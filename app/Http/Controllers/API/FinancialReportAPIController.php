@@ -3673,7 +3673,396 @@ srp_erp_ioubookingmaster.approvedYN = 1
         }
     }
 
+    public function exportGLReport(Request $request){
 
+        $type = $request->type;
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $checkIsGroup = Company::find($request->companySystemID);
+        $data = array();
+
+        if(isset($request->month)) {
+            $request->toDate = $request->month."".Carbon::parse($request->month)->endOfMonth()
+                    ->format('d').",2022";
+        }
+
+        $output = $this->getGeneralLedgerSortedData($request);
+
+        $currencyIdLocal = 1;
+        $currencyIdRpt = 2;
+        $currencyIdTrans = 1;
+
+        $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+        $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+
+        $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
+        $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
+
+        $decimalPlaceCollectTrans = collect($output)->pluck('documentTransCurrencyID')->toArray();
+        $decimalPlaceUniqueTrans = array_unique($decimalPlaceCollectTrans);
+
+        if (!empty($decimalPlaceUniqueLocal)) {
+            $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+        }
+
+        if (!empty($decimalPlaceUniqueRpt)) {
+            $currencyIdRpt = $decimalPlaceUniqueRpt[0];
+        }
+
+        if (!empty($decimalPlaceUniqueTrans)) {
+            $currencyIdTrans = $decimalPlaceUniqueTrans[0];
+        }
+
+        $extraColumns = [];
+        if (isset($request->extraColoumns) && count($request->extraColoumns) > 0) {
+            $extraColumns = collect($request->extraColoumns)->pluck('id')->toArray();
+        }
+
+        $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
+        $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
+        $requestCurrencyTrans = CurrencyMaster::where('currencyID', $currencyIdTrans)->first();
+
+        $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+        $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+        $decimalPlaceTrans = !empty($requestCurrencyTrans) ? $requestCurrencyTrans->DecimalPlaces : 3;
+
+        $currencyLocal = $requestCurrencyLocal->CurrencyCode;
+        $currencyRpt = $requestCurrencyRpt->CurrencyCode;
+        $currencyTrans = $requestCurrencyTrans->CurrencyCode;
+
+        $reportSD = $request->reportSD;
+
+        if ($reportSD == "glCode_wise") {
+            if (!empty($output)) {
+                $outputArr = array();
+                foreach ($output as $val1) {
+                    $outputArr[$val1->glCode . ' - ' . $val1->AccountDescription][] = $val1;
+                }
+
+                $x = 0;
+                $total = array();
+                $total['transAmountTotal'] = array_sum(collect($output)->pluck('transAmountTotal')->toArray());
+                $total['localAmountTotal'] = array_sum(collect($output)->pluck('localAmountTotal')->toArray());
+                $total['rptAmountTotal'] = array_sum(collect($output)->pluck('rptAmountTotal')->toArray());
+
+                foreach ($outputArr as $key => $values) {
+                    $data[$x][''] = $key;
+                    $x++;
+                    $data[$x]['CompanyID'] = 'CompanyID';
+                    $data[$x]['CompanyName'] = 'CompanyName';
+                    $data[$x]['DocumentID'] = 'DocumentID';
+                    $data[$x]['DocumentDescription'] = 'DocumentDescription';
+                    $data[$x]['DocumentCode'] = 'DocumentCode';
+                    $data[$x]['Posted Date'] = 'Posted Date';
+                    $data[$x]['Description'] = 'Description';
+                    $data[$x]['GL created date'] = 'GL created date';
+                    $data[$x]['Segment'] = 'Segment';
+                    $data[$x]['GL Code'] = 'GL Code';
+                    $data[$x]['GL Description'] = 'GL Description';
+
+                    $data[$x]['Transaction Currency'] = 'Transaction Currency';
+                    $data[$x]['Transaction Amount'] = 'Transaction Amount';
+
+                    if ($checkIsGroup->isGroup == 0) {
+                        $data[$x]['Local Currency'] = 'Local Currency';
+                        $data[$x]['Local Amount'] = 'Local Amount';
+                    }
+                    $data[$x]['Reporting Currency'] = 'Reporting Currency';
+                    $data[$x]['Reporting Amount'] = 'Reporting Amount';
+
+                    $data[$x]['Created User'] = 'Created User';
+                    if (in_array('confi_name', $extraColumns)) {
+                        $data[$x]['Confirmed User'] = 'Confirmed User';
+                    }
+
+                    if (in_array('confi_date', $extraColumns)) {
+                        $data[$x]['Confirmed Date'] = 'Confirmed Date';
+                    }
+
+                    if (in_array('app_name', $extraColumns)) {
+                        $data[$x]['Approved User'] = 'Approved User';
+                    }
+
+                    if (in_array('app_date', $extraColumns)) {
+                        $data[$x]['Approved Date'] = 'Approved Date';
+                    }
+                    $data[$x]['Supplier Name'] = 'Supplier Name';
+                    $data[$x]['Supplier Code'] = 'Supplier Code';
+                    $data[$x]['Document Year'] = 'Document Year';
+
+                    if (!empty($values)) {
+                        $subTotalRpt = 0;
+                        $subTotalLocal = 0;
+                        $subTotalTrans = 0;
+                        foreach ($values as $val) {
+                            $x++;
+                            $data[$x]['CompanyID'] = $val->companyID;
+                            $data[$x]['CompanyName'] = $val->CompanyName;
+                            $data[$x]['DocumentID'] = $val->documentID;
+                            $data[$x]['DocumentDescription'] = $val->documentDescription;
+                            $data[$x]['DocumentCode'] = $val->documentCode;
+                            $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
+                            $data[$x]['Description'] = $val->documentNarration;
+                            $data[$x]['GL created date'] = \Helper::dateFormat($val->createdDateTime);
+                            $data[$x]['Segment'] = $val->serviceLineCode;
+                            $data[$x]['GL Code'] = $val->glCode;
+                            $data[$x]['GL Description'] = $val->AccountDescription;
+
+                            $data[$x]['Transaction Currency'] = $currencyTrans;
+                            $data[$x]['Transaction Amount'] = round($val->transAmountTotal, $decimalPlaceTrans);
+                            if ($checkIsGroup->isGroup == 0) {
+                                $data[$x]['Local Currency'] = $currencyLocal;
+                                $data[$x]['Local Amount'] = round($val->localAmountTotal, $decimalPlaceLocal);
+                            }
+
+                            $data[$x]['Reporting Currency'] = $currencyRpt;
+                            $data[$x]['Reporting Amount'] = round($val->rptAmountTotal, $decimalPlaceRpt);
+                            $data[$x]['Created User'] = $val->createdBy;
+                            if (in_array('confi_name', $extraColumns)) {
+                                $data[$x]['Confirmed User'] = $val->confirmedBy;
+                            }
+
+                            if (in_array('confi_date', $extraColumns)) {
+                                $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->documentConfirmedDate);
+                            }
+
+                            if (in_array('app_name', $extraColumns)) {
+                                $data[$x]['Approved User'] = $val->approvedBy;
+                            }
+
+                            if (in_array('app_date', $extraColumns)) {
+                                $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                            }
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Document Year'] = $val->documentYear;
+                            $subTotalRpt +=  round($val->rptAmountTotal, $decimalPlaceRpt);
+                            $subTotalLocal += round($val->localAmountTotal, $decimalPlaceLocal);
+                            $subTotalTrans += round($val->transAmountTotal, $decimalPlaceTrans);
+                        }
+                        $x++;
+                        $data[$x]['CompanyID'] = '';
+                        $data[$x]['CompanyName'] = '';
+                        $data[$x]['DocumentID'] = '';
+                        $data[$x]['DocumentDescription'] = '';
+                        $data[$x]['DocumentCode'] = '';
+                        $data[$x]['Posted Date'] = '';
+                        $data[$x]['Description'] = '';
+                        $data[$x]['GL created date'] = '';
+                        $data[$x]['Segment'] = '';
+                        $data[$x]['GL Code'] = '';
+                        $data[$x]['GL Description'] = 'Total';
+
+                        $data[$x]['Transaction Currency'] = '';
+                        $data[$x]['Transaction Amount'] = round($subTotalTrans, $decimalPlaceTrans);
+                        if ($checkIsGroup->isGroup == 0) {
+                            $data[$x]['Local Currency'] = '';
+                            $data[$x]['Local Amount'] = round($subTotalLocal, $decimalPlaceLocal);
+                        }
+
+                        $data[$x]['Reporting Currency'] = '';
+                        $data[$x]['Reporting Amount'] = round($subTotalRpt, $decimalPlaceRpt);
+
+                        $data[$x]['Created User'] = '';
+                        if (in_array('confi_name', $extraColumns)) {
+                            $data[$x]['Confirmed User'] = '';
+                        }
+
+                        if (in_array('confi_date', $extraColumns)) {
+                            $data[$x]['Confirmed Date'] = '';
+                        }
+
+                        if (in_array('app_name', $extraColumns)) {
+                            $data[$x]['Approved User'] = '';
+                        }
+
+                        if (in_array('app_date', $extraColumns)) {
+                            $data[$x]['Approved Date'] = '';
+                        }
+                        $data[$x]['Supplier Name'] = '';
+                        $data[$x]['Supplier Code'] = '';
+                        $data[$x]['Document Year'] = '';
+
+                        $x++;
+                        $data[$x]['CompanyID'] = '';
+                        $x++;
+                    }
+
+                }
+                $x++;
+                $data[$x]['CompanyID'] = '';
+                $data[$x]['CompanyName'] = '';
+                $data[$x]['DocumentID'] = '';
+                $data[$x]['DocumentDescription'] = '';
+                $data[$x]['DocumentCode'] = '';
+                $data[$x]['Posted Date'] = '';
+                $data[$x]['Description'] = '';
+                $data[$x]['GL created date'] = '';
+                $data[$x]['Segment'] = '';
+                $data[$x]['GL Code'] = '';
+                $data[$x]['GL Description'] = 'Grand Total';
+
+                $data[$x]['Transaction Currency'] = '';
+                $data[$x]['Transaction Amount'] = round($total['transAmountTotal'], $decimalPlaceTrans);
+                if ($checkIsGroup->isGroup == 0) {
+                    $data[$x]['Local Currency'] = '';
+                    $data[$x]['Local Amount'] = round($total['localAmountTotal'], $decimalPlaceLocal);
+                }
+                $data[$x]['Reporting Currency'] = '';
+                $data[$x]['Reporting Amount'] = round($total['rptAmountTotal'], $decimalPlaceRpt);
+
+                $data[$x]['Created User'] = '';
+                if (in_array('confi_name', $extraColumns)) {
+                    $data[$x]['Confirmed User'] = '';
+                }
+
+                if (in_array('confi_date', $extraColumns)) {
+                    $data[$x]['Confirmed Date'] = '';
+                }
+
+                if (in_array('app_name', $extraColumns)) {
+                    $data[$x]['Approved User'] = '';
+                }
+
+                if (in_array('app_date', $extraColumns)) {
+                    $data[$x]['Approved Date'] = '';
+                }
+                $data[$x]['Supplier Name'] = '';
+                $data[$x]['Supplier Code'] = '';
+                $data[$x]['Document Year'] = '';
+            }
+        } else {
+            $x = 0;
+            if ($output) {
+                $subTotalRpt = 0;
+                $subTotalLocal = 0;
+                $subTotalTrans = 0;
+
+                $dataArrayNew = array();
+
+                if(isset($request->isClosing) && !$request->isClosing && isset($request->month)) {
+                    foreach($output as $ou) {
+                        if(Carbon::parse($ou->documentDate)->format('d/m/Y') <= Carbon::parse($request->toDate)->format('d/m/Y')  && (Carbon::parse($ou->documentDate)->format('m')  == Carbon::parse($request->toDate)->format('m')) ) {
+                            array_push($dataArrayNew,$ou);
+                        }
+                    }
+
+                    $output = $dataArrayNew;
+                }
+
+
+                foreach ($output as $val) {
+                    $data[$x]['CompanyID'] = $val->companyID;
+                    $data[$x]['CompanyName'] = $val->CompanyName;
+                    $data[$x]['DocumentID'] = $val->documentID;
+                    $data[$x]['DocumentDescription'] = $val->documentDescription;
+                    $data[$x]['DocumentCode'] = $val->documentCode;
+                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
+                    $data[$x]['Description'] = $val->documentNarration;
+                    $data[$x]['GL created date'] = \Helper::dateFormat($val->createdDateTime);
+                    $data[$x]['Segment'] = $val->serviceLineCode;
+                    $data[$x]['GL Code'] = $val->glCode;
+                    $data[$x]['GL Description'] = $val->AccountDescription;
+
+                    if($request->currencyID == 1 || !isset($request->month)){
+                        $data[$x]['Transaction Currency'] = $currencyTrans;
+                        $data[$x]['Transaction Amount'] = round($val->transAmountTotal, $decimalPlaceTrans);
+                    }
+
+                    if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
+                        $data[$x]['Local Currency'] = $currencyLocal;
+                        $data[$x]['Local Amount'] = round($val->localAmountTotal, $decimalPlaceLocal);
+                    }
+
+                    if($request->currencyID == 2 || !isset($request->month)) {
+                        $data[$x]['Reporting Currency'] = $currencyRpt;
+                        $data[$x]['Reporting Amount'] = round($val->rptAmountTotal, $decimalPlaceRpt);
+                    }
+
+                    $data[$x]['Created User'] = $val->createdBy;
+                    if (in_array('confi_name', $extraColumns)) {
+                        $data[$x]['Confirmed User'] = $val->confirmedBy;
+                    }
+
+                    if (in_array('confi_date', $extraColumns)) {
+                        $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->documentConfirmedDate);
+                    }
+
+                    if (in_array('app_name', $extraColumns)) {
+                        $data[$x]['Approved User'] = $val->approvedBy;
+                    }
+
+                    if (in_array('app_date', $extraColumns)) {
+                        $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                    }
+                    $data[$x]['Supplier Name'] = $val->supplierName;
+                    $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                    $data[$x]['Document Year'] = $val->documentYear;
+
+                    $subTotalRpt +=  round($val->rptAmountTotal, $decimalPlaceRpt);
+                    $subTotalLocal += round($val->localAmountTotal, $decimalPlaceLocal);
+                    $subTotalTrans += round($val->transAmountTotal, $decimalPlaceTrans);
+                    $x++;
+                }
+            }
+            $data[$x]['CompanyID'] = "";
+            $data[$x]['CompanyName'] = "";
+            $data[$x]['DocumentID'] = "";
+            $data[$x]['DocumentDescription'] = "";
+            $data[$x]['DocumentCode'] = "";
+            $data[$x]['Posted Date'] = "";
+            $data[$x]['Description'] = "";
+            $data[$x]['GL created date'] = "";
+            $data[$x]['Segment'] = "";
+            $data[$x]['GL Code'] = "";
+            $data[$x]['GL Description'] = "Grand Total";
+
+            if($request->currencyID == 1 || !isset($request->month)){
+                $data[$x]['Transaction Currency'] = "";
+                $data[$x]['Transaction Amount'] = round($subTotalTrans, $decimalPlaceTrans);
+            }
+
+            if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
+                $data[$x]['Local Currency'] = "";
+                $data[$x]['Local Amount'] = round($subTotalLocal, $decimalPlaceLocal);
+            }
+
+            if($request->currencyID == 2 || !isset($request->month)) {
+                $data[$x]['Reporting Currency'] = "";
+                $data[$x]['Reporting Amount'] = round($subTotalRpt, $decimalPlaceRpt);
+            }
+        }
+
+        $company_name = $companyCurrency->CompanyName;
+        $to_date = \Helper::dateFormat($request->toDate);
+        $from_date = \Helper::dateFormat($request->fromDate);
+        $cur = null;
+        $title = "Financial General Ledger";
+
+        $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
+
+        $detail_array = array(  'type' => 1,
+            'from_date'=>$from_date,
+            'to_date'=>$to_date,
+            'company_name'=>$company_name,
+            'company_code'=>$companyCode,
+            'cur'=>$cur,
+            'title'=>$title);
+
+        $fileName = 'financial_general_ledger';
+        $path = 'general-ledger/report/general_ledger/excel/';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+    }
     public function getTrialBalance($request)
     {
         $fromDate = new Carbon($request->fromDate);
@@ -4860,6 +5249,177 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         ) AS GL_final 
                     ORDER BY
                         documentDate ASC';
+
+        return  \DB::select($query);
+    }
+
+    public function getGeneralLedgerSortedData($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $glCodes = (array)$request->glCodes;
+
+        $type = $request->type;
+        $chartOfAccountId = collect($glCodes)->pluck('chartOfAccountSystemID')->toArray();
+        $departments = (array)$request->departments;
+        $serviceLineId = array_filter(collect($departments)->pluck('serviceLineSystemID')->toArray());
+
+        array_push($serviceLineId, 24);
+
+        $contracts = (array)$request->contracts;
+        $contractsId = array_filter(collect($contracts)->pluck('contractUID')->toArray());
+        array_push($contractsId, 159);
+        //contracts
+        $query = 'SELECT * 
+                    FROM
+                        (
+                    SELECT
+                        * 
+                    FROM
+                        (
+                    SELECT
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        erp_generalledger.serviceLineSystemID,
+                        erp_generalledger.serviceLineCode,
+                        erp_generalledger.documentSystemID,
+                        erp_generalledger.documentID,
+                        erp_generalledger.documentSystemCode,
+                        erp_generalledger.documentCode,
+                        erp_generalledger.documentDate,
+                        erp_generalledger.documentYear,
+                        erp_generalledger.createdDateTime,
+                        erp_generalledger.chartOfAccountSystemID,
+                        erp_generalledger.glCode,
+                        erp_generalledger.glAccountType,
+                        erp_generalledger.documentNarration,
+                        erp_generalledger.clientContractID,
+                        erp_generalledger.supplierCodeSystem,
+                        erp_generalledger.documentLocalCurrencyID,
+                        chartofaccounts.AccountDescription,
+                        companymaster.CompanyName,
+                        erp_templatesglcode.templatesDetailsAutoID as templatesDetailsAutoID,
+                        approveEmp.empName as approvedBy,
+                        confirmEmp.empName as confirmedBy,
+                        createdEmp.empName as createdBy,
+                        erp_generalledger.documentConfirmedDate,
+                        erp_generalledger.documentFinalApprovedDate,
+                        erp_templatesglcode.templateMasterID,
+                        erp_templatesdetails.templateDetailDescription,
+                        erp_companyreporttemplatedetails.description as templateDescription,
+                        erp_documentmaster.documentDescription,
+                        erp_generalledger.documentLocalAmount AS localAmountTotal,
+                        erp_generalledger.documentRptAmount AS rptAmountTotal,
+                        erp_generalledger.documentRptCurrencyID,
+                        erp_generalledger.documentTransAmount AS transAmountTotal,
+                        erp_generalledger.documentTransCurrencyID,
+                        suppliermaster.supplierName,
+                        suppliermaster.primarySupplierCode
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
+                        LEFT JOIN employees as createdEmp ON erp_generalledger.createdUserSystemID = createdEmp.employeeSystemID
+                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                        )
+                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
+                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
+                        LEFT JOIN erp_documentmaster ON erp_documentmaster.documentSystemID = erp_generalledger.documentSystemID
+                    WHERE
+                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
+                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                        ) AS erp_qry_GL UNION ALL
+                    SELECT
+                        * 
+                    FROM
+                        (
+                    SELECT
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        erp_generalledger.serviceLineSystemID,
+                        erp_generalledger.serviceLineCode,
+                        "" AS documentSystemID,
+                        "" AS documentID,
+                        "" AS documentSystemCode,
+                        "" AS documentCode,
+                        "" AS documentDate,
+                        "" AS documentYear,
+                        "" AS createdDateTime,
+                        erp_generalledger.chartOfAccountSystemID,
+                        erp_generalledger.glCode,
+                        "BS" AS glAccountType,
+                        "Opening Balance" AS documentNarration,
+                        "" AS clientContractID,
+                        "" AS supplierCodeSystem,
+                        erp_generalledger.documentLocalCurrencyID,
+                        chartofaccounts.AccountDescription,
+                        companymaster.CompanyName,
+                        erp_templatesglcode.templatesDetailsAutoID,
+                        approveEmp.empName as approvedBy,
+                        confirmEmp.empName as confirmedBy,
+                        createdEmp.empName as createdBy,
+                        erp_generalledger.documentConfirmedDate,
+                        erp_generalledger.documentFinalApprovedDate,
+                        erp_templatesglcode.templateMasterID,
+                        erp_templatesdetails.templateDetailDescription,
+                        erp_companyreporttemplatedetails.description as templateDescription,
+                        erp_documentmaster.documentDescription,
+                        SUM(erp_generalledger.documentLocalAmount) AS localAmountTotal,
+                        SUM(erp_generalledger.documentRptAmount) AS rptAmountTotal,
+                        erp_generalledger.documentRptCurrencyID,
+                        SUM(erp_generalledger.documentTransAmount) AS transAmountTotal,
+                        erp_generalledger.documentTransCurrencyID,
+                        suppliermaster.supplierName,
+                        suppliermaster.primarySupplierCode
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
+                        LEFT JOIN employees as createdEmp ON erp_generalledger.createdUserSystemID = createdEmp.employeeSystemID
+                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                        )
+                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
+                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
+                        LEFT JOIN erp_documentmaster ON erp_documentmaster.documentSystemID = erp_generalledger.documentSystemID
+                        WHERE
+                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND erp_generalledger.glAccountTypeID = 1
+                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
+                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                    GROUP BY
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.serviceLineSystemID,
+                        erp_generalledger.chartOfAccountSystemID
+                        ) AS erp_qry_gl_bf 
+                        ) AS GL_final 
+                    ORDER BY
+                        documentCode ASC';
 
         return  \DB::select($query);
     }
