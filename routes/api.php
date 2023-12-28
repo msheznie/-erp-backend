@@ -545,14 +545,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
 
             // console jv
-            Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');
-            Route::resource('console_j_v_details', 'ConsoleJVDetailAPIController');
-            Route::post('getAllConsoleJV', 'ConsoleJVMasterAPIController@getAllConsoleJV');
-            Route::post('consoleJVReopen', 'ConsoleJVMasterAPIController@consoleJVReopen');
-            Route::get('getConsoleJVGL', 'ConsoleJVMasterAPIController@getConsoleJVGL');
-            Route::get('getConsoleJVMasterFormData', 'ConsoleJVMasterAPIController@getConsoleJVMasterFormData');
-            Route::get('getConsoleJVDetailByMaster', 'ConsoleJVDetailAPIController@getConsoleJVDetailByMaster');
-            Route::post('deleteAllConsoleJVDet', 'ConsoleJVDetailAPIController@deleteAllConsoleJVDet');
             Route::post('getConsoleJvApproval', 'ConsoleJVMasterAPIController@getConsoleJvApproval');
             Route::post('getApprovedConsoleJvForCurrentUser', 'ConsoleJVMasterAPIController@getApprovedConsoleJvForCurrentUser');
             Route::post('approveConsoleJV', 'ConsoleJVMasterAPIController@approveConsoleJV');
@@ -865,8 +857,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('appointments', 'AppointmentAPIController');
             Route::resource('appointment_details', 'AppointmentDetailsAPIController');
             Route::resource('po_categories', 'PoCategoryAPIController');
-
-            Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview');
 
             Route::resource('document_sub_products', 'DocumentSubProductAPIController');
             Route::resource('payment_types', 'PaymentTypeAPIController');

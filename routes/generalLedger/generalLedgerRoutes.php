@@ -190,6 +190,7 @@ Route::group([], function(){
     Route::post('getApprovedConsoleJvForCurrentUser', 'ConsoleJVMasterAPIController@getApprovedConsoleJvForCurrentUser')->name('Get Approved Console JV for current user');
     Route::post('approveConsoleJV', 'ConsoleJVMasterAPIController@approveConsoleJV')->name('Approve Console JV');
     Route::post('rejectConsoleJV', 'ConsoleJVMasterAPIController@rejectConsoleJV')->name('Reject Console JV');
+    Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview')->name('Get elimination ledger review');
 
     // Budget Review
 
