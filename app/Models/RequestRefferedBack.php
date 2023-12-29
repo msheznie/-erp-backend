@@ -299,7 +299,8 @@ class RequestRefferedBack extends Model
         'modifiedPc',
         'modifiedUserSystemID',
         'modifiedUser',
-        'createdDateTime'
+        'createdDateTime',
+        'counter'
     ];
 
     /**

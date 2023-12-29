@@ -14,6 +14,7 @@ use App\Models\MaterielRequest;
 use App\Services\MaterialRequestService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\AddBulkItem\ProcessMaterialRequestQuery;
 
 class MaterialRequestAddBulkItemJob implements ShouldQueue
 {
@@ -62,6 +63,13 @@ class MaterialRequestAddBulkItemJob implements ShouldQueue
         try {
 
             $companyId = $input['companySystemID'];
+            $isSearched = $input['isSearched'];
+            $searchVal = $input['searchVal'];
+            $chunkSize = 100;
+         
+            $financeCategoryMaster = isset($input['financeCategoryMaster'])?$input['financeCategoryMaster']:null;
+            $financeCategorySub = isset($input['financeCategorySub'])?$input['financeCategorySub']:null;
+         
             $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
                                         return $query->where('companySystemID', '=', $companyId);
                                      })->where('isActive',1)
@@ -75,25 +83,26 @@ class MaterialRequestAddBulkItemJob implements ShouldQueue
                                      ->whereDoesntHave('material_request_details', function($query) use ($input) {
                                         $query->where('RequestID', $input['RequestID']);
                                      })
-                                     ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
-                                     ->get();
+                                     ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory']);
+
+
+                                    if ($isSearched) {
+                                        $itemMasters = $itemMasters->where(function ($query) use ($searchVal) {
+                                            $query->where('primaryCode', 'LIKE', "%{$searchVal}%")
+                                                ->orWhere('secondaryItemCode', 'LIKE', "%{$searchVal}%")
+                                                ->orWhere('barcode', 'LIKE', "%{$searchVal}%")
+                                                ->orWhere('itemDescription', 'LIKE', "%{$searchVal}%");
+                                        });
+                                    }
+            $count = $itemMasters->count();
                         
             $invalidItems = [];
-            foreach ($itemMasters as $key => $value) {
-                $res = MaterialRequestService::validateMaterialRequestItem($value->itemCodeSystem, $input['companySystemID'], $input['RequestID']);
-                        
-                if ($res['status']) {
-                    MaterialRequestService::saveMaterialRequestItem($value->itemCodeSystem, $input['companySystemID'], $input['RequestID'], $input['empID'], $input['employeeSystemID']);
-                } else {
-                    $invalidItems[] = ['itemCodeSystem' => $value->itemCodeSystem, 'message' => $res['message']];
-                    Log::error('Invalid Items');
-                    Log::error($value->primaryCode. " - " .$res['message']);
-                }
+            $chunkDataSizeCounts = ceil($count / $chunkSize);
+            for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
+                Log::info('started '.$i);
+                ProcessMaterialRequestQuery::dispatch($i, $db, $companyId, $financeCategoryMaster,$financeCategorySub,$input['RequestID'],$chunkDataSizeCounts,$input['empID'], $input['employeeSystemID'],$isSearched,$searchVal)->onQueue('single');
             }
 
-
-            MaterielRequest::where('RequestID', $input['RequestID'])->update(['isBulkItemJobRun' => 0]);
-            
             Log::info('Successfully completed');
 
             DB::commit();
