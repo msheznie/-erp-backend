@@ -309,6 +309,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
             $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
             $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['financeCogsGLcodePL'] = $financeItemCategorySubAssigned->financeCogsGLcodePL;
+            $input['financeCogsGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeCogsGLcodePLSystemID;
             $input['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
             $input['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
         } else {
@@ -319,6 +321,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }elseif (!$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
             return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+        }elseif (!$input['financeCogsGLcodePL'] || !$input['financeCogsGLcodePLSystemID']){
+            return $this->sendError('COGS gl account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }elseif (!$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']){
             return $this->sendError('Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }
@@ -1243,6 +1247,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $DODetail_arr['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
                                 $DODetail_arr['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
                                 $DODetail_arr['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                                $DODetail_arr['financeCogsGLcodePL'] = $financeItemCategorySubAssigned->financeCogsGLcodePL;
+                                $DODetail_arr['financeCogsGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeCogsGLcodePLSystemID;
                                 $DODetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $DODetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
@@ -1253,6 +1259,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 return $this->sendError('BS account cannot be null for ' . $new['itemSystemCode'], 500);
                             }elseif (!$DODetail_arr['financeGLcodePL'] || !$DODetail_arr['financeGLcodePLSystemID']){
                                 return $this->sendError('Cost account cannot be null for ' . $new['itemSystemCode'], 500);
+                            }elseif (!$DODetail_arr['financeCogsGLcodePL'] || !$DODetail_arr['financeCogsGLcodePLSystemID']){
+                                return $this->sendError('COGS gl account cannot be null for ' . $new['itemSystemCode'], 500);
                             }elseif (!$DODetail_arr['financeGLcodeRevenueSystemID'] || !$DODetail_arr['financeGLcodeRevenue']){
                                 return $this->sendError('Revenue account cannot be null for ' . $new['itemSystemCode'], 500);
                             }
@@ -1831,6 +1839,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
                             $itemArray['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
                             $itemArray['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                            $itemArray['financeCogsGLcodePL'] = $financeItemCategorySubAssigned->financeCogsGLcodePL;
+                            $itemArray['financeCogsGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeCogsGLcodePLSystemID;
                             $itemArray['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                             $itemArray['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
 

@@ -73,6 +73,7 @@ use App\Models\SegmentMaster;
 use App\Models\ShiftDetails;
 use App\Models\StockTransfer;
 use App\Models\Taxdetail;
+use App\Models\TaxMaster;
 use App\Models\TaxVatCategories;
 use App\Models\VatSubCategoryType;
 use App\Models\WarehouseMaster;
@@ -540,15 +541,23 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
         $posTaxes = DB::table('pos_source_taxmaster')
-            ->selectRaw('taxMasterAutoID, taxDescription, taxShortCode')
-            ->where('pos_source_taxmaster.taxType', 1)
+            ->selectRaw('taxMasterAutoID, taxDescription, taxShortCode, taxType')
+            ->whereIn('pos_source_taxmaster.taxType', [0,1])
             ->where('pos_source_taxmaster.erp_tax_master_id', 0)
             ->where('pos_source_taxmaster.companyID', $companySystemID)
             ->get();
 
-        $taxes = TaxVatCategories::selectRaw('taxVatSubCategoriesAutoID as value, subCategoryDescription as label')
+        $taxesVat = TaxVatCategories::selectRaw('taxVatSubCategoriesAutoID as value, subCategoryDescription as label')
             ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'erp_tax_vat_sub_categories.taxMasterAutoID')
             ->where('erp_taxmaster_new.companySystemID', $companySystemID)
+            ->where('erp_taxmaster_new.taxCategory', 2)
+            ->where('erp_tax_vat_sub_categories.isActive', 1)
+            ->get();
+
+        $taxesOther = DB::table('erp_taxmaster_new')->selectRaw('taxMasterAutoID as value, taxDescription as label')
+            ->where('erp_taxmaster_new.companySystemID', $companySystemID)
+            ->where('erp_taxmaster_new.taxCategory', 1)
+            ->where('erp_taxmaster_new.isActive', 1)
             ->get();
 
         $posPayments = DB::table('pos_source_paymentglconfigdetail')
@@ -593,7 +602,8 @@ class ShiftDetailsAPIController extends AppBaseController
             'posCustomers' => $posCustomers,
             'customers' => $customers,
             'posTaxes' => $posTaxes,
-            'taxes' => $taxes,
+            'taxesVat' => $taxesVat,
+            'taxesOther' => $taxesOther,
             'posPayments' => $posPayments,
             'isAvailable' => $isAvailable,
             'posLog' => $posLog,
@@ -623,12 +633,17 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $taxPOSId = $request->taxPOSId;
         $taxERPId = $request->taxERPId;
+        $taxType = $request->taxType;
 
-        $tax = TaxVatCategories::find($taxERPId);
-        if(empty($tax)){
-            return $this->sendError("No vat sub category found");
+        if($taxType == 0) {
+            $tax = TaxVatCategories::find($taxERPId);
+            if (empty($tax)) {
+                return $this->sendError("No vat sub category found");
+            }
+            $output = POSSOURCETaxMaster::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $tax->taxMasterAutoID, 'erp_vat_sub_category' => $taxERPId]);
+        } else {
+            $output = POSSOURCETaxMaster::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $taxERPId, 'erp_vat_sub_category' => 0]);
         }
-        $output = POSSOURCETaxMaster::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $tax->taxMasterAutoID, 'erp_vat_sub_category' => $taxERPId]);
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
     }
@@ -865,33 +880,19 @@ class ShiftDetailsAPIController extends AppBaseController
                     if (empty($customer)) {
                         return $this->sendError('Customer not found', 500);
                     }
-                    $myCurr = $input['custTransactionCurrencyID'];
 
-                    $companyCurrency = \Helper::companyCurrency($company['companySystemID']);
-                    $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
                     /*exchange added*/
-                    $input['custTransactionCurrencyER'] = 1;
-                    $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['custTransactionCurrencyER'] = $invoice->transactionExchangeRate;
+                    $input['companyReportingCurrencyID'] = $invoice->companyReportingCurrencyID;
+                    $input['companyReportingER'] = $invoice->companyReportingExchangeRate;
+                    $input['localCurrencyID'] = $invoice->companyLocalCurrencyID;
+                    $input['localCurrencyER'] = $invoice->companyLocalExchangeRate;
 
                     $bank = BankAssign::select('bankmasterAutoID')
                         ->where('companySystemID', $input['companyID'])
                         ->where('isDefault', -1)
                         ->first();
-                    if ($bank) {
-                        $input['bankID'] = $bank->bankmasterAutoID;
-                        $bankAccount = BankAccount::where('companySystemID', $input['companyID'])
-                            ->where('bankmasterAutoID', $bank->bankmasterAutoID)
-                            ->where('isDefault', 1)
-                            ->where('accountCurrencyID', $myCurr)
-                            ->first();
-                        if ($bankAccount) {
-                            $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
-                        }
 
-                    }
 
                     if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3 || $input['isPerforma'] == 4 || $input['isPerforma'] == 5)) {
                         $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
@@ -945,6 +946,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['customerGLCode'] = $customer->custGLaccount;
                     $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
                     $input['documentType'] = 11;
+                    $input['isPOS'] = 1;
                     $input['createdUserID'] = \Helper::getEmployeeID();
                     $input['createdPcID'] = getenv('COMPUTERNAME');
                     $input['modifiedUser'] = \Helper::getEmployeeID();
@@ -969,19 +971,18 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->get();
 
                     foreach ($items as $item) {
-                        $input2 = ['customerCatalogDetailID' => 0, 'customerCatalogMasterID' => 0, 'itemCode' => $item->itemAutoID, 'qtyIssued' => $item->qty, 'issueCostLocal' => $item->companyLocalAmount, 'issueCostRpt' => $item->companyReportingAmount, 'qtyIssuedDefaultMeasure' => $item->qty, 'sellingCost' => $item->companyLocalAmount, 'sellingCostAfterMargin' => $item->companyLocalAmount, 'sellingCostAfterMarginLocal' => $item->companyLocalAmount, 'sellingCostAfterMarginRpt' => $item->companyReportingAmount, 'sellingCurrencyER' => $item->transactionExchangeRate, 'sellingCurrencyID' => $item->transactionCurrencyID];
+                        $input2 = ['customerCatalogDetailID' => 0, 'customerCatalogMasterID' => 0, 'itemCode' => $item->itemAutoID, 'qtyIssued' => $item->defaultQty, 'issueCostLocal' => $item->companyLocalAmount, 'issueCostRpt' => $item->companyReportingAmount, 'qtyIssuedDefaultMeasure' => $item->defaultQty, 'sellingCost' => $item->price, 'sellingCostAfterMargin' => $item->companyLocalAmount / $item->defaultQty, 'sellingCostAfterMarginLocal' => $item->companyLocalAmount / $item->defaultQty, 'sellingCostAfterMarginRpt' => $item->companyReportingAmount / $item->defaultQty, 'sellingTotal' => $item->companyLocalAmount, 'sellingCurrencyER' => $item->transactionExchangeRate, 'sellingCurrencyID' => $item->transactionCurrencyID, 'salesPrice' => $item->price, 'discountAmount' => $item->discountAmount];
 
                         $input2['companySystemID'] = $customerInvoiceDirects->companySystemID;
                         $input2['custInvoiceDirectAutoID'] = $customerInvoiceDirects->custInvoiceDirectAutoID;
 
                         $companySystemID = $input2['companySystemID'];
 
-
-                        $item = ItemAssigned::with(['item_master'])
+                        $itemAssigned = ItemAssigned::with(['item_master'])
                             ->where('itemCodeSystem', $item->itemAutoID)
                             ->where('companySystemID', $companySystemID)
                             ->first();
-                        if (empty($item)) {
+                        if (empty($itemAssigned)) {
                             return $this->sendError('Item not found');
                         }
 
@@ -991,14 +992,13 @@ class ShiftDetailsAPIController extends AppBaseController
                             return $this->sendError('Customer Invoice Direct Not Found');
                         }
 
+                        $input2['itemCodeSystem'] = $itemAssigned->itemCodeSystem;
+                        $input2['itemPrimaryCode'] = $itemAssigned->itemPrimaryCode;
+                        $input2['itemDescription'] = $itemAssigned->itemDescription;
+                        $input2['itemUnitOfMeasure'] = $itemAssigned->itemUnitOfMeasure;
 
-                        $input2['itemCodeSystem'] = $item->itemCodeSystem;
-                        $input2['itemPrimaryCode'] = $item->itemPrimaryCode;
-                        $input2['itemDescription'] = $item->itemDescription;
-                        $input2['itemUnitOfMeasure'] = $item->itemUnitOfMeasure;
-
-                        $input2['unitOfMeasureIssued'] = $item->itemUnitOfMeasure;
-                        $input2['trackingType'] = isset($item->item_master->trackingType) ? $item->item_master->trackingType : null;
+                        $input2['unitOfMeasureIssued'] = $itemAssigned->itemUnitOfMeasure;
+                        $input2['trackingType'] = isset($itemAssigned->item_master->trackingType) ? $itemAssigned->item_master->trackingType : null;
                         $input2['convertionMeasureVal'] = 1;
 
                         if (!isset($input2['qtyIssued'])) {
@@ -1007,8 +1007,8 @@ class ShiftDetailsAPIController extends AppBaseController
                         }
 
                         $input2['comments'] = '';
-                        $input2['itemFinanceCategoryID'] = $item->financeCategoryMaster;
-                        $input2['itemFinanceCategorySubID'] = $item->financeCategorySub;
+                        $input2['itemFinanceCategoryID'] = $itemAssigned->financeCategoryMaster;
+                        $input2['itemFinanceCategorySubID'] = $itemAssigned->financeCategorySub;
 
                         $input2['localCurrencyID'] = $customerInvoiceDirect->localCurrencyID;
                         $input2['localCurrencyER'] = $customerInvoiceDirect->localCurrencyER;
@@ -1025,22 +1025,20 @@ class ShiftDetailsAPIController extends AppBaseController
                         $input2['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
 
 
-                        $input2['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
-                        $input2['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+                        $input2['issueCostLocal'] = $item->totalCost / $item->defaultQty;
+                        $input2['issueCostRpt'] = ($item->totalCost / $item->defaultQty) / $customerInvoiceDirect->companyReportingER;
 
 
-                        $input2['issueCostLocalTotal'] = $input2['issueCostLocal'] * $input2['qtyIssuedDefaultMeasure'];
+                        $input2['issueCostLocalTotal'] = $item->totalCost;
 
                         $input2['reportingCurrencyID'] = $customerInvoiceDirect->companyReportingCurrencyID;
                         $input2['reportingCurrencyER'] = $customerInvoiceDirect->companyReportingER;
 
-                        $input2['issueCostRptTotal'] = $input2['issueCostRpt'] * $input2['qtyIssuedDefaultMeasure'];
+                        $input2['issueCostRptTotal'] = $item->totalCost / $customerInvoiceDirect->companyReportingER;
                         $input2['marginPercentage'] = 0;
 
-                        $companyCurrencyConversion = Helper::currencyConversion($companySystemID, $customerInvoiceDirect->companyReportingCurrencyID, $customerInvoiceDirect->custTransactionCurrencyID, $input2['issueCostRpt']);
                         $input2['sellingCurrencyID'] = $customerInvoiceDirect->custTransactionCurrencyID;
                         $input2['sellingCurrencyER'] = $customerInvoiceDirect->custTransactionCurrencyER;
-//                                $input2['sellingCost'] = ($companyCurrencyConversion['documentAmount'] != 0) ? $companyCurrencyConversion['documentAmount'] : 1.0;
                         if ((isset($input2['customerCatalogDetailID']) && $input2['customerCatalogDetailID'] > 0)) {
                             $catalogDetail = CustomerCatalogDetail::find($input2['customerCatalogDetailID']);
 
@@ -1055,29 +1053,10 @@ class ShiftDetailsAPIController extends AppBaseController
                                 }
                             }
 
-                            $input2['sellingCostAfterMargin'] = $catalogDetail->localPrice;
-                            $input2['marginPercentage'] = ($input2['sellingCostAfterMargin'] - $input2['sellingCost']) / $input2['sellingCost'] * 100;
                             $input2['part_no'] = $catalogDetail->partNo;
                         } else {
-                            $input2['sellingCostAfterMargin'] = $input2['sellingCost'];
-                            $input2['part_no'] = $item->secondaryItemCode;
+                            $input2['part_no'] = $itemAssigned->secondaryItemCode;
                         }
-
-                        if (isset($input2['marginPercentage']) && $input2['marginPercentage'] != 0) {
-//            $input2['sellingCostAfterMarginLocal'] = ($input2['issueCostLocal']) + ($input2['issueCostLocal']*$input2['marginPercentage']/100);
-//            $input2['sellingCostAfterMarginRpt'] = ($input2['issueCostRpt']) + ($input2['issueCostRpt']*$input2['marginPercentage']/100);
-                        } else {
-                            $input2['sellingCostAfterMargin'] = $input2['sellingCost'];
-//            $input2['sellingCostAfterMarginLocal'] = $input2['issueCostLocal'];
-//            $input2['sellingCostAfterMarginRpt'] = $input2['issueCostRpt'];
-                        }
-
-                        $costs = $this->updateCostBySellingCost($input2, $customerInvoiceDirect);
-                        $input2['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
-                        $input2['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
-
-                        $input2['sellingTotal'] = $input2['sellingCostAfterMargin'] * $input2['qtyIssuedDefaultMeasure'];
-
                         /*round to 7 decimals*/
                         $input2['issueCostLocal'] = Helper::roundValue($input2['issueCostLocal']);
                         $input2['issueCostLocalTotal'] = Helper::roundValue($input2['issueCostLocalTotal']);
@@ -1089,6 +1068,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         $input2['sellingCostAfterMarginLocal'] = Helper::roundValue($input2['sellingCostAfterMarginLocal']);
                         $input2['sellingCostAfterMarginRpt'] = Helper::roundValue($input2['sellingCostAfterMarginRpt']);
 
+
                         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
                             ->where('mainItemCategoryID', $input2['itemFinanceCategoryID'])
                             ->where('itemCategorySubID', $input2['itemFinanceCategorySubID'])
@@ -1096,11 +1076,12 @@ class ShiftDetailsAPIController extends AppBaseController
                         if (!empty($financeItemCategorySubAssigned)) {
                             $input2['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
                             $input2['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-                            $input2['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
                             $input2['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
                             $input2['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
                             $input2['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                             $input2['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
+                            $input2['financeCogsGLcodePL'] = $financeItemCategorySubAssigned->financeCogsGLcodePL;
+                            $input2['financeCogsGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeCogsGLcodePLSystemID;
                         } else {
                             return $this->sendError("Finance Item category sub assigned not found", 500);
                         }
@@ -1112,7 +1093,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             ->where('companySystemID', $companySystemID)
                             ->first();
 
-                        if ($item->financeCategoryMaster == 1) {
+                        if ($itemAssigned->financeCategoryMaster == 1) {
                             $checkWhether = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $customerInvoiceDirect->custInvoiceDirectAutoID)
                                 ->where('companySystemID', $companySystemID)
                                 ->select([
@@ -1234,21 +1215,17 @@ class ShiftDetailsAPIController extends AppBaseController
                             }
                         }
 
-//                                if ($customerInvoiceDirect->isVatEligible) {
-//                                    $vatDetails = TaxService::getVATDetailsByItem($customerInvoiceDirect->companySystemID, $input2['itemCodeSystem'], $customerInvoiceDirect->customerID, 0);
-//                                    $input2['VATPercentage'] = $vatDetails['percentage'];
-//                                    $input2['VATApplicableOn'] = $vatDetails['applicableOn'];
-//                                    $input2['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
-//                                    $input2['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
-//                                    $input2['VATAmount'] = 0;
-//                                    if (isset($input2['sellingCostAfterMargin']) && $input2['sellingCostAfterMargin'] > 0) {
-//                                        $input2['VATAmount'] = (($input2['sellingCostAfterMargin'] / 100) * $vatDetails['percentage']);
-//                                    }
-//                                    $currencyConversionVAT = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $customerInvoiceDirect->custTransactionCurrencyID, $customerInvoiceDirect->custTransactionCurrencyID, $input2['VATAmount']);
-//
-//                                    $input2['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-//                                    $input2['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-//                                }
+                                if ($customerInvoiceDirect->isVatEligible) {
+                                    $vatDetails = TaxService::getVATDetailsByItem($customerInvoiceDirect->companySystemID, $input2['itemCodeSystem'], $customerInvoiceDirect->customerID, 0);
+                                    $input2['VATApplicableOn'] = $vatDetails['applicableOn'];
+                                    $input2['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+                                    $input2['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+                                    $input2['VATAmount'] = $item->taxAmount;
+
+
+                                    $input2['VATAmountLocal'] =  $item->taxAmount;
+                                    $input2['VATAmountRpt'] =  $item->taxAmount / $customerInvoiceDirect->companyReportingER;
+                                }
 
                         $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->create($input2);
                     }
@@ -1311,6 +1288,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 return $this->sendError('Error Occurred' . $exception->getMessage() . 'Line :' . $exception->getLine());
             }
 
+            //sales return
             $hasSales = POSInvoiceSource::where('shiftId', $shiftId)->where('isCreditSales', 0)->get();
             $hasItemsSR = POSSourceSalesReturn::where('shiftId', $shiftId)->get();
 
@@ -1326,6 +1304,8 @@ class ShiftDetailsAPIController extends AppBaseController
                 $taxLedgerData = null;
                 TaxLedgerInsert::dispatch($masterData, $taxLedgerData, $db);
             }
+            //end of sales return
+
         }
 
         else if ($shiftDetails->posType == 2){
@@ -2046,7 +2026,8 @@ class ShiftDetailsAPIController extends AppBaseController
 
         return ['status' => true];
     }
-    public function postPosEntries(Request $request){
+    public function postPosEntries(Request $request)
+    {
 
         $shiftId = $request->shiftId;
         $isPostGroupBy = $request->isPostGroupBy;
@@ -2055,10 +2036,10 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $isInsufficient = 0;
 
-        $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();
-        $logs = POSFinanceLog::where('shiftID',$shiftId)->first();
+        $shiftDetails = POSSOURCEShiftDetails::where('shiftID', $shiftId)->first();
+        $logs = POSFinanceLog::where('shiftID', $shiftId)->first();
 
-        if(empty($logs)) {
+        if (empty($logs)) {
 
             $postedShifts = POSFinanceLog::groupBy('shiftId')->where('status', 2)->get();
             $postedShifts = collect($postedShifts)->pluck('shiftId');
@@ -2096,6 +2077,9 @@ class ShiftDetailsAPIController extends AppBaseController
                 $taxGLArray = array();
                 $itemArray = array();
                 $bankArray = array();
+                $costGLArray = array();
+                $inventoryGLArray = array();
+
                 $refundGLArray1 = array();
                 $refundGLArray2 = array();
                 $itemGLArraySR = array();
@@ -2103,11 +2087,11 @@ class ShiftDetailsAPIController extends AppBaseController
                 if ($isPostGroupBy == 0) {
 
                     $bankGL = DB::table('pos_source_invoice')
-                        ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
+                        ->selectRaw('SUM(pos_source_invoicepayments.amount) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
                         ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
                         ->where('pos_source_invoice.shiftID', $shiftId)
-                        ->groupBy('pos_source_invoice.shiftID')
                         ->groupBy('pos_source_invoice.invoiceID')
+                        ->groupBy('pos_source_invoicepayments.paymentConfigMasterID')
                         ->groupBy('pos_source_invoicepayments.GLCode')
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->get();
@@ -2122,9 +2106,8 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->get();
 
-
-                    $invItemsPLBS = DB::table('pos_source_invoicedetail')
-                        ->selectRaw('pos_source_invoicedetail.qty * itemassigned.wacValueLocal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
+                    $invItemsPL = DB::table('pos_source_invoicedetail')
+                        ->selectRaw('SUM(pos_source_invoicedetail.totalCost) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeCogsGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
                         ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
@@ -2132,6 +2115,22 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_invoice.shiftID', $shiftId)
                         ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                         ->where('pos_source_invoice.isCreditSales', 0)
+                        ->groupBy('financeitemcategorysub.financeCogsGLcodePLSystemID')
+                        ->groupBy('pos_source_invoicedetail.invoiceID')
+                        ->get();
+
+
+                    $invItemsBS = DB::table('pos_source_invoicedetail')
+                        ->selectRaw('SUM(pos_source_invoicedetail.totalCost) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
+                        ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->groupBy('financeitemcategorysub.financeGLcodebBSSystemID')
+                        ->groupBy('pos_source_invoicedetail.invoiceID')
                         ->get();
 
 
@@ -2141,7 +2140,8 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                         ->join('pos_source_taxledger', 'pos_source_taxledger.documentDetailAutoID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
-                        ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
+                        ->join('pos_source_taxmaster', 'pos_source_taxmaster.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
+                        ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxmaster.erp_tax_master_id')
                         ->where('pos_source_invoice.shiftID', $shiftId)
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->get();
@@ -2282,110 +2282,110 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
                 //sales returns
-                foreach ($invItemsSr as $gl) {
-
-                    $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                    $itemGLArraySR[] = array(
-                        'shiftId' => $gl->shiftId,
-                        'documentSystemId' => 110,
-                        'documentCode' => $documentCode,
-                        'invoiceID' => $gl->invoiceID,
-                        'glCode' => $gl->glCode,
-                        'logId' => $logs['id'],
-                        'amount' => $gl->amount,
-                        'isReturnYN' => 1
-                    );
-
-                }
-
-                POSGLEntries::insert($itemGLArraySR);
-
-
-                foreach ($invItemsPLBSSr as $gl) {
-
-                    $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                    if ($gl->categoryID == 1) {
-                        $costGLArrayRefund = [
-                            'shiftId' => $gl->shiftId,
-                            'documentSystemId' => 110,
-                            'documentCode' => $documentCode,
-                            'invoiceID' => $gl->invoiceID,
-                            'glCode' => $gl->plGLCode,
-                            'logId' => $logs['id'],
-                            'amount' => $gl->amount * -1,
-                            'isReturnYN' => 1
-                        ];
-                        POSGLEntries::insert($costGLArrayRefund);
-                        if ($gl->glYN == -1) {
-                            $inventoryGLArrayRefund = [
-                                'shiftId' => $gl->shiftId,
-                                'documentSystemId' => 110,
-                                'documentCode' => $documentCode,
-                                'invoiceID' => $gl->invoiceID,
-                                'glCode' => $gl->plGLCode,
-                                'logId' => $logs['id'],
-                                'amount' => $gl->amount,
-                                'isReturnYN' => 1
-                            ];
-                            POSGLEntries::insert($inventoryGLArrayRefund);
-                        } else {
-                            $inventoryGLArrayRefund = [
-                                'shiftId' => $gl->shiftId,
-                                'documentSystemId' => 110,
-                                'documentCode' => $documentCode,
-                                'invoiceID' => $gl->invoiceID,
-                                'glCode' => $gl->bsGLCode,
-                                'logId' => $logs['id'],
-                                'amount' => $gl->amount,
-                                'isReturnYN' => 1
-                            ];
-                            POSGLEntries::insert($inventoryGLArrayRefund);
-                        }
-
-
-                    }
-                }
-
-
-                foreach ($netTotGLSr as $gl) {
-
-                    if ($gl->isRefund == 0) {
-                        $glCode = POSSOURCEPaymentGlConfigDetail::where('paymentConfigMasterID', 2)->first();
-                        if ($glCode) {
-                            $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                            $refundGLArray1[] = array(
-                                'shiftId' => $gl->shiftId,
-                                'invoiceID' => $gl->invoiceID,
-                                'documentSystemId' => 112,
-                                'documentCode' => $documentCode,
-                                'glCode' => $glCode->GLCode,
-                                'logId' => $logs['id'],
-                                'amount' => $gl->amount * -1,
-                                'isReturnYN' => 1
-                            );
-                        }
-                    }
-                    if ($gl->isRefund == 1) {
-                        $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                        $glCode = POSSOURCEPaymentGlConfigDetail::where('paymentConfigMasterID', 2)->first();
-                        if ($glCode) {
-                            $refundGLArray2[] = array(
-                                'shiftId' => $gl->shiftId,
-                                'invoiceID' => $gl->invoiceID,
-                                'documentSystemId' => 110,
-                                'documentCode' => $documentCode,
-                                'glCode' => $glCode->GLCode,
-                                'logId' => $logs['id'],
-                                'amount' => $gl->amount * -1,
-                                'isReturnYN' => 1
-                            );
-                        }
-                    }
-
-
-                }
-                POSGLEntries::insert($refundGLArray1);
-                POSGLEntries::insert($refundGLArray2);
+//                foreach ($invItemsSr as $gl) {
+//
+//                    $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+//                    $itemGLArraySR[] = array(
+//                        'shiftId' => $gl->shiftId,
+//                        'documentSystemId' => 110,
+//                        'documentCode' => $documentCode,
+//                        'invoiceID' => $gl->invoiceID,
+//                        'glCode' => $gl->glCode,
+//                        'logId' => $logs['id'],
+//                        'amount' => $gl->amount,
+//                        'isReturnYN' => 1
+//                    );
+//
+//                }
+//
+//                POSGLEntries::insert($itemGLArraySR);
+//
+//
+//                foreach ($invItemsPLBSSr as $gl) {
+//
+//                    $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+//                    if ($gl->categoryID == 1) {
+//                        $costGLArrayRefund = [
+//                            'shiftId' => $gl->shiftId,
+//                            'documentSystemId' => 110,
+//                            'documentCode' => $documentCode,
+//                            'invoiceID' => $gl->invoiceID,
+//                            'glCode' => $gl->plGLCode,
+//                            'logId' => $logs['id'],
+//                            'amount' => $gl->amount * -1,
+//                            'isReturnYN' => 1
+//                        ];
+//                        POSGLEntries::insert($costGLArrayRefund);
+//                        if ($gl->glYN == -1) {
+//                            $inventoryGLArrayRefund = [
+//                                'shiftId' => $gl->shiftId,
+//                                'documentSystemId' => 110,
+//                                'documentCode' => $documentCode,
+//                                'invoiceID' => $gl->invoiceID,
+//                                'glCode' => $gl->plGLCode,
+//                                'logId' => $logs['id'],
+//                                'amount' => $gl->amount,
+//                                'isReturnYN' => 1
+//                            ];
+//                            POSGLEntries::insert($inventoryGLArrayRefund);
+//                        } else {
+//                            $inventoryGLArrayRefund = [
+//                                'shiftId' => $gl->shiftId,
+//                                'documentSystemId' => 110,
+//                                'documentCode' => $documentCode,
+//                                'invoiceID' => $gl->invoiceID,
+//                                'glCode' => $gl->bsGLCode,
+//                                'logId' => $logs['id'],
+//                                'amount' => $gl->amount,
+//                                'isReturnYN' => 1
+//                            ];
+//                            POSGLEntries::insert($inventoryGLArrayRefund);
+//                        }
+//
+//
+//                    }
+//                }
+//
+//
+//                foreach ($netTotGLSr as $gl) {
+//
+//                    if ($gl->isRefund == 0) {
+//                        $glCode = POSSOURCEPaymentGlConfigDetail::where('paymentConfigMasterID', 2)->first();
+//                        if ($glCode) {
+//                            $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+//                            $refundGLArray1[] = array(
+//                                'shiftId' => $gl->shiftId,
+//                                'invoiceID' => $gl->invoiceID,
+//                                'documentSystemId' => 112,
+//                                'documentCode' => $documentCode,
+//                                'glCode' => $glCode->GLCode,
+//                                'logId' => $logs['id'],
+//                                'amount' => $gl->amount * -1,
+//                                'isReturnYN' => 1
+//                            );
+//                        }
+//                    }
+//                    if ($gl->isRefund == 1) {
+//                        $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+//                        $glCode = POSSOURCEPaymentGlConfigDetail::where('paymentConfigMasterID', 2)->first();
+//                        if ($glCode) {
+//                            $refundGLArray2[] = array(
+//                                'shiftId' => $gl->shiftId,
+//                                'invoiceID' => $gl->invoiceID,
+//                                'documentSystemId' => 110,
+//                                'documentCode' => $documentCode,
+//                                'glCode' => $glCode->GLCode,
+//                                'logId' => $logs['id'],
+//                                'amount' => $gl->amount * -1,
+//                                'isReturnYN' => 1
+//                            );
+//                        }
+//                    }
+//
+//
+//                }
+//                POSGLEntries::insert($refundGLArray1);
+//                POSGLEntries::insert($refundGLArray2);
 
                 //end of sr
 
@@ -2399,7 +2399,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->amount
+                        'amount' => round($gl->amount,3)
                     );
 
                 }
@@ -2414,7 +2414,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->amount * -1
+                        'amount' => round($gl->amount * -1,3)
                     );
 
                 }
@@ -2429,7 +2429,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->outputVatGLCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->taxAmount * -1
+                        'amount' => round($gl->taxAmount * -1,3)
                     );
 
                 }
@@ -2459,7 +2459,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'bankAccId' => $item->bankID,
                         'logId' => $logs->id,
                         'isReturnYN' => 0,
-                        'amount' => $item->amount
+                        'amount' => round($item->amount,3)
                     );
 
                 }
@@ -2471,50 +2471,53 @@ class ShiftDetailsAPIController extends AppBaseController
                 POSGLEntries::insert($taxGLArray);
 
 
-                $qtyArray = array();
-                foreach ($invItemsPLBS as $gl) {
+                foreach ($invItemsPL as $gl) {
 
                     $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                     if ($gl->categoryID == 1) {
-                        $costGLArray = [
+                        $costGLArray[] = array(
                             'shiftId' => $gl->shiftId,
                             'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 110,
                             'documentCode' => $documentCode,
                             'glCode' => $gl->plGLCode,
                             'logId' => $logs['id'],
-                            'amount' => $gl->amount
-                        ];
-                        POSGLEntries::insert($costGLArray);
+                            'amount' => round($gl->amount,3)
+                        );
+                    }
+                }
+                POSGLEntries::insert($costGLArray);
+                foreach ($invItemsBS as $gl) {
+                    if ($gl->categoryID == 1) {
+                        $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                         if ($gl->glYN == -1) {
-                            $inventoryGLArray = [
+                            $inventoryGLArray[] = array(
                                 'shiftId' => $gl->shiftId,
                                 'invoiceID' => $gl->invoiceID,
                                 'documentSystemId' => 110,
                                 'documentCode' => $documentCode,
                                 'glCode' => $gl->plGLCode,
                                 'logId' => $logs['id'],
-                                'amount' => $gl->amount * -1
-                            ];
-                            POSGLEntries::insert($inventoryGLArray);
+                                'amount' => round($gl->amount * -1,3)
+                            );
                         } else {
-                            $inventoryGLArray = [
+                            $inventoryGLArray[] = array(
                                 'shiftId' => $gl->shiftId,
                                 'invoiceID' => $gl->invoiceID,
                                 'documentSystemId' => 110,
                                 'documentCode' => $documentCode,
                                 'glCode' => $gl->bsGLCode,
                                 'logId' => $logs['id'],
-                                'amount' => $gl->amount * -1
-                            ];
-                            POSGLEntries::insert($inventoryGLArray);
+                                'amount' => round($gl->amount * -1,3)
+                            );
                         }
-
-
                     }
-
                 }
+                POSGLEntries::insert($inventoryGLArray);
+
             }
+
+
 
             if ($shiftDetails->posType == 2) {
                 $hasItems = POSSourceMenuSalesMaster::where('shiftId', $shiftId)->get();

@@ -165,7 +165,7 @@ class CustomerInvoiceGlService
 
             $bs = CustomerInvoiceItemDetails::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
             //get pnl account
-            $pl = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
+            $pl = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeCogsGLcodePLSystemID,financeCogsGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeCogsGLcodePLSystemID')->where('financeCogsGLcodePLSystemID', '>', 0)->groupBy('financeCogsGLcodePLSystemID')->get();
 
             $revenue = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
 
@@ -197,8 +197,8 @@ class CustomerInvoiceGlService
             if ($pl) {
                 foreach ($pl as $item) {
                     $currencyConversion = \Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
-                    $data['chartOfAccountSystemID'] = $item->financeGLcodePLSystemID;
-                    $data['glCode'] = $item->financeGLcodePL;
+                    $data['chartOfAccountSystemID'] = $item->financeCogsGLcodePLSystemID;
+                    $data['glCode'] = $item->financeCogsGLcodePL;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 

@@ -38,7 +38,7 @@ class POSInsufficientItems extends Model
         'uom' => 'integer',
         'qty' => 'double',
         'wareHouseId' => 'integer',
-        'availableQty' => 'integer',
+        'availableQty' => 'double',
         'primaryCode' => 'string'
     ];
 
