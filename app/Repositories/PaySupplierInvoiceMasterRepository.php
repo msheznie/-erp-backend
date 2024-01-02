@@ -212,7 +212,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $subCompanies = [$selectedCompanyId];
         }
 
-        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project'])->whereIN('companySystemID', $subCompanies);
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project','pdc_cheque'])->whereIN('companySystemID', $subCompanies);
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {

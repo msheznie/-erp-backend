@@ -4524,7 +4524,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 'erp_bankmemosupplier.memoHeaderSupplier',
                 'erp_bankmemosupplier.memoDetailSupplier',
                 'erp_bankmemopayee.memoHeaderPayee',
-                'erp_bankmemopayee.memoDetailPayee'
+                'erp_bankmemopayee.memoDetailPayee',
+                'payment_type.description as paymentMode',
+                'erp_pdc_logs.chequeNo as pdcChequeNo'
             )
             ->join('employeesdepartments', function ($query) use ($companyId, $empID, $serviceLinePolicy) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
@@ -4545,6 +4547,16 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                     ->where('erp_paysupplierinvoicemaster.companySystemID', $companyId)
                     ->where('erp_paysupplierinvoicemaster.approved', 0)
                     ->where('erp_paysupplierinvoicemaster.confirmedYN', 1);
+            })
+            ->leftJoin('payment_type', 'erp_paysupplierinvoicemaster.payment_mode', '=', 'payment_type.id')
+            ->leftJoin('erp_pdc_logs', function ($join) {
+                $join->on('erp_pdc_logs.documentmasterAutoID', '=', 'erp_paysupplierinvoicemaster.PayMasterAutoId')
+                    ->where('erp_pdc_logs.id', '=', function ($query) {
+                        $query->select('id')
+                            ->from('erp_pdc_logs')
+                            ->whereColumn('erp_pdc_logs.documentmasterAutoID', '=', 'erp_paysupplierinvoicemaster.PayMasterAutoId')
+                            ->limit(1);
+                    });
             })
             ->leftjoin('suppliercurrency as suppCurrency', function ($query) use ($companyId) {
                 $query->on('erp_paysupplierinvoicemaster.BPVsupplierID', '=', 'suppCurrency.supplierCodeSystem')
@@ -4598,8 +4610,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             ->make(true);
     }
 
-    public
-    function getPaymentApprovedByUser(Request $request)
+    public function getPaymentApprovedByUser(Request $request)
     {
 
         $input = $request->all();
@@ -4625,11 +4636,23 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 'bankcurrency.DecimalPlaces as bankCurrencyCodeDecimalPlaces',
                 'rollLevelOrder',
                 'approvalLevelID',
-                'documentSystemCode')
-            ->join('erp_paysupplierinvoicemaster', function ($query) use ($companyId) {
+                'documentSystemCode',
+                'payment_type.description as paymentMode',
+                'erp_pdc_logs.chequeNo as pdcChequeNo'
+            )->join('erp_paysupplierinvoicemaster', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'PayMasterAutoId')
                     ->where('erp_paysupplierinvoicemaster.companySystemID', $companyId)
                     ->where('erp_paysupplierinvoicemaster.confirmedYN', 1);
+            })
+            ->leftJoin('payment_type', 'erp_paysupplierinvoicemaster.payment_mode', '=', 'payment_type.id')
+            ->leftJoin('erp_pdc_logs', function ($join) {
+                $join->on('erp_pdc_logs.documentmasterAutoID', '=', 'erp_paysupplierinvoicemaster.PayMasterAutoId')
+                    ->where('erp_pdc_logs.id', '=', function ($query) {
+                        $query->select('id')
+                            ->from('erp_pdc_logs')
+                            ->whereColumn('erp_pdc_logs.documentmasterAutoID', '=', 'erp_paysupplierinvoicemaster.PayMasterAutoId')
+                            ->limit(1);
+                    });
             })
             ->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
