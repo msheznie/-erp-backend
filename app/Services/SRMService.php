@@ -2084,7 +2084,7 @@ class SRMService
         if (!empty($tenderMaster)) {
             $tenderDates = array(
                 [
-                    'calendar_date' => 'Document Sale',
+                    'calendar_date' => 'Tender Document Sale',
                     'from_date' => (!is_null($tenderMaster['document_sales_start_date'])) ? Carbon::parse($tenderMaster['document_sales_start_date'])->format('Y-m-d') : null,
                     'to_date' => (!is_null($tenderMaster['document_sales_end_date'])) ? Carbon::parse($tenderMaster['document_sales_end_date'])->format('Y-m-d') : null
                 ],
