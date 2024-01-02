@@ -280,13 +280,17 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
 
 
         $newTotal = $allocatedSum + floatval($input['amount']);
+        if($input['documentSystemID'] == 8){
+            $newTotal = round($newTotal,2);
 
-    
-        if (($newTotal - $detailTotal) > 0.00001) {
-            return $this->sendError("Allocated amount cannot be greater than detail amount.");
+            if (($newTotal - $detailTotal) > 0.01) {
+                return $this->sendError("Allocated amount cannot be greater than detail amount.");
+            }
+        }else{
+            if (($newTotal - $detailTotal) > 0.00001) {
+                return $this->sendError("Allocated amount cannot be greater than detail amount.");
+            }
         }
-
-     
 
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->create($input);
 
