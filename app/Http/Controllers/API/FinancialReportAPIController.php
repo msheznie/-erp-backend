@@ -3701,7 +3701,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $currencyLocal = $requestCurrencyLocal->CurrencyCode;
         $currencyRpt = $requestCurrencyRpt->CurrencyCode;
-        $currencyTrans = $requestCurrencyTrans->CurrencyCode;
+        $currencyTrans = !empty($requestCurrencyTrans) ? $requestCurrencyTrans->CurrencyCode : 'OMR';
 
         $reportSD = $request->reportSD;
 
@@ -3906,11 +3906,10 @@ srp_erp_ioubookingmaster.approvedYN = 1
             }
         } else {
             $x = 0;
+            $subTotalRpt = 0;
+            $subTotalLocal = 0;
+            $subTotalTrans = 0;
             if ($output) {
-                $subTotalRpt = 0;
-                $subTotalLocal = 0;
-                $subTotalTrans = 0;
-
                 $dataArrayNew = array();
 
                 if(isset($request->isClosing) && !$request->isClosing && isset($request->month)) {
