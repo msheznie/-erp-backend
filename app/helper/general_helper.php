@@ -3326,6 +3326,10 @@ class Helper
                                         
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
+                                        if($document->documentSystemID == 107){
+                                            $approvedDocNameBody = $document->documentDescription . ', <b> "' . $documentApproved->suppliername->name . '"</b>';
+                                        }
+
                                         if($document->documentSystemID == 108 || $document->documentSystemID == 113){
                                             $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
                                             $approvedDocNameBody = $type[$params["document_type"]]. ' ' . ' <b>' . $documentApproved->documentCode . '</b>';
@@ -3363,6 +3367,10 @@ class Helper
                                         $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
 
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+
+                                        if ($document->documentSystemID == 107){
+                                            $subject = "Pending " . $document->documentDescription . " approval " .'"' . $documentApproved->suppliername->name .'"';
+                                        }
 
                                         if($document->documentSystemID == 108 || $document->documentSystemID == 113){
                                             $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
@@ -5113,6 +5121,11 @@ class Helper
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+
+                            if($input["documentSystemID"] == 107){
+                                $subjectName = $document->documentDescription . ' ' .'"' . $currentApproved->suppliername->name .'"';
+                                $bodyName = $document->documentDescription . ', ' . '<b>"' . $currentApproved->suppliername->name . '"</b>';
+                            }
 
                             if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
                                 $tenderMaster = TenderMaster::find($input["id"]);
