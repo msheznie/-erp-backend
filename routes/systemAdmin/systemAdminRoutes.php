@@ -24,6 +24,7 @@ Route::group([], function(){
 	Route::get('subICVCategoriesByMasterCategory', 'SupplierCategoryICVMasterAPIController@subICVCategoriesByMasterCategory')->name("Supplier sub ICV categoreis by master category");
 	Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink')->name("Generate supplier external link");
 	Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit')->name("Get supplier master audit");
+	Route::get('getSupplierMaster', 'SupplierMasterAPIController@getSupplierMaster')->name("Get supplier master");
 
 	Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany')->name('Company wise suppliers list');
 	Route::post('getInterCompaniesForCustomerSupplier', 'CustomerMasterAPIController@getInterCompaniesForCustomerSupplier')->name("Inter companies for customer/supplier");

@@ -272,6 +272,11 @@ class SupplierMaster extends Model
         
     ];
 
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'currency', 'currencyID');
+    }
+
     public function company() {
         return $this->belongsTo('App\Models\Company','primaryCompanySystemID','companySystemID');
     }
@@ -359,5 +364,25 @@ class SupplierMaster extends Model
      public function unbilled_account()
     {
         return $this->belongsTo('App\Models\ChartOfAccount', 'UnbilledGRVAccountSystemID', 'chartOfAccountSystemID');
+    }
+
+    public function supplier_group(){
+        return $this->belongsTo('App\Models\SupplierGroup','supplier_group_id','id');
+    }
+
+    public function supplier_category(){
+        return $this->belongsTo('App\Models\SupplierCategory','supplier_category_id','id');
+    }
+
+    public function importance(){
+        return $this->belongsTo('App\Models\SupplierImportance','supplierImportanceID','supplierImportanceID');
+    }
+
+    public function nature(){
+        return $this->belongsTo('App\Models\suppliernature','supplierNatureID','supplierNatureID');
+    }
+
+    public function type(){
+        return $this->belongsTo('App\Models\SupplierType','supplierTypeID','supplierTypeID');
     }
 }
