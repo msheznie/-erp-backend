@@ -439,7 +439,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     public function update($id, UpdateCustomerReceivePaymentAPIRequest $request)
     {
         $input = $request->all();
-      
+
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'employeeID','companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
         $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank', 'employee']);
@@ -973,7 +973,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     'active_serviceLine' => array(),
                     'contract_check' => array()
                 );
-
                 foreach ($directReceiptDetail as $item) {
 
                     $updateItem = DirectReceiptDetail::find($item['directReceiptDetailsID']);
@@ -1010,7 +1009,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                                                  ->where('chartOfAccountSystemID', $item->chartOfAccountSystemID)
                                                                  ->first();
 
-                        if ($chartOfAccount->controlAccountsSystemID == 1) {
+                        if (isset($chartOfAccount) && $chartOfAccount->controlAccountsSystemID == 1) {
                             if ($item['contractUID'] == '' || $item['contractUID'] == 0) {
                                 array_push($finalError['contract_check'], $item->glCode);
                                 $error_count++;
