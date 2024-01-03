@@ -14,7 +14,7 @@
                         @if ($request->createduser)
                             {{($request->createduser) ? $request->createduser->empFullName : ''}}
                             <br>
-                            {{ \App\helper\Helper::dateFormat($request->createduser->timestamp)}}
+                            {{ \App\helper\Helper::dateFormat($request->customerInvoiceDate)}}
                         @endif
                     </td>
                 </tr>
