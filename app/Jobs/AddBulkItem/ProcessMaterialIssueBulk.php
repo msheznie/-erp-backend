@@ -8,12 +8,12 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Services\MaterialRequestService;
-use App\Models\MaterielRequest;
+use App\Models\ItemIssueMaster;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
-class ProcessMaterialRequestBulk implements ShouldQueue
+class ProcessMaterialIssueBulk implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $dispatch_db;
@@ -23,6 +23,7 @@ class ProcessMaterialRequestBulk implements ShouldQueue
     protected $empID;
     protected $employeeSystemID;
     protected $chunkDataSizeCounts;
+
     /**
      * Create a new job instance.
      *
@@ -57,13 +58,13 @@ class ProcessMaterialRequestBulk implements ShouldQueue
         DB::beginTransaction();
         try {
             $output = $this->outputData;
-            $requestMaster = MaterielRequest::find($requestID);
+            $requestMaster = ItemIssueMaster::find($requestID);
             foreach ($output as $value) {
-                $res = MaterialRequestService::validateMaterialRequestItem($value['itemCodeSystem'], $companyId, $requestID);
+                $res = MaterialRequestService::validateMaterialIssueItem($value['itemCodeSystem'], $companyId, $requestID);
                             
                 if ($res['status']) {
                     Log::info($value['itemCodeSystem']. " - inserted success");
-                    MaterialRequestService::saveMaterialRequestItem($value['itemCodeSystem'], $companyId, $requestID, $empID, $employeeSystemID);
+                    MaterialRequestService::saveMaterialIssueItem($value['itemCodeSystem'], $companyId, $requestID, $empID, $employeeSystemID);
                 } else {
                     $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $res['message']];
                     Log::error('Invalid Items');
@@ -79,7 +80,7 @@ class ProcessMaterialRequestBulk implements ShouldQueue
 
             if ($newCounterValue == $chunkDataSizeCounts) {
 
-                MaterielRequest::where('RequestID', $requestID)->update(['isBulkItemJobRun' => 0]);
+                ItemIssueMaster::where('itemIssueAutoID', $requestID)->update(['isBulkItemJobRun' => 0]);         
             }
             DB::commit();
         }
@@ -91,12 +92,5 @@ class ProcessMaterialRequestBulk implements ShouldQueue
             Log::info('---- Dep  End with Error-----' . date('H:i:s'));
         }
 
-
-             
-    }
-
-    public function failed($exception)
-    {
-        return $exception->getMessage();
     }
 }

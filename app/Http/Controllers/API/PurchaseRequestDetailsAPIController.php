@@ -2057,6 +2057,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     }
             }
             PurchaseRequestDetails::where('purchaseRequestID',$id)->delete();
+            PurchaseRequest::where('purchaseRequestID', $id)->update(['counter' => 0]);
     
             SegmentAllocatedItem::where('documentMasterAutoID', $id)
             ->where('documentSystemID', $purchase_request->documentSystemID)

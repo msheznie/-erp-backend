@@ -367,7 +367,8 @@ class ItemIssueMaster extends Model
         'timesReferred',
         'mfqJobID',
         'mfqJobNo',
-        'postedDate'
+        'postedDate',
+        'counter'
     ];
 
     /**

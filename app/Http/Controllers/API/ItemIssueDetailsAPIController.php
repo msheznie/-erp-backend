@@ -1212,7 +1212,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if($material_request){
 
             ItemIssueDetails::where('itemIssueAutoID', $id)->delete();
-
+            ItemIssueMaster::where('itemIssueAutoID', $id)->update(['counter' => 0]);
             return $this->sendResponse([], 'Items Deleted Successfully');
 
         } else {

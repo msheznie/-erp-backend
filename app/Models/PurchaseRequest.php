@@ -204,7 +204,8 @@ class PurchaseRequest extends Model
         'manuallyClosedDate',
         'allocateItemToSegment',
         'manuallyClosedComment',
-        'isBulkItemJobRun'
+        'isBulkItemJobRun',
+        'counter'
     ];
 
     /**

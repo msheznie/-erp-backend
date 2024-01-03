@@ -14,6 +14,7 @@ use App\Models\ProcumentOrder;
 use App\Services\MaterialRequestService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\AddBulkItem\ProcessMaterialIssueQuery;
 
 class ItemIssueBulkItemsJob implements ShouldQueue
 {
@@ -62,6 +63,13 @@ class ItemIssueBulkItemsJob implements ShouldQueue
         try {
 
             $companyId = $input['companySystemID'];
+            $isSearched = $input['isSearched'];
+            $searchVal = $input['searchVal'];
+            $chunkSize = 100;
+
+            $financeCategoryMaster = isset($input['financeCategoryMaster'])?$input['financeCategoryMaster']:null;
+            $financeCategorySub = isset($input['financeCategorySub'])?$input['financeCategorySub']:null;
+
             $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
                                         return $query->where('companySystemID', '=', $companyId);
                                      })->where('isActive',1)
@@ -75,24 +83,41 @@ class ItemIssueBulkItemsJob implements ShouldQueue
                                      ->whereDoesntHave('material_issue_details', function($query) use ($input) {
                                         $query->where('itemIssueAutoID', $input['itemIssueAutoID']);
                                      })
-                                     ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
-                                     ->get();
-                        
-            $invalidItems = [];
-            foreach ($itemMasters as $key => $value) {
-                $res = MaterialRequestService::validateMaterialIssueItem($value->itemCodeSystem, $input['companySystemID'], $input['itemIssueAutoID']);
-                        
-                if ($res['status']) {
-                    MaterialRequestService::saveMaterialIssueItem($value->itemCodeSystem, $input['companySystemID'], $input['itemIssueAutoID'], $input['empID'], $input['employeeSystemID']);
-                } else {
-                    $invalidItems[] = ['itemCodeSystem' => $value->itemCodeSystem, 'message' => $res['message']];
-                    Log::error('Invalid Items');
-                    Log::error($value->primaryCode. " - " .$res['message']);
-                }
+                                     ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory']);
+
+                                     if ($isSearched) {
+                                        $itemMasters = $itemMasters->where(function ($query) use ($searchVal) {
+                                            $query->where('primaryCode', 'LIKE', "%{$searchVal}%")
+                                                ->orWhere('secondaryItemCode', 'LIKE', "%{$searchVal}%")
+                                                ->orWhere('barcode', 'LIKE', "%{$searchVal}%")
+                                                ->orWhere('itemDescription', 'LIKE', "%{$searchVal}%");
+                                        });
+                                    }
+                                  
+            $count = $itemMasters->count();   
+            
+            $chunkDataSizeCounts = ceil($count / $chunkSize);
+            for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
+                Log::info('started '.$i);
+                ProcessMaterialIssueQuery::dispatch($i, $db, $companyId, $financeCategoryMaster,$financeCategorySub,$input['itemIssueAutoID'],$chunkDataSizeCounts,$input['empID'], $input['employeeSystemID'],$isSearched,$searchVal)->onQueue('single');
             }
 
 
-            ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->update(['isBulkItemJobRun' => 0]);
+            // $invalidItems = [];
+            // foreach ($itemMasters as $key => $value) {
+            //     $res = MaterialRequestService::validateMaterialIssueItem($value->itemCodeSystem, $input['companySystemID'], $input['itemIssueAutoID']);
+                        
+            //     if ($res['status']) {
+            //         MaterialRequestService::saveMaterialIssueItem($value->itemCodeSystem, $input['companySystemID'], $input['itemIssueAutoID'], $input['empID'], $input['employeeSystemID']);
+            //     } else {
+            //         $invalidItems[] = ['itemCodeSystem' => $value->itemCodeSystem, 'message' => $res['message']];
+            //         Log::error('Invalid Items');
+            //         Log::error($value->primaryCode. " - " .$res['message']);
+            //     }
+            // }
+
+
+            // ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->update(['isBulkItemJobRun' => 0]);
             
             Log::info('Successfully completed');
 

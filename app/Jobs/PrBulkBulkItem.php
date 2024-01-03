@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 use App\helper\PurcahseRequestDetail;
 use App\Http\Controllers\AppBaseController;
 use App\helper\CommonJobService;
+use App\Jobs\PrBulkBulkItemQuery;
+
 class PrBulkBulkItem implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -97,6 +99,13 @@ class PrBulkBulkItem implements ShouldQueue
         }
            
         $companyId = $input['companySystemID'];
+        $isSearched = $input['isSearched'];
+        $searchVal = $input['searchVal'];
+        $chunkSize = 100;
+
+        $financeCategoryMaster = isset($input['financeCategoryMaster'])?$input['financeCategoryMaster']:null;
+        $financeCategorySub = isset($input['financeCategorySub'])?$input['financeCategorySub']:null;
+
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
                                     return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1);
                                  })->where('isActive',1)
@@ -110,144 +119,26 @@ class PrBulkBulkItem implements ShouldQueue
                                  ->whereDoesntHave('purchase_request_details', function($query) use ($input) {
                                     $query->where('purchaseRequestID', $input['purchaseRequestID']);
                                  })
-                                 ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
-                                 ->get();
+                                 ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory']);
+
+                                 if ($isSearched) {
+                                    $itemMasters = $itemMasters->where(function ($query) use ($searchVal) {
+                                        $query->where('primaryCode', 'LIKE', "%{$searchVal}%")
+                                            ->orWhere('secondaryItemCode', 'LIKE', "%{$searchVal}%")
+                                            ->orWhere('barcode', 'LIKE', "%{$searchVal}%")
+                                            ->orWhere('itemDescription', 'LIKE', "%{$searchVal}%");
+                                    });
+                                }
         
-        $validationFailedItems = [];
-        $totalItemCount = count($itemMasters);
+        $count = $itemMasters->count();   
 
-        foreach($itemMasters as $item) {
-            $data = [
-                "companySystemID" => $input['companySystemID'],
-                "purcahseRequestID" => $input['purchaseRequestID'],
-                "itemCodeSystem" => $item->itemCodeSystem
-            ];
-            $add = app()->make(PurcahseRequestDetail::class);
-            $purchaseRequestDetailsValidation = $add->validateItemOnly($data);
-            if(!$purchaseRequestDetailsValidation['status']) {
-                array_push($validationFailedItems,$item);
-            }
+        $chunkDataSizeCounts = ceil($count / $chunkSize);
+        for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
+            Log::info('started '.$i);
+            PrBulkBulkItemQuery::dispatch($i, $db, $companyId, $financeCategoryMaster,$financeCategorySub,$input['purchaseRequestID'],$chunkDataSizeCounts,$isSearched,$searchVal,$budgetYear)->onQueue('single');
         }
-    
-    
-        $addedItems = $totalItemCount - count($validationFailedItems);
-    
-      
-        $itemsToAdd = $itemMasters->diff(collect($validationFailedItems));
-        $dataToAdd = [];
-        foreach($itemsToAdd as $itemToAdd) {
-            $name = $itemToAdd->barcode.'|'.$itemToAdd->itemDescription;
-            $itemToAdd['purchaseRequestID'] =  $input['purchaseRequestID'];
-            $itemToAdd['companySystemID'] =  $input['companySystemID'];
-            $itemToAdd['partNumber'] =  "-";
-            $itemToAdd['isMRPulled'] =  false;
-
-            $item = ItemAssigned::where('itemCodeSystem', $itemToAdd->itemCodeSystem)
-                                ->where('companySystemID', $input['companySystemID'])
-                                ->first();
-
-            if ($item) {
-                $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
-
-                $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
-                    ->where('mainItemCategoryID', $item->financeCategoryMaster)
-                    ->where('itemCategorySubID', $item->financeCategorySub)
-                    ->first();
-
-                if ($financeItemCategorySubAssigned) {
-                    $financeGLcodePLSystemID = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-                    $financeGLcodePL = $financeItemCategorySubAssigned->financeGLcodePL;
-                    if ($item->financeCategoryMaster == 3) {
-                        $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
-                        if ($assetCategory) {
-                            $financeGLcodePLSystemID = $assetCategory->COSTGLCODESystemID;
-                            $financeGLcodePL = $assetCategory->COSTGLCODE;
-                        } 
-                    } 
-
-                    $group_companies = \Helper::getSimilarGroupCompanies($input['companySystemID']);
-                    $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
-                                                $query->whereIn('companySystemID', $group_companies)
-                                                    ->where('approved', -1)
-                                                    ->where('poType_N', '!=',5)// poType_N = 5 =>work order
-                                                    ->where('poCancelledYN', 0)
-                                                    ->where('manuallyClosed', 0);
-                                                 })
-                                                ->where('itemCode', $itemToAdd->itemCodeSystem)
-                                                ->where('manuallyClosed',0)
-                                                ->groupBy('erp_purchaseorderdetails.itemCode')
-                                                ->select(
-                                                    [
-                                                        'erp_purchaseorderdetails.companySystemID',
-                                                        'erp_purchaseorderdetails.itemCode',
-                                                        'erp_purchaseorderdetails.itemPrimaryCode'
-                                                    ]
-                                                )
-                                                ->sum('noQty');
-
-                    $quantityInHand = ErpItemLedger::where('itemSystemCode', $itemToAdd->itemCodeSystem)
-                                                ->where('companySystemID', $input['companySystemID'])
-                                                ->groupBy('itemSystemCode')
-                                                ->sum('inOutQty');
-
-
-                    $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($group_companies) {
-                                        $query->whereIn('companySystemID', $group_companies)
-                                            ->where('grvTypeID', 2)
-                                            ->where('approved', -1)
-                                            ->groupBy('erp_grvmaster.companySystemID');
-                                    })->whereHas('po_detail', function ($query){
-                                        $query->where('manuallyClosed',0)
-                                        ->whereHas('order', function ($query){
-                                            $query->where('manuallyClosed',0);
-                                        });
-                                    })
-                                        ->where('itemCode', $itemToAdd->itemCodeSystem)
-                                        ->groupBy('erp_grvdetails.itemCode')
-                                        ->select(
-                                            [
-                                                'erp_grvdetails.companySystemID',
-                                                'erp_grvdetails.itemCode'
-                                            ])
-                                        ->sum('noQty');
-
-                    $quantityOnOrder = $poQty - $grvQty;
-
-
-                    $data = ([
-                        "budgetYear" => $budgetYear,
-                        "companyID" => $companyID,
-                        "companySystemID" => $input['companySystemID'],
-                        "estimatedCost" => $currencyConversion['documentAmount'],
-                        "financeGLcodePL" => $financeGLcodePL,
-                        "financeGLcodePLSystemID" => $financeGLcodePLSystemID,
-                        "financeGLcodebBS" => $financeItemCategorySubAssigned->financeGLcodebBS,
-                        "financeGLcodebBSSystemID" => $financeItemCategorySubAssigned->financeGLcodebBSSystemID,
-                        "includePLForGRVYN" => $financeItemCategorySubAssigned->includePLForGRVYN,
-                        "itemCategoryID" => 0,
-                        "itemCode" => $itemToAdd->itemCodeSystem,
-                        "itemDescription" => $itemToAdd->itemDescription,
-                        'itemFinanceCategoryID' => $item->financeCategoryMaster,
-                        'itemFinanceCategorySubID' => $item->financeCategorySub,
-                        "itemPrimaryCode" => $itemToAdd->primaryCode,
-                        'maxQty' => $item->maximunQty,
-                        'minQty' => $item->minimumQty,
-                        "partNumber" => $itemToAdd->secondaryItemCode,
-                        'poQuantity' => $poQty,
-                        "purchaseRequestID" => $input['purchaseRequestID'],
-                        "quantityInHand" =>  $quantityInHand,
-                        "quantityOnOrder" =>  $quantityOnOrder,
-                        "isMRPulled" => false,
-                        "unitOfMeasure" => $itemToAdd->unit,
-                    ]);
-                    array_push($dataToAdd,$data);
-                }
-            }
-
-        }
-        $purchaseRequest->isBulkItemJobRun = 0;
-        $purchaseRequest->update();
-        $purchaseRequestDetails = PurchaseRequestDetails::insert($dataToAdd);
+                                
+                                
         Log::info('succefully added PR items');
         DB::commit();
         } catch (\Exception $exception) {

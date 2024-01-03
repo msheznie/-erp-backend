@@ -412,7 +412,8 @@ class ItemIssueMasterRefferedBack extends Model
         'RollLevForApp_curr',
         'timestamp',
         'mfqJobID',
-        'mfqJobNo'
+        'mfqJobNo',
+        'counter'
     ];
 
     /**
