@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.29.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.29.0...v10.29.1) (2024-01-03)
+
+
+### Bug Fixes
+
+* **asset management:** asset Depreciation Job processing issue fixed [GCP-2622] ([b4b7df7](https://github.com/pbsgears/Gears_BackEnd/commit/b4b7df71babbe0cb375c7ac71a0c9388b4b1ffee))
+
 ## [10.29.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.28.0...v10.29.0) (2024-01-01)
 
 
