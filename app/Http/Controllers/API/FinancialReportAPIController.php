@@ -3706,17 +3706,19 @@ srp_erp_ioubookingmaster.approvedYN = 1
         $reportSD = $request->reportSD;
 
         if ($reportSD == "glCode_wise") {
+            $x = 0;
+            $total = array();
+            $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
+            $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
+            $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
+            $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+            $total['documentTransAmountDebit'] = array_sum(collect($output)->pluck('transDebit')->toArray());
+            $total['documentTransAmountCredit'] = array_sum(collect($output)->pluck('transCredit')->toArray());
             if (!empty($output)) {
                 $outputArr = array();
                 foreach ($output as $val1) {
                     $outputArr[$val1->glCode . ' - ' . $val1->AccountDescription][] = $val1;
                 }
-
-                $x = 0;
-                $total = array();
-                $total['transAmountTotal'] = array_sum(collect($output)->pluck('transAmountTotal')->toArray());
-                $total['localAmountTotal'] = array_sum(collect($output)->pluck('localAmountTotal')->toArray());
-                $total['rptAmountTotal'] = array_sum(collect($output)->pluck('rptAmountTotal')->toArray());
 
                 foreach ($outputArr as $key => $values) {
                     $data[$x][''] = $key;
@@ -3734,14 +3736,17 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     $data[$x]['GL Description'] = 'GL Description';
 
                     $data[$x]['Transaction Currency'] = 'Transaction Currency';
-                    $data[$x]['Transaction Amount'] = 'Transaction Amount';
+                    $data[$x]['Transaction Debit Amount'] = 'Transaction Debit Amount';
+                    $data[$x]['Transaction Credit Amount'] = 'Transaction Credit Amount';
 
                     if ($checkIsGroup->isGroup == 0) {
                         $data[$x]['Local Currency'] = 'Local Currency';
-                        $data[$x]['Local Amount'] = 'Local Amount';
+                        $data[$x]['Local Debit Amount'] = 'Local Debit Amount';
+                        $data[$x]['Local Credit Amount'] = 'Local Credit Amount';
                     }
                     $data[$x]['Reporting Currency'] = 'Reporting Currency';
-                    $data[$x]['Reporting Amount'] = 'Reporting Amount';
+                    $data[$x]['Reporting Debit Amount'] = 'Reporting Debit Amount';
+                    $data[$x]['Reporting Credit Amount'] = 'Reporting Credit Amount';
 
                     $data[$x]['Created User'] = 'Created User';
                     if (in_array('confi_name', $extraColumns)) {
@@ -3759,14 +3764,17 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     if (in_array('app_date', $extraColumns)) {
                         $data[$x]['Approved Date'] = 'Approved Date';
                     }
-                    $data[$x]['Supplier Name'] = 'Supplier Name';
-                    $data[$x]['Supplier Code'] = 'Supplier Code';
+                    $data[$x]['Supplier Name/Customer Name'] = 'Supplier Name/Customer Name';
+                    $data[$x]['Supplier Code/Customer Code'] = 'Supplier Code/Customer Code';
                     $data[$x]['Document Year'] = 'Document Year';
 
                     if (!empty($values)) {
-                        $subTotalRpt = 0;
-                        $subTotalLocal = 0;
-                        $subTotalTrans = 0;
+                        $subTotalDebitRpt = 0;
+                        $subTotalCreditRpt = 0;
+                        $subTotalDebitLocal = 0;
+                        $subTotalCreditLocal = 0;
+                        $subTotalDebitTrans = 0;
+                        $subTotalCreditTrans = 0;
                         foreach ($values as $val) {
                             $x++;
                             $data[$x]['CompanyID'] = $val->companyID;
@@ -3782,14 +3790,17 @@ srp_erp_ioubookingmaster.approvedYN = 1
                             $data[$x]['GL Description'] = $val->AccountDescription;
 
                             $data[$x]['Transaction Currency'] = $currencyTrans;
-                            $data[$x]['Transaction Amount'] = round($val->transAmountTotal, $decimalPlaceTrans);
+                            $data[$x]['Transaction Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->transDebit, $decimalPlaceTrans));
+                            $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->transCredit, $decimalPlaceTrans));
                             if ($checkIsGroup->isGroup == 0) {
                                 $data[$x]['Local Currency'] = $currencyLocal;
-                                $data[$x]['Local Amount'] = round($val->localAmountTotal, $decimalPlaceLocal);
+                                $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->localDebit, $decimalPlaceLocal));
+                                $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->localCredit, $decimalPlaceLocal));
                             }
 
                             $data[$x]['Reporting Currency'] = $currencyRpt;
-                            $data[$x]['Reporting Amount'] = round($val->rptAmountTotal, $decimalPlaceRpt);
+                            $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->rptDebit, $decimalPlaceRpt));
+                            $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->rptCredit, $decimalPlaceRpt));
                             $data[$x]['Created User'] = $val->createdBy;
                             if (in_array('confi_name', $extraColumns)) {
                                 $data[$x]['Confirmed User'] = $val->confirmedBy;
@@ -3806,12 +3817,17 @@ srp_erp_ioubookingmaster.approvedYN = 1
                             if (in_array('app_date', $extraColumns)) {
                                 $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
                             }
-                            $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Supplier Name/Customer Name'] = $val->supplierOrCustomerName;
+                            $data[$x]['Supplier Code/Customer Code'] = $val->supplierOrCustomerCode;
                             $data[$x]['Document Year'] = $val->documentYear;
-                            $subTotalRpt +=  round($val->rptAmountTotal, $decimalPlaceRpt);
-                            $subTotalLocal += round($val->localAmountTotal, $decimalPlaceLocal);
-                            $subTotalTrans += round($val->transAmountTotal, $decimalPlaceTrans);
+                            $subTotalDebitRpt +=  round($val->rptDebit, $decimalPlaceRpt);
+                            $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
+
+                            $subTotalDebitLocal += round($val->localDebit, $decimalPlaceLocal);
+                            $subTotalCreditLocal += round($val->localCredit, $decimalPlaceLocal);
+
+                            $subTotalDebitTrans += round($val->transDebit, $decimalPlaceTrans);
+                            $subTotalCreditTrans += round($val->transCredit, $decimalPlaceTrans);
                         }
                         $x++;
                         $data[$x]['CompanyID'] = '';
@@ -3827,14 +3843,17 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $data[$x]['GL Description'] = 'Total';
 
                         $data[$x]['Transaction Currency'] = '';
-                        $data[$x]['Transaction Amount'] = round($subTotalTrans, $decimalPlaceTrans);
+                        $data[$x]['Transaction Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitTrans, $decimalPlaceTrans));
+                        $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditTrans, $decimalPlaceTrans));
                         if ($checkIsGroup->isGroup == 0) {
                             $data[$x]['Local Currency'] = '';
-                            $data[$x]['Local Amount'] = round($subTotalLocal, $decimalPlaceLocal);
+                            $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal, $decimalPlaceLocal));
+                            $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditLocal, $decimalPlaceLocal));
                         }
 
                         $data[$x]['Reporting Currency'] = '';
-                        $data[$x]['Reporting Amount'] = round($subTotalRpt, $decimalPlaceRpt);
+                        $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt, $decimalPlaceRpt));
+                        $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRpt, $decimalPlaceRpt));
 
                         $data[$x]['Created User'] = '';
                         if (in_array('confi_name', $extraColumns)) {
@@ -3852,8 +3871,54 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         if (in_array('app_date', $extraColumns)) {
                             $data[$x]['Approved Date'] = '';
                         }
-                        $data[$x]['Supplier Name'] = '';
-                        $data[$x]['Supplier Code'] = '';
+                        $data[$x]['Supplier Name/Customer Name'] = '';
+                        $data[$x]['Supplier Code/Customer Code'] = '';
+                        $data[$x]['Document Year'] = '';
+
+                        $x++;
+                        $data[$x]['CompanyID'] = '';
+                        $data[$x]['CompanyName'] = '';
+                        $data[$x]['DocumentID'] = '';
+                        $data[$x]['DocumentDescription'] = '';
+                        $data[$x]['DocumentCode'] = '';
+                        $data[$x]['Posted Date'] = '';
+                        $data[$x]['Description'] = '';
+                        $data[$x]['GL created date'] = '';
+                        $data[$x]['Segment'] = '';
+                        $data[$x]['GL Code'] = '';
+                        $data[$x]['GL Description'] = 'Balance';
+
+                        $data[$x]['Transaction Currency'] = '';
+                        $data[$x]['Transaction Debit Amount'] = '';
+                        $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitTrans-$subTotalCreditTrans, $decimalPlaceTrans));
+                        if ($checkIsGroup->isGroup == 0) {
+                            $data[$x]['Local Currency'] = '';
+                            $data[$x]['Local Debit Amount'] = '';
+                            $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal-$subTotalCreditLocal, $decimalPlaceLocal));
+                        }
+
+                        $data[$x]['Reporting Currency'] = '';
+                        $data[$x]['Reporting Debit Amount'] = '';
+                        $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt-$subTotalCreditRpt, $decimalPlaceRpt));
+
+                        $data[$x]['Created User'] = '';
+                        if (in_array('confi_name', $extraColumns)) {
+                            $data[$x]['Confirmed User'] = '';
+                        }
+
+                        if (in_array('confi_date', $extraColumns)) {
+                            $data[$x]['Confirmed Date'] = '';
+                        }
+
+                        if (in_array('app_name', $extraColumns)) {
+                            $data[$x]['Approved User'] = '';
+                        }
+
+                        if (in_array('app_date', $extraColumns)) {
+                            $data[$x]['Approved Date'] = '';
+                        }
+                        $data[$x]['Supplier Name/Customer Name'] = '';
+                        $data[$x]['Supplier Code/Customer Code'] = '';
                         $data[$x]['Document Year'] = '';
 
                         $x++;
@@ -3862,53 +3927,105 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     }
 
                 }
-                $x++;
-                $data[$x]['CompanyID'] = '';
-                $data[$x]['CompanyName'] = '';
-                $data[$x]['DocumentID'] = '';
-                $data[$x]['DocumentDescription'] = '';
-                $data[$x]['DocumentCode'] = '';
-                $data[$x]['Posted Date'] = '';
-                $data[$x]['Description'] = '';
-                $data[$x]['GL created date'] = '';
-                $data[$x]['Segment'] = '';
-                $data[$x]['GL Code'] = '';
-                $data[$x]['GL Description'] = 'Grand Total';
-
-                $data[$x]['Transaction Currency'] = '';
-                $data[$x]['Transaction Amount'] = round($total['transAmountTotal'], $decimalPlaceTrans);
-                if ($checkIsGroup->isGroup == 0) {
-                    $data[$x]['Local Currency'] = '';
-                    $data[$x]['Local Amount'] = round($total['localAmountTotal'], $decimalPlaceLocal);
-                }
-                $data[$x]['Reporting Currency'] = '';
-                $data[$x]['Reporting Amount'] = round($total['rptAmountTotal'], $decimalPlaceRpt);
-
-                $data[$x]['Created User'] = '';
-                if (in_array('confi_name', $extraColumns)) {
-                    $data[$x]['Confirmed User'] = '';
-                }
-
-                if (in_array('confi_date', $extraColumns)) {
-                    $data[$x]['Confirmed Date'] = '';
-                }
-
-                if (in_array('app_name', $extraColumns)) {
-                    $data[$x]['Approved User'] = '';
-                }
-
-                if (in_array('app_date', $extraColumns)) {
-                    $data[$x]['Approved Date'] = '';
-                }
-                $data[$x]['Supplier Name'] = '';
-                $data[$x]['Supplier Code'] = '';
-                $data[$x]['Document Year'] = '';
             }
+            $x++;
+            $data[$x]['CompanyID'] = '';
+            $data[$x]['CompanyName'] = '';
+            $data[$x]['DocumentID'] = '';
+            $data[$x]['DocumentDescription'] = '';
+            $data[$x]['DocumentCode'] = '';
+            $data[$x]['Posted Date'] = '';
+            $data[$x]['Description'] = '';
+            $data[$x]['GL created date'] = '';
+            $data[$x]['Segment'] = '';
+            $data[$x]['GL Code'] = '';
+            $data[$x]['GL Description'] = 'Grand Total';
+
+            $data[$x]['Transaction Currency'] = '';
+            $data[$x]['Transaction Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentTransAmountDebit'], $decimalPlaceTrans));
+            $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentTransAmountCredit'], $decimalPlaceTrans));
+            if ($checkIsGroup->isGroup == 0) {
+                $data[$x]['Local Currency'] = '';
+                $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'], $decimalPlaceLocal));
+                $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountCredit'], $decimalPlaceLocal));
+            }
+            $data[$x]['Reporting Currency'] = '';
+            $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'], $decimalPlaceRpt));
+            $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountCredit'], $decimalPlaceRpt));
+
+            $data[$x]['Created User'] = '';
+            if (in_array('confi_name', $extraColumns)) {
+                $data[$x]['Confirmed User'] = '';
+            }
+
+            if (in_array('confi_date', $extraColumns)) {
+                $data[$x]['Confirmed Date'] = '';
+            }
+
+            if (in_array('app_name', $extraColumns)) {
+                $data[$x]['Approved User'] = '';
+            }
+
+            if (in_array('app_date', $extraColumns)) {
+                $data[$x]['Approved Date'] = '';
+            }
+            $data[$x]['Supplier Name/Customer Name'] = '';
+            $data[$x]['Supplier Code/Customer Code'] = '';
+            $data[$x]['Document Year'] = '';
+
+            $x++;
+            $data[$x]['CompanyID'] = '';
+            $data[$x]['CompanyName'] = '';
+            $data[$x]['DocumentID'] = '';
+            $data[$x]['DocumentDescription'] = '';
+            $data[$x]['DocumentCode'] = '';
+            $data[$x]['Posted Date'] = '';
+            $data[$x]['Description'] = '';
+            $data[$x]['GL created date'] = '';
+            $data[$x]['Segment'] = '';
+            $data[$x]['GL Code'] = '';
+            $data[$x]['GL Description'] = 'Total Balance';
+
+            $data[$x]['Transaction Currency'] = '';
+            $data[$x]['Transaction Debit Amount'] = '';
+            $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentTransAmountDebit']-$total['documentTransAmountCredit'], $decimalPlaceTrans));
+            if ($checkIsGroup->isGroup == 0) {
+                $data[$x]['Local Currency'] = '';
+                $data[$x]['Local Debit Amount'] = '';
+                $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit']-$total['documentLocalAmountCredit'], $decimalPlaceLocal));
+            }
+            $data[$x]['Reporting Currency'] = '';
+            $data[$x]['Reporting Debit Amount'] = '';
+            $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit']-$total['documentRptAmountCredit'], $decimalPlaceRpt));
+
+            $data[$x]['Created User'] = '';
+            if (in_array('confi_name', $extraColumns)) {
+                $data[$x]['Confirmed User'] = '';
+            }
+
+            if (in_array('confi_date', $extraColumns)) {
+                $data[$x]['Confirmed Date'] = '';
+            }
+
+            if (in_array('app_name', $extraColumns)) {
+                $data[$x]['Approved User'] = '';
+            }
+
+            if (in_array('app_date', $extraColumns)) {
+                $data[$x]['Approved Date'] = '';
+            }
+            $data[$x]['Supplier Name/Customer Name'] = '';
+            $data[$x]['Supplier Code/Customer Code'] = '';
+            $data[$x]['Document Year'] = '';
         } else {
             $x = 0;
-            $subTotalRpt = 0;
-            $subTotalLocal = 0;
-            $subTotalTrans = 0;
+            $subTotalDebitRpt = 0;
+            $subTotalCreditRpt = 0;
+            $subTotalDebitLocal = 0;
+            $subTotalCreditLocal = 0;
+            $subTotalDebitTrans = 0;
+            $subTotalCreditTrans = 0;
+
             if ($output) {
                 $dataArrayNew = array();
 
@@ -3938,17 +4055,20 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
                     if($request->currencyID == 1 || !isset($request->month)){
                         $data[$x]['Transaction Currency'] = $currencyTrans;
-                        $data[$x]['Transaction Amount'] = round($val->transAmountTotal, $decimalPlaceTrans);
+                        $data[$x]['Transaction Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->transDebit, $decimalPlaceTrans));
+                        $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->transCredit, $decimalPlaceTrans));
                     }
 
                     if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
                         $data[$x]['Local Currency'] = $currencyLocal;
-                        $data[$x]['Local Amount'] = round($val->localAmountTotal, $decimalPlaceLocal);
+                        $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->localDebit, $decimalPlaceLocal));
+                        $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->localCredit, $decimalPlaceLocal));
                     }
 
                     if($request->currencyID == 2 || !isset($request->month)) {
                         $data[$x]['Reporting Currency'] = $currencyRpt;
-                        $data[$x]['Reporting Amount'] = round($val->rptAmountTotal, $decimalPlaceRpt);
+                        $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->rptDebit, $decimalPlaceRpt));
+                        $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->rptCredit, $decimalPlaceRpt));
                     }
 
                     $data[$x]['Created User'] = $val->createdBy;
@@ -3967,13 +4087,18 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     if (in_array('app_date', $extraColumns)) {
                         $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
                     }
-                    $data[$x]['Supplier Name'] = $val->supplierName;
-                    $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                    $data[$x]['Supplier Name/Customer Name'] = $val->supplierOrCustomerName;
+                    $data[$x]['Supplier Code/Customer Code'] = $val->supplierOrCustomerCode;
                     $data[$x]['Document Year'] = $val->documentYear;
 
-                    $subTotalRpt +=  round($val->rptAmountTotal, $decimalPlaceRpt);
-                    $subTotalLocal += round($val->localAmountTotal, $decimalPlaceLocal);
-                    $subTotalTrans += round($val->transAmountTotal, $decimalPlaceTrans);
+                    $subTotalDebitRpt += round($val->rptDebit, $decimalPlaceRpt);
+                    $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
+
+                    $subTotalDebitLocal += round($val->localDebit, $decimalPlaceLocal);
+                    $subTotalCreditLocal += round($val->localCredit, $decimalPlaceLocal);
+
+                    $subTotalDebitTrans += round($val->transDebit, $decimalPlaceTrans);
+                    $subTotalCreditTrans += round($val->transCredit, $decimalPlaceTrans);
                     $x++;
                 }
             }
@@ -3991,25 +4116,97 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
             if($request->currencyID == 1 || !isset($request->month)){
                 $data[$x]['Transaction Currency'] = "";
-                $data[$x]['Transaction Amount'] = round($subTotalTrans, $decimalPlaceTrans);
+                $data[$x]['Transaction Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitTrans, $decimalPlaceTrans));
+                $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditTrans, $decimalPlaceTrans));
             }
 
             if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
                 $data[$x]['Local Currency'] = "";
-                $data[$x]['Local Amount'] = round($subTotalLocal, $decimalPlaceLocal);
+                $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal, $decimalPlaceLocal));
+                $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditLocal, $decimalPlaceLocal));
             }
 
             if($request->currencyID == 2 || !isset($request->month)) {
                 $data[$x]['Reporting Currency'] = "";
-                $data[$x]['Reporting Amount'] = round($subTotalRpt, $decimalPlaceRpt);
+                $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt, $decimalPlaceRpt));
+                $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditRpt, $decimalPlaceRpt));
             }
+            $data[$x]['Created User'] = '';
+            if (in_array('confi_name', $extraColumns)) {
+                $data[$x]['Confirmed User'] = '';
+            }
+
+            if (in_array('confi_date', $extraColumns)) {
+                $data[$x]['Confirmed Date'] = '';
+            }
+
+            if (in_array('app_name', $extraColumns)) {
+                $data[$x]['Approved User'] = '';
+            }
+
+            if (in_array('app_date', $extraColumns)) {
+                $data[$x]['Approved Date'] = '';
+            }
+            $data[$x]['Supplier Name/Customer Name'] = '';
+            $data[$x]['Supplier Code/Customer Code'] = '';
+            $data[$x]['Document Year'] = '';
+
+            $x++;
+            $data[$x]['CompanyID'] = "";
+            $data[$x]['CompanyName'] = "";
+            $data[$x]['DocumentID'] = "";
+            $data[$x]['DocumentDescription'] = "";
+            $data[$x]['DocumentCode'] = "";
+            $data[$x]['Posted Date'] = "";
+            $data[$x]['Description'] = "";
+            $data[$x]['GL created date'] = "";
+            $data[$x]['Segment'] = "";
+            $data[$x]['GL Code'] = "";
+            $data[$x]['GL Description'] = "";
+
+            if($request->currencyID == 1 || !isset($request->month)){
+                $data[$x]['Transaction Currency'] = "";
+                $data[$x]['Transaction Debit Amount'] = "";
+                $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitTrans - $subTotalCreditTrans, $decimalPlaceTrans));
+            }
+
+            if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
+                $data[$x]['Local Currency'] = "";
+                $data[$x]['Local Debit Amount'] = "";
+                $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal - $subTotalCreditLocal, $decimalPlaceLocal));
+            }
+
+            if($request->currencyID == 2 || !isset($request->month)) {
+                $data[$x]['Reporting Currency'] = "";
+                $data[$x]['Reporting Debit Amount'] = "";
+                $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt));
+            }
+            $data[$x]['Created User'] = '';
+            if (in_array('confi_name', $extraColumns)) {
+                $data[$x]['Confirmed User'] = '';
+            }
+
+            if (in_array('confi_date', $extraColumns)) {
+                $data[$x]['Confirmed Date'] = '';
+            }
+
+            if (in_array('app_name', $extraColumns)) {
+                $data[$x]['Approved User'] = '';
+            }
+
+            if (in_array('app_date', $extraColumns)) {
+                $data[$x]['Approved Date'] = '';
+            }
+            $data[$x]['Supplier Name/Customer Name'] = '';
+            $data[$x]['Supplier Code/Customer Code'] = '';
+            $data[$x]['Document Year'] = '';
         }
 
         $company_name = $companyCurrency->CompanyName;
         $to_date = \Helper::dateFormat($request->toDate);
         $from_date = \Helper::dateFormat($request->fromDate);
         $cur = null;
-        $title = "Financial General Ledger";
+        $title = "GL Dump Report";
 
         $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
@@ -4021,7 +4218,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
             'cur'=>$cur,
             'title'=>$title);
 
-        $fileName = 'financial_general_ledger';
+        $fileName = 'GL_Dump_Report';
         $path = 'general-ledger/report/general_ledger/excel/';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
@@ -5291,13 +5488,24 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         erp_templatesdetails.templateDetailDescription,
                         erp_companyreporttemplatedetails.description as templateDescription,
                         erp_documentmaster.documentDescription,
-                        erp_generalledger.documentLocalAmount AS localAmountTotal,
-                        erp_generalledger.documentRptAmount AS rptAmountTotal,
+                        IF
+                            ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
+                        IF
+                            ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) AS localCredit,
+                        IF
+                            ( documentRptAmount > 0, documentRptAmount, 0 ) AS rptDebit,
+                        IF
+                            ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
                         erp_generalledger.documentRptCurrencyID,
-                        erp_generalledger.documentTransAmount AS transAmountTotal,
+                        IF
+                            ( documentTransAmount > 0, documentTransAmount, 0 ) AS transDebit,
+                        IF
+                            ( documentTransAmount < 0, ( documentTransAmount *- 1 ), 0 ) AS transCredit,
                         erp_generalledger.documentTransCurrencyID,
-                        suppliermaster.supplierName,
-                        suppliermaster.primarySupplierCode
+                        IF
+                        ( erp_generalledger.documentSystemID = 87 OR erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS supplierOrCustomerName,
+                        IF
+                        ( erp_generalledger.documentSystemID = 87 OR erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CutomerCode, suppliermaster.primarySupplierCode ) AS supplierOrCustomerCode
                     FROM
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
@@ -5355,13 +5563,16 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         erp_templatesdetails.templateDetailDescription,
                         erp_companyreporttemplatedetails.description as templateDescription,
                         erp_documentmaster.documentDescription,
-                        SUM(erp_generalledger.documentLocalAmount) AS localAmountTotal,
-                        SUM(erp_generalledger.documentRptAmount) AS rptAmountTotal,
+                        sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
+                        sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
+                        sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
+                        sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
                         erp_generalledger.documentRptCurrencyID,
-                        SUM(erp_generalledger.documentTransAmount) AS transAmountTotal,
+                        sum( IF ( documentTransAmount > 0, documentTransAmount, 0 ) ) AS transDebit,
+                        sum( IF ( documentTransAmount < 0, ( documentTransAmount *- 1 ), 0 ) ) AS transCredit,
                         erp_generalledger.documentTransCurrencyID,
-                        suppliermaster.supplierName,
-                        suppliermaster.primarySupplierCode
+                        "" AS supplierOrCustomerName,
+                        "" AS supplierOrCustomerCode
                     FROM
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
