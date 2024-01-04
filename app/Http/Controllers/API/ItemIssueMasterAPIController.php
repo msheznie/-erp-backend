@@ -519,11 +519,6 @@ class ItemIssueMasterAPIController extends AppBaseController
                     $materielRequest = MaterielRequest::where('RequestID', $input['reqDocID'])->with(['created_by'])->first();
 
                     if (!empty($materielRequest)) {
-//                        $validationMsg = MaterialIssueService::validateRequestWithQty($input);
-//                        if(!empty($validationMsg)) {
-//                            return $this->sendError($validationMsg['message']);
-//                        }
-
                         if ($input['reqDocID'] != $itemIssueMaster->reqDocID) {
                             if ($materielRequest->selectedForIssue == -1) {
                                 return $this->sendError('This Request already selected. Please check again!', 500);
