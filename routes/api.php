@@ -153,6 +153,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::get('getDropdownValues', 'FinanceItemCategoryMasterAPIController@getDropdownValues');
 
+
             Route::post('addItemAttributes', 'FinanceItemCategoryMasterAPIController@addItemAttributes');
 
             Route::resource('erp_attributes', 'ErpAttributesAPIController');
