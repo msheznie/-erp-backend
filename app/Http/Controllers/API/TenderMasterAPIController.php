@@ -2359,7 +2359,7 @@ ORDER BY
         }
 
 
-        $qry = SupplierAssigned::with(['master' => function ($query) use ($selectedCategoryIds) {
+        $qry = SupplierAssigned::with(['businessCategoryAssigned' => function ($query) use ($selectedCategoryIds) {
             if (sizeof($selectedCategoryIds) != 0) {
                 $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
             }
@@ -2371,7 +2371,7 @@ ORDER BY
             ->where('isAssigned', -1)
             ->where('supEmail', '!=', null)
             ->where('registrationNumber', '!=', null)
-            ->whereHas('master', function ($query) use ($selectedCategoryIds) {
+            ->whereHas('businessCategoryAssigned', function ($query) use ($selectedCategoryIds) {
                 if (sizeof($selectedCategoryIds) != 0) {
                     $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
                 }
@@ -3392,7 +3392,7 @@ ORDER BY
             ->where('technical_eval_status', 1);
 
         if($isNegotiation == 1){
-            $query = $query->where('negotiation_code', '!=', null)->where('is_negotiation_closed', 0);
+            $query = $query->where('negotiation_code', '!=', null);
         }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
@@ -3558,7 +3558,13 @@ ORDER BY
             $tenderBidNegotiations = TenderBidNegotiation::with(['tender_negotiation_area'])->select('tender_negotiation_id')
                 ->where('tender_id', $tenderId)
                 ->first();
-            if($tenderBidNegotiations->tender_negotiation_area->technical_evaluation == 0 || $tenderBidNegotiations->tender_negotiation_area->technical_evaluation == false){
+
+            if (
+                isset($tenderBidNegotiations->tender_negotiation_area) &&
+                is_object($tenderBidNegotiations->tender_negotiation_area) &&
+                ($tenderBidNegotiations->tender_negotiation_area->technical_evaluation == 0 ||
+                    $tenderBidNegotiations->tender_negotiation_area->technical_evaluation == false)
+            ) {
                 return;
             }
         }
@@ -3888,33 +3894,19 @@ ORDER BY
 
             $techniqal_wightage->save();
 
-            $total_amount = BidSubmissionMaster::whereIn('id', $bids)->sum('line_item_total');
+            $minLineItemTotal = BidSubmissionMaster::whereIn('id', $bids)->min('line_item_total');
 
             $result = BidSubmissionMaster::whereIn('id', $bids)->select('id', 'line_item_total', 'tech_weightage', 'supplier_registration_id')->get();
 
             $supplier_ids = BidSubmissionMaster::whereIn('id', $bids)->pluck('supplier_registration_id')->toArray();
 
-            $highest_val1 = 0;
-            foreach ($result as $key => $val) {
-
-                $highest_val = $total_amount - $val->line_item_total;
-                if ($highest_val1 < $highest_val) {
-                    $highest_val1 = $highest_val;
-                }
-                $result[$key]['new_val'] = $highest_val;
-            }
 
             foreach ($result as $key => $val) {
                 $output = 0;
-                if ($highest_val1 != 0) {
-                    $output = round(($val->new_val / $highest_val1) * 100, 3);
-                }
-
-
+                
                 $count =  count(array_keys($supplier_ids, $val->supplier_registration_id));
 
-
-                $weightage = round(($output / 100) * $techniqal_wightage->commercial_weightage, 3);
+                $weightage = round(($minLineItemTotal / $val->line_item_total) * $techniqal_wightage->commercial_weightage, 3);
 
                 if($isNegotiation == 1 && $pricing_schedule == false){
                     $weightage = 0;

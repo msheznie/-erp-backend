@@ -2094,10 +2094,17 @@ class SRMService
             'commerical_bid_closing_date',
             'no_of_alternative_solutions',
             'is_active_go_no_go',
-            'stage'
+            'stage',
+            'document_system_id'
         )
             ->where('id', $tenderMasterId)
             ->first();
+
+        if($tenderMaster['document_system_id'] == 108){
+            $doctype = "Tender";
+        }else{
+            $doctype = "";
+        }
 
         $ClanderDetails = DB::table('srm_calendar_dates_detail')->selectRaw(
             'srm_calendar_dates.calendar_date, 
@@ -2116,7 +2123,7 @@ class SRMService
         if (!empty($tenderMaster)) {
             $tenderDates = array(
                 [
-                    'calendar_date' => 'Document Sale',
+                    'calendar_date' => $doctype.' Document Sale',
                     'from_date' => (!is_null($tenderMaster['document_sales_start_date'])) ? Carbon::parse($tenderMaster['document_sales_start_date'])->format('Y-m-d') : null,
                     'to_date' => (!is_null($tenderMaster['document_sales_end_date'])) ? Carbon::parse($tenderMaster['document_sales_end_date'])->format('Y-m-d') : null
                 ],
