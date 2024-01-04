@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
+use App\Models\SRMSupplierValues;
 use App\Services\SRMService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -179,16 +180,32 @@ class SupplierRegistrationApprovalController extends AppBaseController
             return $this->sendError($approve["message"]);
         } else {
             if ($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
+
+                $getUpdatedValues = SRMSupplierValues::select('user_name','name')
+                    ->where('company_id',$request['company_id'])
+                    ->where('supplier_id',$request['id'])
+                    ->first();
+
+                $userName = $getUpdatedValues['user_name'];
+                $name = $getUpdatedValues['name'];
+
+                SupplierRegistrationLink::where('id', $request['id'])
+                    ->update([
+                        'email' => $userName,
+                        'name' => $name
+                ]);
+
                 $response = $this->srmService->callSRMAPIs([
                     'apiKey' => $request->input('api_key'),
                     'request' => 'UPDATE_KYC_STATUS',
                     'extra' => [
                         'status'    => APPROVED,
                         'auth'      => $request->user(),
-                        'uuid'      => $request->input('uuid')
+                        'uuid'      => $request->input('uuid'),
+                        'email' => $userName,
+                        'name' => $name
                     ]
                 ]);
-
 
                 if($supplierMasterId['supplier_master_id'] > 0){ 
                     $getSupplierData = $this->getKYCData($request);

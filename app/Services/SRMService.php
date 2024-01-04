@@ -35,6 +35,7 @@ use App\Models\ScheduleBidSubmission;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\PurchaseOrderDetails;
+use App\Models\SRMSupplierValues;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
@@ -357,8 +358,10 @@ class SRMService
     {
         $invitationToken = $request->input('extra.token');
         $supplierUuid = $request->input('supplier_uuid');
+        $name = $request->input('extra.name');
+        $email = $request->input('extra.email');
 
-        $isUpdated = $this->supplierService->updateTokenStatus($invitationToken, $supplierUuid);
+        $isUpdated = $this->supplierService->updateTokenStatus($invitationToken, $supplierUuid,$name,$email);
 
         if (!$isUpdated) {
             return [
@@ -559,9 +562,23 @@ class SRMService
      */
     public function supplierRegistrationApprovalSetup(Request $request)
     {
+
+        $validateSupplierEmail = $this->validateSupplierEmail($request);
+
+        if(!$validateSupplierEmail['status']){
+            return [
+                'success' => false,
+                'message' => $validateSupplierEmail['message'],
+                'data' => []
+            ];
+        }
+
         $supplierLink = SupplierRegistrationLink::where('uuid', $request->input('supplier_uuid'))->first();
 
         throw_unless($supplierLink, "Something went wrong, UUID doesn't match with ERP supplier link table reocrd");
+        $userEmail = $request->input('extra.data.supplierUserEmail');
+        $name = $request->input('extra.data.supplierName');
+
 
         $data = $this->supplierService->createSupplierApprovalSetup([
             'autoID' => $supplierLink->id,
@@ -569,6 +586,21 @@ class SRMService
             'documentID' => 107, // 107 mean documentMaster id of "Supplier Registration" document in ERP
             'email' => $supplierLink->email
         ]);
+
+        if($data['success']){
+            $conditions = [
+                'uuid' => $request->input('supplier_uuid'),
+                'company_id' => $supplierLink->company_id,
+                'supplier_id' => $supplierLink->id,
+            ];
+
+            $updates = [
+                'user_name' => $userEmail,
+                'name' => $name,
+            ];
+
+            SRMSupplierValues::customCreateOrUpdate($conditions, $updates);
+        }
 
         return [
             'success' => $data['success'],
@@ -4826,5 +4858,41 @@ class SRMService
         return TenderBidNegotiation::where('tender_id', $tenderId)
         ->pluck('bid_submission_master_id_new')
         ->toArray();
+    }
+
+    public function getSupplierRegistrationData(Request $request) {
+         $companyId = $request['companyId'];
+
+         $supRegData = SupplierRegistrationLink::select('id','email','uuid')
+              ->where('company_id',$companyId)
+              ->where('STATUS',1)
+              ->get();
+
+        return [
+            'success' => true,
+            'message' => 'ERP Form Data Retrieved',
+            'data' => $supRegData
+        ];
+    }
+
+    public function validateSupplierEmail($request)
+    {
+        $companyId = $request->input('extra.data.company_id');
+        $userEmail = $request->input('extra.data.supplierUserEmail');
+        $supplierUuid = $request->input('supplier_uuid');
+        $request->merge([
+            'companyId' => $companyId
+        ]);
+
+        $supRegData = $this->getSupplierRegistrationData($request);
+        $filteredData = $supRegData['data']->filter(function ($item) use ($supplierUuid) {
+            return $item->uuid != $supplierUuid;
+        });
+
+        $emails = $filteredData->pluck('email')->toArray();
+        if (in_array($userEmail, $emails)) {
+            return ['status' => false, 'message' => 'Email already exists'];
+        }
+        return ['status' => true, 'message' => 'Success'];
     }
 }

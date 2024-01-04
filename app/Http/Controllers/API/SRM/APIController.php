@@ -86,6 +86,7 @@ define('GET_PAYMENTVOUCHERS', 'GET_PAYMENTVOUCHERS');
 define('GET_PAYMENT_VOUCHER_DETAILS', 'GET_PAYMENT_VOUCHER_DETAILS');
 define('CHECK_GRV_CREATION', 'CHECK_GRV_CREATION');
 define('GET_NEGOTIATION_TENDERS', 'GET_NEGOTIATION_TENDERS');
+define('GET_SUPPLIER_REGISTRATION_DATA', 'GET_SUPPLIER_REGISTRATION_DATA');
 
 
 class APIController extends Controller
@@ -247,7 +248,8 @@ class APIController extends Controller
                 return $this->SRMService->checkGrvCreation($request);
             case GET_NEGOTIATION_TENDERS:
                 return $this->SRMService->getNegotiationTenders($request);
-                     
+            case GET_SUPPLIER_REGISTRATION_DATA:
+                return $this->SRMService->getSupplierRegistrationData($request);
             default:
                 return [
                     'success'   => false,

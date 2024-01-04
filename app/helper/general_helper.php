@@ -112,6 +112,7 @@ use App\Models\BookInvSuppDet;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentAttachments;
+use App\Models\SRMSupplierValues;
 
 class Helper
 {
@@ -4419,7 +4420,8 @@ class Helper
                             // pass below data for taking action in controller
                             $more_data = [
                                 'numberOfLevels' => $approvalLevel->noOfLevels,
-                                'currentLevel' => $input["rollLevelOrder"]
+                                'currentLevel' => $input["rollLevelOrder"],
+                                'userEmail'=> $docApproved->reference_email
                             ];
                         }
 
@@ -4938,6 +4940,18 @@ class Helper
                             if ($input["documentSystemID"] == 107) {
 
                                 $suppiler_info = SupplierRegistrationLink::where('id', '=', $docApproved->documentSystemCode)->first();
+
+                             $updatedUserEmail = SRMSupplierValues::select('id','user_name','company_id','supplier_id')
+                                ->where('company_id', $docApproved->companySystemID)
+                                ->where('supplier_id', $docApproved->documentSystemCode)
+                                ->first();
+
+                             $docApproved->reference_email = $updatedUserEmail['user_name'];
+
+                              Models\DocumentApproved::where('documentSystemID',107)
+                                  ->where('documentSystemCode',$docApproved->documentSystemCode)
+                                  ->update(['reference_email' => $docApproved->reference_email]);
+
                                 if (isset($suppiler_info) && isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;

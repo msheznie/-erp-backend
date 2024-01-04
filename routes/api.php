@@ -1251,3 +1251,5 @@ if (env("LOG_ENABLE", false)) {
 /*
  * End external related routes
  */
+
+Route::resource('s_r_m_supplier_values', 'SRMSupplierValuesAPIController');

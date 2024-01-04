@@ -1837,6 +1837,12 @@ class SupplierMasterAPIController extends AppBaseController
         $token = md5(Carbon::now()->format('YmdHisu'));
         $apiKey = $request->input('api_key');
 
+        $validateEmail =  $this->validateEmailExist($request);
+
+        if(!$validateEmail['status']){
+            return $this->sendError($validateEmail['message'],402);
+        }
+
         $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
             ->where('company_id', $request->input('company_id'))
             ->where('email', $request->input('email'))
@@ -2008,5 +2014,30 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
+    }
+
+    public function validateEmailExist($request)
+    {
+        $email = $request->input('email');
+        $regNo = $request->input('registration_number');
+        $companyId = $request->input('company_id');
+
+        $supplierRegLink = SupplierRegistrationLink::select('id','email','registration_number')
+            ->where('company_id',$companyId)
+            ->where('STATUS',1)
+            ->get();
+
+        $emails = $supplierRegLink->pluck('email')->toArray();
+        $registrationNumbers = $supplierRegLink->pluck('registration_number')->toArray();
+
+        if (in_array($email, $emails)) {
+            return ['status' => false, 'message' => 'Email already exists'];
+        }
+
+        if (in_array($regNo, $registrationNumbers)) {
+            return ['status' => false, 'message' => 'Registration number already exists'];
+        }
+
+        return ['status' => true, 'message' => 'Success'];
     }
 }
