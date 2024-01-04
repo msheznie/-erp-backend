@@ -189,7 +189,7 @@ class VatDetailReport
      */
     public function setAccountingDocumentDate($accountingDocumentDate): void
     {
-        $this->accountingDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($accountingDocumentDate));
+        $this->accountingDocumentDate = ($accountingDocumentDate) ?  \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($accountingDocumentDate)) : null;
     }
 
     /**
@@ -317,7 +317,7 @@ class VatDetailReport
      */
     public function setOriginalDocumentDate($originalDocumentDate): void
     {
-        $this->originalDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($originalDocumentDate));
+        $this->originalDocumentDate = ($originalDocumentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($originalDocumentDate)) : null;
     }
 
     /**

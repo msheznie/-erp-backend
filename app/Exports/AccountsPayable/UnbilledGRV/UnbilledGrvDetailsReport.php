@@ -91,7 +91,7 @@ class UnbilledGrvDetailsReport
     public function setDocDate($docDate): void
     {
 
-        $this->docDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($docDate));
+        $this->docDate = ($docDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($docDate)) : null;
     }
 
     /**

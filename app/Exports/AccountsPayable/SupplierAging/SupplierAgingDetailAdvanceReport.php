@@ -85,7 +85,7 @@ class SupplierAgingDetailAdvanceReport
      */
     public function setDocumentDate($documentDate): void
     {
-        $this->documentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($documentDate));
+        $this->documentDate = ($documentDate)  ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($documentDate)) : null;
     }
 
     /**
@@ -141,7 +141,7 @@ class SupplierAgingDetailAdvanceReport
      */
     public function setInvoiceDate($invoiceDate): void
     {
-        $this->invoiceDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDate));
+        $this->invoiceDate = ($invoiceDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDate)) : null;
     }
 
     /**

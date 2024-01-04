@@ -159,7 +159,7 @@ class DetailsOfInwardSupplyReport
      */
     public function setAccountingDocumentDate($accountingDocumentDate): void
     {
-        $this->accountingDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($accountingDocumentDate));
+        $this->accountingDocumentDate = ($accountingDocumentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($accountingDocumentDate)) : null;
     }
 
     /**
@@ -215,7 +215,7 @@ class DetailsOfInwardSupplyReport
      */
     public function setOriginalDocumentDate($originalDocumentDate): void
     {
-        $this->originalDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($originalDocumentDate));
+        $this->originalDocumentDate = ($originalDocumentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($originalDocumentDate)) : null;
     }
 
     /**
@@ -223,7 +223,7 @@ class DetailsOfInwardSupplyReport
      */
     public function setPaymentDueDate($paymentDueDate): void
     {
-        $this->paymentDueDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($paymentDueDate));
+        $this->paymentDueDate = ($paymentDueDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($paymentDueDate)) : null;
     }
 
     /**
@@ -247,7 +247,7 @@ class DetailsOfInwardSupplyReport
      */
     public function setReferenceInvoiceDate($referenceInvoiceDate): void
     {
-        $this->referenceInvoiceDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($referenceInvoiceDate));
+        $this->referenceInvoiceDate = ($referenceInvoiceDate)? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($referenceInvoiceDate)): null;
     }
 
     /**

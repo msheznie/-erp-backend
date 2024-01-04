@@ -120,7 +120,7 @@ class InputOutputVatReport
     {
 
         if($isDate) {
-            $this->documentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($documentDate));
+            $this->documentDate = ($documentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($documentDate)) : null;
         }else {
             $this->documentDate = $documentDate;
         }

@@ -78,7 +78,7 @@ class UnbilledGrvLogisticDetails
      */
     public function setGrvDate($grvDate): void
     {
-        $this->grvDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($grvDate));
+        $this->grvDate = ($grvDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($grvDate)) : null;
     }
 
     /**

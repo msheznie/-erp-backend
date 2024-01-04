@@ -115,7 +115,7 @@ class CustomerAgingDetailReport
      */
     public function setDocumentDate($documentDate): void
     {
-        $this->documentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($documentDate));
+        $this->documentDate = ($documentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($documentDate)) : null;
     }
 
     /**
@@ -187,7 +187,7 @@ class CustomerAgingDetailReport
      */
     public function setInvoiceDate($invoiceDate): void
     {
-        $this->invoiceDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDate));
+        $this->invoiceDate = ($invoiceDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDate)) : null;
     }
 
     /**
@@ -195,7 +195,7 @@ class CustomerAgingDetailReport
      */
     public function setInvoiceDueDate($invoiceDueDate): void
     {
-        $this->invoiceDueDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDueDate));
+        $this->invoiceDueDate = ($invoiceDueDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDueDate)) : null;
     }
 
     /**
