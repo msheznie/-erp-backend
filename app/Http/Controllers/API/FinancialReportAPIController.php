@@ -3647,7 +3647,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
         return $data;
     }
 
-    public function exportGLReport(Request $request){
+    public function exportGLReport(Request $request, ExportGeneralLedgerReportService $exportGlToExcelService){
         $type = $request->type;
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
@@ -3842,16 +3842,16 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $data[$x]['GL Code'] = '';
                         $data[$x]['GL Description'] = 'Total';
 
-                        $data[$x]['Transaction Currency'] = '';
+                        $data[$x]['Transaction Currency'] = $currencyTrans;
                         $data[$x]['Transaction Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitTrans, $decimalPlaceTrans));
                         $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditTrans, $decimalPlaceTrans));
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Local Currency'] = '';
+                            $data[$x]['Local Currency'] = $currencyLocal;
                             $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal, $decimalPlaceLocal));
                             $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditLocal, $decimalPlaceLocal));
                         }
 
-                        $data[$x]['Reporting Currency'] = '';
+                        $data[$x]['Reporting Currency'] = $currencyRpt;
                         $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt, $decimalPlaceRpt));
                         $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRpt, $decimalPlaceRpt));
 
@@ -3888,16 +3888,16 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $data[$x]['GL Code'] = '';
                         $data[$x]['GL Description'] = 'Balance';
 
-                        $data[$x]['Transaction Currency'] = '';
+                        $data[$x]['Transaction Currency'] = $currencyTrans;
                         $data[$x]['Transaction Debit Amount'] = '';
                         $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitTrans-$subTotalCreditTrans, $decimalPlaceTrans));
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Local Currency'] = '';
+                            $data[$x]['Local Currency'] = $currencyLocal;
                             $data[$x]['Local Debit Amount'] = '';
                             $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal-$subTotalCreditLocal, $decimalPlaceLocal));
                         }
 
-                        $data[$x]['Reporting Currency'] = '';
+                        $data[$x]['Reporting Currency'] = $currencyRpt;
                         $data[$x]['Reporting Debit Amount'] = '';
                         $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt-$subTotalCreditRpt, $decimalPlaceRpt));
 
@@ -3941,15 +3941,15 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $data[$x]['GL Code'] = '';
             $data[$x]['GL Description'] = 'Grand Total';
 
-            $data[$x]['Transaction Currency'] = '';
+            $data[$x]['Transaction Currency'] = $currencyTrans;
             $data[$x]['Transaction Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentTransAmountDebit'], $decimalPlaceTrans));
             $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentTransAmountCredit'], $decimalPlaceTrans));
             if ($checkIsGroup->isGroup == 0) {
-                $data[$x]['Local Currency'] = '';
+                $data[$x]['Local Currency'] = $currencyLocal;
                 $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'], $decimalPlaceLocal));
                 $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountCredit'], $decimalPlaceLocal));
             }
-            $data[$x]['Reporting Currency'] = '';
+            $data[$x]['Reporting Currency'] = $currencyRpt;
             $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'], $decimalPlaceRpt));
             $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountCredit'], $decimalPlaceRpt));
 
@@ -3986,15 +3986,15 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $data[$x]['GL Code'] = '';
             $data[$x]['GL Description'] = 'Total Balance';
 
-            $data[$x]['Transaction Currency'] = '';
+            $data[$x]['Transaction Currency'] = $currencyTrans;
             $data[$x]['Transaction Debit Amount'] = '';
             $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentTransAmountDebit']-$total['documentTransAmountCredit'], $decimalPlaceTrans));
             if ($checkIsGroup->isGroup == 0) {
-                $data[$x]['Local Currency'] = '';
+                $data[$x]['Local Currency'] = $currencyLocal;
                 $data[$x]['Local Debit Amount'] = '';
                 $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit']-$total['documentLocalAmountCredit'], $decimalPlaceLocal));
             }
-            $data[$x]['Reporting Currency'] = '';
+            $data[$x]['Reporting Currency'] = $currencyRpt;
             $data[$x]['Reporting Debit Amount'] = '';
             $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit']-$total['documentRptAmountCredit'], $decimalPlaceRpt));
 
@@ -4101,6 +4101,8 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     $subTotalCreditTrans += round($val->transCredit, $decimalPlaceTrans);
                     $x++;
                 }
+                $data[$x]['CompanyID'] = "";
+                $x++;
             }
             $data[$x]['CompanyID'] = "";
             $data[$x]['CompanyName'] = "";
@@ -4115,19 +4117,19 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $data[$x]['GL Description'] = "Grand Total";
 
             if($request->currencyID == 1 || !isset($request->month)){
-                $data[$x]['Transaction Currency'] = "";
+                $data[$x]['Transaction Currency'] = $currencyTrans;
                 $data[$x]['Transaction Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitTrans, $decimalPlaceTrans));
                 $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditTrans, $decimalPlaceTrans));
             }
 
             if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
-                $data[$x]['Local Currency'] = "";
+                $data[$x]['Local Currency'] = $currencyLocal;
                 $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal, $decimalPlaceLocal));
                 $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditLocal, $decimalPlaceLocal));
             }
 
             if($request->currencyID == 2 || !isset($request->month)) {
-                $data[$x]['Reporting Currency'] = "";
+                $data[$x]['Reporting Currency'] = $currencyRpt;
                 $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt, $decimalPlaceRpt));
                 $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditRpt, $decimalPlaceRpt));
             }
@@ -4162,22 +4164,22 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $data[$x]['GL created date'] = "";
             $data[$x]['Segment'] = "";
             $data[$x]['GL Code'] = "";
-            $data[$x]['GL Description'] = "";
+            $data[$x]['GL Description'] = "Total Balance";
 
             if($request->currencyID == 1 || !isset($request->month)){
-                $data[$x]['Transaction Currency'] = "";
+                $data[$x]['Transaction Currency'] = $currencyTrans;
                 $data[$x]['Transaction Debit Amount'] = "";
                 $data[$x]['Transaction Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitTrans - $subTotalCreditTrans, $decimalPlaceTrans));
             }
 
             if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
-                $data[$x]['Local Currency'] = "";
+                $data[$x]['Local Currency'] = $currencyLocal;
                 $data[$x]['Local Debit Amount'] = "";
                 $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal - $subTotalCreditLocal, $decimalPlaceLocal));
             }
 
             if($request->currencyID == 2 || !isset($request->month)) {
-                $data[$x]['Reporting Currency'] = "";
+                $data[$x]['Reporting Currency'] = $currencyRpt;
                 $data[$x]['Reporting Debit Amount'] = "";
                 $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt));
             }
@@ -4203,34 +4205,46 @@ srp_erp_ioubookingmaster.approvedYN = 1
         }
 
         $company_name = $companyCurrency->CompanyName;
-        $to_date = \Helper::dateFormat($request->toDate);
-        $from_date = \Helper::dateFormat($request->fromDate);
+        $toDate = $request->toDate;
+        $fromDate = $request->fromDate;
         $cur = null;
         $title = "GL Dump Report";
 
         $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
-        $detail_array = array(  'type' => 1,
-            'from_date'=>$from_date,
-            'to_date'=>$to_date,
-            'company_name'=>$company_name,
-            'company_code'=>$companyCode,
-            'cur'=>$cur,
-            'title'=>$title);
-
         $fileName = 'GL_Dump_Report';
         $path = 'general-ledger/report/general_ledger/excel/';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
+        $excelFormat = [
+            'M' => '#,##0.' . str_repeat('0', $decimalPlaceTrans),
+            'N' => '#,##0.' . str_repeat('0', $decimalPlaceTrans),
+            'P' => '#,##0.' . str_repeat('0', $decimalPlaceLocal),
+            'Q' => '#,##0.' . str_repeat('0', $decimalPlaceLocal),
+            'S' => '#,##0.' . str_repeat('0', $decimalPlaceRpt),
+            'T' => '#,##0.' . str_repeat('0', $decimalPlaceRpt),
+        ];
 
-        if($basePath == '')
-        {
+        $exportToExcel = $exportGlToExcelService
+            ->setTitle($title)
+            ->setFileName($fileName)
+            ->setPath($path)
+            ->setCompanyCode($companyCode)
+            ->setCompanyName($company_name)
+            ->setFromDate($fromDate)
+            ->setToDate($toDate)
+            ->setReportType(1)
+            ->setData($data)
+            ->setType('xls')
+            ->setDateType()
+            ->setExcelFormat($excelFormat)
+            ->setDetails()
+            ->generateExcel();
+
+        if(!$exportToExcel['success'])
             return $this->sendError('Unable to export excel');
-        }
-        else
-        {
-            return $this->sendResponse($basePath, trans('custom.success_export'));
-        }
+
+        return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
+
     }
     public function getTrialBalance($request)
     {
