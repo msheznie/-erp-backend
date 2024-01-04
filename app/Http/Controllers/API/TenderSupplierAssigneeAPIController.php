@@ -312,14 +312,13 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $employee = \Helper::getEmployeeInfo();
 
-        $validator = \Validator::make($input, [
-            'email' => 'required|email|max:255',
-            'name' => 'required|max:255',
-            'regNo' => 'required|max:255',
-        ]);
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
+        $validateFileds = $this->validateFileds($input);
+
+        if(!$validateFileds['status']){
+            return $this->sendError($validateFileds['message'], $validateFileds['code']);
         }
+
+
 
         DB::beginTransaction();
         try {
@@ -575,5 +574,41 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         }
 
         return $this->sendResponse(0, 'File Deleted');
+    }
+
+    public function validateFileds($input){
+        $validator = \Validator::make($input, [
+            'email' => 'required|email|max:255',
+            'name' => 'required|max:255',
+            'regNo' => 'required|max:255',
+        ]);
+        if ($validator->fails()) {
+            return ['status' => false, 'message' => $validator->messages(), 'code' => 422];
+        }
+
+
+        $email = $input['email'];
+        $regNo = $input['regNo'];
+        $companyId =$input['companySystemID'];
+
+        $supplierRegLink = SupplierRegistrationLink::select('id','email','registration_number')
+            ->where('company_id',$companyId)
+            ->where('STATUS',1)
+            ->get();
+
+        $emails = $supplierRegLink->pluck('email')->toArray();
+        $registrationNumbers = $supplierRegLink->pluck('registration_number')->toArray();
+
+        if (in_array($email, $emails)) {
+            return ['status' => false, 'message' => 'Email already exists','code' => 402];
+        }
+
+        if (in_array($regNo, $registrationNumbers)) {
+            return ['status' => false, 'message' => 'Registration number already exists','code' => 402];
+        }
+
+
+        return ['status' => true, 'message' => 'success'];
+
     }
 }

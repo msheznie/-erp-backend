@@ -57,9 +57,16 @@ class SupplierService
             ->first();
     }
 
-    public function updateTokenStatus($token, $supplierUuid)
+    public function updateTokenStatus($token, $supplierUuid,$name,$email)
     {
-        return DB::table('srm_supplier_registration_link')->where('token', $token)->update(['status' => 1, 'uuid' => $supplierUuid]);
+        $data = [
+          'status' => 1,
+          'uuid' => $supplierUuid,
+          'name' => $name,
+          'email' => $email,
+        ];
+
+        return DB::table('srm_supplier_registration_link')->where('token', $token)->update($data);
     }
 
     /**
