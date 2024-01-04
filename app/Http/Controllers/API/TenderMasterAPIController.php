@@ -2359,7 +2359,7 @@ ORDER BY
         }
 
 
-        $qry = SupplierAssigned::with(['master' => function ($query) use ($selectedCategoryIds) {
+        $qry = SupplierAssigned::with(['businessCategoryAssigned' => function ($query) use ($selectedCategoryIds) {
             if (sizeof($selectedCategoryIds) != 0) {
                 $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
             }
@@ -2371,7 +2371,7 @@ ORDER BY
             ->where('isAssigned', -1)
             ->where('supEmail', '!=', null)
             ->where('registrationNumber', '!=', null)
-            ->whereHas('master', function ($query) use ($selectedCategoryIds) {
+            ->whereHas('businessCategoryAssigned', function ($query) use ($selectedCategoryIds) {
                 if (sizeof($selectedCategoryIds) != 0) {
                     $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
                 }
