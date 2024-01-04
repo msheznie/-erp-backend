@@ -380,7 +380,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
              $newValue = ($input['isActive'] == true) ? 'True' : 'False';
              $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
 
-             $this->createAuditLogs($input['itemCategorySubID'],"Is Active",$previousValue, $newValue,"financeitemcategorysub", $uuid);
+             $this->createAuditLogs($id,"Is Active",$previousValue, $newValue,"financeitemcategorysub", $uuid);
          }
 
         return $this->sendResponse($financeItemCategorySub->toArray(), 'Finance Item Category Sub updated successfully');
