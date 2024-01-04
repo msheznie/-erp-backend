@@ -404,7 +404,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
             
             Route::post('deleteAllDisposalDetail', 'AssetDisposalDetailAPIController@deleteAllDisposalDetail');
-            Route::post('budgetTransferCreateFromReview', 'BudgetTransferFormAPIController@budgetTransferCreateFromReview');
 
             Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
             Route::resource('audit_trails', 'AuditTrailAPIController');

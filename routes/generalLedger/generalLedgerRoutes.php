@@ -98,7 +98,6 @@ Route::group([], function(){
     Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany')->name('Get budget by company');
     Route::post('budgetReferBack', 'BudgetMasterAPIController@budgetReferBack')->name('Budget Referback');
     Route::post('updateCutOffPeriod', 'BudgetMasterAPIController@updateCutOffPeriod')->name('Update budget cutoff period');
-    Route::post('getBudgetBlockedDocuments', 'BudgetMasterAPIController@getBudgetBlockedDocuments')->name('Get budget bloacked documents');
     Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen')->name('Budget reopen');
     Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise')->name('Get budget GL Wise report');
     Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails')->name('Get budget GL Wise report details');
