@@ -52,6 +52,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ItemIssueMasterRepository;
+use App\Services\Inventory\MaterialIssueService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -518,6 +519,10 @@ class ItemIssueMasterAPIController extends AppBaseController
                     $materielRequest = MaterielRequest::where('RequestID', $input['reqDocID'])->with(['created_by'])->first();
 
                     if (!empty($materielRequest)) {
+//                        $validationMsg = MaterialIssueService::validateRequestWithQty($input);
+//                        if(!empty($validationMsg)) {
+//                            return $this->sendError($validationMsg['message']);
+//                        }
 
                         if ($input['reqDocID'] != $itemIssueMaster->reqDocID) {
                             if ($materielRequest->selectedForIssue == -1) {
@@ -1219,37 +1224,23 @@ class ItemIssueMasterAPIController extends AppBaseController
 
     public function getAllMaterielRequestNotSelectedForIssueByCompany(Request $request)
     {
-
         $input = $request->all();
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
         if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
 
-        $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
-            //->where("selectedForIssue", 0);
-            ->where("approved", -1)
-            ->where("cancelledYN", 0)
-            ->where("serviceLineSystemID", $request['serviceLineSystemID']);
-            // ->where("location", $request['wareHouseFrom']);
+        $confirmYn= 0;
+        if(isset($input['id']))
+            $materialIssue = ItemIssueMaster::select('confirmedYN')->where('itemIssueAutoID',$input['id'])->first();
+            $confirmYn = $materialIssue->confirmedYN;
 
-        $search = $input['search'];
-
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $materielRequests = $materielRequests->where(function ($query) use ($search) {
-                $query->where('itemIssueCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comment', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $materielRequests = $materielRequests->get(['RequestID', 'RequestCode']);
-        return $this->sendResponse($materielRequests->toArray(), 'Materiel Issue updated successfully');
+        $data = MaterialIssueService::getMaterialRequest($subCompanies,$request,$input,$confirmYn);
+        return $this->sendResponse($data, 'Materiel Issue updated successfully');
     }
 
     /**
