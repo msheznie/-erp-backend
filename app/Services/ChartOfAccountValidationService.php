@@ -37,10 +37,10 @@ class ChartOfAccountValidationService
 
     }
 
-    public function checkChartOfAccountStatus($documentSystemID, $autoID, $companySystemID)
+    public function checkChartOfAccountStatus($documentSystemID, $autoID, $companySystemID, $uploadEmployeeID = null)
     {
         $masterModel = [
-            'employeeSystemID' => \Helper::getEmployeeSystemID(),
+            'employeeSystemID' => is_null($uploadEmployeeID) ? \Helper::getEmployeeSystemID() : $uploadEmployeeID,
             'autoID' => $autoID,
             'documentSystemID' => $documentSystemID,
             'companySystemID' => $companySystemID

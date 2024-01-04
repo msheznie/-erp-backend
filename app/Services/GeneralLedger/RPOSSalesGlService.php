@@ -83,65 +83,84 @@ class RPOSSalesGlService
 {
 	public static function processEntry($masterModel)
 	{
-		$data = [];
+        Log::useFiles(storage_path() . '/logs/cash_rpos_jobs.log');
+
+        $data = [];
         $taxLedgerData = [];
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
 
-        $glEntries = POSGLEntries::where('shiftId', $masterModel["autoID"])->get();
-
-
+        $glEntries = DB::table('pos_gl_entries')
+            ->selectRaw('pos_gl_entries.*, SUM(amount) as totAmount')
+            ->where('pos_gl_entries.shiftID', $masterModel["autoID"])
+            ->groupBy('pos_gl_entries.glCode')
+            ->groupBy('pos_gl_entries.invoiceID')
+            ->get();
 
         foreach($glEntries as $gl) {
             $invItems = DB::table('pos_source_menusalesmaster')
                 ->selectRaw('pos_source_menusalesmaster.*')
                 ->where('pos_source_menusalesmaster.shiftID', $masterModel["autoID"])
+                ->where('pos_source_menusalesmaster.menuSalesID', $gl->invoiceID)
                 ->first();
-            $glCodes = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $gl->glCode)->first();
 
-            $sourceDetails = POSSOURCEShiftDetails::where("shiftId", $masterModel["autoID"])->select('transactionCurrency')->first();
-            $currency = CurrencyMaster::where("CurrencyCode", $sourceDetails->transactionCurrency)->first();
-            $data['documentTransCurrencyID'] = $currency->currencyID;
 
-            $data['companySystemID'] = $masterModel['companySystemID'];
-            $data['companyID'] = $masterModel["companyID"];
-            $segments = DB::table('pos_source_shiftdetails')
-                ->selectRaw('pos_source_shiftdetails.segmentID as segmentID, serviceline.ServiceLineCode as serviceLineCode')
-                ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
-                ->where('pos_source_shiftdetails.shiftID', $masterModel["autoID"])
-                ->first();
-            if($segments){
-                $data['serviceLineSystemID'] = $segments->segmentID;
-                $data['serviceLineCode'] = $segments->serviceLineCode;
+                $sourceDetails = POSSOURCEShiftDetails::where("shiftId", $masterModel["autoID"])->select('transactionCurrency')->first();
+                $currency = CurrencyMaster::where("CurrencyCode", $sourceDetails->transactionCurrency)->first();
+                $data['documentTransCurrencyID'] = $currency->currencyID;
+
+                $data['companySystemID'] = $masterModel['companySystemID'];
+                $data['companyID'] = $masterModel["companyID"];
+                $segments = DB::table('pos_source_shiftdetails')
+                    ->selectRaw('pos_source_shiftdetails.segmentID as segmentID, serviceline.ServiceLineCode as serviceLineCode')
+                    ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
+                    ->where('pos_source_shiftdetails.shiftID', $masterModel["autoID"])
+                    ->first();
+                if ($segments) {
+                    $data['serviceLineSystemID'] = $segments->segmentID;
+                    $data['serviceLineCode'] = $segments->serviceLineCode;
+                }
+                $data['masterCompanyID'] = null;
+                $data['documentSystemID'] = 111;
+                $data['documentID'] = 'RPOS';
+                $data['documentSystemCode'] = $masterModel["autoID"];
+                $data['documentCode'] = $gl->documentCode;
+                $data['documentDate'] = date('Y-m-d H:i:s');
+                $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
+                $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
+                $data['createdDateTime'] = \Helper::currentDateTime();
+                $data['createdUserID'] = $empID->empID;
+                $data['createdUserSystemID'] = $empID->employeeSystemID;
+                $data['createdUserPC'] = gethostname();
+                $data['chartOfAccountSystemID'] = $gl->glCode;
+            $glCodes = ChartOfAccount::find($data['chartOfAccountSystemID']);
+            if (!empty($glCodes)) {
+                    $glCode = $glCodes->AccountCode;
+                    $data['glCode'] = $glCode;
+            } else {
+                return ['status' => false, 'message' => 'error chart of account not found', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
             }
-            $data['masterCompanyID'] = null;
-            $data['documentSystemID'] = 111;
-            $data['documentID'] = 'RPOS';
-            $data['documentSystemCode'] = $masterModel["autoID"];
-            $data['documentCode'] = $gl->documentCode;
-            $data['documentDate'] = date('Y-m-d H:i:s');
-            $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
-            $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
-            $data['createdDateTime'] = \Helper::currentDateTime();
-            $data['createdUserID'] = $empID->empID;
-            $data['createdUserSystemID'] = $empID->employeeSystemID;
-            $data['createdUserPC'] = gethostname();
-            $data['chartOfAccountSystemID'] = $gl->glCode;
-            if ($glCodes) {
-                $glCode = $glCodes->AccountCode;
-                $data['glCode'] = $glCode;
+                $data['glAccountType'] = ChartOfAccount::getGlAccountType($gl->glCode);
+                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl->glCode);
+            if (!empty($invItems)) {
+                $data['documentTransCurrencyID'] = $invItems->companyLocalCurrencyID;
+                $data['documentTransCurrencyER'] = $invItems->companyLocalExchangeRate;
+                $data['documentTransAmount'] = $gl->totAmount;
+                $data['documentLocalCurrencyID'] = $invItems->companyLocalCurrencyID;
+                $data['documentLocalCurrencyER'] = $invItems->companyLocalExchangeRate;
+                $data['documentLocalAmount'] = $gl->totAmount;
+                $data['documentRptCurrencyID'] = $invItems->companyReportingCurrencyID;
+                $data['documentRptCurrencyER'] = $invItems->companyReportingExchangeRate;
+                $data['documentRptAmount'] = $gl->totAmount / $invItems->companyReportingExchangeRate;
+                $data['documentNarration'] = "Bill No: ". $invItems->invoiceCode;
             }
-            $data['glAccountType'] = ChartOfAccount::getGlAccountType($gl->glCode);
-            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl->glCode);
-            $data['documentLocalCurrencyID'] = $invItems->companyLocalCurrencyID;
-            $data['documentLocalCurrencyER'] = $invItems->companyLocalExchangeRate;
-            $data['documentLocalAmount'] = $gl->amount;
-            $data['documentRptCurrencyID'] = $invItems->companyReportingCurrencyID;
-            $data['documentRptCurrencyER'] = $invItems->companyReportingExchangeRate;
-            $data['documentRptAmount'] = $gl->amount / $invItems->companyReportingExchangeRate;
-            $data['timestamp'] = \Helper::currentDateTime();
-            $data['supplierCodeSystem'] = null;
-            array_push($finalData, $data);
+            else {
+                return ['status' => false, 'message' => 'error bill was not found', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
+            }
+                $data['timestamp'] = \Helper::currentDateTime();
+                $data['supplierCodeSystem'] = null;
+                array_push($finalData, $data);
+
         }
 	
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];

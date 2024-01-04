@@ -851,7 +851,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
 
         $reportData = Budjetdetails::select(DB::raw("(SUM(budjetAmtLocal) * -1) as totalLocal,
                                        (SUM(budjetAmtRpt) * -1) as totalRpt,
-                                       chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
+                                       chartofaccounts.AccountCode,chartofaccounts.AccountDescription,chartofaccounts.controlAccountsSystemID,
                                        erp_companyreporttemplatedetails.description as templateDetailDescription,
                                        erp_companyreporttemplatedetails.detID as templatesMasterAutoID,
                                        erp_budjetdetails.*,ifnull(ca.consumed_amount,0) as consumed_amount,ifnull(ppo.rptAmt,0) as pending_po_amount,

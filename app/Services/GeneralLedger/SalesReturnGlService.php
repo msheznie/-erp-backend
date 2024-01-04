@@ -105,9 +105,9 @@ class SalesReturnGlService
             ->get();
 
         //all acoount
-        $COSGAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID, financeGLcodePLSystemID, financeGLcodePL")
+        $COSGAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID, financeCogsGLcodePLSystemID, financeCogsGLcodePL")
             ->WHERE('salesReturnID', $masterModel["autoID"])
-            ->groupBy('financeGLcodePLSystemID')
+            ->groupBy('financeCogsGLcodePLSystemID')
             ->get();
 
         //all acoount
@@ -224,8 +224,8 @@ class SalesReturnGlService
                 foreach ($COSGAc as $val) {
                     $currencyConversionCog = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
 
-                    $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
-                    $data['glCode'] = $val->financeGLcodePL;
+                    $data['chartOfAccountSystemID'] = $val->financeCogsGLcodePLSystemID;
+                    $data['glCode'] = $val->financeCogsGLcodePL;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $val->transCurrencyID;

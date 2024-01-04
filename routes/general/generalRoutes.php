@@ -1,5 +1,11 @@
 <?php
 
+Route::group(['middleware' => 'max_memory_limit'], function () {
+    Route::group(['middleware' => 'max_execution_limit'], function () {
+        Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload')->name("Master data bulk upload");
+        Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')->name("Export Record");
+    });
+});
 
 Route::resource('document_attachments', 'DocumentAttachmentsAPIController');  
 Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
@@ -9,7 +15,6 @@ Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPICon
 
 Route::get('downloadTemplate', 'CustomerMasterAPIController@downloadTemplate')->name('Master data bulk upload template');
 Route::get('getExampleTableData', 'ExampleTableTemplateAPIController@getExampleTableData')->name("Get example table for upload");
-Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload')->name("Master data bulk upload");
 Route::post('getUserActivityLog', 'UserActivityLogAPIController@getViewLog')->name("Get user Activity log");
 
 Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany')->name("Get Search Customer By Company");
@@ -41,8 +46,7 @@ Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcure
 Route::get('getDocumentTracingData', 'ProcumentOrderAPIController@getDocumentTracingData')->name('Get document tracing data');
 Route::get('checkBudgetShowPolicy', 'BudgetMasterAPIController@checkBudgetShowPolicy')->name('Check budget show policy');
 
-Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights');
-Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData')->name('Get grv form data');
+Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights'); //!! Do not add route name to this route !!
 Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod')->name('Get all finance period');
 Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany')->name('Get search supplier by company');
 
@@ -56,8 +60,6 @@ Route::post('generateSegmentGlReportExcel', 'GeneralLedgerAPIController@generate
 Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCategoryFormData')->name('Get vat category form data');
 Route::post('updateItemVatCategories', 'TaxVatCategoriesAPIController@updateItemVatCategories')->name('Update item vat categories');
 Route::get('getInvoiceDetailsForDeliveryOrderPrintView', 'DeliveryOrderAPIController@getInvoiceDetailsForDeliveryOrderPrintView')->name('Get invoice details for delivery order print view');
-
-Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')->name("Export Record");
 
 Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails')->name("Get Document Details");
 Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY')->name("Get All Finance Period Based FY");

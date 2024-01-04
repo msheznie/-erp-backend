@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+  pull-requests: write
+
+name: release-please
+
+jobs:
+  release-please:
+    runs-on: arc-runner-set
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        with:
+          release-type: node
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          pull-request-header: ":robot: *beep* *boop* I have created a release"
+          # command: manifest

@@ -155,7 +155,7 @@ class DeliveryOrderGlService
 
         $bs = DeliveryOrderDetail::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
         //get pnl account
-        $pl = DeliveryOrderDetail::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
+        $pl = DeliveryOrderDetail::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeCogsGLcodePLSystemID,financeCogsGLcodePL,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeCogsGLcodePLSystemID')->where('financeCogsGLcodePLSystemID', '>', 0)->groupBy('financeCogsGLcodePLSystemID')->get();
 
         $revenue = DeliveryOrderDetail::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * (companyLocalAmount - (companyLocalAmount*discountPercentage/100))) as localAmount, SUM(qtyIssuedDefaultMeasure * (companyReportingAmount - (companyReportingAmount*discountPercentage/100))) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
 
@@ -184,8 +184,8 @@ class DeliveryOrderGlService
 
         if ($pl) {
             foreach ($pl as $item) {
-                $data['chartOfAccountSystemID'] = $item->financeGLcodePLSystemID;
-                $data['glCode'] = $item->financeGLcodePL;
+                $data['chartOfAccountSystemID'] = $item->financeCogsGLcodePLSystemID;
+                $data['glCode'] = $item->financeCogsGLcodePL;
                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
