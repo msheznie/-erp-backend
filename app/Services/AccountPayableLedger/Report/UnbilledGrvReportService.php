@@ -74,7 +74,7 @@ class UnbilledGrvReportService
                 $data[$x]['Supplier Code'] = $val->supplierCode;
                 $data[$x]['Supplier Name'] = $val->supplierName;
                 $data[$x]['Doc Number'] = $val->documentCode;
-                $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
+                $data[$x]['Doc Date'] = ($val->documentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($val->documentDate)) : null;
                 if ($request->currencyID == 2) {
                     $decimal = 3;
                     $data[$x]['Doc Value (Local Currency)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));

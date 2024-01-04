@@ -1295,7 +1295,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
                     $from_date = ((new Carbon($from_date))->format('d/m/Y'));
-
+                    $dataType=2;
                     if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
                         $fileName = 'Unbilled GRV Detail Report ';
                         $title = 'Unbilled GRV Detail Report ';
@@ -1317,6 +1317,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
                         $fileName = 'Unbilled GRV Aging Detail';
                         $title = 'Unbilled GRV Aging Detail Report';
+                        $dataType = 1;
                         $output = $this->getUnbilledGRVDetailAgingQRY($request);
                         $name = "aging_detail";
                         $data = $unbilledGrvReportService->getUnbilledGrvAgingDetailExportToExcelData($output,$request);
@@ -1360,7 +1361,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         ->setReportType(2)
                         ->setType('xls')
                         ->setCurrency($requestCurrency)
-                        ->setDateType(2)
+                        ->setDateType($dataType)
                         ->setExcelFormat($excelColumnFormat)
                         ->setDetails()
                         ->generateExcel();
