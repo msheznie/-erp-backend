@@ -2,6 +2,8 @@
 
 namespace App\Exports\GeneralLedger\VAT;
 
+use App\helper\Helper;
+
 class VatDetailReport
 {
     public $companyCodeInErp;
@@ -187,7 +189,7 @@ class VatDetailReport
      */
     public function setAccountingDocumentDate($accountingDocumentDate): void
     {
-        $this->accountingDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($accountingDocumentDate);
+        $this->accountingDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($accountingDocumentDate));
     }
 
     /**
@@ -315,7 +317,7 @@ class VatDetailReport
      */
     public function setOriginalDocumentDate($originalDocumentDate): void
     {
-        $this->originalDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($originalDocumentDate);
+        $this->originalDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($originalDocumentDate));
     }
 
     /**

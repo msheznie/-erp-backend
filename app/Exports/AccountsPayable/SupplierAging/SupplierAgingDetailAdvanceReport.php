@@ -2,6 +2,8 @@
 
 namespace App\Exports\AccountsPayable\SupplierAging;
 
+use App\helper\Helper;
+
 class SupplierAgingDetailAdvanceReport
 {
     public $companyID;
@@ -83,7 +85,7 @@ class SupplierAgingDetailAdvanceReport
      */
     public function setDocumentDate($documentDate): void
     {
-        $this->documentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($documentDate);
+        $this->documentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($documentDate));
     }
 
     /**
@@ -139,7 +141,7 @@ class SupplierAgingDetailAdvanceReport
      */
     public function setInvoiceDate($invoiceDate): void
     {
-        $this->invoiceDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($invoiceDate);
+        $this->invoiceDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDate));
     }
 
     /**

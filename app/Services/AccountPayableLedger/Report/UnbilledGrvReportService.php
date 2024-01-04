@@ -119,25 +119,25 @@ class UnbilledGrvReportService
                 $objUnbilledGrvAgingSummaryReport->setSupplierCode($val->supplierCode);
                 $objUnbilledGrvAgingSummaryReport->setSupplierName($val->supplierName);
                 if ($request->currencyID == 2) {
-                    $objUnbilledGrvAgingSummaryReport->setDocValueCurerncy(number_format($val->documentLocalAmount, $decimal));
-                    $objUnbilledGrvAgingSummaryReport->setMatchedValueCurrency(number_format($val->matchedLocalAmount, $decimal));
-                    $objUnbilledGrvAgingSummaryReport->setBalanceCurrency(number_format($val->balanceLocalAmount, $decimal));
+                    $objUnbilledGrvAgingSummaryReport->setDocValueCurerncy(CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmount, $decimal)));
+                    $objUnbilledGrvAgingSummaryReport->setMatchedValueCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->matchedLocalAmount, $decimal)));
+                    $objUnbilledGrvAgingSummaryReport->setBalanceCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->balanceLocalAmount, $decimal)));
                 } else {
-                    $objUnbilledGrvAgingSummaryReport->setDocValueCurerncy(number_format($val->documentRptAmount,$decimal));
-                    $objUnbilledGrvAgingSummaryReport->setMatchedValueCurrency(number_format($val->matchedRptAmount, $decimal));
-                    $objUnbilledGrvAgingSummaryReport->setBalanceCurrency(number_format($val->balanceRptAmount, $decimal));
+                    $objUnbilledGrvAgingSummaryReport->setDocValueCurerncy(CurrencyService::convertNumberFormatToNumber(number_format($val->documentRptAmount,$decimal)));
+                    $objUnbilledGrvAgingSummaryReport->setMatchedValueCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->matchedRptAmount, $decimal)));
+                    $objUnbilledGrvAgingSummaryReport->setBalanceCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->balanceRptAmount, $decimal)));
                 }
 
-                $objUnbilledGrvAgingSummaryReport->setLessThan30(number_format($val->case1, $decimal));
-                $objUnbilledGrvAgingSummaryReport->setColumn2(number_format($val->case2, $decimal));
-                $objUnbilledGrvAgingSummaryReport->setColumn3(number_format($val->case3, $decimal));
-                $objUnbilledGrvAgingSummaryReport->setColumn4(number_format($val->case4, $decimal));
-                $objUnbilledGrvAgingSummaryReport->setColumn5(number_format($val->case5, $decimal));
-                $objUnbilledGrvAgingSummaryReport->setColumn6(number_format($val->case6, $decimal));
-                $objUnbilledGrvAgingSummaryReport->setColumn7(number_format($val->case7, $decimal));
-                $objUnbilledGrvAgingSummaryReport->setColumn8(number_format($val->case8, $decimal));
-                $objUnbilledGrvAgingSummaryReport->setColumn9(number_format($val->case9, $decimal));
-                $objUnbilledGrvAgingSummaryReport->setColumn10(number_format($val->case10, $decimal));
+                $objUnbilledGrvAgingSummaryReport->setLessThan30(CurrencyService::convertNumberFormatToNumber(number_format($val->case1, $decimal)));
+                $objUnbilledGrvAgingSummaryReport->setColumn2(CurrencyService::convertNumberFormatToNumber(number_format($val->case2, $decimal)));
+                $objUnbilledGrvAgingSummaryReport->setColumn3(CurrencyService::convertNumberFormatToNumber(number_format($val->case3, $decimal)));
+                $objUnbilledGrvAgingSummaryReport->setColumn4(CurrencyService::convertNumberFormatToNumber(number_format($val->case4, $decimal)));
+                $objUnbilledGrvAgingSummaryReport->setColumn5(CurrencyService::convertNumberFormatToNumber(number_format($val->case5, $decimal)));
+                $objUnbilledGrvAgingSummaryReport->setColumn6(CurrencyService::convertNumberFormatToNumber(number_format($val->case6, $decimal)));
+                $objUnbilledGrvAgingSummaryReport->setColumn7(CurrencyService::convertNumberFormatToNumber(number_format($val->case7, $decimal)));
+                $objUnbilledGrvAgingSummaryReport->setColumn8(CurrencyService::convertNumberFormatToNumber(number_format($val->case8, $decimal)));
+                $objUnbilledGrvAgingSummaryReport->setColumn9(CurrencyService::convertNumberFormatToNumber(number_format($val->case9, $decimal)));
+                $objUnbilledGrvAgingSummaryReport->setColumn10(CurrencyService::convertNumberFormatToNumber(number_format($val->case10, $decimal)));
 
                 array_push($data,collect($objUnbilledGrvAgingSummaryReport)->toArray());
             }
@@ -162,13 +162,13 @@ class UnbilledGrvReportService
                 $objUnbilledGrvLogisticDetails->setSupplierCode($val->primarySupplierCode);
                 $objUnbilledGrvLogisticDetails->setSupplierName($val->supplierName);
                 $objUnbilledGrvLogisticDetails->setTranscationCurrency($val->TransactionCurrencyCode);
-                $objUnbilledGrvLogisticDetails->setLogisticAmountTrans(number_format($val->LogisticAmountTransaction, $val->TransactionCurrencyDecimalPlaces));
+                $objUnbilledGrvLogisticDetails->setLogisticAmountTrans(CurrencyService::convertNumberFormatToNumber(number_format($val->LogisticAmountTransaction, $val->TransactionCurrencyDecimalPlaces)));
                 $objUnbilledGrvLogisticDetails->setRptCurrency($val->RptCurrencyCode);
-                $objUnbilledGrvLogisticDetails->setLogisticAmountRpt(number_format($val->LogisticAmountRpt, $val->RptCurrencyDecimalPlaces));
-                $objUnbilledGrvLogisticDetails->setPaidAmountTrans(number_format($val->PaidAmountTrans, $val->TransactionCurrencyDecimalPlaces));
-                $objUnbilledGrvLogisticDetails->setPaidAmountRpt(number_format($val->PaidAmountRpt, $val->RptCurrencyDecimalPlaces));
-                $objUnbilledGrvLogisticDetails->setBalanceTrans(number_format($val->BalanceTransAmount, $val->TransactionCurrencyDecimalPlaces));
-                $objUnbilledGrvLogisticDetails->setBalanceRpt(number_format($val->BalanceRptAmount, $val->RptCurrencyDecimalPlaces));
+                $objUnbilledGrvLogisticDetails->setLogisticAmountRpt(CurrencyService::convertNumberFormatToNumber(number_format($val->LogisticAmountRpt, $val->RptCurrencyDecimalPlaces)));
+                $objUnbilledGrvLogisticDetails->setPaidAmountTrans(CurrencyService::convertNumberFormatToNumber(number_format($val->PaidAmountTrans, $val->TransactionCurrencyDecimalPlaces)));
+                $objUnbilledGrvLogisticDetails->setPaidAmountRpt(CurrencyService::convertNumberFormatToNumber(number_format($val->PaidAmountRpt, $val->RptCurrencyDecimalPlaces)));
+                $objUnbilledGrvLogisticDetails->setBalanceTrans(CurrencyService::convertNumberFormatToNumber(number_format($val->BalanceTransAmount, $val->TransactionCurrencyDecimalPlaces)));
+                $objUnbilledGrvLogisticDetails->setBalanceRpt(CurrencyService::convertNumberFormatToNumber(number_format($val->BalanceRptAmount, $val->RptCurrencyDecimalPlaces)));
 
                 array_push($data,collect($objUnbilledGrvLogisticDetails)->toArray());
             }

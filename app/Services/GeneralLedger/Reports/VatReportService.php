@@ -3,6 +3,7 @@
 namespace App\Services\GeneralLedger\Reports;
 
 use App\Exports\GeneralLedger\VAT\InputOutputVatReport;
+use App\Services\Currency\CurrencyService;
 
 class VatReportService
 {
@@ -31,7 +32,7 @@ class VatReportService
         $documentReportingAmountTotal = 0;
         $localAmountTotal = 0;
         $documentLocalAmountTotal = 0;
-
+        $localDecimalPlaces = 2;
         if(empty($dataArray)) {
             $headerObj = $this->setHeaderObj();
             array_push($dataArray,collect($headerObj)->toArray());
@@ -82,11 +83,11 @@ class VatReportService
 
             $localDecimalPlaces = isset($val->localcurrency->DecimalPlaces) ? $val->localcurrency->DecimalPlaces : 3;
             $rptDecimalPlaces = isset($val->rptcurrency->DecimalPlaces) ? $val->rptcurrency->DecimalPlaces : 2;
-            $inputOutputVatReport->setDocumentTotalAmount($val->documentLocalAmount);
-            $inputOutputVatReport->setDocumentVatAmount($val->localAmount);
+            $inputOutputVatReport->setDocumentTotalAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmount),$localDecimalPlaces));
+            $inputOutputVatReport->setDocumentVatAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->localAmount,$localDecimalPlaces)));
             if(isset($input['currencyID'])&&$input['currencyID']==2){
-                $inputOutputVatReport->setDocumentTotalAmount(number_format($val->documentReportingAmount,$rptDecimalPlaces));
-                $inputOutputVatReport->setDocumentVatAmount(number_format($val->rptAmount,$rptDecimalPlaces));
+                $inputOutputVatReport->setDocumentTotalAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->documentReportingAmount,$rptDecimalPlaces)));
+                $inputOutputVatReport->setDocumentVatAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->rptAmount,$rptDecimalPlaces)));
             }
 
             isset($val->main_category->mainCategoryDescription) ? $inputOutputVatReport->setVatMainCategory($val->main_category->mainCategoryDescription) : $inputOutputVatReport->setVatMainCategory('-');
@@ -101,13 +102,13 @@ class VatReportService
 
         $lastRowData = new InputOutputVatReport();
         $lastRowData->setApporvedBy('Total');
-        $lastRowData->setDocumentTotalAmount(number_format($documentLocalAmountTotal,$localDecimalPlaces));
-        $lastRowData->setDocumentVatAmount(number_format($localAmountTotal,$localDecimalPlaces));
+        $lastRowData->setDocumentTotalAmount(CurrencyService::convertNumberFormatToNumber(number_format($documentLocalAmountTotal,$localDecimalPlaces)));
+        $lastRowData->setDocumentVatAmount(CurrencyService::convertNumberFormatToNumber(number_format($localAmountTotal,$localDecimalPlaces)));
 
 
         if(isset($input['currencyID'])&&$input['currencyID']==2){
-            $lastRowData->setDocumentTotalAmount(number_format($documentReportingAmountTotal,$rptDecimalPlaces));
-            $lastRowData->setDocumentVatAmount(number_format($rptAmountTotal,$rptDecimalPlaces));
+            $lastRowData->setDocumentTotalAmount(CurrencyService::convertNumberFormatToNumber(number_format($documentReportingAmountTotal,$rptDecimalPlaces)));
+            $lastRowData->setDocumentVatAmount(CurrencyService::convertNumberFormatToNumber(number_format($rptAmountTotal,$rptDecimalPlaces)));
         }
 
         array_push($dataArray,collect($lastRowData)->toArray());

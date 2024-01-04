@@ -2,6 +2,8 @@
 
 namespace App\Exports\AccountsPayable\UnbilledGRV;
 
+use App\helper\Helper;
+
 class UnbilledGrvDetailsReport
 {
     public $companyId;
@@ -89,7 +91,7 @@ class UnbilledGrvDetailsReport
     public function setDocDate($docDate): void
     {
 
-        $this->docDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($docDate);
+        $this->docDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($docDate));
     }
 
     /**

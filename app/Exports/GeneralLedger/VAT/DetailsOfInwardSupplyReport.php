@@ -2,6 +2,8 @@
 
 namespace App\Exports\GeneralLedger\VAT;
 
+use App\helper\Helper;
+
 class DetailsOfInwardSupplyReport
 {
     public $companyCodeInErp;
@@ -157,7 +159,7 @@ class DetailsOfInwardSupplyReport
      */
     public function setAccountingDocumentDate($accountingDocumentDate): void
     {
-        $this->accountingDocumentDate = $accountingDocumentDate;
+        $this->accountingDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($accountingDocumentDate));
     }
 
     /**
@@ -213,7 +215,7 @@ class DetailsOfInwardSupplyReport
      */
     public function setOriginalDocumentDate($originalDocumentDate): void
     {
-        $this->originalDocumentDate = $originalDocumentDate;
+        $this->originalDocumentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($originalDocumentDate));
     }
 
     /**
@@ -221,7 +223,7 @@ class DetailsOfInwardSupplyReport
      */
     public function setPaymentDueDate($paymentDueDate): void
     {
-        $this->paymentDueDate = $paymentDueDate;
+        $this->paymentDueDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($paymentDueDate));
     }
 
     /**
@@ -245,7 +247,7 @@ class DetailsOfInwardSupplyReport
      */
     public function setReferenceInvoiceDate($referenceInvoiceDate): void
     {
-        $this->referenceInvoiceDate = $referenceInvoiceDate;
+        $this->referenceInvoiceDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($referenceInvoiceDate));
     }
 
     /**

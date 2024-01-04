@@ -2,6 +2,8 @@
 
 namespace App\Exports\AccountsPayable\UnbilledGRV;
 
+use App\helper\Helper;
+
 class UnbilledGrvAgingSummaryReport
 {
     public $companyId;
@@ -27,6 +29,19 @@ class UnbilledGrvAgingSummaryReport
     {
         return [
             'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
         ];
     }
     public function getHeader($currencyId) :Array {
@@ -113,7 +128,7 @@ class UnbilledGrvAgingSummaryReport
      */
     public function setDocDate($docDate): void
     {
-        $this->docDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($docDate);
+        $this->docDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($docDate));
     }
 
     /**

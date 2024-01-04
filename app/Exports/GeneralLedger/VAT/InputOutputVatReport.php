@@ -2,6 +2,8 @@
 
 namespace App\Exports\GeneralLedger\VAT;
 
+use App\helper\Helper;
+
 class InputOutputVatReport
 {
 
@@ -118,7 +120,7 @@ class InputOutputVatReport
     {
 
         if($isDate) {
-            $this->documentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($documentDate);
+            $this->documentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($documentDate));
         }else {
             $this->documentDate = $documentDate;
         }

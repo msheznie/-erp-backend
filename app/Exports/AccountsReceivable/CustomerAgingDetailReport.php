@@ -2,6 +2,8 @@
 
 namespace App\Exports\AccountsReceivable;
 
+use App\helper\Helper;
+
 class CustomerAgingDetailReport
 {
     public $companyID;
@@ -113,7 +115,7 @@ class CustomerAgingDetailReport
      */
     public function setDocumentDate($documentDate): void
     {
-        $this->documentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($documentDate);
+        $this->documentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($documentDate));
     }
 
     /**
@@ -185,7 +187,7 @@ class CustomerAgingDetailReport
      */
     public function setInvoiceDate($invoiceDate): void
     {
-        $this->invoiceDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($invoiceDate);
+        $this->invoiceDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDate));
     }
 
     /**
@@ -193,7 +195,7 @@ class CustomerAgingDetailReport
      */
     public function setInvoiceDueDate($invoiceDueDate): void
     {
-        $this->invoiceDueDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($invoiceDueDate);
+        $this->invoiceDueDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDueDate));
     }
 
     /**

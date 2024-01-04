@@ -2,6 +2,8 @@
 
 namespace App\Exports\AccountsPayable\UnbilledGRV;
 
+use App\helper\Helper;
+
 class UnbilledGrvLogisticDetails
 {
     public $companyId;
@@ -76,7 +78,7 @@ class UnbilledGrvLogisticDetails
      */
     public function setGrvDate($grvDate): void
     {
-        $this->grvDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($grvDate);
+        $this->grvDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($grvDate));
     }
 
     /**
