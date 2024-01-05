@@ -637,6 +637,10 @@ class FinancialReportAPIController extends AppBaseController
 
         
             $companyID = $request->comapnyID;
+            if($companyID == null)
+            {
+                return $this->sendError('Company ID found');
+            }
 
             $companyCurrency = \Helper::companyCurrency($companyID);
 
