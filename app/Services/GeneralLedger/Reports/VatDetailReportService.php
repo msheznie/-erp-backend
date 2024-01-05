@@ -173,7 +173,7 @@ class VatDetailReportService
             $objLastVatDetailReport->setValueExculdingInDocumentCurency(CurrencyService::convertNumberFormatToNumber(number_format($taxableAmountTotal, $transdecimalPlace)));
             $objLastVatDetailReport->setVatInDocumentCurrency(CurrencyService::convertNumberFormatToNumber(number_format($VATAmountTotal, $transdecimalPlace)));
             $objLastVatDetailReport->setValueExculdingInLocalCurency(CurrencyService::convertNumberFormatToNumber(number_format($taxableAmountLocalTotal, $transdecimalPlace)));
-            $objLastVatDetailReport->setValueExculdingInLocalCurency(CurrencyService::convertNumberFormatToNumber(number_format($VATAmountLocalTotal, $transdecimalPlace)));
+            $objLastVatDetailReport->setVatInLocalCurrency(CurrencyService::convertNumberFormatToNumber(number_format($VATAmountLocalTotal, $transdecimalPlace)));
             array_push($dataArray,collect($objLastVatDetailReport)->toArray());
         }
         if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
@@ -182,7 +182,7 @@ class VatDetailReportService
             $objLastVatDetailReport->setValueExculdingInDocumentCurency(CurrencyService::convertNumberFormatToNumber(number_format($taxableAmountTotal, $transdecimalPlace)));
             $objLastVatDetailReport->setVatInDocumentCurrency(CurrencyService::convertNumberFormatToNumber(number_format($VATAmountTotal, $transdecimalPlace)));
             $objLastVatDetailReport->setValueExculdingInLocalCurency(CurrencyService::convertNumberFormatToNumber(number_format($taxableAmountLocalTotal, $transdecimalPlace)));
-            $objLastVatDetailReport->setValueExculdingInLocalCurency(CurrencyService::convertNumberFormatToNumber(number_format($VATAmountLocalTotal, $transdecimalPlace)));
+            $objLastVatDetailReport->setVatInLocalCurrency(CurrencyService::convertNumberFormatToNumber(number_format($VATAmountLocalTotal, $transdecimalPlace)));
             $objLastVatDetailReport->setInputTaxRecoverability("");
             $objLastVatDetailReport->setInputTaxRecoverabilityPercentage("");
             $objLastVatDetailReport->setInputTaxRecoverabilityAmount(CurrencyService::convertNumberFormatToNumber(number_format($recoverabilityAmountTotal, $transdecimalPlace)));
