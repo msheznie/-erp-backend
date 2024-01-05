@@ -979,13 +979,17 @@ class PosAPIController extends AppBaseController
                                                             customermaster.isCustomerActive,
                                                             customermaster.primaryCompanySystemID,
                                                             customermaster.primaryCompanyID,
-                                                            customerassigned.isActive as isActive
+                                                            customerassigned.isActive as isActive,
+                                                            CASE WHEN pos_source_customermaster.customerAutoID IS NULL THEN 0
+                                                                 ELSE pos_source_customermaster.customerAutoID
+                                                            END AS posCustomerID
                                                         ')
                                                 ->join('customerassigned', 'customerassigned.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
                                                 ->join('countrymaster', 'countrymaster.countryID', '=', 'customermaster.customerCountry')
                                                 ->join('customercontactdetails', 'customercontactdetails.customerID', '=', 'customermaster.customerCodeSystem')
                                                 ->join('customercurrency as custcur', 'custcur.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
                                                 ->join('currencymaster', 'currencymaster.currencyID', '=', 'custcur.currencyID')
+                                                ->leftjoin('pos_source_customermaster', 'pos_source_customermaster.erp_customer_master_id', '=', 'customermaster.customerCodeSystem')
                                                 ->where('customermaster.customerCodeSystem', '!=', '')
                                                 ->where('isCustomerActive', '=', 1)
                                                 ->where('customerassigned.companySystemID', '=', $company_id)
