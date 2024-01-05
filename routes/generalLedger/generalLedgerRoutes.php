@@ -245,8 +245,12 @@ Route::group([], function(){
     Route::post('validateVATReport', 'VATReportAPIController@validateVATReport')->name('Validate VAT report');
     Route::post('generateVATReport', 'VATReportAPIController@generateVATReport')->name('Generate VAT report');
     Route::post('generateVATDetailReport', 'VATReportAPIController@generateVATDetailReport')->name('Generate VAT detail report');
-    Route::post('exportVATReport', 'VATReportAPIController@exportVATReport')->name('Export VAT report');
-    Route::post('exportVATDetailReport', 'VATReportAPIController@exportVATDetailReport')->name('Export VAT detail report');
+    Route::group(['middleware' => 'max_memory_limit'], function () {
+        Route::group(['middleware' => 'max_execution_limit'], function () {
+            Route::post('exportVATReport', 'VATReportAPIController@exportVATReport')->name('Export VAT report');
+            Route::post('exportVATDetailReport', 'VATReportAPIController@exportVATDetailReport')->name('Export VAT detail report');
+        });
+    });
     Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees')->name('Get ALL Employees');
     Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports')->name('Get Cash Flow Reports');
     Route::post('cashFlowConfirmation', 'CashFlowReportAPIController@cashFlowConfirmation')->name('Cash flow confirmation');
