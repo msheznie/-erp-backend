@@ -2494,7 +2494,7 @@ ORDER BY
     public function getSupplierCategoryList(Request $request)
     {
         try {
-            return SupplierCategoryMaster::orderBy('categoryDescription', 'asc')
+            return SupplierCategoryMaster::orderBy('categoryName', 'asc')
                 ->get();
         } catch (\Exception $ex) {
             return [];
