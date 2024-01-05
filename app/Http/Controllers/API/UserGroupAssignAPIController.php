@@ -74,7 +74,9 @@ class UserGroupAssignAPIController extends AppBaseController
     public function store(CreateUserGroupAssignAPIRequest $request)
     { 
         $input = $request->all();
-        DB::table('srp_erp_navigationusergroupsetup')->where('companyID', '=', $input["companyID"])->where('userGroupID', '=', $input["userGroupID"])->delete();
+        if(isset(input["companyID"]) && $input["userGroupID"]) {
+            DB::table('srp_erp_navigationusergroupsetup')->where('companyID', '=', $input["companyID"])->where('userGroupID', '=', $input["userGroupID"])->delete();
+        }
         $navigation = array();
         if ($input["navigation"]) {
             foreach ($input["navigation"] as $val) {
