@@ -2370,12 +2370,13 @@ ORDER BY
             ->where('isActive', 1)
             ->where('isAssigned', -1)
             ->where('supEmail', '!=', null)
-            ->where('registrationNumber', '!=', null)
-            ->whereHas('businessCategoryAssigned', function ($query) use ($selectedCategoryIds) {
-                if (sizeof($selectedCategoryIds) != 0) {
-                    $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
-                }
-            });
+            ->where('registrationNumber', '!=', null);
+
+            if(sizeof($selectedCategoryIds) != 0) {
+                $qry = $qry->whereHas('businessCategoryAssigned', function ($query) use ($selectedCategoryIds) {
+                        $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
+                });
+            }
 
         $search = $request->input('search.value');
         if ($search) {
