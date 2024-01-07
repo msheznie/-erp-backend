@@ -1008,6 +1008,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 }
             }
 
+        $input =  MaterialIssueService::getItemDetailsForMaterialIssueUpdate($input);
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
 
 
@@ -1231,23 +1232,42 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input = $request->all();
         $rId = $input['itemIssueAutoID'];
 
+        $materialIssue = ItemIssueMaster::where('itemIssueAutoID',$rId)->first();
+        $materielRequestId = $materialIssue->reqDocID;
+
         $items = ItemIssueDetails::where('itemIssueAutoID', $rId)
             ->with(['uom_default', 'uom_issuing','item_by'])
             ->skip($input['skip'])->take($input['limit'])->get();
 
         $index = $input['skip'] + 1;
-
+        $materialIssueObj = ItemIssueMaster::where('reqDocID',$materielRequestId)->whereNotIn('itemIssueAutoID',[$rId])->get();
+        $issuedTotal = 0;
+        $itemIdArray = array();
         foreach ($items as $item) {
             $item['index'] = $index;
             $index++;
             $issueUnit = Unit::all();
-
             $issueUnits = array();
+           foreach ($materialIssueObj as $mi) {
+               if($mi->itemIssueAutoID < $rId) {
+                   // item loop twice
+                   $issuedItem = $mi->details()->where('itemCodeSystem',$item->itemCodeSystem)->first();
+                   if(isset($issuedItem)) {
+                       if(!collect($itemIdArray)->contains($issuedItem->itemIssueDetailID)) {
+                           array_push($itemIdArray,$issuedItem->itemIssueDetailID);
+                           $issuedTotal += $issuedItem->qtyIssued;
+
+                       }
+
+                   }
+
+               }
+           }
             foreach ($issueUnit as $unit) {
                 $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
                 array_push($issueUnits, $temArray);
             }
-
+            $item['prev_issued_qnty'] = $issuedTotal;
             $item->issueUnits = $issueUnits;
         }
 
@@ -1320,7 +1340,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                             $totalIssuedQty = 0;
                             $totalQuantityRequested = $materialRequestQty->quantityRequested;
                             foreach ($materielIssue as $mi) {
-                                $totalIssuedQty += $mi->details->sum('qtyIssued');
+                                $totalIssuedQty += $mi->details()->where('itemCodeSystem',$item->itemCode)->sum('qtyIssued');
                             }
 
                             $temp = array(
