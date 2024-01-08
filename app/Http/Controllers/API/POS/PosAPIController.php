@@ -992,6 +992,8 @@ class PosAPIController extends AppBaseController
                                                 ->leftjoin('pos_source_customermaster', 'pos_source_customermaster.erp_customer_master_id', '=', 'customermaster.customerCodeSystem')
                                                 ->where('customermaster.customerCodeSystem', '!=', '')
                                                 ->where('isCustomerActive', '=', 1)
+                                                ->where('custcur.isDefault', '=', -1)
+                                                ->where('customercontactdetails.isDefault', '=', -1)
                                                 ->where('customerassigned.companySystemID', '=', $company_id)
                                                 ->where('customerassigned.isAssigned', '=', -1);
 
