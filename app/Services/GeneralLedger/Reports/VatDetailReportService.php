@@ -95,7 +95,7 @@ class VatDetailReportService
                 isset($val->output_vat->AccountDescription) ? $objVatDetailReport->setVatGlDescription($val->output_vat->AccountDescription) : "";
             }
 
-            if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 4) {
+            if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
                 $objVatDetailReport = new DetailsOfInwardSupplyReport();
                 isset($val->company->CompanyID) ? $objVatDetailReport->setCompanyCodeInErp($val->company->CompanyID) :  $objVatDetailReport->setCompanyCodeInErp("-");
                 isset($val->company->CompanyID) ?  $objVatDetailReport->setCompanyVatRegistrationNumber($val->company->CompanyID) : "";
