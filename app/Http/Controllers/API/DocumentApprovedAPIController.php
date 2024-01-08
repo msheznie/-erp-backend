@@ -3199,10 +3199,12 @@ WHERE
             } else {
                 return $this->sendResponse(array(), $approve["message"]);
             }
-        }else if ($request->input('documentSystemID') && ($request->input('documentSystemID') == 107 )){
+        }else if ($request->input('documentSystemID') && ($request->input('documentSystemID') == 107 ))
+        { 
             $requestData['id'] =$request->input('documentSystemCode');
             $requestData['api_key'] =$apiKey;
             $requestData['uuid'] = $this->getSupplierUUID($requestData['id']);
+            $requestData['company_id'] = $request->input('companySystemID');
             $request->merge($requestData);
             $controller =  $this->getController();
             $result = $controller->approveSupplierKYC($request);
