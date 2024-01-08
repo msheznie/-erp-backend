@@ -1259,6 +1259,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
                        }
 
+                   }else {
+                       $issuedTotal = 0;
                    }
 
                }
