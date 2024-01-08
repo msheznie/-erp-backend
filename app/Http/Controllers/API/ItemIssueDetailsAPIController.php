@@ -1238,28 +1238,24 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $items = ItemIssueDetails::where('itemIssueAutoID', $rId)
             ->with(['uom_default', 'uom_issuing','item_by'])
             ->skip($input['skip'])->take($input['limit'])->get();
-
         $index = $input['skip'] + 1;
         $materialIssueObj = ItemIssueMaster::where('reqDocID',$materielRequestId)->whereNotIn('itemIssueAutoID',[$rId])->get();
-        $issuedTotal = 0;
         $itemIdArray = array();
         foreach ($items as $item) {
             $item['index'] = $index;
+            $issuedTotal = 0;
             $index++;
             $issueUnit = Unit::all();
             $issueUnits = array();
            foreach ($materialIssueObj as $mi) {
                if($mi->itemIssueAutoID < $rId) {
-                   // item loop twice
                    $issuedItem = $mi->details()->where('itemCodeSystem',$item->itemCodeSystem)->first();
                    if(isset($issuedItem)) {
                        if(!collect($itemIdArray)->contains($issuedItem->itemIssueDetailID)) {
                            array_push($itemIdArray,$issuedItem->itemIssueDetailID);
-                           if($issuedItem->itemCodeSystem == $item->itemCodeSystem) {
+                       }
+                       if($issuedItem->itemCodeSystem == $item->itemCodeSystem) {
                                $issuedTotal += $issuedItem->qtyIssued;
-                           }
-
-
                        }
 
                    }else {
@@ -1275,7 +1271,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $item['prev_issued_qnty'] = $issuedTotal;
             $item->issueUnits = $issueUnits;
         }
-
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 
