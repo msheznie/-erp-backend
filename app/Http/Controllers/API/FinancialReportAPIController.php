@@ -641,7 +641,6 @@ class FinancialReportAPIController extends AppBaseController
             {
                 return $this->sendError('Company ID found');
             }
-
             $companyCurrency = \Helper::companyCurrency($companyID);
 
             $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
@@ -3744,7 +3743,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     $data[$x]['Reporting Debit Amount'] = 'Reporting Debit Amount';
                     $data[$x]['Reporting Credit Amount'] = 'Reporting Credit Amount';
 
-                    $data[$x]['Created User'] = 'Created User';
                     if (in_array('confi_name', $extraColumns)) {
                         $data[$x]['Confirmed User'] = 'Confirmed User';
                     }
@@ -3801,7 +3799,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                             $data[$x]['Reporting Currency'] = $currencyRpt;
                             $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->rptDebit, $decimalPlaceRpt));
                             $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->rptCredit, $decimalPlaceRpt));
-                            $data[$x]['Created User'] = $val->documentNarration == "Opening Balance" ? "" : $val->createdBy;
+
                             if (in_array('confi_name', $extraColumns)) {
                                 $data[$x]['Confirmed User'] = $val->documentNarration == "Opening Balance" ? "" : $val->confirmedBy;
                             }
@@ -3855,7 +3853,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt, $decimalPlaceRpt));
                         $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRpt, $decimalPlaceRpt));
 
-                        $data[$x]['Created User'] = '';
                         if (in_array('confi_name', $extraColumns)) {
                             $data[$x]['Confirmed User'] = '';
                         }
@@ -3903,7 +3900,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $data[$x]['Reporting Debit Amount'] = '';
                         $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt-$subTotalCreditRpt, $decimalPlaceRpt));
 
-                        $data[$x]['Created User'] = '';
                         if (in_array('confi_name', $extraColumns)) {
                             $data[$x]['Confirmed User'] = '';
                         }
@@ -3957,7 +3953,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'], $decimalPlaceRpt));
             $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountCredit'], $decimalPlaceRpt));
 
-            $data[$x]['Created User'] = '';
             if (in_array('confi_name', $extraColumns)) {
                 $data[$x]['Confirmed User'] = '';
             }
@@ -4004,7 +3999,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $data[$x]['Reporting Debit Amount'] = '';
             $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit']-$total['documentRptAmountCredit'], $decimalPlaceRpt));
 
-            $data[$x]['Created User'] = '';
             if (in_array('confi_name', $extraColumns)) {
                 $data[$x]['Confirmed User'] = '';
             }
@@ -4081,7 +4075,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->rptCredit, $decimalPlaceRpt));
                     }
 
-                    $data[$x]['Created User'] = $val->documentNarration == "Opening Balance" ? "" : $val->createdBy;
                     if (in_array('confi_name', $extraColumns)) {
                         $data[$x]['Confirmed User'] = $val->documentNarration == "Opening Balance" ? "" : $val->confirmedBy;
                     }
@@ -4143,7 +4136,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt, $decimalPlaceRpt));
                 $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditRpt, $decimalPlaceRpt));
             }
-            $data[$x]['Created User'] = '';
+
             if (in_array('confi_name', $extraColumns)) {
                 $data[$x]['Confirmed User'] = '';
             }
@@ -4195,7 +4188,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $data[$x]['Reporting Debit Amount'] = "";
                 $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt));
             }
-            $data[$x]['Created User'] = '';
+
             if (in_array('confi_name', $extraColumns)) {
                 $data[$x]['Confirmed User'] = '';
             }
@@ -5505,7 +5498,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         erp_templatesglcode.templatesDetailsAutoID as templatesDetailsAutoID,
                         approveEmp.empName as approvedBy,
                         confirmEmp.empName as confirmedBy,
-                        createdEmp.empName as createdBy,
                         erp_generalledger.documentConfirmedDate,
                         erp_generalledger.documentFinalApprovedDate,
                         erp_templatesglcode.templateMasterID,
@@ -5534,8 +5526,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
                         LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
-                        LEFT JOIN employees as createdEmp ON (erp_generalledger.createdUserID = createdEmp.employeeSystemID OR 
-                            erp_generalledger.createdUserSystemID = createdEmp.employeeSystemID)
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
@@ -5581,7 +5571,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         erp_templatesglcode.templatesDetailsAutoID,
                         approveEmp.empName as approvedBy,
                         confirmEmp.empName as confirmedBy,
-                        createdEmp.empName as createdBy,
                         erp_generalledger.documentConfirmedDate,
                         erp_generalledger.documentFinalApprovedDate,
                         erp_templatesglcode.templateMasterID,
@@ -5602,7 +5591,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
                         LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
-                        LEFT JOIN employees as createdEmp ON erp_generalledger.createdUserSystemID = createdEmp.employeeSystemID
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
