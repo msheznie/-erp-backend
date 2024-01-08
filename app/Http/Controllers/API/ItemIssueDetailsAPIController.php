@@ -1255,7 +1255,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
                    if(isset($issuedItem)) {
                        if(!collect($itemIdArray)->contains($issuedItem->itemIssueDetailID)) {
                            array_push($itemIdArray,$issuedItem->itemIssueDetailID);
-                           $issuedTotal += $issuedItem->qtyIssued;
+                           if($issuedItem->itemCodeSystem == $item->itemCodeSystem) {
+                               $issuedTotal += $issuedItem->qtyIssued;
+                           }
+
 
                        }
 
