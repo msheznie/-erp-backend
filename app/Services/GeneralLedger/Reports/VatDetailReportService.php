@@ -118,14 +118,14 @@ class VatDetailReportService
                 else{
                     $objVatDetailReport->setReferenceNo('');
                 }
-                $objVatDetailReport->setAccountingDocumentDate(Helper::dateFormat($val->documentDate));
+                $objVatDetailReport->setAccountingDocumentDate($val->documentDate);
                 $objVatDetailReport->setYear( Carbon::parse($val->documentDate)->format('Y'));
                 $objVatDetailReport->setVatGlCode($val->accountCode);
                 $objVatDetailReport->setVatGlDescription($val->accountDescription);
                 isset($val->transcurrency->CurrencyCode) ? $objVatDetailReport->setDocumentCurrency($val->transcurrency->CurrencyCode) : "";
                 isset($val->document_master->documentDescription) ? $objVatDetailReport->setDocumentType($val->document_master->documentDescription) : "";
                 $objVatDetailReport->setOriginalDocumentNo($val->originalInvoice);
-                $objVatDetailReport->setOriginalDocumentDate(Helper::dateFormat($val->originalInvoiceDate));
+                $objVatDetailReport->setOriginalDocumentDate($val->originalInvoiceDate);
                 $objVatDetailReport->setPaymentDueDate("");
                 $objVatDetailReport->setDateOfSupply($val->dateOfSupply);
                 if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
