@@ -464,10 +464,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             'modifiedUser' => $input['modifiedUser'],
         ];
 
-        $originalData = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
-
 
         if (isset($input['itemCategorySubID'])){
+            $originalData = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
+
             $itemCategorySubUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                     ->update($masterData);
 
