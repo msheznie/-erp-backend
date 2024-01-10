@@ -3322,7 +3322,18 @@ class Helper
                                             $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
                                         }
                                         
-                                        $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
+                                        if($params["document"] == 56 )
+                                        {
+                                            $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->supplierName . '</b>';
+                                            $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->supplierName;
+                                        }
+                                        else
+                                        {
+                                            $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
+                                            $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+                                        }
+
+                                       
 
                                         // if (in_array($params["document"], self::documentListForClickHere())) {
                                         //     if (in_array($params["document"], [1, 50, 51])) {
@@ -3340,7 +3351,7 @@ class Helper
                                         $redirectUrl =  self::checkDomai();
                                         $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
 
-                                        $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+                                    
                                         $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
                                         foreach ($approvalList as $da) {
                                             if ($da->employee) {
@@ -5088,8 +5099,18 @@ class Helper
                                 $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
                             }
 
-                            $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                            $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            if($input["documentSystemID"] == 56)
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $isConfirmed['supplierName'];
+                                $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['supplierName'] . '</b>';
+                            }
+                            else
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                                $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            }
+
+                 
 
                             if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
 
