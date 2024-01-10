@@ -23,7 +23,15 @@ class LokiService
             return $entry;
         }, $data['data']['result']);
 
-        return $logEntriesAsArrays;
+            usort($logEntriesAsArrays, function ($a, $b) {
+                $timestampA = strtotime($a['metric']['log']['date_time']);
+                $timestampB = strtotime($b['metric']['log']['date_time']);
+
+                return $timestampB - $timestampA;
+            });
+
+
+            return $logEntriesAsArrays;
 
         } catch (RequestException $e) {
             if ($e->hasResponse()) {
