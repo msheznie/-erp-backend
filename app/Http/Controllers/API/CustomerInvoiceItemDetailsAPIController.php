@@ -299,7 +299,9 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
             $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
             $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+            $input['financeCogsGLcodePL'] = $financeItemCategorySubAssigned->financeCogsGLcodePL;
+            $input['financeCogsGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeCogsGLcodePLSystemID;
+
             $input['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
             $input['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
         } else {
@@ -675,13 +677,21 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             if ($input['by'] === 'discountPercentage') {
               $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
             } else if ($input['by'] === 'discountAmount') {
-              $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
+                if($input['salesPrice'] > 0){
+                    $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
+                } else {
+                    $input["discountPercentage"] = 0;
+                }
             }
         } else {
             if ($input['discountPercentage'] != 0) {
               $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
             } else {
-              $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
+                if($input['salesPrice'] > 0){
+                    $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
+                } else {
+                    $input["discountPercentage"] = 0;
+                }
             }
         }
 
@@ -697,13 +707,21 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             if ($input['by'] === 'VATPercentage') {
               $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
             } else if ($input['by'] === 'VATAmount') {
-              $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+                if($input['sellingCostAfterMargin'] > 0){
+                    $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+                } else {
+                    $input["VATPercentage"] = 0;
+                }
             }
         } else {
             if ($input['VATPercentage'] != 0) {
               $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
             } else {
-              $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+                if($input['sellingCostAfterMargin'] > 0){
+                    $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+                } else {
+                    $input["VATPercentage"] = 0;
+                }
             }
         }
 
@@ -1806,6 +1824,8 @@ WHERE
                                 $invDetail_arr['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
                                 $invDetail_arr['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
                                 $invDetail_arr['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                                $invDetail_arr['financeCogsGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeCogsGLcodePLSystemID;
+                                $invDetail_arr['financeCogsGLcodePL'] = $financeItemCategorySubAssigned->financeCogsGLcodePL;
                                 $invDetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $invDetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
@@ -1816,6 +1836,8 @@ WHERE
                                 return $this->sendError('BS account cannot be null for ' . $new['itemSystemCode'], 500);
                             }elseif (!$invDetail_arr['financeGLcodePL'] || !$invDetail_arr['financeGLcodePLSystemID']){
                                 return $this->sendError('Cost account cannot be null for ' . $new['itemSystemCode'], 500);
+                            }elseif (!$invDetail_arr['financeCogsGLcodePL'] || !$invDetail_arr['financeCogsGLcodePLSystemID']){
+                                return $this->sendError('COGS GL account cannot be null for ' . $new['itemSystemCode'], 500);
                             }elseif (!$invDetail_arr['financeGLcodeRevenueSystemID'] || !$invDetail_arr['financeGLcodeRevenue']){
                                 return $this->sendError('Revenue account cannot be null for ' . $new['itemSystemCode'], 500);
                             }
@@ -1833,6 +1855,8 @@ WHERE
                             $invDetail_arr['localCurrencyER'] = $quotationMaster->companyLocalExchangeRate;
                             $invDetail_arr['reportingCurrencyID'] = $quotationMaster->companyReportingCurrencyID;
                             $invDetail_arr['reportingCurrencyER'] = $quotationMaster->companyReportingExchangeRate;
+                            $invDetail_arr['part_no'] = $item->secondaryItemCode;
+
 
                             $invDetail_arr['itemUnitOfMeasure'] = $new['unitOfMeasureID'];
                             $invDetail_arr['unitOfMeasureIssued'] = $new['unitOfMeasureID'];

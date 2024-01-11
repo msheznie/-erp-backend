@@ -631,8 +631,8 @@ class PdcDoubleEntry implements ShouldQueue
                                     $payee = CustomerMaster::find($custReceivePayment->customerID);
                                     if ($payee) {
                                         $data['payeeCode'] = $payee->CutomerCode;
+                                        $data['payeeName'] = $payee->CustomerName;
                                     }
-                                    $data['payeeName'] = $custReceivePayment->PayeeName;
                                     $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
                                     $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
                                     $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;

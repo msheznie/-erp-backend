@@ -299,14 +299,17 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
         $details = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $masterID)->first()->toArray();
 
-
         /* selectRaw*/
         CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $masterID)->update($details);
-        
-        $resVat = $this->updateTotalVAT($customerInvoiceDirectDetail->custInvoiceDirectID);
-        if (!$resVat['status']) {
-           return $this->sendError($resVat['message']); 
-        } 
+
+        $master =  CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $masterID)->first();
+        if($master->isPerforma != 2) {
+            $resVat = $this->updateTotalVAT($customerInvoiceDirectDetail->custInvoiceDirectID);
+            if (!$resVat['status']) {
+                return $this->sendError($resVat['message']); 
+             } 
+        }
+
 
         return $this->sendResponse($id, 'Customer Invoice Direct Detail deleted successfully');
     }
@@ -411,7 +414,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             $addToCusInvDetails['invoiceQty'] = 1;
         }
 
-        if ($master->isVatEligible) {
+        if ($master->isVatEligible && $master->isPerforma != 2) {
             $vatDetails = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
             $addToCusInvDetails['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
             $addToCusInvDetails['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
@@ -469,6 +472,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             // return $this->sendError('Please delete tax details to continue');
         }
 
+
         $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($master->documentSystemiD, $master->companySystemID, $id, $input, $master->customerID, $master->isPerforma);
 
         if (!$validateVATCategories['status']) {
@@ -523,19 +527,28 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
         $input['invoiceQty']= ($input['invoiceQty'] != ''?$input['invoiceQty']:0);
         $input['salesPrice']= ($input['salesPrice'] != '' ? $input['salesPrice'] : 0);
-
+        
+        $input['salesPrice'] = floatval($input['salesPrice'] );
 
         if(isset($input['by']) && ($input['by'] == 'discountPercentage' || $input['by'] == 'discountAmountLine')){
             if ($input['by'] === 'discountPercentage') {
               $input["discountAmountLine"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
             } else if ($input['by'] === 'discountAmountLine') {
-              $input["discountPercentage"] = ($input["discountAmountLine"] / $input['salesPrice']) * 100;
+                if($input['salesPrice'] > 0){
+                    $input["discountPercentage"] = ($input["discountAmountLine"] / $input['salesPrice']) * 100;
+                } else {
+                    $input["discountPercentage"] = 0;
+                }
             }
         } else {
             if ($input['discountPercentage'] != 0) {
               $input["discountAmountLine"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
             } else if ($input['discountAmountLine'] != 0){
-              $input["discountPercentage"] = ($input["discountAmountLine"] / $input['salesPrice']) * 100;
+                if($input['salesPrice'] > 0){
+                    $input["discountPercentage"] = ($input["discountAmountLine"] / $input['salesPrice']) * 100;
+                } else {
+                    $input["discountPercentage"] = 0;
+                }
             }
         }
 
@@ -549,6 +562,12 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             $input['invoiceAmountCurrencyER'] = 1;
             $totalAmount = ($input['unitCost'] != ''?$input['unitCost']:0) * ($input['invoiceQty'] != ''?$input['invoiceQty']:0);
             $input['invoiceAmount'] = round($totalAmount, $decimal);
+            
+            if($master->isPerforma == 2) {
+                $totalAmount = $input['salesPrice'];
+                $input['invoiceAmount'] = round($input['salesPrice'], $decimal);
+            }
+
             /**/
                $MyRptAmount = 0;
                if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
@@ -595,13 +614,21 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             if ($input['by'] === 'VATPercentage') {
               $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
             } else if ($input['by'] === 'VATAmount') {
-              $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+                if($input['unitCost'] > 0){
+                    $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+                } else {
+                    $input["VATPercentage"] = 0;
+                }
             }
         } else {
             if ($input['VATPercentage'] != 0) {
               $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
             } else if ($input['VATAmount'] != 0){
-              $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+                if($input['unitCost'] > 0){
+                    $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+                } else {
+                    $input["VATPercentage"] = 0;
+                }
             }
         }
 
@@ -655,10 +682,12 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
             CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->update($allDetail);
 
-            $resVat = $this->updateTotalVAT($master->custInvoiceDirectAutoID);
-            if (!$resVat['status']) {
-               return $this->sendError($resVat['message']); 
-            } 
+            if($master->isPerforma != 2) {
+                $resVat = $this->updateTotalVAT($master->custInvoiceDirectAutoID);
+                if (!$resVat['status']) {
+                   return $this->sendError($resVat['message']); 
+                } 
+            }
 
             DB::commit();
             return $this->sendResponse('s', 'successfully created');

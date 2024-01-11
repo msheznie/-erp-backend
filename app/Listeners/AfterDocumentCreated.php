@@ -31,9 +31,7 @@ class AfterDocumentCreated
         $document = $event->document;
 
         Log::useFiles(storage_path() . '/logs/after_document_created.log');
-        Log::info('Successfully start  after_document_created' . date('H:i:s'));
         if (!empty($document)) {
-            Log::info($document);
             $documentArray = array(
                 'modelName' => '',
                 'primaryKey' => '',
@@ -170,8 +168,6 @@ class AfterDocumentCreated
                     ->orderBy($documentArray['documentCodeColumnName'], 'desc')
                     ->first();
 
-                Log::info('Previous Doc: ');
-                Log::info($previousDoc);
 
 
                 if (!empty($previousDoc)) {
@@ -180,8 +176,6 @@ class AfterDocumentCreated
                     if ($different != 1) {
 
                         array_push($missingRecodes, array('start' => $previousDoc[$documentArray['documentCodeColumnName']], 'end' => $document[$documentArray['documentCodeColumnName']]));
-                        Log::info('Test: ');
-                        Log::info($document[$documentArray['documentCodeColumnName']]);
 
                         if ($different != 0) {
                             $range = $range . '<br> This document is getting jumped from ' . $previousDoc[$documentArray['documentCodeColumnName']] . ' to ' . $document[$documentArray['documentCodeColumnName']];
@@ -190,31 +184,7 @@ class AfterDocumentCreated
                         }
                     }
                 }
-
-                /*$listOfDoc  = $nameSpacedModel::where('companySystemID',$document['companySystemID'])
-                                                ->where('documentSystemID',$document['documentSystemID'])
-                                                ->where($documentArray['companyFinanceYearID'],$document[$documentArray['companyFinanceYearID']])
-                                                ->selectRaw($documentArray["primaryKey"].",".$documentArray['documentCodeColumnName'].",RIGHT(".$documentArray['documentCodeColumnName'].",6) as 'serialNo'")
-                                                ->orderBy($documentArray['documentCodeColumnName'],'ASC')
-                                                ->get();
-
-                $previousDoc = null;
-                $missingRecodes  = array();
-                $range  = "";
-                foreach ($listOfDoc as $doc){
-                    if($previousDoc){
-                        if((((int)$doc['serialNo']) - ((int)$previousDoc['serialNo'])) != 1 ){
-                            array_push($missingRecodes,array('start' => $previousDoc[$documentArray['documentCodeColumnName']],'end' => $doc[$documentArray['documentCodeColumnName']]));
-                            Log::info('Test: ');
-                            Log::info($doc[$documentArray['documentCodeColumnName']]);
-
-                            $range = $range.'<br>'.$previousDoc[$documentArray['documentCodeColumnName']].' - '. $doc[$documentArray['documentCodeColumnName']];
-                        }
-                    }
-                    $previousDoc = $doc;
-                }
-                Log::info('List count: ' . count($listOfDoc));
-                Log::info($listOfDoc);*/
+       
                 if ($range) {
 
                     $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
@@ -247,19 +217,13 @@ class AfterDocumentCreated
                     $dataEmail['emailAlertMessage'] = $temp;
 
                     $sendEmail = \Email::sendEmailErp($dataEmail);
-                    Log::info('Email array:');
-                    Log::info($dataEmail);
 
                 }
-                Log::info('Mising count: ' . count($missingRecodes));
-                Log::info($range);
-                Log::info($missingRecodes);
             }
 
         } else {
             Log::info('Document Not Found' . date('H:i:s'));
         }
-        Log::info('Successfully end  after_document_created' . date('H:i:s'));
     }
 
 }

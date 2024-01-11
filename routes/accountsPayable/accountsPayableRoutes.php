@@ -25,7 +25,6 @@ Route::group([], function() {
     Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems')->name("Get direct items");
     Route::get('getSupplierInvoiceGRVItems', 'BookInvSuppDetAPIController@getSupplierInvoiceGRVItems')->name("Get supplier invoice grv items");
     Route::get('getSupplierInvDirectItems', 'SupplierInvoiceDirectItemAPIController@getSupplierInvDirectItems')->name("Get supplier inv direct items");
-    Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice')->name("Print supplier invoice");
     Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI')->name("Get purchase order for si");
     Route::get('getUnbilledGRVDetailsForSI', 'UnbilledGrvGroupByAPIController@getUnbilledGRVDetailsForSI')->name("Get unbilled grv details for si");
     Route::post('storePOBaseDetail', 'BookInvSuppDetAPIController@storePOBaseDetail')->name("Store po base detail");

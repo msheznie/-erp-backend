@@ -745,4 +745,8 @@ class ProcumentOrder extends Model
     {
         return $this->hasMany('App\Models\BudgetConsumedData', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
     }
+
+    public function grv_details(){
+        return $this->hasMany('\App\Models\GRVDetails','purchaseOrderMastertID','purchaseOrderID');
+    }
 }

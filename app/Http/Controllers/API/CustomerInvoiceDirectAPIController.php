@@ -25,6 +25,7 @@ namespace App\Http\Controllers\API;
 
 use App\Constants\ContractMasterType;
 use App\helper\CreateExcel;
+use App\helper\CustomerInvoiceService;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
@@ -32,6 +33,7 @@ use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
+use App\Models\CustomerInvoiceUploadDetail;
 use App\Models\ErpProjectMaster;
 use App\Models\BankAssign;
 use App\Models\QuotationMaster;
@@ -90,12 +92,15 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
+use App\Jobs\CustomerInvoiceUpload\CustomerInvoiceUpload;
 use App\Models\CustomerContactDetails;
 use App\Models\CustomerInvoiceLogistic;
 use App\Models\DeliveryTermsMaster;
+use App\Models\LogUploadCustomerInvoice;
 use App\Models\PortMaster;
+use App\Models\UploadCustomerInvoice;
+use PHPExcel_IOFactory;
 use Exception;
-use PHPExcel_Worksheet_Drawing;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -468,6 +473,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
         }
 
+        if($isPerforma == 2) {
+            $_glSelectionItems = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
+
+            if($_glSelectionItems) {
+                foreach($_glSelectionItems as $_glSelectionItem) {
+                    if(!isset($_glSelectionItem->serviceLineCode)) {
+                        return $this->sendError('Please select a Segment in GL Selection', 500);
+                    }
+                    if(!isset($_glSelectionItem->invoiceAmount) || $_glSelectionItem->invoiceAmount == 0) {
+                        return $this->sendError('Amount is required in GL Selection', 500);
+                    }
+                }
+
+            }
+        }
+
         if(isset($detail[0])) {
             $qo_master = QuotationMaster::find($detail[0]['quotationMasterID']);
             $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
@@ -514,8 +535,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['serviceLineCode'] = isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null;
             }
 
-
-            $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
+            if(isset($input['custTransactionCurrencyID'])){
+                $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
+            }
+            else{
+                return $this->sendError('Please select a Currency', 500);
+            }
+            
             $_post['bankID'] = $input['bankID'];
             $_post['bankAccountID'] = $input['bankAccountID'];
 
@@ -2042,6 +2068,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
     }
 
+    public function getCIUploadStatus(Request $request)
+    {
+        $companyId = $request['companyId'];
+        $output = UploadCustomerInvoice::where('companySystemID',$companyId)
+                                                ->where('uploadStatus',-1)->count();
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+    }
 
     public function getINVFormData(Request $request)
     {
@@ -2105,6 +2139,235 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function downloadCITemplate(Request $request){
+
+        $file_type = $request->type;
+
+        $companySystemID = $request->companySystemID;
+        $sentNotificationAt = $request->sentNotificationAt;
+
+
+
+        $templateName = "download_template.ci_template";
+        $fileName = 'customer_invoice_template';
+        $path = 'accounts-receivable/transactions/customer-invoice-template/excel/';
+
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+
+        $isVATEligible = TaxService::checkCompanyVATEligible($companySystemID);
+
+        $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
+
+
+        $output = array(
+            'company' => $company,
+            'companyCode' =>$company->companyShortCode,
+            'sentNotificationAt' => $sentNotificationAt,
+            'isProjectBase' => $isProjectBase,
+            'isVATEligible' => $isVATEligible,
+   
+        );
+
+        $basePath = CreateExcel::loadView($output,$file_type,$fileName,$path,$templateName);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+    }
+
+    public function uploadCustomerInvoice(Request $request) {
+        $input = $request->all();
+        if($input['uploadComment']== ''){
+            return $this->sendError('Description is required',500);
+        }
+
+        if($input['excelUploadCustomerInvoice']== null){
+            return $this->sendError('Please Select a File',500);
+        }
+
+        $excelUpload = $input['excelUploadCustomerInvoice'];
+        $input = array_except($request->all(), 'excelUploadCustomerInvoice');
+        $input = $this->convertArrayToValue($input);
+
+        $decodeFile = base64_decode($excelUpload[0]['file']);
+        $originalFileName = $excelUpload[0]['filename'];
+        $extension = $excelUpload[0]['filetype'];
+        $size = $excelUpload[0]['size'];
+
+        $allowedExtensions = ['xlsx','xls'];
+
+        if (!in_array($extension, $allowedExtensions))
+        {
+            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+        }
+
+        if ($size > 20000000) {
+            return $this->sendError('The maximum size allow to upload is 20 MB',500);
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $uploadArray = array(
+            'companySystemID' => $input['companySystemID'],
+            'uploadComment' => $input['uploadComment'],
+            'uploadedDate' => \Helper::currentDateTime(),
+            'uploadedBy' => $employee->empID,
+            'uploadStatus' => -1
+        );
+
+        DB::beginTransaction();
+        try {
+
+            $uploadCustomerInvoice = UploadCustomerInvoice::create($uploadArray);
+
+            $uploadLogArray = array(
+                'companySystemID' => $input['companySystemID'],
+                'customerInvoiceUploadID' => $uploadCustomerInvoice->id,
+            );
+
+            $logUploadCustomerInvoice = LogUploadCustomerInvoice::create($uploadLogArray);
+
+
+
+            $db = isset($request->db) ? $request->db : "";
+
+            $disk = 'local';
+
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+            $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+
+            $uploadData = ['objPHPExcel' => $objPHPExcel,
+                'uploadCustomerInvoice' => $uploadCustomerInvoice,
+                'logUploadCustomerInvoice' => $logUploadCustomerInvoice,
+                'employee' => $employee,
+                'uploadedCompany' =>  $input['companySystemID'],
+            ];
+
+            CustomerInvoiceUpload::dispatch($db, $uploadData);
+
+            DB::commit();
+            return $this->sendResponse([], 'Customer Invoice uploaded successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+    }
+
+    public function checkCustomerInvoiceUploadStatus(Request $request)
+    {
+        $input = $request->all();
+
+        $checkStatus = CustomerInvoiceUploadDetail::where('custInvoiceDirectID', $input['customerInvoiceID'])
+                                                  ->whereHas('uploaded_data', function($query) {
+                                                        $query->where('uploadStatus', 1);
+                                                  })
+                                                  ->first();
+
+        if ($checkStatus) {
+            return $this->sendResponse([], 'Customer Invoice can be edit successfully');
+        } else {
+            return $this->sendError("Unable to edit customer invoice. Upload is currently in progress.");
+        }
+
+    }
+
+    public function getCustomerInvoiceUploads(Request $request) {
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $uploadCustomerInvoice = UploadCustomerInvoice::where('companySystemID', $input['companyId'])->with('uploaded_by','log')->select('*');
+
+
+        return \DataTables::eloquent($uploadCustomerInvoice)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function deleteCustomerInvoiceUploads(Request $request){
+
+        $input = $request->all();
+
+        $customerInvoiceUploadID = $input['customerInvoiceUploadID'];
+        $uploadCustomerInvoiceObj = UploadCustomerInvoice::find($customerInvoiceUploadID);
+
+        if(!isset($uploadCustomerInvoiceObj)) {
+            return $this->sendError('Customer Invoice Upload details not found');
+        }
+
+        if($uploadCustomerInvoiceObj->uploadStatus == -1) {
+            return $this->sendError('Upload in progress. Cannot be deleted.');
+        }
+
+        DB::beginTransaction();
+        try {
+            if($uploadCustomerInvoiceObj->uploadStatus == 1) {
+                $customerInvoiceUploadDetailsIds = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->pluck('custInvoiceDirectID')->toArray();
+
+                $validateInvoiceToDelete = $this->validateInvoiceToDelete($customerInvoiceUploadDetailsIds,$uploadCustomerInvoiceObj);
+                if(isset($validateInvoiceToDelete['status']) && !$validateInvoiceToDelete['status'])
+                    return $this->sendError($validateInvoiceToDelete['message']);
+                $customerInvoiceUploadDetails = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->get();
+
+                foreach ($customerInvoiceUploadDetails as $customerInvoiceUploadDetail) {
+                    $deleteCustomerInvoice  = CustomerInvoiceService::deleteCustomerInvoice($customerInvoiceUploadDetail);
+                    if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
+                        return $this->sendError($deleteCustomerInvoice['message']);
+                }
+
+            }
+
+            UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
+            DB::commit();
+            return $this->sendResponse([], 'customer invoice upload deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+    }
+
+    public function validateInvoiceToDelete($customerInvoiceUploadDetailsIds,$uploadCustomerInvoiceObj):array
+    {
+
+        $isFailedProcessExists = UploadCustomerInvoice::where('uploadStatus',0)->where('companySystemID',$uploadCustomerInvoiceObj->companySystemID)->orderBy('id', 'DESC')->first();
+        $lastCustomerInvoice = CustomerInvoiceDirect::orderBy('custInvoiceDirectAutoID', 'DESC')->where('companySystemID', $uploadCustomerInvoiceObj->companySystemID)->select('custInvoiceDirectAutoID')->first();
+        if(!in_array($lastCustomerInvoice->custInvoiceDirectAutoID,$customerInvoiceUploadDetailsIds))
+            return ['status' => false , 'message' => 'Additional Invoices had been created after the upload. Cannot delete the uploaded invoices'];
+
+
+        if($isFailedProcessExists && ($isFailedProcessExists->id > $uploadCustomerInvoiceObj->id))
+             return ['status' => false , 'message' => 'There is a failed customer invoice to be delete'];
+
+
+        return ['status' => true, 'message' => ''];
+    }
+
+
     public function getCustomerInvoiceMasterView(Request $request)
     {
         $input = $request->all();
@@ -2125,7 +2388,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
 
+
         return \DataTables::of($invMaster)
+                ->addColumn('total', function($inv) {
+                    return $this->getTotalAfterGL($inv);
+                })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -2882,8 +3149,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $id = $request->get('id');
         $type = $request->get('type');
-        
+
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
+        if (!$master) {
+            return $this->sendError("Customer invoice not found");
+        }
         $companySystemID = $master->companySystemID;
         $localCurrencyER = $master->localCurrencyER;
 
@@ -2907,6 +3177,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
         }
 
+        if (!$customerInvoice) {
+            return $this->sendError("Customer invoice not found");
+        }
         $accountIBAN = '';
         if ($customerInvoice && $customerInvoice->bankAccount) {
             $accountIBAN = $customerInvoice->bankAccount['accountIBAN#'];
@@ -3376,7 +3649,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoiceLogistic = $customerInvoiceLogistic->toArray();
             $customerInvoice['customerInvoiceLogistic'] = $customerInvoiceLogistic;
         }
-
+        
+        if(!isset($secondaryBankAccount)){
+            return $this->sendError('Bank account not found.');
+        }
 
         $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
@@ -4139,6 +4415,9 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('total', function($inv) {
+                return $this->getTotalAfterGL($inv);
+            })
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
@@ -4221,6 +4500,9 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('total', function($inv) {
+                return $this->getTotalAfterGL($inv);
+            })
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
@@ -4807,5 +5089,25 @@ WHERE
         CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
 
         return ['status' => true];
+    }
+
+    public static function getTotalAfterGL($invoice) {
+            $total = 0;
+            $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::with(['chart_Of_account'])->where('custInvoiceDirectID',$invoice->custInvoiceDirectAutoID)->get();
+            $total = $invoice->bookingAmountTrans;
+            if(count($_customerInvoiceDirectDetails) > 0 && $invoice->isPerforma == 2) {
+                foreach ($_customerInvoiceDirectDetails as $item) {
+
+                    if(isset($item->chart_Of_account)) {
+                        if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5 || $item->chart_Of_account->controlAccountsSystemID == 3) {
+                            $total -= ($item->invoiceAmount + $item->VATAmountTotal);
+                        }else{
+                            $total += ($item->invoiceAmount + $item->VATAmountTotal);
+                        }
+                    }
+                }
+            }
+
+           return $total;
     }
 }

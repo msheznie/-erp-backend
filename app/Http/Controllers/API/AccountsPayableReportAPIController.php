@@ -730,193 +730,183 @@ class AccountsPayableReportAPIController extends AppBaseController
 
     public function exportReport(Request $request)
     {
-        $reportID = $request->reportID;
-        switch ($reportID) {
-            case 'APPSY':
-                $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $output = $this->getPaymentSuppliersByYear($request);
+        try {
+            $reportID = $request->reportID;
+            switch ($reportID) {
+                case 'APPSY':
+                    $type = $request->type;
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $output = $this->getPaymentSuppliersByYear($request);
 
-                
-             
 
-                $from_date = $request->fromDate;
-                $to_date = $request->toDate;
-                $company = Company::find($request->companySystemID);
-                $company_name = $company->CompanyName;
-                $year = $request->year;
-                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
-                $decimalPlace = 0;
-                $data = array();
-                if ($request->reportTypeID == 'APPSY') {
-                    $typ_re = 1;
-                    $fileName = 'Payment Suppliers By Year -'.$year;
-                    $title = 'Payment Suppliers By Year -'.$year;
-                    $requestCurrency = $request->currency;
-
-                }
-                else if ($request->reportTypeID == 'APDPY') {
-                    $typ_re = 1;
-                    $fileName = 'Direct Payments By Year -'.$year;
-                    $title = 'Direct Payments By Year -'.$year;
-                    $requestCurrency = $request->currency;
-                    
-                }
-                else if ($request->reportTypeID == 'APAPY') {
-                    $typ_re = 1;
-                    $fileName = 'All Payments By Year -'.$year;
-                    $title = 'All Payments By Year -'.$year;
-                    $requestCurrency = $request->currency;
-                 
-                }
-                else if ($request->reportTypeID == 'APLWS' && $request->reportSD != 'detail') {
-                    $typ_re = 2;
-                    $fileName = 'Payments Lists Status By Year';
-                    $title = 'Payments Lists Status By Year';
-                    $requestCurrency = NULL;
+                    $from_date = $request->fromDate;
                     $to_date = $request->toDate;
-                    $to_date =  ((new Carbon($to_date))->format('d/m/Y'));
-                }
-
-
-
-                if ($output) {
-                    $reportSD = $request->reportSD;
-                    $currency = $request->currencyID;
-                    $reportTypeID = $request->reportTypeID;
-
-           
-                    if ($reportTypeID == 'APPSY') {
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+                    $year = $request->year;
+                    $from_date = ((new Carbon($from_date))->format('d/m/Y'));
+                    $decimalPlace = 0;
+                    $data = array();
+                    if ($request->reportTypeID == 'APPSY') {
                         $typ_re = 1;
+                        $fileName = 'Payment Suppliers By Year -' . $year;
+                        $title = 'Payment Suppliers By Year -' . $year;
+                        $requestCurrency = $request->currency;
 
-                        
-
-                        $fileName = 'Payment Suppliers By Year -'.$year;
-                        if ($reportSD == 'detail') {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Payment Type'] = $val->PaymentType;
-                                $data[$x]['Payment Document Number'] = $val->documentCode;
-                                $data[$x]['Supplier Code'] = $val->supplierCode;
-                                $data[$x]['Supplier Name'] = $val->supplierName;
-                                
-                                if ($currency == 2) {
-                                    $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                    $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
-                                } else if ($currency == 3) {
-                                    $data[$x]['Currency'] = $val->documentRptCurrency;
-                                    $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
-                                }
-                                $x++;
-                            }
-                        } else {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Supplier Code'] = $val->supplierCode;
-                                $data[$x]['Supplier Name'] = $val->supplierName;
-                                $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
-                                $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
-                                $data[$x]['March'] = round($val->March, $decimalPlace);
-                                $data[$x]['April'] = round($val->April, $decimalPlace);
-                                $data[$x]['May'] = round($val->May, $decimalPlace);
-                                $data[$x]['Jun'] = round($val->June, $decimalPlace);
-                                $data[$x]['July'] = round($val->July, $decimalPlace);
-                                $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
-                                $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
-                                $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
-                                $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
-                                $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
-                                $data[$x]['Total'] = round($val->Total, $decimalPlace);
-                                $x++;
-                            }
-                        }
-                    }
-                    else if ($reportTypeID == 'APDPY') {
+                    } else if ($request->reportTypeID == 'APDPY') {
                         $typ_re = 1;
-                        $fileName = 'Direct Payments By Year -'.$year;
-                        if ($reportSD == 'detail') {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Payment Document Number'] = $val->documentCode;
-                                $data[$x]['GL Code'] = $val->glCode;
-                                $data[$x]['Account Description'] = $val->AccountDescription;
+                        $fileName = 'Direct Payments By Year -' . $year;
+                        $title = 'Direct Payments By Year -' . $year;
+                        $requestCurrency = $request->currency;
 
-                                if ($currency == 2) {
-                                    $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                    $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
-                                } else if ($currency == 3) {
-                                    $data[$x]['Currency'] = $val->documentRptCurrency;
-                                    $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
-                                }
-                                $x++;
-                            }
-                        } else {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['GL Code'] = $val->glCode;
-                                $data[$x]['Account Description'] = $val->AccountDescription;
-                                $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
-                                $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
-                                $data[$x]['March'] = round($val->March, $decimalPlace);
-                                $data[$x]['April'] = round($val->April, $decimalPlace);
-                                $data[$x]['May'] = round($val->May, $decimalPlace);
-                                $data[$x]['Jun'] = round($val->June, $decimalPlace);
-                                $data[$x]['July'] = round($val->July, $decimalPlace);
-                                $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
-                                $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
-                                $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
-                                $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
-                                $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
-                                $data[$x]['Total'] = round($val->Total, $decimalPlace);
-                                $x++;
-                            }
-                        }
-                    }
-                    else if ($reportTypeID == 'APAPY') {
+                    } else if ($request->reportTypeID == 'APAPY') {
                         $typ_re = 1;
-                        $fileName = 'All Payments By Year -'.$year;
-                        if ($reportSD != 'detail') {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Supplier Code / GL Code'] = $val->docCode;
-                                $data[$x]['Supplier Name / Account Description'] = $val->docDes;
-                                $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
-                                $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
-                                $data[$x]['March'] = round($val->March, $decimalPlace);
-                                $data[$x]['April'] = round($val->April, $decimalPlace);
-                                $data[$x]['May'] = round($val->May, $decimalPlace);
-                                $data[$x]['Jun'] = round($val->June, $decimalPlace);
-                                $data[$x]['July'] = round($val->July, $decimalPlace);
-                                $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
-                                $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
-                                $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
-                                $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
-                                $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
-                                $data[$x]['Total'] = round($val->Total, $decimalPlace);
-                                $x++;
-                            }
-                        }
-                    }
-                    else if ($reportTypeID == 'APLWS' && $reportSD != 'detail') {
+                        $fileName = 'All Payments By Year -' . $year;
+                        $title = 'All Payments By Year -' . $year;
+                        $requestCurrency = $request->currency;
+
+                    } else if ($request->reportTypeID == 'APLWS' && $request->reportSD != 'detail') {
                         $typ_re = 2;
-                        $to_date = $request->toDate;
-                        $to_date =  ((new Carbon($to_date))->format('d/m/Y'));
-
-                        
-
                         $fileName = 'Payments Lists Status By Year';
+                        $title = 'Payments Lists Status By Year';
+                        $requestCurrency = NULL;
+                        $to_date = $request->toDate;
+                        $to_date = ((new Carbon($to_date))->format('d/m/Y'));
+                    }
+
+
+                    if ($output) {
+                        $reportSD = $request->reportSD;
+                        $currency = $request->currencyID;
+                        $reportTypeID = $request->reportTypeID;
+
+
+                        if ($reportTypeID == 'APPSY') {
+                            $typ_re = 1;
+
+
+                            $fileName = 'Payment Suppliers By Year -' . $year;
+                            if ($reportSD == 'detail') {
+                                $x = 0;
+                                foreach ($output as $val) {
+                                    $data[$x]['Company ID'] = $val->companyID;
+                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
+                                    $data[$x]['Payment Type'] = $val->PaymentType;
+                                    $data[$x]['Payment Document Number'] = $val->documentCode;
+                                    $data[$x]['Supplier Code'] = $val->supplierCode;
+                                    $data[$x]['Supplier Name'] = $val->supplierName;
+
+                                    if ($currency == 2) {
+                                        $data[$x]['Currency'] = $val->documentLocalCurrency;
+                                        $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
+                                    } else if ($currency == 3) {
+                                        $data[$x]['Currency'] = $val->documentRptCurrency;
+                                        $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
+                                    }
+                                    $x++;
+                                }
+                            } else {
+                                $x = 0;
+                                foreach ($output as $val) {
+                                    $data[$x]['Company ID'] = $val->companyID;
+                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['Supplier Code'] = $val->supplierCode;
+                                    $data[$x]['Supplier Name'] = $val->supplierName;
+                                    $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
+                                    $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
+                                    $data[$x]['March'] = round($val->March, $decimalPlace);
+                                    $data[$x]['April'] = round($val->April, $decimalPlace);
+                                    $data[$x]['May'] = round($val->May, $decimalPlace);
+                                    $data[$x]['Jun'] = round($val->June, $decimalPlace);
+                                    $data[$x]['July'] = round($val->July, $decimalPlace);
+                                    $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
+                                    $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
+                                    $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
+                                    $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
+                                    $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
+                                    $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                                    $x++;
+                                }
+                            }
+                        } else if ($reportTypeID == 'APDPY') {
+                            $typ_re = 1;
+                            $fileName = 'Direct Payments By Year -' . $year;
+                            if ($reportSD == 'detail') {
+                                $x = 0;
+                                foreach ($output as $val) {
+                                    $data[$x]['Company ID'] = $val->companyID;
+                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
+                                    $data[$x]['Payment Document Number'] = $val->documentCode;
+                                    $data[$x]['GL Code'] = $val->glCode;
+                                    $data[$x]['Account Description'] = $val->AccountDescription;
+
+                                    if ($currency == 2) {
+                                        $data[$x]['Currency'] = $val->documentLocalCurrency;
+                                        $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
+                                    } else if ($currency == 3) {
+                                        $data[$x]['Currency'] = $val->documentRptCurrency;
+                                        $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
+                                    }
+                                    $x++;
+                                }
+                            } else {
+                                $x = 0;
+                                foreach ($output as $val) {
+                                    $data[$x]['Company ID'] = $val->companyID;
+                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['GL Code'] = $val->glCode;
+                                    $data[$x]['Account Description'] = $val->AccountDescription;
+                                    $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
+                                    $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
+                                    $data[$x]['March'] = round($val->March, $decimalPlace);
+                                    $data[$x]['April'] = round($val->April, $decimalPlace);
+                                    $data[$x]['May'] = round($val->May, $decimalPlace);
+                                    $data[$x]['Jun'] = round($val->June, $decimalPlace);
+                                    $data[$x]['July'] = round($val->July, $decimalPlace);
+                                    $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
+                                    $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
+                                    $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
+                                    $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
+                                    $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
+                                    $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                                    $x++;
+                                }
+                            }
+                        } else if ($reportTypeID == 'APAPY') {
+                            $typ_re = 1;
+                            $fileName = 'All Payments By Year -' . $year;
+                            if ($reportSD != 'detail') {
+                                $x = 0;
+                                foreach ($output as $val) {
+                                    $data[$x]['Company ID'] = $val->companyID;
+                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['Supplier Code / GL Code'] = $val->docCode;
+                                    $data[$x]['Supplier Name / Account Description'] = $val->docDes;
+                                    $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
+                                    $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
+                                    $data[$x]['March'] = round($val->March, $decimalPlace);
+                                    $data[$x]['April'] = round($val->April, $decimalPlace);
+                                    $data[$x]['May'] = round($val->May, $decimalPlace);
+                                    $data[$x]['Jun'] = round($val->June, $decimalPlace);
+                                    $data[$x]['July'] = round($val->July, $decimalPlace);
+                                    $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
+                                    $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
+                                    $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
+                                    $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
+                                    $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
+                                    $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                                    $x++;
+                                }
+                            }
+                        } else if ($reportTypeID == 'APLWS' && $reportSD != 'detail') {
+                            $typ_re = 2;
+                            $to_date = $request->toDate;
+                            $to_date = ((new Carbon($to_date))->format('d/m/Y'));
+
+
+                            $fileName = 'Payments Lists Status By Year';
                             $x = 0;
                             foreach ($output as $val) {
 
@@ -961,663 +951,640 @@ class AccountsPayableReportAPIController extends AppBaseController
                         }
                     }
 
-                
-                $path = 'accounts-payable/report/payment_suppliers_by_year/excel/';
 
-                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+                    $path = 'accounts-payable/report/payment_suppliers_by_year/excel/';
 
-
-                if($typ_re == 1)
-                {   
-                    $detail_array = array('type' => 3,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title, 'company_code'=>$companyCode);
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-                }
-                else
-                {   
-                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title, 'company_code'=>$companyCode);
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-                }
-                
-
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
-
-                break;
-            case 'APSS':
-                $type = $request->type;
-                $reportTypeID = $request->reportTypeID;
-
-                $from_date = $request->fromDate;
-                $to_date = $request->fromDate;
-                $company = Company::find($request->companySystemID);
-                $company_name = $company->CompanyName;
-
-                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
 
 
-
-                if ($reportTypeID == 'SS') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $request->fromPath = 'view';
-                    $output = $this->getSupplierStatementQRY($request);
-            
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Supplier Code'] = $val->SupplierCode;
-                            $data[$x]['Supplier Name'] = $val->suppliername;
-                            $data[$x]['Document ID'] = $val->documentID;
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Account'] = $val->glCode." - ".$val->AccountDescription;
-                            $data[$x]['Narration'] = $val->documentNarration;
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Age Days'] = $val->ageDays;
-                            $data[$x]['Doc Amount'] = $val->invoiceAmount;
-                            $data[$x]['Balance Amount'] = $val->balanceAmount;
-
-                            $x++;
-                        }
+                    if ($typ_re == 1) {
+                        $detail_array = array('type' => 3, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $requestCurrency, 'title' => $title, 'company_code' => $companyCode);
+                        $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
                     } else {
-                        $data = array();
+                        $detail_array = array('type' => 1, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $requestCurrency, 'title' => $title, 'company_code' => $companyCode);
+                        $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
                     }
 
-                $fileName = 'Supplier Statement';
-                $title = 'Supplier Statement';    
 
-
-                } else if ($reportTypeID == 'SBSR') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
-                    $output = $this->getSupplierBalanceStatementReconcileQRY($request);
-
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Supplier Code'] = $val->SupplierCode;
-                            $data[$x]['Supplier Name'] = $val->suppliername;
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Amount'] = $val->invoiceAmountDoc;
-                            $data[$x]['Balance Amount'] = $val->balanceAmountDoc;
-                            $data[$x]['Local Currency'] = $val->documentCurrencyLoc;
-                            $data[$x]['Local Amount'] = $val->invoiceAmountLoc;
-                            $data[$x]['Local Balance Amount'] = $val->balanceAmountLoc;
-                            $data[$x]['Reporting Currency'] = $val->documentCurrencyRpt;
-                            $data[$x]['Reporting Amount'] = $val->invoiceAmountRpt;
-                            $data[$x]['Reporting Balance Amount'] = $val->balanceAmountRpt;
-                            $x++;
-                        }
+                    if ($basePath == '') {
+                        return $this->sendError('Unable to export excel');
                     } else {
-                        $data = array();
-                    }
-  
-                    $fileName = 'Supplier Balance Statement';
-                    $title = 'Supplier Balance Statement - Reconcile';    
-
-
-                }
-
-                $path = 'accounts-payable/report/supplier-statement/excel/';
-                $cur = NULL;
-
-                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
-
-
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title, 'company_code'=>$companyCode);
-       
-
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
-                break;
-
-            case 'APSL':
-                $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $checkIsGroup = Company::find($request->companySystemID);
-                $output = $this->getSupplierLedgerQRY($request);
-                $fromDate = $request->fromDate;
-                $toDate = $request->toDate;
-
-                $outputArr = array();
-                $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
-                $invoiceAmount = array_sum($invoiceAmount);
-
-                $paidAmount = collect($output)->pluck('paidAmount')->toArray();
-                $paidAmount = array_sum($paidAmount);
-
-                $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
-                $balanceAmount = array_sum($balanceAmount);
-
-                $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
-                $decimalPlace = array_unique($decimalPlace);
-
-                if ($output) {
-                    foreach ($output as $val) {
-                        $outputArr[$val->SupplierCode . " - " . $val->suppliername][$val->documentCurrency][] = $val;
-                    }
-                }
-
-                $companyCode = isset($checkIsGroup->CompanyID) ? $checkIsGroup->CompanyID: null;
-                $templateName = "export_report.payment_suppliers";
-
-                $reportData = ['reportData' => $outputArr,'Title'=>'Supplier Ledger', 'companyName' => $checkIsGroup->CompanyName, 'companyCode'=>$companyCode, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
-
-                $fileName = 'Supplier Ledger';
-                $path = 'accounts-payable/report/supplier_ledger/excel/';
-
-                $basePath = CreateExcel::loadView($reportData,$type,$fileName,$path,$templateName);
-
-                if($basePath == '')
-                {
-                    return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                    return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
-
-                break;
-            case 'APSBS':
-                $type = $request->type;
-                $from_date = $request->fromDate;
-                $to_date = $request->fromDate;
-                $company = Company::find($request->companySystemID);
-                $company_name = $company->CompanyName;
-                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
-
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $output = $this->getSupplierBalanceSummeryQRY($request);
-                if ($output) {
-                    $x = 0;
-                    foreach ($output as $val) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Account'] = $val->AccountCode."-".$val->AccountDescription;
-                        $data[$x]['Supplier Code'] = $val->SupplierCode;
-                        $data[$x]['Supplier Name'] = $val->supplierName;
-                        $data[$x]['Currency'] = $val->documentCurrency;
-                        $data[$x]['Amount'] = $val->documentAmount;
-                        $x++;
-                    }
-                } else {
-                    $data = array();
-                }
-                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
-                $cur = NULL;
-                $fileName = 'Supplier Balance Summary';
-                $title = 'Supplier Balance Summary';
-                $path = 'accounts-payable/report/supplier_balance_summary/excel/';
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title, 'company_code'=>$companyCode);
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
-
-
-                break;
-            case 'APSA':// Supplier Aging
-                $reportTypeID = $request->reportTypeID;
-                $type = $request->type;
-
-                $from_date = $request->fromDate;
-                $to_date = $request->toDate;
-                $company = Company::find($request->companySystemID);
-                $company_name = $company->CompanyName;
-                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
-
-                if ($reportTypeID == 'SAD') { //supplier aging detail
-                    $fileName = 'Supplier Aging Detail Report';
-                    $title = 'Supplier Aging Detail Report';
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getSupplierAgingDetailQRY($request);
-                    if ($output['data']) {
-                        $x = 0;
-                        foreach ($output['data'] as $val) {
-                            $lineTotal = 0;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Account'] = $val->glCode ."-". $val->AccountDescription;
-                            $data[$x]['Supplier Code'] = $val->SupplierCode;
-                            $data[$x]['Supplier Name'] = $val->suppliername;
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Aging Days'] = $val->ageDays;
-                            foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val->$val2;
-                                $lineTotal += $val->$val2;
-                            }
-                            $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
-                            $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
-                            $x++;
-                        }
-                    } else {
-                        $data = array();
-                    }
-                } else if ($reportTypeID == 'SAS') { //supplier aging summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getSupplierAgingSummaryQRY($request);
-                    $fileName = 'Supplier Aging Summary Report';
-                    $title = 'Supplier Aging Summary Report';
-                    if ($output['data']) {
-                        $x = 0;
-                        foreach ($output['data'] as $val) {
-                            $lineTotal = 0;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Account'] = $val->glCode."-".$val->AccountDescription;
-                            $data[$x]['Supplier Code'] = $val->SupplierCode;
-                            $data[$x]['Supplier Name'] = $val->suppliername;
-                            $data[$x]['Credit Period'] = $val->creditPeriod;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Aging Days'] = $val->ageDays;
-                            foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val->$val2;
-                                $lineTotal += $val->$val2;
-                            }
-                            $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
-                            $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
-                            $x++;
-                        }
-                    } else {
-                        $data = array();
-                    }
-                } else if ($reportTypeID == 'SADA') { //supplier aging detail advance
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getSupplierAgingDetailAdvanceQRY($request);
-                    $fileName = 'Supplier Aging Detail Advance';
-                    $title = 'Supplier Aging Detail Advance Report';
-                    if ($output['data']) {
-                        $x = 0;
-                        foreach ($output['data'] as $val) {
-                            $lineTotal = 0;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Account'] = $val->glCode."-".$val->AccountDescription;
-                            $data[$x]['Narration '] = $val->documentNarration;
-                            $data[$x]['Supplier Code'] = $val->SupplierCode;
-                            $data[$x]['Supplier Name'] = $val->suppliername;
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Aging Days'] = $val->ageDays;
-                            foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val->$val2;
-                                $lineTotal += $val->$val2;
-                            }
-                            $data[$x]['Advance/UnAllocated Amount'] = $lineTotal;
-                            $x++;
-                        }
-                    } else {
-                        $data = array();
-                    }
-                } else if ($reportTypeID == 'SASA') { //supplier aging summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
-                    $fileName = 'Supplier Aging Summary Advance';
-                    $title = 'Supplier Aging Summary Advance Report';
-                    if ($output['data']) {
-                        $x = 0;
-                        foreach ($output['data'] as $val) {
-                            $lineTotal = 0;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Account'] = $val->glCode."-".$val->AccountDescription;
-                            $data[$x]['Supplier Code'] = $val->SupplierCode;
-                            $data[$x]['Supplier Name'] = $val->suppliername;
-                            $data[$x]['Credit Period'] = $val->creditPeriod;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Aging Days'] = $val->ageDays;
-                            foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val->$val2;
-                                $lineTotal += $val->$val2;
-                            }
-                            $data[$x]['Total'] = $lineTotal;
-                            $x++;
-                        }
-                    } else {
-                        $data = array();
-                    }
-                }
-                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
-                $cur = NULL;
-                $path = 'accounts-payable/report/supplier_aging/excel/';
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title, 'company_code'=>$companyCode);
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
-
-
-                break;
-            case 'TS':// Top Suppliers
-                $reportTypeID = $request->reportTypeID;
-                $type = $request->type;
-                $name = "";
-                if ($reportTypeID == 'TSCW' || $reportTypeID == 'TSC') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
-                    $output = $this->getTopSupplierQRY($request);
-
-                    if ($reportTypeID == 'TSCW') {
-                        $name = "company_wise";
-                    } else if ($reportTypeID == 'TSC') {
-                        $name = "consolidated";
+                        return $this->sendResponse($basePath, trans('custom.success_export'));
                     }
 
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
+                    break;
+                case 'APSS':
+                    $type = $request->type;
+                    $reportTypeID = $request->reportTypeID;
 
-                            if ($reportTypeID == 'TSCW') {
+                    $from_date = $request->fromDate;
+                    $to_date = $request->fromDate;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
+                    $from_date = ((new Carbon($from_date))->format('d/m/Y'));
+
+
+                    if ($reportTypeID == 'SS') {
+                        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                        $request->fromPath = 'view';
+                        $output = $this->getSupplierStatementQRY($request);
+
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+
                                 $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['Supplier Code'] = $val->SupplierCode;
+                                $data[$x]['Supplier Name'] = $val->suppliername;
+                                $data[$x]['Document ID'] = $val->documentID;
+                                $data[$x]['Document Code'] = $val->documentCode;
+                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                                $data[$x]['Account'] = $val->glCode . " - " . $val->AccountDescription;
+                                $data[$x]['Narration'] = $val->documentNarration;
+                                $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                                $data[$x]['Currency'] = $val->documentCurrency;
+                                $data[$x]['Age Days'] = $val->ageDays;
+                                $data[$x]['Doc Amount'] = $val->invoiceAmount;
+                                $data[$x]['Balance Amount'] = $val->balanceAmount;
+
+                                $x++;
                             }
-                            $data[$x]['Supplier Code'] = $val->supplierPrimaryCode;
+                        } else {
+                            $data = array();
+                        }
+
+                        $fileName = 'Supplier Statement';
+                        $title = 'Supplier Statement';
+
+
+                    } else if ($reportTypeID == 'SBSR') {
+                        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
+                        $output = $this->getSupplierBalanceStatementReconcileQRY($request);
+
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                                $data[$x]['Document Code'] = $val->documentCode;
+                                $data[$x]['Supplier Code'] = $val->SupplierCode;
+                                $data[$x]['Supplier Name'] = $val->suppliername;
+                                $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                                $data[$x]['Currency'] = $val->documentCurrency;
+                                $data[$x]['Amount'] = $val->invoiceAmountDoc;
+                                $data[$x]['Balance Amount'] = $val->balanceAmountDoc;
+                                $data[$x]['Local Currency'] = $val->documentCurrencyLoc;
+                                $data[$x]['Local Amount'] = $val->invoiceAmountLoc;
+                                $data[$x]['Local Balance Amount'] = $val->balanceAmountLoc;
+                                $data[$x]['Reporting Currency'] = $val->documentCurrencyRpt;
+                                $data[$x]['Reporting Amount'] = $val->invoiceAmountRpt;
+                                $data[$x]['Reporting Balance Amount'] = $val->balanceAmountRpt;
+                                $x++;
+                            }
+                        } else {
+                            $data = array();
+                        }
+
+                        $fileName = 'Supplier Balance Statement';
+                        $title = 'Supplier Balance Statement - Reconcile';
+
+
+                    }
+
+                    $path = 'accounts-payable/report/supplier-statement/excel/';
+                    $cur = NULL;
+
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
+
+
+                    $detail_array = array('type' => 2, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $cur, 'title' => $title, 'company_code' => $companyCode);
+
+
+                    $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+
+                    if ($basePath == '') {
+                        return $this->sendError('Unable to export excel');
+                    } else {
+                        return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+                    break;
+
+                case 'APSL':
+                    $type = $request->type;
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getSupplierLedgerQRY($request);
+                    $fromDate = $request->fromDate;
+                    $toDate = $request->toDate;
+
+                    $outputArr = array();
+                    $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+                    $invoiceAmount = array_sum($invoiceAmount);
+
+                    $paidAmount = collect($output)->pluck('paidAmount')->toArray();
+                    $paidAmount = array_sum($paidAmount);
+
+                    $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                    $balanceAmount = array_sum($balanceAmount);
+
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->SupplierCode . " - " . $val->suppliername][$val->documentCurrency][] = $val;
+                        }
+                    }
+
+                    $companyCode = isset($checkIsGroup->CompanyID) ? $checkIsGroup->CompanyID : null;
+                    $templateName = "export_report.payment_suppliers";
+
+                    $reportData = ['reportData' => $outputArr, 'Title' => 'Supplier Ledger', 'companyName' => $checkIsGroup->CompanyName, 'companyCode' => $companyCode, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
+
+                    $fileName = 'Supplier Ledger';
+                    $path = 'accounts-payable/report/supplier_ledger/excel/';
+
+                    $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName);
+
+                    if ($basePath == '') {
+                        return $this->sendError('Unable to export excel');
+                    } else {
+                        return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+                    break;
+                case 'APSBS':
+                    $type = $request->type;
+                    $from_date = $request->fromDate;
+                    $to_date = $request->fromDate;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+                    $from_date = ((new Carbon($from_date))->format('d/m/Y'));
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $output = $this->getSupplierBalanceSummeryQRY($request);
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Account'] = $val->AccountCode . "-" . $val->AccountDescription;
+                            $data[$x]['Supplier Code'] = $val->SupplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Supplier Country'] = $val->supplierCountry;
-                            $data[$x]['Amount'] = round($val->Amount, 2);
+                            $data[$x]['Currency'] = $val->documentCurrency;
+                            $data[$x]['Amount'] = $val->documentAmount;
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
-                }
-                \Excel::create('top_suppliers_by_year_' . $name, function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-                return $this->sendResponse(array(), trans('custom.success_export'));
-                break;
-            case 'APUGRV':// Unbilled GRV
-                $reportTypeID = $request->reportTypeID;
-                $type = $request->type;
-                $name = "";
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'localOrForeign', 'controlAccountsSystemID'));
-
-                $from_date = $request->fromDate;
-                $to_date = $request->fromDate;
-                $company = Company::find($request->companySystemID);
-                $company_name = $company->CompanyName;
-
-                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
-
-                if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
-                    $fileName = 'Unbilled GRV Detail Report ';
-                    $title = 'Unbilled GRV Detail Report ';
-                    $output = $this->getUnbilledDetailQRY($request);
-                    $name = "detail";
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Supplier Code'] = $val->supplierCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Doc Number'] = $val->documentCode;
-                            $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
-
-                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
-                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
-                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
-
-                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
-                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
-                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
-                            $x++;
-                        }
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
+                    $cur = NULL;
+                    $fileName = 'Supplier Balance Summary';
+                    $title = 'Supplier Balance Summary';
+                    $path = 'accounts-payable/report/supplier_balance_summary/excel/';
+                    $detail_array = array('type' => 2, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $cur, 'title' => $title, 'company_code' => $companyCode);
+                    $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+                    if ($basePath == '') {
+                        return $this->sendError('Unable to export excel');
                     } else {
-                        $data = array();
+                        return $this->sendResponse($basePath, trans('custom.success_export'));
                     }
-                } else if ($reportTypeID == 'UGRVS') {  //Unbilled GRV summary
-                    $output = $this->getUnbilledDetailQRY($request);
-                    $fileName = 'Unbilled GRV Summary Report';
-                    $title = 'Unbilled GRV Summary Report';
-                    $name = "summary";
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Supplier Code'] = $val->supplierCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
 
-                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
-                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
-                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
 
-                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
-                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
-                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
-                            $x++;
+                    break;
+                case 'APSA':// Supplier Aging
+                    $reportTypeID = $request->reportTypeID;
+                    $type = $request->type;
+
+                    $from_date = $request->fromDate;
+                    $to_date = $request->toDate;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+                    $from_date = ((new Carbon($from_date))->format('d/m/Y'));
+
+                    if ($reportTypeID == 'SAD') { //supplier aging detail
+                        $fileName = 'Supplier Aging Detail Report';
+                        $title = 'Supplier Aging Detail Report';
+                        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                        $output = $this->getSupplierAgingDetailQRY($request);
+                        if ($output['data']) {
+                            $x = 0;
+                            foreach ($output['data'] as $val) {
+                                $lineTotal = 0;
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                                $data[$x]['Document Code'] = $val->documentCode;
+                                $data[$x]['Account'] = $val->glCode . "-" . $val->AccountDescription;
+                                $data[$x]['Supplier Code'] = $val->SupplierCode;
+                                $data[$x]['Supplier Name'] = $val->suppliername;
+                                $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                                $data[$x]['Currency'] = $val->documentCurrency;
+                                $data[$x]['Aging Days'] = $val->ageDays;
+                                foreach ($output['aging'] as $val2) {
+                                    $data[$x][$val2] = $val->$val2;
+                                    $lineTotal += $val->$val2;
+                                }
+                                $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
+                                $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
+                                $x++;
+                            }
+                        } else {
+                            $data = array();
                         }
-                    } else {
-                        $data = array();
+                    } else if ($reportTypeID == 'SAS') { //supplier aging summary
+                        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                        $output = $this->getSupplierAgingSummaryQRY($request);
+                        $fileName = 'Supplier Aging Summary Report';
+                        $title = 'Supplier Aging Summary Report';
+                        if ($output['data']) {
+                            $x = 0;
+                            foreach ($output['data'] as $val) {
+                                $lineTotal = 0;
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['Account'] = $val->glCode . "-" . $val->AccountDescription;
+                                $data[$x]['Supplier Code'] = $val->SupplierCode;
+                                $data[$x]['Supplier Name'] = $val->suppliername;
+                                $data[$x]['Credit Period'] = $val->creditPeriod;
+                                $data[$x]['Currency'] = $val->documentCurrency;
+                                $data[$x]['Aging Days'] = $val->ageDays;
+                                foreach ($output['aging'] as $val2) {
+                                    $data[$x][$val2] = $val->$val2;
+                                    $lineTotal += $val->$val2;
+                                }
+                                $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
+                                $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
+                                $x++;
+                            }
+                        } else {
+                            $data = array();
+                        }
+                    } else if ($reportTypeID == 'SADA') { //supplier aging detail advance
+                        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                        $output = $this->getSupplierAgingDetailAdvanceQRY($request);
+                        $fileName = 'Supplier Aging Detail Advance';
+                        $title = 'Supplier Aging Detail Advance Report';
+                        if ($output['data']) {
+                            $x = 0;
+                            foreach ($output['data'] as $val) {
+                                $lineTotal = 0;
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                                $data[$x]['Document Code'] = $val->documentCode;
+                                $data[$x]['Account'] = $val->glCode . "-" . $val->AccountDescription;
+                                $data[$x]['Narration '] = $val->documentNarration;
+                                $data[$x]['Supplier Code'] = $val->SupplierCode;
+                                $data[$x]['Supplier Name'] = $val->suppliername;
+                                $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                                $data[$x]['Currency'] = $val->documentCurrency;
+                                $data[$x]['Aging Days'] = $val->ageDays;
+                                foreach ($output['aging'] as $val2) {
+                                    $data[$x][$val2] = $val->$val2;
+                                    $lineTotal += $val->$val2;
+                                }
+                                $data[$x]['Advance/UnAllocated Amount'] = $lineTotal;
+                                $x++;
+                            }
+                        } else {
+                            $data = array();
+                        }
+                    } else if ($reportTypeID == 'SASA') { //supplier aging summary
+                        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                        $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
+                        $fileName = 'Supplier Aging Summary Advance';
+                        $title = 'Supplier Aging Summary Advance Report';
+                        if ($output['data']) {
+                            $x = 0;
+                            foreach ($output['data'] as $val) {
+                                $lineTotal = 0;
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['Account'] = $val->glCode . "-" . $val->AccountDescription;
+                                $data[$x]['Supplier Code'] = $val->SupplierCode;
+                                $data[$x]['Supplier Name'] = $val->suppliername;
+                                $data[$x]['Credit Period'] = $val->creditPeriod;
+                                $data[$x]['Currency'] = $val->documentCurrency;
+                                $data[$x]['Aging Days'] = $val->ageDays;
+                                foreach ($output['aging'] as $val2) {
+                                    $data[$x][$val2] = $val->$val2;
+                                    $lineTotal += $val->$val2;
+                                }
+                                $data[$x]['Total'] = $lineTotal;
+                                $x++;
+                            }
+                        } else {
+                            $data = array();
+                        }
                     }
-                }
-                else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
-                    $fileName = 'Unbilled GRV Aging Detail';
-                    $title = 'Unbilled GRV Aging Detail Report';
-                    $output = $this->getUnbilledGRVDetailAgingQRY($request);
-                    $name = "aging_detail";
-                    $decimal = 2;
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Supplier Code'] = $val->supplierCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Doc Number'] = $val->documentCode;
-                            $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
-                            if ($request->currencyID == 2) {
-                                $decimal = 3;
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
+                    $cur = NULL;
+                    $path = 'accounts-payable/report/supplier_aging/excel/';
+                    $detail_array = array('type' => 2, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $cur, 'title' => $title, 'company_code' => $companyCode);
+                    $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+
+                    if ($basePath == '') {
+                        return $this->sendError('Unable to export excel');
+                    } else {
+                        return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+
+                    break;
+                case 'TS':// Top Suppliers
+                    $reportTypeID = $request->reportTypeID;
+                    $type = $request->type;
+                    $name = "";
+                    if ($reportTypeID == 'TSCW' || $reportTypeID == 'TSC') {
+                        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+                        $output = $this->getTopSupplierQRY($request);
+
+                        if ($reportTypeID == 'TSCW') {
+                            $name = "company_wise";
+                        } else if ($reportTypeID == 'TSC') {
+                            $name = "consolidated";
+                        }
+
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+
+                                if ($reportTypeID == 'TSCW') {
+                                    $data[$x]['Company ID'] = $val->companyID;
+                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                }
+                                $data[$x]['Supplier Code'] = $val->supplierPrimaryCode;
+                                $data[$x]['Supplier Name'] = $val->supplierName;
+                                $data[$x]['Supplier Country'] = $val->supplierCountry;
+                                $data[$x]['Amount'] = round($val->Amount, 2);
+                                $x++;
+                            }
+                        } else {
+                            $data = array();
+                        }
+                    }
+                    \Excel::create('top_suppliers_by_year_' . $name, function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+                    return $this->sendResponse(array(), trans('custom.success_export'));
+                    break;
+                case 'APUGRV':// Unbilled GRV
+                    $reportTypeID = $request->reportTypeID;
+                    $type = $request->type;
+                    $name = "";
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'localOrForeign', 'controlAccountsSystemID'));
+
+                    $from_date = $request->fromDate;
+                    $to_date = $request->fromDate;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
+                    $from_date = ((new Carbon($from_date))->format('d/m/Y'));
+
+                    if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
+                        $fileName = 'Unbilled GRV Detail Report ';
+                        $title = 'Unbilled GRV Detail Report ';
+                        $output = $this->getUnbilledDetailQRY($request);
+                        $name = "detail";
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Supplier Code'] = $val->supplierCode;
+                                $data[$x]['Supplier Name'] = $val->supplierName;
+                                $data[$x]['Doc Number'] = $val->documentCode;
+                                $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
+
                                 $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
                                 $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
                                 $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
-                            } else {
+
                                 $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
                                 $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
                                 $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
+                                $x++;
                             }
-
-                            $data[$x]['<=30'] = number_format($val->case1, $decimal);
-                            $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
-                            $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
-                            $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
-                            $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
-                            $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
-                            $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
-                            $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
-                            $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
-                            $data[$x]['Over 365'] = number_format($val->case10, $decimal);
-
-                            $x++;
+                        } else {
+                            $data = array();
                         }
-                    } else {
-                        $data = array();
-                    }
-                }
-                else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
-                    $fileName = 'Unbilled GRV Aging Summary';
-                    $title = 'Unbilled GRV Aging Summary Report';
-                    $output = $this->getUnbilledGRVSummaryAgingQRY($request);
-                    $name = "aging_summary";
-                    $decimal = 2;
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Supplier Code'] = $val->supplierCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
+                    } else if ($reportTypeID == 'UGRVS') {  //Unbilled GRV summary
+                        $output = $this->getUnbilledDetailQRY($request);
+                        $fileName = 'Unbilled GRV Summary Report';
+                        $title = 'Unbilled GRV Summary Report';
+                        $name = "summary";
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Supplier Code'] = $val->supplierCode;
+                                $data[$x]['Supplier Name'] = $val->supplierName;
 
-                            if ($request->currencyID == 2) {
-                                $decimal = 3;
                                 $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
                                 $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
                                 $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
-                            } else {
+
                                 $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
                                 $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
                                 $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
+                                $x++;
                             }
-
-                            $data[$x]['<=30'] = number_format($val->case1, $decimal);
-                            $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
-                            $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
-                            $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
-                            $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
-                            $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
-                            $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
-                            $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
-                            $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
-                            $data[$x]['Over 365'] = number_format($val->case10, $decimal);
-                            $x++;
+                        } else {
+                            $data = array();
                         }
-                    } else {
-                        $data = array();
+                    } else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
+                        $fileName = 'Unbilled GRV Aging Detail';
+                        $title = 'Unbilled GRV Aging Detail Report';
+                        $output = $this->getUnbilledGRVDetailAgingQRY($request);
+                        $name = "aging_detail";
+                        $decimal = 2;
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Supplier Code'] = $val->supplierCode;
+                                $data[$x]['Supplier Name'] = $val->supplierName;
+                                $data[$x]['Doc Number'] = $val->documentCode;
+                                $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
+                                if ($request->currencyID == 2) {
+                                    $decimal = 3;
+                                    $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                                    $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                                    $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
+                                } else {
+                                    $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                                    $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                                    $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
+                                }
+
+                                $data[$x]['<=30'] = number_format($val->case1, $decimal);
+                                $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
+                                $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
+                                $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
+                                $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
+                                $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
+                                $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
+                                $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
+                                $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
+                                $data[$x]['Over 365'] = number_format($val->case10, $decimal);
+
+                                $x++;
+                            }
+                        } else {
+                            $data = array();
+                        }
+                    } else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
+                        $fileName = 'Unbilled GRV Aging Summary';
+                        $title = 'Unbilled GRV Aging Summary Report';
+                        $output = $this->getUnbilledGRVSummaryAgingQRY($request);
+                        $name = "aging_summary";
+                        $decimal = 2;
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Supplier Code'] = $val->supplierCode;
+                                $data[$x]['Supplier Name'] = $val->supplierName;
+
+                                if ($request->currencyID == 2) {
+                                    $decimal = 3;
+                                    $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                                    $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                                    $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
+                                } else {
+                                    $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                                    $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                                    $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
+                                }
+
+                                $data[$x]['<=30'] = number_format($val->case1, $decimal);
+                                $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
+                                $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
+                                $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
+                                $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
+                                $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
+                                $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
+                                $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
+                                $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
+                                $data[$x]['Over 365'] = number_format($val->case10, $decimal);
+                                $x++;
+                            }
+                        } else {
+                            $data = array();
+                        }
+
+                    } else if ($reportTypeID == 'ULD') {
+
+                        $fileName = 'Unbilled Logistics Detail';
+                        $title = 'Unbilled Logistics Detail Report';
+                        $output = $this->getUnbilledLogisticsDetailQRY($request);
+                        $name = "logistics_detail";
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['PO Number'] = $val->purchaseOrderCode;
+                                $data[$x]['GRV'] = $val->grvPrimaryCode;
+                                $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
+                                $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                                $data[$x]['Supplier Name'] = $val->supplierName;
+                                $data[$x]['Trans.Cur'] = $val->TransactionCurrencyCode;
+                                $data[$x]['Logistic Amount Transaction'] = number_format($val->LogisticAmountTransaction, $val->TransactionCurrencyDecimalPlaces);
+                                $data[$x]['Rpt.Cur'] = $val->RptCurrencyCode;
+                                $data[$x]['Logistic Amount Rpt'] = number_format($val->LogisticAmountRpt, $val->RptCurrencyDecimalPlaces);
+                                $data[$x]['Paid Amount Trans'] = number_format($val->PaidAmountTrans, $val->TransactionCurrencyDecimalPlaces);
+                                $data[$x]['Paid Amount Rpt'] = number_format($val->PaidAmountRpt, $val->RptCurrencyDecimalPlaces);
+                                $data[$x]['Balance Trans'] = number_format($val->BalanceTransAmount, $val->TransactionCurrencyDecimalPlaces);
+                                $data[$x]['Balance Rpt'] = number_format($val->BalanceRptAmount, $val->RptCurrencyDecimalPlaces);
+                                $x++;
+                            }
+                        } else {
+                            $data = array();
+                        }
                     }
 
-                }
-                else if ($reportTypeID == 'ULD') {
+                    $requestCurrency = NULL;
+                    $path = $name . '/';
+                    $path = 'accounts-payable/report/unbilled_grv_/' . $path . 'excel/';
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
 
-                    $fileName = 'Unbilled Logistics Detail';      
-                    $title = 'Unbilled Logistics Detail Report';       
-                    $output = $this->getUnbilledLogisticsDetailQRY($request);
-                    $name = "logistics_detail";
+                    $detail_array = array('type' => 2, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $requestCurrency, 'title' => $title, 'company_code' => $companyCode);
+
+                    $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+
+                    if ($basePath == '') {
+                        return $this->sendError('Unable to export excel');
+                    } else {
+                        return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+
+                    break;
+                case 'APITP':
+                    $type = $request->type;
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+
+                    $output = $this->getInvoiceToPaymentQry($request);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
+                    $decimalPlaces = 2;
+                    if ($companyCurrency) {
+                        $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                    }
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['PO Number'] = $val->purchaseOrderCode;
-                            $data[$x]['GRV'] = $val->grvPrimaryCode;
-                            $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
-                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Document No'] = $val->documentCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Trans.Cur'] = $val->TransactionCurrencyCode;
-                            $data[$x]['Logistic Amount Transaction'] = number_format($val->LogisticAmountTransaction,$val->TransactionCurrencyDecimalPlaces);
-                            $data[$x]['Rpt.Cur'] = $val->RptCurrencyCode;
-                            $data[$x]['Logistic Amount Rpt'] = number_format($val->LogisticAmountRpt,$val->RptCurrencyDecimalPlaces);
-                            $data[$x]['Paid Amount Trans'] = number_format($val->PaidAmountTrans,$val->TransactionCurrencyDecimalPlaces);
-                            $data[$x]['Paid Amount Rpt'] =  number_format($val->PaidAmountRpt,$val->RptCurrencyDecimalPlaces);
-                            $data[$x]['Balance Trans'] =  number_format($val->BalanceTransAmount,$val->TransactionCurrencyDecimalPlaces);
-                            $data[$x]['Balance Rpt'] = number_format($val->BalanceRptAmount,$val->RptCurrencyDecimalPlaces);
+                            $data[$x]['Supplier Invoice No'] = $val->supplierInvoiceNo;
+                            $data[$x]['Supplier Invoice Date'] = Helper::dateFormat($val->supplierInvoiceDate);
+                            $data[$x]['Currency'] = $val->CurrencyCode;
+                            $data[$x]['Total Amount'] = number_format($val->rptAmount, $decimalPlaces);
+                            $data[$x]['Confirmed Date'] = Helper::dateFormat($val->confirmedDate);
+                            $data[$x]['Final Approved Date'] = Helper::dateFormat($val->approvedDate);
+                            $data[$x]['Posted Date'] = Helper::dateFormat($val->postedDate);
+
+                            $data[$x]['Payment Voucher No'] = $val->BPVcode;
+                            $data[$x]['Paid Amount'] = number_format($val->paidRPTAmount, $decimalPlaces);
+                            $data[$x]['Cheque No'] = $val->BPVchequeNo;
+                            $data[$x]['Cheque Date'] = Helper::dateFormat($val->BPVchequeDate);
+                            $data[$x]['Cheque Printed By'] = $val->chequePrintedByEmpName;
+                            $data[$x]['Cheque Printed Date'] = Helper::dateFormat($val->chequePrintedDateTime);
+                            $data[$x]['Payment Cleared Date'] = Helper::dateFormat($val->trsClearedDate);
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
-                }
- 
-                $requestCurrency = NULL;
-                $path = $name.'/'; 
-                $path = 'accounts-payable/report/unbilled_grv_/'.$path.'excel/';
-                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+                    \Excel::create('invoice_to_paymentpayment', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
 
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title, 'company_code' => $companyCode);
-
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
-
-
-
-                break;
-            case 'APITP':
-                $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-
-                $output = $this->getInvoiceToPaymentQry($request);
-                $companyCurrency = Helper::companyCurrency($request->companySystemID);
-                $decimalPlaces = 2;
-                if ($companyCurrency) {
-                    $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
-                }
-                if ($output) {
-                    $x = 0;
-                    foreach ($output as $val) {
-                        $data[$x]['Document No'] = $val->documentCode;
-                        $data[$x]['Supplier Name'] = $val->supplierName;
-                        $data[$x]['Supplier Invoice No'] = $val->supplierInvoiceNo;
-                        $data[$x]['Supplier Invoice Date'] = Helper::dateFormat($val->supplierInvoiceDate);
-                        $data[$x]['Currency'] = $val->CurrencyCode;
-                        $data[$x]['Total Amount'] = number_format($val->rptAmount,$decimalPlaces);
-                        $data[$x]['Confirmed Date'] =  Helper::dateFormat($val->confirmedDate);
-                        $data[$x]['Final Approved Date'] = Helper::dateFormat($val->approvedDate);
-                        $data[$x]['Posted Date'] = Helper::dateFormat($val->postedDate);
-
-                        $data[$x]['Payment Voucher No'] = $val->BPVcode;
-                        $data[$x]['Paid Amount'] = number_format($val->paidRPTAmount,$decimalPlaces);
-                        $data[$x]['Cheque No'] = $val->BPVchequeNo;
-                        $data[$x]['Cheque Date'] = Helper::dateFormat($val->BPVchequeDate);
-                        $data[$x]['Cheque Printed By'] = $val->chequePrintedByEmpName;
-                        $data[$x]['Cheque Printed Date'] = Helper::dateFormat($val->chequePrintedDateTime);
-                        $data[$x]['Payment Cleared Date'] = Helper::dateFormat($val->trsClearedDate);
-                        $x++;
-                    }
-                } else {
-                    $data = array();
-                }
-                \Excel::create('invoice_to_paymentpayment', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-
-                break;
-            default:
-                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
+                    break;
+                default:
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
+            }
+        } catch(\Exception $e){
+            return $this->sendError($e->getMessage(), 500);
         }
     }
 

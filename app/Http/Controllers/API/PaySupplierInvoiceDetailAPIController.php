@@ -370,10 +370,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
 
         $supplierPaymentAmount = isset($input["supplierPaymentAmount"]) ? $input["supplierPaymentAmount"] : 0;
-
-        $input["paymentBalancedAmount"] = $paymentBalancedAmount - $supplierPaymentAmount;
-
-       
+        try{
+            $input["paymentBalancedAmount"] = $paymentBalancedAmount - $supplierPaymentAmount;
+        }catch (\Exception $e){
+            $input["paymentBalancedAmount"] = $paymentBalancedAmount - (float) preg_replace("/[^0-9.]/", "",$supplierPaymentAmount);
+        }       
 
         $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], $input["supplierPaymentAmount"]);
         $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);

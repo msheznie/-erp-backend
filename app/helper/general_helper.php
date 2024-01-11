@@ -156,15 +156,16 @@ class Helper
         $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
 
         if (env('IS_MULTI_TENANCY') == true) {
+            if (isset($_SERVER['HTTP_HOST'])) {
+                $url = $_SERVER['HTTP_HOST'];
+                $url_array = explode('.', $url);
+                $subDomain = $url_array[0];
 
-            $url = $_SERVER['HTTP_HOST'];
-            $url_array = explode('.', $url);
-            $subDomain = $url_array[0];
+                $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
 
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
-
-            $search = '*';
-            $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
+                $search = '*';
+                $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
+            }
         }
 
         return $redirectUrl;
@@ -2407,14 +2408,18 @@ class Helper
                             SendEmailForDocument::approvedDocument($input);
                         }
 
-                        $sendEmail = \Email::sendEmail($emails);
+                        $notifyConfirm = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
 
+                        if ($notifyConfirm) {
+                            $sendEmail = \Email::sendEmail($emails);
 
-                        if (!$sendEmail["success"]) {
-                            return ['success' => false, 'message' => $sendEmail["message"]];
+                            if (!$sendEmail["success"]) {
+                                return ['success' => false, 'message' => $sendEmail["message"]];
+                            }
+
+                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
                         }
 
-                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
 
                         $webPushData = [
                             'title' => $pushNotificationMessage,
@@ -3419,20 +3424,22 @@ class Helper
                                             }
                                         }
                                         
-                                        $sendEmail = \Email::sendEmail($emails);
-                                        if (!$sendEmail["success"]) {
-                                            return ['success' => false, 'message' => $sendEmail["message"]];
+                                        $notifyConfirm = (isset($params['fromUpload']) && $params['fromUpload']) ? false : true;
+
+                                        if ($notifyConfirm) {
+                                            $sendEmail = \Email::sendEmail($emails);
+                                            if (!$sendEmail["success"]) {
+                                                return ['success' => false, 'message' => $sendEmail["message"]];
+                                            }
+
+                                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+
+                                            $webPushData = [
+                                                'title' => $pushNotificationMessage,
+                                                'body' => '',
+                                                'url' => $redirectUrl,
+                                            ];
                                         }
-
-                                        
-
-                                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
-
-                                        $webPushData = [
-                                            'title' => $pushNotificationMessage,
-                                            'body' => '',
-                                            'url' => $redirectUrl,
-                                        ];
 
                                         // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
 
@@ -4332,7 +4339,8 @@ class Helper
 
                     
                 // get current employee detail
-                $empInfo = self::getEmployeeInfo();
+                $empInfo = (isset($input['fromUpload']) && $input['fromUpload']) ? self::getEmployeeInfoByEmployeeID($input['approvedBy']) : self::getEmployeeInfo();
+
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
                 if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
@@ -4546,7 +4554,10 @@ class Helper
                                 $customerInvoiceDirect = CustomerInvoiceDirect::find($input["documentSystemCode"]);
                                 if ($customerInvoiceDirect->isPerforma == 0 || $customerInvoiceDirect->isPerforma == 2) {
                                     $object = new ChartOfAccountValidationService();
-                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    $uploadEmployeeID = (isset($input['fromUpload']) && $input['fromUpload']) ? $input['approvedBy'] : null;
+
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $uploadEmployeeID);
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
                                         return ['success' => false, 'message' => $result["errorMsg"]];
@@ -5281,15 +5292,20 @@ class Helper
                              Log::info('approvedDocument function called in side general helper');
                             SendEmailForDocument::approvedDocument($input);
                         }
-                        
-                        $sendEmail = \Email::sendEmail($emails);
 
-                      
-                        if (!$sendEmail["success"]) {
-                            return ['success' => false, 'message' => $sendEmail["message"]];
+                        $notifyApprove = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
+
+                        if ($notifyApprove) {
+                            $sendEmail = \Email::sendEmail($emails);
+
+                          
+                            if (!$sendEmail["success"]) {
+                                return ['success' => false, 'message' => $sendEmail["message"]];
+                            }
+
+                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
+
                         }
-
-                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
                         
                         $webPushData = [
                             'title' => $pushNotificationMessage,
@@ -5315,6 +5331,7 @@ class Helper
             //$data = ['documentSystemCode' => $input['documentSystemCode'],'documentSystemID' => $input['documentSystemID']];
             //RollBackApproval::dispatch($data);
             Log::error($e->getMessage());
+            Log::error($e->getFile());
 
 
             $msg = 'Error Occurred';
@@ -6027,6 +6044,19 @@ class Helper
                 $l->select(['languageID','languageShortCode','icon']);
             }]);
         }])->find($user->employee_id);
+
+        return $employee;
+    }
+
+    public static function getEmployeeInfoByEmployeeID($employee_id)
+    {
+        $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+            $query->select('uuid', 'employee_id');
+        },'language' => function ($q) {
+            $q->with(['language' => function ($l) {
+                $l->select(['languageID','languageShortCode','icon']);
+            }]);
+        }])->find($employee_id);
 
         return $employee;
     }

@@ -15,6 +15,11 @@ use App\Models\BankMemoTypes;
 use App\Models\RegisteredSupplierAttachment;
 use App\Models\DocumentAttachments;
 use App\Models\Company;
+use App\Models\RegisterSupplierBusinessCategoryAssign;
+use App\Models\SupplierBusinessCategoryAssign;
+use App\Models\RegisterSupplierSubcategoryAssign;
+use App\Models\SupplierSubCategoryAssign;
+
 
 class SupplierRegister
 {
@@ -137,6 +142,30 @@ class SupplierRegister
 
         	$attachemntRes = DocumentAttachments::create($attachmentData);
         }
+
+		$businessCategoryData = RegisterSupplierBusinessCategoryAssign::where('supplierID', $input['id'])
+								->get();
+
+		foreach($businessCategoryData as $key => $value)
+		{
+			$businessCategoryAssign = new SupplierBusinessCategoryAssign();
+			$businessCategoryAssign->supplierID = $supplierMasters->supplierCodeSystem;
+			$businessCategoryAssign->supCategoryMasterID = $value->supCategoryMasterID;
+			$businessCategoryAssign->save();
+		}
+
+		$businessSubCategoryData = RegisterSupplierSubcategoryAssign::where('supplierID', $input['id'])
+								->get();
+
+		foreach($businessSubCategoryData as $key => $value)
+		{
+			$businessSubCategoryAssign = new SupplierSubCategoryAssign();
+			$businessSubCategoryAssign->supplierID = $supplierMasters->supplierCodeSystem;
+			$businessSubCategoryAssign->supSubCategoryID = $value->supSubCategoryID;
+			$businessSubCategoryAssign->save();
+		}
+
+
 
         return ['status' => true, 'message' => 'success'];
 	}

@@ -101,7 +101,8 @@ class CreateDepreciation implements ShouldQueue
 
                     $chunkDataSizeCounts = ceil($checkTotalRec / $chunkSize);
 
-                    Log::info('chunkCount - '.$chunkDataSizeCounts);
+                    $depMaster->totalChunks = $chunkDataSizeCounts;
+                    $depMaster->save();
 
                     for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
                         ProcessDepreciationQuery::dispatch($i, $db, $depMasterAutoID, $depDate, $chunkDataSizeCounts)->onQueue('single');

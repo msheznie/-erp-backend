@@ -78,6 +78,10 @@ use Illuminate\Support\Facades\Hash;
 use App\helper\CreateExcel;
 use App\helper\email;
 use Illuminate\Http\Request as LaravelRequest;
+use App\Models\RegisterSupplierBusinessCategoryAssign;
+use App\Models\RegisterSupplierSubcategoryAssign;
+
+
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -1296,12 +1300,15 @@ class SupplierMasterAPIController extends AppBaseController
         $contactTypes = SupplierContactType::all();
         $yesNoSelection = YesNoSelection::all();
 
+        $businessCategories = SupplierCategoryMaster::where('isActive',1)->get();
+
         $output = [
                 'country' => $country,
                 'currencyMaster' => $currencyMaster,
                 'contactTypes' => $contactTypes,
                 'yesNoSelection' => $yesNoSelection,
-                'companyDefaultBankMemos' => $companyDefaultBankMemos
+                'companyDefaultBankMemos' => $companyDefaultBankMemos,
+                'businessCategories' => $businessCategories,
             ];
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -1368,7 +1375,7 @@ class SupplierMasterAPIController extends AppBaseController
             'webAddress' => isset($input['webAddress']) ? $input['webAddress'] : null,
             'registrationNumber' => $input['registrationNumber']
         ];
-
+        
         DB::beginTransaction();
         try {
             $resMaster = RegisteredSupplier::create($masterData);
@@ -1411,6 +1418,33 @@ class SupplierMasterAPIController extends AppBaseController
                         $resContact = RegisteredSupplierContactDetail::create($contactData);
                     }
                 }
+
+                // foreach ($input['businessCategoryID'] as $key => $value) {
+                //     $masterCategory = [
+                //         'supplierID' => $resMaster->id,
+                //         'supCategoryMasterID' => $value['id'],
+                //     ];
+                //     $resContact = RegisterSupplierBusinessCategoryAssign::create($masterCategory);
+                //   }
+                  
+
+                  foreach ($input['businessSubCategoryID'] as $key => $value) {
+
+                    $mainCategory = SupplierCategorySub::where('supCategorySubID',$value['id'])->select('supCategorySubID','supMasterCategoryID')->first();
+
+                    RegisterSupplierBusinessCategoryAssign::updateOrCreate(
+                        ['supplierID' => $resMaster->id,'supCategoryMasterID' => $mainCategory->supMasterCategoryID],
+                        ['supplierID' => $resMaster->id,'supCategoryMasterID' => $mainCategory->supMasterCategoryID]
+                    );
+
+                    $subCategory = [
+                        'supplierID' => $resMaster->id,
+                        'supSubCategoryID' => $value['id'],
+                    ];
+                    $resContact = RegisterSupplierSubcategoryAssign::create($subCategory);
+                  }
+
+
             }
 
             $checkHash->isUsed = 1;
@@ -1591,14 +1625,48 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $data = RegisteredSupplier::with(['supplier_currency' => function($query) {
+        $data['data'] = RegisteredSupplier::with(['supplier_currency' => function($query) {
                                         $query->with(['currency_master']);
                                     }, 'supplier_contact_details' => function($query) {
                                         $query->with(['contact_type']);
                                     }, 'supplier_attachments', 'final_approved_by'])
                                   ->where('id', $input['supplierID'])
                                   ->first();     
+
+        $categories = [];                           
+        $supplierBusinessCategories = DB::table('registersupplierbusinesscategoryassign')
+                ->select('suppliercategorymaster.supCategoryMasterID','suppliercategorymaster.categoryName','registersupplierbusinesscategoryassign.id')
+                ->leftJoin('suppliercategorymaster','registersupplierbusinesscategoryassign.supCategoryMasterID','=','suppliercategorymaster.supCategoryMasterID')
+                ->where('registersupplierbusinesscategoryassign.supplierID', $input['supplierID'])->get();
+                foreach ($supplierBusinessCategories as $supplierBusinessCategory){
+                    $supplierBusinessSubCategories = DB::table('registersuppliersubcategoryassign')
+                        ->select('registersuppliersubcategoryassign.id','suppliercategorysub.categoryName')
+                        ->leftJoin('suppliercategorysub','registersuppliersubcategoryassign.supSubCategoryID','=','suppliercategorysub.supCategorySubID')
+                        ->where('registersuppliersubcategoryassign.supplierID', $input['supplierID'])
+                        ->where('suppliercategorysub.supMasterCategoryID', $supplierBusinessCategory->supCategoryMasterID)->get();
+                    if(count($supplierBusinessSubCategories) > 0){
+                        foreach ($supplierBusinessSubCategories as $supplierBusinessSubCategory) {
+                            $temp = [
+                                "businessCategoryAssignID" => $supplierBusinessCategory->id,
+                                "businessCategoryName" => $supplierBusinessCategory->categoryName,
+                                "businessSubCategoryAssignID" => $supplierBusinessSubCategory->id,
+                                "businessSubCategoryName" => $supplierBusinessSubCategory->categoryName
+                            ];
+                            $categories[] = $temp;
+                        }
+                    }
+                    else{
+                        $temp = [
+                            "businessCategoryAssignID" => $supplierBusinessCategory->id,
+                            "businessCategoryName" => $supplierBusinessCategory->categoryName,
+                            "businessSubCategoryAssignID" => 0,
+                            "businessSubCategoryName" => null
+                        ];
+                        $categories[] = $temp;
+                    }
+                 }                          
         
+        $data['categories'] = $categories;
         return $this->sendResponse($data, 'Supplier data retrived successfully');   
     }
 

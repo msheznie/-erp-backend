@@ -146,6 +146,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             }
 
             $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $input['prefix'])
+                                                          ->where('companyReportTemplateID', $input['companyReportTemplateID'])
                                                           ->first();
             if ($checkPrefixDuplicate) {
                 return $this->sendError("Prefix already exists.", 500);
@@ -647,6 +648,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                         }
 
                         $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $val['prefix'])
+                                                                       ->where('companyReportTemplateID', $input['companyReportTemplateID'])
                                                                       ->first();
                         if ($checkPrefixDuplicate) {
                             return $this->sendError("Prefix ".$val['prefix']. " cannot be duplicated.", 500);

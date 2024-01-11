@@ -194,6 +194,10 @@ class DebitNoteDetailsAPIController extends AppBaseController
             return $this->sendError('Company not found');
         }
 
+        if ($debitNote->projectID) {
+            $input['detail_project_id'] = $debitNote->projectID;
+        }
+
 
         $input['companySystemID'] = $debitNote->companySystemID;
         $input['companyID'] = $debitNote->companyID;
@@ -366,6 +370,12 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
         if (empty($debitNote)) {
             return $this->sendError('Debit Note not found');
+        }
+
+        if(isset($input['detail_project_id'])){
+            $input['detail_project_id'] = $input['detail_project_id'];
+        } else {
+            $input['detail_project_id'] = null;
         }
 
         if (isset($input['serviceLineSystemID'])) {

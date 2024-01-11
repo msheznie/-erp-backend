@@ -252,6 +252,10 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $input['bankCurrencyER'] = $payMaster->BPVbankCurrencyER;
         }
 
+        if ($payMaster->projectID) {
+            $input['detail_project_id'] = $payMaster->projectID;
+        }
+
         if ($payMaster->BPVsupplierID) {
             $input['supplierTransCurrencyID'] = $payMaster->supplierTransCurrencyID;
             $input['supplierTransER'] = $payMaster->supplierTransCurrencyER;
@@ -385,6 +389,12 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         if (empty($directPaymentDetails)) {
             return $this->sendError('Direct Payment Details not found');
+        }
+
+        if(isset($input['detail_project_id'])){
+            $input['detail_project_id'] = $input['detail_project_id'];
+        } else {
+            $input['detail_project_id'] = null;
         }
 
         $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);

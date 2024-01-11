@@ -510,6 +510,10 @@ class DebitNoteAPIController extends AppBaseController
         /** @var DebitNote $debitNote */
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
+        if(empty($input['projectID'])){
+            $input['projectID'] = null;
+        }
+
         $type =  $input['type'];
 
         if($type == 2)

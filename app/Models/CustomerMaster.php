@@ -136,6 +136,8 @@ class CustomerMaster extends Model
         'consignee_name',
         'consignee_address',
         'payment_terms',
+        'customer_registration_no',
+        'customer_registration_expiry_date',
         'consignee_contact_no'
     ];
 
@@ -201,6 +203,8 @@ class CustomerMaster extends Model
         'consignee_name' => 'string',
         'consignee_address' => 'string',
         'payment_terms' => 'string',
+        'customer_registration_no' => 'string',
+        'customer_registration_expiry_date' => 'string',
         'consignee_contact_no' => 'string'
     ];
 

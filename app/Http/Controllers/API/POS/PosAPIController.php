@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\POS;
 
+use App\helper\inventory;
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\CustomerMasterCategory;
@@ -386,16 +387,9 @@ class PosAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
     }
-
-    public function pullItem(Request $request)
-    {
-        DB::beginTransaction();
-        try {
-
-            $company_id = $request->get('company_id');
-
-
-            $items = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
+    
+    public function getItemMasters($company_id, $third_party_system_id){
+        $data = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
             (case when itemmaster.secondaryItemCode = "" or isnull(itemmaster.secondaryItemCode) then primaryCode else itemmaster.secondaryItemCode end) as secondary_code, "" as image,(case when itemShortDescription = "" or isnull(itemShortDescription) then itemmaster.itemDescription else itemShortDescription end) as name,itemmaster.itemDescription as description,
             itemmaster.financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, itemmaster.financeCategorySub as sub_category_id, "" as sub_sub_category_id, itemmaster.barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, itemmaster.secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
             rev.chartOfAccountSystemID as revenue_gl,rev.AccountDescription as revenue_description,
@@ -404,23 +398,43 @@ class PosAPIController extends AppBaseController
             "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
             "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
             "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type, itemassigned.isActive')
-                ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
-                ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
-                ->leftJoin('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
-                ->leftJoin('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
-                ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-                ->where('itemassigned.companySystemID', '=', $company_id)
-                ->where('itemassigned.isAssigned', '=', -1)
-                ->where('primaryCode', '!=', '')
-                ->where('itemmaster.documentID', '!=', '')
-                ->where('itemmaster.financeCategoryMaster', '!=', '')
-                ->where('itemmaster.financeCategorySub', '!=', '')
-                ->where('itemmaster.itemDescription', '!=', '')
-                ->where('financeitemcategorymaster.categoryDescription', '!=', '')
-                ->where('units.UnitShortCode', '!=', '')
-                // ->where('itemmaster.financeCategoryMaster', '!=', 3)
-                ->get();
+            ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
+            ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+            ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
+            ->leftJoin('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
+            ->leftJoin('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
+            ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+            ->where('itemassigned.companySystemID', '=', $company_id)
+            ->where('itemassigned.isAssigned', '=', -1)
+            ->where('primaryCode', '!=', '')
+            ->where('itemmaster.documentID', '!=', '')
+            ->where('itemmaster.financeCategoryMaster', '!=', '')
+            ->where('itemmaster.financeCategorySub', '!=', '')
+            ->where('itemmaster.itemDescription', '!=', '')
+            ->where('financeitemcategorymaster.categoryDescription', '!=', '')
+            ->where('units.UnitShortCode', '!=', '');
+            // ->where('itemmaster.financeCategoryMaster', '!=', 3)
+
+
+        if ($third_party_system_id == 1) {
+            $data = $data->whereIn('itemmaster.pos_type', [1,3]);
+        } else if ($third_party_system_id == 2) {
+            $data = $data->whereIn('itemmaster.pos_type', [2,3]);
+        }
+
+        $data = $data->get();
+        return $data;
+    }
+
+    public function pullItem(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+
+            $company_id = $request->get('company_id');
+            $third_party_system_id = $request->get('third_party_system_id');
+
+            $items = $this->getItemMasters($company_id, $third_party_system_id);
 
             DB::commit();
             return $this->sendResponse($items, 'Data Retrieved successfully');
@@ -687,6 +701,8 @@ class PosAPIController extends AppBaseController
         $input = $request->all();
         $isCompleted = isset($input['isCompleted']) ? $input['isCompleted']: 0;
 
+        $companyId = $request->companyId;
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -700,6 +716,7 @@ class PosAPIController extends AppBaseController
                 ->leftjoin('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_shiftdetails.wareHouseID')
                 ->leftjoin('pos_source_menusalesmaster', 'pos_source_menusalesmaster.shiftID', '=', 'pos_source_shiftdetails.shiftID')
                 ->whereIn('pos_source_shiftdetails.shiftID', $postedShifts)
+                ->where('pos_source_shiftdetails.companyID', $companyId)
                 ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription', 'pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
                 ->selectRaw('SUM(pos_source_menusalesmaster.grossTotal) as totalBillAmount')
                 ->selectRaw('COUNT(pos_source_menusalesmaster.shiftID) as noOfBills')->groupBy('pos_source_menusalesmaster.shiftID');
@@ -708,6 +725,7 @@ class PosAPIController extends AppBaseController
                 ->leftjoin('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_shiftdetails.wareHouseID')
                 ->leftjoin('pos_source_menusalesmaster', 'pos_source_menusalesmaster.shiftID', '=', 'pos_source_shiftdetails.shiftID')
                 ->whereNotIn('pos_source_shiftdetails.shiftID', $postedShifts)
+                ->where('pos_source_shiftdetails.companyID', $companyId)
                 ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription', 'pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
                 ->selectRaw('SUM(pos_source_menusalesmaster.grossTotal) as totalBillAmount')
                 ->selectRaw('COUNT(pos_source_menusalesmaster.shiftID) as noOfBills')->groupBy('pos_source_menusalesmaster.shiftID');
@@ -736,26 +754,28 @@ class PosAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-
+        $companyId = $request->companyId;
         $postedShifts = POSFinanceLog::groupBy('shiftId')->where('status', 2)->pluck('shiftId');
 
         if ($isCompleted == 1){
             $shifts = POSSOURCEShiftDetails::where('posType', 1)
                 ->leftjoin('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_shiftdetails.wareHouseID')
-                ->leftjoin('pos_source_menusalesmaster', 'pos_source_menusalesmaster.shiftID', '=', 'pos_source_shiftdetails.shiftID')
+                ->leftjoin('pos_source_invoice', 'pos_source_invoice.shiftID', '=', 'pos_source_shiftdetails.shiftID')
                 ->whereIn('pos_source_shiftdetails.shiftID', $postedShifts)
+                ->where('pos_source_shiftdetails.companyID', $companyId)
                 ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription', 'pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
-                ->selectRaw('SUM(pos_source_menusalesmaster.grossTotal) as totalBillAmount')
-                ->selectRaw('COUNT(pos_source_menusalesmaster.shiftID) as noOfBills')->groupBy('pos_source_menusalesmaster.shiftID');
+                ->selectRaw('SUM(pos_source_invoice.netTotal) as totalBillAmount')
+                ->selectRaw('COUNT(pos_source_invoice.shiftID) as noOfBills')->groupBy('pos_source_invoice.shiftID');
         } else {
 
             $shifts = POSSOURCEShiftDetails::where('posType', 1)
                 ->leftjoin('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_shiftdetails.wareHouseID')
-                ->leftjoin('pos_source_menusalesmaster', 'pos_source_menusalesmaster.shiftID', '=', 'pos_source_shiftdetails.shiftID')
+                ->leftjoin('pos_source_invoice', 'pos_source_invoice.shiftID', '=', 'pos_source_shiftdetails.shiftID')
                 ->whereNotIn('pos_source_shiftdetails.shiftID', $postedShifts)
+                ->where('pos_source_shiftdetails.companyID', $companyId)
                 ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription', 'pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
-                ->selectRaw('SUM(pos_source_menusalesmaster.grossTotal) as totalBillAmount')
-                ->selectRaw('COUNT(pos_source_menusalesmaster.shiftID) as noOfBills')->groupBy('pos_source_menusalesmaster.shiftID');
+                ->selectRaw('SUM(pos_source_invoice.netTotal) as totalBillAmount')
+                ->selectRaw('COUNT(pos_source_invoice.shiftID) as noOfBills')->groupBy('pos_source_invoice.shiftID');
         }
 
         return \DataTables::eloquent($shifts)
@@ -1030,4 +1050,44 @@ class PosAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
   }
+
+    public function fetchItemWacAmount(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $company_id = $request->get('company_id');
+            $third_party_system_id = $request->get('third_party_system_id');
+
+            $items = $this->getItemMasters($company_id, $third_party_system_id);
+
+            $itemData = $items->map(function ($item) use ($company_id) {
+                $data = array(
+                    'companySystemID' => $company_id,
+                    'itemCodeSystem' => $item->id,
+                    'wareHouseId' => null
+                );
+
+                $inventoryData = Inventory::itemCurrentCostAndQty($data);
+                return [
+                    'itemAutoID' => $item->id,
+                    'companyWacAmount' => $inventoryData['wacValueLocal'],
+                ];
+            });
+
+            DB::commit();
+            return \Response::json([
+                "type" => "success",
+                "status" => 200,
+                "message" => "Data Retreived Sucessfully!",
+                "data" => $itemData
+            ]);
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return \Response::json([
+                "type" => "error", 
+                "status" => 404, 
+                "message" => "No records fetched!"
+            ]);
+        }
+    }
 }

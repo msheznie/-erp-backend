@@ -378,45 +378,54 @@ class FinanceItemCategorySubAPIController extends AppBaseController
        // financeGLcodePLSystemID - cost gl
 
         
-       $data = $this->convertArrayToSelectedValue($input,['financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID']);
+       $data = $this->convertArrayToSelectedValue($input,['financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID','financeCogsGLcodePLSystemID']);
         
        $balance_sheet_gl_code = (isset($data['financeGLcodebBSSystemID'])) ? $data['financeGLcodebBSSystemID'] : null;
-       $cost_gl_code = (isset($data['financeGLcodePLSystemID'])) ? $data['financeGLcodePLSystemID'] : null;
+       $consumption_gl_code = (isset($data['financeGLcodePLSystemID'])) ? $data['financeGLcodePLSystemID'] : null;
+       $cogs_gl_code = (isset($data['financeCogsGLcodePLSystemID'])) ? $data['financeCogsGLcodePLSystemID'] : null;
        $include_pl_for_grvn = (isset($data['includePLForGRVYN'])) ? $data['includePLForGRVYN'] : null;
 
-       if(!$include_pl_for_grvn) {
-            if(!$balance_sheet_gl_code) {
-                if($cost_gl_code) {
-                    return $this->sendError("Please check 'Include PL For GRV YN'",500);     
-                }else {
-                    return $this->sendError("Please select 'Cost GL Code'",500);
-                }
-            }else {
-                if(!$cost_gl_code) {
-                    return $this->sendError("Please select 'Cost GL Code'",500);
-                }
-            }
+       $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID','trackingType','financeCogsGLcodePLSystemID']);
+       if($input['itemCategoryID'] != 3){
+           if(!$include_pl_for_grvn) {
+               if(!$balance_sheet_gl_code) {
+                   if($consumption_gl_code) {
+                       return $this->sendError("Please check 'Include PL For GRV YN'",500);
+                   }else {
+                       return $this->sendError("Please select 'Consumption GL Code'",500);
+                   }
+               }else {
+                   if(!$consumption_gl_code) {
+                       return $this->sendError("Please select 'Consumption GL Code'",500);
+                   }
+               }
 
-       }else {
-            if(!$balance_sheet_gl_code) { 
-                if(!$cost_gl_code) {
-                    return $this->sendError("Please select 'Cost GL Code'",500);
-                }
-            }
+           }else {
+               if(!$balance_sheet_gl_code) {
+                   if(!$consumption_gl_code) {
+                       return $this->sendError("Please select 'Consumption GL Code'",500);
+                   }
+               }
+           }
+
+           if(!$cogs_gl_code) {
+               return $this->sendError("Please select 'COGS GL Code'",500);
+           }
+       } else{
+           if(!$balance_sheet_gl_code){
+               return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+           }
        }
-
-
-        $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID','trackingType']);
         
         $financeGLcodebBS = ChartOfAccount::find(isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null);
         $financeGLcodePL = ChartOfAccount::find(isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] : null);
         $financeGLcodeRevenue = ChartOfAccount::find(isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] : null);
-
+        $financeCogsGLcodePL = ChartOfAccount::find($cogs_gl_code);
         
         $input['financeGLcodebBS'] = isset($financeGLcodebBS->AccountCode) ? $financeGLcodebBS->AccountCode : null;
         $input['financeGLcodePL'] = isset($financeGLcodePL->AccountCode) ? $financeGLcodePL->AccountCode : null;
+        $input['financeCogsGLcodePL'] = isset($financeCogsGLcodePL->AccountCode) ? $financeCogsGLcodePL->AccountCode : null;
         $input['financeGLcodeRevenue'] = isset($financeGLcodeRevenue->AccountCode) ? $financeGLcodeRevenue->AccountCode : null;
-    
 
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
@@ -427,11 +436,13 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             'itemCategoryID' => $input['itemCategoryID'],
             'financeGLcodebBSSystemID' => isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null,
             'financeGLcodePLSystemID' => isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] :null ,
+            'financeCogsGLcodePLSystemID' => $cogs_gl_code ,
             'financeGLcodeRevenueSystemID' => isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] :null,
             'includePLForGRVYN' => (isset($input['includePLForGRVYN']) && $input['includePLForGRVYN']) ? -1 : 0,
             'trackingType' => isset($input['trackingType']) ? $input['trackingType'] :null,
             'financeGLcodebBS' => $input['financeGLcodebBS'],
             'financeGLcodePL' => $input['financeGLcodePL'],
+            'financeCogsGLcodePL' => $input['financeCogsGLcodePL'],
             'financeGLcodeRevenue' => $input['financeGLcodeRevenue'],
             'modifiedPc' => $input['modifiedPc'],
             'modifiedUser' => $input['modifiedUser'],

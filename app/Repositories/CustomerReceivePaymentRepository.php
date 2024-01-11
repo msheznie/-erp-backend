@@ -238,7 +238,18 @@ class CustomerReceivePaymentRepository extends BaseRepository
                 if($val->payeeTypeID == 3){
                     $payeeType = 'Other';
                 }
+                
+                if(isset($val->transDecimal) && $val->transDecimal != null){
+                    $transDecimal = $val->transDecimal;
+                } else {
+                    $transDecimal = 0;
+                }
 
+                if(isset($val->bankDecimal) && $val->bankDecimal != null){
+                    $bankDecimal = $val->bankDecimal;
+                } else {
+                    $bankDecimal = 0;
+                }
                 $data[$x]['BRV Code'] = $val->custPaymentReceiveCode;
                 $data[$x]['Receipt Type'] = $receiptType;
                 $data[$x]['Customer'] = $val->CutomerCode;
@@ -255,9 +266,9 @@ class CustomerReceivePaymentRepository extends BaseRepository
                 $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x]['Currency'] = $val->transCurrencyCode;
-                $data[$x]['Transaction Amount'] = $val->receivedAmount? number_format(abs($val->receivedAmount), $val->transDecimal? $val->transDecimal : '', ".", "") : '';
+                $data[$x]['Transaction Amount'] = $val->receivedAmount? number_format(abs($val->receivedAmount), $transDecimal, ".", "") : '';
                 $data[$x]['Bank Currency'] = $val->bankCurrencyCode;
-                $data[$x]['Bank Amount'] = $val->bankAmount? number_format(abs($val->bankAmount), $val->bankDecimal? $val->bankDecimal : '', ".", "") : '';
+                $data[$x]['Bank Amount'] = $val->bankAmount? number_format(abs($val->bankAmount), $bankDecimal, ".", "") : '';
                 $data[$x]['Treasury Cleared'] = $val->trsClearedYN == -1? 'Yes' : 'No';
                 $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 

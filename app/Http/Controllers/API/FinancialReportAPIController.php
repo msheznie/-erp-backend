@@ -8263,6 +8263,12 @@ GROUP BY
 
     public function exportFinanceReport(Request $request)
     {
+        
+        $reportID = $request->get('reportID');
+        if(!isset($reportID) && $reportID == null)
+        {
+            return $this->sendError('No report ID found');
+        }
         $reportData = $this->generateFRReport($request);
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));

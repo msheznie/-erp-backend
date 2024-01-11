@@ -364,6 +364,10 @@ class CreditNoteAPIController extends AppBaseController
             return $this->sendError('Credit note not found', 500);
         }
 
+        if(empty($input['projectID'])){
+            $input['projectID'] = null;
+        }
+
         if (isset($input['debitNoteAutoID'])) {
             $alreadyUsed = CreditNote::where('debitNoteAutoID', $input['debitNoteAutoID'])
                 ->where('creditNoteAutoID', '<>', $id)

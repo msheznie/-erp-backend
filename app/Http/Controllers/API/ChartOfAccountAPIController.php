@@ -157,23 +157,6 @@ class ChartOfAccountAPIController extends AppBaseController
         }
 
         $isMasterAc = (isset($input['isMasterAccount']) && ($input['isMasterAccount'] == TRUE || $input['isMasterAccount'] == 1)) ? 1 : 0;
-        if (isset($input['masterAccount']) && $input['masterAccount'] != null && !$isMasterAc) {
-            $checkMasterAccountValidity = ChartOfAccount::where('isMasterAccount', 1)
-                ->where('isApproved', 1)
-                ->where('AccountCode', $input['masterAccount'])
-                ->where('catogaryBLorPLID', $input['catogaryBLorPLID'])
-                ->where('controlAccountsSystemID', $input['controlAccountsSystemID'])
-                ->whereHas('chartofaccount_assigned', function ($query) use ($input) {
-                    $query->where('companySystemID', $input['primaryCompanySystemID'])
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                })
-                ->first();
-
-            if (!$checkMasterAccountValidity) {
-                return $this->sendError('Selected Master Account not match with sub ledger account');
-            }
-        }
 
         if (isset($input['isMasterAccount']) && $input['isMasterAccount']) {
             $input['masterAccount'] = $accountCode;

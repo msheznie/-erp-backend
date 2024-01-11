@@ -127,7 +127,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         }
 
         $financeItemCategorySub = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
-                                                         ->with(['finance_item_category_master','finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue'])
+                                                         ->with(['finance_item_category_master','finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue','cogs_gl_code_pl'])
                                                          ->select('financeitemcategorysub.*');
 
 
@@ -180,6 +180,9 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         /** all chart of Account */
         $chartOfAccount = ChartOfAccount::all();
 
+        /** expense chart of accounts */
+        $expenseChartOfAccount = ChartOfAccount::where(['controlAccountsSystemID' => 2, 'isActive' => 1])->get();
+
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -187,6 +190,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
         $output = array('mainCategories' => $mainCategories,
             'chartOfAccount' => $chartOfAccount,
+            'expenseChartOfAccount' => $expenseChartOfAccount,
             'yesNoSelection' => $yesNoSelection,
             'fieldTypes' => $fieldTypes,
         );

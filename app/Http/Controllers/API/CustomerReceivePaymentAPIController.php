@@ -31,6 +31,7 @@ use App\Models\AdvanceReceiptDetails;
 use App\Models\BankLedger;
 use App\Models\ChartOfAccount;
 use App\Models\ChequeRegisterDetail;
+use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\Employee;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccountsAssigned;
@@ -181,7 +182,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input['documentType'] = isset($input['documentType']) ? $input['documentType'] : 0;
         $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
-        
+
+        if(!isset($input['paymentType'])){
+            return $this->sendError("Payment Mode is required", 500);
+        }
         $input['payment_type_id'] = $input['paymentType'];
         unset($input['paymentType']);
 
@@ -445,6 +449,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if (empty($customerReceivePayment)) {
             return $this->sendError('Receipt Voucher not found');
+        }
+
+        if(empty($input['projectID'])){
+            $input['projectID'] = null;
         }
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
@@ -1068,12 +1076,45 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         ->sum('receiveAmountTrans');
 
                     $customerInvoiceMaster = CustomerInvoiceDirect::find($item['bookingInvCodeSystem']);
-                    if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round(($customerInvoiceMaster['bookingAmountTrans'] + $customerInvoiceMaster['VATAmount']), $documentCurrencyDecimalPlace)) {
+                    if($customerInvoiceMaster['isPerforma'] == 2) {
+                        $_documentTransAmount = 0; 
+                        $_documentLocalAmount = 0;
+                        $_documentRptAmount = 0;
 
-                        $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
-                        $itemExistArray[] = [$itemDrt];
+                        $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::with(['chart_Of_account'])->where('custInvoiceDirectID', $customerInvoiceMaster["custInvoiceDirectAutoID"])->get();
+                        foreach ($_customerInvoiceDirectDetails as $item) {
+                            if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5 || $item->chart_Of_account->controlAccountsSystemID == 3) {
+                                $_documentTransAmount -= ($item->invoiceAmount + $item->VATAmountTotal);
+                                $_documentLocalAmount -= ($item->localAmount + $item->VATAmountLocalTotal);
+                                $_documentRptAmount -= ($item->comRptAmount + $item->VATAmountRptTotal);
+                                
+                            }else if($item->chart_Of_account->controlAccountsSystemID == 4) {
+                                $_documentTransAmount += $item->invoiceAmount + $item->VATAmountTotal;
+                                $_documentLocalAmount += $item->localAmount + $item->VATAmountLocalTotal;
+                                $_documentRptAmount += $item->comRptAmount + $item->VATAmountRptTotal;  
+                            }else{
+                                $_documentTransAmount += $item->invoiceAmount + $item->VATAmountTotal;
+                                $_documentLocalAmount += $item->localAmount + $item->VATAmountLocalTotal;
+                                $_documentRptAmount += $item->comRptAmount + $item->VATAmountRptTotal;  
+                            }
+                        }
 
+
+                        if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round(($customerInvoiceMaster['bookingAmountTrans'] + $customerInvoiceMaster['VATAmount'] + $_documentTransAmount), $documentCurrencyDecimalPlace)) {
+
+                            $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
+                            $itemExistArray[] = [$itemDrt];
+    
+                        }
+                    }else {
+                        if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round(($customerInvoiceMaster['bookingAmountTrans'] + $customerInvoiceMaster['VATAmount']), $documentCurrencyDecimalPlace)) {
+
+                            $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
+                            $itemExistArray[] = [$itemDrt];
+    
+                        }
                     }
+
                 }
             }
 
@@ -2654,7 +2695,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $join->on('erp_bankledger.documentSystemCode', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
                 $join->on('erp_bankledger.companySystemID', '=', 'erp_customerreceivepayment.companySystemID');
                 $join->on('erp_bankledger.documentSystemID', '=', 'erp_customerreceivepayment.documentSystemID');
-            })
+            })->distinct()
             ->where('erp_customerreceivepayment.documentSystemID', $input['documentId']);
 
         if (array_key_exists('confirmedYN', $input)) {

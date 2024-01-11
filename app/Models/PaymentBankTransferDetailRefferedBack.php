@@ -475,7 +475,8 @@ class PaymentBankTransferDetailRefferedBack extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'pdcID'
     ];
 
     /**
@@ -548,7 +549,8 @@ class PaymentBankTransferDetailRefferedBack extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'pdcID' => 'integer'
     ];
 
     /**

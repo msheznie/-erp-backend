@@ -4,6 +4,7 @@ namespace App\Services\AccountReceivableLedger;
 
 use App\Models\AccountsReceivableLedger;
 use App\Models\AdvanceReceiptDetails;
+use App\Models\ChartOfAccount;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
 use App\Models\DirectReceiptDetail;
@@ -22,6 +23,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\GeneralLedger\GlPostedDateService;
+
 
 class CustomerInvoiceARLedgerService
 {
@@ -89,40 +91,84 @@ class CustomerInvoiceARLedgerService
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdPcID'] = gethostname();
             $data['timeStamp'] = \Helper::currentDateTime();
-
-            if($masterData->isPerforma == 2 || $masterData->isPerforma == 3|| $masterData->isPerforma == 4|| $masterData->isPerforma == 5){// item sales invoice
+    
+            if($masterData->isPerforma == 3|| $masterData->isPerforma == 4|| $masterData->isPerforma == 5){// item sales invoice
                 $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans);
                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal));
                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt));
+                array_push($finalData, $data);
+            }else if($masterData->isPerforma == 2) {
+                $processData = self::performDirectInvoiceDetails($masterModel,$data);
+                $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans+$processData['_documentTransAmount']);
+                $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal+$processData['_documentLocalAmount']));
+                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt+$processData['_documentRptAmount']));
+
                 array_push($finalData, $data);
             }else if( $masterData->isPerforma == 1){
                 $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount);
                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount));
                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount));
                 array_push($finalData, $data);
-            }else{
-                if ($masterData->isPerforma == 0) {
-                    $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID')->get();
+            }else if ($masterData->isPerforma == 0) {
+                $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID')->get();
+                foreach ($detail as $item) {
+                    $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                    $data['serviceLineCode'] = $item->serviceLineCode;
+
+                    $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
+                    $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
+                    $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
+                    array_push($finalData, $data);
+                }
+
+            }else {
+                $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
+                $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
+                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                array_push($finalData, $data);
+            }
+
+            
+        }
+
+        return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData]];
+	}
+
+    public static function performDirectInvoiceDetails($masterModel,$data){
+        $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::selectRaw("serviceLineSystemID,serviceLineCode ,sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID')->get();
+        $detailsArray = [];
+        $_documentTransAmount = 0; 
+        $_documentLocalAmount = 0;
+        $_documentRptAmount = 0;
 
 
-                    foreach ($detail as $item) {
+                    foreach ($_customerInvoiceDirectDetails as $item) {
                         $data['serviceLineSystemID'] = $item->serviceLineSystemID;
                         $data['serviceLineCode'] = $item->serviceLineCode;
                         
                         $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
                         $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
                         $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
-                        array_push($finalData, $data);
-                    }
-                } else {
-                    $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
-                    $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
-                    $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
-                    array_push($finalData, $data);
-                }
-            }
-        }
+                        $chart_Of_account = ChartOfAccount::where('chartOfAccountSystemID', $item->glSystemID)->first();
 
-        return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData]];
-	}
+                        array_push($detailsArray, $data);
+
+                        if($chart_Of_account->controlAccountsSystemID == 2 || $chart_Of_account->controlAccountsSystemID == 5 || $chart_Of_account->controlAccountsSystemID == 3) {
+                            $_documentTransAmount -= ($item->invoiceAmount + $item->VATAmountTotal);
+                            $_documentLocalAmount -= ($item->localAmount + $item->VATAmountLocalTotal);
+                            $_documentRptAmount -= ($item->comRptAmount + $item->VATAmountRptTotal);
+                            
+                        }else if($chart_Of_account->controlAccountsSystemID == 4) {
+                            $_documentTransAmount += $item->invoiceAmount + $item->VATAmountTotal;
+                            $_documentLocalAmount += $item->localAmount + $item->VATAmountLocalTotal;
+                            $_documentRptAmount += $item->comRptAmount + $item->VATAmountRptTotal;
+                        }else{
+                            $_documentTransAmount += $item->invoiceAmount + $item->VATAmountTotal;
+                            $_documentLocalAmount += $item->localAmount + $item->VATAmountLocalTotal;
+                            $_documentRptAmount += $item->comRptAmount + $item->VATAmountRptTotal;
+                        }
+                    }
+        return ['detailsArray' => $detailsArray,'_documentTransAmount' => $_documentTransAmount,'_documentLocalAmount' => $_documentLocalAmount,'_documentRptAmount' =>$_documentRptAmount];
+
+    }
 }
