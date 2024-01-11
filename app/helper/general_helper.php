@@ -5847,8 +5847,20 @@ class Helper
                                 $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
                             }
 
-                            $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                            $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                          
+
+                            if($input["documentSystemID"] == 56 )
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $sourceModel->supplierName;
+                                $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $sourceModel->supplierName . '</b>';
+                            }
+                            else
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                                $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            }
+
+
 
                             $subject = $subjectName . " is rejected.";
                             $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
