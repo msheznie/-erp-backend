@@ -72,7 +72,7 @@ class CustomerAgingDetailReport
             'Currency',
             'Invoice Amount',
             'OutStanding',
-            'Aging Days',
+            'Aged Days',
             '0-30',
             '31-60',
             '61-90',
