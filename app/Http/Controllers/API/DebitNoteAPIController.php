@@ -2516,6 +2516,10 @@ UNION ALL
                     ->orWhereHas('supplier', function ($query) use ($search) {
                         $query->where('supplierName', 'like', "%{$search}%")
                             ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhereHas('employee', function ($query) use ($search) {
+                        $query->where('empName', 'like', "%{$search}%")
+                            ->orWhere('empID', 'LIKE', "%{$search}%");
                     });
             });
         }
