@@ -376,7 +376,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND erp_documentapproved.employeeSystemID = $employeeSystemID AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.companySystemID = $employee->empCompanySystemID AND employeesdepartments.documentSystemID = 11 AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
+	AND erp_documentapproved.employeeSystemID = $employeeSystemID GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierInvoiceApprovals UNION ALL SELECT
 	* 
 FROM
@@ -413,14 +413,13 @@ FROM
 	AND erp_bookinvsuppmaster.documentType = 4
 	AND erp_bookinvsuppmaster.cancelYN = 0
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_bookinvsuppmaster.supplierTransactionCurrencyID 
-	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 WHERE
 	erp_documentapproved.approvedYN = -1 
 	AND erp_documentapproved.rejectedYN = 0 
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.companySystemID = $employee->empCompanySystemID AND employeesdepartments.documentSystemID = 11 AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
+	AND erp_documentapproved.employeeSystemID = $employeeSystemID GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierEmployeeDirectInvoiceApprovals UNION ALL
 SELECT
 	* 
@@ -957,7 +956,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.companySystemID = $employee->empCompanySystemID AND employeesdepartments.documentSystemID = 11 AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierInvoiceApprovals
 UNION ALL
 SELECT
@@ -1152,6 +1151,9 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID = erp_documentapproved.companySystemID 
 	INNER JOIN employees ON erp_bookinvsuppmaster.confirmedByEmpSystemID = employees.employeeSystemID
@@ -1170,7 +1172,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.companySystemID = $employee->empCompanySystemID AND employeesdepartments.documentSystemID = 11 AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierEmployeeDirectInvoiceApprovals
 UNION ALL
 SELECT
