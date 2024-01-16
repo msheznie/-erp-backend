@@ -13,6 +13,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateDocumentApprovedAPIRequest;
 use App\Http\Requests\API\UpdateDocumentApprovedAPIRequest;
 use App\Models\ApprovalLevel;
@@ -146,6 +147,7 @@ class DocumentApprovedAPIController extends AppBaseController
         $search = $request->input('search.value');
 
         $employeeSystemID = \Helper::getEmployeeSystemID();
+        $employee = Helper::getEmployeeInfo();
 
         $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
 
@@ -374,7 +376,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND erp_documentapproved.employeeSystemID = $employeeSystemID GROUP BY erp_bookinvsuppmaster.bookingInvCode
+	AND erp_documentapproved.employeeSystemID = $employeeSystemID AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.companySystemID = $employee->empCompanySystemID AND employeesdepartments.documentSystemID = 11 AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierInvoiceApprovals UNION ALL SELECT
 	* 
 FROM
@@ -418,7 +420,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.companySystemID = $employee->empCompanySystemID AND employeesdepartments.documentSystemID = 11 AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierEmployeeDirectInvoiceApprovals UNION ALL
 SELECT
 	* 
@@ -955,7 +957,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.companySystemID = $employee->empCompanySystemID AND employeesdepartments.documentSystemID = 11 AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierInvoiceApprovals
 UNION ALL
 SELECT
@@ -1168,8 +1170,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
-
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.companySystemID = $employee->empCompanySystemID AND employeesdepartments.documentSystemID = 11 AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierEmployeeDirectInvoiceApprovals
 UNION ALL
 SELECT

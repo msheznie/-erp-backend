@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Tenant;
+use App\Services\AuditRoutesTenantService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -17,7 +18,6 @@ class TenantEnforce
      * @param \Closure $next
      * @return mixed
      */
-
 
     public function handle($request, Closure $next)
     {
@@ -95,6 +95,11 @@ class TenantEnforce
                     if (in_array($request->route()->uri, $dbRoutes)) {
                         $request->request->add(['db' => $tenant->database]);
                     }
+
+                    if (in_array($request->route()->uri, AuditRoutesTenantService::getTenantRoutes())) {
+                        $request->request->add(['tenant_uuid' => $tenant->uuid]);
+                    }
+
                     Config::set("database.connections.mysql.database", $tenant->database);
                     //DB::purge('mysql');
                     DB::reconnect('mysql');

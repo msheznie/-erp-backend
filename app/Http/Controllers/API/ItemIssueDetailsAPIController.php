@@ -39,6 +39,7 @@ use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
 use App\Repositories\ItemIssueDetailsRepository;
+use App\Services\Inventory\MaterialIssueService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -333,7 +334,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['itemPrimaryCode'] = $item->item_by->primaryCode;
         }
 
-        
 
         $itemMaster = ItemMaster::find($input['itemCodeSystem']);
         
@@ -453,18 +453,18 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
             return $this->sendError("Account code not updated.", 500);
         }
-
-        if ($input['itemFinanceCategoryID'] == 1) {
-            $alreadyAdded = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])
-                ->whereHas('details', function ($query) use ($input) {
-                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
-                })
-                ->first();
-
-            if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
-            }
-        }
+//
+//        if ($input['itemFinanceCategoryID'] == 1) {
+//            $alreadyAdded = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])
+//                ->whereHas('details', function ($query) use ($input) {
+//                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+//                })
+//                ->first();
+//
+//            if ($alreadyAdded) {
+//                return $this->sendError("Selected item is already added. Please check again", 500);
+//            }
+//        }
 
         // check policy 18
 
@@ -611,8 +611,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $input['clientReferenceNumber'] = $clientReferenceNumber->clientReferenceNumber;
             }
         }
-
+        $input = MaterialIssueService::getItemDetailsForMaterialIssue($input);
         $itemIssueDetails = $this->itemIssueDetailsRepository->create($input);
+
 
         if ($itemIssue->issueType == 2) {
 
@@ -638,6 +639,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                         ->count();
 
                     $materielRequest = MaterielRequest::where('RequestID', $itemIssue->reqDocID)->first();
+
                     if (!empty($materielRequest)) {
 
                         if ($checkMRD == 0) {
@@ -664,7 +666,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 }
             }
         }
-
 
         return $this->sendResponse($itemIssueDetails->toArray(), $message);
     }
@@ -971,12 +972,15 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
         }
-
         if ($itemIssue->issueType == 2) {
-            if($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyRequested){
+            if($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyAvailableToIssue){
                 $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
                 // $qtyError['diff_item'] = ["item_id" => $id,"diff_qnty" => ($input['qtyIssuedDefaultMeasure'] - $itemIssueDetails->qtyRequested)];
-                return $this->sendError("Issuing qty cannot be more than requested qty", 500, $qtyError);
+                if($itemIssueDetails->qtyAvailableToIssue == 0) {
+                    return $this->sendError("Qty fully issued for this item", 500, $qtyError);
+                }else {
+                    return $this->sendError("Issuing qty cannot be more than requested qty/remaining qty", 500, $qtyError);
+                }
             }
         }
  
@@ -1004,6 +1008,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 }
             }
 
+        $input =  MaterialIssueService::getItemDetailsForMaterialIssueUpdate($input);
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
 
 
@@ -1212,7 +1217,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if($material_request){
 
             ItemIssueDetails::where('itemIssueAutoID', $id)->delete();
-
+            ItemIssueMaster::where('itemIssueAutoID', $id)->update(['counter' => 0]);
             return $this->sendResponse([], 'Items Deleted Successfully');
 
         } else {
@@ -1227,26 +1232,45 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input = $request->all();
         $rId = $input['itemIssueAutoID'];
 
+        $materialIssue = ItemIssueMaster::where('itemIssueAutoID',$rId)->first();
+        $materielRequestId = $materialIssue->reqDocID;
+
         $items = ItemIssueDetails::where('itemIssueAutoID', $rId)
             ->with(['uom_default', 'uom_issuing','item_by'])
             ->skip($input['skip'])->take($input['limit'])->get();
-
         $index = $input['skip'] + 1;
-
+        $materialIssueObj = ItemIssueMaster::where('reqDocID',$materielRequestId)->whereNotIn('itemIssueAutoID',[$rId])->get();
+        $itemIdArray = array();
         foreach ($items as $item) {
             $item['index'] = $index;
+            $issuedTotal = 0;
             $index++;
             $issueUnit = Unit::all();
-
             $issueUnits = array();
+           foreach ($materialIssueObj as $mi) {
+               if($mi->itemIssueAutoID < $rId) {
+                   $issuedItem = $mi->details()->where('itemCodeSystem',$item->itemCodeSystem)->first();
+                   if(isset($issuedItem)) {
+                       if(!collect($itemIdArray)->contains($issuedItem->itemIssueDetailID)) {
+                           array_push($itemIdArray,$issuedItem->itemIssueDetailID);
+                       }
+                       if($issuedItem->itemCodeSystem == $item->itemCodeSystem) {
+                               $issuedTotal += $issuedItem->qtyIssued;
+                       }
+
+                   }else {
+                       $issuedTotal = 0;
+                   }
+
+               }
+           }
             foreach ($issueUnit as $unit) {
                 $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
                 array_push($issueUnits, $temArray);
             }
-
+            $item['prev_issued_qnty'] = $issuedTotal;
             $item->issueUnits = $issueUnits;
         }
-
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 
@@ -1311,14 +1335,23 @@ class ItemIssueDetailsAPIController extends AppBaseController
                         $items = $items->take(20)->get();
                         $temArray = array();
                         foreach ($items as $item) {
+                            $materialRequestQty = MaterielRequestDetails::where('RequestID', $input['reqDocID'])->where('itemCode',$item->itemCode)->first();
+                            $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$input['reqDocID'])->get();
+                            $totalIssuedQty = 0;
+                            $totalQuantityRequested = $materialRequestQty->quantityRequested;
+                            foreach ($materielIssue as $mi) {
+                                $totalIssuedQty += $mi->details()->where('itemCodeSystem',$item->itemCode)->sum('qtyIssued');
+                            }
+
                             $temp = array(
                                 'itemDescription' => $item->itemDescription,
                                 'RequestDetailsID' => $item->RequestDetailsID,
                                 'itemPrimaryCode' => isset($item->item_by->primaryCode) ? $item->item_by->primaryCode : "",
                                 'secondaryItemCode' => isset($item->item_by->secondaryItemCode) ? $item->item_by->secondaryItemCode : ""
                             );
-
-                            array_push($temArray, $temp);
+                            if($totalQuantityRequested != 0 && ($totalQuantityRequested != $totalIssuedQty)) {
+                                array_push($temArray, $temp);
+                            }
                         }
                         return $this->sendResponse($temArray, 'Data retrieved successfully');
 

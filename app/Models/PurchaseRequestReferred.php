@@ -344,7 +344,8 @@ class PurchaseRequestReferred extends Model
         'manuallyClosedByEmpName',
         'manuallyClosedDate',
         'manuallyClosedComment',
-        'timesReferred'
+        'timesReferred',
+        'counter'
     ];
 
     /**

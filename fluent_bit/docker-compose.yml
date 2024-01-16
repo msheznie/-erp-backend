@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  fluent-bit:
+    image: fluent/fluent-bit:2.1.10
+    volumes:
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./../storage/logs/audit.log:/var/logs/audit.log

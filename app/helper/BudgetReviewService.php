@@ -152,7 +152,11 @@ class BudgetReviewService
 			}
 
 			foreach ($finalEmployees as $key => $value) {
-				$employee = Employee::where('employeeSystemID', $value['employeeSystemID'])->first();
+				$employee = Employee::where('employeeSystemID', $value['employeeSystemID'])
+                    ->where('discharegedYN', 0)
+                    ->where('ActivationFlag', -1)
+                    ->where('empLoginActive', 1)
+                    ->where('empActive', 1)->first();
 
 				if ($employee && !is_null($employee->empEmail)) {
 					$dataEmail['empEmail'] = $employee->empEmail;

@@ -2423,7 +2423,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if (!$bankID && $id) {
-            $bankID = $master->bankID;
+            if($master){
+                $bankID = $master->bankID;
+            }
         }
 
         $output['portMasters'] = PortMaster::where('is_deleted', 0)->get();
@@ -3914,10 +3916,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 // return $array;
                 $html = view('print.customer_invoice_template_ksa', $array);
+                $htmlFooter = view('print.customer_invoice_template_ksa_footer', $array);
                 $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
                 $mpdf->AddPage('P');
-                $mpdf->setAutoBottomMargin = 'stretch';    
-
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
                 $mpdf->WriteHTML($html);
                 return $mpdf->Output($fileName, 'I');
             }

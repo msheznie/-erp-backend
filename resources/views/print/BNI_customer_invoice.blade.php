@@ -217,8 +217,7 @@
                 <td width="40%" style="text-align: right;white-space: nowrap">
                     <table style="width: 100%">
                         <tr>
-                            <th>{{$request->CompanyName}}</th>
-                        </tr>
+                            <td style="font-weight: bold">{{$request->CompanyName}}</th>
                         <tr>
                             <td>{{$request->CompanyAddress}},</td>
                         </tr>
