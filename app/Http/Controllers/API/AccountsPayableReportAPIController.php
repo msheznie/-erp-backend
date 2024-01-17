@@ -1551,6 +1551,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                     AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                    AND erp_generalledger.documentSystemID IN (4,11,15,16,18,24)
                     ) AS MAINQUERY
                 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                 LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
@@ -1619,6 +1620,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                     AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                    AND erp_generalledger.documentSystemID IN (4,11,15,16,18,24)
                      ) AS MAINQUERY
                 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                 LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
