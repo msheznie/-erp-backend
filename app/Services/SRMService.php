@@ -4729,6 +4729,18 @@ class SRMService
         $pricingSchedule = $tenderNegotiationArea->area->pricing_schedule;
         $technicalEvaluation = $tenderNegotiationArea->area->technical_evaluation;
         $tenderDocuments = $tenderNegotiationArea->area->tender_documents;
+
+        $envelopeType = [];
+        $envelopeType[] = $pricingSchedule ? 1 : null;
+        $envelopeType[] = $technicalEvaluation ? 2 : null;
+        $envelopeType[] = $tenderDocuments ? 3 : null;
+
+        $envelopeType = array_filter($envelopeType);
+
+
+        $pricingSchedule = $tenderNegotiationArea->area->pricing_schedule;
+        $technicalEvaluation = $tenderNegotiationArea->area->technical_evaluation;
+        $tenderDocuments = $tenderNegotiationArea->area->tender_documents;
         $data['tender_id'] = $tender_id;
         $data['tender_negotiation_id'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['tender_negotiation_id'];
         $data['bid_submission_master_id_old'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id'];
@@ -4776,10 +4788,8 @@ class SRMService
         }
 
         $docAttachments = DocumentAttachments::where('documentSystemCode', $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id']);
-            if($tenderDocuments) {
-                $docAttachments = $docAttachments->whereNull('parent_id');
-            }
-           $docAttachments = $docAttachments->get();
+
+        $docAttachments = $docAttachments->get()->whereNotIn('envelopType',$envelopeType);
 
         if(count($docAttachments) > 0){
             foreach ($docAttachments as $docAttachment){
