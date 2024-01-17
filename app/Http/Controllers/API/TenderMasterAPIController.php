@@ -1297,6 +1297,7 @@ ORDER BY
             $data['commerical_bid_opening_date'] = ($commerical_bid_opening_date) ? $commerical_bid_opening_date : null;
             $data['commerical_bid_closing_date'] = ($commerical_bid_closing_date) ? $commerical_bid_closing_date : null;
             $data['updated_by'] = $employee->employeeSystemID;
+            $data['show_technical_criteria'] = $input['show_technical_criteria'];
             $result =  $tenderMaster->update($data);
 
             if ($result) {
@@ -3237,7 +3238,7 @@ ORDER BY
 
         $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id', $bid_master_ids)->get();
 
-        $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage')->first();
+        $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage', 'show_technical_criteria')->first();
 
 
         $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config', 'tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
@@ -3298,6 +3299,7 @@ ORDER BY
         $data['percentage'] = $percentage;
         $data['master_data'] = $master_data;
         $data['submission_master_data'] = $submission_master_data;
+        $data['show_technical_criteria'] = $techniqal_wightage->show_technical_criteria;
         return $this->sendResponse($data, 'Tender Masters retrieved successfully');
     }
 

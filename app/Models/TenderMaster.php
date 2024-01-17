@@ -326,7 +326,8 @@ class TenderMaster extends Model
         'negotiation_award_comment',
         'negotiation_is_awarded',
         'negotiation_doc_verify_comment',
-        'negotiation_doc_verify_status'
+        'negotiation_doc_verify_status',
+        'show_technical_criteria'
     ];
     /**
      * The attributes that should be casted to native types.

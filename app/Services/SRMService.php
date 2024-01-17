@@ -2381,6 +2381,7 @@ class SRMService
         }
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+        $data['showTechnicalCriteria'] = TenderMaster::select('show_technical_criteria')->where('id', $tenderId)->first();
 
         return [
             'success' => true,
@@ -2730,8 +2731,10 @@ class SRMService
 
         DB::beginTransaction();
         try {
+            $showTechnicalCriteria = TenderMaster::select('show_technical_criteria')->where('id', $tenderId)->first();
+
             if ($criteriaDetail['answer_type_id'] == 4 || $criteriaDetail['answer_type_id'] == 2) {
-                if ($criteriaDetail['bid_submission_detail']['score_id'] > 0 && $criteriaDetail['bid_submission_detail']['score_id'] != null) {
+                if (($showTechnicalCriteria['show_technical_criteria'] == 0 && $criteriaDetail['bid_submission_detail']['score_id'] > 0 && $criteriaDetail['bid_submission_detail']['score_id'] != null) || $showTechnicalCriteria['show_technical_criteria'] == 1) {
                     $score = EvaluationCriteriaScoreConfig::where('id', $criteriaDetail['bid_submission_detail']['score_id'])->first();
                     $push['bid_master_id'] = $bidMasterId;
                     $push['tender_id'] = $tenderId;
@@ -3354,6 +3357,8 @@ class SRMService
 
         }
 
+        $showTechnicalCriteria = TenderMaster::select('show_technical_criteria')->where('id', $tenderId)->first();
+
         if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
             $data['goNoGoStatus'] = 0;
         }else {
@@ -3378,6 +3383,8 @@ class SRMService
 
 
         if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
+            $data['technicalStatus'] = 0;
+        } else if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $showTechnicalCriteria['show_technical_criteria'] == 1) {
             $data['technicalStatus'] = 0;
         }else {
             $data['technicalStatus'] =1;
@@ -4233,7 +4240,12 @@ class SRMService
             })
             ->where('documentSystemCode', $bidMasterId)->count();
 
+
+            $showTechnicalCriteria = TenderMaster::select('show_technical_criteria')->where('id', $tender)->first();
+
             if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
+                $group['technical_bid_submission_status'] = 0;
+            } else if( (count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $showTechnicalCriteria['show_technical_criteria'] == 1){
                 $group['technical_bid_submission_status'] = 0;
             }else {
                 $group['technical_bid_submission_status'] =1;
