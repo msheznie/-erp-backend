@@ -71,52 +71,48 @@ class MaterialIssueService
 
     public static function getItemDetailsForMaterialIssue($input):Array {
         $materielRequest = MaterielRequest::select(['RequestID'])->where('RequestID', $input['reqDocID'])->first();
-        $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->get();
-        $issuedQty = 0;
+        if(isset($materielRequest)) {
+            $issuedQty = 0;
+            $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->get();
+            if($input['issueType'] == 2) {
+                foreach($materielIssue as $mi) {
+                    $item = $mi->details()->where('itemCodeSystem',$input['itemCodeSystem'])->first();
+                    $issuedQty += isset($item->qtyIssued) ? (int) $item->qtyIssued : 0;
+                }
 
-        if($input['issueType'] == 2) {
-            foreach($materielIssue as $mi) {
-                $item = $mi->details()->where('itemCodeSystem',$input['itemCodeSystem'])->first();
-                $issuedQty += isset($item->qtyIssued) ? (int) $item->qtyIssued : 0;
+                $input['issuedQty'] = $issuedQty;
+                $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - $issuedQty);
+                $input['qtyIssued'] = $input['qtyAvailableToIssue'];
+                $input['qtyIssuedDefaultMeasure'] = $input['qtyAvailableToIssue'];
+                return $input;
+
             }
-
-            $input['issuedQty'] = $issuedQty;
-            $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - $issuedQty);
-            $input['qtyIssued'] = $input['qtyAvailableToIssue'];
-            $input['qtyIssuedDefaultMeasure'] = $input['qtyAvailableToIssue'];
-            return $input;
-
         }
-
-
         return $input;
     }
 
     public static function getItemDetailsForMaterialIssueUpdate($input):Array {
         $materielIssueParent = ItemIssueMaster::where('itemIssueAutoID',$input['itemIssueAutoID'])->first();
-        $materielRequest = MaterielRequest::select(['RequestID'])->where('RequestID', $materielIssueParent->reqDocID)->first();
-        if($materielIssueParent->issueType == 2) {
-            $materielAllIssues = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->get();
-
-            $issuedQty = 0;
-            if(count($materielAllIssues) == 1 ) {
-                $issuedQty = $input['qtyIssued'] ;
-            }else {
-                $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->whereNotIn('itemIssueAutoID',[$input['itemIssueAutoID']])->get();
-                foreach($materielIssue as $mi) {
-                    $item = $mi->details()->where('itemCodeSystem',$input['itemCodeSystem'])->first();
-                    $issuedQty += isset($item->qtyIssued) ? (int) $item->qtyIssued : 0;
+        if(isset($materielIssueParent) && $materielIssueParent->issueType == 2) {
+            $materielRequest = MaterielRequest::select(['RequestID'])->where('RequestID', $materielIssueParent->reqDocID)->first();
+            if(isset($materielRequest)) {
+                $materielAllIssues = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->get();
+                $issuedQty = 0;
+                if(count($materielAllIssues) == 1 ) {
+                    $issuedQty = $input['qtyIssued'] ;
+                }else {
+                    $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->whereNotIn('itemIssueAutoID',[$input['itemIssueAutoID']])->get();
+                    foreach($materielIssue as $mi) {
+                        $item = $mi->details()->where('itemCodeSystem',$input['itemCodeSystem'])->first();
+                        $issuedQty += isset($item->qtyIssued) ? (int) $item->qtyIssued : 0;
+                    }
                 }
+                $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - ($issuedQty + $input['qtyIssued']));
+                return $input;
             }
-
-            $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - ($issuedQty + $input['qtyIssued']));
-            return $input;
-
-        }else {
-            return $input;
-
         }
 
+        return $input;
     }
 
 }
