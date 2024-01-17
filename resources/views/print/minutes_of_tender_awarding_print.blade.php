@@ -254,13 +254,24 @@
         </tr>
         <tbody>
         @foreach ($employeeDetails as $item)
-            <tr><td>{{ $item->employee->empID }} | {{$item->employee->empName}}</td>
-                <td style="text-align: center;">{{ \Carbon\Carbon::parse($item->updated_at)->format('d/m/Y h:i A') }}</td>
+            <tr>
+                <td>{{ $item->employee->empID }} | {{$item->employee->empName}}</td>
+                <td style="text-align: center;">
+                    @if ($item->tender_award_commite_mem_status != 0)
+                    {{ \Carbon\Carbon::parse($item->updated_at)->format('d/m/Y h:i A') }}
+                    @else
+                        {{'-'}}
+                    @endif
+                </td>
                 <td style="text-align: center;">
                     @if ($item->tender_award_commite_mem_status == 1)
                         Approved
-                    @else
+                    @endif
+                    @if ($item->tender_award_commite_mem_status == 2)
                         Rejected
+                    @endif
+                    @if ($item->tender_award_commite_mem_status == 0)
+                         -
                     @endif
                 </td>
             </tr>
