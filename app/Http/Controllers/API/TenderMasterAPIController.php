@@ -18,6 +18,8 @@ use App\Models\Employee;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
+use App\Models\SrmDepartmentMaster;
+use App\Models\SrmTenderDepartment;
 use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderNegotiation;
@@ -789,6 +791,18 @@ ORDER BY
             ->get();
         $data['tenderPurchaseRequestList'] = $tenderPurchaseRequestList;
 
+        // Get Department Master Data
+        $departmentMaster = SrmDepartmentMaster::where('company_id', $companySystemID)->where('is_active', 1)->get();
+        $data['departmentMaster'] = $departmentMaster;
+
+        // Get Tender Department
+        $tenderdepartment = SrmTenderDepartment::select('department_id as id', 'srm_department_master.description as itemName')
+            ->leftJoin('srm_department_master', 'srm_department_master.id', '=', 'srm_tender_department.department_id')
+            ->where('tender_id', $tenderMasterId)
+            ->get();
+        $data['tenderdepartment'] = $tenderdepartment;
+
+
         //check prebid Clarification Added
         $prebidclarificationDateId = CalendarDates::select('id')->where('is_default', 1)->first();
         $prebidclarificationDateCount = CalendarDatesDetail::where('calendar_date_id', $prebidclarificationDateId->id)
@@ -1557,6 +1571,54 @@ ORDER BY
                         TenderPurchaseRequest::create($data);
                     }
 
+                }
+
+                $getinactivedepartments = SrmDepartmentMaster::select('id','description')
+                    ->where('company_id', $input['company_id'])
+                    ->where('is_active', 0)
+                    ->get();
+
+                $convertedArray = [];
+                foreach ($getinactivedepartments as $item) {
+                    $convertedArray[] = [
+                        'id' => $item['id'],
+                        'itemName' => $item['description'],
+                    ];
+                }
+
+                $id1 = array_column($input['departmentMaster'], 'id');
+                $id2 = array_column($convertedArray, 'id');
+                // Find the intersection of 'id' values
+                $commonIds = array_intersect($id1, $id2);
+
+                $name1 = array_column($input['departmentMaster'], 'itemName');
+                $name2 = array_column($convertedArray, 'itemName');
+                // Find the intersection of 'itemName' values
+                $commonnames = array_intersect($name1, $name2);
+
+                if(!empty($commonIds)){
+                    foreach ($commonnames as $name) {
+                        return ['success' => false, 'message' => 'Selected Department is currently deactivated in Masters. Please activate it or remove it from your selection to proceed.'];
+                    }
+                }else{
+                    $departmentMasterCount = SrmTenderDepartment::where('tender_id', $input['id'])->count();
+
+                    if( $departmentMasterCount > 0){
+                        SrmTenderDepartment::where('tender_id', $input['id'])->delete();
+                    }
+
+                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0){
+                        foreach ($input['departmentMaster'] as $dm) {
+                            $data = [
+                                'tender_id' => $input['id'],
+                                'department_id' => $dm['id'],
+                                'company_id' => $input['company_id'],
+                            ];
+
+                            SrmTenderDepartment::create($data);
+                        }
+
+                    }
                 }
 
                 DB::commit();

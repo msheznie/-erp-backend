@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateSrmDepartmentMasterAPIRequest;
 use App\Http\Requests\API\UpdateSrmDepartmentMasterAPIRequest;
 use App\Models\SrmDepartmentMaster;
+use App\Models\SrmTenderDepartment;
 use App\Repositories\SrmDepartmentMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -277,12 +278,20 @@ class SrmDepartmentMasterAPIController extends AppBaseController
             return $this->sendError('Department Description \'' . $input['description'] . '\' already exists.');
         }
 
-        $input['updated_by'] = Helper::getEmployeeSystemID();
-        $input['updated_at'] = Carbon::now();
+        $tenderDepartmentExist = SrmTenderDepartment::where('department_id', $id)->first();
 
-        $srmDepartmentMaster = SrmDepartmentMaster::where('id', $id)->update($input);
+        if(empty($tenderDepartmentExist)){
+            $input['updated_by'] = Helper::getEmployeeSystemID();
+            $input['updated_at'] = Carbon::now();
 
-        return $this->sendResponse($srmDepartmentMaster, 'Department updated successfully');
+            $srmDepartmentMaster = SrmDepartmentMaster::where('id', $id)->update($input);
+
+            return $this->sendResponse($srmDepartmentMaster, 'Department updated successfully');
+        }else{
+            return $this->sendError('Department is already pulled to Tender/RFX');
+        }
+
+
     }
 
     /**
