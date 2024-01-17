@@ -347,4 +347,31 @@ class CreateExcel
     }
 
 
+    public static function loadView($data,$type,$fileName,$path_dir,$templateName)
+    {
+
+    $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName) {
+                   $excel->sheet($fileName, function ($sheet) use ($data, $templateName) {
+                       $sheet->loadView($templateName, $data);
+                   });
+               })->string($type);
+
+
+       $disk = 's3';
+       $companyCode = isset($data['companyCode'])?$data['companyCode']:'common';
+
+       $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
+       $path = $companyCode.'/'.$path_dir.$full_name;
+       $result = Storage::disk($disk)->put($path, $excel_content);
+       $basePath = '';
+       if($result)
+       {
+           if (Storage::disk($disk)->exists($path))
+           {
+               $basePath = \Helper::getFileUrlFromS3($path);
+           }
+       }
+
+       return $basePath;
+    }
 }
