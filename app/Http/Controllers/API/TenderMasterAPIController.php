@@ -4407,11 +4407,16 @@ ORDER BY
 
             $name = $tender->ranking_supplier->supplier->name;
             $company = $tender->company->CompanyName;
+            $currency = $tender->currency->CurrencyName;
+            $bid_submision_date = \Carbon\Carbon::parse($tender->ranking_supplier->bid_submission_master->bidSubmittedDatetime)->format('d/m/Y');
+            $finalcommercialprice = $tender->ranking_supplier->bid_submission_master->line_item_total;
             $documentType = $this->getDocumentType($tender->document_type); 
-            $body = "Hi $name <br><br> We are pleased to inform, that $company decided to award $documentType ($tender->tender_code - $tender->title) to $name.<br>For more details kindly contact the Contact Person <br><br> Regards,<br>$company.";
+            $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title for <b>$finalcommercialprice</b> $currency with all agreed conditions.
+                    <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
+                    <br><br> Regards,<br>$company.";
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
-            $dataEmail['alertMessage'] = "$documentType Award";
+            $dataEmail['alertMessage'] = "Letter of Awarding | $tender->tender_code | $tender->title";
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = \Email::sendEmailErp($dataEmail);
 

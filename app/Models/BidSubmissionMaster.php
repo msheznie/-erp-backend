@@ -108,7 +108,8 @@ class BidSubmissionMaster extends Model
         'line_item_total',
         'tech_weightage',
         'comm_weightage',
-        'total_weightage'
+        'total_weightage',
+        'bidSubmittedDatetime'
     ];
 
     /**
