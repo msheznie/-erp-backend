@@ -111,6 +111,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\BookInvSuppDet;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\CurrencyMaster;
+use App\helper\CreateCustomerThirdPartyInvoice;
 
 class Helper
 {
@@ -2226,6 +2227,14 @@ class Helper
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
                                 if ($sourceModel->disposalType == 1) {
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
+                                }
+                                else if ($sourceModel->disposalType == 6) {
+                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase);
+
+                                    if (!$message['status']) {
+                                        DB::rollback();
+                                        return ['success' => false, 'message' => $message['message']];
+                                    }
                                 }
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {
@@ -4889,6 +4898,14 @@ class Helper
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
                                 if ($sourceModel->disposalType == 1) {
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
+                                }
+                                else if ($sourceModel->disposalType == 6) {
+                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase);
+
+                                    if (!$message['status']) {
+                                        DB::rollback();
+                                        return ['success' => false, 'message' => $message['message']];
+                                    }
                                 }
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {
