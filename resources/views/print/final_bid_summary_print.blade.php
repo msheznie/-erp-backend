@@ -288,6 +288,7 @@
         <td style="text-align: center;"><strong>Bid Submission Code</strong></td>
         <td style="text-align: center;"><strong>Bid Submission Date</strong></td>
         <td style="text-align: center;"><strong>Supplier Name</strong></td>
+        <td style="text-align: center;"><strong>Total Commercial</strong></td>
         <td style="text-align: center;"><strong>Commercial Weightage</strong></td>
         <td style="text-align: center;"><strong>Technical Weightage</strong></td>
         <td style="text-align: center;"><strong>Total Weightage</strong></td>
@@ -299,8 +300,9 @@
         <tr>
             <td style="text-align: center;">{{ $loop->index+1 }}</td>
             <td>{{ $item->bidSubmissionCode }}</td>
-            <td style="text-align: center;width: 140px">{{ \Carbon\Carbon::parse($item->bidSubmittedDatetime)->format('d/m/Y h:i A') }}</td>
+            <td style="text-align: center;width: 90px">{{ \Carbon\Carbon::parse($item->bidSubmittedDatetime)->format('d/m/Y h:i A') }}</td>
             <td style="text-align: center;">{{ $item->name }}</td>
+            <td style="text-align: right;"> {{ number_format($item->line_item_total, 3) }} </td>
             <td style="text-align: right;">{{ $item->com_weightage }}</td>
             <td style="text-align: right;">{{ $item->tech_weightage }}</td>
             <td style="text-align: right;">{{ $item->total_weightage }}</td>
