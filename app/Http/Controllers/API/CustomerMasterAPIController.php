@@ -3027,4 +3027,19 @@ class CustomerMasterAPIController extends AppBaseController
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
     }
 
+    public function getSearchCustomers(Request $request)
+    {
+        $companyID = $request->companyId;
+        $search = $request->search;
+        $customers = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+            ->where('companySystemID', $companyID)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->where('CustomerName', 'LIKE', "%{$search}%")
+            ->orWhere('CutomerCode', 'LIKE', "%{$search}%")
+            ->get();
+
+        return $this->sendResponse($customers, 'Customer Master retrieved successfully');
+    }
+
 }
