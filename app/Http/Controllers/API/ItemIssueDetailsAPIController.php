@@ -1241,36 +1241,38 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $index = $input['skip'] + 1;
         $materialIssueObj = ItemIssueMaster::where('reqDocID',$materielRequestId)->whereNotIn('itemIssueAutoID',[$rId])->get();
         $itemIdArray = array();
-        foreach ($items as $item) {
-            $item['index'] = $index;
-            $issuedTotal = 0;
-            $index++;
-            $issueUnit = Unit::all();
-            $issueUnits = array();
-           foreach ($materialIssueObj as $mi) {
-               if($mi->itemIssueAutoID < $rId) {
-                   $issuedItem = $mi->details()->where('itemCodeSystem',$item->itemCodeSystem)->first();
-                   if(isset($issuedItem)) {
-                       if(!collect($itemIdArray)->contains($issuedItem->itemIssueDetailID)) {
-                           array_push($itemIdArray,$issuedItem->itemIssueDetailID);
-                       }
-                       if($issuedItem->itemCodeSystem == $item->itemCodeSystem) {
-                               $issuedTotal += $issuedItem->qtyIssued;
-                       }
 
-                   }else {
-                       $issuedTotal = 0;
-                   }
+            foreach ($items as $item) {
+                $item['index'] = $index;
+                $issuedTotal = 0;
+                $index++;
+                $issueUnit = Unit::all();
+                $issueUnits = array();
+                if($materialIssue->issueType == 2) {
+                    foreach ($materialIssueObj as $mi) {
+                        if($mi->itemIssueAutoID < $rId) {
+                            $issuedItem = $mi->details()->where('itemCodeSystem',$item->itemCodeSystem)->first();
+                            if(isset($issuedItem)) {
+                                if(!collect($itemIdArray)->contains($issuedItem->itemIssueDetailID)) {
+                                    array_push($itemIdArray,$issuedItem->itemIssueDetailID);
+                                }
+                                if($issuedItem->itemCodeSystem == $item->itemCodeSystem) {
+                                    $issuedTotal += $issuedItem->qtyIssued;
+                                }
 
-               }
-           }
-            foreach ($issueUnit as $unit) {
-                $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
-                array_push($issueUnits, $temArray);
+                            }
+
+                        }
+                    }
+                    $item['prev_issued_qnty'] = $issuedTotal;
+                }
+                foreach ($issueUnit as $unit) {
+                    $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
+                    array_push($issueUnits, $temArray);
+                }
+                $item->issueUnits = $issueUnits;
             }
-            $item['prev_issued_qnty'] = $issuedTotal;
-            $item->issueUnits = $issueUnits;
-        }
+
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 
