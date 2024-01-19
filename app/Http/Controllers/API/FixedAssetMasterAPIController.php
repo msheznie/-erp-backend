@@ -1338,7 +1338,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = $request->all();
 
 
-        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved','auditCategory','mainCategory','subCategory'));
+        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved','auditCategory','mainCategory','subCategory','assetTypeID'));
         $isDeleted = (isset($input['is_deleted']) && $input['is_deleted']==1)?1:0;
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -1356,7 +1356,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category'])->ofCompany($subCompanies);
+        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category','asset_type'])->ofCompany($subCompanies);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -1381,6 +1381,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $assetCositng->where('faSubCatID', $input['subCategory']);
             }
         }
+
+        if (array_key_exists('assetTypeID', $input)) {
+            if ($input['assetTypeID']) {
+                $assetCositng->where('assetType', $input['assetTypeID']);
+            }
+        } 
 
         if (array_key_exists('auditCategory', $input)) {
             if ($input['auditCategory']) {
