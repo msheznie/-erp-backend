@@ -1072,8 +1072,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $id = $request['id'];
         $envelopType = $request['envelopType'];
 
-        if($this->getOldBidSubmissonCode($id) != null){
-            $id = $this->getOldBidSubmissonCode($id);
+        if($this->getOldBidSubmissionCodeForTechnicalAndCommercial($id, $envelopType) != null){
+            $id = $this->getOldBidSubmissionCodeForTechnicalAndCommercial($id, $envelopType);
         }
 
         $tenderId = $request['tenderId'];
@@ -1290,6 +1290,31 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     ->where('tender_negotiation_id', $supplierTenderNegotiationsId
                         ->tender_negotiation_id)->first();
                 if($TenderNegotiationArea->tender_documents == 0){
+                    $id = $supplierTenderNegotiationsId->bid_submission_master_id_old;
+                }
+
+                return $id;
+            }
+
+            return null;
+        }
+
+        private function getOldBidSubmissionCodeForTechnicalAndCommercial($id, $envelopType){
+
+            $supplierTenderNegotiationsId = TenderBidNegotiation::select('bid_submission_master_id_old')->where('bid_submission_master_id_new', $id)
+                ->select('tender_id', 'bid_submission_master_id_old', 'tender_negotiation_id')
+                ->first();
+
+            if(isset($supplierTenderNegotiationsId)){
+                $TenderNegotiationArea = TenderNegotiationArea::select('tender_documents', 'pricing_schedule', 'technical_evaluation')
+                    ->where('tender_negotiation_id', $supplierTenderNegotiationsId
+                        ->tender_negotiation_id)->first();
+
+                if(($TenderNegotiationArea->pricing_schedule == 0 && $envelopType == 1) || ($TenderNegotiationArea->technical_evaluation == 0 && $envelopType == 2)){
+                    $id = $supplierTenderNegotiationsId->bid_submission_master_id_old;
+                }
+
+                if($TenderNegotiationArea->tender_documents == 0 && $envelopType == 3){
                     $id = $supplierTenderNegotiationsId->bid_submission_master_id_old;
                 }
 
