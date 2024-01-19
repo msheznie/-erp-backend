@@ -4262,7 +4262,10 @@ ORDER BY
         $companyId = $request['companyId'];
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-            ->where('is_awarded', 1)->where('negotiation_published', 0)->orWhere('is_negotiation_closed', 1);
+            ->where('is_awarded', 1)->where(function ($query) {
+                $query->where('negotiation_published', 0)
+                    ->orWhere('is_negotiation_closed', 1);
+            });
 
 
         $search = $request->input('search.value');
