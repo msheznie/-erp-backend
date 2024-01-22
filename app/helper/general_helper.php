@@ -5976,7 +5976,7 @@ class Helper
                                     if($input["documentSystemID"] == 107 )
                                     {
                                         $sub = "<p>Dear Supplier". ',</p><p>Please be informed that your KYC form has been referred back for the following reason by the '. $empInfo->empName .".". "<br><br><b> " . '"' . $input["rejectedComments"].".".'"'." </b><br><br> Please click on ".'"Amend"'." button to do the changes for KYC and resubmit for approval.<br><br> Thank You.</p>";
-                                        $msg = " Registration Rejected";
+                                        $msg = " Registration Referred Back";
                                     }
                                     else if($input["documentSystemID"] == 106)
                                     {
