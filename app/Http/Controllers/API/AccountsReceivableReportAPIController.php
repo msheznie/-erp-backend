@@ -1922,15 +1922,15 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $objCustomerAgingDetailReport->setCreditDays($val->creditDays);
                     $objCustomerAgingDetailReport->setDepartment($val->serviceLineName);
                     $objCustomerAgingDetailReport->setContractID($val->Contract);
-                    $objCustomerAgingDetailReport->setPoNumber($val->PONumber);
                     $objCustomerAgingDetailReport->setInvoiceNumber($val->invoiceNumber);
+                    $objCustomerAgingDetailReport->setPoNumber($val->PONumber);
                     $objCustomerAgingDetailReport->setInvoiceDate($val->InvoiceDate);
+                    $objCustomerAgingDetailReport->setAgeDays($val->age);
                     $objCustomerAgingDetailReport->setInvoiceDueDate($val->invoiceDueDate);
                     $objCustomerAgingDetailReport->setDocumentNarration($val->DocumentNarration);
                     $objCustomerAgingDetailReport->setCurrency($val->documentCurrency);
                     $objCustomerAgingDetailReport->setInvoiceAmount($val->invoiceAmount);
                     $objCustomerAgingDetailReport->setOutStanding($lineTotal);
-                    $objCustomerAgingDetailReport->setAgeDays($val->age);
                     $objCustomerAgingDetailReport->setColumn1(CurrencyService::convertNumberFormatToNumber(number_format($val->$column1,2)));
                     $objCustomerAgingDetailReport->setColumn2(CurrencyService::convertNumberFormatToNumber(number_format($val->$column2,2)));
                     $objCustomerAgingDetailReport->setColumn3(CurrencyService::convertNumberFormatToNumber(number_format($val->$column3,2)));
