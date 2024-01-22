@@ -41,9 +41,9 @@ class CustomerAgingDetailReport
         return [
             'D' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'M' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'O' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
