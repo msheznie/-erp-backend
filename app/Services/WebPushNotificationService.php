@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\helper\Helper;
+use App\Models\SupplierRegistrationLink;
 use App\Models\User;
 use App\Models\Employee;
 use Carbon\Carbon;
@@ -29,7 +30,7 @@ class WebPushNotificationService
         read = '',
 
     **/
-    public static function sendNotification($data, $type , $userIds = [], $dataBase = "")
+    public static function sendNotification($data, $type , $userIds = [], $dataBase = "", $notifyTo = 'user')
     {
         $apps = [];
         switch ($type) {
@@ -51,6 +52,12 @@ class WebPushNotificationService
                 $data['type'] = 3;
                 $apps = ['erp'];
                 break;
+            case 4: // SRM Related
+                $data['clickable'] = true;
+                $data['type'] = 4;
+                $data['url'] = ['srm' => $data['url']];
+                $apps = ['srm'];
+                break;
             
             default:
                 // code...
@@ -58,12 +65,19 @@ class WebPushNotificationService
         }
         
         $data['time'] = Carbon::now()->format('Y-m-d H:i:s');
-        
-        foreach ($userIds as $key => $value) {
-            $employee = Employee::with(['user_data'])->find($value);
-            if ($employee && $employee->user_data) {
-                WebPushNotification::dispatch($dataBase, $data, $employee->user_data->uuid, $apps);
+
+        if($notifyTo == 'user'){
+            foreach ($userIds as $key => $value) {
+                $employee = Employee::with(['user_data'])->find($value);
+                if ($employee && $employee->user_data) {
+                    WebPushNotification::dispatch($dataBase, $data, $employee->user_data->uuid, $apps);
+                }
             }
+        }elseif($notifyTo == 'supplier') {
+
+            $supplierData = SupplierRegistrationLink::where('id',$userIds)->first();
+            $supplierUUID =  $supplierData->uuid_notification;
+            WebPushNotification::dispatch($dataBase, $data, $supplierUUID, $apps,107);
         }
 
         return ['status' => true];

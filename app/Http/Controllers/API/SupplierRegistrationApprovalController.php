@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
+use App\Jobs\ThirdPartySystemNotifications\ThirdPartySystemNotificationJob;
 use App\Models\SRMSupplierValues;
 use App\Services\SRMService;
 use Illuminate\Http\Request;
@@ -172,6 +173,8 @@ class SupplierRegistrationApprovalController extends AppBaseController
      */
     public function approveSupplierKYC($request)
     {
+        $db = isset($request->db) ? $request->db : "";
+
        $supplierMasterId = $this->isSupplierMasterCreated($request['id']);  
        
        $approve = Helper::approveDocument($request);
@@ -180,6 +183,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             return $this->sendError($approve["message"]);
         } else {
             if ($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
+                ThirdPartySystemNotificationJob::dispatch($db,107,$request['id']);
 
                 $getUpdatedValues = SRMSupplierValues::select('user_name','name')
                     ->where('company_id',$request['company_id'])
