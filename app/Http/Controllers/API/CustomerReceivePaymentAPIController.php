@@ -310,6 +310,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
             $input['customerGLCode'] = $customer->custGLaccount;
+            $input['custAdvanceAccountSystemID'] = $customer->custAdvanceAccountSystemID;
+            $input['custAdvanceAccount'] = $customer->custAdvanceAccount;
         }
 
         if ($input['documentType'] == 14) {
@@ -1209,7 +1211,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         ->where('custReceivePaymentAutoID', $id)
                         ->first();
 
-                    if(!empty($details)) {
+                    if(!empty($details) && $details->VATAmount != 0) {
                         $input['VATAmount'] = $details->VATAmount;
                         $input['VATAmountLocal'] = $details->VATAmountLocal;
                         $input['VATAmountRpt'] = $details->VATAmountRpt;

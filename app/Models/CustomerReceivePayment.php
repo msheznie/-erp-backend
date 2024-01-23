@@ -499,7 +499,9 @@ class CustomerReceivePayment extends Model
         'netAmountLocal',
         'netAmountRpt',
         'bankAccountBalance',
-        'payment_type_id'
+        'payment_type_id',
+        'custAdvanceAccountSystemID',
+        'custAdvanceAccount',
     ];
 
     /**
