@@ -3070,12 +3070,14 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $companyID = $request->companyId;
         $search = $request->search;
-        $customers = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+        $customers = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
             ->where('companySystemID', $companyID)
             ->where('isActive', 1)
             ->where('isAssigned', -1)
-            ->where('CustomerName', 'LIKE', "%{$search}%")
-            ->orWhere('CutomerCode', 'LIKE', "%{$search}%")
+            ->where(function ($query) use ($search) {
+                $query->where('CustomerName', 'LIKE', "%{$search}%")
+                    ->orWhere('CutomerCode', 'LIKE', "%{$search}%");
+            })
             ->get();
 
         return $this->sendResponse($customers, 'Customer Master retrieved successfully');
