@@ -1099,7 +1099,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data[$x]['Open Advance to Suppliers'] = '';
                         $data[$x]['Open Debit Notes'] = '';
                         $data[$x]['Total Payable'] = '';
-                        $data[$x]['Total Prepayement'] = '';
+                        $data[$x]['Total Prepayment'] = '';
                         $data[$x]['Net Outstanding'] = '';
                         $x++;
 
@@ -1113,7 +1113,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x]['Open Advance to Suppliers'] = $val['open_advances'];
                                 $data[$x]['Open Debit Notes'] = $val['open_debit_notes'];
                                 $data[$x]['Total Payable'] = $val['open_invoices'];
-                                $data[$x]['Total Prepayement'] = ($val['open_advances'] + $val['open_debit_notes']);
+                                $data[$x]['Total Prepayment'] = ($val['open_advances'] + $val['open_debit_notes']);
                                 $data[$x]['Net Outstanding'] = $val['open_invoices'] - ($val['open_advances'] + $val['open_debit_notes']);
 
                                 $x++;
@@ -1122,7 +1122,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $totalInvoices = array_sum(array_column($data, 'Open AP Invoices'));
                             $totalAdvances = array_sum(array_column($data, 'Open Advance to Suppliers'));
                             $totalDebitNotes = array_sum(array_column($data, 'Open Debit Notes'));
-                            $totalPrepayment = array_sum(array_column($data, 'Total Prepayement'));
+                            $totalPrepayment = array_sum(array_column($data, 'Total Prepayment'));
                             $totalNetOutstanding = array_sum(array_column($data, 'Net Outstanding'));
 
                             $totalRow = [

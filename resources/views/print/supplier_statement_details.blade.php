@@ -167,7 +167,7 @@
             <th>Open Advance to Suppliers</th>
             <th>Open Debit Notes</th>
             <th>Total Payable</th>
-            <th>Total Prepayement</th>
+            <th>Total Prepayment</th>
             <th>Net Outstanding</th>
         </tr>
         <tbody>
