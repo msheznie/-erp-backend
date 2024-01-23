@@ -1094,8 +1094,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data[$x]['Payable Account'] = '';
                         $data[$x]['Prepayment Account'] = '';
                         $data[$x]['Currency'] = '';
-                        $data[$x]['Vendor Name'] = '';
-                        $data[$x]['Open AP Invoices'] = '';
+                        $data[$x]['Supplier Name'] = '';
+                        $data[$x]['Open Supplier Invoices'] = '';
                         $data[$x]['Open Advance to Suppliers'] = '';
                         $data[$x]['Open Debit Notes'] = '';
                         $data[$x]['Total Payable'] = '';
@@ -1108,8 +1108,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x]['Payable Account'] = $val['payable_account'];
                                 $data[$x]['Prepayment Account'] = $val['prePayment_account'];
                                 $data[$x]['Currency'] = $val['supplier_currency'];
-                                $data[$x]['Vendor Name'] = $key;
-                                $data[$x]['Open AP Invoices'] = $val['open_invoices'];
+                                $data[$x]['Supplier Name'] = $key;
+                                $data[$x]['Open Supplier Invoices'] = $val['open_invoices'];
                                 $data[$x]['Open Advance to Suppliers'] = $val['open_advances'];
                                 $data[$x]['Open Debit Notes'] = $val['open_debit_notes'];
                                 $data[$x]['Total Payable'] = $val['open_invoices'];
@@ -1119,7 +1119,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $x++;
                             }
 
-                            $totalInvoices = array_sum(array_column($data, 'Open AP Invoices'));
+                            $totalInvoices = array_sum(array_column($data, 'Open Supplier Invoices'));
                             $totalAdvances = array_sum(array_column($data, 'Open Advance to Suppliers'));
                             $totalDebitNotes = array_sum(array_column($data, 'Open Debit Notes'));
                             $totalPrepayment = array_sum(array_column($data, 'Total Prepayment'));
@@ -1129,8 +1129,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 'Payable Account' => '',
                                 'Prepayment Account' => '',
                                 'Currency' => '',
-                                'Vendor Name' => 'Total',
-                                'Open AP Invoices' => $totalInvoices,
+                                'Supplier Name' => 'Total',
+                                'Open Supplier Invoices' => $totalInvoices,
                                 'Open Advance to Suppliers' => $totalAdvances,
                                 'Open Debit Notes' => $totalDebitNotes,
                                 'Total Payable' => $totalInvoices,

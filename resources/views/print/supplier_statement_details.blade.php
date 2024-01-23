@@ -162,8 +162,8 @@
             <th>Payable Account</th>
             <th>Prepayment Account</th>
             <th>Currency</th>
-            <th>Vendor Name</th>
-            <th>Open AP Invoices</th>
+            <th>Supplier Name</th>
+            <th>Open Supplier Invoices</th>
             <th>Open Advance to Suppliers</th>
             <th>Open Debit Notes</th>
             <th>Total Payable</th>
