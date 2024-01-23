@@ -24,30 +24,40 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Exports\AccountsPayable\SupplierAging\SupplierAgingDetailAdvanceReport;
+use App\Exports\AccountsPayable\SupplierAging\SupplierAgingDetailReport;
+use App\Exports\AccountsPayable\SupplierAging\SupplierAgingSummaryAdvanceReport;
+use App\Exports\AccountsPayable\SupplierAging\SupplierAgingSummaryReport;
+use App\Exports\AccountsPayable\UnbilledGRV\UnbilledGrvAgingSummaryReport;
+use App\Exports\AccountsPayable\UnbilledGRV\UnbilledGrvDetailsReport;
+use App\Exports\AccountsPayable\UnbilledGRV\UnbilledGrvDetailsSummaryReport;
+use App\Exports\AccountsPayable\UnbilledGRV\UnbilledGrvLogisticDetails;
+use App\helper\CreateExcel;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
+use App\Jobs\DocumentAttachments\SupplierStatementJob;
 use App\Models\AccountsPayableLedger;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
-use App\Models\CountryMaster;
-use App\Models\SegmentMaster;
-use App\Models\CurrencyMaster;
-use App\Models\SupplierContactDetails;
-use App\Models\GeneralLedger;
-use App\Models\FinanceItemCategoryMaster;
-use App\Models\SupplierAssigned;
-use App\Models\SupplierMaster;
 use App\Models\Company;
+use App\Models\CountryMaster;
+use App\Models\CurrencyMaster;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\GeneralLedger;
+use App\Models\SegmentMaster;
+use App\Models\SupplierAssigned;
+use App\Models\SupplierContactDetails;
+use App\Models\SupplierMaster;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
+use App\Services\AccountPayableLedger\Report\SupplierAgingReportService;
+use App\Services\AccountPayableLedger\Report\UnbilledGrvReportService;
+use App\Services\Excel\ExportReportToExcelService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use App\helper\CreateExcel;
-use App\Jobs\DocumentAttachments\SupplierStatementJob;
 
 class AccountsPayableReportAPIController extends AppBaseController
 {
@@ -728,7 +738,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
     }
 
-    public function exportReport(Request $request)
+    public function exportReport(Request $request, SupplierAgingReportService $supplierAgingReportService, ExportReportToExcelService $exportReportToExcelService, UnbilledGrvReportService $unbilledGrvReportService)
     {
         try {
             $reportID = $request->reportID;
@@ -1173,130 +1183,61 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $title = 'Supplier Aging Detail Report';
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingDetailQRY($request);
-                        if ($output['data']) {
-                            $x = 0;
-                            foreach ($output['data'] as $val) {
-                                $lineTotal = 0;
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Document Code'] = $val->documentCode;
-                                $data[$x]['Account'] = $val->glCode . "-" . $val->AccountDescription;
-                                $data[$x]['Supplier Code'] = $val->SupplierCode;
-                                $data[$x]['Supplier Name'] = $val->suppliername;
-                                $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                                $data[$x]['Currency'] = $val->documentCurrency;
-                                $data[$x]['Aging Days'] = $val->ageDays;
-                                foreach ($output['aging'] as $val2) {
-                                    $data[$x][$val2] = $val->$val2;
-                                    $lineTotal += $val->$val2;
-                                }
-                                $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
-                                $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
-                                $x++;
-                            }
-                        } else {
-                            $data = array();
-                        }
-                    } else if ($reportTypeID == 'SAS') { //supplier aging summary
+                        $data = $supplierAgingReportService->getSupplierAgingExportToExcelData($output);
+                        $objSupplierAgingDetail = new SupplierAgingDetailReport();
+                        $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
+                    }
+                    else if ($reportTypeID == 'SAS') { //supplier aging summary
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingSummaryQRY($request);
                         $fileName = 'Supplier Aging Summary Report';
                         $title = 'Supplier Aging Summary Report';
-                        if ($output['data']) {
-                            $x = 0;
-                            foreach ($output['data'] as $val) {
-                                $lineTotal = 0;
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Account'] = $val->glCode . "-" . $val->AccountDescription;
-                                $data[$x]['Supplier Code'] = $val->SupplierCode;
-                                $data[$x]['Supplier Name'] = $val->suppliername;
-                                $data[$x]['Credit Period'] = $val->creditPeriod;
-                                $data[$x]['Currency'] = $val->documentCurrency;
-                                $data[$x]['Aging Days'] = $val->ageDays;
-                                foreach ($output['aging'] as $val2) {
-                                    $data[$x][$val2] = $val->$val2;
-                                    $lineTotal += $val->$val2;
-                                }
-                                $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
-                                $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
-                                $x++;
-                            }
-                        } else {
-                            $data = array();
-                        }
-                    } else if ($reportTypeID == 'SADA') { //supplier aging detail advance
+                        $data = $supplierAgingReportService->getSupplierAgingSummaryExportToExcelData($output);
+                        $objSupplierAgingDetail = new SupplierAgingSummaryReport();
+                        $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
+                    }
+                    else if ($reportTypeID == 'SADA') { //supplier aging detail advance
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingDetailAdvanceQRY($request);
                         $fileName = 'Supplier Aging Detail Advance';
                         $title = 'Supplier Aging Detail Advance Report';
-                        if ($output['data']) {
-                            $x = 0;
-                            foreach ($output['data'] as $val) {
-                                $lineTotal = 0;
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Document Code'] = $val->documentCode;
-                                $data[$x]['Account'] = $val->glCode . "-" . $val->AccountDescription;
-                                $data[$x]['Narration '] = $val->documentNarration;
-                                $data[$x]['Supplier Code'] = $val->SupplierCode;
-                                $data[$x]['Supplier Name'] = $val->suppliername;
-                                $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                                $data[$x]['Currency'] = $val->documentCurrency;
-                                $data[$x]['Aging Days'] = $val->ageDays;
-                                foreach ($output['aging'] as $val2) {
-                                    $data[$x][$val2] = $val->$val2;
-                                    $lineTotal += $val->$val2;
-                                }
-                                $data[$x]['Advance/UnAllocated Amount'] = $lineTotal;
-                                $x++;
-                            }
-                        } else {
-                            $data = array();
-                        }
-                    } else if ($reportTypeID == 'SASA') { //supplier aging summary
+                        $data = $supplierAgingReportService->getSupplierAgingDetailAdvanceExportToExcelData($output);
+                        $objSupplierAgingDetail = new SupplierAgingDetailAdvanceReport();
+                        $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
+                    }
+                    else if ($reportTypeID == 'SASA') { //supplier aging summary
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
                         $fileName = 'Supplier Aging Summary Advance';
                         $title = 'Supplier Aging Summary Advance Report';
-                        if ($output['data']) {
-                            $x = 0;
-                            foreach ($output['data'] as $val) {
-                                $lineTotal = 0;
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Account'] = $val->glCode . "-" . $val->AccountDescription;
-                                $data[$x]['Supplier Code'] = $val->SupplierCode;
-                                $data[$x]['Supplier Name'] = $val->suppliername;
-                                $data[$x]['Credit Period'] = $val->creditPeriod;
-                                $data[$x]['Currency'] = $val->documentCurrency;
-                                $data[$x]['Aging Days'] = $val->ageDays;
-                                foreach ($output['aging'] as $val2) {
-                                    $data[$x][$val2] = $val->$val2;
-                                    $lineTotal += $val->$val2;
-                                }
-                                $data[$x]['Total'] = $lineTotal;
-                                $x++;
-                            }
-                        } else {
-                            $data = array();
-                        }
+                        $data = $supplierAgingReportService->getSupplierAgingSummaryAdvanceExportToExcelData($output);
+                        $objSupplierAgingDetail = new SupplierAgingSummaryAdvanceReport();
+                        $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
                     }
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
                     $cur = NULL;
                     $path = 'accounts-payable/report/supplier_aging/excel/';
-                    $detail_array = array('type' => 2, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $cur, 'title' => $title, 'company_code' => $companyCode);
-                    $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+                    $exportToExcel = $exportReportToExcelService
+                        ->setTitle($title)
+                        ->setFileName($fileName)
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
+                        ->setCompanyName($company_name)
+                        ->setFromDate($from_date)
+                        ->setToDate($to_date)
+                        ->setData($data)
+                        ->setReportType(2)
+                        ->setType('xls')
+                        ->setCurrency($cur)
+                        ->setDateType(2)
+                        ->setExcelFormat($excelColumnFormat)
+                        ->setDetails()
+                        ->generateExcel();
 
-                    if ($basePath == '') {
+                    if(!$exportToExcel['success'])
                         return $this->sendError('Unable to export excel');
-                    } else {
-                        return $this->sendResponse($basePath, trans('custom.success_export'));
-                    }
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
 
                     break;
@@ -1353,168 +1294,54 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $to_date = $request->fromDate;
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
-
                     $from_date = ((new Carbon($from_date))->format('d/m/Y'));
-
+                    $dataType=2;
                     if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
                         $fileName = 'Unbilled GRV Detail Report ';
                         $title = 'Unbilled GRV Detail Report ';
                         $output = $this->getUnbilledDetailQRY($request);
                         $name = "detail";
-                        if ($output) {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Supplier Code'] = $val->supplierCode;
-                                $data[$x]['Supplier Name'] = $val->supplierName;
-                                $data[$x]['Doc Number'] = $val->documentCode;
-                                $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
-
-                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
-                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
-                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
-
-                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
-                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
-                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
-                                $x++;
-                            }
-                        } else {
-                            $data = array();
-                        }
-                    } else if ($reportTypeID == 'UGRVS') {  //Unbilled GRV summary
+                        $data = $unbilledGrvReportService->getUnbilledGrvExportToExcelData($output);
+                        $objUnbilledGrvDetailsReport = new UnbilledGrvDetailsReport();
+                        $excelColumnFormat = $objUnbilledGrvDetailsReport->getCloumnFormat();
+                    }
+                    else if ($reportTypeID == 'UGRVS') {  //Unbilled GRV summary
                         $output = $this->getUnbilledDetailQRY($request);
                         $fileName = 'Unbilled GRV Summary Report';
                         $title = 'Unbilled GRV Summary Report';
                         $name = "summary";
-                        if ($output) {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Supplier Code'] = $val->supplierCode;
-                                $data[$x]['Supplier Name'] = $val->supplierName;
-
-                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
-                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
-                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
-
-                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
-                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
-                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
-                                $x++;
-                            }
-                        } else {
-                            $data = array();
-                        }
-                    } else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
+                        $data = $unbilledGrvReportService->getUnbilledGrvSummaryExportToExcelData($output);
+                        $objUnbilledGrvDetailsReport = new UnbilledGrvDetailsSummaryReport();
+                        $excelColumnFormat = $objUnbilledGrvDetailsReport->getCloumnFormat();
+                    }
+                    else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
                         $fileName = 'Unbilled GRV Aging Detail';
                         $title = 'Unbilled GRV Aging Detail Report';
+                        $dataType = 1;
                         $output = $this->getUnbilledGRVDetailAgingQRY($request);
                         $name = "aging_detail";
-                        $decimal = 2;
-                        if ($output) {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Supplier Code'] = $val->supplierCode;
-                                $data[$x]['Supplier Name'] = $val->supplierName;
-                                $data[$x]['Doc Number'] = $val->documentCode;
-                                $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
-                                if ($request->currencyID == 2) {
-                                    $decimal = 3;
-                                    $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
-                                    $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
-                                    $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
-                                } else {
-                                    $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
-                                    $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
-                                    $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
-                                }
-
-                                $data[$x]['<=30'] = number_format($val->case1, $decimal);
-                                $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
-                                $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
-                                $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
-                                $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
-                                $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
-                                $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
-                                $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
-                                $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
-                                $data[$x]['Over 365'] = number_format($val->case10, $decimal);
-
-                                $x++;
-                            }
-                        } else {
-                            $data = array();
-                        }
-                    } else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
+                        $data = $unbilledGrvReportService->getUnbilledGrvAgingDetailExportToExcelData($output,$request);
+                        $objUnbilledGrvAgingSummaryReport = new UnbilledGrvAgingSummaryReport();
+                        $excelColumnFormat = $objUnbilledGrvAgingSummaryReport->getCloumnFormat();
+                    }
+                    else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
                         $fileName = 'Unbilled GRV Aging Summary';
                         $title = 'Unbilled GRV Aging Summary Report';
                         $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                         $name = "aging_summary";
-                        $decimal = 2;
-                        if ($output) {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Supplier Code'] = $val->supplierCode;
-                                $data[$x]['Supplier Name'] = $val->supplierName;
-
-                                if ($request->currencyID == 2) {
-                                    $decimal = 3;
-                                    $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
-                                    $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
-                                    $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
-                                } else {
-                                    $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
-                                    $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
-                                    $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
-                                }
-
-                                $data[$x]['<=30'] = number_format($val->case1, $decimal);
-                                $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
-                                $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
-                                $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
-                                $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
-                                $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
-                                $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
-                                $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
-                                $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
-                                $data[$x]['Over 365'] = number_format($val->case10, $decimal);
-                                $x++;
-                            }
-                        } else {
-                            $data = array();
-                        }
-
-                    } else if ($reportTypeID == 'ULD') {
+                        $data = $unbilledGrvReportService->getUnbilledGrvAgingSummaryExportToExcelData($output,$request);
+                        $objUnbilledGrvAgingSummaryReport = new UnbilledGrvAgingSummaryReport();
+                        $excelColumnFormat = $objUnbilledGrvAgingSummaryReport->getCloumnFormat();
+                    }
+                    else if ($reportTypeID == 'ULD') {
 
                         $fileName = 'Unbilled Logistics Detail';
                         $title = 'Unbilled Logistics Detail Report';
                         $output = $this->getUnbilledLogisticsDetailQRY($request);
                         $name = "logistics_detail";
-                        if ($output) {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['PO Number'] = $val->purchaseOrderCode;
-                                $data[$x]['GRV'] = $val->grvPrimaryCode;
-                                $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
-                                $data[$x]['Supplier Code'] = $val->primarySupplierCode;
-                                $data[$x]['Supplier Name'] = $val->supplierName;
-                                $data[$x]['Trans.Cur'] = $val->TransactionCurrencyCode;
-                                $data[$x]['Logistic Amount Transaction'] = number_format($val->LogisticAmountTransaction, $val->TransactionCurrencyDecimalPlaces);
-                                $data[$x]['Rpt.Cur'] = $val->RptCurrencyCode;
-                                $data[$x]['Logistic Amount Rpt'] = number_format($val->LogisticAmountRpt, $val->RptCurrencyDecimalPlaces);
-                                $data[$x]['Paid Amount Trans'] = number_format($val->PaidAmountTrans, $val->TransactionCurrencyDecimalPlaces);
-                                $data[$x]['Paid Amount Rpt'] = number_format($val->PaidAmountRpt, $val->RptCurrencyDecimalPlaces);
-                                $data[$x]['Balance Trans'] = number_format($val->BalanceTransAmount, $val->TransactionCurrencyDecimalPlaces);
-                                $data[$x]['Balance Rpt'] = number_format($val->BalanceRptAmount, $val->RptCurrencyDecimalPlaces);
-                                $x++;
-                            }
-                        } else {
-                            $data = array();
-                        }
+                        $data = $unbilledGrvReportService->getUnbilledGrvLogisticDetailExportToExcelData($output);
+                        $objUnbilledGrvAgingSummaryReport = new UnbilledGrvLogisticDetails();
+                        $excelColumnFormat = $objUnbilledGrvAgingSummaryReport->getCloumnFormat();
                     }
 
                     $requestCurrency = NULL;
@@ -1522,15 +1349,27 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $path = 'accounts-payable/report/unbilled_grv_/' . $path . 'excel/';
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
 
-                    $detail_array = array('type' => 2, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $requestCurrency, 'title' => $title, 'company_code' => $companyCode);
+                    $exportToExcel = $exportReportToExcelService
+                        ->setTitle($title)
+                        ->setFileName($fileName)
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
+                        ->setCompanyName($company_name)
+                        ->setFromDate($from_date)
+                        ->setToDate($to_date)
+                        ->setData($data)
+                        ->setReportType(2)
+                        ->setType('xls')
+                        ->setCurrency($requestCurrency)
+                        ->setDateType($dataType)
+                        ->setExcelFormat($excelColumnFormat)
+                        ->setDetails()
+                        ->generateExcel();
 
-                    $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
-
-                    if ($basePath == '') {
+                    if(!$exportToExcel['success'])
                         return $this->sendError('Unable to export excel');
-                    } else {
-                        return $this->sendResponse($basePath, trans('custom.success_export'));
-                    }
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
 
                     break;
@@ -1712,6 +1551,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                     AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                    AND erp_generalledger.documentSystemID IN (4,11,15,16,18,24)
                     ) AS MAINQUERY
                 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                 LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
@@ -1780,6 +1620,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                     AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                    AND erp_generalledger.documentSystemID IN (4,11,15,16,18,24)
                      ) AS MAINQUERY
                 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                 LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
@@ -4326,6 +4167,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 final.supplierID,
                 final.supplierCode,
                 final.supplierName,
+                final.documentRptCurrencyID,
+                final.documentLocalCurrencyID,
                 SUM(final.documentLocalAmount) as documentLocalAmount,
                 SUM(final.documentRptAmount) as documentRptAmount,
                 SUM(final.matchedLocalAmount) as matchedLocalAmount,
@@ -4346,6 +4189,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 finalUnbilled.supplierID,
                 finalUnbilled.supplierCode,
                 finalUnbilled.supplierName,
+                finalUnbilled.documentRptCurrencyID,
+                finalUnbilled.documentLocalCurrencyID,
                 finalUnbilled.localAmount AS documentLocalAmount,
                 finalUnbilled.rptAmount AS documentRptAmount,
                    IF
@@ -4364,6 +4209,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 erp_generalledger.documentSystemID,
                 erp_generalledger.documentSystemCode,
                 erp_generalledger.documentCode,
+                erp_generalledger.documentRptCurrencyID,
+                erp_generalledger.documentLocalCurrencyID,
                 sum( erp_generalledger.documentLocalAmount * - 1 ) AS localAmount,
                 sum( erp_generalledger.documentRptAmount * - 1 ) AS rptAmount,
                 erp_generalledger.supplierCodeSystem AS supplierID,

@@ -435,28 +435,30 @@ class EmployeeAPIController extends AppBaseController
         }
 
         //sending emails
-        $subject = 'GEARS Password Reset';
+        if(($employeeMasterData->discharegedYN == 0) && ($employeeMasterData->ActivationFlag == -1) && ($employeeMasterData->empLoginActive == 1) && ($employeeMasterData->empActive == 1)){
+            $subject = 'GEARS Password Reset';
 
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-            "monitoring this inbox.</font>";
+            $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
+                "<br>This is an auto generated email. Please do not reply to this email because we are not " .
+                "monitoring this inbox.</font>";
 
-        $body = "Dear " . $employeeMasterData->empName . ',<p> Your GEARS password has been reset to '.$password . $footer;
+            $body = "Dear " . $employeeMasterData->empName . ',<p> Your GEARS password has been reset to '.$password . $footer;
 
-        $dataEmail['empSystemID'] = $employeeMasterData->employeeSystemID;
-        $dataEmail['empID'] = $employeeMasterData->empID;
-        $dataEmail['empName'] = $employeeMasterData->empName;
-        $dataEmail['empEmail'] = $employeeMasterData->empEmail;
-        $dataEmail['companySystemID'] = $employeeMasterData->empCompanySystemID;
-        $dataEmail['companyID'] = $employeeMasterData->empCompanyID;
-        $dataEmail['ccEmailID'] = $employeeMasterData->empEmail;
-        $dataEmail['isEmailSend'] = 0;
-        $dataEmail['alertMessage'] = $subject;
-        $dataEmail['emailAlertMessage'] = $body;
+            $dataEmail['empSystemID'] = $employeeMasterData->employeeSystemID;
+            $dataEmail['empID'] = $employeeMasterData->empID;
+            $dataEmail['empName'] = $employeeMasterData->empName;
+            $dataEmail['empEmail'] = $employeeMasterData->empEmail;
+            $dataEmail['companySystemID'] = $employeeMasterData->empCompanySystemID;
+            $dataEmail['companyID'] = $employeeMasterData->empCompanyID;
+            $dataEmail['ccEmailID'] = $employeeMasterData->empEmail;
+            $dataEmail['isEmailSend'] = 0;
+            $dataEmail['alertMessage'] = $subject;
+            $dataEmail['emailAlertMessage'] = $body;
 
-        $sendEmail = \Email::sendEmailErp($dataEmail);
-        if (!$sendEmail["success"]) {
-            return $this->sendError($sendEmail["message"], 500);
+            $sendEmail = \Email::sendEmailErp($dataEmail);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
         }
 
         return $this->sendResponse($employeeMasterData->toArray(), 'Employee password reset successfully');

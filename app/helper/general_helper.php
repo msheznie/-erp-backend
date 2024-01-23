@@ -143,6 +143,25 @@ class Helper
         return $serviceline;
     }
 
+    public static function getCompanyServicelineWithMaster($company)
+    {
+        $companiesByGroup = "";
+        if (self::checkIsCompanyGroup($company)) {
+            $companiesByGroup = self::getGroupCompany($company);
+        } else {
+            $companiesByGroup = (array)$company;
+        }
+
+        $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
+                         ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
+                         ->whereIN('serviceline.companySystemID', $companiesByGroup)
+                         ->where('serviceline.isFinalLevel', 1)
+                         ->where('serviceline.isDeleted', 0)
+                        ->get();
+        return $serviceline;
+    }
+
+
 
     /**
      * Get all companies related to a group
@@ -3330,7 +3349,18 @@ class Helper
                                         } 
  
                                         
-                                        $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
+                                        if($params["document"] == 56 )
+                                        {
+                                            $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->supplierName . '</b>';
+                                            $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->supplierName;
+                                        }
+                                        else
+                                        {
+                                            $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
+                                            $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+                                        }
+
+                                       
 
                                         if($document->documentSystemID == 107){
                                             $approvedDocNameBody = $document->documentDescription . ', <b> "' . $documentApproved->suppliername->name . '"</b>';
@@ -3371,6 +3401,7 @@ class Helper
                                         }
 
                                         $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
+
 
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
 
@@ -5144,8 +5175,18 @@ class Helper
                                 $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
                             }
 
-                            $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                            $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            if($input["documentSystemID"] == 56)
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $isConfirmed['supplierName'];
+                                $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['supplierName'] . '</b>';
+                            }
+                            else
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                                $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            }
+
+                 
 
                             if($input["documentSystemID"] == 107){
                                 $subjectName = $document->documentDescription . ' ' .'"' . $currentApproved->suppliername->name .'"';
@@ -5915,8 +5956,20 @@ class Helper
                                 $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
                             }
 
-                            $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                            $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                          
+
+                            if($input["documentSystemID"] == 56 )
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $sourceModel->supplierName;
+                                $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $sourceModel->supplierName . '</b>';
+                            }
+                            else
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                                $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            }
+
+
 
                             $subject = $subjectName . " is rejected.";
                             $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
@@ -8663,6 +8716,15 @@ class Helper
                                 $q->with(['reportingcurrency', 'localcurrency']);
                             }]);
                         }, 'segment'])
+                        ->get();
+                    break;
+                case 97:
+                    $output = Models\StockCountDetail::where('stockCountAutoID', $documentSystemCode)
+                        ->whereHas('master', function ($query) use ($companySystemID, $documentSystemID) {
+                            $query->where('companySystemID', $companySystemID)
+                                ->where('documentSystemID', $documentSystemID);
+                        })
+                        ->with(['master', 'uom'])
                         ->get();
                     break;
 

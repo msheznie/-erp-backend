@@ -2,18 +2,15 @@
 
 namespace App\helper;
 
-use App\Models\ProcumentOrder;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
+
 class CreateExcel
 {
 
     public static function process($data,$type,$fileName,$path_dir,$array=NULL)
     {
-
-        $excel_content =  \Excel::create('payment_suppliers_by_year', function ($excel) use ($data,$fileName,$array) {
+        $columnFormat = isset($array['excelFormat']) ? $array['excelFormat'] : NULL;
+        $excel_content =  \Excel::create('payment_suppliers_by_year', function ($excel) use ($data,$fileName,$array,$columnFormat) {
             if(isset($array['origin']) && $array['origin'] == 'SRM'){
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
@@ -79,8 +76,9 @@ class CreateExcel
                     }
 
                 });
-            } else {
-                $excel->sheet($fileName, function ($sheet) use ($data,$fileName,$array) {
+            }
+            else {
+                $excel->sheet($fileName, function ($sheet) use ($data,$fileName,$array,$columnFormat) {
 
                     $i = 7;
                     if(!isset($array['title']) && empty($array['title']))
@@ -135,8 +133,10 @@ class CreateExcel
                             $cell->setAlignment('center');
                         }
                     });
+                    if($columnFormat) {
+                        $sheet->setColumnFormat($columnFormat);
+                    }
 
-           
                     if(isset($array['type']))
                     {
                         if(($array['type']) == 1)
@@ -225,7 +225,12 @@ class CreateExcel
 
                         }
                     }
-                    $sheet->fromArray($data, null, 'A'.$i, true);
+
+                    if(isset($array['dataType']) && $array['dataType'] == 2) {
+                        $sheet->fromArray($data, null, 'A'.$i, false,false);
+                    }else {
+                        $sheet->fromArray($data, null, 'A'.$i, false,true);
+                    }
                     $sheet->setAutoSize(true);
                     //$sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
 
@@ -235,6 +240,7 @@ class CreateExcel
 
                         // call cell manipulation methods
 
+                        $row->setAlignment('left');
                         $row->setFontColor('#00000');
 
                         $row->setFont(array(
@@ -250,13 +256,14 @@ class CreateExcel
 
 
                     });
+
+
                 });
             }
 
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->string($type);
-
         $disk = 's3';
         $companyCode = isset($array['company_code'])?$array['company_code']:'common';
 
@@ -275,38 +282,9 @@ class CreateExcel
         return $basePath;
     }
 
-
-    public static function loadView($data,$type,$fileName,$path_dir,$templateName)
-    {
-
-     $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName) {
-                    $excel->sheet($fileName, function ($sheet) use ($data, $templateName) {
-                        $sheet->loadView($templateName, $data);
-                    });
-                })->string($type);
-
-
-        $disk = 's3';
-        $companyCode = isset($data['companyCode'])?$data['companyCode']:'common';
-
-        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
-        $path = $companyCode.'/'.$path_dir.$full_name;
-        $result = Storage::disk($disk)->put($path, $excel_content);
-        $basePath = '';
-        if($result)
-        {
-            if (Storage::disk($disk)->exists($path))
-            {
-                $basePath = \Helper::getFileUrlFromS3($path);
-            }
-        }
-
-        return $basePath;
-    }
-
     public static function fromDate($array,$sheet,$type)
     {
-        $sheet->cell('A3', function($cell) use($array,$type) 
+        $sheet->cell('A3', function($cell) use($array,$type)
         {
             if(isset($array['from_date']))
             {
@@ -323,15 +301,16 @@ class CreateExcel
                 $cell->setAlignment('left');
             }
        });
+
     }
 
     public static function toDate($array,$sheet)
     {
-        $sheet->cell('A4', function($cell) use($array) 
+        $sheet->cell('A4', function($cell) use($array)
         {
-            if(isset($array['to_date']))
+            if(isset($array))
             {
-                $cell->setValue('To Date - '.$array['to_date']);  
+                $cell->setValue('To Date - '.$array['to_date']);
                 $cell->setFont(array(
     
                     'family'     => 'Calibri',
@@ -348,7 +327,7 @@ class CreateExcel
 
     public static function currency($array,$sheet,$col)
     {
-        $sheet->cell($col, function($cell) use($array) 
+        $sheet->cell($col, function($cell) use($array)
         {
             if(isset($array['cur']))
             {
@@ -368,4 +347,31 @@ class CreateExcel
     }
 
 
+    public static function loadView($data,$type,$fileName,$path_dir,$templateName)
+    {
+
+    $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName) {
+                   $excel->sheet($fileName, function ($sheet) use ($data, $templateName) {
+                       $sheet->loadView($templateName, $data);
+                   });
+               })->string($type);
+
+
+       $disk = 's3';
+       $companyCode = isset($data['companyCode'])?$data['companyCode']:'common';
+
+       $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
+       $path = $companyCode.'/'.$path_dir.$full_name;
+       $result = Storage::disk($disk)->put($path, $excel_content);
+       $basePath = '';
+       if($result)
+       {
+           if (Storage::disk($disk)->exists($path))
+           {
+               $basePath = \Helper::getFileUrlFromS3($path);
+           }
+       }
+
+       return $basePath;
+    }
 }

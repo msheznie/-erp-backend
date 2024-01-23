@@ -108,10 +108,10 @@
         content: counter(page);
     }
 
-    /*.content {
+    .content {
         margin-bottom: 30px;
     }
-*/
+
     #watermark {
         position: fixed;
         width: 100%;
@@ -158,13 +158,13 @@
         color: black;
     }
     .container
-          {
-            display: block;
-            max-width:230px;
-            max-height:95px;
-            width: auto;
-            height: auto;
-            }
+    {
+        display: block;
+        max-width:230px;
+        max-height:95px;
+        width: auto;
+        height: auto;
+    }
 
     .table_height
     {
@@ -298,8 +298,8 @@
                     <b>CUSTOMER VATIN : {{$request->vatNumber}}</b>
                 </td>
                 <td style="width: 50%; text-align: right;direction: rtl;">
-                    <b>أسم العميل : {{$request->customer->ReportTitle}}</b><br>
-                    <b>عنوان العميل : {{$request->customer->customerAddress1}}</b><br>
+                    <b>أسم العميل : {{$request->customer->customerSecondLanguage}}</b><br>
+                    <b>عنوان العميل : {{$request->customer->addressOneSecondLanguage}}</b><br>
                     <b>رقم العميل : {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</b><br>
                     <b>فاكس العميل : {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</b><br>
                     <b>الرقم الضريبي : {{$request->vatNumber}}</b>
@@ -352,7 +352,7 @@
                             <td style="text-align: right;">{{isset($item->invoiceQty)? $item->invoiceQty:0}}</td>
                             <td style="text-align: right;">{{number_format($item->salesPrice,$numberFormatting)}}</td>
                             <td style="text-align: right;">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
-                            <td style="text-align: right;">{{$item->VATPercentage}}</td>
+                            <td style="text-align: right;">{{number_format($item->VATPercentage, 0)}}</td>
                             {{$totalVatamount = ($item->VATPercentage/100)*$item->invoiceAmount}}
                             <td style="text-align: right;">{{number_format(($totalVatamount),$numberFormatting)}}</td>
                             <td style="text-align: right;">{{number_format($item->invoiceAmount+$totalVatamount,$numberFormatting)}}</td>
@@ -374,7 +374,7 @@
                     {{$taxPercent = ($request->tax) ? $request->tax->taxPercent : 0}}
                     <tr>
                         <td></td>
-                        <td colspan="6" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                        <td colspan="6" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{number_format($taxPercent, 0)}}% (ضريبة القيمة المضافة )</b></td>
                         <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">{{number_format($taxAmount, $numberFormatting)}}</td>
                     </tr>
@@ -404,7 +404,7 @@
                         {{$taxPercent = ($request->tax) ? $request->tax->taxPercent : 0}}
                         <tr>
                             <td></td>
-                            <td colspan="6" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                            <td colspan="6" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{number_format($taxPercent, 0)}}% (ضريبة القيمة المضافة )</b></td>
                             <td style="text-align: center; border-left: none !important"><b>{{empty($request->local_currency) ? '' : $request->local_currency->CurrencyCode}}</b></td>
                             <td class="text-right">{{number_format($taxAmount, $numberFormatting)}}</td>
                         </tr>
@@ -425,21 +425,6 @@
             </table>
 
             <br>
-            <br>
-            @php
-                $qrcode=QrCode::encoding('UTF-8')->size(75)->generate(URL::full());
-                $qrcode=str_replace('<?xml version="1.0" encoding="UTF-8"?>',"",$qrcode); //replace to empty
-            @endphp
-            {!! $qrcode !!}
-            <table>
-                <tbody>
-                    <tr>
-                        <td style="width: 50%; text-align: left">This QR code is encoded as per ZATCA e-invoicing requirement / رمز الإستجابة السريعة مشفَر بحسب متطلبات هيئة الزكاة والضريبة والجمارك للفوترة الإلكترونية</td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
-
         @endif
     @endif
 
@@ -721,146 +706,110 @@
             @endif
         </div>
     @endif
-</div>
-<br>
-<br>
-    @if($request->line_invoiceDetails)
-        <div class="" style="">
-            @else
-                <div class="" style="">
-                    @endif
-                    <table>
-                        <tr>
-                            <td width="100px" colspan="2"  style="text-decoration: underline;"><b> Remittance Details  </b></td>
-                        </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>BANK NAME</b></span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$secondaryBankAccount->contract->secondary_bank_account->bankName}}
-                                      @endif
-                                    @else
-                                    {{($request->bankaccount) ? $request->bankaccount->bankName : ''}}
-                                @endif
-                                </b>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>ACCOUNT NAME</b></span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$secondaryBankAccount->contract->secondary_bank_account->AccountName}}
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->bankaccount->AccountName : ''}}
-                                @endif
-                                </b>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>ACCOUNT NO</b></span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$secondaryBankAccount->contract->secondary_bank_account->AccountNo}} 
-                                        @if ($request->isPerforma == 0 && $secondaryBankAccount->contract->secondary_bank_account)
-                                            ({{($secondaryBankAccount->contract->secondary_bank_account->currency->CurrencyCode) ? $secondaryBankAccount->contract->secondary_bank_account->currency->CurrencyCode : ''}})
-                                        @endif
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->bankaccount->AccountNo : ''}}
-                                    @if ($request->isPerforma == 0 && $request->bankaccount)
-                                        ({{($request->bankaccount->currency->CurrencyCode) ? $request->bankaccount->currency->CurrencyCode : ''}})
-                                    @endif
-                                @endif
 
-                                </b>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>IBAN NO</b></span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$request->accountIBANSecondary}}
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->accountIBAN : ''}}
-                                @endif
-                                </b>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>SWIFT Code</b> </span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$secondaryBankAccount->contract->secondary_bank_account->accountSwiftCode}}
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}
-                                @endif
-                                </b>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-
-                @if(!$request->line_rentalPeriod)
-                    <div class="" style="margin-top: 10px">
-                        <table style="width: 100%">
+    <div>
+        @if($request->line_invoiceDetails)
+            <div class="" style="">
+                @else
+                    <div class="" style="">
+                        @endif
+                        @php
+                            $qrcode=QrCode::encoding('UTF-8')->size(130)->generate(URL::full());
+                            $qrcode=str_replace('<?xml version="1.0" encoding="UTF-8"?>',"",$qrcode); //replace to empty
+                        @endphp
+                        <table>
                             <tr>
-                                <td>
-                                    <span class="font-weight-bold"><b>Approved By :</b></span>
+                                <td style="width: 60%; vertical-align: top;border: 1px solid !important;">
+                                    <table>
+                                        <tr>
+                                            <td width="100px" colspan="2"><b> REMITTANCE DETAILS  </b></td>
+                                        </tr>
+                                        <tr>
+                                            <td width="100px"><span class="font-weight-bold"><b>BANK NAME</b></span></td>
+                                            <td><b> :
+                                                    @if($request->secondaryLogoCompanySystemID)
+                                                        @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                                            {{$secondaryBankAccount->contract->secondary_bank_account->bankName}}
+                                                        @endif
+                                                    @else
+                                                        {{($request->bankaccount) ? $request->bankaccount->bankName : ''}}
+                                                    @endif
+                                                </b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td width="120px"><span class="font-weight-bold"><b>ACCOUNT NAME</b></span></td>
+                                            <td><b> :
+                                                    @if($request->secondaryLogoCompanySystemID)
+                                                        @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                                            {{$secondaryBankAccount->contract->secondary_bank_account->AccountName}}
+                                                        @endif
+                                                    @else
+                                                        {{($request->bankaccount) ? $request->bankaccount->AccountName : ''}}
+                                                    @endif
+                                                </b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td width="100px"><span class="font-weight-bold"><b>ACCOUNT NO</b></span></td>
+                                            <td><b> :
+                                                    @if($request->secondaryLogoCompanySystemID)
+                                                        @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                                            {{$secondaryBankAccount->contract->secondary_bank_account->AccountNo}}
+                                                            @if ($request->isPerforma == 0 && $secondaryBankAccount->contract->secondary_bank_account)
+                                                                ({{($secondaryBankAccount->contract->secondary_bank_account->currency->CurrencyCode) ? $secondaryBankAccount->contract->secondary_bank_account->currency->CurrencyCode : ''}})
+                                                            @endif
+                                                        @endif
+                                                    @else
+                                                        {{($request->bankaccount) ? $request->bankaccount->AccountNo : ''}}
+                                                        @if ($request->isPerforma == 0 && $request->bankaccount)
+                                                            ({{($request->bankaccount->currency->CurrencyCode) ? $request->bankaccount->currency->CurrencyCode : ''}})
+                                                        @endif
+                                                    @endif
+
+                                                </b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td width="100px"><span class="font-weight-bold"><b>IBAN NO</b></span></td>
+                                            <td><b> :
+                                                    @if($request->secondaryLogoCompanySystemID)
+                                                        @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                                            {{$request->accountIBANSecondary}}
+                                                        @endif
+                                                    @else
+                                                        {{($request->bankaccount) ? $request->accountIBAN : ''}}
+                                                    @endif
+                                                </b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td width="100px"><span class="font-weight-bold"><b>SWIFT Code</b> </span></td>
+                                            <td><b> :
+                                                    @if($request->secondaryLogoCompanySystemID)
+                                                        @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                                            {{$secondaryBankAccount->contract->secondary_bank_account->accountSwiftCode}}
+                                                        @endif
+                                                    @else
+                                                        {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}
+                                                    @endif
+                                                </b>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td style="width: 40%; vertical-align: top;border: 1px solid !important;">
+                                    <table>
+                                        <tr>
+                                            <td style="width: 50%; text-align: right; padding-left:10px; padding-right:10px;">This QR code is encoded as per ZATCA e-invoicing requirement / رمز الإستجابة السريعة مشفَر بحسب متطلبات هيئة الزكاة والضريبة والجمارك للفوترة الإلكترونية</td>
+                                            <td style="width: 50%;vertical-align: top;width: 100%; height: 100%;">{!! $qrcode !!}</td>
+                                        </tr>
+                                    </table>
                                 </td>
                             </tr>
-                            <tr>
-                                @foreach ($request->approved_by as $det)
-                                    <td style="padding-right: 25px" class="text-center">
-                                        <b>
-                                        @if($det->employee)
-                                            {{$det->employee->empFullName }}
-                                            <br>
-
-                                            @if($det->employee->details)
-                                                @if($det->employee->details->designation)
-                                                    {{$det->employee->details->designation->designation}}
-                                                @endif
-                                            @endif
-                                            <br><br>
-                                            @if($det->employee)
-                                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
-                                            @endif
-                                        @endif
-                                        </b>
-                                    </td>
-                                @endforeach
-                            </tr>
-
-                            @if ($request->isPerforma == 0)
-                                <tr>
-                                    <td width="100px"><span class="font-weight-bold"><b>Created By</b> </span></td>
-                                    <td><b> :
-                                            @if ($request->createduser)
-                                                {{($request->createduser) ? $request->createduser->empFullName : ''}}
-                                            @endif
-                                        </b>
-                                    </td>
-                                </tr>
-                            @endif
                         </table>
                     </div>
-                @endif
-        </div>
-
-
-
-
-
-
-
-
-
+            </div>
+    </div>
+</div>
 

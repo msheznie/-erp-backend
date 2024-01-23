@@ -408,7 +408,8 @@ class ItemIssueDetailsRefferedBack extends Model
         'p13',
         'pl10',
         'pl3',
-        'timestamp'
+        'timestamp',
+        'qtyAvailableToIssue'
     ];
 
     /**
@@ -471,7 +472,8 @@ class ItemIssueDetailsRefferedBack extends Model
         'p11' => 'integer',
         'p12' => 'integer',
         'p13' => 'integer',
-        'pl3' => 'integer'
+        'pl3' => 'integer',
+        'qtyAvailableToIssue' => 'integer',
     ];
 
     /**

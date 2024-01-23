@@ -73,9 +73,9 @@ class ItemIssueDetailsRepository extends BaseRepository
         'p13',
         'pl10',
         'pl3',
-        'timestamp'
+        'timestamp',
+        'qtyAvailableToIssue'
     ];
-
     /**
      * Configure the Model
      **/

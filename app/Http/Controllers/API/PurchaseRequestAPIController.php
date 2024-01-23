@@ -2998,6 +2998,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $result = Helper::getDocumentDetails($companySystemID,$documentSystemID,$documentSystemCode,$matchingDoc);
         $output['data'] = count($result) > 0?$result->take(10):[];
         $output['is_limit'] =  count($result) > 10?true:false;
+        $output['count'] =  count($result);
 
         return $this->sendResponse($output,'Success');
     }

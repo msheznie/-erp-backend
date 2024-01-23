@@ -199,7 +199,41 @@
 
 <div class="content">
     <div class="row">
-        <br>
+        <table class="table_height head_font" style="width:100%">
+            <tr>
+                <td width="20%">
+                    @if($request->logo)
+                           @if($type == 1)
+                            <img style="height: 130px" src="{{$request->companyLogo}}">
+                          @else
+                            image not found
+                          @endif
+
+                    @endif
+                </td>
+
+                <td width="40%">
+                </td>
+                <td width="40%" style="text-align: left;white-space: nowrap">
+                    <table style="width: 100%">
+                        <tr>
+                            <td style="font-weight: bold">{{$request->CompanyName}}</th>
+                        <tr>
+                            <td>{{$request->CompanyAddress}},</td>
+                        </tr>
+                        <tr>
+                            <td>{{$request->CompanyCountry}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Tel</b>&nbsp;&nbsp;:&nbsp;{{$request->CompanyTelephone}}, <b>Fax</b>&nbsp;:&nbsp;{{$request->CompanyFax}}</td>
+                        </tr>
+                    </table>
+                    <br>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="row">
         <br>
     </div>
     <div class="row underline">

@@ -59,8 +59,19 @@ class ReopenDocument
 
             $document = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
-            $cancelDocNameBody = $document->documentDescription . ' <b>' . $sourceModel[$docInforArr['documentCodeColumnName']] . '</b>';
-            $cancelDocNameSubject = $document->documentDescription . ' ' . $sourceModel[$docInforArr['documentCodeColumnName']];
+            if($input["documentSystemID"] == 56 )
+            {
+                $cancelDocNameBody = $document->documentDescription . ' <b>' . $sourceModel->supplierName . '</b>';
+                $cancelDocNameSubject = $document->documentDescription . ' ' . $sourceModel->supplierName;
+            }
+            else
+            {
+                $cancelDocNameBody = $document->documentDescription . ' <b>' . $sourceModel[$docInforArr['documentCodeColumnName']] . '</b>';
+                $cancelDocNameSubject = $document->documentDescription . ' ' . $sourceModel[$docInforArr['documentCodeColumnName']];
+            }
+
+
+
 
             $subject = $cancelDocNameSubject . ' is reopened';
 

@@ -1022,6 +1022,59 @@ class SupplierMasterAPIController extends AppBaseController
         return $this->sendResponse($supplierMaster->toArray(), 'Supplier Master retrieved successfully');
     }
 
+    public function getSupplierMaster(Request $request)
+    {
+         $input = $request->all();
+         $supplierId = $input['autoID'];
+        
+         $supplier = SupplierMaster::with('currency','company','confirmed_by','approved_by','supplier_group','supplier_category','country','importance','nature','type','critical')
+                                                ->where('supplierCodeSystem', $supplierId)->first();
+
+         if (empty($supplier)) {
+             return $this->sendError('Supplier Master not found');
+         }
+         $data = [];
+         if ($supplier) {
+             $supplierBusinessCategories = DB::table('supplierbusinesscategoryassign')
+                 ->select('suppliercategorymaster.supCategoryMasterID','suppliercategorymaster.categoryName','supplierbusinesscategoryassign.supplierBusinessCategoryAssignID')
+                 ->leftJoin('suppliercategorymaster','supplierbusinesscategoryassign.supCategoryMasterID','=','suppliercategorymaster.supCategoryMasterID')
+                 ->where('supplierbusinesscategoryassign.supplierID', $supplierId)->get();
+             foreach ($supplierBusinessCategories as $supplierBusinessCategory){
+                 $supplierBusinessSubCategories = DB::table('suppliersubcategoryassign')
+                     ->select('suppliersubcategoryassign.supplierSubCategoryAssignID','suppliercategorysub.categoryName')
+                     ->leftJoin('suppliercategorysub','suppliersubcategoryassign.supSubCategoryID','=','suppliercategorysub.supCategorySubID')
+                     ->where('suppliersubcategoryassign.supplierID', $supplierId)
+                     ->where('suppliercategorysub.supMasterCategoryID', $supplierBusinessCategory->supCategoryMasterID)->get();
+                 if(count($supplierBusinessSubCategories) > 0){
+                     foreach ($supplierBusinessSubCategories as $supplierBusinessSubCategory) {
+                         $temp = [
+                             "businessCategoryAssignID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID,
+                             "businessCategoryName" => $supplierBusinessCategory->categoryName,
+                             "businessSubCategoryAssignID" => $supplierBusinessSubCategory->supplierSubCategoryAssignID,
+                             "businessSubCategoryName" => $supplierBusinessSubCategory->categoryName
+                         ];
+                         $data[] = $temp;
+                     }
+                 }
+                 else{
+                     $temp = [
+                         "businessCategoryAssignID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID,
+                         "businessCategoryName" => $supplierBusinessCategory->categoryName,
+                         "businessSubCategoryAssignID" => 0,
+                         "businessSubCategoryName" => null
+                     ];
+                     $data[] = $temp;
+                 }
+             }
+         }
+         $supplierData = [
+            'supplierMaster'=> $supplier,
+            'supplierBusinessData' => $data
+         ];
+
+         return $this->sendResponse($supplierData, 'Supplier Master retrieved successfully');
+    }
+    
     /**
      * Update the specified SupplierMaster in storage.
      * PUT/PATCH /supplierMasters/{id}
