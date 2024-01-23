@@ -160,6 +160,7 @@ class FixedAssetMasterAPIController extends AppBaseController
      */
     public function store(CreateFixedAssetMasterAPIRequest $request)
     {
+      
         $input = $request->all();
         $assetSerialNoArr = $input['assetSerialNo'];
         $itemImgaeArr = $input['itemImage'];
@@ -209,6 +210,14 @@ class FixedAssetMasterAPIController extends AppBaseController
                     return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
+
+
+            
+            if(empty($input['depMonth']) || $input['depMonth'] == 0){
+                return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
+            }
+
+
 
             $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
             $awsPolicy = Helper::checkPolicy($input['companySystemID'], 50);
