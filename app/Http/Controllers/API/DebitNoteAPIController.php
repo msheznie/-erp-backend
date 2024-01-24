@@ -1675,6 +1675,7 @@ class DebitNoteAPIController extends AppBaseController
             ->select(
                 'erp_debitnote.*',
                 'employees.empName As created_emp',
+                'doc_employees.empName As empFullName',
                 'currencymaster.DecimalPlaces As DecimalPlaces',
                 'currencymaster.CurrencyCode As CurrencyCode',
                 'suppliermaster.supplierName As supplierName',
@@ -1689,6 +1690,7 @@ class DebitNoteAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('employees as doc_employees', 'erp_debitnote.empID', 'doc_employees.employeeSystemID')
             ->leftJoin('currencymaster', 'supplierTransactionCurrencyID', 'currencymaster.currencyID')
             ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
             ->where('erp_documentapproved.rejectedYN', 0)
@@ -1727,7 +1729,8 @@ class DebitNoteAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $debitNotes = $debitNotes->where(function ($query) use ($search) {
                 $query->where('debitNoteCode', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierName', 'like', "%{$search}%");
+                    ->orWhere('supplierName', 'like', "%{$search}%")
+                    ->orWhere('doc_employees.empName', 'like', "%{$search}%");
             });
         }
 
@@ -1774,6 +1777,7 @@ class DebitNoteAPIController extends AppBaseController
             ->select(
                 'erp_debitnote.*',
                 'employees.empName As created_emp',
+                'doc_employees.empName As empFullName',
                 'currencymaster.DecimalPlaces As DecimalPlaces',
                 'currencymaster.CurrencyCode As CurrencyCode',
                 'suppliermaster.supplierName As supplierName',
@@ -1809,6 +1813,7 @@ class DebitNoteAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('employees as doc_employees', 'erp_debitnote.empID', 'doc_employees.employeeSystemID')
             ->leftJoin('currencymaster', 'supplierTransactionCurrencyID', 'currencymaster.currencyID')
             ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
             ->where('erp_documentapproved.rejectedYN', 0)
@@ -1847,7 +1852,8 @@ class DebitNoteAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $debitNotes = $debitNotes->where(function ($query) use ($search) {
                 $query->where('debitNoteCode', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierName', 'like', "%{$search}%");
+                    ->orWhere('supplierName', 'like', "%{$search}%")
+                    ->orWhere('doc_employees.empName', 'like', "%{$search}%");
             });
         }
 
@@ -2383,11 +2389,11 @@ UNION ALL
 
                 $data[$x]['Narration'] = $value->comments;
                 if ($value->supplier) {
-                    $data[$x]['Supplier Code'] = $value->supplier->primarySupplierCode;
-                    $data[$x]['Supplier Name'] = $value->supplier->supplierName;
+                    $data[$x]['Supplier/Employee Code'] = $value->supplier->primarySupplierCode;
+                    $data[$x]['Supplier/Employee Name'] = $value->supplier->supplierName;
                 } else {
-                    $data[$x]['Supplier Code'] = '';
-                    $data[$x]['Supplier Name'] = '';
+                    $data[$x]['Supplier/Employee Code'] = $value->employee->empID;;
+                    $data[$x]['Supplier/Employee Name'] = $value->employee->empFullName;;
                 }
 
                 $decimalPlaces = 2;
