@@ -994,6 +994,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
         // Route::get('/phpinfo', function () { phpinfo(); });
     }
+    Route::post('getPortalRedirectUrl', 'FcmTokenAPIController@getPortalRedirectUrl');
 });
 
 
