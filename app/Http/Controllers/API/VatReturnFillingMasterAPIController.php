@@ -485,8 +485,8 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                       ->orWhereHas('supplier', function ($q1) use($search){
                             $q1->where('supplierName','LIKE',"%{$search}%");
                         })
-                      ->orWhereHas('customer', function ($q1) use($search){
-                            $q1->where('CustomerName','LIKE',"%{$search}%");
+                      ->orWhereHas('customer', function ($q2) use($search){
+                            $q2->where('CustomerName','LIKE',"%{$search}%");
                         });
             });
         }
