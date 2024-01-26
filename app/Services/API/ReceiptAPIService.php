@@ -30,6 +30,8 @@ class ReceiptAPIService
         $errorConfirmation = array();
         $errorApproval = array();
         foreach ($receipts as $receipt) {
+            $receipt = self::serialCodeDetails($receipt);
+
             if(!isset($receipt->companyFinanceYearID)) {
                 $isFailed = true;
                 array_push($this->financeYearError,$receipt->narration);
@@ -143,7 +145,6 @@ class ReceiptAPIService
             $receipt = self::setBankAccount($dt['account'],$receipt);
             $receipt = self::setFinanicalPeriod($dt['documentDate'],$receipt);
             $receipt = self::setCurrencyDetails($receipt);
-            $receipt = self::serialCodeDetails($receipt);
             $receipt = self::setLocalAndReportingAmounts($receipt);
             $receipt = self::setConfirmedDetails($dt,$receipt);
             $receipt = self::setApprovedDetails($dt,$receipt);
