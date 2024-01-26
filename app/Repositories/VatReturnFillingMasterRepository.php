@@ -49,8 +49,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
     {
         return VatReturnFillingMaster::class;
     }
-
-    public function generateFilling($date, $categoryID, $companySystemID, $forUpdate = false, $returnFilledDetailID = null, $confirmedYN = 0, $vatReturnFillingMasterID = null)
+   public function generateFilling($date, $categoryID, $companySystemID, $forUpdate = false, $returnFilledDetailID = null, $confirmedYN = 0, $vatReturnFillingMasterID = null,$isCollection = true)
     {
         $linkedTaxLedgerDetails = [];
         $taxableAmount = 0;
@@ -91,9 +90,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     });
 
 
-                $taxLedgerDetail = $taxLedgerDetailData->get();
+                $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
                 break;
-            case 3://Supplies of goods/ services taxed @0% - 1 (b)  
+            case 3://Supplies of goods/ services taxed @0% - 1 (b)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
@@ -124,9 +123,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     });
 
 
-                $taxLedgerDetail = $taxLedgerDetailData->get();
+                $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
                 break;
-            case 4: // Supplies of goods/ services tax exempt - 1 (c) 
+            case 4: // Supplies of goods/ services tax exempt - 1 (c)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
@@ -157,9 +156,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     });
 
 
-                $taxLedgerDetail = $taxLedgerDetailData->get();
+                $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
                 break;
-            case 10: // Purchases from outside of GCC subject to Reverse Charge Mechanism - 2 (b) 
+            case 10: // Purchases from outside of GCC subject to Reverse Charge Mechanism - 2 (b)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
@@ -194,9 +193,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     });
 
 
-                $taxLedgerDetail = $taxLedgerDetailData->get();
+                $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
                 break;
-            case 12: // Exports - 3 (a) 
+            case 12: // Exports - 3 (a)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
@@ -243,9 +242,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     });
 
 
-                $taxLedgerDetail = $taxLedgerDetailData->get();
+                $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
                 break;
-            case 15: // Total goods imported - 4 (b)  
+            case 15: // Total goods imported - 4 (b)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
@@ -343,105 +342,110 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     ->selectRaw('SUM(taxAmount) as totalTaxAmount, SUM(taxableAmount) as totalTaxableAmount')
                     ->first();
 
-                // $onef = 
+                // $onef =
                 $twoB = VatReturnFillingDetail::where('vatReturnFillingSubCatgeoryID', 10)
                     ->where('vatReturnFillingID', $vatReturnFillingMasterID)
                     ->selectRaw('SUM(taxAmount) as totalTaxAmount, SUM(taxableAmount) as totalTaxableAmount')
                     ->first();
 
-                // $fourA = 
+                // $fourA =
 
                 $taxAmount = (($oneA) ? $oneA->totalTaxAmount : 0) + (($twoB) ? $twoB->totalTaxAmount : 0);
                 $taxableAmount = (($oneA) ? $oneA->totalTaxableAmount : 0) + (($twoB) ? $twoB->totalTaxableAmount : 0);
                 break;
             case 20: // Purchases (except import of goods) - 6 (a)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
-                    ->whereDate('documentDate', '<=', $date)
-                    ->where('companySystemID', $companySystemID)
-                    ->where(function($q) use ($companyCountry){
-                        $q->where(function($q)  use ($companyCountry){
-                            $q->whereHas('supplier', function($query) use ($companyCountry){
-                                $query->where('supplierCountryID',$companyCountry);
-                            });
-                        })
-                            ->orWhere(function($q)  use ($companyCountry){
-                                $q->whereHas('supplier', function($query) use ($companyCountry){
-                                    $query->where('supplierCountryID', '!=', $companyCountry);
-                                })
-                                    ->where('rcmApplicableYN', 0);
-                            });
+                                                  ->whereDate('documentDate', '<=', $date)
+                                                  ->where('companySystemID', $companySystemID)
+                                                  ->where(function($q) use ($companyCountry){
+                                                    $q->where(function($q)  use ($companyCountry){
+                                                        $q->whereHas('supplier', function($query) use ($companyCountry){
+                                                            $query->where('supplierCountryID',$companyCountry);
+                                                        });
+                                                    })
+                                                    ->orWhere(function($q)  use ($companyCountry){
+                                                        $q->whereHas('supplier', function($query) use ($companyCountry){
+                                                            $query->where('supplierCountryID', '!=', $companyCountry);
+                                                        })
+                                                        ->where('rcmApplicableYN', 0);
+                                                    });
+                                                    
+                                                  })
+                                                  ->whereNotNull('inputVATGlAccountID')
+                                                  ->when($forUpdate == false, function($query) {
+                                                        $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
+                                                              ->whereNull('returnFilledDetailID');
+                                                  })
+                                                  ->when($forUpdate == true && $confirmedYN == 0, function($query) use ($returnFilledDetailID){
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                                  $query->whereNull('returnFilledDetailID')
+                                                                        ->orWhere('returnFilledDetailID', $returnFilledDetailID);
+                                                                });
+                                                  })
+                                                   ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                              $query->where('returnFilledDetailID', $returnFilledDetailID);
+                                                            });
+                                                  })
+                                                  ->where('documentSystemID', 11)
+                                                    ->whereHas('supplier_invoice', function($query) {
+                                                        $query->whereIn('documentType', [0,1,2,3,4]);
+                                                    })
+                                                  ->when(('supplier_invoice.documentType' == 1 || 'supplier_invoice.documentType' == 3),function($query) {
+                                                        $query->whereHas('supplier_invoice_details', function($query) {
+                                                            $query->whereHas('grv_detail', function($query) {
+                                                                $query->where('itemFinanceCategoryID','!=',3);
+                                                            });
+                                                        });
+                                                  });
 
-                    })
-                    ->whereNotNull('inputVATGlAccountID')
-                    ->when($forUpdate == false, function($query) {
-                        $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
-                            ->whereNull('returnFilledDetailID');
-                    })
-                    ->when($forUpdate == true && $confirmedYN == 0, function($query) use ($returnFilledDetailID){
-                        $query->where(function($query) use ($returnFilledDetailID) {
-                            $query->whereNull('returnFilledDetailID')
-                                ->orWhere('returnFilledDetailID', $returnFilledDetailID);
-                        });
-                    })
-                    ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
-                        $query->where(function($query) use ($returnFilledDetailID) {
-                            $query->where('returnFilledDetailID', $returnFilledDetailID);
-                        });
-                    })
-                    ->whereHas('supplier_invoice_details', function($query) {
-                        $query->whereHas('grv_detail', function($query) {
-                            $query->where('itemFinanceCategoryID','!=' ,3);
-                        });
-                    })
-                    ->where('documentSystemID', 11)
-                    ->whereHas('supplier_invoice', function($query) {
-                        $query->where('documentType', 0);
-                    });
 
-
-                $taxLedgerDetail = $taxLedgerDetailData->get();
+                $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
                 break;
             case 21: // Import of goods - 6 (b)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
-                    ->whereDate('documentDate', '<=', $date)
-                    ->where('companySystemID', $companySystemID)
-                    ->whereHas('supplier', function($query) use ($companyCountry){
-                        $query->where('supplierCountryID', '!=',$companyCountry);
-                    })
-                    ->whereNotNull('inputVATGlAccountID')
-                    ->when($forUpdate == false, function($query) {
-                        $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
-                            ->whereNull('returnFilledDetailID');
-                    })
-                    ->when($forUpdate == true && $confirmedYN == 0, function($query) use ($returnFilledDetailID){
-                        $query->where(function($query) use ($returnFilledDetailID) {
-                            $query->whereNull('returnFilledDetailID')
-                                ->orWhere('returnFilledDetailID', $returnFilledDetailID);
-                        });
-                    })
-                    ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
-                        $query->where(function($query) use ($returnFilledDetailID) {
-                            $query->where('returnFilledDetailID', $returnFilledDetailID);
-                        });
-                    })
-                    ->where('addVATonPO', 0)
-                    ->whereHas('sub_category', function($query) {
-                        $query->whereHas('type', function($query) {
-                            $query->where('id', 1);
-                        });
-                    })
-                    ->whereHas('supplier_invoice_details', function($query) {
-                        $query->whereHas('grv_detail', function($query) {
-                            $query->where('itemFinanceCategoryID','!=',3);
-                        });
-                    })
-                    ->where('documentSystemID', 11)
-                    ->whereHas('supplier_invoice', function($query) {
-                        $query->where('documentType', 0);
-                    });
+                                                  ->whereDate('documentDate', '<=', $date)
+                                                  ->where('companySystemID', $companySystemID)
+                                                  ->whereHas('supplier', function($query) use ($companyCountry){
+                                                      $query->where('supplierCountryID', '!=',$companyCountry);
+                                                  })
+                                                  ->whereNotNull('inputVATGlAccountID')
+                                                  ->when($forUpdate == false, function($query) {
+                                                        $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
+                                                              ->whereNull('returnFilledDetailID');
+                                                  })
+                                                  ->when($forUpdate == true && $confirmedYN == 0, function($query) use ($returnFilledDetailID){
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                                  $query->whereNull('returnFilledDetailID')
+                                                                        ->orWhere('returnFilledDetailID', $returnFilledDetailID);
+                                                                });
+                                                  })
+                                                   ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                              $query->where('returnFilledDetailID', $returnFilledDetailID);
+                                                            });
+                                                  })
+                                                  ->where('addVATonPO', 0)
+                                                  ->whereHas('sub_category', function($query) {
+                                                        $query->whereHas('type', function($query) { 
+                                                            $query->where('id', 1);
+                                                        });
+                                                  })
+                                                  ->where('documentSystemID', 11)
+                                                  ->whereHas('supplier_invoice', function($query) {
+                                                        $query->whereIn('documentType', [0,1,2,3,4]);
+                                                  })
+                                                ->when(('supplier_invoice.documentType' == 1 || 'supplier_invoice.documentType' == 3),function($query) {
+                                                    $query->whereHas('supplier_invoice_details', function($query) {
+                                                        $query->whereHas('grv_detail', function($query) {
+                                                            $query->where('itemFinanceCategoryID','!=',3);
+                                                        });
+                                                    });
+                                                });
 
 
-                $taxLedgerDetail = $taxLedgerDetailData->get();
+                $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
+
                 break;
             case 22: // VAT on acquisition of fixed assets - 6 (c)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
@@ -474,7 +478,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     });
 
 
-                $taxLedgerDetail = $taxLedgerDetailData->get();
+                $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
                 break;
             case 25: // Total VAT due [5(a) - 5(b)]
                 $fiveA = VatReturnFillingDetail::where('vatReturnFillingSubCatgeoryID', 17)
@@ -534,13 +538,18 @@ class VatReturnFillingMasterRepository extends BaseRepository
         }
 
 
-        if (count($taxLedgerDetail) > 0) {
-            $linkedTaxLedgerDetails = collect($taxLedgerDetail)->pluck('id')->toArray();
-            $taxAmount = collect($taxLedgerDetail)->sum('VATAmountLocal');
-            $taxableAmount = collect($taxLedgerDetail)->sum('taxableAmountLocal');
-        }
+        if($isCollection) {
+            if (count($taxLedgerDetail) > 0) {
+                $linkedTaxLedgerDetails = collect($taxLedgerDetail)->pluck('id')->toArray();
+                $taxAmount = collect($taxLedgerDetail)->sum('VATAmountLocal');
+                $taxableAmount = collect($taxLedgerDetail)->sum('taxableAmountLocal');
+            }
 
-        return ['status' => true, 'data' => ['linkedTaxLedgerDetails' => $linkedTaxLedgerDetails, 'taxAmount' => $taxAmount, 'taxableAmount' => $taxableAmount, 'taxLedgerDetailData' => $taxLedgerDetail]];
+            return ['status' => true, 'data' => ['linkedTaxLedgerDetails' => $linkedTaxLedgerDetails, 'taxAmount' => $taxAmount, 'taxableAmount' => $taxableAmount, 'taxLedgerDetailData' => $taxLedgerDetail]];
+
+        }else {
+            return $taxLedgerDetail;
+        }
     }
 
     public function portionateExemptVAT($ledgerDetail)
@@ -561,7 +570,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
             ->get();
 
         foreach ($subCategories as $key => $value) {
-            $res = $this->generateFilling(null, $value->id, null, false, null, 0, $vatReturnFillingID);
+            $res = $this->generateFilling(null, $value->id, null, false, null, 0, $vatReturnFillingID,true);
 
             if ($res['status']) {
                 $detailData = [
