@@ -485,6 +485,7 @@ class CustomerReceivePaymentGlService
                         $data['glCode'] = $chartOfAccountData->AccountCode;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                        $taxLedgerData['outputVatGLAccountID'] = $data['chartOfAccountSystemID'];
                     } else {
                         Log::info('Receipt voucher VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                         Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
@@ -547,6 +548,8 @@ class CustomerReceivePaymentGlService
                             $data['glCode'] = $chartOfAccountData->AccountCode;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                            $taxLedgerData['outputVatTransferGLAccountID'] = $data['chartOfAccountSystemID'];
                         } else {
                             Log::info('Receipt voucher VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                             Log::info('Output Vat transfer GL Account not assigned to company' . date('H:i:s'));

@@ -558,18 +558,6 @@ class CustomerMasterAPIController extends AppBaseController
 
             $customerMasters = CustomerMaster::where('customerCodeSystem', $input['customerCodeSystem'])->first();
 
-            $matDoc = MatchDocumentMaster::where('BPVsupplierID',$input['customerCodeSystem'])->where('matchingConfirmedYN',0)->count();
-            if($matDoc > 0)
-            {
-                $advanceAccount = $input['custAdvanceAccountSystemID'];
-
-                if($customerMasters->custAdvanceAccountSystemID != $advanceAccount)
-                {
-                    return $this->sendError('There are pending Advance Receipt documents to be matched. Match all pending document to update this account');
-
-                }
-            }
-
             if (empty($customerMasters)) {
                 return $this->sendError('customer not found');
             }
@@ -2980,14 +2968,27 @@ class CustomerMasterAPIController extends AppBaseController
         $cusInvoice = CustomerInvoice::where('customerID', $input['customerID'])->where('customerGLSystemID', $customerMaster->custGLAccountSystemID)->first();//check GL account
     
         if ($cusInvoice) {
-            $errorMessages[] = "GL Account cannot be amended. it had used in customer Invoice";
+            $errorMessages[] = "Receivable Account cannot be amended. it had used in customer Invoice";
             $amendable['GLAmendable'] = false;
         } else {
-            $successMessages[] = "Use of GL Account checking is done in customer Invoice";
+            $successMessages[] = "Use of Receivable Account checking is done in customer Invoice";
             $amendable['GLAmendable'] = true;
         }
 
+        $isFullyMatched = CustomerReceivePayment::where('customerID',$input['customerID'])->where('matchInvoice','!=',2)->first();
 
+        $matDoc = MatchDocumentMaster::where('BPVsupplierID',$input['customerID'])->where('matchingConfirmedYN',0)->first();
+
+        if($isFullyMatched || $matDoc)
+        {
+            $errorMessages[] = "Advance Account cannot be amended. Match all pending Advance Receipt Voucher documents to update this account";
+            $amendable['advanceAmendable'] = false;
+        }
+        else
+        {
+            $successMessages[] = "Use of Advance Account checking is done in Advance Receipt Voucher";
+            $amendable['advanceAmendable'] = true;
+        }
        
         $deliveryOrder = DeliveryOrder::where('customerID', $input['customerID'])
                                       ->where('custUnbilledAccountSystemID', $customerMaster->custUnbilledAccountSystemID)

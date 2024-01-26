@@ -2450,8 +2450,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $controlAccount = CustomerMaster::groupBy('custGLAccountSystemID')->pluck('custGLAccountSystemID');
-        $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
+        $controlAccount = CustomerMaster::groupBy('custGLAccountSystemID')->pluck('custGLAccountSystemID')->toArray();
+        $controlAccount1 = CustomerMaster::groupBy('custAdvanceAccountSystemID')->pluck('custAdvanceAccountSystemID')->toArray();
+
+        $mergedArray = array_merge($controlAccount, $controlAccount1);
+        $uniqueArray = array_unique($mergedArray);
+        $uniqueArray = array_values($uniqueArray);
+        $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $uniqueArray)->get();
 
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
 
