@@ -15,7 +15,13 @@
 
 Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
-Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
+
+Route::group(['middleware' => 'max_memory_limit'], function () {
+    Route::group(['middleware' => 'max_execution_limit'], function () {
+        Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
+    });
+});
+
 Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
 Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
 Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
