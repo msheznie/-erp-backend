@@ -1344,11 +1344,23 @@ class ShiftDetailsAPIController extends AppBaseController
                         return $this->sendError('Unbilled receivable account is not configured for this customer', 500);
                     }
 
+                    $input['customerID'] = $customerID;
                     $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
                     $input['custGLAccountCode'] = $customer->custGLaccount;
                     $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
                     $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
 
+                    $wareHouseID = null;
+                    $wareHouse = DB::table('pos_source_shiftdetails')
+                        ->selectRaw('pos_source_shiftdetails.wareHouseID as wareHouseID')
+                        ->where('pos_source_shiftdetails.shiftID', $shiftId)
+                        ->first();
+                    if ($wareHouse) {
+                        $wareHouseID = $wareHouse->wareHouseID;
+                    }
+
+                    $input['wareHouseSystemCode'] = $wareHouseID;
+                    
                     $lastSerial = SalesReturn::where('companySystemID', $shiftDetails->companyID)
                         ->where('companyFinanceYearID', $getCompanyFinanceYear->companyFinanceYearID)
                         ->orderBy('serialNo', 'desc')
@@ -1365,6 +1377,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['companyID'] = $company['CompanyID'];
                     $input['companySystemID'] = $shiftDetails->companyID;
                     $input['documentID'] = 'SLR';
+                    $input['narration'] = "Sales Return Created by GPOS System";
 
 
                     $segments = DB::table('pos_source_shiftdetails')
@@ -1475,7 +1488,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                                     $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
 
-                                    $invDetail_arr['doInvRemainingQty'] = floatval($cusInvDetail->qtyIssuedDefaultMeasure);
+                                    $invDetail_arr['doInvRemainingQty'] = floatval($cusInvDetail->qtyIssuedDefaultMeasure) - floatval($returnItem->qty);
                                     $invDetail_arr['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                                     $invDetail_arr['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                                     $invDetail_arr['wacValueLocal'] = $cusInvDetail->issueCostLocal;
@@ -2935,7 +2948,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
                     $taxItems = DB::table('pos_source_invoicedetail')
-                        ->selectRaw('pos_source_taxledger.amount * pos_source_salesreturndetails.qty / pos_source_invoicedetail.qty as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, pos_source_taxledger.amount as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                        ->selectRaw('pos_source_taxledger.amount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, pos_source_taxledger.amount * pos_source_salesreturndetails.qty / pos_source_invoicedetail.qty as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
                         ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
