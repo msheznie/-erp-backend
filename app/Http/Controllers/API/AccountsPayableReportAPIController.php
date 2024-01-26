@@ -2098,7 +2098,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $suppliers = (array)$request->suppliers;
         $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
 
-        $controlAccountsSystemIDs = (array)$request->controlAccountsList;
+        $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
 
         $currency = $request->currencyID;
@@ -2106,7 +2106,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $currencyQry = '';
         $balanceAmountQry = '';
-//        $decimalPlaceQry = '';
+        $decimalPlaceQry = '';
         $whereQry = '';
         if ($currency == 1) {
             $currencyQry = "finalAgingDetail.transCurrencyName AS documentCurrency";
@@ -2146,6 +2146,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentSystemID,
                                 MAINQUERY.documentSystemCode,
                                 MAINQUERY.supplierCodeSystem,
+                                MAINQUERY.chartOfAccountSystemID,
                                 suppliermaster.primarySupplierCode AS SupplierCode,
                                 suppliermaster.suppliername,
                                 suppliermaster.currency AS suppliercurrency,
@@ -2329,7 +2330,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
-                                AND erp_generalledger.documentSystemID IN (' . join(',', $documentSystemID) . ')
                                 AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
@@ -2340,7 +2340,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as supplierCurrency ON supplierCurrency.currencyID = finalAgingDetail.suppliercurrency
                             LEFT JOIN chartofaccounts as liabilityAccount ON liabilityAccount.chartOfAccountSystemID = finalAgingDetail.liabilityAccount
                             LEFT JOIN chartofaccounts as advanceAccount ON advanceAccount.chartOfAccountSystemID = finalAgingDetail.advanceAccount
-                            WHERE ' . $whereQry . ' <> 0 ORDER BY finalAgingDetail.supplierCodeSystem ASC;');
+                            WHERE ' . $whereQry . ' <> 0 
+                            AND (
+                                (finalAgingDetail.documentSystemID = 11 AND finalAgingDetail.liabilityAccount = finalAgingDetail.chartOfAccountSystemID) 
+                                OR (finalAgingDetail.documentSystemID = 4 AND finalAgingDetail.advanceAccount = finalAgingDetail.chartOfAccountSystemID)
+                                OR finalAgingDetail.documentSystemID = 15
+                            )
+                            ORDER BY finalAgingDetail.supplierCodeSystem ASC;');
 
         return $this->exchangeGainLoss($results, $currency);
     }
