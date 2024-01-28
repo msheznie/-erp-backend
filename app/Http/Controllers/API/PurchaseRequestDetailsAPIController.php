@@ -1262,13 +1262,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
             }
 
-            foreach ($record as $key => $input) {
-                if (isset($input['estimated_unit_cost'])) {
-                    if (!is_numeric($input['estimated_unit_cost'])) {
-                        return $this->sendError('Estimated Unit Cost must be a numeric value.', 500);
+            foreach ($record as $key => $data) {
+                if (isset($data['estimated_unit_cost'])) {
+                    if (!is_numeric($data['estimated_unit_cost'])) {
+                        return $this->sendError('Records with alpha numeric values for the estimated unit cost can not be uploaded.', 500);
                     }
             
-                    if ($input['estimated_unit_cost'] < 0) {
+                    if ($data['estimated_unit_cost'] < 0) {
                         return $this->sendError('Estimated Unit Cost Value Can Not Be Less Than Zero.', 500);
                     }
                 }
