@@ -2244,7 +2244,7 @@ class Helper
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
                                 }
                                 else if ($sourceModel->disposalType == 6) {
-                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase);
+                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase,$empInfo->employeeSystemID);
 
                                     if (!$message['status']) {
                                         DB::rollback();
@@ -4915,7 +4915,7 @@ class Helper
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
                                 }
                                 else if ($sourceModel->disposalType == 6) {
-                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase);
+                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase,$empInfo->employeeSystemID);
 
                                     if (!$message['status']) {
                                         DB::rollback();

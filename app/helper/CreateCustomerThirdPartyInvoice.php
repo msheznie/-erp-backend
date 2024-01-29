@@ -51,21 +51,63 @@ use App\Models\AssetDisposalDetail;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\AssetDisposalType;
 use App\Jobs\GeneralLedgerInsert;
+
 class CreateCustomerThirdPartyInvoice
 {
     /** @var  CustomerInvoiceDirectRepository */
     private $sourceModel;
     private $db;
 
-	public static function customerInvoiceCreate($sourceModel,$db)
+	public static function customerInvoiceCreate($sourceModel,$db,$empId)
 	{   
 
         DB::beginTransaction();
         try {
             $companySystemId = $sourceModel['companySystemID'];
-            $approvalLevel = ApprovalLevel::where('companySystemID',$companySystemId)->first();
+          
+            
+                    $approvalLevel = ApprovalLevel::with('approvalrole' )
+                    ->where('companySystemID', $companySystemId)
+                    ->where('documentSystemID', 20)
+                    ->where('departmentSystemID', 4)
+                    ->where('isActive', -1)
+                    ->first();
 
-            if (!empty($approvalLevel)) {
+                    $approvalGroupID = [];
+                    if($approvalLevel){
+                        if ($approvalLevel->approvalrole) {
+                            foreach ($approvalLevel->approvalrole as $val) {
+                                if ($val->approvalGroupID) {
+                                  $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
+                                } 
+                                else {
+                                    $errorMsg = "'Please set the approval group.";
+                                    return ['status' => false, 'message' => $errorMsg];
+                                }
+                            }
+                        }
+                    } else {
+                        $errorMsg = "No approval setup created for this document.";
+                        return ['status' => false, 'message' => $errorMsg];
+                    }
+
+                    $approvalGroupID;
+
+                    $approvalAccess = EmployeesDepartment::where('employeeGroupID', $approvalGroupID)
+                                    ->whereHas('employee', function ($q) {
+                                        $q->where('discharegedYN', 0);
+                                    })
+                                    ->where('companySystemID', $companySystemId)
+                                    ->where('employeeSystemID',$empId)
+                                    ->where('documentSystemID', 20)
+                                    ->where('isActive', 1)
+                                    ->where('removedYN', 0)
+                                    ->first();
+
+
+
+
+            if ($approvalAccess) {
 
                 $customerInvoiceData = array();
                 $customerInvoiceData['transactionMode'] = null;
@@ -140,7 +182,7 @@ class CreateCustomerThirdPartyInvoice
                         $customerInvoiceData['bookingInvCode'] = $bookingInvCode;
                         $customerInvoiceData['bookingDate'] = $today;
     
-                        $customerInvoiceData['comments'] = 'INV Created by -Sold to 3rd. Party Disposal -Disposal Code ';
+                        $customerInvoiceData['comments'] = "INV Created by -Sold to 3rd. Party Disposal - ".$sourceModel['disposalDocumentCode'];
     
                         $customer = CustomerMaster::where('customerCodeSystem', $sourceModel['customerID'])->first();
     
@@ -247,7 +289,7 @@ class CreateCustomerThirdPartyInvoice
                         $segment = AssetDisposalDetail::OfMaster($sourceModel['assetdisposalMasterAutoID'])->first();
                         if ($disposalDetail) {
                            $accID = SystemGlCodeScenarioDetail::getGlByScenario($companySystemId, $sourceModel['documentSystemID'], 11);
-                            $comment = "INV Created by -Sold to 3rd. Party Disposal -Disposal Code";
+                            $comment = "INV Created by -Sold to 3rd. Party Disposal - ".$sourceModel['disposalDocumentCode'];
                        
                                 $disposalType = AssetDisposalType::where('disposalTypesID',6)->first();
                                 $chartofAccount = ChartOfAccount::find($disposalType->chartOfAccountID);
@@ -298,7 +340,7 @@ class CreateCustomerThirdPartyInvoice
                         return ['status' => true, 'message' => "Customer invoice created successfully"];
                     }
                     else {
-                        return ['status' => false, 'message' => "From Company Finance Period not found, date"];
+                        return ['status' => false, 'message' => "Finance period not activated"];
     
                     }
                 }else {
