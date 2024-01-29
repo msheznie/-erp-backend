@@ -163,17 +163,19 @@
         {{ $grandTotal = 0 }}
         @foreach ($reportData as $key => $val)
             <tr>
-                <td colspan="12"><b>{{$key}}</b></td>
+                <td colspan="14"><b>{{$key}}</b></td>
             </tr>
             <tr>
                 <td><b>Credit Days</b></td>
-                <td colspan="11"><b>{{$customerCreditDays[$key]}}</b></td>
+                <td colspan="13"><b>{{$customerCreditDays[$key]}}</b></td>
             </tr>
             <tr>
                 <th width="10%">Document Code</th>
                 <th width="10%">Posted Date</th>
                 <th width="5%">Invoice Number</th>
+                <th width="5%">PO Number</th>
                 <th width="5%">Invoice Date</th>
+                <th width="5%">Aged Days</th>
                 <th width="5%">Currency</th>
                 <th width="10%">Invoice Amount</th>
                 <th width="10%">Balance Amount</th>
@@ -198,7 +200,9 @@
                         <td>{{ $det2->DocumentCode }}</td>
                         <td> {{ \App\helper\Helper::dateFormat($det2->PostedDate)}}</td>
                         <td>{{ $det2->invoiceNumber }}</td>
+                        <td>{{ $det2->PONumber }}</td>
                         <td> {{ \App\helper\Helper::dateFormat($det2->InvoiceDate)}}</td>
+                        <td style="text-align: right">{{ $det2->age }}</td>
                         <td>{{ $det2->documentCurrency }}</td>
                         <td style="text-align: right">{{ number_format($det2->invoiceAmount) }}</td>
                         <td style="text-align: right">{{ number_format($ageTotal) }}</td>
@@ -210,7 +214,7 @@
                     {{$invoiceTotal += $det2->invoiceAmount}}
                 @endforeach
                 <tr>
-                    <td colspan="5" style="border-bottom-color:white !important;border-left-color:white !important"
+                    <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
                         class="text-right"><b>Sub Total:</b></td>
                     <td style="text-align: right"><b>{{ number_format($invoiceTotal) }}</b></td>
                     <td style="text-align: right">
@@ -228,7 +232,7 @@
         @endforeach
         <tfoot>
         <tr>
-            <td colspan="5" style="border-bottom-color:white !important;border-left-color:white !important"
+            <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
                 class="text-right"><b>Grand Total:</b></td>
             <td style="text-align: right"><b>{{ number_format($invoiceAmountTotal) }}</b></td>
             <td style="text-align: right"><b>{{ number_format($grandTotal) }}</b></td>

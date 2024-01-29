@@ -71,7 +71,7 @@ class CustomerAgingDetailReport
             'Invoice Date',
             'Aged Days',
             'Invoice Due Date',
-            'Document Darration',
+            'Document Narration',
             'Currency',
             'Invoice Amount',
             'OutStanding',
@@ -80,7 +80,7 @@ class CustomerAgingDetailReport
             '61-90',
             '91-100',
             '> 100',
-            'Currenct Outstanding',
+            'Current Outstanding',
             'Subsequent Collection Amount',
             'Receipt Matching/BRVNo',
             'Collection Tracker Status'
