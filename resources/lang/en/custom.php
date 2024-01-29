@@ -557,5 +557,6 @@ return [
     'qty_requested'=> 'Qty Requested',
     'requested_by'=> 'Requested By',
     'supplier_business_category' => 'Supplier Business Category',
-    'supplier_business_sub_category' => 'Supplier Business Sub Category'
+    'supplier_business_sub_category' => 'Supplier Business Sub Category',
+    "receive_amount" => "Receive Amount",
 ];

@@ -547,5 +547,6 @@ return [
     "requisition" => "طلب",
     'material_request_voucher'=> 'قسيمة طلب مواد',
     'qty_requested'=> 'الكمية المطلوبة',
-    'requested_by'=> 'طلب بواسطة'
+    'requested_by'=> 'طلب بواسطة',
+    "receive_amount" => "استلام المبلغ",
 ];

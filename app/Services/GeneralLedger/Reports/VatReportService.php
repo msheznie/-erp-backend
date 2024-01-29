@@ -83,7 +83,7 @@ class VatReportService
 
             $localDecimalPlaces = isset($val->localcurrency->DecimalPlaces) ? $val->localcurrency->DecimalPlaces : 3;
             $rptDecimalPlaces = isset($val->rptcurrency->DecimalPlaces) ? $val->rptcurrency->DecimalPlaces : 2;
-            $inputOutputVatReport->setDocumentTotalAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmount),$localDecimalPlaces));
+            $inputOutputVatReport->setDocumentTotalAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmount,$localDecimalPlaces)));
             $inputOutputVatReport->setDocumentVatAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->localAmount,$localDecimalPlaces)));
             if(isset($input['currencyID'])&&$input['currencyID']==2){
                 $inputOutputVatReport->setDocumentTotalAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->documentReportingAmount,$rptDecimalPlaces)));

@@ -257,9 +257,9 @@ class CreateCustomerThirdPartyInvoice
                         $customerInvoiceData['confirmedByEmpSystemID'] = $sourceModel['confimedByEmpSystemID'];
                         $customerInvoiceData['confirmedByEmpID'] = $sourceModel['confimedByEmpID'];
                         $customerInvoiceData['confirmedByName'] = $sourceModel['confirmedByEmpName'];
-                        $customerInvoiceData['confirmedDate'] = $today;
+                        $customerInvoiceData['confirmedDate'] = $sourceModel['confirmedDate'];
                         $customerInvoiceData['approved'] = -1;
-                        $customerInvoiceData['approvedDate'] = $today;
+                        $customerInvoiceData['approvedDate'] = $sourceModel['confirmedDate'];
                         $customerInvoiceData['postedDate'] = $today;
                         $customerInvoiceData['isPerforma'] = 0;
                         $customerInvoiceData['documentType'] = 11;
