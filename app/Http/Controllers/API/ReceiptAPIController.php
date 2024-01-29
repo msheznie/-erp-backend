@@ -4,10 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\StoreReceiptApiRequest;
-use App\Models\CustomerReceivePayment;
 use App\Services\API\ReceiptAPIService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class ReceiptAPIController extends AppBaseController
 {
@@ -23,6 +20,9 @@ class ReceiptAPIController extends AppBaseController
             return $this->sendResponse($createReceiptVoucher,'Receipt Voucher Created Successfully!');
 
         }else {
+            if(isset($createReceiptVoucher['code']))
+                return $this->sendError($createReceiptVoucher['data'],422);
+
             return $this->sendError($createReceiptVoucher['message']);
 
         }

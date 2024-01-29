@@ -12,8 +12,8 @@ class CustomerInvoiceReceiptDetailsService
         $customerInvoiceDetailsObj = new CustomerReceivePaymentDetail();
         $customerInvoiceDetailsObj->custReceivePaymentAutoID = $receiptVoucher->custReceivePaymentAutoID;
         $customerInvoiceDetailsObj = self::setCustomerInvoiceDetails($details,$customerInvoiceDetailsObj);
-        $customerInvoiceDetailsObj = self::setAmountDetails($details,$customerInvoiceDetailsObj,$receiptVoucher);
         $customerInvoiceDetailsObj = self::setAccountLedgerDetails($details,$customerInvoiceDetailsObj);
+        $customerInvoiceDetailsObj = self::setAmountDetails($details,$customerInvoiceDetailsObj,$receiptVoucher);
         $customerInvoiceDetailsObj = self::setCompanyDetails($receiptVoucher,$customerInvoiceDetailsObj);
         $validation = self::validateTotalAmount($details,$customerInvoiceDetailsObj);
         if($validation['status'] === 'success') {
@@ -47,9 +47,9 @@ class CustomerInvoiceReceiptDetailsService
         $customerInvoiceDetailsObj->bookingInvCodeSystem = $invoice->custInvoiceDirectAutoID;
         $customerInvoiceDetailsObj->bookingInvCode = $invoice->bookingInvCode;
         $customerInvoiceDetailsObj->bookingDate = $invoice->bookingDate;
-        $customerInvoiceDetailsObj->bookingAmountRpt = $invoice->bookingAmountRpt;
-        $customerInvoiceDetailsObj->bookingAmountLocal = $invoice->bookingAmountLocal;
-        $customerInvoiceDetailsObj->bookingAmountTrans = $invoice->bookingAmountTrans;
+        $customerInvoiceDetailsObj->bookingAmountRpt = $invoice->bookingAmountRpt + $invoice->VATAmountRpt;
+        $customerInvoiceDetailsObj->bookingAmountLocal = $invoice->bookingAmountLocal + $invoice->VATAmountLocal;
+        $customerInvoiceDetailsObj->bookingAmountTrans = $invoice->bookingAmountTrans + $invoice->VATAmount;
         $customerInvoiceDetailsObj->addedDocumentSystemID = $invoice->documentSystemiD;
         $customerInvoiceDetailsObj->addedDocumentID = $invoice->documentID;
         $customerInvoiceDetailsObj->custTransactionCurrencyID = $invoice->custTransactionCurrencyID;
@@ -68,7 +68,8 @@ class CustomerInvoiceReceiptDetailsService
         $customerInvoiceDetailsObj->receiveAmountRpt = \Helper::roundValue($receivedAmountConversion['reportingAmount']);
         $customerInvoiceDetailsObj->receiveAmountLocal = \Helper::roundValue($receivedAmountConversion['localAmount']);
         $customerInvoiceDetailsObj->receiveAmountTrans = $details['receiptAmount'];
-        $customerInvoiceDetailsObj->custbalanceAmount = ($customerInvoiceDetailsObj->bookingAmountTrans-$customerInvoiceDetailsObj->receiveAmountTrans);
+        $totalAmountReceived = CustomerReceivePaymentDetail::where('arAutoID',$customerInvoiceDetailsObj->arAutoID)->sum('receiveAmountTrans');
+        $customerInvoiceDetailsObj->custbalanceAmount = ($customerInvoiceDetailsObj->bookingAmountTrans - ($totalAmountReceived + $customerInvoiceDetailsObj->receiveAmountTrans));
         return $customerInvoiceDetailsObj;
     }
 

@@ -2,46 +2,42 @@
 
 namespace App\Services\API;
 
+use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerCurrency;
+use App\Models\CustomerInvoice;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentApproved;
 use App\Models\Employee;
 use Carbon\Carbon;
-use Cassandra\Custom;
-use PhpParser\Node\Expr\Array_;
 
 class ReceiptAPIService
 {
-
     public $financeYearError = array();
     public $financePeriodError = array();
 
+    public $validationErrorArray = array();
+
+    public $isError = false;
+
+
     public function storeReceiptVoucherData($receipts,$db) {
         $savedReceipts = array();
-        $isFailed = false;
-        $errorReceipts = array();
         $errorDetails = array();
-        $errorConfirmation = array();
-        $errorApproval = array();
+
+        if($this->isError) {
+            return ['status'=>'fail', "code" => 422,'data' => $this->validationErrorArray];
+        }
+
         foreach ($receipts as $receipt) {
             $receipt = self::serialCodeDetails($receipt);
-
-            if(!isset($receipt->companyFinanceYearID)) {
-                $isFailed = true;
-                array_push($this->financeYearError,$receipt->narration);
-            }
-
-            if(!isset($receipt->FYPeriodDateFrom)) {
-                $isFailed = true;
-                array_push($this->financePeriodError,$receipt->narration);
-
-            }
 
             $saveReceipt = CustomerReceivePayment::create($receipt->toArray());
             array_push($savedReceipts,$saveReceipt);
@@ -72,51 +68,8 @@ class ReceiptAPIService
                         $documentApproved["db"] = $db;
                         $documentApproved['empID'] = $receipt->approvedByUserSystemID;
                         $approval = \Helper::approveDocumentForApi($documentApproved); // check approval
-                        if($approval['success']) {
-
-                        }else {
-                            $isFailed = true;
-                            array_push($errorApproval,$saveReceipt->narration);
-                        }
-
                     }
-                }else {
-                    $isFailed = true;
-                    array_push($errorConfirmation,$saveReceipt->narration);
                 }
-            }else {
-                $isFailed = true;
-                array_push($errorReceipts,$receipt->narration);
-
-            }
-        }
-
-
-        if($isFailed) {
-
-
-            if(count($errorApproval) > 0) {
-                return ['status'=>'fail','message'=>"Following receipt create successfully , but cannot approve - ".implode(',',$errorApproval ),'data' => []];
-            }
-
-            if(count($errorConfirmation) > 0) {
-                return ['status'=>'fail','message'=>"Following receipt create successfully , but cannot confirm - ".implode(',',$errorConfirmation ),'data' => []];
-            }
-
-            if(count($this->financePeriodError) > 0) {
-                return ['status'=>'fail','message'=>"Financial periods not found for the following receipt vouchers - ".implode(',',$this->financeYearError ),'data' => []];
-            }
-
-            if(count($this->financeYearError) > 0) {
-                return ['status'=>'fail','message'=>"Following receipt vouchers not within the financial year - ".implode(',',$this->financeYearError ),'data' => []];
-            }
-            if(count($errorDetails) > 0) {
-                return ['status'=>'fail','message'=>"Following invoice's total receipt amount is greater than invoice amount ".implode(',',$errorDetails),'data' => []];
-
-            }
-
-            if(count($errorReceipts) > 0) {
-                return ['status'=>'fail','message'=>'Following receipt voucher/s not uploaded '.implode(',',$errorReceipts),'data' => []];
             }
         }
 
@@ -129,25 +82,34 @@ class ReceiptAPIService
         $companyID = $input['company_id'];
 
         $receipts = array();
+        $errors = array();
         foreach ($data as $dt) {
             $receipt = new CustomerReceivePayment();
+            $receiptValidationService =  array();
+            $this->validationErrorArray[$dt['narration']] = [];
             $receipt->details = $dt['details'];
             $receipt->payeeTypeID = $dt['payeeType'];
             $receipt->payment_type_id = $dt['paymentMode'];
-
             $receipt = self::setCompanyDetails($companyID,$receipt); // set company details of the document
             $receipt = self::setDocumentDetails($dt,$receipt); // set document details (narration,custPaymentReceiveDate,documentIds)
             $receipt = self::setFinancialYear($dt['documentDate'],$receipt);
-            $receipt = self::setBankDetails($dt['bank'],$receipt);
+            $receipt = self::setBankDetails($dt['bank'],$receipt,$receiptValidationService);
             $receipt = self::setCustomerDetails($dt['customer'],$receipt);
             $receipt = self::setCurrency($dt['currency'],$receipt);
+            $receipt = self::setBankAccount($dt['account'],$receipt,$receiptValidationService);
             $receipt = self::setBankCurrency($dt['bankCurrency'],$receipt);
-            $receipt = self::setBankAccount($dt['account'],$receipt);
+            $receipt = self::setBankBalance($receipt);
             $receipt = self::setFinanicalPeriod($dt['documentDate'],$receipt);
             $receipt = self::setCurrencyDetails($receipt);
             $receipt = self::setLocalAndReportingAmounts($receipt);
             $receipt = self::setConfirmedDetails($dt,$receipt);
             $receipt = self::setApprovedDetails($dt,$receipt);
+
+            foreach ($receipt['details'] as $details) {
+                self::validateInvoiceDetails($details,$receipt);
+                self::validateTotalAmount($details,$receipt);
+
+            }
 
             if(isset($dt['vatApplicable'])) {
                 $receipt = self::setVatDetails($dt['vatApplicable'],$receipt);
@@ -158,23 +120,91 @@ class ReceiptAPIService
         return $receipts;
     }
 
-    private static function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
-        $userDetails = Employee::where('empID',$detail['confirmedBy'])->first();
 
-//        $receipt->confirmedYN = true;
-        $receipt->confirmedByEmpSystemID = $userDetails->employeeSystemID;
-        $receipt->confirmedByEmpID = $userDetails->empID;
-        $receipt->confirmedByName = $userDetails->empFullName;
-        $receipt->confirmedDate = Carbon::parse($detail['confirmedDate']);
+
+    private function validateTotalAmount($details,$receipt) {
+        $invCode = $details['invoiceCode'];
+        $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
+        $accountReceivableLedgerDetails = AccountsReceivableLedger::where('documentCodeSystem',$invoice->custInvoiceDirectAutoID)->first();
+        if($accountReceivableLedgerDetails) {
+            $totalAmountReceived = CustomerReceivePaymentDetail::where('arAutoID',$accountReceivableLedgerDetails->arAutoID)->sum('receiveAmountTrans');
+            $bookingAmountTrans = $invoice->bookingAmountTrans + $invoice->VATAmount;
+            if(($totalAmountReceived+$details['receiptAmount']) > $bookingAmountTrans) {
+                $this->isError = true;
+                $error[$receipt->narration][$details['invoiceCode']] = ['Total received amount cannot be greater the invoice amount'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
+
+
+    }
+
+    private function setBankBalance($receipt) {
+        $cur_det['companySystemID'] = $receipt->companySystemID;
+        $cur_det['bankmasterAutoID'] = $receipt->bankID;
+        $cur_det['bankAccountAutoID'] = $receipt->bankAccount;
+        $cur_det_info =  (object)$cur_det;
+        $document_currency = $receipt->custTransactionCurrencyID;
+
+        $bankBalance = app('App\Http\Controllers\API\BankAccountAPIController')->getBankAccountBalanceSummery($cur_det_info);
+
+        $amount = $bankBalance['netBankBalance'];
+
+        $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->select('DecimalPlaces')->first();
+
+        $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
+
+        $receipt->bankAccountBalance = $rounded_amount;
 
         return $receipt;
     }
-    private static function setApprovedDetails($detail,$receipt):CustomerReceivePayment {
+
+    private function validateInvoiceDetails($details,$receipt) {
+        $invoice = CustomerInvoice::where('bookingInvCode',$details['invoiceCode'])->first();
+        if(!$invoice) {
+            $this->isError = true;
+            $error[$receipt->narration][$details['invoiceCode']] = ['Invoice data not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+
+        }else {
+            if($invoice->customerID != $receipt->customerID) {
+                $this->isError = true;
+                $error[$receipt->narration][$details['invoiceCode']] = ['Invoice is not related to the customer you provided'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
+    }
+    private function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
+        $userDetails = Employee::where('empID',$detail['confirmedBy'])->first();
+
+        if(!$userDetails) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Confirmed By employee data not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+
+        }else {
+            $receipt->confirmedByEmpSystemID = $userDetails->employeeSystemID;
+            $receipt->confirmedByEmpID = $userDetails->empID;
+            $receipt->confirmedByName = $userDetails->empFullName;
+            $receipt->confirmedDate = Carbon::parse($detail['confirmedDate']);
+        }
+
+
+        return $receipt;
+    }
+    private function setApprovedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = Employee::where('empID',$detail['approvedBy'])->first();
-//        $receipt->approved = -1;
-        $receipt->approvedByUserSystemID = $userDetails->employeeSystemID;
-        $receipt->approvedByUserID = $userDetails->empID;
-        $receipt->approvedDate = Carbon::parse($detail['approvedDate']);
+
+        if(!$userDetails) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Approved By employee data not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+
+        }else {
+            $receipt->approvedByUserSystemID = $userDetails->employeeSystemID;
+            $receipt->approvedByUserID = $userDetails->empID;
+            $receipt->approvedDate = Carbon::parse($detail['approvedDate']);
+        }
 
         return $receipt;
     }
@@ -184,6 +214,11 @@ class ReceiptAPIService
             case 14 :
                 $totalVatAmount = collect($receipt->details)->sum('vatAmount');
                 $totalAmount = collect($receipt->details)->sum('amount');
+                $totalNetAmount = ($totalAmount-$totalVatAmount);
+                break;
+            case 13 :
+                $totalVatAmount = collect($receipt->details)->sum('vatAmount');
+                $totalAmount = collect($receipt->details)->sum('receiptAmount');
                 $totalNetAmount = ($totalAmount-$totalVatAmount);
                 break;
             default;
@@ -196,9 +231,12 @@ class ReceiptAPIService
         $receipt->VATAmount = $totalVatAmount;
         $receipt->localAmount = $totalAmount;
         $receipt->receivedAmount = $totalAmount;
-        $receipt->netAmountLocal = ($receipt->localAmount / $receipt->localCurrencyER);
-        $receipt->netAmountRpt = $receipt->localAmount / $receipt->companyRptCurrencyER;
-        $receipt->companyRptAmount = $receipt->localAmount / $receipt->companyRptCurrencyER;
+        if($receipt->custTransactionCurrencyID) {
+            $receipt->netAmountLocal = ($receipt->localAmount / $receipt->localCurrencyER);
+            $receipt->netAmountRpt = $receipt->localAmount / $receipt->companyRptCurrencyER;
+            $receipt->companyRptAmount = $receipt->localAmount / $receipt->companyRptCurrencyER;
+        }
+
         $receipt->bankAmount = $totalAmount;
         return $receipt;
     }
@@ -213,12 +251,26 @@ class ReceiptAPIService
         return $receipt;
     }
 
-    private static function setCustomerDetails($customerCode,$receipt): CustomerReceivePayment
+    private function setCustomerDetails($customerCode,$receipt): CustomerReceivePayment
     {
-        $customerDetails = CustomerMaster::where('CutomerCode',$customerCode)->first();
-        $receipt->customerID = $customerDetails->customerCodeSystem;
-        $receipt->customerGLCodeSystemID = $customerDetails->custGLAccountSystemID;
-        $receipt->customerGLCode = $customerDetails->custGLaccount;
+        $customerDetails = CustomerMaster::where('CutomerCode',$customerCode)->orWhere('customer_registration_no',$customerCode)->first();
+        if(!$customerDetails) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Customer data not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+
+        }else {
+            if(!$customerDetails->isCustomerActive) {
+                $this->isError = true;
+                $error[$receipt->narration] = ['Customer is not active'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }else {
+                $receipt->customerID = $customerDetails->customerCodeSystem;
+                $receipt->customerGLCodeSystemID = $customerDetails->custGLAccountSystemID;
+                $receipt->customerGLCode = $customerDetails->custGLaccount;
+            }
+        }
+
 
         return $receipt;
     }
@@ -292,50 +344,125 @@ class ReceiptAPIService
         return $receipt;
     }
 
-    private static function setFinanicalPeriod($documentDate,$receipt) : CustomerReceivePayment
+    private function setFinanicalPeriod($documentDate,$receipt) : CustomerReceivePayment
     {
         $financialPeriods = CompanyFinancePeriod::where('departmentSystemID',4)->where('companySystemID',$receipt->companySystemID)->where('companyFinanceYearID',$receipt->companyFinanceYearID)->get();
         foreach ($financialPeriods as $financialPeriod) {
             if(Carbon::parse($financialPeriod->dateFrom)->format('d/m/Y') == Carbon::parse($documentDate)->firstOfMonth()->format('d/m/Y')) {
-                $receipt->FYPeriodDateFrom = $financialPeriod->dateFrom;
-                $receipt->FYPeriodDateTo = $financialPeriod->dateTo;
-                $receipt->companyFinancePeriodID = $financialPeriod->companyFinancePeriodID;
+                if($financialPeriod->isActive == 0) {
+                    $this->isError = true;
+                    $error[$receipt->narration] = ['Financial Period should be active'];
+                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                }else {
+                    $receipt->FYPeriodDateFrom = $financialPeriod->dateFrom;
+                    $receipt->FYPeriodDateTo = $financialPeriod->dateTo;
+                    $receipt->companyFinancePeriodID = $financialPeriod->companyFinancePeriodID;
+                }
+
             }
         }
         return $receipt;
     }
 
-    private static function setBankAccount($bankAccount,$receipt): CustomerReceivePayment {
-        $accountDetails = BankAccount::where('AccountNo',$bankAccount)->first();
-        $receipt->bankAccount = $accountDetails->bankAccountAutoID;
+    private function setBankAccount($bankAccount,$receipt,$receiptValidationService): CustomerReceivePayment {
+        $accountDetails = BankAccount::where('AccountNo',$bankAccount)->where('bankmasterAutoID',$receipt->bankID)->first();
+        if(!$accountDetails) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Bank Account is not related to the bank you provided'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            $receipt->bankAccount = null;
+        }else {
+            $receipt->bankAccount = $accountDetails->bankAccountAutoID;
+        }
 
         return $receipt;
     }
 
-    private static function setCurrency($currencyCode,$receipt): CustomerReceivePayment {
+    private function setCurrency($currencyCode,$receipt): CustomerReceivePayment {
         $currencyDetails = CurrencyMaster::where('CurrencyCode',$currencyCode)->first();
-        $receipt->custTransactionCurrencyID = $currencyDetails->currencyID;
-        return $receipt;
-    }
-    private static function setBankCurrency($currencyCode,$receipt): CustomerReceivePayment {
-        $currencyDetails = CurrencyMaster::where('CurrencyCode',$currencyCode)->first();
-        $receipt->bankCurrency = $currencyDetails->currencyID;
+
+        if(!$currencyDetails) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Currency data not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }else {
+            $receipt->custTransactionCurrencyID = $currencyDetails->currencyID;
+            $this->checkCurrencyAssignedToCustomer($receipt);
+        }
+
         return $receipt;
     }
 
-    private static function setBankDetails($bankCode,$receipt) : CustomerReceivePayment
+    private function checkCurrencyAssignedToCustomer($receipt) {
+        if(isset($receipt->customerID)) {
+            $customerCurrencyDetails = CustomerCurrency::where('currencyID',$receipt->custTransactionCurrencyID)->where('customerCodeSystem',$receipt->customerID)->where('isAssigned',-1)->first();
+            if(!$customerCurrencyDetails) {
+                $this->isError = true;
+                $error[$receipt->narration] = ['Currency is not assigned to the customer'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
+    }
+
+    private function setBankCurrency($currencyCode,$receipt): CustomerReceivePayment {
+        $currencyDetails = CurrencyMaster::where('CurrencyCode',$currencyCode)->first();
+
+
+        if(!$currencyDetails) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Currency data not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }else {
+            $receipt->bankCurrency = $currencyDetails->currencyID;
+            $this->checkCurrencyAssignedToBankAccount($receipt);
+        }
+        return $receipt;
+    }
+
+
+    private function checkCurrencyAssignedToBankAccount($receipt) {
+        if(isset($receipt->bankAccount)) {
+            $bankAccount = BankAccount::where('bankAccountAutoID',$receipt->bankAccount)->first();
+            if($bankAccount->accountCurrencyID != $receipt->bankCurrency) {
+                $this->isError = true;
+                $error[$receipt->narration] = ['Bank Currency is not assigned to the bank account'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
+    }
+
+    private function setBankDetails($bankCode,$receipt,$receiptValidationService) : CustomerReceivePayment
     {
         $bankDetails = BankMaster::where('bankShortCode',$bankCode)->first();
-        $receipt->bankID = $bankDetails->bankmasterAutoID;
+
+        if(!$bankDetails) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Bank data not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+
+        }else {
+            $receipt->bankID = $bankDetails->bankmasterAutoID;
+
+        }
+
 
         return $receipt;
     }
 
 
-    private static function setCompanyDetails($company_id,$receipt):CustomerReceivePayment
+    private function setCompanyDetails($company_id,$receipt):CustomerReceivePayment
     {
 
         $companyDetails = Company::select(['companySystemID','CompanyID'])->where('companySystemID',$company_id)->first();
+        if(!$companyDetails) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Company details not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+
+        }else {
+
+        }
+
         $receipt->companySystemID = $companyDetails->companySystemID;
         $receipt->companyID = $companyDetails->CompanyID;
 
