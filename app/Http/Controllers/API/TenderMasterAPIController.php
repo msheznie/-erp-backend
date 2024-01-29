@@ -21,6 +21,7 @@ use App\Models\PurchaseRequest;
 use App\Models\SrmDepartmentMaster;
 use App\Models\SrmTenderDepartment;
 use App\Models\SupplierRegistrationLink;
+use App\Models\SupplierTenderNegotiation;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
@@ -5070,4 +5071,78 @@ ORDER BY
 
     }
 
+    public function getTenderPurchaseList(Request $request)
+    {
+        $input = $request->all();
+        $tenderMasterId = $input['tenderMasterId'];
+        $type = isset($input['type']) ? 'count' : 'list';
+        $isTender = isset($input['isTender']) ? $input['isTender'] : false;
+
+        $negotiatedSuppliers = $this->getTenderNegotiations($tenderMasterId);
+        $supplierMasterIds = $this->negotiatedSupplierIdList($negotiatedSuppliers) ;
+
+
+        $documentType = ($isTender) ? [0] : [1,2,3];
+
+        $tenderPurchaseList = TenderMasterSupplier::select('id','tender_master_id','purchased_by')
+        ->with(['supplierDetails'])
+        ->with(['tender_master' => function ($q) use ($tenderMasterId,$documentType){
+            $q->select('id','title')
+            ->whereIn('document_type',$documentType);
+        }])
+        ->whereHas('supplierDetails', function($q2) use ($tenderMasterId,$documentType){
+         })
+
+        ->where('tender_master_id',$tenderMasterId)
+        ->whereNotIn('purchased_by',$supplierMasterIds);
+
+        if($type == 'count'){
+            return !empty($tenderPurchaseList->get()->count()) || ($tenderPurchaseList->count() > 0)  ? $tenderPurchaseList->get()->count() : 0;
+        }
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $tenderPurchaseList = $tenderPurchaseList->whereHas('supplierDetails', function ($query) use ($search){
+                $query->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
+            });
+        }
+
+        return \DataTables::of($tenderPurchaseList)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getTenderNegotiations($tenderMasterId){
+      return TenderNegotiation::select('id','srm_tender_master_id')
+        ->with(['SupplierTenderNegotiationList' => function ($q){
+            $q->select('tender_negotiation_id','suppliermaster_id');
+        }])
+        ->where('srm_tender_master_id',$tenderMasterId)
+        ->where('status',2)
+        ->get();
+    }
+
+    public function negotiatedSupplierIdList($negotiatedSuppliers){
+       return $negotiatedSuppliers->pluck('SupplierTenderNegotiationList')
+            ->flatten()
+            ->pluck('suppliermaster_id')
+           ->toArray();
+    }
 } 
