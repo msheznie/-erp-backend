@@ -31,7 +31,9 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Response;
-
+use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\TaxVatCategories;
 /**
  * Class CustomerReceivePaymentDetailController
  * @package App\Http\Controllers\API
@@ -664,6 +666,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         try {
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
+                    
                     $tempArray = $new;
                     $tempArray["custReceivePaymentAutoID"] = $matchDocumentMasterData->PayMasterAutoId;
                     $tempArray["arAutoID"] = $new['arAutoID'];
@@ -693,6 +696,49 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     unset($tempArray['DecimalPlaces']);
                     unset($tempArray['CurrencyCode']);
 
+
+                    $companySystemID = $new['companySystemID'];
+                    $invoice = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$new['bookingInvCodeSystem'])->select('vatRegisteredYN','customerVATEligible')->first();
+                    if($invoice->vatRegisteredYN)
+                    {
+                         $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$new['bookingInvCodeSystem']); 
+
+                          if($details->count() == 2)
+                          {
+                            $det = $details->first();
+
+                            $tempArray['vatSubCategoryID'] = $det->vatSubCategoryID;
+                            $tempArray['vatMasterCategoryID'] = $det->vatMasterCategoryID;
+                            $tempArray['VATPercentage'] = $det->VATPercentage;
+
+                          }
+                          else
+                          {
+                                
+                            $defaultVAT = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
+                                $q->where('companySystemID', $companySystemID)
+                                    ->where('isActive', 1)
+                                    ->where('taxCategory', 2);
+                            })
+                            ->whereHas('main', function ($q) {
+                                $q->where('isActive', 1);
+                            })
+                            ->where('isActive', 1)
+                            ->where('isDefault', 1)
+                            ->first();
+
+                                if ($defaultVAT) {
+                                    $tempArray['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
+                                    $tempArray['vatMasterCategoryID'] = $defaultVAT->mainCategory;
+                                    $tempArray['VATPercentage'] = $defaultVAT->percentage;
+                                } else {
+                                    DB::rollBack();
+                                    return $this->sendError("Default VAT not configured");
+                                }
+
+                          }
+                    }
+
                     if ($tempArray) {
                         $receiptVoucherDetails = $this->customerReceivePaymentDetailRepository->create($tempArray);
                         $updatePayment = AccountsReceivableLedger::find($new['arAutoID'])
@@ -700,6 +746,9 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     }
                 }
             }
+
+            
+
             DB::commit();
             return $this->sendResponse('', 'Details saved successfully');
         } catch (\Exception $exception) {
@@ -716,6 +765,9 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         if (isset($input['ar_data'])) {
             unset($input['ar_data']);
         }
+        $input = array_except($input, ['segment','updateKey','vatMasterCategoryAutoID','itemPrimaryCode','itemDescription','subCategoryArray','subCatgeoryType','exempt_vat_portion']);
+        $input = $this->convertArrayToValue($input);
+
 
         $receiptVoucherDetails = $this->customerReceivePaymentDetailRepository->findWithoutFail($input['custRecivePayDetAutoID']);
 
@@ -775,14 +827,14 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                 return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
             }
         }
-
+        
         $conversionAmount = \Helper::convertAmountToLocalRpt(205, $input["custRecivePayDetAutoID"], ABS($input["receiveAmountTrans"]));
         //$input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
         $input["receiveAmountLocal"] = \Helper::roundValue($conversionAmount["localAmount"]);
         $input["receiveAmountRpt"] = \Helper::roundValue($conversionAmount["reportingAmount"]);
 
         $receiptVoucherDetails = $this->customerReceivePaymentDetailRepository->update($input, $input['custRecivePayDetAutoID']);
-
+        
         $detailUpdateBalance = CustomerReceivePaymentDetail::find($input['custRecivePayDetAutoID']);
 
         $totalReceiveAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $input['arAutoID'])
@@ -797,12 +849,18 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         if(!$matchedAmount){
             $matchedAmount['SumOfmatchedAmount'] = 0;
         }
-
+        
         $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
 
         $custbalanceAmount = $detailUpdateBalance->bookingAmountTrans - $totReceiveAmount;
 
         $detailUpdateBalance->custbalanceAmount = \Helper::roundValue($custbalanceAmount);
+
+
+        $detailUpdateBalance->VATAmount = round($input['receiveAmountTrans']*($input['VATPercentage']/(100+$input['VATPercentage'])),$documentCurrencyDecimalPlace);
+        $detailUpdateBalance->VATAmountRpt = round($input['VATAmount'] / $matchDocumentMasterData->companyRptCurrencyER,$documentCurrencyDecimalPlace);
+        $detailUpdateBalance->VATAmountLocal = round($input['VATAmount'] / $matchDocumentMasterData->localCurrencyER,$documentCurrencyDecimalPlace);
+        
         $detailUpdateBalance->save();
 
         //updating Accounts receivable Ledger
@@ -842,6 +900,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $detailAmountTotRpt = CustomerReceivePaymentDetail::where('matchingDocID', $input['matchingDocID'])
             ->sum('receiveAmountRpt');
+
 
         $matchDocumentMasterData->matchingAmount = $detailAmountTotTran;
         $matchDocumentMasterData->matchedAmount = $detailAmountTotTran;
