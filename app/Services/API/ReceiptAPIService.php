@@ -4,6 +4,7 @@ namespace App\Services\API;
 
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
+use App\Models\BankAssign;
 use App\Models\BankMaster;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
@@ -441,7 +442,16 @@ class ReceiptAPIService
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
 
         }else {
-            $receipt->bankID = $bankDetails->bankmasterAutoID;
+            $bankAssigned = BankAssign::where('bankmasterAutoID',$bankDetails->bankmasterAutoID)->where('companySystemID',$receipt->companySystemID)->where('isAssigned',-1)->where('isActive',1)->first();
+
+            if(!$bankAssigned) {
+                $this->isError = true;
+                $error[$receipt->narration] = ['Bank is not assigned/active to the company'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }else {
+                $receipt->bankID = $bankDetails->bankmasterAutoID;
+            }
+
 
         }
 
