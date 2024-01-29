@@ -6,6 +6,8 @@ use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\ThirdPartySystemNotifications\ThirdPartySystemNotificationJob;
 use App\Models\SRMSupplierValues;
+use App\Models\SupplierBusinessCategoryAssign;
+use App\Models\SupplierSubCategoryAssign;
 use App\Services\SRMService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -22,6 +24,7 @@ use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 // supplier KYC status
@@ -321,13 +324,17 @@ class SupplierRegistrationApprovalController extends AppBaseController
         }
 
         $data['webAddress'] = $supplierFormValues['webAddress'];
-        
+        $data['registrationExprity'] = $supplierFormValues['expireDate'];
+
+
+
+
         if($isApprovalAmmend!=1){ 
             $supplierMasters = SupplierMaster::create($data); 
             $dataPrimary['primarySupplierCode'] = 'S0' . strval($supplierMasters['supplierCodeSystem']);
             SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])
-                ->update($dataPrimary);  
-    
+                ->update($dataPrimary);
+            $supplierID = $supplierMasters['supplierCodeSystem'];
         }else {  
             
             SupplierMaster::where('supplierCodeSystem',$supplierMasterData['supplierMasterId'])
@@ -335,9 +342,29 @@ class SupplierRegistrationApprovalController extends AppBaseController
 
             $supplierMasters['supplierCodeSystem'] =$supplierMasterData['supplierMasterId'];
             $supplierMasters['currency'] = ($supplierFormValues['currency'] != "0") ? $supplierFormValues['currency']  : null;
+            $supplierID = $supplierMasterData['supplierMasterId'];
+
+            SupplierBusinessCategoryAssign::where('supplierID', $supplierID)->delete();
+            SupplierSubCategoryAssign::where('supplierID', $supplierID)->delete();
 
         }
-       
+
+        foreach ($supplierFormValues['category'] as $value) {
+            SupplierBusinessCategoryAssign::insert([
+                'supplierID' => $supplierID,
+                'supCategoryMasterID' => $value,
+                'timestamp' => now(),
+            ]);
+        }
+
+        foreach ($supplierFormValues['subCategory'] as $value) {
+            SupplierSubCategoryAssign::insert([
+                'supplierID' => $supplierID,
+                'supSubCategoryID' => $value,
+                'timestamp' => now(),
+            ]);
+        }
+
         $supplierCurrency = new SupplierCurrency();
         $supplierCurrency->supplierCodeSystem = $supplierMasters['supplierCodeSystem'];
         $supplierCurrency->currencyID =  $supplierMasters['currency'];
