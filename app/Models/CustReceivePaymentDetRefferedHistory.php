@@ -206,7 +206,13 @@ class CustReceivePaymentDetRefferedHistory extends Model
         'receiveAmountTrans',
         'receiveAmountLocal',
         'receiveAmountRpt',
-        'timestamp'
+        'timestamp',
+        'VATAmount',
+        'VATAmountRpt',
+        'VATAmountLocal',
+        'VATPercentage',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
     ];
 
     /**
