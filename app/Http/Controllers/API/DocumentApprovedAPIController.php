@@ -18,9 +18,22 @@ use App\Http\Requests\API\CreateDocumentApprovedAPIRequest;
 use App\Http\Requests\API\UpdateDocumentApprovedAPIRequest;
 use App\Models\ApprovalLevel;
 use App\Models\DocumentApproved;
+use App\Models\SupplierRegistrationLink;
+use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\DocumentApprovedRepository;
+use App\Repositories\DocumentAttachmentsRepository;
+use App\Repositories\PaySupplierInvoiceMasterRepository;
+use App\Repositories\SupplierInvoiceItemDetailRepository;
+use App\Repositories\TenderBidClarificationsRepository;
+use App\Services\InvoiceService;
+use App\Services\POService;
+use App\Services\Shared\SharedService;
+use App\Services\SRMService;
+use App\Services\SupplierService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\DocumentModifyRequest;
+use App\Repositories\DocumentModifyRequestRepository;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -180,6 +193,7 @@ class DocumentApprovedAPIController extends AppBaseController
         }
 
         $filter = 'AND erp_documentapproved.documentSystemID IN (0) ';
+		$tenderFilter = '';
 
 
         if (!empty($documentType)) {
@@ -189,6 +203,7 @@ class DocumentApprovedAPIController extends AppBaseController
 
         if ($companies) {
             $filter .= " AND erp_documentapproved.companySystemID IN (" . implode(',', $companies) . ")";
+            $tenderFilter .= " AND dmr.companySystemID IN (" . implode(',', $companies) . ")";
         }
 
         $where = '';
@@ -762,7 +777,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	- 1 AS documentType 
+	- 1 AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -823,7 +839,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_purchaseordermaster.amended AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	- 1 AS documentType 
+	- 1 AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -877,7 +894,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_paysupplierinvoicemaster.invoiceType AS documentType 
+	erp_paysupplierinvoicemaster.invoiceType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -932,7 +950,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_bookinvsuppmaster.documentType AS documentType 
+	erp_bookinvsuppmaster.documentType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -987,7 +1006,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_grvmaster.grvType AS documentType 
+	erp_grvmaster.grvType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1042,7 +1062,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_itemissuemaster.issueType AS documentType 
+	erp_itemissuemaster.issueType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1095,7 +1116,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1147,7 +1169,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1203,7 +1226,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1255,7 +1279,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1309,7 +1334,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue 
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1361,7 +1387,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1413,7 +1440,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1465,7 +1493,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1517,7 +1546,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1569,7 +1599,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType ,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1621,7 +1652,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1674,7 +1706,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1723,7 +1756,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_debitnote.documentType AS documentType 
+	erp_debitnote.documentType AS documentType,
+	'' as srmValue 
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1776,7 +1810,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_custinvoicedirect.documentType AS documentType 
+	erp_custinvoicedirect.documentType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1830,7 +1865,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_delivery_order.orderType AS documentType 
+	erp_delivery_order.orderType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1883,7 +1919,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	salesreturn.returnType AS documentType 
+	salesreturn.returnType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1936,7 +1973,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_creditnote.documentType AS documentType 
+	erp_creditnote.documentType AS documentType,
+	'' as srmValue 
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1988,7 +2026,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_quotationmaster.quotationType AS documentType 
+	erp_quotationmaster.quotationType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2041,7 +2080,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_quotationmaster.quotationType AS documentType 
+	erp_quotationmaster.quotationType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2094,7 +2134,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_jvmaster.jvType AS documentType 
+	erp_jvmaster.jvType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2156,7 +2197,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2207,7 +2249,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2258,7 +2301,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2311,7 +2355,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2362,7 +2407,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2413,7 +2459,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2464,7 +2511,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2517,7 +2565,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_customerreceivepayment.documentType AS documentType
+	erp_customerreceivepayment.documentType AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
@@ -2569,7 +2618,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2619,7 +2669,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	0 AS documentType
+	0 AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
@@ -2668,7 +2719,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	0 AS documentType
+	0 AS documentType,
+	'' as srmValue
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
@@ -2716,7 +2768,8 @@ FROM
 		0 AS amended,
 		employeesdepartments.employeeID,
 		erp_documentapproved.approvedYN,
-		0 AS documentType 
+		0 AS documentType,
+		'' as srmValue
 	FROM
 		erp_documentapproved
 		INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2736,8 +2789,122 @@ FROM
 		AND erp_documentapproved.approvalGroupID > 0 
 		AND erp_documentapproved.documentSystemID IN ( 56 ) 
 		AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
-	) AS pendingSupplierMasterApprovals
-	)t 
+	) AS pendingSupplierMasterApprovals 
+		UNION ALL  
+		SELECT 
+		* 
+		FROM (
+			".self::getTenderAmendNotApproved($filter,$employeeSystemID,117,$tenderFilter)."
+			) AS pendingTenderAmendRequestConfirmApprovals
+		UNION ALL  
+		SELECT 
+		* 
+		FROM (
+			".self::getTenderAmendNotApproved($filter,$employeeSystemID,118,$tenderFilter)."
+			) AS pendingTenderAmendRequestApprovals	
+       UNION ALL  
+		SELECT 
+		* 
+		FROM (
+		SELECT
+	DATEDIFF( CURDATE(), erp_documentapproved.docConfirmedDate ) AS dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' AS approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	spr.name as documentCode,
+	spr.email AS narration,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	' ' AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	0 AS DecimalPlaces,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	0 AS documentType,
+	spr.uuid AS srmValue 
+FROM
+	`erp_documentapproved`
+	INNER JOIN `employeesdepartments` ON `erp_documentapproved`.`companySystemID` = `employeesdepartments`.`companySystemID`
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND `erp_documentapproved`.`documentSystemID` = `employeesdepartments`.`documentSystemID` 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID 
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN srm_supplier_registration_link spr ON erp_documentapproved.documentSystemCode = spr.id  AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr 
+WHERE
+	 `erp_documentapproved`.`approvedYN` = 0 
+	AND`erp_documentapproved`.`rejectedYN` = 0 
+	$filter
+	AND spr.confirmed_yn = 1
+	AND erp_documentapproved.approvalGroupID > 0 
+	AND erp_documentapproved.documentSystemID = 107
+	AND employeesdepartments.employeeSystemID = $employeeSystemID 
+	AND employeesdepartments.isActive = 1 
+	AND employeesdepartments.removedYN = 0
+		) AS pendingSupplierRegistrationApprovals
+		
+		 UNION ALL  
+		SELECT 
+		* 
+		FROM (
+		SELECT
+	DATEDIFF( CURDATE(), erp_documentapproved.docConfirmedDate ) AS dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' AS approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	title AS narration,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	' ' AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	0 AS DecimalPlaces,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	0 AS documentType,
+	tm.id AS srmValue 
+	FROM 
+	erp_documentapproved
+	INNER JOIN `employeesdepartments` ON `erp_documentapproved`.`companySystemID` = `employeesdepartments`.`companySystemID`
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND `erp_documentapproved`.`documentSystemID` = `employeesdepartments`.`documentSystemID` 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID 
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees em ON erp_documentapproved.docConfirmedByEmpSystemID = em.employeeSystemID 
+		INNER JOIN srm_tender_master tm ON erp_documentapproved.documentSystemCode = id AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
+		INNER JOIN currencymaster ON tm.currency_id = currencymaster.currencyID
+		Where
+		erp_documentapproved.approvedYN = 0 
+		AND erp_documentapproved.rejectedYN = 0 
+		AND tm.approved = 0 
+        $filter
+		AND tm.confirmed_yn = 1
+		AND erp_documentapproved.approvalGroupID > 0 
+		AND erp_documentapproved.documentSystemID IN ( 108,113 ) 
+		AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+		) as tenderPendingApprovals
+		 
+		 )t 
+			
 	INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID 
 	LEFT JOIN erp_documentmaster ON t.documentSystemID = erp_documentmaster.documentSystemID 
 	$where ORDER BY docConfirmedDate $sort $limit";
@@ -3008,12 +3175,141 @@ FROM
 
     public function approveDocument(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
-        if (!$approve["success"]) {
-            return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
-        } else {
-            return $this->sendResponse(array(), $approve["message"]);
-        }
+        $apiKey = $request->input('api_key');
+        $request->except('api_key');
 
+		if($request->input('documentSystemID') && ($request->input('documentSystemID') == 117 || $request->input('documentSystemID') == 118) ){ 
+				$id = $request->input('documentSystemCode');
+				$documentModifyRequestRepo = app(DocumentModifyRequestRepository::class); 
+				$controller = new DocumentModifyRequestAPIController($documentModifyRequestRepo); 
+				
+				$tenderData = $this->getTenderData($id); 
+
+				$requestData = $request->all();  
+				$requestData['reference_document_id'] = 108;
+				$requestData['bid_submission_opening_date'] = $tenderData->tenderMaster->bid_submission_opening_date; 
+				$requestData['id'] = $tenderData->tenderMaster->id; 
+				$request->merge($requestData);  
+				$result = $controller->approveEditDocument($request);
+				return $result;
+
+		}else if($request->input('documentSystemID') && ($request->input('documentSystemID') == 108 || $request->input('documentSystemID') == 113)){
+            $requestData['id'] = $request->input('documentSystemCode');
+            $request->merge($requestData);
+            $approve = \Helper::approveDocument($request);
+            if (!$approve["success"]) {
+                return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
+            } else {
+                return $this->sendResponse(array(), $approve["message"]);
+            }
+        }else if ($request->input('documentSystemID') && ($request->input('documentSystemID') == 107 ))
+        { 
+            $requestData['id'] =$request->input('documentSystemCode');
+            $requestData['api_key'] =$apiKey;
+            $requestData['uuid'] = $this->getSupplierUUID($requestData['id']);
+            $requestData['company_id'] = $request->input('companySystemID');
+            $request->merge($requestData);
+            $controller =  $this->getController();
+            $result = $controller->approveSupplierKYC($request);
+            return $result;
+        }else {
+			$approve = \Helper::approveDocument($request);
+			if (!$approve["success"]) {
+				return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
+			} else {
+				return $this->sendResponse(array(), $approve["message"]);
+			}
+		} 
+    }
+
+	public function getTenderAmendNotApproved($filter,$employeeSystemID,$documentId,$tenderFilter){ 
+
+
+		$rollOver = $documentId == 117?'RollLevForApp_curr':'confirmation_RollLevForApp_curr';
+        $approved = $documentId == 117?'dmr.approved':'dmr.confirmation_approved';
+
+		return "SELECT
+		DATEDIFF( CURDATE(), erp_documentapproved.docConfirmedDate ) AS dueDays,
+		erp_documentapproved.documentApprovedID,
+		erp_documentapproved.approvalLevelID,
+		erp_documentapproved.rollLevelOrder,
+		erp_approvallevel.noOfLevels AS NoOfLevels,
+		erp_documentapproved.companySystemID,
+		erp_documentapproved.companyID,
+		'' AS approval_remarks,
+		erp_documentapproved.documentSystemID,
+		erp_documentapproved.documentID,
+		erp_documentapproved.documentSystemCode,
+		tm.tender_code AS documentCode,
+		CONCAT('Amend Code : ',dmr.code)  AS comments,
+		erp_documentapproved.docConfirmedDate,
+		erp_documentapproved.approvedDate,
+		em.empName AS confirmedEmployee,
+		'' AS SupplierOrCustomer,
+		2,
+		'' AS DocumentCurrency,
+		'' AS DocumentValue,
+		1 AS amended,
+		emd.employeeID,
+		erp_documentapproved.approvedYN,
+		dmr.type AS documentType ,
+		tm.id as srmValue
+	FROM
+		erp_documentapproved
+		JOIN document_modify_request dmr ON dmr.id = erp_documentapproved.documentSystemCode 
+		AND erp_documentapproved.rollLevelOrder =  $rollOver 
+		$tenderFilter
+		AND $approved = 0
+		JOIN srm_tender_master tm ON tm.id = dmr.documentSystemCode
+		INNER JOIN employeesdepartments emd ON emd.companySystemID = erp_documentapproved.companySystemID 
+		AND emd.documentSystemID = 108 
+		AND emd.employeeGroupID = erp_documentapproved.approvalGroupID
+		INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+		INNER JOIN employees em ON erp_documentapproved.docConfirmedByEmpSystemID = em.employeeSystemID 
+	WHERE
+		erp_documentapproved.approvedYN = 0 
+		AND erp_documentapproved.rejectedYN = 0 
+		AND erp_documentapproved.approvalGroupID > 0 
+		AND erp_documentapproved.documentSystemID IN ($documentId)  
+		AND $approved = 0
+		$filter
+		AND emd.employeeSystemID = $employeeSystemID AND emd.isActive = 1 AND emd.removedYN = 0
+			";
+	}
+
+	public function getTenderData($id){ 
+		return DocumentModifyRequest::select('id','documentSystemCode')
+		->with(['tenderMaster' => function ($q){ 
+			$q->select('id','tender_code','bid_submission_opening_date');
+		}])
+		->where('id',$id)
+		->first();
+	}
+
+    public function getSupplierUUID($id)
+    {
+        $supReg = SupplierRegistrationLink::select('uuid')
+            ->where('id',$id)
+            ->first();
+
+        return $supReg['uuid'];
+    }
+
+    public function getController(){
+        $bookInvoiceSupMasterRepo = app(BookInvSuppMasterRepository::class);
+        $POService = new POService();
+        $supplierService = new SupplierService();
+        $sharedService =new SharedService();
+        $invoiceService = new InvoiceService();
+        $supplierInvoiceItemDetailRepo = app(SupplierInvoiceItemDetailRepository::class);
+        $tenderBidClarificationsRepo = app(TenderBidClarificationsRepository::class);
+        $documentAttachmentsRepo = app(DocumentAttachmentsRepository::class);
+        $paySupplierInvoiceMasterRepository = app(PaySupplierInvoiceMasterRepository::class);
+
+        $srmService = new SRMService($bookInvoiceSupMasterRepo,$POService,$supplierService,$sharedService,$invoiceService,$supplierInvoiceItemDetailRepo,
+            $tenderBidClarificationsRepo,$documentAttachmentsRepo,$paySupplierInvoiceMasterRepository);
+
+        $controller = new SupplierRegistrationApprovalController($srmService);
+        return $controller;
     }
 }

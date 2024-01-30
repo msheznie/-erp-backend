@@ -3,6 +3,7 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Eloquent as Model;
+use phpDocumentor\Reflection\Types\Integer;
 
 /**
  * @SWG\Definition(
@@ -83,7 +84,8 @@ class TenderBidFormatDetail extends Model
         'created_by',
         'updated_by',
         'deleted_by',
-        'formula_string'
+        'formula_string',
+        'finalTotalYn'
     ];
 
     /**
@@ -100,7 +102,8 @@ class TenderBidFormatDetail extends Model
         'boq_applicable' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
-        'formula_string' => 'string'
+        'formula_string' => 'string',
+        'finalTotalYn' => 'integer'
     ];
 
     /**

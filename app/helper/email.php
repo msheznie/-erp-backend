@@ -536,18 +536,19 @@ class email
 
                 // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
                 if ($data) {
-                    $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
-                        ->where('companyPolicyCategoryID', 37)
-                        ->where('isYesNO', 1)
-                        ->exists();
+                $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
+                    ->where('companyPolicyCategoryID', 37)
+                    ->where('isYesNO', 1)
+                    ->exists();
 
-                    if ($hasPolicy) {
-                        Log::info('Email send start');
-                        $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
-                        if (isset($data['empEmail']) && $data['empEmail']) {
-                            $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
-                            if ($data['empEmail']) {
-                                Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],[],$color,$text));
+                if ($hasPolicy) {
+                    Log::info('Email send start');
+                    $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
+                    $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
+                    if (isset($data['empEmail']) && $data['empEmail']) {
+                        $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
+                        if ($data['empEmail']) {
+                            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text));
                             }
                         }
                         Log::info('email sent success fully to :' . $data['empEmail']);

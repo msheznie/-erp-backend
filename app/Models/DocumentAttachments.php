@@ -431,6 +431,11 @@ class DocumentAttachments extends Model
         return $this->hasOne('App\Models\DocumentAttachments', 'parent_id', 'attachmentID');
     }
 
+    public function document_parent()
+    {
+        return $this->hasOne('App\Models\DocumentAttachments', 'attachmentID', 'parent_id');
+    }
+
     public function bid_verify()
     {
         return $this->hasOne('App\Models\BidDocumentVerification', 'attachment_id', 'attachmentID');

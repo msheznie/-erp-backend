@@ -243,5 +243,13 @@ class DocumentModifyRequest extends Model
         'type' => 'required'
     ];
 
+    public function documentAttachments(){ 
+        return $this->hasMany('App\Models\DocumentAttachments','documentSystemCode','documentSystemCode');
+    }
+
+    public function tenderMaster(){ 
+        return $this->hasOne('App\Models\TenderMaster','id','documentSystemCode');
+    }
+
     
 }

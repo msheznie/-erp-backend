@@ -31,6 +31,8 @@ class TenantEnforce
             'api/v1/item_issue_masters/{item_issue_master}',
             'api/v1/item_return_details/{item_return_detail}',
             'api/v1/checkManWareHouse',
+            'api/v1/approveDocument',
+            'api/v1/rejectPurchaseRequest'
         ];
 
         $dbRoutes = [

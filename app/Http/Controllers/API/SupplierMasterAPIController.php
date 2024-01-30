@@ -77,6 +77,7 @@ use App\Mail\EmailForQueuing;
 use Illuminate\Support\Facades\Hash;
 use App\helper\CreateExcel;
 use App\helper\email;
+use Illuminate\Http\Request as LaravelRequest;
 use App\Models\RegisterSupplierBusinessCategoryAssign;
 use App\Models\RegisterSupplierSubcategoryAssign;
 
@@ -1949,11 +1950,19 @@ class SupplierMasterAPIController extends AppBaseController
         if(isset($company->CompanyName)){
            $companyName =  $company->CompanyName;
         }
+        $data['domain'] =  Helper::getDomainForSrmDocuments($request);
+        $request->merge($data);
         $logo = $company->getLogoUrlAttribute();
 
         // Generate Hash Token for the current timestamp
         $token = md5(Carbon::now()->format('YmdHisu'));
         $apiKey = $request->input('api_key');
+
+        $validateEmail =  $this->validateEmailExist($request);
+
+        if(!$validateEmail['status']){
+            return $this->sendError($validateEmail['message'],402);
+        }
 
         $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
             ->where('company_id', $request->input('company_id'))
@@ -1969,10 +1978,11 @@ class SupplierMasterAPIController extends AppBaseController
                 return $this->sendError('Supplier Registration Details Already Exist',402);
             } else if ($isExist['STATUS'] === 0){
                 $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
-                $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
+                $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
+                $updateRec['sub_domain'] =  Helper::getDomainForSrmDocuments($request);
                 $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                 if ($isUpdated) {
-                    Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+                    Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
                     return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
                 } else{
                     return $this->sendError('Supplier Registration Link Generation Failed',500);
@@ -1982,7 +1992,7 @@ class SupplierMasterAPIController extends AppBaseController
             $loginUrl = env('SRM_LINK').$token.'/'.$apiKey;
             $isCreated = $this->registrationLinkRepository->save($request, $token);
             if ($isCreated['status'] == true) {
-                Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+                Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
 
                 return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
             } else {
@@ -2125,5 +2135,30 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
+    }
+
+    public function validateEmailExist($request)
+    {
+        $email = $request->input('email');
+        $regNo = $request->input('registration_number');
+        $companyId = $request->input('company_id');
+
+        $supplierRegLink = SupplierRegistrationLink::select('id','email','registration_number')
+            ->where('company_id',$companyId)
+            ->where('STATUS',1)
+            ->get();
+
+        $emails = $supplierRegLink->pluck('email')->toArray();
+        $registrationNumbers = $supplierRegLink->pluck('registration_number')->toArray();
+
+        if (in_array($email, $emails)) {
+            return ['status' => false, 'message' => 'Email already exists'];
+        }
+
+        if (in_array($regNo, $registrationNumbers)) {
+            return ['status' => false, 'message' => 'Registration number already exists'];
+        }
+
+        return ['status' => true, 'message' => 'Success'];
     }
 }

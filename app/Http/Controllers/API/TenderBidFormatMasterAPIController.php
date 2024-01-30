@@ -347,8 +347,20 @@ class TenderBidFormatMasterAPIController extends AppBaseController
            $result = TenderBidFormatMaster::create($data);
 
            if($result){
-               DB::commit();
-               return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+               $detail_data = [
+                   'tender_id' =>   $result['id'],
+                   'label' => "Final Total",
+                   'field_type' => 4,
+                   'is_disabled' => 0,
+                   'boq_applicable' => 0,
+                   'finalTotalYn' => 1,
+                   'created_by' => $employee->employeeSystemID
+               ];
+               $detail_result = TenderBidFormatDetail::create($detail_data);
+               if($detail_result) {
+                   DB::commit();
+                   return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+               }
            }
 
         } catch (\Exception $e) {
@@ -363,7 +375,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $data['master'] = TenderBidFormatMaster::where('id',$input['id'])->where('company_id',$input['companySystemID'])->first();
-        $data['detail'] = TenderBidFormatDetail::where('tender_id',$input['id'])->get();
+        $data['detail'] = TenderBidFormatDetail::where('tender_id',$input['id'])->orderBy('finalTotalYn', 'ASC')->get();
         $data['tenderType'] = TenderFieldType::get();
         $pricebid = self::priceBidExistInTender($input['id']);
         if(!empty($pricebid)){
@@ -633,7 +645,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $id = $input['id'];
         $bit_format_id = $input['tender_id'];
 
-        $result = TenderBidFormatDetail::where('tender_id',$bit_format_id)->whereIn('field_type', [2, 3])->get();
+        $result = TenderBidFormatDetail::where('tender_id',$bit_format_id)->where('finalTotalYn','=',0)->where('id','!=',$id)->whereIn('field_type', [2, 3,4])->get();
 
 
         $formula = TenderBidFormatDetail::where('tender_id',$bit_format_id)->where('id',$id)->where('field_type',4)->Select('formula_string')->first();
@@ -674,6 +686,12 @@ class TenderBidFormatMasterAPIController extends AppBaseController
                         $val1 = 1;
                         $cont = $cont.$val1;
              
+                    }
+                    else if ($elementType == '#') {
+                    $elementArr = explode('#', $formula_row);
+                    $val1 = 1;
+                    $cont = $cont.$val1;
+
                     }
                     else if($elementType == '|')
                     {

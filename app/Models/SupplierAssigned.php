@@ -237,4 +237,7 @@ class SupplierAssigned extends Model
         return $this->hasOne('App\Models\TenderSupplierAssignee', 'supplier_assigned_id','supplierAssignedID');
         
     }
+    public function businessCategoryAssigned(){
+        return $this->hasOne('App\Models\SupplierBusinessCategoryAssign', 'supplierID','supplierCodeSytem');
+    }
 }
