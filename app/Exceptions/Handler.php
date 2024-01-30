@@ -56,7 +56,7 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-        if (!($exception instanceof HttpException)) {
+        if (!($exception instanceof HttpException || $exception instanceof AuthenticationException)) {
             if (!config('app.debug')) {
                 return response()->json(['message' => 'Something went wrong. Please contact system administrator'], 500);
             }
