@@ -36,6 +36,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Exports\AccountsReceivable\CustomerAgingDetailReport;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsReceivableLedger;
 use App\Models\ChartOfAccount;
@@ -49,6 +50,8 @@ use App\Models\ReportTemplate;
 use App\Models\CustomerMaster;
 use App\Models\FreeBillingMasterPerforma;
 use App\Models\GeneralLedger;
+use App\Services\Currency\CurrencyService;
+use App\Services\Excel\ExportReportToExcelService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -900,7 +903,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
         }
     }
 
-    public function exportReport(Request $request)
+    public function exportReport(Request $request, ExportReportToExcelService $exportReportToExcelService)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
@@ -1007,7 +1010,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
-                
+
 
                 if($basePath == '')
                 {
@@ -1022,101 +1025,54 @@ class AccountsReceivableReportAPIController extends AppBaseController
             case 'CA': //Customer Aging
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
-
                 $from_date = $request->fromDate;
-                $to_date = $request->fromDate;
+                $to_date = $request->toDate;
                 $company = Company::find($request->companySystemID);
                 $company_name = $company->CompanyName;
-                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
-
-
-                $data = array();
-                if ($reportTypeID == 'CAD') { //customer aging detail
-
+                if ($reportTypeID == 'CAD') {
+                    $dataType = 2;
+                    $objCustomerAgingDetailReport = new CustomerAgingDetailReport();
+                    $excelColumnFormat = $objCustomerAgingDetailReport->getCloumnFormat();
                     $fileName = 'Customer Invoice Aging Report';
                     $title = 'Customer Invoice Aging Report';
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerAgingDetailQRY($request);
-
-                    if ($output['data']) {
-                        $x = 0;
-                        foreach ($output['data'] as $val) {
-                            $lineTotal = 0;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Document Code'] = $val->DocumentCode;
-                            $data[$x]['Document Date'] = \Helper::dateFormat($val->PostedDate);
-                            $data[$x]['GL Code'] = $val->glCode;
-                            $data[$x]['Customer Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->customerName2;
-                            $data[$x]['Credit Days'] = $val->creditDays;
-                            $data[$x]['Department'] = $val->serviceLineName;
-                            $data[$x]['Contract ID'] = $val->Contract;
-                            $data[$x]['PO Number'] = $val->PONumber;
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
-                            $data[$x]['Invoice Due Date'] = \Helper::dateFormat($val->invoiceDueDate);
-                            $data[$x]['Document Narration'] = $val->DocumentNarration;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Invoice Amount'] = $val->invoiceAmount;
-                            foreach ($output['aging'] as $val2) {
-                                $lineTotal += $val->$val2;
-                            }
-                            $data[$x]['Outstanding'] = $lineTotal;
-                            $data[$x]['Age Days'] = $val->age;
-                            foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val->$val2;
-                            }
-                            $data[$x]['Current Outstanding'] = $val->subsequentBalanceAmount;
-                            $data[$x]['Subsequent Collection Amount'] = $val->subsequentAmount;
-                            $data[$x]['Receipt Matching/BRVNo'] = $val->brvInv;
-                            $data[$x]['Collection Tracker Status'] = $val->commentAndStatus;
-                            $x++;
-                        }
-                    }
-                } else {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerAgingSummaryQRY($request);
+                }else {
+                    $dataType = 1;
+                    $excelColumnFormat = [
+                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    ];
                     $fileName = 'Customer Invoice Aging Summary';
                     $title = 'Customer Invoice Aging Summary';
-                    if ($output['data']) {
-                        $x = 0;
-                        foreach ($output['data'] as $val) {
-                            $lineTotal = 0;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Credit Days'] = $val->creditDays;
-                            $data[$x]['Cust. Code'] = $val->CustomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            foreach ($output['aging'] as $val2) {
-                                $lineTotal += $val->$val2;
-                            }
-                            $data[$x]['Amount'] = $lineTotal;
-                            foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val->$val2;
-                            }
-                            $x++;
-                        }
-                    }
                 }
-
+                $data = $this->getAgingReportRecordForExcel($request,$reportTypeID);
                 $requestCurrency = NULL;
                 $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
-
                 $path = 'accounts-receivable/report/customer_aging/excel/';
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name, 'company_code'=>$companyCode, 'cur'=>$requestCurrency,'title'=>$title);
+                $exportToExcel = $exportReportToExcelService
+                    ->setTitle($title)
+                    ->setFileName($fileName)
+                    ->setPath($path)
+                    ->setCompanyCode($companyCode)
+                    ->setCompanyName($company_name)
+                    ->setFromDate($from_date)
+                    ->setToDate($to_date)
+                    ->setReportType(2)
+                    ->setData($data)
+                    ->setType('xls')
+                    ->setDateType($dataType)
+                    ->setExcelFormat($excelColumnFormat)
+                    ->setCurrency($requestCurrency)
+                    ->setDetails()
+                    ->generateExcel();
 
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+                if(!$exportToExcel['success'])
+                    return $this->sendError('Unable to export excel');
 
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
+                return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
                 break;
             case 'CL': //Customer Ledger
@@ -1929,6 +1885,91 @@ class AccountsReceivableReportAPIController extends AppBaseController
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
+    }
+
+    private function getAgingReportRecordForExcel($request,$reportTypeID) : Array{
+        $data = array();
+        if ($reportTypeID == 'CAD') { //customer aging detail
+            $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+            $output = $this->getCustomerAgingDetailQRY($request);
+
+            if ($output['data']) {
+                $x = 0;
+                if(empty($data)) {
+                    $ObjCustomerAgingDetailReportHeader =  new CustomerAgingDetailReport();
+                    array_push($data,collect($ObjCustomerAgingDetailReportHeader->getHeader())->toArray());
+                }
+
+                foreach ($output['data'] as $val) {
+                    $lineTotal = 0;
+                    $column1 = $output['aging'][0];
+                    $column2 = $output['aging'][1];
+                    $column3 = $output['aging'][2];
+                    $column4 = $output['aging'][3];
+                    $column5 = $output['aging'][4];
+                    foreach ($output['aging'] as $val2) {
+                        $lineTotal += $val->$val2;
+                    }
+
+                    $objCustomerAgingDetailReport = new CustomerAgingDetailReport();
+                    $objCustomerAgingDetailReport->setCompanyID($val->companyID);
+                    $objCustomerAgingDetailReport->setCompanyName($val->CompanyName);
+                    $objCustomerAgingDetailReport->setDocumentCode($val->DocumentCode);
+                    $objCustomerAgingDetailReport->setDocumentDate($val->PostedDate);
+                    $objCustomerAgingDetailReport->setGlCode($val->glCode);
+                    $objCustomerAgingDetailReport->setCustomerCode($val->CutomerCode);
+                    $objCustomerAgingDetailReport->setCustomerName($val->customerName2);
+                    $objCustomerAgingDetailReport->setCreditDays($val->creditDays);
+                    $objCustomerAgingDetailReport->setDepartment($val->serviceLineName);
+                    $objCustomerAgingDetailReport->setContractID($val->Contract);
+                    $objCustomerAgingDetailReport->setPoNumber($val->PONumber);
+                    $objCustomerAgingDetailReport->setInvoiceNumber($val->invoiceNumber);
+                    $objCustomerAgingDetailReport->setInvoiceDate($val->InvoiceDate);
+                    $objCustomerAgingDetailReport->setInvoiceDueDate($val->invoiceDueDate);
+                    $objCustomerAgingDetailReport->setDocumentNarration($val->DocumentNarration);
+                    $objCustomerAgingDetailReport->setCurrency($val->documentCurrency);
+                    $objCustomerAgingDetailReport->setInvoiceAmount($val->invoiceAmount);
+                    $objCustomerAgingDetailReport->setOutStanding($lineTotal);
+                    $objCustomerAgingDetailReport->setAgeDays($val->age);
+                    $objCustomerAgingDetailReport->setColumn1(CurrencyService::convertNumberFormatToNumber(number_format($val->$column1,2)));
+                    $objCustomerAgingDetailReport->setColumn2(CurrencyService::convertNumberFormatToNumber(number_format($val->$column2,2)));
+                    $objCustomerAgingDetailReport->setColumn3(CurrencyService::convertNumberFormatToNumber(number_format($val->$column3,2)));
+                    $objCustomerAgingDetailReport->setColumn4(CurrencyService::convertNumberFormatToNumber(number_format($val->$column4,2)));
+                    $objCustomerAgingDetailReport->setColumn5(CurrencyService::convertNumberFormatToNumber(number_format($val->$column5,2)));
+                    $objCustomerAgingDetailReport->setCurrentOutstanding($val->subsequentBalanceAmount);
+                    $objCustomerAgingDetailReport->setCollectionAmount($val->subsequentAmount);
+                    $objCustomerAgingDetailReport->setReceiptMatchingNo( $val->brvInv);
+                    $objCustomerAgingDetailReport->setCollectionTrackerStatus($val->commentAndStatus);
+
+                    array_push($data,collect($objCustomerAgingDetailReport)->toArray());
+                }
+            }
+        } else {
+            $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+            $output = $this->getCustomerAgingSummaryQRY($request);
+            if ($output['data']) {
+                $x = 0;
+                foreach ($output['data'] as $val) {
+                    $lineTotal = 0;
+                    $data[$x]['Company ID'] = $val->companyID;
+                    $data[$x]['Company Name'] = $val->CompanyName;
+                    $data[$x]['Credit Days'] = $val->creditDays;
+                    $data[$x]['Cust. Code'] = $val->CustomerCode;
+                    $data[$x]['Customer Name'] = $val->CustomerName;
+                    $data[$x]['Currency'] = $val->documentCurrency;
+                    foreach ($output['aging'] as $val2) {
+                        $lineTotal += $val->$val2;
+                    }
+                    $data[$x]['Amount'] = $lineTotal;
+                    foreach ($output['aging'] as $val2) {
+                        $data[$x][$val2] = $val->$val2;
+                    }
+                    $x++;
+                }
+            }
+        }
+
+        return $data;
     }
 
     public function pdfExportReport(Request $request)

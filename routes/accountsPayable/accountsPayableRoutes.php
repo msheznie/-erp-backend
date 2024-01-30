@@ -195,7 +195,11 @@ Route::group([],function (){
     Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData')->name('Get account payable filter data');
     Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport')->name('Validate account payable report');
     Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport')->name('Generate account payable report');
-    Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport')->name('Export account payable report');
+    Route::group(['middleware' => 'max_memory_limit'], function () {
+        Route::group(['middleware' => 'max_execution_limit'], function () {
+            Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport')->name('Export account payable report');
+        });
+    });
     Route::post('sentSupplierLedger', 'AccountsPayableReportAPIController@sentSupplierLedger')->name('Sent supplier ledger');
     Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord')->name('Get journal voucher master record');
 });

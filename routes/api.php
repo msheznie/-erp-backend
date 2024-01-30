@@ -153,6 +153,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::get('getDropdownValues', 'FinanceItemCategoryMasterAPIController@getDropdownValues');
 
+
             Route::post('addItemAttributes', 'FinanceItemCategoryMasterAPIController@addItemAttributes');
 
             Route::resource('erp_attributes', 'ErpAttributesAPIController');
@@ -278,9 +279,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
 
-            Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
-            Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
-            Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
             Route::get('getUtilizationFilterFormData', 'FinancialReportAPIController@getUtilizationFilterFormData');
             Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
             Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
@@ -406,7 +404,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
             
             Route::post('deleteAllDisposalDetail', 'AssetDisposalDetailAPIController@deleteAllDisposalDetail');
-            Route::post('budgetTransferCreateFromReview', 'BudgetTransferFormAPIController@budgetTransferCreateFromReview');
 
             Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
             Route::resource('audit_trails', 'AuditTrailAPIController');
@@ -548,14 +545,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
 
             // console jv
-            Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');
-            Route::resource('console_j_v_details', 'ConsoleJVDetailAPIController');
-            Route::post('getAllConsoleJV', 'ConsoleJVMasterAPIController@getAllConsoleJV');
-            Route::post('consoleJVReopen', 'ConsoleJVMasterAPIController@consoleJVReopen');
-            Route::get('getConsoleJVGL', 'ConsoleJVMasterAPIController@getConsoleJVGL');
-            Route::get('getConsoleJVMasterFormData', 'ConsoleJVMasterAPIController@getConsoleJVMasterFormData');
-            Route::get('getConsoleJVDetailByMaster', 'ConsoleJVDetailAPIController@getConsoleJVDetailByMaster');
-            Route::post('deleteAllConsoleJVDet', 'ConsoleJVDetailAPIController@deleteAllConsoleJVDet');
             Route::post('getConsoleJvApproval', 'ConsoleJVMasterAPIController@getConsoleJvApproval');
             Route::post('getApprovedConsoleJvForCurrentUser', 'ConsoleJVMasterAPIController@getApprovedConsoleJvForCurrentUser');
             Route::post('approveConsoleJV', 'ConsoleJVMasterAPIController@approveConsoleJV');
@@ -842,8 +831,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('fetch-asset-transfer-master-amend/{id}', 'AssetTransferReferredbackAPIController@fetchAssetTransferMasterAmend');
             Route::get('get-employee-asset-transfer-details-amend/{id}', 'ERPAssetTransferDetailsRefferedbackAPIController@get_employee_asset_transfer_details_amend');
             Route::post('amendAssetVerification', 'AssetVerificationAPIController@amendAssetVerification');
-            Route::post('budgetAdditionReopen', 'ErpBudgetAdditionAPIController@budgetAdditionReopen');
-            Route::get('getBudgetAdditionAudit', 'ErpBudgetAdditionAPIController@getBudgetAdditionAudit');
             Route::post('getAssetVerificationAmendHistory', 'ERPAssetVerificationReferredbackAPIController@getAssetVerificationAmendHistory');
             Route::get('fetchAssetVerification/{id}', 'ERPAssetVerificationReferredbackAPIController@fetchAssetVerification');
             Route::post('fetchAssetVerificationDetailAmend', 'ERPAssetVerificationDetailReferredbackAPIController@fetchAssetVerificationDetailAmend');
@@ -870,8 +857,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('appointments', 'AppointmentAPIController');
             Route::resource('appointment_details', 'AppointmentDetailsAPIController');
             Route::resource('po_categories', 'PoCategoryAPIController');
-
-            Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview');
 
             Route::resource('document_sub_products', 'DocumentSubProductAPIController');
             Route::resource('payment_types', 'PaymentTypeAPIController');
@@ -1007,7 +992,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     if (env("LOG_ENABLE", false)) {
         Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
-        Route::get('/phpinfo', function () { phpinfo(); });
+        // Route::get('/phpinfo', function () { phpinfo(); });
     }
 });
 

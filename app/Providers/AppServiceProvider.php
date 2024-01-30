@@ -44,7 +44,8 @@ use App\Models\ProcumentActivity;
 use App\Observers\ProcumentActivityObserver;
 use App\Models\TenderDocumentTypeAssign;
 use App\Observers\TenderDocumentTypeObserver;
-
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Observers\FinanceItemcategorySubAssignedObserver;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -60,6 +61,7 @@ class AppServiceProvider extends ServiceProvider
             // $event->job
             // $event->exception
         });
+        FinanceItemcategorySubAssigned::observe(FinanceItemcategorySubAssignedObserver::class);
         AssetCapitalizationDetail::observe(CapitalizationDetailObserver::class);
         FixedAssetDepreciationMaster::observe(DepreciationObserver::class);
         AssetCapitalization::observe(CapitalizationObserver::class);

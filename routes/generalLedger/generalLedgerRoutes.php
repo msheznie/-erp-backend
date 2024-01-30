@@ -98,7 +98,6 @@ Route::group([], function(){
     Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany')->name('Get budget by company');
     Route::post('budgetReferBack', 'BudgetMasterAPIController@budgetReferBack')->name('Budget Referback');
     Route::post('updateCutOffPeriod', 'BudgetMasterAPIController@updateCutOffPeriod')->name('Update budget cutoff period');
-    Route::post('getBudgetBlockedDocuments', 'BudgetMasterAPIController@getBudgetBlockedDocuments')->name('Get budget bloacked documents');
     Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen')->name('Budget reopen');
     Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise')->name('Get budget GL Wise report');
     Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails')->name('Get budget GL Wise report details');
@@ -130,7 +129,7 @@ Route::group([], function(){
     Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany')->name('Get budget master by company');
     Route::post('amendBudgetTrasfer', 'BudgetTransferFormAPIController@amendBudgetTrasfer')->name('Amend budget transfer');
     Route::post('getBudgetTransferAmendHistory', 'BudgetTransferFormRefferedBackAPIController@getBudgetTransferAmendHistory')->name('Get budget transfer amend history');
-    Route::post('amendBudgetAddition', 'ErpBudgetAdditionAPIController@amendBudgetAddition');
+    Route::post('amendBudgetAddition', 'ErpBudgetAdditionAPIController@amendBudgetAddition')->name('Amend budget addition');
     Route::post('getBudgetAdditionAmendHistory', 'BudgetAdditionRefferedBackAPIController@getBudgetAdditionAmendHistory');
 
     // Contingency Budgets
@@ -172,6 +171,8 @@ Route::group([], function(){
     Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen')->name('Asset dissposal reopen');
     Route::post('referBackDisposal', 'AssetDisposalMasterAPIController@referBackDisposal')->name('Refer back disposal');
     Route::post('amendAssetDisposalReview', 'AssetDisposalMasterAPIController@amendAssetDisposalReview')->name('Amend disposal review');
+    Route::post('budgetAdditionReopen', 'ErpBudgetAdditionAPIController@budgetAdditionReopen')->name('Budget addition re open');
+    Route::get('getBudgetAdditionAudit', 'ErpBudgetAdditionAPIController@getBudgetAdditionAudit')->name('Get budget addition audit');
 
     // console jv
     Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');
@@ -188,6 +189,7 @@ Route::group([], function(){
     Route::post('getApprovedConsoleJvForCurrentUser', 'ConsoleJVMasterAPIController@getApprovedConsoleJvForCurrentUser')->name('Get Approved Console JV for current user');
     Route::post('approveConsoleJV', 'ConsoleJVMasterAPIController@approveConsoleJV')->name('Approve Console JV');
     Route::post('rejectConsoleJV', 'ConsoleJVMasterAPIController@rejectConsoleJV')->name('Reject Console JV');
+    Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview')->name('Get elimination ledger review');
 
     // Budget Review
 
@@ -243,8 +245,12 @@ Route::group([], function(){
     Route::post('validateVATReport', 'VATReportAPIController@validateVATReport')->name('Validate VAT report');
     Route::post('generateVATReport', 'VATReportAPIController@generateVATReport')->name('Generate VAT report');
     Route::post('generateVATDetailReport', 'VATReportAPIController@generateVATDetailReport')->name('Generate VAT detail report');
-    Route::post('exportVATReport', 'VATReportAPIController@exportVATReport')->name('Export VAT report');
-    Route::post('exportVATDetailReport', 'VATReportAPIController@exportVATDetailReport')->name('Export VAT detail report');
+    Route::group(['middleware' => 'max_memory_limit'], function () {
+        Route::group(['middleware' => 'max_execution_limit'], function () {
+            Route::post('exportVATReport', 'VATReportAPIController@exportVATReport')->name('Export VAT report');
+            Route::post('exportVATDetailReport', 'VATReportAPIController@exportVATDetailReport')->name('Export VAT detail report');
+        });
+    });
     Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees')->name('Get ALL Employees');
     Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports')->name('Get Cash Flow Reports');
     Route::post('cashFlowConfirmation', 'CashFlowReportAPIController@cashFlowConfirmation')->name('Cash flow confirmation');

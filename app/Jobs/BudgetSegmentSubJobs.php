@@ -75,117 +75,120 @@ class BudgetSegmentSubJobs implements ShouldQueue
             Log::info($segment.' count - '. $segmentCount);
 
             $segmentMaster = SegmentMaster::where('ServiceLineDes', $segment)->first();
-            $budgetArray = array(
-                'documentSystemID' => 65,
-                'documentID' => 'BUD',
-                'companySystemID' => $template->companySystemID,
-                'companyID' => $template->companyID,
-                'companyFinanceYearID' => $financeYear->companyFinanceYearID,
-                'serviceLineSystemID' => $segmentMaster->serviceLineSystemID,
-                'serviceLineCode' => $segmentMaster->ServiceLineCode,
-                'templateMasterID' => $template->companyReportTemplateID,
-                'Year' => $year,
-                'month' => 1,
-                'generateStatus' => 100,
-                'createdByUserSystemID' => $employee->employeeSystemID,
-                'createdByUserID' => $employee->empID,
-                'createdDateTime' => \Helper::currentDateTime(),
-                'sentNotificationAt' => $notification,
-                'cutOffPeriod' => 3,
-                'budgetUploadID' => $uploadBudget->id
-            );
 
-            $budget = BudgetMaster::create($budgetArray);
+            if ($segmentMaster) {
+                $budgetArray = array(
+                    'documentSystemID' => 65,
+                    'documentID' => 'BUD',
+                    'companySystemID' => $template->companySystemID,
+                    'companyID' => $template->companyID,
+                    'companyFinanceYearID' => $financeYear->companyFinanceYearID,
+                    'serviceLineSystemID' => $segmentMaster->serviceLineSystemID,
+                    'serviceLineCode' => $segmentMaster->ServiceLineCode,
+                    'templateMasterID' => $template->companyReportTemplateID,
+                    'Year' => $year,
+                    'month' => 1,
+                    'generateStatus' => 100,
+                    'createdByUserSystemID' => $employee->employeeSystemID,
+                    'createdByUserID' => $employee->empID,
+                    'createdDateTime' => \Helper::currentDateTime(),
+                    'sentNotificationAt' => $notification,
+                    'cutOffPeriod' => 3,
+                    'budgetUploadID' => $uploadBudget->id
+                );
 
-            foreach ($result as $value) {
+                $budget = BudgetMaster::create($budgetArray);
 
-                $templateDetail = ReportTemplateDetails::where('description', $value['Template Description 2'])
-                    ->where('companyReportTemplateID', $budget->templateMasterID)
-                    ->whereHas('gllink', function ($query) use ($value) {
-                        $query->where('glCode', $value['GL Code']);
-                    })
-                    ->first();
+                foreach ($result as $value) {
 
-                if (!empty($templateDetail)) {
+                    $templateDetail = ReportTemplateDetails::where('description', $value['Template Description 2'])
+                        ->where('companyReportTemplateID', $budget->templateMasterID)
+                        ->whereHas('gllink', function ($query) use ($value) {
+                            $query->where('glCode', $value['GL Code']);
+                        })
+                        ->first();
+
+                    if (!empty($templateDetail)) {
 
 
-                    $chartOfAccount = ChartOfAccount::where('AccountCode', $value['GL Code'])->first();
+                        $chartOfAccount = ChartOfAccount::where('AccountCode', $value['GL Code'])->first();
 
-                    $currencyMaster = CurrencyMaster::where('CurrencyCode', $currency)->first();
+                        $currencyMaster = CurrencyMaster::where('CurrencyCode', $currency)->first();
 
-                    $segmentMaster = SegmentMaster::find($budget->serviceLineSystemID);
-                    $currencyConvection = \Helper::currencyConversion($budget->companySystemID, $currencyMaster->currencyID, $currencyMaster->currencyID, $value[$segmentMaster->ServiceLineDes]);
+                        $segmentMaster = SegmentMaster::find($budget->serviceLineSystemID);
+                        $currencyConvection = \Helper::currencyConversion($budget->companySystemID, $currencyMaster->currencyID, $currencyMaster->currencyID, $value[$segmentMaster->ServiceLineDes]);
 
-                    $localAmount = \Helper::roundValue($currencyConvection['localAmount']);
+                        $localAmount = \Helper::roundValue($currencyConvection['localAmount']);
 
-                    $companyMaster = Company::find($budget->companySystemID);
-                    $currencyMasterLocal = CurrencyMaster::where('currencyID', $companyMaster->localCurrencyID)->first();
+                        $companyMaster = Company::find($budget->companySystemID);
+                        $currencyMasterLocal = CurrencyMaster::where('currencyID', $companyMaster->localCurrencyID)->first();
 
-                    $budjetAmtLocal = 0;
-                    $budjetAmtRpt = 0;
-                    $counter = 1;
-                    $startMonth = $month;
-                    $startYear = $year;
-                    for ($i = 1; $i <= 12; $i++) {
-                        if($startMonth == 13){
-                            Log::info('M- '.$startMonth);
-                            $startMonth = 1;
-                            $startYear = $startYear + 1;
+                        $budjetAmtLocal = 0;
+                        $budjetAmtRpt = 0;
+                        $counter = 1;
+                        $startMonth = $month;
+                        $startYear = $year;
+                        for ($i = 1; $i <= 12; $i++) {
+                            if($startMonth == 13){
+                                Log::info('M- '.$startMonth);
+                                $startMonth = 1;
+                                $startYear = $startYear + 1;
+                            }
+
+
+                            if($counter == 12){
+                                $budgetDetailsArray = array(
+                                    'budgetmasterID' => $budget->budgetmasterID,
+                                    'companySystemID' => $budget->companySystemID,
+                                    'companyId' => $budget->companyID,
+                                    'companyFinanceYearID' => $budget->companyFinanceYearID,
+                                    'serviceLineSystemID' => $budget->serviceLineSystemID,
+                                    'serviceLine' => $segmentMaster->ServiceLineCode,
+                                    'templateDetailID' => isset($templateDetail->detID) ? $templateDetail->detID : null,
+                                    'chartOfAccountID' => isset($chartOfAccount->chartOfAccountSystemID) ? $chartOfAccount->chartOfAccountSystemID : null,
+                                    'glCode' => $value['GL Code'],
+                                    'glCodeType' => isset($chartOfAccount->controlAccounts) ? $chartOfAccount->controlAccounts : null,
+                                    'Year' => $startYear,
+                                    'month' => $startMonth,
+                                    'budjetAmtLocal' => round(round($localAmount, $currencyMasterLocal->DecimalPlaces) - $budjetAmtLocal,$currencyMasterLocal->DecimalPlaces),
+                                    'budjetAmtRpt' => round(round($value[$segmentMaster->ServiceLineDes], $currencyMaster->DecimalPlaces) - $budjetAmtRpt,$currencyMaster->DecimalPlaces),
+                                    'createdByUserSystemID' => $employee->employeeSystemID,
+                                    'createdByUserID' => $employee->empID,
+                                    'createdDateTime' => \Helper::currentDateTime(),
+                                );
+                            }
+                            else {
+                                $budgetDetailsArray = array(
+                                    'budgetmasterID' => $budget->budgetmasterID,
+                                    'companySystemID' => $budget->companySystemID,
+                                    'companyId' => $budget->companyID,
+                                    'companyFinanceYearID' => $budget->companyFinanceYearID,
+                                    'serviceLineSystemID' => $budget->serviceLineSystemID,
+                                    'serviceLine' => $segmentMaster->ServiceLineCode,
+                                    'templateDetailID' => isset($templateDetail->detID) ? $templateDetail->detID : null,
+                                    'chartOfAccountID' => isset($chartOfAccount->chartOfAccountSystemID) ? $chartOfAccount->chartOfAccountSystemID : null,
+                                    'glCode' => $value['GL Code'],
+                                    'glCodeType' => isset($chartOfAccount->controlAccounts) ? $chartOfAccount->controlAccounts : null,
+                                    'Year' => $startYear,
+                                    'month' => $startMonth,
+                                    'budjetAmtLocal' => round($localAmount / 12, $currencyMasterLocal->DecimalPlaces),
+                                    'budjetAmtRpt' => round($value[$segmentMaster->ServiceLineDes] / 12, $currencyMaster->DecimalPlaces),
+                                    'createdByUserSystemID' => $employee->employeeSystemID,
+                                    'createdByUserID' => $employee->empID,
+                                    'createdDateTime' => \Helper::currentDateTime(),
+                                );
+
+                                $budjetAmtLocal = $budjetAmtLocal + round($localAmount / 12, $currencyMasterLocal->DecimalPlaces);
+                                $budjetAmtRpt = $budjetAmtRpt + round($value[$segmentMaster->ServiceLineDes] / 12, $currencyMaster->DecimalPlaces);
+                            }
+
+                            $counter++;
+                            $startMonth++;
+                            $budgetDetails = Budjetdetails::create($budgetDetailsArray);
+
                         }
-
-
-                        if($counter == 12){
-                            $budgetDetailsArray = array(
-                                'budgetmasterID' => $budget->budgetmasterID,
-                                'companySystemID' => $budget->companySystemID,
-                                'companyId' => $budget->companyID,
-                                'companyFinanceYearID' => $budget->companyFinanceYearID,
-                                'serviceLineSystemID' => $budget->serviceLineSystemID,
-                                'serviceLine' => $segmentMaster->ServiceLineCode,
-                                'templateDetailID' => isset($templateDetail->detID) ? $templateDetail->detID : null,
-                                'chartOfAccountID' => isset($chartOfAccount->chartOfAccountSystemID) ? $chartOfAccount->chartOfAccountSystemID : null,
-                                'glCode' => $value['GL Code'],
-                                'glCodeType' => isset($chartOfAccount->controlAccounts) ? $chartOfAccount->controlAccounts : null,
-                                'Year' => $startYear,
-                                'month' => $startMonth,
-                                'budjetAmtLocal' => round(round($localAmount, $currencyMasterLocal->DecimalPlaces) - $budjetAmtLocal,$currencyMasterLocal->DecimalPlaces),
-                                'budjetAmtRpt' => round(round($value[$segmentMaster->ServiceLineDes], $currencyMaster->DecimalPlaces) - $budjetAmtRpt,$currencyMaster->DecimalPlaces),
-                                'createdByUserSystemID' => $employee->employeeSystemID,
-                                'createdByUserID' => $employee->empID,
-                                'createdDateTime' => \Helper::currentDateTime(),
-                            );
-                        }
-                        else {
-                            $budgetDetailsArray = array(
-                                'budgetmasterID' => $budget->budgetmasterID,
-                                'companySystemID' => $budget->companySystemID,
-                                'companyId' => $budget->companyID,
-                                'companyFinanceYearID' => $budget->companyFinanceYearID,
-                                'serviceLineSystemID' => $budget->serviceLineSystemID,
-                                'serviceLine' => $segmentMaster->ServiceLineCode,
-                                'templateDetailID' => isset($templateDetail->detID) ? $templateDetail->detID : null,
-                                'chartOfAccountID' => isset($chartOfAccount->chartOfAccountSystemID) ? $chartOfAccount->chartOfAccountSystemID : null,
-                                'glCode' => $value['GL Code'],
-                                'glCodeType' => isset($chartOfAccount->controlAccounts) ? $chartOfAccount->controlAccounts : null,
-                                'Year' => $startYear,
-                                'month' => $startMonth,
-                                'budjetAmtLocal' => round($localAmount / 12, $currencyMasterLocal->DecimalPlaces),
-                                'budjetAmtRpt' => round($value[$segmentMaster->ServiceLineDes] / 12, $currencyMaster->DecimalPlaces),
-                                'createdByUserSystemID' => $employee->employeeSystemID,
-                                'createdByUserID' => $employee->empID,
-                                'createdDateTime' => \Helper::currentDateTime(),
-                            );
-
-                            $budjetAmtLocal = $budjetAmtLocal + round($localAmount / 12, $currencyMasterLocal->DecimalPlaces);
-                            $budjetAmtRpt = $budjetAmtRpt + round($value[$segmentMaster->ServiceLineDes] / 12, $currencyMaster->DecimalPlaces);
-                        }
-
-                        $counter++;
-                        $startMonth++;
-                        $budgetDetails = Budjetdetails::create($budgetDetailsArray);
 
                     }
-
                 }
             }
 

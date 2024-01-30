@@ -398,6 +398,16 @@ trait AuditTrial
                 'modifiedDate' => Carbon::now()
             ];
             AuditTrail::create($insertArray);
+
+            if($masterRec->offsetExists('modifiedPc') && $masterRec->offsetExists('modifiedUser') && $masterRec->offsetExists('modifiedUserSystemID'))
+            {
+                $masterRec->modifiedPc = gethostname();
+                $masterRec->modifiedUser =\Helper::getEmployeeID();
+                $masterRec->modifiedUserSystemID = \Helper::getEmployeeSystemID();
+                $masterRec->save();
+            }
+   
+
         }
 
 

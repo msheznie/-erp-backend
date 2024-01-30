@@ -460,8 +460,15 @@ class JvDetailAPIController extends AppBaseController
         $input = $request->all();
         $detail_arr = array();
         $validator = array();
-        $jvMasterAutoId = $input['jvMasterAutoId'];
-        $accruvalMasterID = $input['accruvalMasterID'];
+
+        if (isset($input['jvMasterAutoId'])) {
+            $jvMasterAutoId = $input['jvMasterAutoId'];
+        }
+
+        if (isset($input['accruvalMasterID'])) {
+            $accruvalMasterID = $input['accruvalMasterID'];
+        }
+
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);

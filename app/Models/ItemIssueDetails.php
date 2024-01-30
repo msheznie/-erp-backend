@@ -397,9 +397,9 @@ class ItemIssueDetails extends Model
         'deliveryComments',
         'timestamp',
         'timesReferred',
-        'detail_project_id'
+        'detail_project_id',
+        'qtyAvailableToIssue'
     ];
-
     /**
      * The attributes that should be casted to native types.
      *
@@ -463,7 +463,8 @@ class ItemIssueDetails extends Model
         'pl10' => 'string',
         'deliveryComments' => 'string',
         'timesReferred' => 'integer',
-        'detail_project_id' => 'integer'
+        'detail_project_id' => 'integer',
+        'qtyAvailableToIssue' => 'integer'
     ];
 
     /**

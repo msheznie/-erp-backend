@@ -65,6 +65,11 @@ Route::group([],function (){
 Route::group([],function (){
     Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts')->name("Get afr filter chart of accounts");
     Route::post('exportFRReport', 'FinancialReportAPIController@exportReport')->name("Export fr report");
+    Route::group(['middleware' => 'max_memory_limit'], function () {
+        Route::group(['middleware' => 'max_execution_limit'], function () {
+            Route::post('exportGLReport', 'FinancialReportAPIController@exportGLReport')->name("Export general ledger report");
+        });
+    });
     Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Generate general ledger report pdf");
 });
 

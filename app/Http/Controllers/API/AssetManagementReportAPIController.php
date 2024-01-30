@@ -2996,6 +2996,12 @@ FROM
 	INNER JOIN serviceline ON serviceline.serviceLineSystemID = erp_fa_asset_master.serviceLineSystemID
 LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")) assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
+(
+    (erp_fa_asset_master.DIPOSED = -1 AND DATE(erp_fa_asset_master.disposedDate) > '$asOfDate')
+    OR
+    (erp_fa_asset_master.DIPOSED = 0)
+  )
+    AND
 	erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
 	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
 	$where

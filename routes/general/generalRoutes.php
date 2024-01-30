@@ -86,3 +86,5 @@ Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIControlle
 
 Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear')->name("Get All Finance Period For Year");
 Route::post('postGLEntries', 'ShiftDetailsAPIController@postGLEntries');
+
+Route::post('auditLogs', 'AuditTrailAPIController@auditLogs')->name("Get audit logs");

@@ -15,12 +15,14 @@ use App\Http\Requests\API\CreateAuditTrailAPIRequest;
 use App\Http\Requests\API\UpdateAuditTrailAPIRequest;
 use App\Models\AuditTrail;
 use App\Repositories\AuditTrailRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Services\LokiService;
+use DataTables;
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
@@ -30,10 +32,12 @@ class AuditTrailAPIController extends AppBaseController
 {
     /** @var  AuditTrailRepository */
     private $auditTrailRepository;
+    private $lokiService;
 
-    public function __construct(AuditTrailRepository $auditTrailRepo)
+    public function __construct(AuditTrailRepository $auditTrailRepo, LokiService $lokiService)
     {
         $this->auditTrailRepository = $auditTrailRepo;
+        $this->lokiService = $lokiService;
     }
 
     /**
@@ -286,5 +290,33 @@ class AuditTrailAPIController extends AppBaseController
         $auditTrail->delete();
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.audit_trails')]));
+    }
+
+    public function auditLogs(Request $request){
+
+        $input = $request->all();
+
+        try {
+            $env = env("LOKI_ENV");
+
+            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
+            $toDate = Carbon::now();
+            $diff = $toDate->diffInDays($fromDate);
+            $id = $input['id'];
+            $module = $input['module'];
+
+            $table = $this->lokiService->getAuditTables($module);
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
+
+            $params = 'query?query=rate({env="'.$env.'"}|= `\"transaction_id\":\"'.$id.'\"` |= `\"table\":\"'.$table.'\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` | json ['.$diff.'d])';
+
+            $data = $this->lokiService->getAuditLogs($params);
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->make(true);
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

@@ -1560,19 +1560,38 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $addToCusInvItemDetails['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
                         $addToCusInvItemDetails['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-                        $addToCusInvItemDetails['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-                        $addToCusInvItemDetails['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                        $addToCusInvItemDetails['financeCogsGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeCogsGLcodePLSystemID;
+                        $addToCusInvItemDetails['financeCogsGLcodePL'] = $financeItemCategorySubAssigned->financeCogsGLcodePL;
                         $addToCusInvItemDetails['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                         $addToCusInvItemDetails['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
 
 
                         $addToCusInvItemDetails['localCurrencyID'] = $item->companyLocalCurrencyID;
                         $addToCusInvItemDetails['localCurrencyER'] = $item->companyLocalExchangeRate;
-                        $addToCusInvItemDetails['issueCostLocal'] = $item->cost / $item->itemQty;
+
+                        if($item->itemQty != 0 || $item->itemQty != null)
+                        {
+                            $addToCusInvItemDetails['issueCostLocal'] = $item->cost / $item->itemQty;
+                        }
+                        else
+                        {
+                            $addToCusInvItemDetails['issueCostLocal'] = 0;
+                        }
+
                         $addToCusInvItemDetails['issueCostLocalTotal'] = $item->cost * $item->qty;
                         $addToCusInvItemDetails['reportingCurrencyID'] = $item->companyReportingCurrencyID;
                         $addToCusInvItemDetails['reportingCurrencyER'] = $item->companyReportingExchangeRate;
-                        $addToCusInvItemDetails['issueCostRpt'] = ($item->cost / $item->itemQty) / $item->companyReportingExchangeRate;
+
+                        if($item->itemQty != 0 || $item->itemQty != null)
+                        { 
+                           $addToCusInvItemDetails['issueCostRpt'] = ($item->cost / $item->itemQty) / $item->companyReportingExchangeRate;
+                        }
+                        else
+                        {
+                           $addToCusInvItemDetails['issueCostRpt'] = 0;
+                        }
+
+
                         $addToCusInvItemDetails['issueCostRptTotal'] = $item->cost * $item->qty / $item->companyReportingExchangeRate;
                         $addToCusInvItemDetails['sellingCurrencyID'] = $item->transactionCurrencyID;
                         $addToCusInvItemDetails['sellingCurrencyER'] = $item->transactionExchangeRate;
@@ -2597,7 +2616,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->get();
 
                     $invItemsPL = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('SUM(pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                        ->selectRaw('SUM(pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeCogsGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
                         ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                         ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
@@ -2606,7 +2625,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                         ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                        ->groupBy('financeitemcategorysub.financeGLcodePLSystemID')
+                        ->groupBy('financeitemcategorysub.financeCogsGLcodePLSystemID')
                         ->groupBy('pos_source_menusalesitemdetails.menuSalesID')
                         ->get();
 
@@ -2752,7 +2771,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->serviceChargeAmount * -1
+                        'amount' => round($gl->serviceChargeAmount * -1,3)
                     );
                 }
 
@@ -2765,7 +2784,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->promotionAmount
+                        'amount' => round($gl->promotionAmount,3)
                     );
                 }
 
@@ -2779,7 +2798,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->outputVatGLCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->taxAmount * -1
+                        'amount' => round($gl->taxAmount * -1,3)
                     );
 
                 }
@@ -2795,7 +2814,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->outputVatGLCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->taxAmount * -1
+                        'amount' => round($gl->taxAmount * -1,3)
                     );
 
                 }
@@ -2812,7 +2831,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->amount
+                        'amount' => round($gl->amount,3)
                     );
 
                 }
@@ -2841,7 +2860,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             'documentCode' => $documentCode,
                             'glCode' => $gl->revenueGLAutoID,
                             'logId' => $logs['id'],
-                            'amount' => $amount * -1
+                            'amount' => round($amount * -1,3)
                         );
                     }
 
@@ -2870,7 +2889,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'bankAccId' => $item->bankID,
                         'logId' => $logs->id,
                         'isReturnYN' => 0,
-                        'amount' => $item->amount
+                        'amount' => round($item->amount,3)
                     );
 
                 }
@@ -2894,7 +2913,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             'documentCode' => $documentCode,
                             'glCode' => $gl->plGLCode,
                             'logId' => $logs['id'],
-                            'amount' => $gl->amount
+                            'amount' => round($gl->amount,3)
                         );
                     }
                 }
@@ -2911,7 +2930,7 @@ class ShiftDetailsAPIController extends AppBaseController
                                 'documentCode' => $documentCode,
                                 'glCode' => $gl->plGLCode,
                                 'logId' => $logs['id'],
-                                'amount' => $gl->amount * -1
+                                'amount' => round($gl->amount * -1,3)
                             );
                         } else {
                             $inventoryGLArray[] = array(
@@ -2921,7 +2940,7 @@ class ShiftDetailsAPIController extends AppBaseController
                                 'documentCode' => $documentCode,
                                 'glCode' => $gl->bsGLCode,
                                 'logId' => $logs['id'],
-                                'amount' => $gl->amount * -1
+                                'amount' => round($gl->amount * -1,3)
                             );
                         }
                     }
