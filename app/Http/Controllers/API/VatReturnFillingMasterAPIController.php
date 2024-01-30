@@ -478,7 +478,6 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $results = $res;
 
         $search = $request->input('search.value');
-
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $results = $results->where(function ($query) use ($search) {
@@ -492,7 +491,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             });
 
         }
-        return \DataTables::eloquent($results)
+        return \DataTables::of($results)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {

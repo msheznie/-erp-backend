@@ -354,7 +354,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxableAmount = (($oneA) ? $oneA->totalTaxableAmount : 0) + (($twoB) ? $twoB->totalTaxableAmount : 0);
                 break;
             case 20: // Purchases (except import of goods) - 6 (a)
-                $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
+                $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category','supplier_invoice' => function($q) {
+                                                        $q->with(['employee']);
+                                                  }])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
                                                   ->where(function($q) use ($companyCountry){
@@ -403,7 +405,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
                 break;
             case 21: // Import of goods - 6 (b)
-                $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
+                $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category','supplier_invoice'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
                                                   ->whereHas('supplier', function($query) use ($companyCountry){
@@ -448,7 +450,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                 break;
             case 22: // VAT on acquisition of fixed assets - 6 (c)
-                $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
+                $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category','supplier_invoice'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
                     ->whereNotNull('inputVATGlAccountID')
