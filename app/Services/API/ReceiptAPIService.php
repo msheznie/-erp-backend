@@ -178,6 +178,12 @@ class ReceiptAPIService
     private function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = Employee::where('empID',$detail['confirmedBy'])->first();
 
+        if(Carbon::parse($detail['documentDate']) > Carbon::parse($detail['confirmedDate'])) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Confirmed date should greater than document date'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }
+
         if(!$userDetails) {
             $this->isError = true;
             $error[$receipt->narration] = ['Confirmed By employee data not found'];
@@ -195,6 +201,12 @@ class ReceiptAPIService
     }
     private function setApprovedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = Employee::where('empID',$detail['approvedBy'])->first();
+
+        if(Carbon::parse($detail['confirmedDate']) > Carbon::parse($detail['approvedDate'])) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Approved date should greater than confirmed date'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }
 
         if(!$userDetails) {
             $this->isError = true;
