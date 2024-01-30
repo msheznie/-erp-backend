@@ -2347,8 +2347,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                                 ->groupBy('documentSystemCode')
                                                                 ->first();
                                         $taxLedgerData = [];
-                            
-                                        $customerMatchingDetails = CustomerReceivePaymentDetail::selectRaw("SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt")
+
+                                        $customerMatchingDetails = CustomerReceivePaymentDetail::with(['ar_data'])->selectRaw("SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt,arAutoID")
                                                             ->where('custReceivePaymentAutoID', $input["PayMasterAutoId"])
                                                             ->get();
 
@@ -2376,21 +2376,33 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                                         $data['clientContractID'] = 'X';
                                         $data['contractUID'] = 159;
-                        
-                                        $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
-                                        $data['documentTransCurrencyER'] = $tax->supplierTransactionER;
-                                        $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
-                                        $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
-                                        $data['documentRptCurrencyID'] = $tax->reportingCurrencyID;
-                                        $data['documentRptCurrencyER'] = $tax->companyReportingER;
+                                        
+                                        if($tax)
+                                        {   
+                                            $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
+                                            $data['documentTransCurrencyER'] = $tax->supplierTransactionER;
+                                            $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
+                                            $data['documentRptCurrencyID'] = $tax->reportingCurrencyID;
+                                            $data['documentRptCurrencyER'] = $tax->companyReportingER;
+                                        }
+                                        else
+                                        {
+                                            $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                            $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                        }
 
 
                                         foreach ($customerMatchingDetails as $key => $value) {
                                             $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) ;
                                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) ;
                                             $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) ;
-                                            $data['serviceLineSystemID'] = $value->serviceLineSystemID;
-                                            $data['serviceLineCode'] = $value->serviceLineCode;
+                                            $data['serviceLineSystemID'] = $value->ar_data->serviceLineSystemID;
+                                            $data['serviceLineCode'] = $value->ar_data->serviceLineCode;
                                             array_push($finalData, $data);
                                         }
 
@@ -2421,8 +2433,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) * -1;
                                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
                                             $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
-                                            $data['serviceLineSystemID'] = $value->serviceLineSystemID;
-                                            $data['serviceLineCode'] = $value->serviceLineCode;
+                                            $data['serviceLineSystemID'] = $value->ar_data->serviceLineSystemID;
+                                            $data['serviceLineCode'] = $value->ar_data->serviceLineCode;
                                             array_push($finalData, $data);
                                         }
                                         

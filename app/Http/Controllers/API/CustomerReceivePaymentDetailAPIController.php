@@ -34,6 +34,8 @@ use Response;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\TaxVatCategories;
+use App\Models\CustomerInvoiceItemDetails;
+
 /**
  * Class CustomerReceivePaymentDetailController
  * @package App\Http\Controllers\API
@@ -697,10 +699,20 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
 
                     $companySystemID = $new['companySystemID'];
-                    $invoice = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$new['bookingInvCodeSystem'])->select('vatRegisteredYN','customerVATEligible')->first();
+                    $invoice = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$new['bookingInvCodeSystem'])->select('vatRegisteredYN','customerVATEligible','isPerforma')->first();
+
                     if($invoice->vatRegisteredYN)
                     {
-                         $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$new['bookingInvCodeSystem']); 
+                        if($invoice->isPerforma == 1 || $invoice->isPerforma == 0)
+                        {
+                            $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$new['bookingInvCodeSystem']); 
+                        }
+                        else
+                        {
+                            $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$new['bookingInvCodeSystem']); 
+                            
+                        }
+                        
                          $allValuesAreTheSame = $this->areAllElementsSame($details->pluck('vatSubCategoryID'));
 
                           if($details->count() == 1 || $allValuesAreTheSame)
