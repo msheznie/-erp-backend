@@ -2176,25 +2176,28 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $masterData = CustomerReceivePayment::with(['bank', 'finance_period_by'])->find($input['PayMasterAutoId']);
                         $masterDocumentDate =  $validatePostedDate['postedDate'];
 
-                        $data['companySystemID'] = $masterData->companySystemID;
-                        $data['companyID'] = $masterData->companyID;
+                        $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
+
+
+                        $data['companySystemID'] = $matchDocumentMaster->companySystemID;
+                        $data['companyID'] = $matchDocumentMaster->companyID;
                         $data['serviceLineSystemID'] = null;
                         $data['serviceLineCode'] = null;
                         $data['masterCompanyID'] = null;
-                        $data['documentSystemID'] = $masterData->documentSystemID;
-                        $data['documentID'] = $masterData->documentID;
+                        $data['documentSystemID'] = $matchDocumentMaster->documentSystemID;
+                        $data['documentID'] = $matchDocumentMaster->documentID;
                         $data['documentSystemCode'] = $input["PayMasterAutoId"];
                         $data['documentCode'] = $masterData->custPaymentReceiveCode;
                         $data['documentDate'] = $masterDocumentDate;
                         $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
                         $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
-                        $data['documentConfirmedDate'] = $masterData->confirmedDate;
-                        $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
-                        $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
-                        $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                        $data['documentConfirmedDate'] = $matchDocumentMaster->matchingConfirmedDate;
+                        $data['documentConfirmedBy'] = $matchDocumentMaster->confirmedByEmpID;
+                        $data['documentConfirmedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
+                        $data['documentFinalApprovedDate'] = $matchDocumentMaster->approvedDate;
                         $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
-                        $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-                        $data['documentNarration'] = $masterData->narration;
+                        $data['documentFinalApprovedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
+                        $data['documentNarration'] = "Matching Entry ".$matchDocumentMaster->matchingDocCode;
                         $data['clientContractID'] = 'X';
                         $data['contractUID'] = 159;
                         $data['supplierCodeSystem'] = $masterData->customerID;

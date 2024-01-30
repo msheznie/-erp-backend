@@ -601,7 +601,6 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     public function addReceiptVoucherMatchDetails(Request $request)
     {
         $input = $request->all();
-
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
@@ -702,39 +701,43 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     if($invoice->vatRegisteredYN)
                     {
                          $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$new['bookingInvCodeSystem']); 
+                         $allValuesAreTheSame = $this->areAllElementsSame($details->pluck('vatSubCategoryID'));
 
-                          if($details->count() == 2)
+                          if($details->count() == 1 || $allValuesAreTheSame)
                           {
                             $det = $details->first();
 
                             $tempArray['vatSubCategoryID'] = $det->vatSubCategoryID;
                             $tempArray['vatMasterCategoryID'] = $det->vatMasterCategoryID;
                             $tempArray['VATPercentage'] = $det->VATPercentage;
+                            $tempArray['isVatDisabled'] = true;
+                            
 
                           }
                           else
-                          {
-                                
-                            $defaultVAT = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
-                                $q->where('companySystemID', $companySystemID)
-                                    ->where('isActive', 1)
-                                    ->where('taxCategory', 2);
-                            })
-                            ->whereHas('main', function ($q) {
-                                $q->where('isActive', 1);
-                            })
-                            ->where('isActive', 1)
-                            ->where('isDefault', 1)
-                            ->first();
+                          {  
 
-                                if ($defaultVAT) {
-                                    $tempArray['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
-                                    $tempArray['vatMasterCategoryID'] = $defaultVAT->mainCategory;
-                                    $tempArray['VATPercentage'] = $defaultVAT->percentage;
-                                } else {
-                                    DB::rollBack();
-                                    return $this->sendError("Default VAT not configured");
-                                }
+                                $defaultVAT = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
+                                    $q->where('companySystemID', $companySystemID)
+                                        ->where('isActive', 1)
+                                        ->where('taxCategory', 2);
+                                })
+                                ->whereHas('main', function ($q) {
+                                    $q->where('isActive', 1);
+                                })
+                                ->where('isActive', 1)
+                                ->where('isDefault', 1)
+                                ->first();
+    
+                                    if ($defaultVAT) {
+                                        $tempArray['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
+                                        $tempArray['vatMasterCategoryID'] = $defaultVAT->mainCategory;
+                                        $tempArray['VATPercentage'] = $defaultVAT->percentage;
+                                    } else {
+                                        DB::rollBack();
+                                        return $this->sendError("Default VAT not configured");
+                                    }
+                            
 
                           }
                     }
@@ -758,6 +761,12 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
     }
 
+    function areAllElementsSame($array) {
+        $collection = collect($array);
+        return $collection->every(function ($value) use ($collection) {
+            return $value === $collection->first();
+        });
+    }
     public function updateReceiptVoucherMatchDetail(Request $request)
     {
         $input = $request->all();
@@ -857,9 +866,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $detailUpdateBalance->custbalanceAmount = \Helper::roundValue($custbalanceAmount);
 
 
-        $detailUpdateBalance->VATAmount = round($input['receiveAmountTrans']*($input['VATPercentage']/(100+$input['VATPercentage'])),$documentCurrencyDecimalPlace);
-        $detailUpdateBalance->VATAmountRpt = round($input['VATAmount'] / $matchDocumentMasterData->companyRptCurrencyER,$documentCurrencyDecimalPlace);
-        $detailUpdateBalance->VATAmountLocal = round($input['VATAmount'] / $matchDocumentMasterData->localCurrencyER,$documentCurrencyDecimalPlace);
+        $vatAmount = round($input['receiveAmountTrans']*($input['VATPercentage']/(100+$input['VATPercentage'])),$documentCurrencyDecimalPlace);
+        $detailUpdateBalance->VATAmount = $vatAmount;
+        $detailUpdateBalance->VATAmountRpt = round($vatAmount / $matchDocumentMasterData->companyRptCurrencyER,$documentCurrencyDecimalPlace);
+        $detailUpdateBalance->VATAmountLocal = round($vatAmount / $matchDocumentMasterData->localCurrencyER,$documentCurrencyDecimalPlace);
         
         $detailUpdateBalance->save();
 

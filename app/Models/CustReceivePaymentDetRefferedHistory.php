@@ -213,6 +213,7 @@ class CustReceivePaymentDetRefferedHistory extends Model
         'VATPercentage',
         'vatMasterCategoryID',
         'vatSubCategoryID',
+        'isVatDisabled'
     ];
 
     /**

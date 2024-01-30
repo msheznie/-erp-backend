@@ -217,6 +217,7 @@ class CustomerReceivePaymentDetail extends Model
         'VATPercentage',
         'vatMasterCategoryID',
         'vatSubCategoryID',
+        'isVatDisabled'
     ];
 
     /**
