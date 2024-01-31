@@ -1224,11 +1224,11 @@ class ShiftDetailsAPIController extends AppBaseController
                                     $input2['VATApplicableOn'] = $vatDetails['applicableOn'];
                                     $input2['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
                                     $input2['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
-                                    $input2['VATAmount'] = $item->taxAmount;
+                                    $input2['VATAmount'] = $item->taxAmount / $item->defaultQty;
 
 
-                                    $input2['VATAmountLocal'] =  $item->taxAmount;
-                                    $input2['VATAmountRpt'] =  $item->taxAmount / $customerInvoiceDirect->companyReportingER;
+                                    $input2['VATAmountLocal'] =  $item->taxAmount / $item->defaultQty;
+                                    $input2['VATAmountRpt'] =  ($item->taxAmount / $item->defaultQty) / $customerInvoiceDirect->companyReportingER;
                                 }
 
                         $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->create($input2);
@@ -3683,7 +3683,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $invoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
 
         foreach ($invoiceDetails as $key => $value) {
-                $totalVATAmount += $value->VATAmount;
+                $totalVATAmount += $value->qtyIssued * $value->VATAmount;
         }
 
         $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
