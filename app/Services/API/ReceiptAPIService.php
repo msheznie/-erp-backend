@@ -10,6 +10,7 @@ use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerAssigned;
 use App\Models\CustomerCurrency;
 use App\Models\CustomerInvoice;
 use App\Models\CustomerMaster;
@@ -301,11 +302,20 @@ class ReceiptAPIService
                 $error[$receipt->narration] = ['Customer is not active'];
                 array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
             }else {
+                $customerAssigned = CustomerAssigned::where('companySystemID',$receipt->companySystemID)->where('customerCodeSystem',$customerDetails->customerCodeSystem)->where('isAssigned',-1)->first();
+
+                if(!$customerAssigned) {
+                    $this->isError = true;
+                    $error[$receipt->narration] = ['Customer is not assigned to the company'];
+                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                }
                 $receipt->customerID = $customerDetails->customerCodeSystem;
                 $receipt->customerGLCodeSystemID = $customerDetails->custGLAccountSystemID;
                 $receipt->customerGLCode = $customerDetails->custGLaccount;
             }
         }
+
+
 
 
         return $receipt;
