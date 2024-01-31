@@ -1639,7 +1639,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     }
 
-                    if($updateItem->discountPercentage != 0){
+                    if(isset($updateItem->discountPercentage) != 0){
                         $amount = SalesReturnDetail::where('salesReturnID', $salesReturnID)
                             ->sum(\Illuminate\Support\Facades\DB::raw('qtyReturnedDefaultMeasure * (companyReportingAmount-(companyReportingAmount*discountPercentage/100))'));
                     }else{
@@ -2353,6 +2353,128 @@ class ShiftDetailsAPIController extends AppBaseController
 
         return ['status' => true];
     }
+
+
+    public function saveSalesReturnTaxDetails($salesReturnID, $totalVATAmount)
+    {
+        $percentage = 0;
+        $taxMasterAutoID = 0;
+
+        $master = SalesReturn::where('id', $salesReturnID)->first();
+
+        if (empty($master)) {
+            return ['status' => false, 'message' => 'Sales Return not found.'];
+        }
+
+        $invoiceDetail = SalesReturnDetail::where('salesReturnID', $salesReturnID)->first();
+
+        if (empty($invoiceDetail)) {
+            return ['status' => false, 'message' => 'Sales Return Details not found.'];
+        }
+
+        $totalAmount = 0;
+        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+
+        $totalDetail = SalesReturnDetail::select(\Illuminate\Support\Facades\DB::raw("SUM(transactionAmount) as amount"))
+            ->where('salesReturnID', $salesReturnID)
+            ->groupBy('salesReturnID')
+            ->first();
+
+        if (!empty($totalDetail)) {
+            $totalAmount = $totalDetail->amount;
+        }
+
+        if ($totalAmount > 0) {
+            $percentage = ($totalVATAmount / $totalAmount) * 100;
+        }
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $salesReturnID)
+            ->where('documentSystemID', 87)
+            ->first();
+
+        if (!empty($Taxdetail)) {
+            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+        }
+
+        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
+
+
+        $_post['taxMasterAutoID'] = $taxMasterAutoID;
+        $_post['companyID'] = $master->companyID;
+        $_post['companySystemID'] = $master->companySystemID;
+        $_post['documentID'] = 'SLR';
+        $_post['documentSystemID'] = $master->documentSystemID;
+        $_post['documentSystemCode'] = $salesReturnID;
+        $_post['documentCode'] = $master->salesReturnCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage; //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $master->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $master->transactionCurrencyID;
+        $_post['currencyER'] = $master->transactionCurrencyER;
+        $_post['amount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $master->transactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $master->transactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalVATAmount, $decimal);
+        $_post['localCurrencyID'] = $master->companyLocalCurrencyID;
+        $_post['localCurrencyER'] = $master->companyLocalCurrencyER;
+
+        $_post['rptCurrencyID'] = $master->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $master->companyReportingCurrencyER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalVATAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalVATAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+
+        Taxdetail::create($_post);
+        $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
+
+        $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCodeSystemID;
+        $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCode;
+        $vatAmount['VATPercentage'] = $percentage;
+        $vatAmount['VATAmount'] = $_post['amount'];
+        $vatAmount['VATAmountLocal'] = $_post["localAmount"];
+        $vatAmount['VATAmountRpt'] = $_post["rptAmount"];
+
+        SalesReturn::where('id', $salesReturnID)->update($vatAmount);
+
+        return ['status' => true];
+    }
+
 
     private function updateInvoiceReturnedStatus($custInvoiceDirectAutoID){
 
