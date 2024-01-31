@@ -1284,7 +1284,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
                 $returns = DB::table('pos_source_salesreturn')
-                    ->selectRaw('pos_source_salesreturn.*')
+                    ->selectRaw('pos_source_salesreturn.*, pos_source_invoice.invoiceCode as invoiceCode')
                     ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_salesreturn.invoiceID')
                     ->where('pos_source_salesreturn.shiftID', $shiftId)
                     ->where('pos_source_invoice.isCreditSales', 1)
@@ -1376,6 +1376,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['companySystemID'] = $shiftDetails->companyID;
                     $input['documentID'] = 'SLR';
                     $input['narration'] = "Sales Return Created by GPOS System";
+                    $input['referenceNo'] = $return->invoiceCode;
 
 
                     $segments = DB::table('pos_source_shiftdetails')
@@ -1675,7 +1676,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             return $this->sendError($approve["message"]);
                         }
                     }
-                    
+
                 }
 
 
