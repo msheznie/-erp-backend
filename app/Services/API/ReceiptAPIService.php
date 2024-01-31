@@ -91,6 +91,7 @@ class ReceiptAPIService
             $receipt->details = $dt['details'];
             $receipt->payeeTypeID = $dt['payeeType'];
             $receipt->payment_type_id = $dt['paymentMode'];
+            $receipt = self::setCommonValidation($dt,$receipt);
             $receipt = self::setCompanyDetails($companyID,$receipt); // set company details of the document
             $receipt = self::setDocumentDetails($dt,$receipt); // set document details (narration,custPaymentReceiveDate,documentIds)
             $receipt = self::setFinancialYear($dt['documentDate'],$receipt);
@@ -156,6 +157,28 @@ class ReceiptAPIService
         $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
 
         $receipt->bankAccountBalance = $rounded_amount;
+
+        return $receipt;
+    }
+
+    private function setCommonValidation($input,$receipt) {
+        if($input['receiptType'] < 0 || $input['receiptType'] > 3) {
+            $this->isError = true;
+            $error[$input['narration']] = ['Receipt type not found'];
+            array_push($this->validationErrorArray[$input['narration']],$error[$input['narration']]);
+        }
+
+        if($input['paymentMode'] < 0 || $input['paymentMode'] > 4) {
+            $this->isError = true;
+            $error[$input['narration']] = ['Payment mode not found'];
+            array_push($this->validationErrorArray[$input['narration']],$error[$input['narration']]);
+        }
+
+        if($input['payeeType'] < 0 || $input['payeeType'] > 3) {
+            $this->isError = true;
+            $error[$input['narration']] = ['Payee type not found'];
+            array_push($this->validationErrorArray[$input['narration']],$error[$input['narration']]);
+        }
 
         return $receipt;
     }
@@ -480,8 +503,6 @@ class ReceiptAPIService
             $this->isError = true;
             $error[$receipt->narration] = ['Company details not found'];
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
-
-        }else {
 
         }
 
