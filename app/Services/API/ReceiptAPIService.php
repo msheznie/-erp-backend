@@ -126,20 +126,20 @@ class ReceiptAPIService
 
 
     private function validateTotalAmount($details,$receipt) {
-        $invCode = $details['invoiceCode'];
-        $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
-        $accountReceivableLedgerDetails = AccountsReceivableLedger::where('documentCodeSystem',$invoice->custInvoiceDirectAutoID)->first();
-        if($accountReceivableLedgerDetails) {
-            $totalAmountReceived = CustomerReceivePaymentDetail::where('arAutoID',$accountReceivableLedgerDetails->arAutoID)->sum('receiveAmountTrans');
-            $bookingAmountTrans = $invoice->bookingAmountTrans + $invoice->VATAmount;
-            if(($totalAmountReceived+$details['receiptAmount']) > $bookingAmountTrans) {
-                $this->isError = true;
-                $error[$receipt->narration][$details['invoiceCode']] = ['Total received amount cannot be greater the invoice amount'];
-                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        if($receipt->documentType == 13) {
+            $invCode = $details['invoiceCode'];
+            $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
+            $accountReceivableLedgerDetails = AccountsReceivableLedger::where('documentCodeSystem',$invoice->custInvoiceDirectAutoID)->first();
+            if($accountReceivableLedgerDetails) {
+                $totalAmountReceived = CustomerReceivePaymentDetail::where('arAutoID',$accountReceivableLedgerDetails->arAutoID)->sum('receiveAmountTrans');
+                $bookingAmountTrans = $invoice->bookingAmountTrans + $invoice->VATAmount;
+                if(($totalAmountReceived+$details['receiptAmount']) > $bookingAmountTrans) {
+                    $this->isError = true;
+                    $error[$receipt->narration][$details['invoiceCode']] = ['Total received amount cannot be greater the invoice amount'];
+                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                }
             }
         }
-
-
     }
 
     private function setBankBalance($receipt) {
@@ -185,19 +185,23 @@ class ReceiptAPIService
     }
 
     private function validateInvoiceDetails($details,$receipt) {
-        $invoice = CustomerInvoice::where('bookingInvCode',$details['invoiceCode'])->first();
-        if(!$invoice) {
-            $this->isError = true;
-            $error[$receipt->narration][$details['invoiceCode']] = ['Invoice data not found'];
-            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
-
-        }else {
-            if($invoice->customerID != $receipt->customerID) {
+        if($receipt->documentType == 13) {
+            $invoice = CustomerInvoice::where('bookingInvCode',$details['invoiceCode'])->first();
+            if(!$invoice) {
                 $this->isError = true;
-                $error[$receipt->narration][$details['invoiceCode']] = ['Invoice is not related to the customer you provided'];
+                $error[$receipt->narration][$details['invoiceCode']] = ['Invoice data not found'];
                 array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+
+            }else {
+                if($invoice->customerID != $receipt->customerID) {
+                    $this->isError = true;
+                    $error[$receipt->narration][$details['invoiceCode']] = ['Invoice is not related to the customer you provided'];
+                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                }
             }
         }
+
+
     }
     private function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = Employee::where('empID',$detail['confirmedBy'])->first();
@@ -301,6 +305,7 @@ class ReceiptAPIService
     private function setCustomerDetails($customerCode,$receipt): CustomerReceivePayment
     {
         $customerDetails = CustomerMaster::where('CutomerCode',$customerCode)->orWhere('customer_registration_no',$customerCode)->first();
+
         if(!$customerDetails) {
             $this->isError = true;
             $error[$receipt->narration] = ['Customer data not found'];
