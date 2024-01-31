@@ -246,6 +246,11 @@ class ReceiptAPIService
         return $receipt;
     }
     private static function setLocalAndReportingAmounts($receipt): CustomerReceivePayment {
+
+        $myCurr = $receipt->custTransactionCurrencyID;
+
+
+
         switch ($receipt->documentType) {
             case 15:
             case 14 :
@@ -264,15 +269,20 @@ class ReceiptAPIService
                 $totalNetAmount = 0;
                 break;
         }
-        $receipt->netAmount = $totalNetAmount;
-        $receipt->VATAmount = $totalVatAmount;
-        $receipt->localAmount = $totalAmount;
+
+
+        $companyCurrencyConversionTrans = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
+        $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
+        $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
+        $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount']);
         $receipt->receivedAmount = $totalAmount;
-        if($receipt->custTransactionCurrencyID) {
-            $receipt->netAmountLocal = ($receipt->localAmount / $receipt->localCurrencyER);
-            $receipt->netAmountRpt = $receipt->localAmount / $receipt->companyRptCurrencyER;
-            $receipt->companyRptAmount = $receipt->localAmount / $receipt->companyRptCurrencyER;
-        }
+        $receipt->VATAmount = $totalVatAmount;
+        $receipt->VATAmountLocal =  $companyCurrencyConversionVat['localAmount'];
+        $receipt->VATAmountRpt = $companyCurrencyConversionVat['reportingAmount'];
+        $receipt->netAmount = $totalNetAmount;
+        $receipt->netAmountLocal = $companyCurrencyConversionNet['localAmount'];
+        $receipt->netAmountRpt = $companyCurrencyConversionNet['reportingAmount'];
+        $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']);
 
         $receipt->bankAmount = $totalAmount;
         return $receipt;
