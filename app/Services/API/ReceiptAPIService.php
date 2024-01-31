@@ -428,6 +428,12 @@ class ReceiptAPIService
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
             $receipt->bankAccount = null;
         }else {
+            if(!$accountDetails->approvedYN) {
+                $this->isError = true;
+                $error[$receipt->narration] = ['Bank account is not fully approved'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
             $receipt->bankAccount = $accountDetails->bankAccountAutoID;
         }
 
