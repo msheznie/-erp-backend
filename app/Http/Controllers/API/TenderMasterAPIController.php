@@ -5093,9 +5093,8 @@ ORDER BY
         ->whereHas('supplierDetails', function($q2) use ($tenderMasterId,$documentType){
          })
 
-        ->where('tender_master_id',$tenderMasterId)
-        ->whereNotIn('purchased_by',$supplierMasterIds);
-
+        ->where('tender_master_id',$tenderMasterId);
+        
         if($type == 'count'){
             return !empty($tenderPurchaseList->get()->count()) || ($tenderPurchaseList->count() > 0)  ? $tenderPurchaseList->get()->count() : 0;
         }
