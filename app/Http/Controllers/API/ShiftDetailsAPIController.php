@@ -1280,8 +1280,6 @@ class ShiftDetailsAPIController extends AppBaseController
                         return $this->sendError($resVat['message']);
                     };
 
-                    \Illuminate\Support\Facades\DB::commit();
-
                 }
 
 
@@ -1403,15 +1401,15 @@ class ShiftDetailsAPIController extends AppBaseController
                     $companyCurrency = Helper::companyCurrency($shiftDetails->companyID);
                     $companyCurrencyConversion = Helper::currencyConversion($shiftDetails->companyID, $return->transactionCurrencyID, $return->transactionCurrencyID, 0);
 
-                    $input['transactionAmount'] = $return->netTotal;
+                    $input['transactionAmount'] = $return->subTotal;
                     $input['transactionCurrencyID'] = $return->transactionCurrencyID;
                     $input['transactionCurrencyER'] = 1;
                     $input['companyLocalCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $input['companyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                    $input['companyLocalAmount'] = $return->netTotal / $input['companyLocalCurrencyER'];
+                    $input['companyLocalAmount'] = $return->subTotal / $input['companyLocalCurrencyER'];
                     $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $input['companyReportingCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['companyReportingAmount'] = $return->netTotal / $input['companyReportingCurrencyER'];
+                    $input['companyReportingAmount'] = $return->subTotal / $input['companyReportingCurrencyER'];
 
                     $employee = Helper::getEmployeeInfo();
                     $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -1440,7 +1438,6 @@ class ShiftDetailsAPIController extends AppBaseController
                         $customerInvoice = CustomerInvoiceDirect::find($cusInvoice->custInvoiceDirectAutoID);
 
                         $cusInvDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $cusInvoice->custInvoiceDirectAutoID)->where('itemCodeSystem', $returnItem->itemAutoID)->first();
-
 
                          $detailSum = SalesReturnDetail::select(DB::raw('COALESCE(SUM(qtyReturnedDefaultMeasure),0) as totalNoQty'))->where('customerItemDetailID', $cusInvDetail->customerItemDetailID)->first();
 
@@ -1540,7 +1537,7 @@ class ShiftDetailsAPIController extends AppBaseController
                                     // if (isset($new['discountPercentage']) && $new['discountPercentage'] != 0){
                                     //     $invDetail_arr['unitTransactionAmount'] = ($new['unitTransactionAmount']) - ($new['unitTransactionAmount']*$new['discountPercentage']/100);
                                     // }else{
-                                    $invDetail_arr['unitTransactionAmount'] = $cusInvDetail->sellingCost;
+                                    $invDetail_arr['unitTransactionAmount'] = $cusInvDetail->sellingCostAfterMargin;
                                     // }
 
                                     $totalNetcost = $cusInvDetail->sellingCost * $cusInvDetail->noQty;
@@ -1678,9 +1675,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             return $this->sendError($approve["message"]);
                         }
                     }
-
-                    \Illuminate\Support\Facades\DB::commit();
-
+                    
                 }
 
 
