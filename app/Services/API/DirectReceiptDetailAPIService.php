@@ -28,7 +28,10 @@ class DirectReceiptDetailAPIService
 
         $objDirectReceipt->DRAmountCurrency = $receiptVoucher->custTransactionCurrencyID;
         $objDirectReceipt->DDRAmountCurrencyER = $receiptVoucher->custTransactionCurrencyER;
-        $objDirectReceipt->DRAmount = $directReceipt['amount'];
+        if($receiptVoucher->custTransactionCurrencyID != 1) {
+            $objDirectReceipt->DRAmount = round($directReceipt['amount'],2);
+        }
+
 
         return $objDirectReceipt;
     }
@@ -85,7 +88,8 @@ class DirectReceiptDetailAPIService
             $objDirectReceipt->netAmountLocal = \Helper::roundValue($currencyNet['localAmount']);
         }
 
-        if($objDirectReceipt->localCurrency != 1) {
+
+        if($receiptVoucher->custTransactionCurrencyID != 1) {
             $objDirectReceipt->comRptAmount = round($objDirectReceipt->comRptAmount,2);
             $objDirectReceipt->localAmount = round($objDirectReceipt->localAmount,2);
             $objDirectReceipt->VATAmount = round($objDirectReceipt->VATAmount,2);
