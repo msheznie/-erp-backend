@@ -439,6 +439,12 @@ class ReceiptAPIService
                 array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
             }
 
+            if(!$accountDetails->isAccountActive) {
+                $this->isError = true;
+                $error[$receipt->narration] = ['Bank account is not active'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
             $receipt->bankAccount = $accountDetails->bankAccountAutoID;
         }
 
