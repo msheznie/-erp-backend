@@ -163,19 +163,19 @@ class ReceiptAPIService
     }
 
     private function setCommonValidation($input,$receipt) {
-        if($input['receiptType'] < 0 || $input['receiptType'] > 3) {
+        if($input['receiptType'] <= 0 || $input['receiptType'] > 3) {
             $this->isError = true;
             $error[$input['narration']] = ['Receipt type not found'];
             array_push($this->validationErrorArray[$input['narration']],$error[$input['narration']]);
         }
 
-        if($input['paymentMode'] < 0 || $input['paymentMode'] > 4) {
+        if($input['paymentMode'] <= 0 || $input['paymentMode'] > 4) {
             $this->isError = true;
             $error[$input['narration']] = ['Payment mode not found'];
             array_push($this->validationErrorArray[$input['narration']],$error[$input['narration']]);
         }
 
-        if($input['payeeType'] < 0 || $input['payeeType'] > 3) {
+        if($input['payeeType'] <= 0 || $input['payeeType'] > 3) {
             $this->isError = true;
             $error[$input['narration']] = ['Payee type not found'];
             array_push($this->validationErrorArray[$input['narration']],$error[$input['narration']]);
