@@ -345,11 +345,10 @@ class ReceiptAPIService
                 break;
         }
 
-
         $companyCurrencyConversionTrans = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
         $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
         $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
-        $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalNetAmount);
+        $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalAmount);
         if($receipt->custTransactionCurrencyID != 1) {
             $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount']);
             $receipt->receivedAmount = $totalAmount;
