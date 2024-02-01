@@ -1303,8 +1303,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     $getCompanyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<=", $return->salesReturnDate)->where('dateTo', ">=", $return->salesReturnDate)->where('companySystemID', $shiftDetails->companyID)->where('isActive', -1)->first();
 
-                    $input['companyFinancePeriodID'] = $getCompanyFinancePeriod->companyFinancePeriodID;
-                    $input['companyFinanceYearID'] = $getCompanyFinanceYear->companyFinanceYearID;
+
 
                     if (!isset($getCompanyFinancePeriod->companyFinancePeriodID) || is_null($getCompanyFinancePeriod->companyFinancePeriodID)) {
                         return $this->sendError('Financial period is not found or inactive', 500);
@@ -1314,6 +1313,9 @@ class ShiftDetailsAPIController extends AppBaseController
                         return $this->sendError('Financial year is not found or inactive', 500);
                     }
 
+
+                    $input['companyFinancePeriodID'] = $getCompanyFinancePeriod->companyFinancePeriodID;
+                    $input['companyFinanceYearID'] = $getCompanyFinanceYear->companyFinanceYearID;
 
                     $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $getCompanyFinanceYear->companyFinanceYearID)->first();
                     $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
