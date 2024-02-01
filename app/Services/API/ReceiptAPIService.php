@@ -351,17 +351,22 @@ class ReceiptAPIService
         $companyCurrencyConversionTrans = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
         $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
         $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
-        $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount']);
-        $receipt->receivedAmount = $totalAmount;
-        $receipt->VATAmount = $totalVatAmount;
-        $receipt->VATAmountLocal =  $companyCurrencyConversionVat['localAmount'];
-        $receipt->VATAmountRpt = $companyCurrencyConversionVat['reportingAmount'];
-        $receipt->netAmount = $totalNetAmount;
-        $receipt->netAmountLocal = $companyCurrencyConversionNet['localAmount'];
-        $receipt->netAmountRpt = $companyCurrencyConversionNet['reportingAmount'];
-        $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']);
 
-        $receipt->bankAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']);
+        if($receipt->custTransactionCurrencyID != 1) {
+            $receipt->localAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['localAmount']),2);
+            $receipt->receivedAmount = round($totalAmount,2);
+            $receipt->VATAmount = round($totalVatAmount,2);
+            $receipt->VATAmountLocal =  round($companyCurrencyConversionVat['localAmount'],2);
+            $receipt->VATAmountRpt = round($companyCurrencyConversionVat['reportingAmount'],2);
+            $receipt->netAmount = round($totalNetAmount,2);
+            $receipt->netAmountLocal = round($companyCurrencyConversionNet['localAmount'],2);
+            $receipt->netAmountRpt = round($companyCurrencyConversionNet['reportingAmount'],2);
+            $receipt->companyRptAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),2);
+            $receipt->bankAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),2);
+        }
+
+
+
         return $receipt;
     }
     private static function setVatDetails($vatApplicable,$receipt): CustomerReceivePayment {
