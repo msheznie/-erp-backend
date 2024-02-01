@@ -1698,13 +1698,11 @@ class ShiftDetailsAPIController extends AppBaseController
                 ->where('pos_source_salesreturn.shiftID', $shiftId)
                 ->where('pos_source_invoice.isCreditSales', 0)
                 ->get();
-            if (!$hasItemsSR->isEmpty()) {
 
+            if (!$hasItemsSR->isEmpty() || !$hasSales->isEmpty()) {
                 GeneralLedgerInsert::dispatch($masterData, $db);
             }
-
             if (!$hasSales->isEmpty()) {
-                GeneralLedgerInsert::dispatch($masterData, $db);
                 POSItemLedgerInsert::dispatch($masterData);
                 BankLedgerInsert::dispatch($masterData);
                 $taxLedgerData = null;
