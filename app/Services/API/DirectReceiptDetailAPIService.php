@@ -88,7 +88,6 @@ class DirectReceiptDetailAPIService
             $objDirectReceipt->netAmountLocal = \Helper::roundValue($currencyNet['localAmount']);
         }
 
-
         if($receiptVoucher->custTransactionCurrencyID != 1) {
             $objDirectReceipt->comRptAmount = round($objDirectReceipt->comRptAmount,2);
             $objDirectReceipt->localAmount = round($objDirectReceipt->localAmount,2);

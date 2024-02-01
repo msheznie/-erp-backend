@@ -350,7 +350,6 @@ class ReceiptAPIService
         $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
         $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
         $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalNetAmount);
-
         if($receipt->custTransactionCurrencyID != 1) {
             $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount']);
             $receipt->receivedAmount = $totalAmount;
