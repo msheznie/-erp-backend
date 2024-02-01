@@ -6,6 +6,8 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\BankMaster;
+use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
@@ -109,9 +111,16 @@ class ReceiptAPIService
             $receipt = self::setApprovedDetails($dt,$receipt);
 
             foreach ($receipt['details'] as $details) {
-                self::validateInvoiceDetails($details,$receipt);
-                self::validateTotalAmount($details,$receipt);
-                self::validateDocumentDate($details,$receipt);
+
+                if($receipt->documentType == 13) {
+                    self::validateInvoiceDetails($details,$receipt);
+                    self::validateTotalAmount($details,$receipt);
+                    self::validateDocumentDate($details,$receipt);
+                }
+
+                if($receipt->documentType == 14) {
+                    self::validateGlCode($details,$receipt);
+                }
 
             }
 
@@ -125,6 +134,40 @@ class ReceiptAPIService
     }
 
 
+    private function validateGlCode($detail,$receipt) {
+        $chartOfAccountDetails = ChartOfAccount::where('AccountCode',$detail['glCode'])->where('controllAccountYN', 0)->first();
+
+        if(!$chartOfAccountDetails) {
+            $this->isError = true;
+            $error[$receipt->narration][$detail['glCode']] = ['GL Account not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }else {
+            if(!$chartOfAccountDetails->isApproved) {
+                $this->isError = true;
+                $error[$receipt->narration][$detail['glCode']] = ['GL Account is not approved'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
+            if(!$chartOfAccountDetails->isActive) {
+                $this->isError = true;
+                $error[$receipt->narration][$detail['glCode']] = ['GL Account is not active'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
+
+            $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$chartOfAccountDetails->chartOfAccountSystemID)->where('companySystemID',$receipt->companySystemID)->where('isAssigned',-1)->first();
+
+            if(!$chartOfAccountAssigned) {
+                $this->isError = true;
+                $error[$receipt->narration][$detail['glCode']] = ['GL Account is not assigned to the company'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
+
+
+
+
+    }
     private function validateDocumentDate($details,$receipt) {
         if($receipt->documentType == 13) {
             $invCode = $details['invoiceCode'];
@@ -381,16 +424,19 @@ class ReceiptAPIService
 
         switch ($data['receiptType']) {
             case 1 :
+                //direct receipt
                 $receipt->documentSystemID = 21;
                 $receipt->documentID = "BRV";
                 $receipt->documentType = 14;
                 break;
             case 2 :
+                //customer invoice receipt
                 $receipt->documentSystemID = 21;
                 $receipt->documentID = "BRV";
                 $receipt->documentType = 13;
                 break;
             case 3 :
+                //advance receipt
                 $receipt->documentSystemID = 21;
                 $receipt->documentID = "BRV";
                 $receipt->documentType = 15;
