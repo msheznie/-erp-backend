@@ -109,6 +109,7 @@ class ReceiptAPIService
             $receipt = self::setLocalAndReportingAmounts($receipt);
             $receipt = self::setConfirmedDetails($dt,$receipt);
             $receipt = self::setApprovedDetails($dt,$receipt);
+            $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
 
             foreach ($receipt['details'] as $details) {
 
@@ -198,6 +199,19 @@ class ReceiptAPIService
         }
     }
 
+    private function multipleInvoiceAtOneReceiptValidation($receipt) {
+
+        $groupByInvoiceCode = collect($receipt->details)->groupBy('invoiceCode');
+
+        foreach ($groupByInvoiceCode as $gp) {
+            if(count($gp) > 1) {
+                $this->isError = true;
+                $error[$receipt->narration][$gp[0]['invoiceCode']] = ['Receipt voucher cannot have same invoice more than one time'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
+        return $receipt;
+    }
     private function setBankBalance($receipt) {
         $cur_det['companySystemID'] = $receipt->companySystemID;
         $cur_det['bankmasterAutoID'] = $receipt->bankID;
