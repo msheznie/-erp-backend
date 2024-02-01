@@ -109,7 +109,10 @@ class ReceiptAPIService
             $receipt = self::setLocalAndReportingAmounts($receipt);
             $receipt = self::setConfirmedDetails($dt,$receipt);
             $receipt = self::setApprovedDetails($dt,$receipt);
-            $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
+
+            if($receipt->documentType == 13) {
+                $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
+            }
 
             foreach ($receipt['details'] as $details) {
 
@@ -358,7 +361,7 @@ class ReceiptAPIService
         $receipt->netAmountRpt = $companyCurrencyConversionNet['reportingAmount'];
         $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']);
 
-        $receipt->bankAmount = $totalAmount;
+        $receipt->bankAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']);
         return $receipt;
     }
     private static function setVatDetails($vatApplicable,$receipt): CustomerReceivePayment {
@@ -388,7 +391,6 @@ class ReceiptAPIService
                 array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
             }else {
                 $customerAssigned = CustomerAssigned::where('companySystemID',$receipt->companySystemID)->where('customerCodeSystem',$customerDetails->customerCodeSystem)->where('isAssigned',-1)->first();
-
                 if(!$customerAssigned) {
                     $this->isError = true;
                     $error[$receipt->narration] = ['Customer is not assigned to the company'];
