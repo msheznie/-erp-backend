@@ -345,7 +345,6 @@ class ReceiptAPIService
                 break;
         }
 
-
         $companyCurrencyConversionTrans = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
         $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
         $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
