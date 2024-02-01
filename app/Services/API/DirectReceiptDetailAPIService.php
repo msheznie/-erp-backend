@@ -32,6 +32,7 @@ class DirectReceiptDetailAPIService
             $objDirectReceipt->DRAmount = round($directReceipt['amount'],2);
         }
 
+        $objDirectReceipt->DRAmount = $directReceipt['amount'];
 
         return $objDirectReceipt;
     }

@@ -349,7 +349,7 @@ class ReceiptAPIService
         $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
         $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
         $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalAmount);
-        if($receipt->custTransactionCurrencyID != 1) {
+        if($receipt->custTransactionCurrencyID == 1) {
             $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount']);
             $receipt->receivedAmount = $totalAmount;
             $receipt->VATAmount = $totalVatAmount;
@@ -359,7 +359,7 @@ class ReceiptAPIService
             $receipt->netAmountLocal = $companyCurrencyConversionNet['localAmount'];
             $receipt->netAmountRpt = $companyCurrencyConversionNet['reportingAmount'];
             $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']);
-            $receipt->bankAmount = \Helper::roundValue($bankCurrencyConversion['documentAmount']);
+            $receipt->bankAmount = $totalAmount;
             $receipt->bankCurrencyER = $bankCurrencyConversion['transToDocER'];
 
         }else {
