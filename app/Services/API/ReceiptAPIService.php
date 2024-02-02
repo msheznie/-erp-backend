@@ -159,13 +159,14 @@ class ReceiptAPIService
             }
 
 
-            $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$chartOfAccountDetails->chartOfAccountSystemID)->where('companySystemID',$receipt->companySystemID)->where('isAssigned',-1)->first();
-
-            if(!$chartOfAccountAssigned) {
+            $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$chartOfAccountDetails->chartOfAccountSystemID)->where('companySystemID',$receipt->companySystemID)->where('isAssigned',-1)->get();
+            if(!isset($chartOfAccountAssigned)) {
                 $this->isError = true;
                 $error[$receipt->narration][$detail['glCode']] = ['GL Account is not assigned to the company'];
                 array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
             }
+
+
         }
 
 
@@ -270,7 +271,7 @@ class ReceiptAPIService
         if($receipt->documentType == 13) {
             $invoice = CustomerInvoice::where('bookingInvCode',$details['invoiceCode'])->first();
             if(!$invoice) {
-                $this->isError = true;
+//                $this->isError = true;
 //                $error[$receipt->narration][$details['invoiceCode']] = ['Invoice data not found'];
 //                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
 
