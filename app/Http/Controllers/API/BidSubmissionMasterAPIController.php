@@ -286,6 +286,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
                         $tenderMaster->save();
                 }
             }
+            else if($meth == 3){
+                unset($input['technical_verify_status']);
+                $input['technical_eval_remarks'] = $input['technical_eval_remarks'];
+                $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
+            }
             else if($meth == 2)
             {
                 $input['commercial_verify_by'] = \Helper::getEmployeeSystemID();

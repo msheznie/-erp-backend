@@ -285,8 +285,12 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         if (empty($bidEvaluationSelection)) {
             return $this->sendError('Bid Evaluation Selection not found');
         }
-        $input['updated_by'] = \Helper::getEmployeeSystemID();
-        $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
+
+        if($type == 1){
+            $input['updated_by'] = \Helper::getEmployeeSystemID();
+            $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
+        }
+
 
 
         if($type == 2)
@@ -312,6 +316,9 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
             // }
 
+            $input['updated_by'] = \Helper::getEmployeeSystemID();
+            $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
+
             BidSubmissionMaster::where('tender_id', $tender_id)->whereIn('id', $bid_master_ids)->update(
                 ['technical_verify_status'=>1,
                 'technical_verify_by'=>\Helper::getEmployeeSystemID(),
@@ -326,6 +333,20 @@ class BidEvaluationSelectionAPIController extends AppBaseController
                     $tenderMaster->technical_eval_status = 1;;
                     $tenderMaster->save();
             }
+        }
+
+        if($type == 3){
+                unset($input['status']);
+                unset($input['updated_at']);
+                $input['remarks'] = $input['remarks'];
+                $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
+
+                $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+                BidSubmissionMaster::where('tender_id', $tender_id)->whereIn('id', $bid_master_ids)->update(
+                    ['technical_eval_remarks'=>$input['remarks']]
+                );
+
+
         }
 
         return $this->sendResponse($bidEvaluationSelection->toArray(), 'BidEvaluationSelection updated successfully');
