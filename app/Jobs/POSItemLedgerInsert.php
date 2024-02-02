@@ -68,7 +68,12 @@ class POSItemLedgerInsert implements ShouldQueue
                             ->where('pos_source_invoicedetail.itemAutoID', $item->itemAutoId)
                             ->first();
                         $data['unitOfMeasure'] = $item->uom;
-                        $data['inOutQty'] = $invItems->defaultQty * -1;
+                        if($item->isReturnYN == 1) {
+                            $data['inOutQty'] = $item->qty;
+                        }
+                            else{
+                            $data['inOutQty'] = $invItems->defaultQty * -1;
+                        }
                         if ($invItems) {
                             $data['wareHouseSystemCode'] = $invItems->wareHouseID;
                             $data['wacLocalCurrencyID'] = $invItems->companyLocalCurrencyID;
