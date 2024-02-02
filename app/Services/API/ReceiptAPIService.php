@@ -160,7 +160,7 @@ class ReceiptAPIService
 
 
             $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$chartOfAccountDetails->chartOfAccountSystemID)->where('companySystemID',$receipt->companySystemID)->where('isAssigned',-1)->get();
-            if(!isset($chartOfAccountAssigned)) {
+            if(count($chartOfAccountAssigned) == 0) {
                 $this->isError = true;
                 $error[$receipt->narration][$detail['glCode']] = ['GL Account is not assigned to the company'];
                 array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
