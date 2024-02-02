@@ -176,11 +176,13 @@ class ReceiptAPIService
         if($receipt->documentType == 13) {
             $invCode = $details['invoiceCode'];
             $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
-            if($receipt->postedDate < Carbon::parse($invoice->postedDate)) {
-                $this->isError = true;
-                $error[$receipt->narration][$details['invoiceCode']] = ['Document date of a customer invoice receipt voucher should not be lesser than the invoice dates of customer invoices pulled'];
-                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            if($invoice) {
+                if($receipt->postedDate < Carbon::parse($invoice->postedDate)) {
+                    $this->isError = true;
+                    $error[$receipt->narration][$details['invoiceCode']] = ['Document date of a customer invoice receipt voucher should not be lesser than the invoice dates of customer invoices pulled'];
+                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
 
+                }
             }
         }
     }
@@ -189,16 +191,23 @@ class ReceiptAPIService
         if($receipt->documentType == 13) {
             $invCode = $details['invoiceCode'];
             $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
-            $accountReceivableLedgerDetails = AccountsReceivableLedger::where('documentCodeSystem',$invoice->custInvoiceDirectAutoID)->first();
-            if($accountReceivableLedgerDetails) {
-                $totalAmountReceived = CustomerReceivePaymentDetail::where('arAutoID',$accountReceivableLedgerDetails->arAutoID)->sum('receiveAmountTrans');
-                $bookingAmountTrans = $invoice->bookingAmountTrans + $invoice->VATAmount;
-                if(($totalAmountReceived+$details['receiptAmount']) > $bookingAmountTrans) {
-                    $this->isError = true;
-                    $error[$receipt->narration][$details['invoiceCode']] = ['Total received amount cannot be greater the invoice amount'];
-                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            if(!$invoice) {
+                $this->isError = true;
+                $error[$receipt->narration][$details['invoiceCode']] = ['Invoice data not found'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }else {
+                $accountReceivableLedgerDetails = AccountsReceivableLedger::where('documentCodeSystem',$invoice->custInvoiceDirectAutoID)->first();
+                if($accountReceivableLedgerDetails) {
+                    $totalAmountReceived = CustomerReceivePaymentDetail::where('arAutoID',$accountReceivableLedgerDetails->arAutoID)->sum('receiveAmountTrans');
+                    $bookingAmountTrans = $invoice->bookingAmountTrans + $invoice->VATAmount;
+                    if(($totalAmountReceived+$details['receiptAmount']) > $bookingAmountTrans) {
+                        $this->isError = true;
+                        $error[$receipt->narration][$details['invoiceCode']] = ['Total received amount cannot be greater the invoice amount'];
+                        array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                    }
                 }
             }
+
         }
     }
 
@@ -262,8 +271,8 @@ class ReceiptAPIService
             $invoice = CustomerInvoice::where('bookingInvCode',$details['invoiceCode'])->first();
             if(!$invoice) {
                 $this->isError = true;
-                $error[$receipt->narration][$details['invoiceCode']] = ['Invoice data not found'];
-                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+//                $error[$receipt->narration][$details['invoiceCode']] = ['Invoice data not found'];
+//                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
 
             }else {
                 if($invoice->customerID != $receipt->customerID) {
