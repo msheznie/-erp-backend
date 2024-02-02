@@ -1269,7 +1269,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     }
             
                     if ($data['estimated_unit_cost'] < 0) {
-                        return $this->sendError('Estimated Unit Cost Value Can Not Be Less Than Zero.', 500);
+                        return $this->sendError('Estimated unit cost value can not be less than zero.', 500);
                     }
                 }
             }
