@@ -642,4 +642,14 @@ class TenderMaster extends Model
  
     }
 
+    public function awardedSupplier()
+    {
+        return $this->hasOne('App\Models\TenderFinalBids', 'tender_id', 'id')->where('award', 1);
+    }
+
+    public function srmTenderMasterSuppliers()
+    {
+        return $this->hasOne('App\Models\TenderMasterSupplier', 'tender_master_id', 'id');
+    }
+
 }
