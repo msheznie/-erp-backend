@@ -16,7 +16,13 @@ jobs:
     runs-on: arc-runner-set
 
     steps:
-
+      - name: Check Target Branch Name
+        run: |
+          target_branch_name="${{ github.event.pull_request.base.ref }}"
+          if [[ ! ${target_branch_name} =~ ^(erp-sprint|hr-sprint|srm-sprint) ]]; then
+            echo "Skipping Code Standard validation as the target branch does not start with 'erp-sprint'"
+            exit 0
+          fi
       - name: Install Git
         run: sudo apt update && sudo apt-get -y install git
         
