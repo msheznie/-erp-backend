@@ -21,8 +21,20 @@ class SupplierService
      * @throws Throwable
      */
 
-    public function getTokenData($token)
+    public function checkValidTokenData($token)
     {
+        // Check Token Expired
+        $supplierTokenExpired = SupplierRegistrationLink::where([
+            ['token', $token],
+            ['token_expiry_date_time', '>', Carbon::now()->toDateTimeString()]
+        ])
+            ->first();
+
+        if (is_null($supplierTokenExpired)) {
+            return 1;
+        }
+
+        // Check linked already used
         $supplierDataUsingToken = SupplierRegistrationLink::where([
             ['token', $token],
             ['token_expiry_date_time', '>', Carbon::now()->toDateTimeString()],
@@ -31,15 +43,30 @@ class SupplierService
             ->first();
 
         if (is_null($supplierDataUsingToken)) {
-            return false;
+            return 2;
         }
-
-        return $supplierDataUsingToken;
     }
 
-    public function updateTokenStatus($token, $supplierUuid)
+    public function getTokenData($token)
     {
-        return DB::table('srm_supplier_registration_link')->where('token', $token)->update(['status' => 1, 'uuid' => $supplierUuid]);
+        return $supplierDataUsingToken = SupplierRegistrationLink::where([
+            ['token', $token],
+            ['token_expiry_date_time', '>', Carbon::now()->toDateTimeString()],
+            ['status', 0]
+        ])
+            ->first();
+    }
+
+    public function updateTokenStatus($token, $supplierUuid,$name,$email)
+    {
+        $data = [
+          'status' => 1,
+          'uuid' => $supplierUuid,
+          'name' => $name,
+          'email' => $email,
+        ];
+
+        return DB::table('srm_supplier_registration_link')->where('token', $token)->update($data);
     }
 
     /**

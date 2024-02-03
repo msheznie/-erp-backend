@@ -214,4 +214,9 @@ class PricingScheduleDetail extends Model
     public function getActiveAttribute(){
         return false;
     }
+
+    public function tender_bid_format_detail()
+    {
+        return $this->hasOne('App\Models\TenderBidFormatDetail', 'id', 'bid_format_detail_id');
+    }
 }

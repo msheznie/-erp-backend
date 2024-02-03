@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderSupplierAssigneeAPIRequest;
 use App\Http\Requests\API\UpdateTenderSupplierAssigneeAPIRequest;
 use App\Models\TenderSupplierAssignee;
@@ -311,14 +312,13 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $employee = \Helper::getEmployeeInfo();
 
-        $validator = \Validator::make($input, [
-            'email' => 'required|email|max:255',
-            'name' => 'required|max:255',
-            'regNo' => 'required|max:255',
-        ]);
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
+        $validateFileds = $this->validateFileds($input);
+
+        if(!$validateFileds['status']){
+            return $this->sendError($validateFileds['message'], $validateFileds['code']);
         }
+
+
 
         DB::beginTransaction();
         try {
@@ -357,6 +357,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $loginUrl = env('SRM_LINK');
         $urlArray = explode('/', $loginUrl);
         $urlArray = array_filter($urlArray);
+        $subDomain = Helper::getDomainForSrmDocuments($request);
         array_pop($urlArray);
 
         $getSupplierAssignedData = TenderSupplierAssignee::with(['supplierAssigned'])
@@ -382,6 +383,8 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         ->first();
 
                     if (!empty($isExist)) {
+                        $update['sub_domain'] = $subDomain;
+                        SupplierRegistrationLink::where('id', $isExist['id'])->update($update);
                         if($isExist['STATUS'] === 1){
                             $urlString = implode('//', $urlArray) . '/';
                             TenderSupplierAssignee::find($val['id'])
@@ -389,7 +392,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                             $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companyId, 1, $rfx);
                         } else if ($isExist['STATUS'] === 0){
                             $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
-                            $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
+                            $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
                             $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                             if($isUpdated){
                                 $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 1, $rfx);
@@ -401,7 +404,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     } else {
                         $isCreated = $this->registrationLinkRepository->save(request()->merge([
                             'name' => $name, 'email' => $email, 'registration_number' => $regNo, 'company_id' => $companyId,
-                            'is_bid_tender' => $isBidTender, 'created_via' => 1
+                            'is_bid_tender' => $isBidTender, 'created_via' => 1, 'domain' => $subDomain
                         ]), $token);
                         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
                         if ($isCreated['status'] == true) {
@@ -442,6 +445,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $urlArray = explode('/', $loginUrl);
         $urlArray = array_filter($urlArray);
         array_pop($urlArray);
+        $subDomain = Helper::getDomainForSrmDocuments($request);
 
         $getSupplierAssignedData = TenderSupplierAssignee::with(['supplierAssigned'])
             ->where('tender_master_id', $tenderId)
@@ -465,6 +469,8 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                 ->first();
 
             if (!empty($isExist)) {
+                $update['sub_domain'] = $subDomain;
+                SupplierRegistrationLink::where('id', $isExist['id'])->update($update);
                 if($isExist['STATUS'] === 1){
                     $urlString = implode('//', $urlArray) . '/';
                     $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companySystemId, 1, $rfx);
@@ -472,7 +478,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                 } elseif ($isExist['STATUS'] === 0) {
                     $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
-                    $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
+                    $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
                     $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                     if($isUpdated){
                         $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 1, $rfx);
@@ -484,7 +490,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             } else {
                 $isCreated = $this->registrationLinkRepository->save(request()->merge([
                     'name' => $name, 'email' => $email, 'registration_number' => $regNo, 'company_id' => $companySystemId,
-                    'is_bid_tender' => $isBidTender, 'created_via' => 1
+                    'is_bid_tender' => $isBidTender, 'created_via' => 1,'sub_domain'=>$subDomain
                 ]), $token);
 
                 if ($isCreated['status'] == true) {
@@ -503,9 +509,9 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
     public function sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, $type, $rfx)
     {
-        $docType = 'tender';
+        $docType = 'Tender';
         $emailFormatted = email::emailAddressFormat($email);
-        $tenderMaster = TenderMaster::select('title')
+        $tenderMaster = TenderMaster::select('title','description')
             ->where('id', $tenderId)
             ->where('company_id', $companySystemId)
             ->first();
@@ -514,13 +520,25 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         }
 
         if ($type == 1) {
-            Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
+            if($rfx){
+                Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
             Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            }else{
+            Mail::to($emailFormatted)->send(new EmailForQueuing(" ".$docType." Invitation link", "Dear Supplier," . "<br /><br />" . "
+            I trust this message finds you well." . "<br /><br />" . "
+            We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
+            If your company is interested in participating in the ".$docType." process, please click on the link below." . "<br /><br />" . "
+            " . "<b>" . " ".$docType." Title :" . "</b> " . $tenderMaster['title'] . "<br /><br />" . "
+            " . "<b>" . " ".$docType." Description :" . "</b> " . $tenderMaster['description'] . "<br /><br />" . "
+            " . "<b>" . "Link :" . "</b> " . "<a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . "
+            If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
+            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />"));
+            }
         } else {
             Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
-            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 96 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
         }
     }
     public function getNotSentEmail(Request $request){ 
@@ -556,5 +574,41 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         }
 
         return $this->sendResponse(0, 'File Deleted');
+    }
+
+    public function validateFileds($input){
+        $validator = \Validator::make($input, [
+            'email' => 'required|email|max:255',
+            'name' => 'required|max:255',
+            'regNo' => 'required|max:255',
+        ]);
+        if ($validator->fails()) {
+            return ['status' => false, 'message' => $validator->messages(), 'code' => 422];
+        }
+
+
+        $email = $input['email'];
+        $regNo = $input['regNo'];
+        $companyId =$input['companySystemID'];
+
+        $supplierRegLink = SupplierRegistrationLink::select('id','email','registration_number')
+            ->where('company_id',$companyId)
+            ->where('STATUS',1)
+            ->get();
+
+        $emails = $supplierRegLink->pluck('email')->toArray();
+        $registrationNumbers = $supplierRegLink->pluck('registration_number')->toArray();
+
+        if (in_array($email, $emails)) {
+            return ['status' => false, 'message' => 'Email already exists','code' => 402];
+        }
+
+        if (in_array($regNo, $registrationNumbers)) {
+            return ['status' => false, 'message' => 'Registration number already exists','code' => 402];
+        }
+
+
+        return ['status' => true, 'message' => 'success'];
+
     }
 }

@@ -35,6 +35,7 @@ use App\Models\ScheduleBidSubmission;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\PurchaseOrderDetails;
+use App\Models\SRMSupplierValues;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
@@ -329,29 +330,38 @@ class SRMService
     public function getSupplierInvitationInfo(Request $request)
     {
         $invitationToken = $request->input('extra.token');
-        $data = $this->supplierService->getTokenData($invitationToken);
+        $data = $this->supplierService->checkValidTokenData($invitationToken);
 
-        if (!$data) {
+        if ($data == 1) {
             return [
                 'success' => false,
-                'message' => "Invalid Token",
+                'message' => "Sorry, This link has already been expired",
                 'data' => null
             ];
+        } else if ($data == 2) {
+            return [
+                'success' => false,
+                'message' => "Sorry, This link has already been used",
+                'data' => null
+            ];
+        } else {
+            $dataSupplier = $this->supplierService->getTokenData($invitationToken);
+            return [
+                'success' => true,
+                'message' => 'Valid Invitation Link',
+                'data' => $dataSupplier
+            ];
         }
-
-        return [
-            'success' => true,
-            'message' => 'Valid Invitation Link',
-            'data' => $data
-        ];
     }
 
     public function updateSupplierInvitation(Request $request)
     {
         $invitationToken = $request->input('extra.token');
         $supplierUuid = $request->input('supplier_uuid');
+        $name = $request->input('extra.name');
+        $email = $request->input('extra.email');
 
-        $isUpdated = $this->supplierService->updateTokenStatus($invitationToken, $supplierUuid);
+        $isUpdated = $this->supplierService->updateTokenStatus($invitationToken, $supplierUuid,$name,$email);
 
         if (!$isUpdated) {
             return [
@@ -552,9 +562,23 @@ class SRMService
      */
     public function supplierRegistrationApprovalSetup(Request $request)
     {
+
+        $validateSupplierEmail = $this->validateSupplierEmail($request);
+
+        if(!$validateSupplierEmail['status']){
+            return [
+                'success' => false,
+                'message' => $validateSupplierEmail['message'],
+                'data' => []
+            ];
+        }
+
         $supplierLink = SupplierRegistrationLink::where('uuid', $request->input('supplier_uuid'))->first();
 
         throw_unless($supplierLink, "Something went wrong, UUID doesn't match with ERP supplier link table reocrd");
+        $userEmail = $request->input('extra.data.supplierUserEmail');
+        $name = $request->input('extra.data.supplierName');
+
 
         $data = $this->supplierService->createSupplierApprovalSetup([
             'autoID' => $supplierLink->id,
@@ -562,6 +586,21 @@ class SRMService
             'documentID' => 107, // 107 mean documentMaster id of "Supplier Registration" document in ERP
             'email' => $supplierLink->email
         ]);
+
+        if($data['success']){
+            $conditions = [
+                'uuid' => $request->input('supplier_uuid'),
+                'company_id' => $supplierLink->company_id,
+                'supplier_id' => $supplierLink->id,
+            ];
+
+            $updates = [
+                'user_name' => $userEmail,
+                'name' => $name,
+            ];
+
+            SRMSupplierValues::customCreateOrUpdate($conditions, $updates);
+        }
 
         return [
             'success' => $data['success'],
@@ -798,9 +837,16 @@ class SRMService
         $kycFormDetails = SupplierRegistrationLink::where('uuid', $request->input('supplier_uuid'))
             ->first();
         $id = $kycFormDetails->id;
+        $isApprovalAmmend = $request->has('approvalAmmend') ? $request->input('approvalAmmend') : 0;
         $companySystemID = $kycFormDetails->company_id;
         $documentSystemID = 107;
         $timesReferred = $kycFormDetails->timesReferred;
+
+
+        if($isApprovalAmmend == 1){ 
+            $update['approved_yn'] = 0;
+            SupplierRegistrationLink::where('uuid',$request->input('supplier_uuid'))->update($update);
+        }
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $companySystemID)
@@ -2048,10 +2094,17 @@ class SRMService
             'commerical_bid_closing_date',
             'no_of_alternative_solutions',
             'is_active_go_no_go',
-            'stage'
+            'stage',
+            'document_system_id'
         )
             ->where('id', $tenderMasterId)
             ->first();
+
+        if($tenderMaster['document_system_id'] == 108){
+            $doctype = "Tender";
+        }else{
+            $doctype = "";
+        }
 
         $ClanderDetails = DB::table('srm_calendar_dates_detail')->selectRaw(
             'srm_calendar_dates.calendar_date, 
@@ -2070,7 +2123,7 @@ class SRMService
         if (!empty($tenderMaster)) {
             $tenderDates = array(
                 [
-                    'calendar_date' => 'Document Sale',
+                    'calendar_date' => $doctype.' Document Sale',
                     'from_date' => (!is_null($tenderMaster['document_sales_start_date'])) ? Carbon::parse($tenderMaster['document_sales_start_date'])->format('Y-m-d') : null,
                     'to_date' => (!is_null($tenderMaster['document_sales_end_date'])) ? Carbon::parse($tenderMaster['document_sales_end_date'])->format('Y-m-d') : null
                 ],
@@ -2328,6 +2381,7 @@ class SRMService
         }
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+        $data['showTechnicalCriteria'] = TenderMaster::select('show_technical_criteria')->where('id', $tenderId)->first();
 
         return [
             'success' => true,
@@ -2477,7 +2531,8 @@ class SRMService
                         }, $outcome->toArray());
 
 
-                        $formula_cal = PirceBidFormula::process($details_obj);
+                         $formula_cal = PirceBidFormula::process($details_obj,$tender_id);
+
 
                         foreach($formula_cal as $val)
                         {
@@ -2676,8 +2731,10 @@ class SRMService
 
         DB::beginTransaction();
         try {
+            $showTechnicalCriteria = TenderMaster::select('show_technical_criteria')->where('id', $tenderId)->first();
+
             if ($criteriaDetail['answer_type_id'] == 4 || $criteriaDetail['answer_type_id'] == 2) {
-                if ($criteriaDetail['bid_submission_detail']['score_id'] > 0 && $criteriaDetail['bid_submission_detail']['score_id'] != null) {
+                if (($showTechnicalCriteria['show_technical_criteria'] == 0 && $criteriaDetail['bid_submission_detail']['score_id'] > 0 && $criteriaDetail['bid_submission_detail']['score_id'] != null) || $showTechnicalCriteria['show_technical_criteria'] == 1) {
                     $score = EvaluationCriteriaScoreConfig::where('id', $criteriaDetail['bid_submission_detail']['score_id'])->first();
                     $push['bid_master_id'] = $bidMasterId;
                     $push['tender_id'] = $tenderId;
@@ -3040,7 +3097,12 @@ class SRMService
             },'bid_format_detail' =>function ($q) use ($bidMasterId) {
                 $q->where('bid_master_id', $bidMasterId);
                 $q->orWhere('bid_master_id', null);
-            }]);
+            },
+                'tender_bid_format_detail' => function ($q) {
+                    $q->select('id', 'tender_id', 'label', 'field_type', 'finalTotalYn');
+                    $q->where('finalTotalYn', 1);
+                }
+            ]);
         }])->where('tender_id', $tenderId)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
@@ -3295,6 +3357,8 @@ class SRMService
 
         }
 
+        $showTechnicalCriteria = TenderMaster::select('show_technical_criteria')->where('id', $tenderId)->first();
+
         if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
             $data['goNoGoStatus'] = 0;
         }else {
@@ -3319,6 +3383,8 @@ class SRMService
 
 
         if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
+            $data['technicalStatus'] = 0;
+        } else if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $showTechnicalCriteria['show_technical_criteria'] == 1) {
             $data['technicalStatus'] = 0;
         }else {
             $data['technicalStatus'] =1;
@@ -3453,7 +3519,7 @@ class SRMService
 
 
 
-            $formula_cal = PirceBidFormula::process($details);
+            $formula_cal = PirceBidFormula::process($details,$tenderId);
 
             foreach($formula_cal as $val)
             {
@@ -3510,7 +3576,7 @@ class SRMService
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
-
+        $tenderMainWork = PricingScheduleDetail::where('id', $detail['main_work_id'])->first();
 
         DB::beginTransaction();
         try {
@@ -3547,7 +3613,7 @@ class SRMService
                     $mainWork['updated_by'] = $supplierRegId;
                     BidMainWork::where('id', $bidMainWork['id'])->update($mainWork);
                 } else {
-                    $tenderMainWork = PricingScheduleDetail::where('id', $detail['main_work_id'])->first();
+
                     $mainWork['main_works_id'] = $detail['main_work_id'];
                     $mainWork['bid_master_id'] = $bidMasterId;
                     $mainWork['tender_id'] = $tenderMainWork['tender_id'];
@@ -3590,7 +3656,7 @@ class SRMService
 
 
 
-            $formula_cal = PirceBidFormula::process($details);
+            $formula_cal = PirceBidFormula::process($details,$tenderMainWork['tender_id']);
 
             foreach($formula_cal as $val)
             {
@@ -3837,7 +3903,7 @@ class SRMService
                     }, $outcome->toArray());
 
 
-                    $formula_cal = PirceBidFormula::process($details_obj);
+                    $formula_cal = PirceBidFormula::process($details_obj,$tenderId);
 
                     foreach($formula_cal as $val)
                     {
@@ -4174,7 +4240,12 @@ class SRMService
             })
             ->where('documentSystemCode', $bidMasterId)->count();
 
+
+            $showTechnicalCriteria = TenderMaster::select('show_technical_criteria')->where('id', $tender)->first();
+
             if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
+                $group['technical_bid_submission_status'] = 0;
+            } else if( (count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $showTechnicalCriteria['show_technical_criteria'] == 1){
                 $group['technical_bid_submission_status'] = 0;
             }else {
                 $group['technical_bid_submission_status'] =1;
@@ -4658,6 +4729,18 @@ class SRMService
         $pricingSchedule = $tenderNegotiationArea->area->pricing_schedule;
         $technicalEvaluation = $tenderNegotiationArea->area->technical_evaluation;
         $tenderDocuments = $tenderNegotiationArea->area->tender_documents;
+
+        $envelopeType = [];
+        $envelopeType[] = $pricingSchedule ? 1 : null;
+        $envelopeType[] = $technicalEvaluation ? 2 : null;
+        $envelopeType[] = $tenderDocuments ? 3 : null;
+
+        $envelopeType = array_filter($envelopeType);
+
+
+        $pricingSchedule = $tenderNegotiationArea->area->pricing_schedule;
+        $technicalEvaluation = $tenderNegotiationArea->area->technical_evaluation;
+        $tenderDocuments = $tenderNegotiationArea->area->tender_documents;
         $data['tender_id'] = $tender_id;
         $data['tender_negotiation_id'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['tender_negotiation_id'];
         $data['bid_submission_master_id_old'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id'];
@@ -4705,10 +4788,8 @@ class SRMService
         }
 
         $docAttachments = DocumentAttachments::where('documentSystemCode', $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id']);
-            if($tenderDocuments) {
-                $docAttachments = $docAttachments->whereNull('parent_id');
-            }
-           $docAttachments = $docAttachments->get();
+
+        $docAttachments = $docAttachments->get()->whereNotIn('envelopType',$envelopeType);
 
         if(count($docAttachments) > 0){
             foreach ($docAttachments as $docAttachment){
@@ -4806,5 +4887,41 @@ class SRMService
         return TenderBidNegotiation::where('tender_id', $tenderId)
         ->pluck('bid_submission_master_id_new')
         ->toArray();
+    }
+
+    public function getSupplierRegistrationData(Request $request) {
+         $companyId = $request['companyId'];
+
+         $supRegData = SupplierRegistrationLink::select('id','email','uuid')
+              ->where('company_id',$companyId)
+              ->where('STATUS',1)
+              ->get();
+
+        return [
+            'success' => true,
+            'message' => 'ERP Form Data Retrieved',
+            'data' => $supRegData
+        ];
+    }
+
+    public function validateSupplierEmail($request)
+    {
+        $companyId = $request->input('extra.data.company_id');
+        $userEmail = $request->input('extra.data.supplierUserEmail');
+        $supplierUuid = $request->input('supplier_uuid');
+        $request->merge([
+            'companyId' => $companyId
+        ]);
+
+        $supRegData = $this->getSupplierRegistrationData($request);
+        $filteredData = $supRegData['data']->filter(function ($item) use ($supplierUuid) {
+            return $item->uuid != $supplierUuid;
+        });
+
+        $emails = $filteredData->pluck('email')->toArray();
+        if (in_array($userEmail, $emails)) {
+            return ['status' => false, 'message' => 'Email already exists'];
+        }
+        return ['status' => true, 'message' => 'Success'];
     }
 }

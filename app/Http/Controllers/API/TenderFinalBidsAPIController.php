@@ -2,13 +2,20 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderFinalBidsAPIRequest;
 use App\Http\Requests\API\UpdateTenderFinalBidsAPIRequest;
+use App\Models\BidSubmissionMaster;
+use App\Models\Company;
+use App\Models\DocumentAttachments;
+use App\Models\Employee;
+use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderFinalBids;
 use App\Repositories\TenderFinalBidsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -356,6 +363,93 @@ class TenderFinalBidsAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getFinalBidsReport(Request $request)
+    {
+        $tenderId = $request->get('id');
+        $employeeID = $request->get('userID');
+        $tenderMaster= TenderMaster::select('title', 'tender_code', 'stage', 'negotiation_code', 'bid_opening_date', 'technical_bid_opening_date', 'commerical_bid_opening_date', 'award_comment', 'negotiation_award_comment', 'negotiation_code')
+            ->where('id', $tenderId)
+            ->first();
+
+        $tenderCompany = TenderMaster::with('company')->where('id', $tenderId)->first();
+
+        $isNegotiation = 0;
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        $bidSubmissionMasterIds = [];
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        }
+
+        $query = TenderFinalBids::selectRaw('srm_tender_final_bids.id,srm_tender_final_bids.status,srm_tender_final_bids.supplier_id,srm_tender_final_bids.com_weightage,srm_tender_final_bids.tech_weightage,srm_tender_final_bids.total_weightage,srm_tender_final_bids.bid_id,srm_bid_submission_master.bidSubmittedDatetime,srm_supplier_registration_link.name,srm_bid_submission_master.bidSubmissionCode,srm_bid_submission_master.line_item_total,srm_tender_final_bids.award, srm_tender_final_bids.combined_ranking')
+            ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
+            ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+            ->where('srm_tender_final_bids.status',1)
+            ->where('srm_tender_final_bids.tender_id', $tenderId);
+
+        if ($tenderMaster->negotiation_code != null || $tenderMaster->negotiation_code != '') {
+            $isNegotiation = 1;
+            $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        }
+
+        $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
+
+        $awardSummary = $query->orderBy('srm_tender_final_bids.total_weightage','desc')->get();
+        $time = strtotime("now");
+        $fileName = 'Supplier_Ranking_Summary' . $time . '.pdf';
+        $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation, 'tenderCompany' => $tenderCompany, 'employeeData' => $employeeData);
+        $html = view('print.final_bid_summary_print', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+    public function getTenderAwardingReport(Request $request)
+    {
+        $tenderId = $request->get('id');
+        $employeeID = $request->get('userID');
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
+
+        $getNegotiationCode = TenderMaster::select('negotiation_code')->where('id', $tenderId)->first();
+
+        $tenderMaster = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
+            if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
+                $q->whereIn('bid_id', $bidSubmissionMasterIds);
+            }
+            $q->where('award', 1)->with('supplier');
+        }])->first();
+
+
+        $employeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
+
+        $company = Company::where('companySystemID', $tenderMaster->company_id)->first();
+
+        $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
+
+        $time = strtotime("now");
+        $fileName = 'Minutes_of_Tender_Awarding' . $time . '.pdf';
+        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData);
+        $html = view('print.minutes_of_tender_awarding_print', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+
     }
 
 

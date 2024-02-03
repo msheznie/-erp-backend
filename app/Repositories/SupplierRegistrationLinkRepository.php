@@ -42,11 +42,12 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->registration_number = $request->input('registration_number');
         $supplierRegistrationLink->company_id = $request->input('company_id');
         $supplierRegistrationLink->token = $token;
-        $supplierRegistrationLink->token_expiry_date_time = Carbon::now()->addHours(48);
+        $supplierRegistrationLink->token_expiry_date_time = Carbon::now()->addHours(96);
         $supplierRegistrationLink->created_by = \Helper::getEmployeeSystemID();
         $supplierRegistrationLink->updated_by = '';
         $supplierRegistrationLink->is_bid_tender =  ($request->input('is_bid_tender') == true ? 1:0);
         $supplierRegistrationLink->created_via =  1;
+        $supplierRegistrationLink->sub_domain = $request->input('domain');
         $result = $supplierRegistrationLink->save();
         if($result){ 
             return ['status' => true,'id' =>$supplierRegistrationLink->id];

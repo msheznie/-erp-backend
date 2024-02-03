@@ -2,6 +2,7 @@
 
 namespace App\helper;
 
+use App\Models\PricingScheduleDetail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -9,25 +10,29 @@ use Illuminate\Support\Facades\Log;
 class PirceBidFormula
 {
 
-    public static function process($details)
+    public static function process($details,$tender_id = null)
     {
-
         $details1 = [];
-        foreach($details as $key=>$val)
-        {   
-         
-            if($val['typeId'] == 4)
-            {   $p = '';
+
+        foreach($details as $key=>$val) {
+
+            if ($val['typeId'] == 4) {
+
+
+                 $p = '';
                 $cont = '';
                 $data = [];
-                $formula_arr = null;  
-                
+                $formula_arr = null;
           
                 if (!is_null($val['formula_string'])) {
                        
                         if ($val['formula_string']) {
-                        
-                            $formula_arr = explode('~', $val['formula_string']);
+
+                           $formula = self::decodeFormula($val['formula_string'],$tender_id);
+
+                            $formula_arr = explode('~', $formula);
+
+
                  
                             foreach ($formula_arr as $formula_row) {
                                 if (trim($formula_row) != '') 
@@ -77,6 +82,7 @@ class PirceBidFormula
                                    
                                       
                                     }
+
                                     else if($elementType == '|')
                                     {
                                         
@@ -119,11 +125,39 @@ class PirceBidFormula
                 
                         array_push($details1,$data);
                     }
-                
 
-         }
+
+            }
 
         return $details1;
+    }
+
+
+    public static function decodeFormula($formula,$tender_id){
+        $formulaD = $formula;
+        $pattern = '/#(\d+)/';
+
+        preg_match_all($pattern, $formulaD, $matches);
+
+        if (!empty($matches[0])) {
+            $dynamicNumbers = array_unique($matches[1]);
+            foreach ($dynamicNumbers as $number) {
+                $replacementValue = self::formula($number,$tender_id);
+                $formulaD = str_replace("#$number", $replacementValue, $formulaD);
+            }
+        }else {
+            $formulaD = $formula;
+        }
+
+         return $formulaD;
+    }
+
+    public static  function formula($id,$tender_id){
+        $formula = PricingScheduleDetail::select('formula_string')
+            ->where('tender_id',$tender_id)
+            ->where('bid_format_detail_id',$id)
+            ->first();
+        return self::decodeFormula($formula['formula_string'],$tender_id);
     }
 
 

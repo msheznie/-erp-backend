@@ -86,6 +86,7 @@ define('GET_PAYMENTVOUCHERS', 'GET_PAYMENTVOUCHERS');
 define('GET_PAYMENT_VOUCHER_DETAILS', 'GET_PAYMENT_VOUCHER_DETAILS');
 define('CHECK_GRV_CREATION', 'CHECK_GRV_CREATION');
 define('GET_NEGOTIATION_TENDERS', 'GET_NEGOTIATION_TENDERS');
+define('GET_SUPPLIER_REGISTRATION_DATA', 'GET_SUPPLIER_REGISTRATION_DATA');
 
 
 class APIController extends Controller
@@ -247,7 +248,8 @@ class APIController extends Controller
                 return $this->SRMService->checkGrvCreation($request);
             case GET_NEGOTIATION_TENDERS:
                 return $this->SRMService->getNegotiationTenders($request);
-                     
+            case GET_SUPPLIER_REGISTRATION_DATA:
+                return $this->SRMService->getSupplierRegistrationData($request);
             default:
                 return [
                     'success'   => false,
@@ -285,11 +287,11 @@ class APIController extends Controller
                             foreach ($val2->controls as $val3) {
                                 foreach ($val3->field->values as $key1 => $val4) {
                                     if ($val3->form_field_id == 1) { //Category 
-                                        $category = SupplierCategoryMaster::select('categoryDescription', 'categoryCode')->where('supCategoryMasterID', $val4->value)->first();
-                                        $val4->value = $category['categoryDescription'];
+                                        $category = SupplierCategoryMaster::select('categoryDescription', 'categoryCode','categoryName')->where('supCategoryMasterID', $val4->value)->first();
+                                        $val4->value = $category['categoryName'];
                                     } else if ($val3->form_field_id == 2) { // Sub Category 
-                                        $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode')->where('supCategorySubID', $val4->value)->first();
-                                        $val4->value = $subCategory['categoryDescription'];
+                                        $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode','categoryName')->where('supCategorySubID', $val4->value)->first();
+                                        $val4->value = $subCategory['categoryName'];
                                     } else if ($val3->form_field_id == 28) { // Preferred Functional Currency
                                         $currency = CurrencyMaster::select('CurrencyCode', 'CurrencyName')->where('currencyID', $val4->value)->first();
                                         $val4->value = $currency['CurrencyName'] . ' (' . $currency['CurrencyCode'] . ')';
@@ -308,6 +310,14 @@ class APIController extends Controller
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            if ($request->input('request') == 'GET_SUPPLIER_HISTORY_DETAILS') {
+                if ($response->data) {
+                    foreach ($response->data  as $key1 => $data1) { 
+                        $this->updateFieldValues($data1);
                     }
                 }
             }
@@ -341,6 +351,65 @@ class APIController extends Controller
                 'message' => $exception->message,
                 'data' => $exception->message
             ], 500);
+        }
+    }
+
+    function updateFieldValues($data)
+    {
+        switch ($data->form_field_id) {
+            case 63:
+                $data->value = ($data->value == '1') ? 'Yes' : 'No';
+                break;
+            case 1:
+            case 2:
+                $category = ($data->form_field_id == 1) ?
+                    SupplierCategoryMaster::select('categoryName')->where('supCategoryMasterID', $data->value)->first() :
+                    SupplierCategorySub::select('categoryName')->where('supCategorySubID', $data->value)->first();
+    
+                $data->value = $category ? $category['categoryName'] : '';
+                break;
+            case 28:
+                $currency = CurrencyMaster::select('CurrencyCode', 'CurrencyName')->where('currencyID', $data->value)->first();
+                $data->value = $currency ? $currency['CurrencyName'] . ' (' . $currency['CurrencyCode'] . ')' : '';
+                break;
+            case 46:
+                $countryMaster = CountryMaster::select('countryName')->where('countryID', $data->value)->first();
+                $data->value = $countryMaster ? $countryMaster['countryName'] : '';
+                break;
+            case $data->form_data_id > 0 :
+                $data->value = $data->options->text;
+                break;
+            default: 
+                break;
+        }
+    
+        if (isset($data->supplier_detail)) {
+            switch ($data->supplier_detail->form_field_id) {
+                case 63:
+                    $data->supplier_detail->value = ($data->supplier_detail->value == '1') ? 'Yes' : 'No';
+                    break;
+                case 1:
+                case 2:
+                    $category = ($data->supplier_detail->form_field_id == 1) ?
+                        SupplierCategoryMaster::select('categoryName')->where('supCategoryMasterID', $data->supplier_detail->value)->first() :
+                        SupplierCategorySub::select('categoryName')->where('supCategorySubID', $data->supplier_detail->value)->first();
+    
+                    $data->supplier_detail->value = $category ? $category['categoryName'] : '-';
+                    break;
+                case 28:
+                    $currency = CurrencyMaster::select('CurrencyCode', 'CurrencyName')->where('currencyID', $data->supplier_detail->value)->first();
+                    $data->supplier_detail->value = $currency ? $currency['CurrencyName'] . ' (' . $currency['CurrencyCode'] . ')' : '';
+                    break;
+                case 46:
+                    $countryMaster = CountryMaster::select('countryName')->where('countryID', $data->supplier_detail->value)->first();
+                    $data->supplier_detail->value = $countryMaster ? $countryMaster['countryName'] : '';
+                    break;
+                case $data->form_data_id > 0 :
+                    $data->supplier_detail->value = $data->supplier_detail->options->text;
+                    break;
+                default: 
+                    break;
+            }
         }
     }
 }

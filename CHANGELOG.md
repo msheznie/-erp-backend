@@ -1,5 +1,14 @@
 # Changelog
 
+## [10.30.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.30.1...v10.30.2) (2024-01-18)
+
+
+### Bug Fixes
+
+* **accounts payable:** supplier ledger invalid data load issue fixed [GCP-2727] ([#5477](https://github.com/pbsgears/Gears_BackEnd/issues/5477)) ([4df8205](https://github.com/pbsgears/Gears_BackEnd/commit/4df8205e631089a792f85393201eba57a65b08ff))
+* **general ledger:** budget upload template download issue fixed [GCP-2731] ([#5479](https://github.com/pbsgears/Gears_BackEnd/issues/5479)) ([0775ea3](https://github.com/pbsgears/Gears_BackEnd/commit/0775ea3da3b12a021684990925b01b383043cffd))
+* **inventory:** direct materialissue item cannot be added and qnty cannot be change fixed [GCP-2730] ([#5478](https://github.com/pbsgears/Gears_BackEnd/issues/5478)) ([ab4980b](https://github.com/pbsgears/Gears_BackEnd/commit/ab4980b90902ef9ee37dc96f803e62c84c37332c))
+
 ## [10.30.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.29.1...v10.30.0) (2024-01-16)
 
 

@@ -217,4 +217,8 @@ class DocumentApproved extends Model
     public function employeeRole(){ 
         return $this->hasOne('App\Models\Appointment',['id', 'RollLevForApp_curr'],['documentSystemCode', 'rollLevelOrder']);
     }
+
+    public function suppliername(){
+        return $this->belongsTo('App\Models\SupplierRegistrationLink','documentSystemCode','id');
+    }
 }

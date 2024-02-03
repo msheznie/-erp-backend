@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
+use App\Models\SRMSupplierValues;
 use App\Services\SRMService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -171,21 +172,61 @@ class SupplierRegistrationApprovalController extends AppBaseController
      */
     public function approveSupplierKYC($request)
     {
-        $approve = Helper::approveDocument($request);
+       $supplierMasterId = $this->isSupplierMasterCreated($request['id']);  
+       
+       $approve = Helper::approveDocument($request);
 
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
             if ($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
+
+                $getUpdatedValues = SRMSupplierValues::select('user_name','name')
+                    ->where('company_id',$request['company_id'])
+                    ->where('supplier_id',$request['id'])
+                    ->first();
+
+                $userName = $getUpdatedValues['user_name'];
+                $name = $getUpdatedValues['name'];
+
+                SupplierRegistrationLink::where('id', $request['id'])
+                    ->update([
+                        'email' => $userName,
+                        'name' => $name
+                ]);
+
                 $response = $this->srmService->callSRMAPIs([
                     'apiKey' => $request->input('api_key'),
                     'request' => 'UPDATE_KYC_STATUS',
                     'extra' => [
                         'status'    => APPROVED,
                         'auth'      => $request->user(),
-                        'uuid'      => $request->input('uuid')
+                        'uuid'      => $request->input('uuid'),
+                        'email' => $userName,
+                        'name' => $name
                     ]
                 ]);
+
+                if($supplierMasterId['supplier_master_id'] > 0){ 
+                    $getSupplierData = $this->getKYCData($request);
+                    $supData = $getSupplierData->data;
+                    $supDataArray = json_decode(json_encode($supData), true);
+                    $supplierReg = [
+                        'registrationNumber' => $supData->registrationNumber,
+                        'company_id'=> $supplierMasterId['company_id'],
+                        'supplierMasterId'=> $supplierMasterId['supplier_master_id'],
+                        'isApprovalAmmend'=> 1,
+                        'primarySupplierCode'=> $supplierMasterId['supplier']['primarySupplierCode']
+                    ];
+        
+                    $request->merge([
+                        'data' => $supDataArray,
+                        'supplierRegistration' => $supplierReg,
+                    ]);
+        
+                    $this->supplierCreation($request); 
+               }
+        
 
                 if ($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
             }
@@ -225,8 +266,10 @@ class SupplierRegistrationApprovalController extends AppBaseController
     public function supplierCreation(Request $request)
     {
         $input = $request->all();
+        
         $supplierFormValues = $input['data'];
         $supplierMasterData = $input['supplierRegistration'];
+        $isApprovalAmmend = isset($supplierMasterData['isApprovalAmmend']) ? $supplierMasterData['isApprovalAmmend'] : 0;
         //$countryID =  $input['supplierCountryID'];
         $company = Company::where('companySystemID', $supplierMasterData['company_id'])->first();
         $employee = \Helper::getEmployeeInfo();
@@ -274,41 +317,106 @@ class SupplierRegistrationApprovalController extends AppBaseController
         }
 
         $data['webAddress'] = $supplierFormValues['webAddress'];
-        $supplierMasters = SupplierMaster::create($data); 
-        $dataPrimary['primarySupplierCode'] = 'S0' . strval($supplierMasters['supplierCodeSystem']);
-        SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])
-            ->update($dataPrimary);  
+        
+        if($isApprovalAmmend!=1){ 
+            $supplierMasters = SupplierMaster::create($data); 
+            $dataPrimary['primarySupplierCode'] = 'S0' . strval($supplierMasters['supplierCodeSystem']);
+            SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])
+                ->update($dataPrimary);  
+    
+        }else {  
+            
+            SupplierMaster::where('supplierCodeSystem',$supplierMasterData['supplierMasterId'])
+            ->update($data);
 
+            $supplierMasters['supplierCodeSystem'] =$supplierMasterData['supplierMasterId'];
+            $supplierMasters['currency'] = ($supplierFormValues['currency'] != "0") ? $supplierFormValues['currency']  : null;
+
+        }
+       
         $supplierCurrency = new SupplierCurrency();
         $supplierCurrency->supplierCodeSystem = $supplierMasters['supplierCodeSystem'];
         $supplierCurrency->currencyID =  $supplierMasters['currency'];
         $supplierCurrency->isAssigned = -1;
         $supplierCurrency->isDefault = -1;
-        $supplierCurrency->save();
+
+        if($isApprovalAmmend!=1){ 
+            $supplierCurrency->save();
+        }else { 
+            SupplierCurrency::where('supplierCodeSystem', $supplierMasterData['supplierMasterId'])
+            ->update([
+                'supplierCodeSystem' => $supplierMasters['supplierCodeSystem'],
+                'currencyID' => $supplierMasters['currency'],
+                'isAssigned' => -1,
+                'isDefault' => -1
+            ]);
+        }
+       
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first(); 
         $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee['empID'];
         $empName = $employee['empName'];
+        $temBankMemo = new BankMemoSupplier();
 
+        if($isApprovalAmmend!=1){ 
+            foreach ($companyDefaultBankMemos as $value) {
+                $temBankMemo->memoHeader = $value['bankMemoHeader'];
+                $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
+                $temBankMemo->memoDetail = '';
+                $temBankMemo->supplierCodeSystem = $supplier->supplierCodeSystem;
+                $temBankMemo->supplierCurrencyID = $supplierCurrency->supplierCurrencyID;
+                $temBankMemo->updatedByUserID = $empId;
+                $temBankMemo->updatedByUserName = $empName;
+                $temBankMemo->save();
+            }
+       
+       
+            $isUpdated = SupplierRegistrationLink::where('id', $supplierMasterData['id'])
+            ->update([
+                'supplier_master_id' => $supplier->supplierCodeSystem
+            ]);
+        }else { 
+            BankMemoSupplier::where('supplierCodeSystem', $supplierMasterData['supplierMasterId'])
+            ->update([
+                'supplierCurrencyID' => $supplierCurrency->supplierCurrencyID
+            ]); 
 
-        foreach ($companyDefaultBankMemos as $value) {
-            $temBankMemo = new BankMemoSupplier();
-            $temBankMemo->memoHeader = $value['bankMemoHeader'];
-            $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
-            $temBankMemo->memoDetail = '';
-            $temBankMemo->supplierCodeSystem = $supplier->supplierCodeSystem;
-            $temBankMemo->supplierCurrencyID = $supplierCurrency->supplierCurrencyID;
-            $temBankMemo->updatedByUserID = $empId;
-            $temBankMemo->updatedByUserName = $empName;
-            $temBankMemo->save();
+            $dataPrimary['primarySupplierCode'] = $supplierMasterData['primarySupplierCode'];
         }
 
-        $isUpdated = SupplierRegistrationLink::where('id', $supplierMasterData['id'])
-        ->update([
-            'supplier_master_id' => $supplier->supplierCodeSystem
-        ]);
+      
         return $this->sendResponse($dataPrimary['primarySupplierCode'] ,"Supplier created successfully");
+    }
+
+    public function isSupplierMasterCreated($supplierId){ 
+        $isMasterCreate = SupplierRegistrationLink::select('supplier_master_id','company_id')
+        ->with(['supplier'=>function ($q){ 
+            $q->select('supplierCodeSystem','supplierName','primarySupplierCode');
+        }])
+        ->where('id',$supplierId)
+        ->first();
+
+        return $isMasterCreate;
+    }
+
+    public function getKYCData($request){
+        
+        $response = $this->srmService->callSRMAPIs([
+            'apiKey' => $request->input('api_key'),
+            'request' => 'GET_SUPPLIER_DETAIL_CREATIONS',
+            'extra' => [ 
+                'auth'      => $request->user(),
+                'uuid'      => $request->input('uuid')
+            ]
+        ]);
+
+        if ($response && $response->success === true){ 
+            return $response;
+        }
+
+        return $this->sendError("Something went wrong!, Supplier data couldn't be fetched");
+
     }
 }

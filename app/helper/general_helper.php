@@ -112,6 +112,8 @@ use App\Models\BookInvSuppDet;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\CurrencyMaster;
 use App\helper\CreateCustomerThirdPartyInvoice;
+use App\Models\DocumentAttachments;
+use App\Models\SRMSupplierValues;
 
 class Helper
 {
@@ -3334,17 +3336,42 @@ class Helper
                                         $pushNotificationUserIds = [];
                                         $pushNotificationArray = [];
                                         $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
-
+                                        $file = []; 
                                         
                                         if($params["document"] == 117 )
                                         {
-                                            $document->documentDescription = $sorceDocument->type == 1?'Edit request':'Amend request';
+                                            $document->documentDescription = $sorceDocument->type == 1?'Edit request':'Amend request'; 
                                         }
 
                                         if($params["document"] == 118 )
-                                        {
-                                            $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
-                                        }
+                                        { 
+                                            $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request'; 
+                                            $companySystemId = $documentApproved->companySystemID;
+                                            
+                                            $amendmentsList = DocumentModifyRequest::select('id','documentSystemCode','document_master_id')
+                                            ->with(['documentAttachments'=> function ($q) use ($companySystemId){ 
+                                                $q->select('documentSystemCode','attachmentID','originalFileName','path')
+                                                ->where('companySystemID',$companySystemId)
+                                                ->where('documentSystemID',108)
+                                                ->where('attachmentType',3);
+                                            }])
+                                            ->whereHas('documentAttachments', function($q2) use ($companySystemId) {
+                                                $q2->where('companySystemID',$companySystemId)
+                                                ->where('documentSystemID',108)
+                                                ->where('attachmentType',3);
+                                            })
+                                            ->where('id',$params['autoID'])
+                                            ->where('companySystemID',$companySystemId)
+                                            ->first();
+            
+                                            if(!empty($amendmentsList)){  
+                                                $documentAttachments = $amendmentsList->documentAttachments;
+                                                    foreach ($documentAttachments as $amendments){
+                                                        $file[$amendments->originalFileName] = Helper::getFileUrlFromS3($amendments->path);
+                                                    }     
+                                            }
+                                        } 
+ 
                                         
                                         if($params["document"] == 56 )
                                         {
@@ -3359,6 +3386,15 @@ class Helper
 
                                        
 
+                                        if($document->documentSystemID == 107){
+                                            $approvedDocNameBody = $document->documentDescription . ', <b> "' . $documentApproved->suppliername->name . '"</b>';
+                                        }
+
+                                        if($document->documentSystemID == 108 || $document->documentSystemID == 113){
+                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                            $approvedDocNameBody = $type[$params["document_type"]]. ' ' . ' <b>' . $documentApproved->documentCode . '</b>';
+                                        }
+
                                         // if (in_array($params["document"], self::documentListForClickHere())) {
                                         //     if (in_array($params["document"], [1, 50, 51])) {
                                         //         $redirectUrl =  env("PR_APPROVE_URL");
@@ -3371,11 +3407,36 @@ class Helper
                                         //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
                                         // }
 
+                                        $documentValues = [107,108,113,117,118]; // srm related documents.
+                                        $redirectUrl = (in_array($params["document"], $documentValues)) ? self::checkDomainErp($params["document"], $documentApproved->documentSystemCode) : self::checkDomai();
 
-                                        $redirectUrl =  self::checkDomai();
-                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br>';
 
-                                    
+                                        if ($params["document"] == 117) {
+                                            $ammendComment = self::getDocumentModifyRequestDetails($params['autoID']);
+                                            $ammendText = '<b>Comment :</b> ' . $ammendComment['description'] . '<br>';
+                                            $body .= $ammendText;
+                                        }
+
+                                        if ($document->documentSystemID == 113 || $document->documentSystemID == 108) {
+                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                            $body .= '<p><b>'. $type[$params["document_type"]] .' Title :</b> ' . $params["tender_title"] . '</p>';
+                                            $body .= '<p><b>'. $type[$params["document_type"]] . ' Description :</b> ' . $params["tender_description"] . '</p>';
+                                        }
+
+                                        $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
+
+                                        $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+
+                                        if ($document->documentSystemID == 107){
+                                            $subject = "Pending " . $document->documentDescription . " approval " .'"' . $documentApproved->suppliername->name .'"';
+                                        }
+
+                                        if($document->documentSystemID == 108 || $document->documentSystemID == 113){
+                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                            $subject = "Pending " . $type[$params["document_type"]] . " approval " . $documentApproved->documentCode;
+                                        }
+
                                         $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
                                         foreach ($approvalList as $da) {
                                             if ($da->employee) {
@@ -3385,7 +3446,8 @@ class Helper
                                                     'docSystemID' => $documentApproved->documentSystemID,
                                                     'alertMessage' => $subject,
                                                     'emailAlertMessage' => $body,
-                                                    'docSystemCode' => $documentApproved->documentSystemCode
+                                                    'docSystemCode' => $documentApproved->documentSystemCode,
+                                                    'attachmentList'=> $file
                                                 );
 
                                                 $pushNotificationUserIds[] = $da->employee->employeeSystemID;
@@ -4376,7 +4438,7 @@ class Helper
                 })
                     ->groupBy('employeeSystemID')
                     ->exists();
-
+                
                 if (!$checkUserHasApprovalAccess) {
                     if (($input["documentSystemID"] == 9 && ($isConfirmed && $isConfirmed->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
                         return ['success' => false, 'message' => 'You do not have access to approve this document.'];
@@ -4428,7 +4490,8 @@ class Helper
                             // pass below data for taking action in controller
                             $more_data = [
                                 'numberOfLevels' => $approvalLevel->noOfLevels,
-                                'currentLevel' => $input["rollLevelOrder"]
+                                'currentLevel' => $input["rollLevelOrder"],
+                                'userEmail'=> $docApproved->reference_email
                             ];
                         }
 
@@ -4958,6 +5021,18 @@ class Helper
                             if ($input["documentSystemID"] == 107) {
 
                                 $suppiler_info = SupplierRegistrationLink::where('id', '=', $docApproved->documentSystemCode)->first();
+
+                             $updatedUserEmail = SRMSupplierValues::select('id','user_name','company_id','supplier_id')
+                                ->where('company_id', $docApproved->companySystemID)
+                                ->where('supplier_id', $docApproved->documentSystemCode)
+                                ->first();
+
+                             $docApproved->reference_email = $updatedUserEmail['user_name'];
+
+                              Models\DocumentApproved::where('documentSystemID',107)
+                                  ->where('documentSystemCode',$docApproved->documentSystemCode)
+                                  ->update(['reference_email' => $docApproved->reference_email]);
+
                                 if (isset($suppiler_info) && isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
@@ -5030,7 +5105,7 @@ class Helper
         
                                                     $description = "";
                                                     if(isset($circular['description'])){
-                                                        $description = "<b>Circular Description : </b>" . $description. "<br /><br />";
+                                                        $description = "<b>Circular Description : </b>" . $circular['description'] . "<br /><br />";
                                                     }
                                                 
                                                     $dataEmail['empEmail'] = $supplier->supplier_registration_link->email;
@@ -5144,6 +5219,18 @@ class Helper
 
                  
 
+                            if($input["documentSystemID"] == 107){
+                                $subjectName = $document->documentDescription . ' ' .'"' . $currentApproved->suppliername->name .'"';
+                                $bodyName = $document->documentDescription . ', ' . '<b>"' . $currentApproved->suppliername->name . '"</b>';
+                            }
+
+                            if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
+                                $tenderMaster = TenderMaster::find($input["id"]);
+                                $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                $subjectName = $type[$tenderMaster->document_type] . ' ' . $currentApproved->documentCode;
+                                $bodyName = $type[$tenderMaster->document_type] . ' ' .  '<b>' . $currentApproved->documentCode . '</b>';
+                            }
+
                             if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
 
                                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
@@ -5203,11 +5290,26 @@ class Helper
                                     // }
 
 
+                                    $documentValues = [107,108,113,117,118]; // srm related documents.
 
-
-                                    $redirectUrl =  self::checkDomai();
+                                    $redirectUrl = (in_array($input["documentSystemID"], $documentValues)) ? self::checkDomainErp($input["documentSystemID"], $currentApproved->documentSystemCode) : self::checkDomai();
                                     //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';   
-                                    $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                    $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br>';
+
+                                    if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
+                                        $tenderMaster = TenderMaster::find($input["id"]);
+                                        $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                        $nextApprovalBody .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
+                                    }
+
+                                    if ($input["documentSystemID"] == 117)
+                                    {
+                                        $ammendComment = self::getDocumentModifyRequestDetails($input['documentSystemCode']);
+                                        $ammendText = '<b>Comment :</b> ' . $ammendComment['description'] . '<br>';
+                                        $nextApprovalBody .= $ammendText;
+                                    }
+
+                                    $nextApprovalBody .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
 
                                     $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
                                     $nextApproveNameList = "";
@@ -5231,6 +5333,12 @@ class Helper
 
                                     $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
                                     $body = '<p>'.$bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
+
+                                    if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
+                                        $tenderMaster = TenderMaster::find($input["id"]);
+                                        $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                        $body .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
+                                    }
                                 }
 
 
@@ -5951,8 +6059,8 @@ class Helper
 
                                     if($input["documentSystemID"] == 107 )
                                     {
-                                        $sub = "<p>Dear Supplier". ',</p><p>Please be informed that your KYC has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
-                                        $msg = " Registration Rejected";
+                                        $sub = "<p>Dear Supplier". ',</p><p>Please be informed that your KYC form has been referred back for the following reason by the '. $empInfo->empName .".". "<br><br><b> " . '"' . $input["rejectedComments"].".".'"'." </b><br><br> Please click on ".'"Amend"'." button to do the changes for KYC and resubmit for approval.<br><br> Thank You.</p>";
+                                        $msg = " Registration Referred Back";
                                     }
                                     else if($input["documentSystemID"] == 106)
                                     {
@@ -8939,6 +9047,62 @@ class Helper
         $retentionAmountToFixed = round($retentionAmount,$decimalPlaces);
         $bookInvSuppMaster->retentionAmount = $retentionAmountToFixed;
         $bookInvSuppMaster->save();
+    }
+
+    public static function getDocumentModifyRequestDetails($autoID)
+    { 
+        $doucumentModifyComment = DocumentModifyRequest::select('description')
+        ->where('id',$autoID)
+        ->first();
+
+        return $doucumentModifyComment;
+    }
+
+    public static function checkDomainErp($document,$id)
+    {
+        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+
+        if($document == 107){
+            $tenantDomain = self::getSupplierRegDomain($id);
+            $search = '*';
+            $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
+        }else {
+            if (env('IS_MULTI_TENANCY') == true) {
+
+                $url = $_SERVER['HTTP_HOST'];
+                $url_array = explode('.', $url);
+                $subDomain = $url_array[0];
+
+                $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+
+                $search = '*';
+                $redirectUrl = str_replace($search, $tenantDomain.'-erp', $redirectUrl);
+            }
+        }
+
+
+        $lastSlashPos = strrpos($redirectUrl, '/');
+        $baseUrl = substr($redirectUrl, 0, $lastSlashPos + 1);
+        $redirectUrlNew = $baseUrl . 'all-document';
+
+        return $redirectUrlNew;
+    }
+
+    public static function getSupplierRegDomain($id){
+        $supplierReg =  SupplierRegistrationLink::select('sub_domain')
+                ->where('id',$id)
+                ->first();
+
+        return $supplierReg['sub_domain'];
+
+    }
+
+    public static function getDomainForSrmDocuments($request)
+    {
+        $url = $request->getHttpHost();
+        $url_array = explode('.', $url);
+        $subDomain = $url_array[0];
+        return $subDomain;
     }
 
 }
