@@ -119,6 +119,10 @@ class ReceiptAPIService
                 $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
             }
 
+            if(isset($dt['vatApplicable'])) {
+                $receipt = self::setVatDetails($dt['vatApplicable'],$receipt);
+            }
+
             foreach ($receipt['details'] as $details) {
 
                 if($receipt->documentType == 13) {
@@ -131,15 +135,27 @@ class ReceiptAPIService
                     self::validateGlCode($details,$receipt);
                 }
 
+                if($receipt->documentType == 14 || $receipt->documentType == 15) {
+                    self::validateVatAmount($details,$receipt);
+                }
+
             }
 
-            if(isset($dt['vatApplicable'])) {
-                $receipt = self::setVatDetails($dt['vatApplicable'],$receipt);
-            }
             array_push($receipts,$receipt);
         }
 
         return $receipts;
+    }
+
+    private function validateVatAmount($details,$receipt) {
+        if($receipt->isVATApplicable) {
+            if($details['vatAmount'] >= $details['amount']) {
+                $this->isError = true;
+                $error[$receipt->narration][$details['comments']] = ['VAT amount cannot be greater or equal than the amount'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
+        }
     }
 
 
@@ -467,6 +483,7 @@ class ReceiptAPIService
     private static function setVatDetails($vatApplicable,$receipt): CustomerReceivePayment {
 
         $vatApplicable = strtolower($vatApplicable);
+
         if($vatApplicable === 'yes') {
             $receipt->isVATApplicable = true;
         }else {
