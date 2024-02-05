@@ -2,6 +2,7 @@
 
 namespace App\Services\API;
 
+use App\helper\TaxService;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
@@ -20,6 +21,7 @@ use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentApproved;
 use App\Models\Employee;
+use App\Models\Taxdetail;
 use Carbon\Carbon;
 
 class ReceiptAPIService
@@ -63,6 +65,8 @@ class ReceiptAPIService
                     'receipt' => true
                 );
 
+                $receipt = self::setTaxDetails($saveReceipt);
+
                 $confirmation = \Helper::confirmDocumentForApi($params);
                 if($confirmation['success'])
                 {
@@ -71,7 +75,8 @@ class ReceiptAPIService
                         $documentApproved["approvedComments"] = "Generated Customer Invoice through API";
                         $documentApproved["db"] = $db;
                         $documentApproved['empID'] = $receipt->approvedByUserSystemID;
-                        $approval = \Helper::approveDocumentForApi($documentApproved); // check approval
+                        $documentApproved['documentSystemID'] = $saveReceipt->documentSystemID;
+                        $approval = \Helper::approveDocumentForApi($documentApproved);
                     }
                 }
             }
@@ -137,6 +142,75 @@ class ReceiptAPIService
         return $receipts;
     }
 
+
+    private function setTaxDetails($receipt) {
+        $taxDetails = Taxdetail::where('documentSystemCode', $receipt->documentSystemCode)
+            ->where('documentSystemID', $receipt->documentSystemID)
+            ->delete();
+
+        if(isset($receipt->VATAmount) && $receipt->VATAmount > 0){
+
+            if(empty(TaxService::getOutputVATGLAccount($receipt->companySystemID))) {
+                $this->isError = true;
+                $error[$receipt->narration] = ['Cannot confirm. Output VAT GL Account not configured.'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
+            if($receipt->documentType == 15 && empty(TaxService::getOutputVATTransferGLAccount($receipt->companySystemID))){
+                $this->isError = true;
+                $error[$receipt->narration] = ['Cannot confirm. Output VAT Transfer GL Account not configured.'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
+            $taxDetail['companyID'] = $receipt->companyID;
+            $taxDetail['companySystemID'] = $receipt->companySystemID;
+            $taxDetail['documentID'] = $receipt->documentID;
+            $taxDetail['documentSystemID'] = $receipt->documentSystemID;
+            $taxDetail['documentSystemCode'] = $receipt->custReceivePaymentAutoID;
+            $taxDetail['documentCode'] = $receipt->custPaymentReceiveCode;
+            $taxDetail['taxShortCode'] = '';
+            $taxDetail['taxDescription'] = '';
+            $taxDetail['taxPercent'] = $receipt->VATPercentage;
+
+            if($receipt->documentType == 15){
+                $taxDetail['payeeSystemCode'] = $receipt->customerID;
+                $customer = CustomerMaster::where('customerCodeSystem', $receipt->customerID)->first();
+
+                if(!empty($customer)) {
+                    $taxDetail['payeeCode'] = $customer->CutomerCode;
+                    $taxDetail['payeeName'] = $customer->CustomerName;
+                }else{
+                    return $this->sendError('Customer not found', 500);
+                }
+            }else {
+                $taxDetail['payeeSystemCode'] = 0;
+                $taxDetail['payeeCode'] = '';
+                $taxDetail['payeeName'] = '';
+            }
+
+
+
+            $taxDetail['amount'] = $receipt->VATAmount;
+            $taxDetail['localCurrencyER']  = $receipt->localCurrencyER;
+            $taxDetail['rptCurrencyER'] = $receipt->companyRptCurrencyER;
+            $taxDetail['localAmount'] = $receipt->VATAmountLocal;
+            $taxDetail['rptAmount'] = $receipt->VATAmountRpt;
+            $taxDetail['currency'] =  $receipt->custTransactionCurrencyID;
+            $taxDetail['currencyER'] =  1;
+
+            $taxDetail['localCurrencyID'] =  $receipt->localCurrencyID;
+            $taxDetail['rptCurrencyID'] =  $receipt->companyRptCurrencyID;
+            $taxDetail['payeeDefaultCurrencyID'] =  $receipt->custTransactionCurrencyID;
+            $taxDetail['payeeDefaultCurrencyER'] =  1;
+            $taxDetail['payeeDefaultAmount'] =  $receipt->VATAmount;
+
+            $tax = Taxdetail::create($taxDetail);
+
+        }
+
+
+        return $receipt;
+    }
 
     private function validateGlCode($detail,$receipt) {
         $chartOfAccountDetails = ChartOfAccount::where('AccountCode',$detail['glCode'])->where('controllAccountYN', 0)->first();
@@ -362,6 +436,7 @@ class ReceiptAPIService
             $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount']);
             $receipt->receivedAmount = $totalAmount;
             $receipt->VATAmount = $totalVatAmount;
+            $receipt->VATPercentage = ($totalVatAmount/100);
             $receipt->VATAmountLocal =  $companyCurrencyConversionVat['localAmount'];
             $receipt->VATAmountRpt = $companyCurrencyConversionVat['reportingAmount'];
             $receipt->netAmount = $totalNetAmount;
@@ -375,6 +450,7 @@ class ReceiptAPIService
             $receipt->localAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['localAmount']),2);
             $receipt->receivedAmount = round($totalAmount,2);
             $receipt->VATAmount = round($totalVatAmount,2);
+            $receipt->VATPercentage = round(($totalVatAmount/100),2);
             $receipt->VATAmountLocal =  round($companyCurrencyConversionVat['localAmount'],2);
             $receipt->VATAmountRpt = round($companyCurrencyConversionVat['reportingAmount'],2);
             $receipt->netAmount = round($totalNetAmount,2);
@@ -384,7 +460,6 @@ class ReceiptAPIService
             $receipt->bankAmount = round(\Helper::roundValue($bankCurrencyConversion['documentAmount']),2);
             $receipt->bankCurrencyER = round($bankCurrencyConversion['transToDocER'],2);
         }
-
 
 
         return $receipt;
