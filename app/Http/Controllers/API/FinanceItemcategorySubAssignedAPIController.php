@@ -101,7 +101,20 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 
         $input = $request->all();
         $companies = $input['companySystemID'];
+
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
         unset($input['companySystemID']);
+
+        if(array_key_exists('tenant_uuid', $input)){
+            unset($input['tenant_uuid']);
+        }
+
+        if(array_key_exists('db', $input)){
+            unset($input['db']);
+        }
+
         if (array_key_exists('Actions', $input)) {
             unset($input['Actions']);
         }
@@ -167,9 +180,6 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 
             $masterData = $financeItemCategorySubAssigned->toArray();
 
-            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
-            $db = isset($input['db']) ? $input['db'] : '';
-
             $this->auditLog($db, $input['itemCategoryAssignedID'],$uuid, "financeitemcategorysubassigned", "Company Assign ".$input['categoryDescription']." has been updated", "U", $masterData, $previousValue, $input['itemCategorySubID'], 'financeitemcategorysub');
         } else {
 
@@ -181,9 +191,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
                 $input['isAssigned'] = -1;
                 $input['mainItemCategoryID'] = $input['itemCategoryID'];
                 $financeItemCategorySubAssigned = $this->financeItemcategorySubAssignedRepository->create($input);
-
-                $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
-                $db = isset($input['db']) ? $input['db'] : '';
+                
                 $masterData = $financeItemCategorySubAssigned->toArray();
 
 
