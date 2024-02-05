@@ -16,6 +16,7 @@ use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\SupplierRegistrationLink;
+use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderMaster;
 use App\Models\VatReturnFillingMaster;
 use App\Models\AssetDisposalMaster;
@@ -67,6 +68,7 @@ use App\Models\CurrencyConversionMaster;
 use App\Models\ERPAssetTransfer;
 use App\Models\ContingencyBudgetPlan;
 use App\Models\Appointment;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\DocumentModifyRequest;
@@ -533,6 +535,12 @@ class email
                     $text = $textObj->value;
                 }
 
+                //set MAIL_FROM_NAME according to company name
+                $emailName = SystemConfigurationAttributes::where('slug', 'mail_name')->with('systemConfigurationDetail')->first();
+                if($emailName){
+                    Config::set("mail.from.name", $emailName->systemConfigurationDetail->value);
+                }
+
                 // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
                 if ($data) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
@@ -581,6 +589,12 @@ class email
         if($textObj)
         {
              $text = $textObj->value;
+        }
+
+        //set MAIL_FROM_NAME according to company name
+        $emailName = SystemConfigurationAttributes::where('slug', 'mail_name')->with('systemConfigurationDetail')->first();
+        if($emailName){
+            Config::set("mail.from.name", $emailName->systemConfigurationDetail->value);
         }
 
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
