@@ -6075,15 +6075,36 @@ class Helper
                                     $dataEmail['alertMessage'] = $msg;
                                     $dataEmail['emailAlertMessage'] = $temp;
 
-                             
+
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
                                 else
                                 {
-                                    return ['success' => false, 'message' => "Unable to send the email"]; 
+                                    return ['success' => false, 'message' => "Unable to send the email"];
                                 }
-                            }
-                            else
+                            }else if($input["document_system_id"] == 108 || $input["document_system_id"] == 113){
+                                $confirmedUserEmail = Employee::select('empName','empEmail')
+                                    ->where('employeeSystemID',$sourceModel->confirmed_by_emp_system_id)
+                                    ->first();
+                                if (isset($confirmedUserEmail->empEmail) && !empty($confirmedUserEmail->empEmail)) {
+                                    $sub = $sourceModel->tender_code." Refered Back";
+                                    $body = "<p>Dear " .$confirmedUserEmail->empName. ',</p>' .
+                                        "<p>The document " . $sourceModel->tender_code . ' ' . $sourceModel->title . ' has been referred back for your review with the below comment:' .
+                                        "<br><br>Kindly review the document. <br>" .
+                                        "<br> " . $input["rejectedComments"] . "." . " <br><br>" .
+                                        "Thank You.</p>";
+
+                                    $dataEmail['empEmail'] = $confirmedUserEmail->empEmail;
+                                    $dataEmail['companySystemID'] = $sourceModel->company_id;
+                                    $temp = $body;
+                                    $dataEmail['alertMessage'] = $sub;
+                                    $dataEmail['emailAlertMessage'] = $temp;
+                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                }else {
+                                    return ['success' => false, 'message' => "Unable to send the email"];
+                                }
+
+                            }else
                             {
                                 $sendEmail = email::sendEmail($emails);
                             }

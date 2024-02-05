@@ -14,6 +14,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
@@ -23,6 +24,7 @@ use App\Models\SrmTenderDepartment;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\TenderBidNegotiation;
+use App\Models\TenderMasterReferred;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
 use App\Models\EnvelopType;
@@ -5143,5 +5145,106 @@ ORDER BY
             ->flatten()
             ->pluck('suppliermaster_id')
            ->toArray();
+    }
+
+    public function referBackTenderMaster(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $tenderMasterId = $input['tenderMasterId'];
+
+            $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tenderMasterId);
+            if (empty($tenderMaster)) {
+                return $this->sendError('Tender Master not found');
+            }
+
+            if ($tenderMaster->refferedBackYN != -1) {
+                return $this->sendError('You cannot amend this document');
+            }
+
+
+            $tenderMasterArray = $tenderMaster->toArray();
+            $tenderMasterArray = collect($tenderMasterArray)->except(['document_sales_start_time', 'document_sales_end_time','pre_bid_clarification_start_time'
+                ,'pre_bid_clarification_end_time','site_visit_start_time','site_visit_end_time','bid_submission_opening_time','bid_submission_closing_time'
+                ,'bid_opening_date_time','bid_opening_end_date_time','technical_bid_opening_date_time','technical_bid_closing_date_time'
+                ,'commerical_bid_opening_date_time','commerical_bid_closing_date_time'])->toArray();
+
+            $storeTenderMasterHistory = TenderMasterReferred::insert($tenderMasterArray);
+
+            $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $tenderMasterId)
+                ->where('companySystemID', $tenderMaster->company_id)
+                ->where('documentSystemID', $tenderMaster->document_system_id)
+                ->get();
+
+            if (!empty($fetchDocumentApproved)) {
+                foreach ($fetchDocumentApproved as $DocumentApproved) {
+                    $DocumentApproved['refTimes'] = $tenderMaster->timesReferred;
+                }
+            }
+
+            $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+            $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $tenderMasterId)
+                ->where('companySystemID', $tenderMaster->company_id)
+                ->where('documentSystemID', $tenderMaster->document_system_id)
+                ->delete();
+
+            if ($deleteApproval) {
+                $tenderMaster->refferedBackYN = 0;
+                $tenderMaster->confirmed_yn = 0;
+                $tenderMaster->confirmed_by_emp_system_id = null;
+                $tenderMaster->confirmed_by_name = null;
+                $tenderMaster->confirmed_date = null;
+                $tenderMaster->RollLevForApp_curr = 1;
+                $tenderMaster->save();
+            }
+
+            DB::commit();
+            return $this->sendResponse($tenderMaster->toArray(), 'Tender Master amended successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function getTenderAmendHistory(Request $request){
+        $input = $request->all();
+
+        $tenderAmendHistory = TenderMasterReferred::with(['currency', 'tender_type', 'envelop_type','createdBy'])
+        ->where('id',$input['tenderMasterId'])
+        ->get();
+
+        return $this->sendResponse($tenderAmendHistory, 'Tender Master retrieved successfully');
+    }
+    public function getTenderRfxAudit(Request $request){
+        $input = $request->all();
+
+        $id = $input['id'];
+        $documentId = $input['documentId'];
+
+        $data['tenderMaster'] = $this->tenderMasterRepository
+            ->with(['createdBy', 'confirmed_by', 'modifiedBy', 'approvedBy' => function ($query) use ($documentId) {
+                $query->with('employee')
+                    ->where('documentSystemID', $documentId);
+            }])
+            ->findWithoutFail($id);
+
+        $data['rejectedHistory'] = DocumentReferedHistory::select('documentReferedID','documentApprovedID','companySystemID','documentSystemID','documentSystemCode',
+        'employeeSystemID','rejectedYN','rejectedDate','rejectedComments')
+            ->with(['employee' => function ($q){
+                $q->select('employeeSystemID','empFullName');
+            }])
+            ->where('documentSystemID',$documentId)
+            ->where('documentSystemCode',$id)
+            ->where('rejectedYN',-1)
+            ->get();
+
+        if (empty($data['tenderMaster'])) {
+            return $this->sendError('Tender Master not found');
+        }
+        return $this->sendResponse($data, 'Tender Master retrieved successfully');
     }
 } 

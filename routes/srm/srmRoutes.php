@@ -262,6 +262,10 @@ Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationContr
 Route::post('saveTenderNegotiationDetails', 'TenderNegotiationController@saveTenderNegotiationDetails');
 Route::get('getTenderPr', 'TenderMasterAPIController@getTenderPr');
 Route::get('getPurchaseRequestDetails', 'TenderMasterAPIController@getPurchaseRequestDetails');
+Route::post('referBackTenderMaster', 'TenderMasterAPIController@referBackTenderMaster');
+Route::post('getTenderAmendHistory', 'TenderMasterAPIController@getTenderAmendHistory');
+Route::post('getTenderRfxAudit', 'TenderMasterAPIController@getTenderRfxAudit');
+
 
 Route::group(['prefix' => 'srm'], function (){
         
