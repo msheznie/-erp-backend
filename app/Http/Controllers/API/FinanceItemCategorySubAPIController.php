@@ -34,7 +34,7 @@ use App\Jobs\ResetFinaceSubCategoryValuesInAllDocuments;
 use Artisan;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
-
+use App\Services\AuditLog\ItemFinanceCategoryAuditService;
 
 use Illuminate\Support\Facades\Validator;
 /**
@@ -368,6 +368,8 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             return $this->sendError('Finance Item Category Sub not found');
         }
 
+        $previosValue = $financeItemCategorySub->toArray();
+
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -375,12 +377,11 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $this->financeItemCategorySubRepository->update($input, $id);
 
          if(isset($input['isActive'])) {
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+            $newValue = ['isActive' => $input['isActive']];
 
-             $previousValue = ($input['isActive'] == true) ? 'False' : 'True';
-             $newValue = ($input['isActive'] == true) ? 'True' : 'False';
-             $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
-
-             $this->createAuditLogs($id,"Is Active",$previousValue, $newValue,"financeitemcategorysub", $uuid);
+            $this->auditLog($db, $id,$uuid, "financeitemcategorysub", $financeItemCategorySub->categoryDescription." has updated", "U", $newValue, $previosValue);
          }
 
         return $this->sendResponse($financeItemCategorySub->toArray(), 'Finance Item Category Sub updated successfully');
@@ -465,104 +466,55 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         ];
 
 
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+        $newValue = $masterData;
+        
         if (isset($input['itemCategorySubID'])){
             $originalData = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
 
             $itemCategorySubUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                     ->update($masterData);
 
-            $amendedFields = [];
-            foreach ($masterData as $key => $newValue) {
-                $originalValue = $originalData->$key ?? null;
+            $previosValue = $originalData->toArray();
 
-                if ($newValue != $originalValue) {
-                    $amendedFields[$key] = [
-                        'old_value' => $originalValue,
-                        'new_value' => $newValue,
-                    ];
-                }
-            }
 
             unset($masterData['itemCategoryID'],$masterData['trackingType'],$masterData['modifiedPc'],$masterData['modifiedUser']);
             $financeItemcategorySubAssigned  = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
                                     ->update($masterData);
 
+            \Artisan::call('reset:sub-category-values');
 
-
-        \Artisan::call('reset:sub-category-values');
-
-            if (!empty($amendedFields)) {
-                unset($amendedFields['financeGLcodebBS'], $amendedFields['financeGLcodePL'], $amendedFields['financeCogsGLcodePL'], $amendedFields['financeGLcodeRevenue']);
-                $fieldMappingsGL = [
-                    'financeGLcodebBSSystemID' => 'Balance sheet GL Code',
-                    'financeGLcodePLSystemID' => 'Consumption GL Code',
-                    'financeGLcodeRevenueSystemID' => 'Revenue GL Code',
-                    'financeCogsGLcodePLSystemID' => 'COGS GL Code',
-                ];
-                $fieldMappings = [
-                    'categoryDescription' => 'Category Description',
-                    'enableSpecification' => 'Enable Specification',
-                    'includePLForGRVYN' => 'Include PL For GRV YN',
-                    'trackingType' => 'Tracking'
-                ];
-                $fieldMappingsTracking = [
-                    0 => 'No Tracking',
-                    1 => 'Batch/Lot No',
-                    2 => 'Unique Serial No',
-                ];
-                foreach ($amendedFields as $field => $value) {
-
-                    $fieldName = $fieldMappingsGL[$field] ?? $field;
-                    $oldValue = $value['old_value'];
-                    $newValue = $value['new_value'];
-                    if($fieldName != $field){
-                        $oldAccount = ChartOfAccount::find($value['old_value']);
-                        $newAccount = ChartOfAccount::find($value['new_value']);
-                            $oldValue = isset($oldAccount->AccountCode) ? $oldAccount->AccountCode. ' - '. $oldAccount->AccountDescription: '-';
-                            $newValue = isset($newAccount->AccountCode) ? $newAccount->AccountCode. ' - '. $newAccount->AccountDescription: '-';
-                    } else {
-                        $fieldName = $fieldMappings[$field] ?? $field;
-                        if ($field == "enableSpecification" || $field == "includePLForGRVYN") {
-                            $newValue = ($value['new_value'] == true) ? 'True' : 'False';
-                            $oldValue = ($value['new_value'] == true) ? 'False' : 'True';
-                        } else if ($field == "trackingType") {
-                            $newValue = $fieldMappingsTracking[$value['new_value']] ?? $value['new_value'];
-                            $oldValue = $fieldMappingsTracking[$value['old_value']] ?? $value['old_value'];
-                        }
-                    }
-                    if($fieldName != $field) {
-
-                        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
-
-                        $this->createAuditLogs($input['itemCategorySubID'],$fieldName,$oldValue, $newValue,"financeitemcategorysub", $uuid);
-                    }
-                }
-            }
-        return $this->sendResponse($itemCategorySubUpdate, 'Finance Item Category Sub updated successfully');
+            $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $input['categoryDescription']." has updated", "U", $newValue, $previosValue);
+            
+            return $this->sendResponse($itemCategorySubUpdate, 'Finance Item Category Sub updated successfully');
         } else {
             $itemCategorySubCreate = FinanceItemCategorySub::create($masterData);
-        return $this->sendResponse($itemCategorySubCreate, 'Finance Item Category Sub Created successfully');
+            
+            $this->auditLog($db, $itemCategorySubCreate['itemCategorySubID'],$uuid, "financeitemcategorysub", $input['categoryDescription']." has created", "C", $newValue, []);
+            
+            return $this->sendResponse($itemCategorySubCreate, 'Finance Item Category Sub Created successfully');
         }
-        
-        
-        
     }
 
     public function financeItemCategorySubsExpiryUpdate(Request $request){
 
         $input = $request->all();
 
+        $originalData = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
+        $previosValue = $originalData->toArray();
+        
         $itemCategorySubAssignedExpiryUpdate = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
                                                 ->update(['expiryYN' => $input['expiryYN']]);
 
         $itemCategorySubExpiryUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                                 ->update(['expiryYN' => $input['expiryYN']]);
 
-        $previousValue = ($input['expiryYN'] == true) ? 'False' : 'True';
-        $newValue = ($input['expiryYN'] == true) ? 'True' : 'False';
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+        $newValue = ['expiryYN' => $input['expiryYN']];
 
-        $this->createAuditLogs($input['itemCategorySubID'],"Expiry",$previousValue, $newValue,"financeitemcategorysub", $uuid);
+        $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $originalData->categoryDescription." has updated", "U", $newValue, $previosValue);
 
         return $this->sendResponse($itemCategorySubExpiryUpdate, 'Finance Item Category Sub updated successfully');
 
@@ -571,17 +523,20 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
     public function financeItemCategorySubsAttributesUpdate(Request $request){
         $input = $request->all();
+
+        $originalData = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
+        $previosValue = $originalData->toArray();
+
         $itemCategorySubExpiryUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                                 ->update(['attributesYN' => $input['attributesYN']]);
 
-        $previousValue = ($input['attributesYN'] == true) ? 'False' : 'True';
-        $newValue = ($input['attributesYN'] == true) ? 'True' : 'False';
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+        $newValue = ['attributesYN' => $input['attributesYN']];
 
-        $this->createAuditLogs($input['itemCategorySubID'],"Attributes",$previousValue, $newValue,"financeitemcategorysub", $uuid);
-        
+        $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $originalData->categoryDescription." has updated", "U", $newValue, $previosValue);
+
         return $this->sendResponse($itemCategorySubExpiryUpdate, 'Finance Item Category Sub updated successfully');
-
     }
 
 

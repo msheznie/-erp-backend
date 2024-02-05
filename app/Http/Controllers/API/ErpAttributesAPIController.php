@@ -12,6 +12,7 @@ use App\Models\ErpAttributesDropdown;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class ErpAttributesController
@@ -22,7 +23,8 @@ class ErpAttributesAPIController extends AppBaseController
 {
     /** @var  ErpAttributesRepository */
     private $erpAttributesRepository;
-
+    use AuditLogsTrait;
+    
     public function __construct(ErpAttributesRepository $erpAttributesRepo)
     {
         $this->erpAttributesRepository = $erpAttributesRepo;
@@ -281,6 +283,14 @@ class ErpAttributesAPIController extends AppBaseController
             return $this->sendError('Erp Attributes not found');
         }
 
+        if ($erpAttributes->document_id == "SUBCAT") {
+
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+
+            $this->auditLog($db, $id,$uuid, "erp_attributes", "Attribute ".$erpAttributes->description." has deleted", "D", [], $erpAttributes->toArray(), $erpAttributes->document_master_id, 'financeitemcategorysub');
+        }
+
         $erpAttributes->delete();
 
         return $this->sendResponse([],'Erp Attributes deleted successfully');
@@ -289,10 +299,24 @@ class ErpAttributesAPIController extends AppBaseController
     public function itemAttributesIsMandotaryUpdate(Request $request){
         $input = $request->all();
         $id = $input['id'];
+
         $is_mendatory = ($input['is_mendatory']) ? 1 : 0;
+
+        $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+        $previousValue = $erpAttributes->toArray();
 
         $attributesIsMandotaryUpdate = ErpAttributes::where('id', $id)
         ->update(['is_mendatory' => $is_mendatory]);
+
+        $newValue = ['is_mendatory' => $is_mendatory];
+
+
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if ($erpAttributes->document_id == "SUBCAT") {
+            $this->auditLog($db, $id, $uuid, "erp_attributes", "Attribute " . $erpAttributes->description . " has been updated", "U", $newValue, $previousValue, $erpAttributes->document_master_id, 'financeitemcategorysub');
+        }
 
         return $this->sendResponse($attributesIsMandotaryUpdate, 'Erp Attributes updated successfully');
 

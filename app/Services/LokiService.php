@@ -11,17 +11,17 @@ class LokiService
     public function getAuditLogs($params){
         try {
 
-        $client = new Client();
-        $url = env("LOKI_URL");
+            $client = new Client();
+            $url = env("LOKI_URL");
 
-        $response = $client->get($url . $params);
+            $response = $client->get($url . $params);
 
-        $data = json_decode($response->getBody()->getContents(), true);
+            $data = json_decode($response->getBody()->getContents(), true);
 
-        $logEntriesAsArrays = array_map(function ($entry) {
-            $entry['metric']['log'] = $this->extractJsonFromLog($entry['metric']['log']);
-            return $entry;
-        }, $data['data']['result']);
+            $logEntriesAsArrays = array_map(function ($entry) {
+                $entry['metric']['log'] = $this->extractJsonFromLog($entry['metric']['log']);
+                return $entry;
+            }, $data['data']['result']);
 
             usort($logEntriesAsArrays, function ($a, $b) {
                 $timestampA = strtotime($a['metric']['log']['date_time']);

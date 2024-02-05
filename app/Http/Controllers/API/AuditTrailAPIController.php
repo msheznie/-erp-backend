@@ -312,7 +312,36 @@ class AuditTrailAPIController extends AppBaseController
 
             $data = $this->lokiService->getAuditLogs($params);
 
-            return DataTables::of($data)
+
+            $params2 = 'query?query=rate({env="'.$env.'"}|= `\"parent_id\":\"'.$id.'\"` |= `\"parent_table\":\"'.$table.'\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` | json ['.$diff.'d])';
+
+            $data2 = $this->lokiService->getAuditLogs($params2);
+
+            $formatedData = [];
+
+            foreach ($data as $key => $value) {
+                if (isset($value['metric']['log']['data'])) {
+                    $lineData = $value['metric']['log'];
+
+                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
+
+                    $formatedData[] = $lineData;
+                }
+            }
+
+            foreach ($data2 as $key => $value) {
+                if (isset($value['metric']['log']['data'])) {
+                    $lineData = $value['metric']['log'];
+
+                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
+
+                    $formatedData[] = $lineData;
+                }
+            }
+
+            $formatedData = collect($formatedData)->sortByDesc('date_time');
+
+            return DataTables::of($formatedData)
                 ->addIndexColumn()
                 ->make(true);
         } catch (\Exception $exception) {

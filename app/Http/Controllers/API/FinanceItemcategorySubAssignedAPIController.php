@@ -24,6 +24,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class FinanceItemcategorySubAssignedController
@@ -33,6 +34,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 {
     /** @var  FinanceItemcategorySubAssignedRepository */
     private $financeItemcategorySubAssignedRepository;
+    use AuditLogsTrait;
 
     public function __construct(FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo)
     {
@@ -151,6 +153,8 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             if (empty($financeItemCategorySubAssigned)) {
                 return $this->sendError('company Assigned not found');
             }
+            $previousValue = $financeItemCategorySubAssigned->toArray();
+
             foreach ($input as $key => $value) {
 
                 if($key == 'isAssigned' && ($value == true || $value == 1)){
@@ -160,6 +164,13 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
                 $financeItemCategorySubAssigned->$key = $value;
             }
             $financeItemCategorySubAssigned->save();
+
+            $masterData = $financeItemCategorySubAssigned->toArray();
+
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+
+            $this->auditLog($db, $input['itemCategoryAssignedID'],$uuid, "financeitemcategorysubassigned", "Company Assign ".$input['categoryDescription']." has been updated", "U", $masterData, $previousValue, $input['itemCategorySubID'], 'financeitemcategorysub');
         } else {
 
             foreach($companies as $companie)
@@ -170,10 +181,17 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
                 $input['isAssigned'] = -1;
                 $input['mainItemCategoryID'] = $input['itemCategoryID'];
                 $financeItemCategorySubAssigned = $this->financeItemcategorySubAssignedRepository->create($input);
+
+                $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+                $db = isset($input['db']) ? $input['db'] : '';
+                $masterData = $financeItemCategorySubAssigned->toArray();
+
+
+                $this->auditLog($db, $financeItemCategorySubAssigned->itemCategoryAssignedID,$uuid, "financeitemcategorysubassigned", "Company Assign ".$input['categoryDescription']." has been created", "C", $masterData, [], $financeItemCategorySubAssigned->itemCategorySubID, 'financeitemcategorysub');
             }
 
         }
-
+        
         return $this->sendResponse($financeItemCategorySubAssigned->toArray(), 'Finance Item Category Sub Assigned saved successfully');
     }
 
@@ -275,12 +293,17 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
     {
         /** @var FinanceItemcategorySubAssigned $financeItemcategorySubAssigned */
         $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->findWithoutFail($id);
-
         if (empty($financeItemcategorySubAssigned)) {
             return $this->sendError('Finance Itemcategory Sub Assigned not found');
         }
+        $masterData = $financeItemcategorySubAssigned->toArray();
 
         $financeItemcategorySubAssigned->delete();
+
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        $this->auditLog($db, $id,$uuid, "financeitemcategorysubassigned", "Company Assign ".$financeItemcategorySubAssigned->categoryDescription." has been deleted", "D", [], $masterData, $financeItemcategorySubAssigned->itemCategorySubID, 'financeitemcategorysub');
 
         return $this->sendResponse($id, 'Finance Itemcategory Sub Assigned deleted successfully');
     }
