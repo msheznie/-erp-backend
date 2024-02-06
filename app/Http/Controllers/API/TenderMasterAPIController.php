@@ -5259,6 +5259,7 @@ ORDER BY
         'pre_bid_clarification_end_date','bid_submission_opening_date','bid_submission_closing_date')
             ->selectRaw('IF(pre_bid_clarification_method = 1, "Online", "Offline") as clarification_method')
             ->where('document_type',0)
+            ->where('tender_type_id',1)
             ->where('approved',-1)
             ->where('published_yn',1);
 
