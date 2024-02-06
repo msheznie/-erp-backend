@@ -1058,7 +1058,7 @@ Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloa
 Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
 Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
 Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
- 
+Route::post('getCompanyTenderList', 'TenderMasterAPIController@getCompanyTenderList');
 
 if (env("LOG_ENABLE", false)) {
     Route::get('runCronJob/{cron}', function ($cron) {

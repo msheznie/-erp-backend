@@ -5247,4 +5247,40 @@ ORDER BY
         }
         return $this->sendResponse($data, 'Tender Master retrieved successfully');
     }
+
+    public function getCompanyTenderList(Request $request){
+        $input = $request->all();
+        $srmUrl = env("SRM_LINK");
+        $tenderUrl = str_replace('/register/', '/tender-management/tenders/', $srmUrl);
+
+        $search = isset($input['search']) ? $input['search'] : '';
+        $data = TenderMaster::select('title','title_sec_lang','description','pre_bid_clarification_method','site_visit_date',
+        'document_sales_start_date','document_sales_end_date','pre_bid_clarification_start_date','pre_bid_clarification_end_date',
+        'pre_bid_clarification_end_date','bid_submission_opening_date','bid_submission_closing_date')
+            ->selectRaw('IF(pre_bid_clarification_method = 1, "Online", "Offline") as clarification_method')
+            ->where('document_type',0)
+            ->where('approved',-1)
+            ->where('published_yn',1);
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\\\\\", $search);
+            $data->where(function ($q) use ($search) {
+                $q->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('title_sec_lang','like', '%'.$search.'%')
+                    ->orWhere('description','like', '%'.$search.'%')
+                    ->orWhereRaw('IF(pre_bid_clarification_method = 1, "Online", "Offline") like ?', ['%' . $search . '%']);
+            });
+        }
+
+        $limit = isset($input['limit']) ? $input['limit'] : 5;
+        if($data){
+            $data = $data->paginate($limit);
+        }
+
+        $tenderData['data'] = $data;
+        $tenderData['srmLink'] = $tenderUrl;
+
+        return $tenderData;
+    }
 } 
