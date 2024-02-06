@@ -5653,6 +5653,7 @@ class Helper
                     $docInforArr["modelName"] = 'ProcumentOrder';
                     $docInforArr["primarykey"] = 'purchaseOrderID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "poConfirmedByEmpSystemID";
                     break;
                 case 1:
                 case 50:
@@ -5661,138 +5662,161 @@ class Helper
                     $docInforArr["modelName"] = 'PurchaseRequest';
                     $docInforArr["primarykey"] = 'purchaseRequestID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "PRConfirmedBySystemID";
                     break;
                 case 20: //Customer Invoice
                     $docInforArr["tableName"] = 'erp_custinvoicedirect';
                     $docInforArr["modelName"] = 'CustomerInvoiceDirect';
                     $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 11: //Booking Supplier Invoice
                     $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
                     $docInforArr["modelName"] = 'BookInvSuppMaster';
                     $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 46:
                     $docInforArr["tableName"] = 'erp_budgettransferform';
                     $docInforArr["modelName"] = 'BudgetTransferForm';
                     $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 65: // budget
                     $docInforArr["tableName"] = 'erp_budgetmaster';
                     $docInforArr["modelName"] = 'BudgetMaster';
                     $docInforArr["primarykey"] = 'budgetmasterID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 22: // Asset Costing
                     $docInforArr["tableName"] = 'erp_fa_asset_master';
                     $docInforArr["modelName"] = 'FixedAssetMaster';
                     $docInforArr["primarykey"] = 'faID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 23: // Asset Depreciation
                     $docInforArr["tableName"] = 'erp_fa_depmaster';
                     $docInforArr["modelName"] = 'FixedAssetDepreciationMaster';
                     $docInforArr["primarykey"] = 'depMasterAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 21: //  Customer Receipt Voucher
                     $docInforArr["tableName"] = 'erp_customerreceivepayment';
                     $docInforArr["modelName"] = 'CustomerReceivePayment';
                     $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 4: // Payment Voucher
                     $docInforArr["tableName"] = 'erp_paysupplierinvoicemaster';
                     $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
                     $docInforArr["primarykey"] = 'PayMasterAutoId';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 19: // Credit Note
                     $docInforArr["tableName"] = 'erp_creditnote';
                     $docInforArr["modelName"] = 'CreditNote';
                     $docInforArr["primarykey"] = 'creditNoteAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 13: // stock transfer
                     $docInforArr["tableName"] = 'erp_stocktransfer';
                     $docInforArr["modelName"] = 'StockTransfer';
                     $docInforArr["primarykey"] = 'stockTransferAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 10: // stock receive
                     $docInforArr["tableName"] = 'erp_stockreceive';
                     $docInforArr["modelName"] = 'StockReceive';
                     $docInforArr["primarykey"] = 'stockReceiveAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 15: // Debit Note
                     $docInforArr["tableName"] = 'erp_debitnote';
                     $docInforArr["modelName"] = 'DebitNote';
                     $docInforArr["primarykey"] = 'debitNoteAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 8: // Materiel Issue
                     $docInforArr["tableName"] = 'erp_itemissuemaster';
                     $docInforArr["modelName"] = 'ItemIssueMaster';
                     $docInforArr["primarykey"] = 'itemIssueAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 12: // Materiel Return
                     $docInforArr["tableName"] = 'erp_itemreturnmaster';
                     $docInforArr["modelName"] = 'ItemReturnMaster';
                     $docInforArr["primarykey"] = 'itemReturnAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 17: //  Journal Voucher
                     $docInforArr["tableName"] = 'erp_jvmaster';
                     $docInforArr["modelName"] = 'JvMaster';
                     $docInforArr["primarykey"] = 'jvMasterAutoId';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 9: // Materiel Request
                     $docInforArr["tableName"] = 'erp_request';
                     $docInforArr["modelName"] = 'MaterielRequest';
                     $docInforArr["primarykey"] = 'RequestID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "ConfirmedBySystemID";
                     break;
                 case 63: //  Asset Capitalization
                     $docInforArr["tableName"] = 'erp_fa_assetcapitalization';
                     $docInforArr["modelName"] = 'AssetCapitalization';
                     $docInforArr["primarykey"] = 'capitalizationID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 41: //  Asset Disposal
                     $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
                     $docInforArr["modelName"] = 'AssetDisposalMaster';
                     $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confimedByEmpSystemID";
                     break;
                 case 64: // Payment bank transfer
                     $docInforArr["tableName"] = 'erp_paymentbanktransfer';
                     $docInforArr["modelName"] = 'PaymentBankTransfer';
                     $docInforArr["primarykey"] = 'paymentBankTransferID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 62: // Bank Reconciliation
                     $docInforArr["tableName"] = 'erp_bankrecmaster';
                     $docInforArr["modelName"] = 'BankReconciliation';
                     $docInforArr["primarykey"] = 'bankRecAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 57: // Item Master
                     $docInforArr["tableName"] = 'itemmaster';
                     $docInforArr["modelName"] = 'ItemMaster';
                     $docInforArr["primarykey"] = 'itemCodeSystem';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "itemConfirmedByEMPSystemID";
                     break;
                 case 3: // Good Receipt Voucher
                     $docInforArr["tableName"] = 'erp_grvmaster';
                     $docInforArr["modelName"] = 'GRVMaster';
                     $docInforArr["primarykey"] = 'grvAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "grvConfirmedByEmpSystemID";
                     break;
                 case 56: // Supplier master
                     $docInforArr["tableName"] = 'suppliermaster';
@@ -5805,30 +5829,35 @@ class Helper
                     $docInforArr["modelName"] = 'RegisteredSupplier';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "supplierConfirmedEmpSystemID";
                     break;
                 case 58: // Customer master
                     $docInforArr["tableName"] = 'customermaster';
                     $docInforArr["modelName"] = 'CustomerMaster';
                     $docInforArr["primarykey"] = 'customerCodeSystem';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedEmpSystemID";
                     break;
                 case 59: // Chart of account
                     $docInforArr["tableName"] = 'chartofaccounts';
                     $docInforArr["modelName"] = 'ChartOfAccount';
                     $docInforArr["primarykey"] = 'chartOfAccountSystemID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedEmpSystemID";
                     break;
                 case 66: // Bank Account
                     $docInforArr["tableName"] = 'erp_bankaccount';
                     $docInforArr["modelName"] = 'BankAccount';
                     $docInforArr["primarykey"] = 'bankAccountAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 7: // Stock Adjustment
                     $docInforArr["tableName"] = 'erp_stockadjustment';
                     $docInforArr["modelName"] = 'StockAdjustment';
                     $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 67:
                 case 68: // Sales Quotation
@@ -5836,107 +5865,125 @@ class Helper
                     $docInforArr["modelName"] = 'QuotationMaster';
                     $docInforArr["primarykey"] = 'quotationMasterID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 71: // Delivery Order
                     $docInforArr["tableName"] = 'erp_delivery_order';
                     $docInforArr["modelName"] = 'DeliveryOrder';
                     $docInforArr["primarykey"] = 'deliveryOrderID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 87: // Delivery Order
                     $docInforArr["tableName"] = 'salesreturn';
                     $docInforArr["modelName"] = 'SalesReturn';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 24:
                     $docInforArr["tableName"] = 'erp_purchasereturnmaster';
                     $docInforArr["modelName"] = 'PurchaseReturn';
                     $docInforArr["primarykey"] = 'purhaseReturnAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 96:
                     $docInforArr["tableName"] = 'currency_conversion_master';
                     $docInforArr["modelName"] = 'CurrencyConversionMaster';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "ConfirmedBySystemID";
                     break;
                 case 97: // Stock Count
                     $docInforArr["tableName"] = 'erp_stockcount';
                     $docInforArr["modelName"] = 'StockCount';
                     $docInforArr["primarykey"] = 'stockCountAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 100:
                     $docInforArr["tableName"] = 'erp_budget_contingency';
                     $docInforArr["modelName"] = 'ContingencyBudgetPlan';
                     $docInforArr["primarykey"] = 'ID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 99: // Asset verification
                     $docInforArr["tableName"] = 'erp_fa_asset_verification';
                     $docInforArr["modelName"] = 'AssetVerification';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 103: // Asset Transfer
                     $docInforArr["tableName"] = 'erp_fa_fa_asset_transfer';
                     $docInforArr["modelName"] = 'ERPAssetTransfer';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
                     break;
                 case 102: // Budget Addition
                     $docInforArr["tableName"] = 'erp_budgetaddition';
                     $docInforArr["modelName"] = 'ErpBudgetAddition';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 104:
                     $docInforArr["tableName"] = 'vat_return_filling_master';
                     $docInforArr["modelName"] = 'VatReturnFillingMaster';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 106:
                     $docInforArr["tableName"] = 'appointment';
                     $docInforArr["modelName"] = 'Appointment';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
                     break;
                 case 107:
                     $docInforArr["tableName"] = 'srm_supplier_registration_link';
                     $docInforArr["modelName"] = 'SupplierRegistrationLink';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
                     break;
                 case 108:
                     $docInforArr["tableName"] = 'srm_tender_master';
                     $docInforArr["modelName"] = 'TenderMaster';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 case 113:
                     $docInforArr["tableName"] = 'srm_tender_master';
                     $docInforArr["modelName"] = 'TenderMaster';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                     break;
                  case 69: // Console Journal Voucher
                     $docInforArr["tableName"] = 'erp_consolejvmaster';
                     $docInforArr["modelName"] = 'ConsoleJVMaster';
                     $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
                 case 117: // Edit Request
                     $docInforArr["tableName"] = 'document_modify_request';
                     $docInforArr["modelName"] = 'DocumentModifyRequest';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
                     break;
                 case 118: // Edit Request
                     $docInforArr["tableName"] = 'document_modify_request';
                     $docInforArr["modelName"] = 'DocumentModifyRequest';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
@@ -5950,14 +5997,78 @@ class Helper
                     return ['success' => false, 'message' => 'Level is already approved'];
                 }
 
+                $reference_document_id = $input['documentSystemID'];
+                if(isset($input['reference_document_id']) && $input['reference_document_id'])
+                {
+                    $reference_document_id = $input['reference_document_id'];
+                }
+                
+                $empInfo = self::getEmployeeInfo(); 
+                $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+                $docModal = $namespacedModel::find($input["documentSystemCode"]);
+
+                $policyConfirmedUserToApprove = '';
+
+                $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                                            ->when(in_array($input["documentSystemID"], [56, 57, 58, 59]), function($query) use ($docModal){
+                                                $query->where('companySystemID', $docModal['primaryCompanySystemID']);
+                                            })
+                                            ->when(!in_array($input["documentSystemID"], [56, 57, 58, 59]), function($query) use ($docModal){
+                                                $query->where('companySystemID', $docModal['companySystemID']);
+                                            })
+                                            ->first();
+
+
+         
+
+                $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApprove->companySystemID)
+                ->where('documentSystemID', $reference_document_id)
+                ->first();
+
+                    if (empty($companyDocument)) {
+                        return ['success' => false, 'message' => 'Policy not found.'];
+                    }
+
+
+                $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApprove->approvalGroupID)
+                ->where('companySystemID', $docApprove->companySystemID)
+                ->where('employeeSystemID', $empInfo->employeeSystemID)
+                ->where('documentSystemID', $reference_document_id)
+                ->where('isActive', 1)
+                ->where('removedYN', 0);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->where('ServiceLineSystemID', $docApprove->serviceLineSystemID);
+                }
+
+
+                $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function ($q) {
+                    $q->where('discharegedYN', 0);
+                })
+                    ->groupBy('employeeSystemID')
+                    ->exists();
+
+                if (!$checkUserHasApprovalAccess) {
+                    if (($input["documentSystemID"] == 9 && ($docModal && $docModal->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
+                        return ['success' => false, 'message' => 'You do not have access to reject this document.'];
+                    } 
+                }
+
+                
+                if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
+                    if ($docModal[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
+                        return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                    }
+                }
+
                 //check document is already rejected
                 $isRejected = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('rejectedYN', -1)->first();
                 if (!$isRejected) {
                     $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
-                    $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+                    
                     if ($approvalLevel) {
                         // get current employee detail
-                        $empInfo = self::getEmployeeInfo();
+                       
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
