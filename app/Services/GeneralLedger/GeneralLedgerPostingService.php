@@ -81,6 +81,13 @@ class GeneralLedgerPostingService
 	public static function postGeneralLedgerData($masterModel, $finalData, $taxLedgerData, $dataBase)
 	{
         if ($finalData) {
+            if (in_array($masterModel["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) { // already GL entry passed Check
+                $outputGL = GeneralLedger::where('documentSystemCode', $masterModel["autoID"])->where('documentSystemID', $masterModel["documentSystemID"])->first();
+                if ($outputGL) {
+                    return ['status' => true];
+                }
+            }
+
             foreach ($finalData as $data) {
                 GeneralLedger::create($data);
             }
