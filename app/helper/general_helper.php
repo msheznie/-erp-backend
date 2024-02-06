@@ -3379,6 +3379,11 @@ class Helper
                                             $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->supplierName . '</b>';
                                             $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->supplierName;
                                         }
+                                        else if($params["document"] == 58 )
+                                        {
+                                            $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->CustomerName . '</b>';
+                                            $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->CustomerName;
+                                        }
                                         else
                                         {
                                             $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
@@ -5213,6 +5218,11 @@ class Helper
                                 $subjectName = $document->documentDescription . ' ' . $isConfirmed['supplierName'];
                                 $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['supplierName'] . '</b>';
                             }
+                            else if($input["documentSystemID"] == 58 )
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $isConfirmed['CustomerName'];
+                                $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['CustomerName'] . '</b>';
+                            }
                             else
                             {
                                 $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
@@ -5342,7 +5352,6 @@ class Helper
                                         $body .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
                                     }
                                 }
-
 
                                 $emails[] = array(
                                     'empSystemID' => $sourceModel[$docInforArr["confirmedEmpSystemID"]],
@@ -5995,6 +6004,11 @@ class Helper
                             {
                                 $subjectName = $document->documentDescription . ' ' . $sourceModel->supplierName;
                                 $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $sourceModel->supplierName . '</b>';
+                            }
+                            else if($input["documentSystemID"] == 58 )
+                            {
+                                $subjectName = $document->documentDescription . ' ' . $sourceModel->CustomerName;
+                                $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $sourceModel->CustomerName . '</b>';
                             }
                             else
                             {
