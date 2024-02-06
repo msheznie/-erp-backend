@@ -5,10 +5,13 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\ThirdPartySystemNotifications\ThirdPartySystemNotificationJob;
+use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierBusinessCategoryAssign;
+use App\Models\SupplierContactDetails;
 use App\Models\SupplierSubCategoryAssign;
 use App\Services\SRMService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\BankMemoSupplier;
@@ -303,7 +306,6 @@ class SupplierRegistrationApprovalController extends AppBaseController
             $supplierCat = SupplierCategoryMaster::select('supCategoryMasterID')->where('supCategoryMasterID', $supplierFormValues['supCategoryMasterID'])->first();
             $data['supCategoryMasterID'] = $supplierCat['supCategoryMasterID'];
         }
-        
 
         $data['vatEligible'] =  $supplierFormValues['vatEligible'];
         $data['createdFrom'] =  6;
@@ -326,16 +328,13 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $data['webAddress'] = $supplierFormValues['webAddress'];
         $data['registrationExprity'] = $supplierFormValues['expireDate'];
 
-
-
-
         if($isApprovalAmmend!=1){ 
             $supplierMasters = SupplierMaster::create($data); 
             $dataPrimary['primarySupplierCode'] = 'S0' . strval($supplierMasters['supplierCodeSystem']);
             SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])
                 ->update($dataPrimary);
             $supplierID = $supplierMasters['supplierCodeSystem'];
-        }else {  
+        }else {
             
             SupplierMaster::where('supplierCodeSystem',$supplierMasterData['supplierMasterId'])
             ->update($data);
@@ -365,6 +364,87 @@ class SupplierRegistrationApprovalController extends AppBaseController
             ]);
         }
 
+        // Update Contact Details
+        $fieldMappings = [
+            70 => 'contactTypeID',
+            56 => 'contactPersonName',
+            59 => 'contactPersonTelephone',
+            61 => 'contactPersonEmail',
+            62 => 'contactPersonFax',
+            63 => 'isDefault',
+        ];
+
+        $supplierContactDetails = new SupplierContactDetails();
+
+        $groupedContacts = [];
+        foreach ($supplierFormValues['supplierContacts'] as $item) {
+            $sort = $item['sort'];
+            $groupedContacts[$sort][] = $item;
+        }
+
+        $supplierContactDetails
+            ->where('supplierID', $supplierID)
+            ->delete();
+
+        foreach ($groupedContacts as $sort => $contacts) {
+            $recordValues = [
+                'supplierID' => $supplierID,
+                'sort' => $sort,
+            ];
+
+            foreach ($contacts as $contact) {
+                $formFieldId = $contact['form_field_id'];
+                $value = $contact['value'];
+
+                if (isset($fieldMappings[$formFieldId])) {
+                    $fieldName = $fieldMappings[$formFieldId];
+
+                    // Check if it's isDefault and value is 1, set it to -1
+                    if ($formFieldId == 63 && $value == 1) {
+                        $value = -1;
+                    }
+
+                    $recordValues[$fieldName] = $value;
+                }
+            }
+
+            $supplierContactDetails->create($recordValues);
+        }
+
+    // upload attachments
+    $attachmentData = [];
+    foreach ($supplierFormValues['getAttachments'] as $index => $item) {
+        $formFieldId = $item['form_field_id'];
+        $value = $item['value'];
+
+        switch ($formFieldId) {
+            case 11:
+                $attachmentData['attachmentDescription'] = $value;
+                break;
+            case 12:
+                $attachmentData['path'] = $value;
+                $attachmentData['myFileName'] = $attachmentData['attachmentDescription'];
+                break;
+            case 14:
+                $attachmentData['docExpirtyDate'] = Carbon::parse($value);
+
+                if ($index % 3 === 2) {
+                    $attachmentData['companySystemID'] = $supplierMasterData['company_id'];
+                    $attachmentData['companyID'] = $company->CompanyID;
+                    $attachmentData['documentSystemID'] = 56;
+                    $attachmentData['documentID'] = 'SUPM';
+                    $attachmentData['documentSystemCode'] = $supplierID;
+                    $attachmentData['originalFileName'] = $attachmentData['attachmentDescription'];
+                    $attachmentData['attachmentType'] = 11;
+                    $attachmentData['sizeInKbs'] = 0;
+                    $attachmentData['isUploaded'] = 1;
+                    DocumentAttachments::create($attachmentData);
+                    $attachmentData = [];
+                }
+                break;
+        }
+    }
+
         $supplierCurrency = new SupplierCurrency();
         $supplierCurrency->supplierCodeSystem = $supplierMasters['supplierCodeSystem'];
         $supplierCurrency->currencyID =  $supplierMasters['currency'];
@@ -382,7 +462,6 @@ class SupplierRegistrationApprovalController extends AppBaseController
                 'isDefault' => -1
             ]);
         }
-       
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first(); 
         $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
@@ -402,8 +481,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
                 $temBankMemo->updatedByUserName = $empName;
                 $temBankMemo->save();
             }
-       
-       
+
             $isUpdated = SupplierRegistrationLink::where('id', $supplierMasterData['id'])
             ->update([
                 'supplier_master_id' => $supplier->supplierCodeSystem

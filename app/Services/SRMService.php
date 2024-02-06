@@ -38,6 +38,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
+use App\Models\SupplierContactType;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
@@ -889,11 +890,13 @@ class SRMService
         $countryMaster = CountryMaster::select('countryID', 'countryCode', 'countryName')->get();
         $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID', 'categoryCode', 'categoryName')->get();
         $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID', 'supMasterCategoryID', 'subCategoryCode', 'categoryName')->get();
+        $supplierContactType = SupplierContactType::select('supplierContactTypeID', 'supplierContactDescription')->get();
         $formData = array(
             'currencyMaster' => $currencyMaster,
             'countryMaster' => $countryMaster,
             'supplierCategoryMaster' => $supplierCategoryMaster,
             'supplierCategorySubMaster' => $supplierCategorySubMaster,
+            'supplierContactType' => $supplierContactType,
         );
 
         return [
