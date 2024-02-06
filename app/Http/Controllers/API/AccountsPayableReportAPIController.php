@@ -1114,7 +1114,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x]['Open Debit Notes'] = $val['open_debit_notes'];
                                 $data[$x]['Total Payable'] = $val['open_invoices'];
                                 $data[$x]['Total Prepayment'] = ($val['open_advances'] + $val['open_debit_notes']);
-                                $data[$x]['Net Outstanding'] = $val['open_invoices'] - ($val['open_advances'] + $val['open_debit_notes']);
+                                $data[$x]['Net Outstanding'] = $val['open_invoices'] + $val['open_advances'] + $val['open_debit_notes'];
 
                                 $x++;
                             }
@@ -5665,7 +5665,7 @@ ORDER BY
                 $totalAdvances += $val['open_advances'];
                 $totalDebitNotes += $val['open_debit_notes'];
                 $totalPrepayment += ($val['open_advances'] + $val['open_debit_notes']);
-                $totalNetOutstanding += ($val['open_invoices'] - ($val['open_advances'] + $val['open_debit_notes']));
+                $totalNetOutstanding += ($val['open_invoices'] + $val['open_advances'] + $val['open_debit_notes']);
             }
         }
 

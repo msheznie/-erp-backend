@@ -182,7 +182,7 @@
                 <td>{{ $supplier['open_debit_notes'] }}</td>
                 <td class="text-right">{{ $supplier['open_invoices'] }}</td>
                 <td class="text-right">{{ number_format(($supplier['open_advances'] + $supplier['open_debit_notes']) , $currencyDecimalPlace) }}</td>
-                <td class="text-right">{{ number_format($supplier['open_invoices'] - ($supplier['open_advances'] + $supplier['open_debit_notes']), $currencyDecimalPlace) }}</td>
+                <td class="text-right">{{ number_format($supplier['open_invoices'] + $supplier['open_advances'] + $supplier['open_debit_notes'], $currencyDecimalPlace) }}</td>
             </tr>
         @endforeach
         <tr width="100%">
