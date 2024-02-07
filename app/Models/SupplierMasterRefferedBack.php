@@ -454,6 +454,10 @@ class SupplierMasterRefferedBack extends Model
         'modifiedUserSystemID',
         'advanceAccountSystemID',
         'AdvanceAccount',
+        'blockType',
+        'blockFrom',
+        'blockTo',
+        'blockReason',
     ];
 
     /**

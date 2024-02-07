@@ -2181,6 +2181,104 @@ class SupplierMasterAPIController extends AppBaseController
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
     }
 
+    public function updateSupplierBlocker(Request $request)
+    {
+        
+        $input = $request->all();      
+        
+        $id = $input['id'];
+        $isDelete = $input['isDelete'];
+        $isEdit = $input['isEdit'];
+        $input = array_except($input, ['isDelete', 'id','isEdit']);
+        $PO = [];
+        $SI = [];
+        $PV= [];
+        $GRV = [];
+
+        $purchaseOrder = ProcumentOrder::where('supplierID',$id)->where('approved',0);
+        if($purchaseOrder->count() > 0)
+        {
+           $PO =  $purchaseOrder->pluck('purchaseOrderCode')->toArray();
+        }
+
+        $Invoice = BookInvSuppMaster::where('supplierID',$id)->where('approved',0)
+                            ->where(function($q)
+                        {
+                            $q->where('documentType',1)->orWhere('documentType',3);
+                        });
+        if($Invoice->count() > 0)
+        {
+           $SI =  $Invoice->pluck('bookingInvCode')->toArray();
+        }
+
+
+        $paymountVOcuher = PaySupplierInvoiceMaster::where('BPVsupplierID',$id)->where('approved',0)
+        ->where(function($q)
+            {
+                $q->where('invoiceType',5)->orWhere('invoiceType',3);
+            });
+
+        if($paymountVOcuher->count() > 0)
+        {
+            $PV =  $paymountVOcuher->pluck('BPVcode')->toArray();
+        }
+
+
+        $grv = GRVMaster::where('supplierID',$id)->where('approved',0)->where('grvTypeID',1);
+
+        if($grv->count() > 0)
+        {
+            $GRV =  $grv->pluck('grvPrimaryCode')->toArray();
+        }
+    
+    
+        if($isEdit == 1)
+        {
+            $mergedArray = array_merge($PO, $SI, $PV,$GRV);
+            if(count($mergedArray) > 0)
+            {
+                return $this->sendError('The supplier cannot be blocked as the supplier selected in the following documents.',500,['type' => 'blockSupplier','data' =>$mergedArray]);
+    
+            }
+        }
+
+
+        $input = $this->convertArrayToSelectedValue($input, array('blockType'));
+        if($isDelete == false)
+        {
+            $validator = \Validator::make($request->all(), [
+                'blockType' => 'required',
+                'blockFrom' => 'required_if:blockType,2|nullable|date',
+                'blockReason' => 'required',
+                'blockTo' => 'required_if:blockType,2|nullable|date|after_or_equal:blockFrom',
+            ],[ 'blockTo.required_if' => 'From Date must be grater than less than or equal to TO date' ]);
+    
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+        }
+
+         $msg = 
+         $supplierMaster = $this->supplierMasterRepository->update($input, $id);
+         return $this->sendResponse($supplierMaster,'Data updated successfully');
+
+    }
+
+    public function validateSupplier(Request $request)
+    {
+        $input = $request->all();
+        $supplier_id = $input['supplierId'];
+        $supplierMaster = $this->supplierMasterRepository->findWithoutFail($supplier_id);
+        $date = isset($input['date'])?$input['date']:null;
+        $validatorResult = \Helper::checkBlockSuppliers($supplierMaster->blockType,$supplierMaster->blockFrom,$supplierMaster->blockTo,$date);
+        if (!$validatorResult['success']) {
+            return $this->sendError($validatorResult['message']);
+        }
+     
+        return $this->sendResponse(true,$validatorResult['message']);
+
+    }
+
     public function validateEmailExist($request)
     {
         $email = $request->input('email');

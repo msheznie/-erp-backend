@@ -56,6 +56,10 @@ Route::group([], function(){
 	Route::resource('supplier/contactDetails', 'SupplierContactDetailsAPIController', ['names' => 'Supplier contact details']);
 	Route::resource('supplier/assigned', 'SupplierAssignedAPIController', ['names' => 'Supplier assigned']);
 	Route::resource('supplier_refer_back', 'SupplierMasterRefferedBackAPIController');
+	Route::post('updateSupplierBlocker', 'SupplierMasterAPIController@updateSupplierBlocker')->name("Update supplier blocker");
+	Route::post('validateSupplier', 'SupplierMasterAPIController@validateSupplier')->name('Validate supplier blocker');
+
+
 });
 
 

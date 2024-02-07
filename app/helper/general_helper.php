@@ -9200,6 +9200,41 @@ class Helper
         $bookInvSuppMaster->save();
     }
 
+
+    public static function checkBlockSuppliers($type, $from, $to, $date)
+    {
+       $isValidate = true;
+
+        if($type == 1)
+        {
+            $isValidate = false;
+
+        }
+        else if(isset($date) && $type == 2)
+        {
+            $date =  ((new Carbon(($date)))->format('Y-m-d'));
+            $check_date = Carbon::parse($date);
+
+            $from = Carbon::parse($from);
+            $to = Carbon::parse($to);
+
+            if ($check_date->between($from, $to)) {
+                $isValidate = false;
+
+            }
+
+        }
+        if(!$isValidate)
+        {
+            
+            return ['success' => false, 'message' => 'The selected supplier has been blocked. Please change the supplier to proceed.'];
+        }
+
+        return ['success' => true, 'message' => "supplier checked successfully"];
+
+    }
+
+
     public static function getDocumentModifyRequestDetails($autoID)
     { 
         $doucumentModifyComment = DocumentModifyRequest::select('description')

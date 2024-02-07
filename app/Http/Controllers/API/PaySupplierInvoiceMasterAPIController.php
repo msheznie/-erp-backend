@@ -1522,6 +1522,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
             }
 
+            $supplier_id = $input['BPVsupplierID'];
+            $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
+    
+            if(($input['isSupplierBlocked']) && ($paySupplierInvoiceMaster->invoiceType == 2))
+            {
+                $validatorResult = \Helper::checkBlockSuppliers($supplierMaster->blockType,$supplierMaster->blockFrom,$supplierMaster->blockTo,$input['BPVdate']);
+                if (!$validatorResult['success']) {              
+                     return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+    
+                }
+            }
+
             $companySystemID = $paySupplierInvoiceMaster->companySystemID;
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
             $input['companySystemID'] = $companySystemID;

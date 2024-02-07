@@ -511,6 +511,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
+        $supplier_id = $input['supplierID'];
+        $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
+
+        if(($input['isSupplierBlocked']) && ($bookInvSuppMaster->documentType == 0 ||$bookInvSuppMaster->documentType == 2) )
+        {
+            $validatorResult = \Helper::checkBlockSuppliers($supplierMaster->blockType,$supplierMaster->blockFrom,$supplierMaster->blockTo,$input['bookingDate']);
+            if (!$validatorResult['success']) {              
+                 return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+
+            }
+        }
+
         if ($input['supplierID'] != $bookInvSuppMaster->supplierID && $input['documentType'] != 4) {
             $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
         }

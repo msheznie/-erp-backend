@@ -351,7 +351,6 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        
 
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
@@ -371,6 +370,18 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
         }
 
+
+        $supplier_id = $input['supplierID'];
+        $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
+
+        if(($input['isSupplierBlocked']))
+        {
+            $validatorResult = \Helper::checkBlockSuppliers($supplierMaster->blockType,$supplierMaster->blockFrom,$supplierMaster->blockTo,$input['grvDate']);
+            if (!$validatorResult['success']) {              
+                 return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+
+            }
+        }
 
         $currentDate = Carbon::parse(now())->format('Y-m-d');
         if (isset($input['grvDate'])) {
