@@ -516,6 +516,8 @@ class ReceiptAPIService
                 $receipt->customerID = $customerDetails->customerCodeSystem;
                 $receipt->customerGLCodeSystemID = $customerDetails->custGLAccountSystemID;
                 $receipt->customerGLCode = $customerDetails->custGLaccount;
+                $receipt->custAdvanceAccountSystemID =  $customerDetails->custGLAccountSystemID;
+                $receipt->custAdvanceAccount = $customerDetails->custGLaccount;
             }
         }
 
