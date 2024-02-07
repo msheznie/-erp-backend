@@ -2188,7 +2188,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['documentID'] = $matchDocumentMaster->documentID;
                         $data['documentSystemCode'] = $input["PayMasterAutoId"];
                         $data['documentCode'] = $masterData->custPaymentReceiveCode;
-                        $data['documentDate'] = $masterDocumentDate;
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
                         $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
                         $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
                         $data['documentConfirmedDate'] = $matchDocumentMaster->matchingConfirmedDate;
@@ -2211,6 +2211,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                         $data['createdUserPC'] = gethostname();
                         $data['timestamp'] = \Helper::currentDateTime();
+                        $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
 
                         $directReceipts = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt")
                                                                 ->WHERE('directReceiptAutoID', $input['PayMasterAutoId'])
@@ -3762,8 +3763,15 @@ ORDER BY
                     $debitNote->save();
                 }
             }
+            else if($masterData->documentSystemID == 21){
+                $receiveVoucher = CustomerReceivePayment::find($masterData->PayMasterAutoId);
+                if (!empty($receiveVoucher)) {
+                    $receiveVoucher->matchInvoice = 0;
+                    $receiveVoucher->save();
+                }
+            }
 
-            if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15){
+            if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15 || $masterData->documentSystemID == 21){
                 GeneralLedger::where('documentSystemID',$masterData->documentSystemID)
                                ->where('documentSystemCode',$masterData->PayMasterAutoId)
                                ->where('documentSystemID',$masterData->documentSystemID)

@@ -132,7 +132,7 @@ class RecieptVoucherTaxLedgerService
                                 $ledgerData['localCurrencyID'] = $value->localCurrencyID;
                                 $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
                                 $ledgerData['transCurrencyID'] = $value->transCurrencyID;
-                
+                                $ledgerData['matchDocumentMasterAutoID'] = $masterModel['matchDocumentMasterAutoID'];
                                 array_push($finalData, $ledgerData);
                             }
                             
@@ -182,6 +182,7 @@ class RecieptVoucherTaxLedgerService
                                 $ledgerDetailsData['taxableAmountReporting'] = $value->netAmountRpt;
                                 $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal;
                                 $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt;
+                                $ledgerDetailsData['matchDocumentMasterAutoID'] = $masterModel['matchDocumentMasterAutoID'];
                                 $taxConfigData = TaxService::getInputVATGLAccount($masterData->companySystemID);
                                 if (!empty($taxConfigData)) {
                                     $ledgerDetailsData['inputVATGlAccountID'] = $taxConfigData->inputVatGLAccountAutoID;
