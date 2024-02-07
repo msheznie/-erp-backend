@@ -2447,7 +2447,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                 'matchDocumentMasterAutoID' => $matchDocumentMaster->matchDocumentMasterAutoID,
                                                 'autoID' => $input['PayMasterAutoId'],
                                                 'matching' => true,
-                                                'companySystemID' => $matchDocumentMaster->companySystemID
+                                                'companySystemID' => $matchDocumentMaster->companySystemID,
+                                                'documentDate' => $matchDocumentMaster->matchingDocdate
                                             ];
 
                                             $taxResponse = RecieptVoucherTaxLedgerService::processEntry($taxLedgerData, $masterModel);

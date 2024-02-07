@@ -88,7 +88,7 @@ class RecieptVoucherTaxLedgerService
             }
     
             $ledgerData['documentCode'] = $masterData->custPaymentReceiveCode;
-            $ledgerData['documentDate'] = $masterDocumentDate;
+        
             $ledgerData['partyID'] = $masterData->customerID;
             $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
     
@@ -133,6 +133,7 @@ class RecieptVoucherTaxLedgerService
                                 $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
                                 $ledgerData['transCurrencyID'] = $value->transCurrencyID;
                                 $ledgerData['matchDocumentMasterAutoID'] = $masterModel['matchDocumentMasterAutoID'];
+                                $ledgerData['documentDate'] = $masterModel['documentDate'];
                                 array_push($finalData, $ledgerData);
                             }
                             
@@ -148,7 +149,7 @@ class RecieptVoucherTaxLedgerService
                                 $ledgerDetailsData['vatSubCategoryID'] = $value->vatSubCategoryID;
                                 $ledgerDetailsData['vatMasterCategoryID'] = $value->vatMasterCategoryID;
                                 $ledgerDetailsData['serviceLineSystemID'] = $value->serviceLineSystemID;
-                                $ledgerDetailsData['documentDate'] = $masterDocumentDate;
+                                $ledgerDetailsData['documentDate'] = $masterModel['documentDate'];
                                 $ledgerDetailsData['postedDate'] = date('Y-m-d H:i:s');
                                 $ledgerDetailsData['documentNumber'] = $masterData->custPaymentReceiveCode;
                                 $ledgerDetailsData['chartOfAccountSystemID'] = $value->chartOfAccountSystemID;
@@ -233,7 +234,7 @@ class RecieptVoucherTaxLedgerService
                         $ledgerData['localCurrencyID'] = $value->localCurrencyID;
                         $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
                         $ledgerData['transCurrencyID'] = $value->transCurrencyID;
-        
+                        $ledgerData['documentDate'] = $masterDocumentDate;
                         array_push($finalData, $ledgerData);
                     }
         
