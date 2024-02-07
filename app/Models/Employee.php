@@ -338,4 +338,10 @@ class Employee extends Model
     {
         return $this->hasOne('App\Models\EmployeeLanguage','employeeID','employeeSystemID');
     }
+
+    public function invoice()
+    {
+        return $this->hasMany('App\Models\BookInvSuppMaster','employeeID','employeeSystemID');
+    }
+
 }

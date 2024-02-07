@@ -42,6 +42,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\Models\BookInvSuppMaster;
 
 /**
  * Class EmployeeController
@@ -209,9 +210,18 @@ class EmployeeAPIController extends AppBaseController
 
     public function getAllEmployees(Request $request){
         $input = $request->all();
-        $employees = Employee::where('empCompanySystemID', $input['selectedCompanyId'])->where('discharegedYN', 0)->get();
 
-        return $this->sendResponse($employees->toArray(), 'Data retrieved successfully');
+        $output = Employee::where(function($q) use($input){
+            $q->where('empCompanySystemID', $input['selectedCompanyId'])->orWhere(function($q) use($input){
+                    $q->whereHas('invoice',function($q) use($input){
+                        $q->where('documentType',4)->whereHas('employee',function($q) use($input){
+                            $q->where('empCompanySystemID','!=',$input['selectedCompanyId']);
+                        });
+                    });
+            });
+        })->where('discharegedYN', 0)->get();
+
+        return $this->sendResponse($output->toArray(), 'Data retrieved successfully');
     }
 
 
