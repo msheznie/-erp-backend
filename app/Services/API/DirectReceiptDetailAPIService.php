@@ -15,7 +15,8 @@ class DirectReceiptDetailAPIService
         $objDirectReceipt->directReceiptAutoID = $receiptVoucher->custReceivePaymentAutoID;
         $objDirectReceipt->companyID = $receiptVoucher->companyID;
         $objDirectReceipt->companySystemID = $receiptVoucher->companySystemID;
-        if(isset($directReceipt['glCode']))
+
+        if(isset($directReceipt['glCode']) && ($receiptVoucher->documentType == 14))
             $objDirectReceipt = self::setGlDetails($directReceipt,$objDirectReceipt);
         $objDirectReceipt = self::setSegemntDetails($directReceipt,$objDirectReceipt);
         $objDirectReceipt = self::setCommonDetails($directReceipt,$objDirectReceipt,$receiptVoucher);

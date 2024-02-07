@@ -44,7 +44,6 @@ class ReceiptAPIService
 
         foreach ($receipts as $receipt) {
             $receipt = self::serialCodeDetails($receipt);
-
             $saveReceipt = CustomerReceivePayment::create($receipt->toArray());
             array_push($savedReceipts,$saveReceipt);
             if($saveReceipt) {
@@ -183,7 +182,7 @@ class ReceiptAPIService
             $taxDetail['documentID'] = $receipt->documentID;
             $taxDetail['documentSystemID'] = $receipt->documentSystemID;
             $taxDetail['documentSystemCode'] = $receipt->custReceivePaymentAutoID;
-            $taxDetail['documentCode'] = $receipt->custPaymentReceiveCode;
+            $taxDetail['documentCode'] = isset($receipt->custPaymentReceiveCode) ? $receipt->custPaymentReceiveCode : null;
             $taxDetail['taxShortCode'] = '';
             $taxDetail['taxDescription'] = '';
             $taxDetail['taxPercent'] = $receipt->VATPercentage;
@@ -538,15 +537,13 @@ class ReceiptAPIService
             $lastSerialNumber = intval($serialNo->serialNo) + 1;
         }
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $receipt->companyFinanceYearID)->first();
-
         if(isset($CompanyFinanceYear)) {
             $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
-
             $custPaymentReceiveCode = ($receipt->companyID . '\\' . $y . '\\BRV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-
             $receipt->custPaymentReceiveCode = $custPaymentReceiveCode;
             $receipt->serialNo = $lastSerialNumber;
         }
+
 
         return $receipt;
     }
@@ -601,20 +598,27 @@ class ReceiptAPIService
     private function setFinanicalPeriod($documentDate,$receipt) : CustomerReceivePayment
     {
         $financialPeriods = CompanyFinancePeriod::where('departmentSystemID',4)->where('companySystemID',$receipt->companySystemID)->where('companyFinanceYearID',$receipt->companyFinanceYearID)->get();
-        foreach ($financialPeriods as $financialPeriod) {
-            if(Carbon::parse($financialPeriod->dateFrom)->format('d/m/Y') == Carbon::parse($documentDate)->firstOfMonth()->format('d/m/Y')) {
-                if($financialPeriod->isActive == 0) {
-                    $this->isError = true;
-                    $error[$receipt->narration] = ['Financial Period should be active'];
-                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
-                }else {
-                    $receipt->FYPeriodDateFrom = $financialPeriod->dateFrom;
-                    $receipt->FYPeriodDateTo = $financialPeriod->dateTo;
-                    $receipt->companyFinancePeriodID = $financialPeriod->companyFinancePeriodID;
-                }
+        if(count($financialPeriods) == 0) {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Financial Period not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }else {
+            foreach ($financialPeriods as $financialPeriod) {
+                if(Carbon::parse($financialPeriod->dateFrom)->format('d/m/Y') == Carbon::parse($documentDate)->firstOfMonth()->format('d/m/Y')) {
+                    if($financialPeriod->isActive == 0) {
+                        $this->isError = true;
+                        $error[$receipt->narration] = ['Financial Period should be active'];
+                        array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                    }else {
+                        $receipt->FYPeriodDateFrom = $financialPeriod->dateFrom;
+                        $receipt->FYPeriodDateTo = $financialPeriod->dateTo;
+                        $receipt->companyFinancePeriodID = $financialPeriod->companyFinancePeriodID;
+                    }
 
+                }
             }
         }
+
         return $receipt;
     }
 
@@ -759,6 +763,9 @@ class ReceiptAPIService
                 $receipt->companyFinanceYearID = null;
                 $receipt->FYBiggin = null;
                 $receipt->FYEnd = null;
+                $this->isError = true;
+                $error[$receipt->narration] = ['Financial Year not found'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
             }
         }
 
@@ -773,6 +780,7 @@ class ReceiptAPIService
             $finanicalYearToDate =$companyFinanicalYear['endingDate'];
             if( ($finanicalYearFromDate <= $receipt->postedDate) &&  ($receipt->postedDate <= $finanicalYearToDate)) {
                 return ['success' => true, 'data' => ['id' => $companyFinanicalYear->companyFinanceYearID, 'from' => $finanicalYearFromDate,'to' => $finanicalYearToDate]];
+            }else {
             }
         }
         return ['success' => false , 'data' => []];
