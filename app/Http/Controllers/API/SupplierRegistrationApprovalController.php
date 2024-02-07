@@ -345,6 +345,8 @@ class SupplierRegistrationApprovalController extends AppBaseController
 
             SupplierBusinessCategoryAssign::where('supplierID', $supplierID)->delete();
             SupplierSubCategoryAssign::where('supplierID', $supplierID)->delete();
+            SupplierContactDetails::where('supplierID', $supplierID)->delete();
+            DocumentAttachments::where('documentSystemCode', $supplierID)->where('documentSystemID', 56)->where('attachmentType', 11)->delete();
 
         }
 
