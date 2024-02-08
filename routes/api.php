@@ -964,6 +964,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('customer_invoice_upload_details', 'CustomerInvoiceUploadDetailAPIController');
 
             Route::post('checkCustomerInvoiceUploadStatus', 'CustomerInvoiceDirectAPIController@checkCustomerInvoiceUploadStatus');
+
+            Route::resource('s_r_m_supplier_values', 'SRMSupplierValuesAPIController');
         });
     });
 
@@ -1071,10 +1073,5 @@ if (env("LOG_ENABLE", false)) {
  * End external related routes
  */
 
-Route::resource('s_r_m_supplier_values', 'SRMSupplierValuesAPIController');
 
 
-
-Route::resource('register_supplier_business_category_assigns', 'RegisterSupplierBusinessCategoryAssignAPIController');
-
-Route::resource('register_supplier_subcategory_assigns', 'RegisterSupplierSubcategoryAssignAPIController');
