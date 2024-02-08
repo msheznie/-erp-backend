@@ -3137,7 +3137,6 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     }
 
-                    POSTaxGLEntries::insert($taxGLReturnArray);
 
                     foreach ($invItems as $item) {
                         $itemReturnArray[] = array(
@@ -3152,7 +3151,6 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     }
 
-                    POSItemGLEntries::insert($itemReturnArray);
 
 
                     foreach ($bankItems as $item) {
@@ -3166,12 +3164,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         );
 
                     }
-                    POSBankGLEntries::insert($bankReturnArray);
 
-
-                    POSGLEntries::insert($bankGLReturnArray);
-                    POSGLEntries::insert($itemGLReturnArray);
-                    POSGLEntries::insert($taxGLReturnArray);
 
 
                     foreach ($invItemsPL as $gl) {
@@ -3190,7 +3183,6 @@ class ShiftDetailsAPIController extends AppBaseController
                             );
                         }
                     }
-                    POSGLEntries::insert($costGLReturnArray);
                     foreach ($invItemsBS as $gl) {
                         if ($gl->categoryID == 1) {
                             $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
@@ -3219,8 +3211,16 @@ class ShiftDetailsAPIController extends AppBaseController
                             }
                         }
                     }
-                    POSGLEntries::insert($inventoryGLReturnArray);
                 }
+                POSTaxGLEntries::insert($taxGLReturnArray);
+                POSItemGLEntries::insert($itemReturnArray);
+                POSBankGLEntries::insert($bankReturnArray);
+                POSGLEntries::insert($bankGLReturnArray);
+                POSGLEntries::insert($itemGLReturnArray);
+                POSGLEntries::insert($taxGLReturnArray);
+                POSGLEntries::insert($costGLReturnArray);
+                POSGLEntries::insert($inventoryGLReturnArray);
+
             }
 
 
