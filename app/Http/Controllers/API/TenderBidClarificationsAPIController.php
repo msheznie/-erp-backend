@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\email;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderBidClarificationsAPIRequest;
 use App\Http\Requests\API\UpdateTenderBidClarificationsAPIRequest;
+use App\Mail\EmailForQueuing;
 use App\Models\TenderBidClarifications;
 use App\Repositories\TenderBidClarificationsRepository;
 use Illuminate\Http\Request;
@@ -15,11 +17,13 @@ use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\TenderMaster;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Exception;
 
 /**
@@ -522,5 +526,46 @@ class TenderBidClarificationsAPIController extends AppBaseController
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
+    }
+
+    public function forwardPreBidClarification(Request $request){
+        $input = $request->all();
+        $bidId = $input['bid_id'];
+
+        $bidClarifications = TenderBidClarifications::with(['attachment','tender'])->where('id', '=', $bidId)->get();
+        $tenderCode = $bidClarifications[0]->tender->title;
+        $tenderTitle = $bidClarifications[0]->tender->tender_code;
+        $preBidClarifications = $bidClarifications[0]->post;
+        $attachments = $bidClarifications[0]->attachment;
+        $file = array();
+        foreach ($attachments as $attachment){
+            $file[$attachment->originalFileName] = Helper::getFileUrlFromS3($attachment->path);
+        }
+
+        $emailString = $input['emailString'];
+        $validator = Validator::make(
+            ['emails' => $emailString],
+            ['emails.*' => 'email']
+        );
+
+        if ($validator->fails()) {
+            $invalidEmails = [];
+            foreach ($emailString as $index => $email) {
+                if ($validator->errors()->has("emails.$index")) {
+                    $invalidEmails[] = $email;
+                }
+            }
+            $invalidEmailsString = implode(', ', $invalidEmails);
+            $errorMessage = "$invalidEmailsString are not valid email addresses. Please enter valid email addresses.";
+
+            return response()->json(['message' => $errorMessage, 'invalid_emails' => $invalidEmails], 422);
+        }else {
+            foreach ($emailString as $email){
+            $forwardEmail = email::emailAddressFormat($email);
+            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarifications"."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file));
+            }
+        }
+        return ['success' => true, 'message' => 'Email sent successfully'];
+
     }
 }
