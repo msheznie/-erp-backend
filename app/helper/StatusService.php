@@ -138,4 +138,43 @@ class StatusService
 
 		return $type;
 	}
+
+    public static function getrrvType($rrvType)
+    {
+        $type = "";
+        if($rrvType == 0){
+            $type = "Recurring JV";
+        } else if ($rrvType == 1) {
+            $type = "Recurring Customer invoice";
+        } else if ($rrvType == 2) {
+            $type = "Recurring Supplier invoice";
+        }
+        return $type;
+    }
+
+    public static function getrrvSchedule($rrvSchedule)
+    {
+        $type = "";
+        if($rrvSchedule == 0){
+            $type = "Day";
+        } else if ($rrvSchedule == 1) {
+            $type = "Month";
+        } else if ($rrvSchedule == 2) {
+            $type = "Year";
+        }
+        return $type;
+    }
+
+    public static function getrrvStatus($rrvStatus)
+    {
+        $type = "";
+        if($rrvStatus == 0){
+            $type = "Draft";
+        } else if ($rrvStatus == 1) {
+            $type = "Confirm";
+        } else if ($rrvStatus == 2) {
+            $type = "Approved";
+        }
+        return $type;
+    }
 }

@@ -3090,6 +3090,17 @@ class Helper
                     $docInforArr["modelName"] = 'DocumentModifyRequest';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 119:
+                    $docInforArr["documentCodeColumnName"] = 'RRVcode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'recurring_voucher_setup';
+                    $docInforArr["modelName"] = 'RecurringVoucherSetup';
+                    $docInforArr["primarykey"] = 'recurringVoucherAutoId';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }

@@ -516,4 +516,29 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         return $this->sendResponse($checkSubAccountIsAssigned, 'Data retrieved successfully');
 
     }
+
+    public function getGLForRecurringVoucherDirect(request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+
+        $items = ChartOfAccountsAssigned::whereHas('chartofaccount', function ($q) {
+            $q->where('isApproved', 1);
+        })->where('companySystemID', $companyID)
+            ->where('controllAccountYN', 0)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+
+    }
 }

@@ -269,6 +269,10 @@ Route::group([], function(){
     Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
     Route::resource('project_gl_details', 'ProjectGlDetailAPIController');
     Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
+    Route::resource('recurring_voucher_setups', 'RecurringVoucherSetupAPIController');
+    Route::resource('recurring_voucher_setup_details', 'RecurringVoucherSetupDetailAPIController');
+    Route::resource('recurring_voucher_setup_schedules', 'RecurringVoucherSetupScheduleAPIController');
+
 
     Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData')->name('Get Finance Year Form data');
 
@@ -277,6 +281,12 @@ Route::group([], function(){
 
     Route::post('erp_project_masters/get_gl_accounts','ChartOfAccountsAssignedAPIController@getGlAccounts')->name('Get GL Accounts');
 
+    Route::get('getRecurringVoucherMasterFormData', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterFormData')->name('Get recurring voucher master form data');
+    Route::post('getRecurringVoucherMasterView', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterView')->name('Get recurring voucher master view');
+    Route::get('getRecurringVoucherDetails', 'RecurringVoucherSetupDetailAPIController@getRecurringVoucherDetails')->name('Get RRV details');
+    Route::get('getRecurringVoucherContracts', 'RecurringVoucherSetupDetailAPIController@getRecurringVoucherContracts')->name('Get RRV contracts');
+    Route::get('getGLForRecurringVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForRecurringVoucherDirect')->name("Get gl for RRV direct");
+    Route::get('getRecurringVoucherMasterRecord', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterRecord')->name('Get rrv master record');
 });
 
 
