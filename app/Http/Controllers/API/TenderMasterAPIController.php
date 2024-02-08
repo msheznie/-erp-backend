@@ -5261,7 +5261,8 @@ ORDER BY
             ->where('document_type',0)
             ->where('tender_type_id',1)
             ->where('approved',-1)
-            ->where('published_yn',1);
+            ->where('published_yn',1)
+            ->orderBy('id','desc');
 
 
         if ($search) {
@@ -5279,8 +5280,14 @@ ORDER BY
             $data = $data->paginate($limit);
         }
 
+
+        $companyData = Company::select('CompanyName','logoPath')
+            ->orderBy('companySystemID','asc')
+            ->first();
+
         $tenderData['data'] = $data;
         $tenderData['srmLink'] = $tenderUrl;
+        $tenderData['companyData'] = $companyData;
 
         return $tenderData;
     }
