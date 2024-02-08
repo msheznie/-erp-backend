@@ -155,6 +155,7 @@ class SupplierInvoiceGlService
         $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
 
         if ($masterData) {
+
             $data['companySystemID'] = $masterData->companySystemID;
             $data['companyID'] = $masterData->companyID;
             $data['serviceLineSystemID'] = 24;
@@ -176,7 +177,8 @@ class SupplierInvoiceGlService
             $data['documentNarration'] = $masterData->comments;
             $data['clientContractID'] = 'X';
             $data['contractUID'] = 159;
-            $data['supplierCodeSystem'] = $masterData->supplierID;;
+            $data['supplierCodeSystem'] = $masterData->supplierID;
+            $data['employeeSystemID'] = $masterData->employeeID;
             $data['chartOfAccountSystemID'] = ($masterData->documentType == 4) ? $masterData->employeeControlAcID : $masterData->supplierGLCodeSystemID;
             $data['glCode'] = ($masterData->documentType == 4) ? ChartOfAccount::getAccountCode($masterData->employeeControlAcID) : $masterData->supplierGLCode;
             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
