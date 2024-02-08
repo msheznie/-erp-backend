@@ -461,7 +461,15 @@ class TenderFinalBidsAPIController extends AppBaseController
             $tenderId = $inputs['tenderMasterId']; 
             $isNegotiation = $inputs['isNegotiation'];
             $comment = $inputs['comment'];
-            $id = $inputs['id'][0]; 
+            $id = $inputs['id'][0];
+
+            $existingAwardedTender = TenderFinalBids::where('tender_id', $tenderId)
+                ->where('award', true)
+                ->first();
+
+            if ($existingAwardedTender) {
+                $existingAwardedTender->update(['award' => false]);
+            }
 
             TenderFinalBids::where('id',$id)->update(['award'=>true]);
 

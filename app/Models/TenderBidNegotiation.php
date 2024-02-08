@@ -37,4 +37,8 @@ class TenderBidNegotiation extends Model
     public function tender_negotiation_area(){
         return $this->hasOne('App\Models\TenderNegotiationArea', 'tender_negotiation_id', 'tender_negotiation_id');
     }
+
+    public function BidSubmissionMaster() {
+        return $this->belongsTo('App\Models\BidSubmissionMaster', 'bid_submission_master_id_new', 'id');
+    }
 }

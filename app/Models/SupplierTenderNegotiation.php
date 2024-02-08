@@ -99,6 +99,8 @@ class SupplierTenderNegotiation extends Model
         return $this->belongsTo('App\Models\SupplierRegistrationLink', 'suppliermaster_id', 'id');
     }
 
-
+    public function SrmTenderBidNegotiation() {
+        return $this->belongsTo('App\Models\TenderBidNegotiation', 'srm_bid_submission_master_id', 'bid_submission_master_id_old');
+    }
     
 }
