@@ -3009,6 +3009,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_salesreturn.invoiceID')
                     ->where('pos_source_salesreturn.shiftID', $shiftId)
                     ->where('pos_source_invoice.isCreditSales', 0)
+                    ->groupBy('pos_source_salesreturn.salesReturnID')
                     ->get();
 
                 foreach ($returns as $return) {
@@ -3017,10 +3018,10 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->selectRaw('pos_source_salesreturn.refundAmount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
                         ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
                         ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_invoice.invoiceID')
-                        ->where('pos_source_invoice.invoiceID', $return->invoiceID)
-                        ->groupBy('pos_source_invoice.invoiceID')
+                        ->where('pos_source_salesreturn.salesReturnID', $return->salesReturnID)
                         ->groupBy('pos_source_invoicepayments.paymentConfigMasterID')
                         ->groupBy('pos_source_invoicepayments.GLCode')
+                        ->groupBy('pos_source_salesreturn.salesReturnID')
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->get();
 
@@ -3031,7 +3032,8 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                         ->join('pos_source_salesreturndetails', 'pos_source_salesreturndetails.invoiceDetailID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
-                        ->where('pos_source_invoice.invoiceID', $return->invoiceID)
+                        ->groupBy('pos_source_salesreturndetails.salesReturnID')
+                        ->where('pos_source_salesreturndetails.salesReturnID', $return->salesReturnID)
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->get();
 
@@ -3042,11 +3044,11 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                         ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
                         ->join('pos_source_salesreturndetails', 'pos_source_salesreturndetails.invoiceDetailID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
-                        ->where('pos_source_invoice.invoiceID', $return->invoiceID)
+                        ->where('pos_source_salesreturndetails.salesReturnID', $return->salesReturnID)
                         ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->groupBy('financeitemcategorysub.financeCogsGLcodePLSystemID')
-                        ->groupBy('pos_source_invoicedetail.invoiceID')
+                        ->groupBy('pos_source_salesreturndetails.salesReturnID')
                         ->get();
 
 
@@ -3057,11 +3059,11 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                         ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
                         ->join('pos_source_salesreturndetails', 'pos_source_salesreturndetails.invoiceDetailID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
-                        ->where('pos_source_invoice.invoiceID', $return->invoiceID)
+                        ->where('pos_source_salesreturndetails.salesReturnID', $return->salesReturnID)
                         ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->groupBy('financeitemcategorysub.financeGLcodebBSSystemID')
-                        ->groupBy('pos_source_invoicedetail.invoiceID')
+                        ->groupBy('pos_source_salesreturndetails.salesReturnID')
                         ->get();
 
 
@@ -3074,8 +3076,9 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('pos_source_taxmaster', 'pos_source_taxmaster.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
                         ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxmaster.erp_tax_master_id')
                         ->join('pos_source_salesreturndetails', 'pos_source_salesreturndetails.invoiceDetailID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
-                        ->where('pos_source_invoice.invoiceID', $return->invoiceID)
+                        ->where('pos_source_salesreturndetails.salesReturnID', $return->salesReturnID)
                         ->where('pos_source_invoice.isCreditSales', 0)
+                        ->groupBy('pos_source_salesreturndetails.salesReturnID')
                         ->get();
 
                     $bankItems = DB::table('pos_source_invoice')
@@ -3083,10 +3086,11 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
                         ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_invoicepayments.paymentConfigDetailID')
                         ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_invoice.invoiceID')
-                        ->where('pos_source_invoice.invoiceID', $return->invoiceID)
+                        ->where('pos_source_salesreturn.salesReturnID', $return->salesReturnID)
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->groupBy('pos_source_invoice.shiftID')
                         ->groupBy('pos_source_invoice.invoiceID')
+                        ->groupBy('pos_source_salesreturn.salesReturnID')
                         ->get();
 
                     foreach ($bankGL as $gl) {
