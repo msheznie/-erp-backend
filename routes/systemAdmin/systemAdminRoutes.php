@@ -26,6 +26,7 @@ Route::group([], function(){
 	Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit')->name("Get supplier master audit");
 	Route::get('getSupplierMaster', 'SupplierMasterAPIController@getSupplierMaster')->name("Get supplier master");
 
+	Route::post('supplierUsage', 'SupplierMasterAPIController@supplierUsage')->name("Check supplier usage");
 	Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany')->name('Company wise suppliers list');
 	Route::post('getInterCompaniesForCustomerSupplier', 'CustomerMasterAPIController@getInterCompaniesForCustomerSupplier')->name("Inter companies for customer/supplier");
 	Route::post('supplier/masters/update', 'SupplierMasterAPIController@updateSupplierMaster')->name("Update supplier master");
