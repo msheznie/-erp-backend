@@ -139,9 +139,6 @@ Route::group([], function(){
     Route::get('getContingencyBudgetFormData', 'ContingencyBudgetPlanAPIController@getFormData')->name('Get contingency budget form data');
     Route::get('getBudgetAmount/{id}', 'ContingencyBudgetPlanAPIController@getBudgetAmount')->name('Get contingency budget amount');
 
-    Route::post('get_contingency_budget', 'ContingencyBudgetPlanAPIController@get_contingency_budget')->name('Get contingency budget');
-
-
     // Budget Additions
     Route::resource('budget_addition', 'ErpBudgetAdditionAPIController');
     Route::resource('budget_addition_details', 'ErpBudgetAdditionDetailAPIController');
