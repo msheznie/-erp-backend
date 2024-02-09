@@ -71,6 +71,8 @@ use App\Models\DeliveryOrder;
 use App\Models\CreditNote;
 use App\Models\CustomerReceivePayment;
 use App\Models\QuotationMaster;
+use App\Models\MatchDocumentMaster;
+
 /**
  * Class CustomerMasterController
  * @package App\Http\Controllers\API
@@ -329,7 +331,7 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $chartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+        $data['chartOfAccounts'] = ChartOfAccount::where('controllAccountYN', '=', 1)
                                          ->whereHas('chartofaccount_assigned', function($query) use ($input) {
                                             $query->where('companySystemID', $input['companySystemID'])
                                                   ->where('isAssigned', -1)    
@@ -340,7 +342,18 @@ class CustomerMasterAPIController extends AppBaseController
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
 
-        return $this->sendResponse($chartOfAccounts, 'Record retrieved successfully');
+        $data['liabilityAccounts'] = ChartOfAccount::where('controllAccountYN', '=', 1)
+                                        ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                            $query->where('companySystemID', $input['companySystemID'])
+                                                    ->where('isAssigned', -1)    
+                                                    ->where('isActive', 1);    
+                                        })
+                                        ->where('controlAccountsSystemID',4)
+                                        ->where('catogaryBLorPL', '=', 'BS')
+                                        ->orderBy('AccountDescription', 'asc')
+                                        ->get();
+
+        return $this->sendResponse($data, 'Record retrieved successfully');
 
     }
 
@@ -418,7 +431,7 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
-
+   
         if($input['custGLAccountSystemID'] == $input['custUnbilledAccountSystemID'] ){
             return $this->sendError('Receivable account and unbilled account cannot be same. Please select different chart of accounts.');
         }
@@ -444,6 +457,10 @@ class CustomerMasterAPIController extends AppBaseController
 
         if($input['custUnbilledAccountSystemID'] == 0){
             return $this->sendError('Unbilled Receivable Account field is required.');
+        }
+
+        if($input['custAdvanceAccountSystemID'] == 0){
+            return $this->sendError('Advance Account field is required.');
         }
 
         if(isset($input['customer_registration_no']) && $input['customer_registration_no']){
@@ -482,6 +499,14 @@ class CustomerMasterAPIController extends AppBaseController
             $unbilled = ChartOfAccount::where('chartOfAccountSystemID', $input['custUnbilledAccountSystemID'])->first();
             if ($unbilled) {
                 $input['custUnbilledAccount'] = $unbilled->AccountCode;
+            }
+        }
+
+
+        if (array_key_exists('custAdvanceAccountSystemID', $input)) {
+            $unbilled = ChartOfAccount::where('chartOfAccountSystemID', $input['custAdvanceAccountSystemID'])->first();
+            if ($unbilled) {
+                $input['custAdvanceAccount'] = $unbilled->AccountCode;
             }
         }
 
@@ -528,7 +553,7 @@ class CustomerMasterAPIController extends AppBaseController
             $input['companyLinkedToSystemID'] = null;
         }
 
-
+        
         if (array_key_exists('customerCodeSystem', $input)) {
 
             $customerMasters = CustomerMaster::where('customerCodeSystem', $input['customerCodeSystem'])->first();
@@ -554,9 +579,11 @@ class CustomerMasterAPIController extends AppBaseController
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
-                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo']), $customerId);
-                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID']));
+
+                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']), $customerId);
+                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
                     // user activity log table
+
                     if($customerMasters){
                         $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
                         $modified_array = array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
@@ -569,7 +596,7 @@ class CustomerMasterAPIController extends AppBaseController
                             }
                         }
                     }
-
+                    
                     return $this->sendResponse($customerMasters, 'Customer Master updated successfully');
                 }
                 return $this->sendError('Customer Master is already approved , You cannot update.',500);
@@ -2941,14 +2968,27 @@ class CustomerMasterAPIController extends AppBaseController
         $cusInvoice = CustomerInvoice::where('customerID', $input['customerID'])->where('customerGLSystemID', $customerMaster->custGLAccountSystemID)->first();//check GL account
     
         if ($cusInvoice) {
-            $errorMessages[] = "GL Account cannot be amended. it had used in customer Invoice";
+            $errorMessages[] = "Receivable Account cannot be amended. it had used in customer Invoice";
             $amendable['GLAmendable'] = false;
         } else {
-            $successMessages[] = "Use of GL Account checking is done in customer Invoice";
+            $successMessages[] = "Use of Receivable Account checking is done in customer Invoice";
             $amendable['GLAmendable'] = true;
         }
 
+        $isFullyMatched = CustomerReceivePayment::where('customerID',$input['customerID'])->where('matchInvoice','!=',2)->first();
 
+        $matDoc = MatchDocumentMaster::where('BPVsupplierID',$input['customerID'])->where('matchingConfirmedYN',0)->first();
+
+        if($isFullyMatched || $matDoc)
+        {
+            $errorMessages[] = "Advance Account cannot be amended. Match all pending Advance Receipt Voucher documents to update this account";
+            $amendable['advanceAmendable'] = false;
+        }
+        else
+        {
+            $successMessages[] = "Use of Advance Account checking is done in Advance Receipt Voucher";
+            $amendable['advanceAmendable'] = true;
+        }
        
         $deliveryOrder = DeliveryOrder::where('customerID', $input['customerID'])
                                       ->where('custUnbilledAccountSystemID', $customerMaster->custUnbilledAccountSystemID)
@@ -3025,6 +3065,23 @@ class CustomerMasterAPIController extends AppBaseController
 
 
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
+    }
+
+    public function getSearchCustomers(Request $request)
+    {
+        $companyID = $request->companyId;
+        $search = $request->search;
+        $customers = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+            ->where('companySystemID', $companyID)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->where(function ($query) use ($search) {
+                $query->where('CustomerName', 'LIKE', "%{$search}%")
+                    ->orWhere('CutomerCode', 'LIKE', "%{$search}%");
+            })
+            ->get();
+
+        return $this->sendResponse($customers, 'Customer Master retrieved successfully');
     }
 
 }

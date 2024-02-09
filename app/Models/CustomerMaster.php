@@ -138,7 +138,9 @@ class CustomerMaster extends Model
         'payment_terms',
         'customer_registration_no',
         'customer_registration_expiry_date',
-        'consignee_contact_no'
+        'consignee_contact_no',
+        'custAdvanceAccountSystemID',
+        'custAdvanceAccount',
     ];
 
     /**

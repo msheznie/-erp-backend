@@ -88,3 +88,5 @@ Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getA
 Route::post('postGLEntries', 'ShiftDetailsAPIController@postGLEntries');
 
 Route::post('auditLogs', 'AuditTrailAPIController@auditLogs')->name("Get audit logs");
+
+Route::get('getSearchCustomers', 'CustomerMasterAPIController@getSearchCustomers')->name("Get Search Customers");

@@ -543,7 +543,9 @@ class CustomerReceivePaymentRefferedHistory extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
-        'bankAccountBalance'
+        'bankAccountBalance',
+        'custAdvanceAccountSystemID',
+        'custAdvanceAccount',
     ];
 
     /**

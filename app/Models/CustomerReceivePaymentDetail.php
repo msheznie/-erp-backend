@@ -210,7 +210,14 @@ class CustomerReceivePaymentDetail extends Model
         'receiveAmountLocal',
         'receiveAmountRpt',
         'timesReferred',
-        'timestamp'
+        'timestamp',
+        'VATAmount',
+        'VATAmountRpt',
+        'VATAmountLocal',
+        'VATPercentage',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
+        'isVatDisabled'
     ];
 
     /**
@@ -266,6 +273,13 @@ class CustomerReceivePaymentDetail extends Model
     {
         return $this->belongsTo(CreditNote::class, 'bookingInvCodeSystem', 'creditNoteAutoID');
     }
+
+    
+    public function reciept_vocuher()
+    {
+        return $this->belongsTo(CustomerInvoiceDirect::class, 'bookingInvCodeSystem', 'custInvoiceDirectAutoID');
+    }
+
 
     public function matching_master()
     {

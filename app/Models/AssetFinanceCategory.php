@@ -113,7 +113,8 @@ class AssetFinanceCategory extends Model
         'modifiedPc',
         'modifiedUser',
         'timestamp',
-        'serializationBasedOn' 
+        'serializationBasedOn',
+        'enableEditing' 
     ];
 
     /**

@@ -15,11 +15,14 @@ use App\Services\TaxLedger\SupplierInvoiceTaxLedgerService;
 use App\Services\TaxLedger\PaymentVoucherTaxLedgerService;
 use App\Services\TaxLedger\GPOSSalesTaxLedgerService;
 use App\Services\TaxLedger\RPOSSalesTaxLedgerService;
+use App\Services\TaxLedger\RecieptVoucherTaxLedgerService;
+use Illuminate\Support\Facades\Log;
 
 class TaxLedgerService
 {
 	public static function postLedgerEntry($taxLedgerData, $masterModel)
 	{
+        
         switch ($masterModel["documentSystemID"]) {
             case 3: //GRV
                 $result = GRVTaxLedgerService::processEntry($taxLedgerData, $masterModel);
@@ -53,6 +56,9 @@ class TaxLedgerService
                 break;
             case 111://RPOS Sales
                 $result = RPOSSalesTaxLedgerService::processEntry($taxLedgerData, $masterModel);
+                break;
+            case 21:// Customer Receive Payment
+                $result = RecieptVoucherTaxLedgerService::processEntry($taxLedgerData, $masterModel);
                 break;
             default:
                 # code...

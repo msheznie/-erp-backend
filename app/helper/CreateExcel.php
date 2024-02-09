@@ -163,9 +163,15 @@ class CreateExcel
                         }
                         else if(($array['type']) == 2)
                         {
-                            $i = $i - 2;
-                            self::fromDate($array,$sheet,'As of Date');
-
+                            if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
+                                $i = $i - 0;
+                                self::branch($array, $sheet, 'Branch ');
+                                self::selectedCurrency($array, $sheet, 'Currency');
+                                self::fromDate($array,$sheet,'As of Date');
+                            } else {
+                                $i = $i - 2;
+                                self::fromDate($array,$sheet,'As of Date');
+                            }
                         }
                         else if(($array['type']) == 3)
                         {
@@ -284,24 +290,43 @@ class CreateExcel
 
     public static function fromDate($array,$sheet,$type)
     {
-        $sheet->cell('A3', function($cell) use($array,$type)
-        {
-            if(isset($array['from_date']))
+        if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
+            $sheet->cell('A5', function($cell) use($array,$type)
             {
-                $cell->setValue($type.' - '.$array['from_date']);  
-                $cell->setFont(array(
+                if(isset($array['from_date']))
+                {
+                    $cell->setValue($type.' - '.$array['from_date']);
+                    $cell->setFont(array(
 
-                    'family'     => 'Calibri',
+                        'family'     => 'Calibri',
 
-                    'size'       => '12',
+                        'size'       => '12',
 
-                    'bold'       =>  true
+                        'bold'       =>  true
 
-                ));
-                $cell->setAlignment('left');
-            }
-       });
+                    ));
+                    $cell->setAlignment('left');
+                }
+            });
+        } else {
+            $sheet->cell('A3', function($cell) use($array,$type)
+            {
+                if(isset($array['from_date']))
+                {
+                    $cell->setValue($type.' - '.$array['from_date']);
+                    $cell->setFont(array(
 
+                        'family'     => 'Calibri',
+
+                        'size'       => '12',
+
+                        'bold'       =>  true
+
+                    ));
+                    $cell->setAlignment('left');
+                }
+            });
+        }
     }
 
     public static function toDate($array,$sheet)
@@ -346,15 +371,58 @@ class CreateExcel
        });
     }
 
+    public static function branch($array,$sheet,$type)
+    {
+        $sheet->cell('A3', function($cell) use($array,$type)
+        {
+            if(isset($array['company_name']))
+            {
+                $cell->setValue($type.' - '.$array['company_name']);
+                $cell->setFont(array(
+
+                    'family'     => 'Calibri',
+
+                    'size'       => '12',
+
+                    'bold'       =>  true
+
+                ));
+                $cell->setAlignment('left');
+            }
+        });
+
+    }
+
+    public static function selectedCurrency($array,$sheet,$type)
+    {
+        $sheet->cell('A4', function($cell) use($array,$type)
+        {
+            if(isset($array['currencyName']) && !empty($array['currencyName']))
+            {
+                $cell->setValue($type.' - '.$array['currencyName']);
+                $cell->setFont(array(
+
+                    'family'     => 'Calibri',
+
+                    'size'       => '12',
+
+                    'bold'       =>  true
+
+                ));
+                $cell->setAlignment('left');
+            }
+        });
+
+    }
 
     public static function loadView($data,$type,$fileName,$path_dir,$templateName)
     {
 
-    $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName) {
-                   $excel->sheet($fileName, function ($sheet) use ($data, $templateName) {
-                       $sheet->loadView($templateName, $data);
-                   });
-               })->string($type);
+        $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName) {
+                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName) {
+                           $sheet->loadView($templateName, $data);
+                       });
+                   })->string($type);
 
 
        $disk = 's3';

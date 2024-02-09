@@ -16,15 +16,17 @@ class CustomerAgingDetailReport
     public $creditDays;
     public $department;
     public $contractID;
-    public $poNumber;
     public $invoiceNumber;
+    public $poNumber;
+
     public $invoiceDate;
+    public $ageDays;
+
     public $invoiceDueDate;
     public $documentNarration;
     public $currency;
     public $invoiceAmount;
     public $outStanding;
-    public $ageDays;
     public $column1;
     public $column2;
     public $column3;
@@ -39,9 +41,9 @@ class CustomerAgingDetailReport
         return [
             'D' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'M' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'O' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
@@ -64,21 +66,21 @@ class CustomerAgingDetailReport
             'Credit Days',
             'Department',
             'Contract ID',
-            'PO Number',
             'Invoice Number',
+            'PO Number',
             'Invoice Date',
+            'Aged Days',
             'Invoice Due Date',
-            'Document Darration',
+            'Document Narration',
             'Currency',
             'Invoice Amount',
             'OutStanding',
-            'Aging Days',
             '0-30',
             '31-60',
             '61-90',
             '91-100',
             '> 100',
-            'Currenct Outstanding',
+            'Current Outstanding',
             'Subsequent Collection Amount',
             'Receipt Matching/BRVNo',
             'Collection Tracker Status'
@@ -167,14 +169,6 @@ class CustomerAgingDetailReport
     }
 
     /**
-     * @param mixed $poNumber
-     */
-    public function setPoNumber($poNumber): void
-    {
-        $this->poNumber = $poNumber;
-    }
-
-    /**
      * @param mixed $invoiceNumber
      */
     public function setInvoiceNumber($invoiceNumber): void
@@ -183,11 +177,27 @@ class CustomerAgingDetailReport
     }
 
     /**
+     * @param mixed $poNumber
+     */
+    public function setPoNumber($poNumber): void
+    {
+        $this->poNumber = $poNumber;
+    }
+
+    /**
      * @param mixed $invoiceDate
      */
     public function setInvoiceDate($invoiceDate): void
     {
         $this->invoiceDate = ($invoiceDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($invoiceDate)) : null;
+    }
+
+    /**
+     * @param mixed $ageDays
+     */
+    public function setAgeDays($ageDays): void
+    {
+        $this->ageDays = $ageDays;
     }
 
     /**
@@ -228,14 +238,6 @@ class CustomerAgingDetailReport
     public function setOutStanding($outStanding): void
     {
         $this->outStanding = $outStanding;
-    }
-
-    /**
-     * @param mixed $ageDays
-     */
-    public function setAgeDays($ageDays): void
-    {
-        $this->ageDays = $ageDays;
     }
 
     /**

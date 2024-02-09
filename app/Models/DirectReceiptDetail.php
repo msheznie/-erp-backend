@@ -154,7 +154,11 @@ class DirectReceiptDetail extends Model
         'netAmount',
         'netAmountLocal',
         'netAmountRpt',
-        'detail_project_id'
+        'detail_project_id',
+        'VATPercentage',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
+        'amountBeforeVAT'
     ];
 
     /**

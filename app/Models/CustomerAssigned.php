@@ -87,7 +87,9 @@ class CustomerAssigned extends Model
         'vatNumber',
         'vendorCode',
         'vatPercentage',
-        'timeStamp'
+        'timeStamp',
+        'custAdvanceAccountSystemID',
+        'custAdvanceAccount',
     ];
 
     /**

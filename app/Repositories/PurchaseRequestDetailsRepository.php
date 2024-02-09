@@ -92,7 +92,8 @@ class PurchaseRequestDetailsRepository extends BaseRepository
         $notUploadCount = [];
         $finalData = [];
         $nullValuesGlobal = false;
-
+        $nonNumericUnitCost = false;
+        $minusValueUnitCost = false;
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $purchaseRequestID)
                                           ->first();
 
@@ -101,7 +102,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
         foreach ($prDetailsArray as $key => $input) {
             $lineError = false;
             $nullValues = false;
-            if ((isset($input['item_code']) && !is_null($input['item_code'])) || isset($input['item_description']) && !is_null($input['item_description']) || isset($input['comment']) && !is_null($input['comment']) || isset($input['qty']) && !is_null($input['qty'])) {
+            if ((isset($input['item_code']) && !is_null($input['item_code'])) || isset($input['item_description']) && !is_null($input['item_description']) || isset($input['comment']) && !is_null($input['comment']) || isset($input['qty']) && !is_null($input['qty']) || isset($input['estimated_unit_cost']) && !is_null($input['estimated_unit_cost'])) {
                 $allowItemToTypePolicy = false;
                 $itemNotound = false;
                 $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
@@ -130,7 +131,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                         $insertData['partNumber'] = null;
                         $insertData['itemFinanceCategoryID'] = null;
                         $insertData['itemFinanceCategorySubID'] = null;
-                        $insertData['estimatedCost'] = 0;
+                        $insertData['estimatedCost'] = $input['estimated_unit_cost'];
                         $insertData['companySystemID'] = $companySystemID;
                         $insertData['companyID'] = $purchaseRequest->companyID;
                         $insertData['unitOfMeasure'] = null;
@@ -199,7 +200,12 @@ class PurchaseRequestDetailsRepository extends BaseRepository
 
                             $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
 
-                            $insertData['estimatedCost'] = $currencyConversion['documentAmount'];
+
+                            if (isset($input['estimated_unit_cost'])) {
+                                $insertData['estimatedCost'] = $input['estimated_unit_cost'];
+                            } else {
+                                $insertData['estimatedCost'] = $currencyConversion['documentAmount'];
+                            }
 
                             $insertData['companySystemID'] = $item->companySystemID;
                             $insertData['companyID'] = $item->companyID;

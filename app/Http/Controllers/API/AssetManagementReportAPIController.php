@@ -38,6 +38,8 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\helper\CreateExcel;
+use App\Models\BookInvSuppDet;
+use App\Models\BookInvSuppMaster;
 
 class AssetManagementReportAPIController extends AppBaseController
 {
@@ -418,6 +420,22 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 $assetCostRpt = collect($output)->pluck('AssetCostRpt')->toArray();
                 $assetCostRpt = array_sum($assetCostRpt);
+
+                foreach($output as $key => $val) {
+                    $supplierInvoiceBSI = [];
+                    $grvMaster = GRVMaster::where('grvPrimaryCode',$val->GRVCODE)->first();
+                    if($grvMaster){
+                        $supplierInvoice = BookInvSuppDet::where('grvAutoID',$grvMaster->grvAutoID)->get();
+                        if($supplierInvoice){
+                            foreach($supplierInvoice as $supInvoice){
+                                $suppINVMaster = BookInvSuppMaster::where('bookingSuppMasInvAutoID',$supInvoice['bookingSuppMasInvAutoID'])->first();
+                                $supplierInvoiceBSI[] = $suppINVMaster->bookingInvCode;
+                            }
+                        }
+                    }
+                    $concatenatedValues = implode(', ', $supplierInvoiceBSI);
+                    $output[$key]->supplierInvoiceBSI = $concatenatedValues;
+                }
 
                 if ($output) {
                     foreach ($output as $val) {
@@ -1384,6 +1402,23 @@ class AssetManagementReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                 $type = $request->type;
                 $output = $this->getAssetAdditionsQRY($request);
+
+                foreach($output as $key => $val) {
+                    $supplierInvoiceBSI = [];
+                    $grvMaster = GRVMaster::where('grvPrimaryCode',$val->GRVCODE)->first();
+                    if($grvMaster){
+                        $supplierInvoice = BookInvSuppDet::where('grvAutoID',$grvMaster->grvAutoID)->get();
+                        if($supplierInvoice){
+                            foreach($supplierInvoice as $supInvoice){
+                                $suppINVMaster = BookInvSuppMaster::where('bookingSuppMasInvAutoID',$supInvoice['bookingSuppMasInvAutoID'])->first();
+                                $supplierInvoiceBSI[] = $suppINVMaster->bookingInvCode;
+                            }
+                        }
+                    }
+                    $concatenatedValues = implode(', ', $supplierInvoiceBSI);
+                    $output[$key]->supplierInvoiceBSI = $concatenatedValues;
+                }
+
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
@@ -1397,6 +1432,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['DEP percentage'] = $val->DEPpercentage;
                         $data[$x]['Posted Date'] = \Helper::dateFormat($val->postedDate);
                         $data[$x]['GRV Code'] = $val->GRVCODE;
+                        $data[$x]['Supplier Invoice'] = $val->supplierInvoiceBSI;
                         $data[$x]['PO Code'] = $val->POCODE;
                         $data[$x]['PO Amount Rpt'] = $val->poTotalComRptCurrency;
                         $data[$x]['Payment Date'] = $val->paymentDate;
@@ -1767,7 +1803,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
         $toDate = new Carbon($request->toDate);
         $toDate = $toDate->format('Y-m-d');
-
+        $typeID = $request->typeID;
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
@@ -1827,7 +1863,7 @@ FROM
                 WHERE erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
                     AND erp_fa_asset_master.deleted_at IS NULL
                     AND DATE(erp_fa_asset_master.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
-                AND erp_fa_asset_master.approved = -1
+                AND erp_fa_asset_master.approved = -1 AND  erp_fa_assettype.typeID =  ' . $typeID . '
                 GROUP BY
                     erp_fa_asset_master.companySystemID,
                     erp_fa_asset_master.faID ORDER BY erp_fa_asset_master.companyID ASC';

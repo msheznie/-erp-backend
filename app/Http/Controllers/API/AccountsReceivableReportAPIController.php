@@ -1922,15 +1922,15 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $objCustomerAgingDetailReport->setCreditDays($val->creditDays);
                     $objCustomerAgingDetailReport->setDepartment($val->serviceLineName);
                     $objCustomerAgingDetailReport->setContractID($val->Contract);
-                    $objCustomerAgingDetailReport->setPoNumber($val->PONumber);
                     $objCustomerAgingDetailReport->setInvoiceNumber($val->invoiceNumber);
+                    $objCustomerAgingDetailReport->setPoNumber($val->PONumber);
                     $objCustomerAgingDetailReport->setInvoiceDate($val->InvoiceDate);
+                    $objCustomerAgingDetailReport->setAgeDays($val->age);
                     $objCustomerAgingDetailReport->setInvoiceDueDate($val->invoiceDueDate);
                     $objCustomerAgingDetailReport->setDocumentNarration($val->DocumentNarration);
                     $objCustomerAgingDetailReport->setCurrency($val->documentCurrency);
                     $objCustomerAgingDetailReport->setInvoiceAmount($val->invoiceAmount);
                     $objCustomerAgingDetailReport->setOutStanding($lineTotal);
-                    $objCustomerAgingDetailReport->setAgeDays($val->age);
                     $objCustomerAgingDetailReport->setColumn1(CurrencyService::convertNumberFormatToNumber(number_format($val->$column1,2)));
                     $objCustomerAgingDetailReport->setColumn2(CurrencyService::convertNumberFormatToNumber(number_format($val->$column2,2)));
                     $objCustomerAgingDetailReport->setColumn3(CurrencyService::convertNumberFormatToNumber(number_format($val->$column3,2)));
@@ -2450,8 +2450,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $controlAccount = CustomerMaster::groupBy('custGLAccountSystemID')->pluck('custGLAccountSystemID');
-        $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
+        $controlAccount = CustomerMaster::groupBy('custGLAccountSystemID')->pluck('custGLAccountSystemID')->toArray();
+        $controlAccount1 = CustomerMaster::groupBy('custAdvanceAccountSystemID')->pluck('custAdvanceAccountSystemID')->toArray();
+
+        $mergedArray = array_merge($controlAccount, $controlAccount1);
+        $uniqueArray = array_unique($mergedArray);
+        $uniqueArray = array_values($uniqueArray);
+        $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $uniqueArray)->get();
 
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
 

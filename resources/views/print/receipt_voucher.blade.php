@@ -693,7 +693,7 @@
                     @if($masterdata->isVATApplicable)
                         <th class="text-center">{{ __('custom.vat_amount') }}</th>
                     @endif
-                    <th class="text-center">{{ __('custom.payment_amount') }}</th>
+                    <th class="text-center">{{ __('custom.receive_amount') }}</th>
                 </tr>
                 </thead>
                 <tbody>

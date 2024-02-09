@@ -160,6 +160,7 @@ class FixedAssetMasterAPIController extends AppBaseController
      */
     public function store(CreateFixedAssetMasterAPIRequest $request)
     {
+      
         $input = $request->all();
         $assetSerialNoArr = $input['assetSerialNo'];
         $itemImgaeArr = $input['itemImage'];
@@ -209,6 +210,14 @@ class FixedAssetMasterAPIController extends AppBaseController
                     return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
+
+
+            
+            if(empty($input['depMonth']) || $input['depMonth'] == 0){
+                return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
+            }
+
+
 
             $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
             $awsPolicy = Helper::checkPolicy($input['companySystemID'], 50);
@@ -1338,7 +1347,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = $request->all();
 
 
-        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved','auditCategory','mainCategory','subCategory'));
+        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved','auditCategory','mainCategory','subCategory','assetTypeID'));
         $isDeleted = (isset($input['is_deleted']) && $input['is_deleted']==1)?1:0;
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -1356,7 +1365,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category'])->ofCompany($subCompanies);
+        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category','asset_type'])->ofCompany($subCompanies);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -1381,6 +1390,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $assetCositng->where('faSubCatID', $input['subCategory']);
             }
         }
+
+        if (array_key_exists('assetTypeID', $input)) {
+            if ($input['assetTypeID']) {
+                $assetCositng->where('assetType', $input['assetTypeID']);
+            }
+        } 
 
         if (array_key_exists('auditCategory', $input)) {
             if ($input['auditCategory']) {
@@ -1438,8 +1453,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
-
-        $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
+        $financeCat = AssetFinanceCategory::find($fixedAssetMaster->AUDITCATOGARY);
+        $output = ['isAuditEnabled' => $financeCat->enableEditing,'fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
 
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
     }
@@ -2134,7 +2149,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function exportAssetMaster(Request $request){
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory','assetTypeID'));
 
         $type = $input['type'];
 
@@ -2167,6 +2182,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (array_key_exists('auditCategory', $input)) {
             if ($input['auditCategory']) {
                 $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
+            }
+        }
+
+        if (array_key_exists('assetTypeID', $input)) {
+            if ($input['assetTypeID']) {
+                $assetCositng->where('assetType', $input['assetTypeID']);
             }
         }
 
