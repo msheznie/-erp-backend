@@ -11,6 +11,7 @@ use App\Mail\EmailForQueuing;
 use App\Models\Company;
 use App\Models\DocumentAttachments;
 use App\Models\SupplierRegistrationLink;
+use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderCirculars;
 use App\Repositories\TenderCircularsRepository;
 use Carbon\Carbon;
@@ -562,6 +563,9 @@ class TenderCircularsAPIController extends AppBaseController
             }
 
             Log::info($file);
+
+            $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
             if ($result) {
                 DB::commit();
                 foreach ($supplierList as $supplier){
@@ -572,7 +576,7 @@ class TenderCircularsAPIController extends AppBaseController
 
                     $email = email::emailAddressFormat($supplier->supplier_registration_link->email);
 
-                    Mail::to($email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file));
+                    Mail::to($email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];

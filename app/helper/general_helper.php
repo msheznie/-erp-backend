@@ -63,6 +63,7 @@ use App\Models\SalesReturnDetail;
 use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
 use App\Models\SupplierMaster;
+use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderMaster;
 use App\Models\User;
 use App\Models\DebitNote;
@@ -9125,6 +9126,20 @@ class Helper
         $url_array = explode('.', $url);
         $subDomain = $url_array[0];
         return $subDomain;
+    }
+
+    public static function getEmailConfiguration($slug='', $defaultValue = 'GEARS')
+    {
+        $emailConfiguration = SystemConfigurationAttributes::where('slug', $slug)
+            ->whereHas('systemConfigurationDetail')
+            ->with('systemConfigurationDetail')
+            ->first();
+
+        if(!$emailConfiguration) {
+            return $defaultValue;
+        }
+
+        return $emailConfiguration['systemConfigurationDetail']['value'];
     }
 
 }

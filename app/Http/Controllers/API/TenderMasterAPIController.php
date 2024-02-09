@@ -23,6 +23,7 @@ use App\Models\SrmDepartmentMaster;
 use App\Models\SrmTenderDepartment;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
+use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderMasterReferred;
 use App\Models\TenderNegotiation;
@@ -2338,6 +2339,10 @@ ORDER BY
             ->distinct()
             ->get();
 
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
+        $file = array();
+
         foreach ($getFullyApprovedSupplierList as $SupplierList){
 
             $docType = 'Tender';
@@ -2351,7 +2356,7 @@ ORDER BY
             " . "<b>" . " ".$docType." Description :" . "</b> " . $tenderDescription . "<br /><br />" . "
             " . "<b>" . "Link :" . "</b> " . "<a href='" . $urlString . "'>" . $urlString . "</a><br /><br />" . "
             If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
-            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />"));
+            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />",null, $file,"#C23C32","GEARS","$fromName"));
         }
     }
 
@@ -2396,11 +2401,14 @@ ORDER BY
         $data['domain'] =  Helper::getDomainForSrmDocuments($request);
         $request->merge($data);
 
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
+        $file = array();
 
         $isCreated = $this->registrationLinkRepository->save($request, $token);
         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
         if ($isCreated['status'] == true) {
-            Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>",null, $file,"#C23C32","GEARS","$fromName"));
             return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         } else {
             return $this->sendError('Supplier Registration Link Generation Failed', 500);

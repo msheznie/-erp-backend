@@ -535,11 +535,7 @@ class email
                     $text = $textObj->value;
                 }
 
-                //set MAIL_FROM_NAME according to company name
-                $emailName = SystemConfigurationAttributes::where('slug', 'mail_name')->with('systemConfigurationDetail')->first();
-                if($emailName){
-                    Config::set("mail.from.name", $emailName->systemConfigurationDetail->value);
-                }
+                $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
 
                 // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
                 if ($data) {
@@ -548,14 +544,13 @@ class email
                     ->where('isYesNO', 1)
                     ->exists();
 
-                if ($hasPolicy) {
-                    Log::info('Email send start');
-                    $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
-                    $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
-                    if (isset($data['empEmail']) && $data['empEmail']) {
-                        $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
-                        if ($data['empEmail']) {
-                            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text));
+                    if ($hasPolicy) {
+                        Log::info('Email send start');
+                        $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
+                        if (isset($data['empEmail']) && $data['empEmail']) {
+                            $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
+                            if ($data['empEmail']) {
+                                Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
                             }
                         }
                         Log::info('email sent success fully to :' . $data['empEmail']);
@@ -591,11 +586,7 @@ class email
              $text = $textObj->value;
         }
 
-        //set MAIL_FROM_NAME according to company name
-        $emailName = SystemConfigurationAttributes::where('slug', 'mail_name')->with('systemConfigurationDetail')->first();
-        if($emailName){
-            Config::set("mail.from.name", $emailName->systemConfigurationDetail->value);
-        }
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
 
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
             ->where('companyPolicyCategoryID', 37)
@@ -608,7 +599,7 @@ class email
             if (isset($data['empEmail']) && $data['empEmail']) {
                 $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
                 if ($data['empEmail']) {
-                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text));
+                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
                 }
             }
             Log::info('email sent success fully to - :' . $data['empEmail']);

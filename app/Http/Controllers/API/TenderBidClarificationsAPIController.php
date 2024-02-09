@@ -7,6 +7,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderBidClarificationsAPIRequest;
 use App\Http\Requests\API\UpdateTenderBidClarificationsAPIRequest;
 use App\Mail\EmailForQueuing;
+use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderBidClarifications;
 use App\Repositories\TenderBidClarificationsRepository;
 use Illuminate\Http\Request;
@@ -542,6 +543,8 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $file[$attachment->originalFileName] = Helper::getFileUrlFromS3($attachment->path);
         }
 
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
         $emailString = $input['emailString'];
         $validator = Validator::make(
             ['emails' => $emailString],
@@ -562,7 +565,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
         }else {
             foreach ($emailString as $email){
             $forwardEmail = email::emailAddressFormat($email);
-            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarifications"."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file));
+            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarifications"."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
             }
         }
         return ['success' => true, 'message' => 'Email sent successfully'];
