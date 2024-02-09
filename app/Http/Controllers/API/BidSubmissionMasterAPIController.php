@@ -696,7 +696,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $input = $request->all();
         $details = $input['extraParams'];
         $tenderId = $details['tenderId'];
-        $isNegotiation = $details['isNegotiation'];
+        $isNegotiation = $details['isNegotiation'] ?? 0;
 
 
 
