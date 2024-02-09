@@ -5257,7 +5257,12 @@ ORDER BY
         $data = TenderMaster::select('title','title_sec_lang','description','pre_bid_clarification_method','site_visit_date',
         'document_sales_start_date','document_sales_end_date','pre_bid_clarification_start_date','pre_bid_clarification_end_date',
         'pre_bid_clarification_end_date','bid_submission_opening_date','bid_submission_closing_date')
-            ->selectRaw('IF(pre_bid_clarification_method = 1, "Online", "Offline") as clarification_method')
+            ->selectRaw('CASE 
+                    WHEN pre_bid_clarification_method = 1 THEN "Online"
+                    WHEN pre_bid_clarification_method = 0 THEN "Offline"
+                    WHEN pre_bid_clarification_method = 2 THEN "Both"
+                    ELSE "-"
+                END as clarification_method')
             ->where('document_type',0)
             ->where('tender_type_id',1)
             ->where('approved',-1)
@@ -5271,7 +5276,12 @@ ORDER BY
                 $q->orWhere('title', 'like', "%{$search}%")
                     ->orWhere('title_sec_lang','like', "%{$search}%")
                     ->orWhere('description','like', "%{$search}%")
-                    ->orWhereRaw('IF(pre_bid_clarification_method = 1, "Online", "Offline") like ?', ['%' . $search . '%']);
+                    ->orWhereRaw('CASE 
+                                WHEN pre_bid_clarification_method = 1 THEN "Online"
+                                WHEN pre_bid_clarification_method = 0 THEN "Offline"
+                                WHEN pre_bid_clarification_method = 2 THEN "Both"
+                                ELSE "-"
+                            END like ?', ['%' . $search . '%']);
             });
         }
 
