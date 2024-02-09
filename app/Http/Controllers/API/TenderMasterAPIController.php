@@ -5268,9 +5268,9 @@ ORDER BY
         if ($search) {
             $search = str_replace("\\", "\\\\\\\\", $search);
             $data->where(function ($q) use ($search) {
-                $q->where('title', 'like', '%'.$search.'%')
-                    ->orWhere('title_sec_lang','like', '%'.$search.'%')
-                    ->orWhere('description','like', '%'.$search.'%')
+                $q->orWhere('title', 'like', "%{$search}%")
+                    ->orWhere('title_sec_lang','like', "%{$search}%")
+                    ->orWhere('description','like', "%{$search}%")
                     ->orWhereRaw('IF(pre_bid_clarification_method = 1, "Online", "Offline") like ?', ['%' . $search . '%']);
             });
         }
