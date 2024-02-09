@@ -7,12 +7,14 @@ use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
+use App\Models\SupplierContactType;
 use App\Services\POService;
 use App\Services\SRMService;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 // available apis name define here
@@ -301,8 +303,11 @@ class APIController extends Controller
                                     } else if ($val3->form_field_id == 46) { // Country
                                         $countryMaster = CountryMaster::select('countryName', 'countryCode')->where('countryID', $val4->value)->first();
                                         $val4->value = $countryMaster['countryName'];
+                                    } else if ($val3->form_field_id == 70) { // Contact Types
+                                        $contactType = SupplierContactType::select('supplierContactTypeID', 'supplierContactDescription')->where('supplierContactTypeID', $val4->value)->first();
+                                        $val4->value = $contactType['supplierContactDescription'];
                                     } else if ($val4->form_data_id > 0) {
-                                        //$value = array_search('26', array_column($val3->field->options, 'id')); 
+                                        //$value = array_search('26', array_column($val3->field->options, 'id'));
                                         $search = $val4->form_data_id;
                                         $data = array_filter($val3->field->options, function ($v) use ($search) {
                                             return $v->id == $search;
