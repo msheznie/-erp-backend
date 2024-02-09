@@ -375,9 +375,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             62 => 'contactPersonFax',
             63 => 'isDefault',
         ];
-
         $supplierContactDetails = new SupplierContactDetails();
-
         $groupedContacts = [];
         foreach ($supplierFormValues['supplierContacts'] as $item) {
             $sort = $item['sort'];
@@ -393,59 +391,120 @@ class SupplierRegistrationApprovalController extends AppBaseController
                 'supplierID' => $supplierID,
                 'sort' => $sort,
             ];
-
             foreach ($contacts as $contact) {
                 $formFieldId = $contact['form_field_id'];
                 $value = $contact['value'];
-
                 if (isset($fieldMappings[$formFieldId])) {
                     $fieldName = $fieldMappings[$formFieldId];
-
-                    // Check if it's isDefault and value is 1, set it to -1
                     if ($formFieldId == 63 && $value == 1) {
                         $value = -1;
                     }
-
                     $recordValues[$fieldName] = $value;
                 }
             }
-
             $supplierContactDetails->create($recordValues);
         }
 
-    // upload attachments
-    $attachmentData = [];
-    foreach ($supplierFormValues['getAttachments'] as $index => $item) {
-        $formFieldId = $item['form_field_id'];
-        $value = $item['value'];
+        // upload attachments
+        $attachmentData = [];
+        foreach ($supplierFormValues['getAttachments'] as $index => $item) {
+            $formFieldId = $item['form_field_id'];
+            $value = $item['value'];
+            switch ($formFieldId) {
+                case 11:
+                    $attachmentData['attachmentDescription'] = $value;
+                    break;
+                case 12:
+                    $attachmentData['path'] = $value;
+                    $attachmentData['myFileName'] = $attachmentData['attachmentDescription'];
+                    break;
+                case 14:
+                    if($value != '-'){
+                        $attachmentData['docExpirtyDate'] = Carbon::parse($value);
+                    }
 
-        switch ($formFieldId) {
-            case 11:
-                $attachmentData['attachmentDescription'] = $value;
-                break;
-            case 12:
-                $attachmentData['path'] = $value;
-                $attachmentData['myFileName'] = $attachmentData['attachmentDescription'];
-                break;
-            case 14:
-                $attachmentData['docExpirtyDate'] = Carbon::parse($value);
-
-                if ($index % 3 === 2) {
-                    $attachmentData['companySystemID'] = $supplierMasterData['company_id'];
-                    $attachmentData['companyID'] = $company->CompanyID;
-                    $attachmentData['documentSystemID'] = 56;
-                    $attachmentData['documentID'] = 'SUPM';
-                    $attachmentData['documentSystemCode'] = $supplierID;
-                    $attachmentData['originalFileName'] = $attachmentData['attachmentDescription'];
-                    $attachmentData['attachmentType'] = 11;
-                    $attachmentData['sizeInKbs'] = 0;
-                    $attachmentData['isUploaded'] = 1;
-                    DocumentAttachments::create($attachmentData);
-                    $attachmentData = [];
-                }
-                break;
+                    if ($index % 3 === 2) {
+                        $attachmentData['companySystemID'] = $supplierMasterData['company_id'];
+                        $attachmentData['companyID'] = $company->CompanyID;
+                        $attachmentData['documentSystemID'] = 56;
+                        $attachmentData['documentID'] = 'SUPM';
+                        $attachmentData['documentSystemCode'] = $supplierID;
+                        $attachmentData['originalFileName'] = $attachmentData['attachmentDescription'];
+                        $attachmentData['attachmentType'] = 11;
+                        $attachmentData['sizeInKbs'] = 0;
+                        $attachmentData['isUploaded'] = 1;
+                        if($value != '-'){
+                            DocumentAttachments::create($attachmentData);
+                        }
+                        $attachmentData = [];
+                    }
+                    break;
+            }
         }
-    }
+
+        if (isset($supplierFormValues['supplierCertification']) && sizeof($supplierFormValues['supplierCertification']) > 0) {
+            $supplierCertificationData = [];
+            foreach ($supplierFormValues['supplierCertification'] as $index => $item) {
+                $formFieldId = $item['form_field_id'];
+                $value = $item['value'];
+                $sort = $item['sort'];
+                if ($formFieldId === 17) {
+                    $supplierCertificationData[$sort] = [
+                        'attachmentDescription' => $value,
+                        'myFileName' => $value
+                    ];
+                } elseif ($formFieldId === 18 || $formFieldId === 19) {
+                    if (isset($supplierCertificationData[$sort])) {
+                        $supplierCertificationData[$sort][$formFieldId === 18 ? 'docExpirtyDate' : 'path'] = $value;
+                    }
+                }
+            }
+
+            foreach ($supplierCertificationData as $sort => $data) {
+                if (isset($data['attachmentDescription'], $data['docExpirtyDate'], $data['path'])) {
+                    $data['companySystemID'] = $supplierMasterData['company_id'];
+                    $data['companyID'] = $company->CompanyID;
+                    $data['documentSystemID'] = 56;
+                    $data['documentID'] = 'SUPM';
+                    $data['documentSystemCode'] = $supplierID;
+                    $data['originalFileName'] = $data['attachmentDescription'];
+                    $data['attachmentType'] = 11;
+                    $data['sizeInKbs'] = 0;
+                    $data['isUploaded'] = 1;
+                    DocumentAttachments::create($data);
+                }
+            }
+        }
+
+        if (isset($supplierFormValues['vatCertification']) && sizeof($supplierFormValues['vatCertification']) > 0) {
+            $vatCertificationData = [];
+            foreach ($supplierFormValues['vatCertification'] as $index => $item) {
+                $formFieldId = $item['form_field_id'];
+                $value = $item['value'];
+
+                switch ($formFieldId) {
+                    case 67:
+                        $vatCertificationData['path'] = $value;
+                        break;
+                    case 68:
+                        $vatCertificationData['docExpirtyDate'] = Carbon::parse($value);
+                        break;
+                }
+            }
+
+            $vatCertificationData['attachmentDescription'] = 'VAT Certificate Document';
+            $vatCertificationData['myFileName'] = 'VAT Certificate Document';
+            $vatCertificationData['companySystemID'] = $supplierMasterData['company_id'];
+            $vatCertificationData['companyID'] = $company->CompanyID;
+            $vatCertificationData['documentSystemID'] = 56;
+            $vatCertificationData['documentID'] = 'SUPM';
+            $vatCertificationData['documentSystemCode'] = $supplierID;
+            $vatCertificationData['originalFileName'] = 'VAT Certificate Document';
+            $vatCertificationData['attachmentType'] = 11;
+            $vatCertificationData['sizeInKbs'] = 0;
+            $vatCertificationData['isUploaded'] = 1;
+            DocumentAttachments::create($vatCertificationData);
+        }
 
         $supplierCurrency = new SupplierCurrency();
         $supplierCurrency->supplierCodeSystem = $supplierMasters['supplierCodeSystem'];
@@ -453,9 +512,9 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $supplierCurrency->isAssigned = -1;
         $supplierCurrency->isDefault = -1;
 
-        if($isApprovalAmmend!=1){ 
+        if($isApprovalAmmend!=1){
             $supplierCurrency->save();
-        }else { 
+        }else {
             SupplierCurrency::where('supplierCodeSystem', $supplierMasterData['supplierMasterId'])
             ->update([
                 'supplierCodeSystem' => $supplierMasters['supplierCodeSystem'],
