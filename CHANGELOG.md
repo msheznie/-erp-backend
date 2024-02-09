@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.31.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.30.3...v10.31.0) (2024-02-09)
+
+
+### Features
+
+* **accounts payable:** net outstanding value issue was fixed in details report [GCP-2860] ([#5586](https://github.com/pbsgears/Gears_BackEnd/issues/5586)) ([c851c7d](https://github.com/pbsgears/Gears_BackEnd/commit/c851c7d78b9838d76df4ec1fdbc1af5d991e289c))
+* **accounts receivable:** vat should be greater to equal than the amount validation add [GCP-2859] ([#5582](https://github.com/pbsgears/Gears_BackEnd/issues/5582)) ([b240328](https://github.com/pbsgears/Gears_BackEnd/commit/b240328feaae053e6c0df0db7ba79a14e7c4c86a))
+
 ## [10.30.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.30.1...v10.30.2) (2024-01-18)
 
 
