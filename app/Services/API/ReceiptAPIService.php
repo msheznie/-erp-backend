@@ -75,7 +75,7 @@ class ReceiptAPIService
                         $documentApproved["db"] = $db;
                         $documentApproved['empID'] = $receipt->approvedByUserSystemID;
                         $documentApproved['documentSystemID'] = $saveReceipt->documentSystemID;
-                        $approval = \Helper::approveDocumentForApi($documentApproved);
+                            $approval = \Helper::approveDocumentForApi($documentApproved);
                     }
                 }
             }
@@ -448,8 +448,8 @@ class ReceiptAPIService
         $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
         $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalAmount);
         if($receipt->custTransactionCurrencyID == 1) {
-            $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount']);
-            $receipt->receivedAmount = $totalAmount;
+            $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount'])  * -1;
+            $receipt->receivedAmount = $totalAmount  * -1;
             $receipt->VATAmount = $totalVatAmount;
             $receipt->VATPercentage = ($totalVatAmount/100);
             $receipt->VATAmountLocal =  $companyCurrencyConversionVat['localAmount'];
@@ -457,13 +457,13 @@ class ReceiptAPIService
             $receipt->netAmount = $totalNetAmount;
             $receipt->netAmountLocal = $companyCurrencyConversionNet['localAmount'];
             $receipt->netAmountRpt = $companyCurrencyConversionNet['reportingAmount'];
-            $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']);
-            $receipt->bankAmount = $totalAmount;
+            $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount'])  * -1;
+            $receipt->bankAmount = (\Helper::roundValue($totalAmount)  * -1);
             $receipt->bankCurrencyER = $bankCurrencyConversion['transToDocER'];
 
         }else {
-            $receipt->localAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['localAmount']),2);
-            $receipt->receivedAmount = round($totalAmount,2);
+            $receipt->localAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['localAmount']),2)  * -1;
+            $receipt->receivedAmount = round($totalAmount,2)  * -1;
             $receipt->VATAmount = round($totalVatAmount,2);
             $receipt->VATPercentage = round(($totalVatAmount/100),2);
             $receipt->VATAmountLocal =  round($companyCurrencyConversionVat['localAmount'],2);
@@ -471,8 +471,8 @@ class ReceiptAPIService
             $receipt->netAmount = round($totalNetAmount,2);
             $receipt->netAmountLocal = round($companyCurrencyConversionNet['localAmount'],2);
             $receipt->netAmountRpt = round($companyCurrencyConversionNet['reportingAmount'],2);
-            $receipt->companyRptAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),2);
-            $receipt->bankAmount = round(\Helper::roundValue($bankCurrencyConversion['documentAmount']),2);
+            $receipt->companyRptAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),2)  * -1;
+            $receipt->bankAmount = (round(\Helper::roundValue($bankCurrencyConversion['documentAmount']),2) * -1);
             $receipt->bankCurrencyER = round($bankCurrencyConversion['transToDocER'],2);
         }
 
