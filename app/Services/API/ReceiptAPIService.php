@@ -98,6 +98,13 @@ class ReceiptAPIService
             $receipt->details = $dt['details'];
             $receipt->payeeTypeID = $dt['payeeType'];
             $receipt->payment_type_id = $dt['paymentMode'];
+
+
+            if(isset($dt['vatApplicable'])) {
+                $receipt = self::setVatDetails($dt['vatApplicable'],$receipt);
+            }
+
+
             $receipt = self::setCommonValidation($dt,$receipt);
             $receipt = self::setCompanyDetails($companyID,$receipt); // set company details of the document
             $receipt = self::setDocumentDetails($dt,$receipt); // set document details (narration,custPaymentReceiveDate,documentIds)
@@ -118,9 +125,6 @@ class ReceiptAPIService
                 $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
             }
 
-            if(isset($dt['vatApplicable'])) {
-                $receipt = self::setVatDetails($dt['vatApplicable'],$receipt);
-            }
 
             foreach ($receipt['details'] as $details) {
 
@@ -423,17 +427,18 @@ class ReceiptAPIService
     }
     private static function setLocalAndReportingAmounts($receipt): CustomerReceivePayment {
 
-        $myCurr = $receipt->custTransactionCurrencyID;
 
+        $myCurr = $receipt->custTransactionCurrencyID;
+        $customerDetails = CustomerMaster::where('customerCodeSystem',$receipt->customerID)->first();
         switch ($receipt->documentType) {
             case 15:
             case 14 :
-                $totalVatAmount = collect($receipt->details)->sum('vatAmount');
+                $totalVatAmount = (($customerDetails && $customerDetails->vatEligible) && $receipt->isVATApplicable) ? collect($receipt->details)->sum('vatAmount') : 0;
                 $totalAmount = collect($receipt->details)->sum('amount');
                 $totalNetAmount = ($totalAmount-$totalVatAmount);
                 break;
             case 13 :
-                $totalVatAmount = collect($receipt->details)->sum('vatAmount');
+                $totalVatAmount = (($customerDetails && $customerDetails->vatEligible) && $receipt->isVATApplicable) ? collect($receipt->details)->sum('vatAmount') : 0;
                 $totalAmount = collect($receipt->details)->sum('receiptAmount');
                 $totalNetAmount = ($totalAmount-$totalVatAmount);
                 break;
