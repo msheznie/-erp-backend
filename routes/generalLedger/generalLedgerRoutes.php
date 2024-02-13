@@ -290,6 +290,8 @@ Route::group([], function(){
     Route::get('getGLForRecurringVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForRecurringVoucherDirect')->name("Get gl for RRV direct");
     Route::get('getRecurringVoucherMasterRecord', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterRecord')->name('Get rrv master record');
     Route::post('amendRecurringVoucherReview', 'RecurringVoucherSetupAPIController@amendRecurringVoucherReview')->name('JV Review');
+    Route::post('recurringVoucherReopen', 'RecurringVoucherSetupAPIController@recurringVoucherReopen')->name('RRV Reopen');
+    Route::post('recurringVoucherDeleteAllDetails', 'RecurringVoucherSetupDetailAPIController@recurringVoucherDeleteAllDetails')->name('RRV details delete all');
 });
 
 

@@ -12,6 +12,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ErpProjectMaster;
 use App\Models\GeneralLedger;
 use App\Models\Months;
@@ -602,7 +603,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             return $this->sendError('RRV Master not found');
         }
 
-        $rrvMasterDataLine = RecurringVoucherSetup::where('recurringVoucherAutoId', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'detail' => function ($query) {
+        $rrvMasterDataLine = RecurringVoucherSetup::where('recurringVoucherAutoId', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'company', 'detail' => function ($query) {
             $query->with('project','segment');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
@@ -933,5 +934,107 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function recurringVoucherReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $rrvMasterAutoId = $input['recurringVoucherAutoId'];
+
+        $rrvMasterData = RecurringVoucherSetup::find($rrvMasterAutoId);
+        $emails = array();
+        if (empty($rrvMasterData)) {
+            return $this->sendError('Recurring Voucher not found');
+        }
+
+        if ($rrvMasterData->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this recurring voucher it is already partially approved');
+        }
+
+        if ($rrvMasterData->approved == -1) {
+            return $this->sendError('You cannot reopen this recurring voucher it is already fully approved');
+        }
+
+        if ($rrvMasterData->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this recurring voucher, it is not confirmed');
+        }
+
+        // updating fields
+        $rrvMasterData->confirmedYN = 0;
+        $rrvMasterData->confirmedByEmpSystemID = null;
+        $rrvMasterData->confirmedByEmpID = null;
+        $rrvMasterData->confirmedByName = null;
+        $rrvMasterData->confirmedDate = null;
+        $rrvMasterData->RollLevForApp_curr = 1;
+        $rrvMasterData->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $rrvMasterData->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $rrvMasterData->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $rrvMasterData->bookingInvCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $rrvMasterData->companySystemID)
+            ->where('documentSystemCode', $rrvMasterData->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', $rrvMasterData->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $rrvMasterData->companySystemID)
+                    ->where('documentSystemID', $rrvMasterData->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        DocumentApproved::where('documentSystemCode', $rrvMasterAutoId)
+            ->where('companySystemID', $rrvMasterData->companySystemID)
+            ->where('documentSystemID', $rrvMasterData->documentSystemID)
+            ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($rrvMasterData->documentSystemID,$rrvMasterAutoId,$input['reopenComments'],'Reopened');
+
+        return $this->sendResponse($rrvMasterData->toArray(), 'RRV reopened successfully');
     }
 }

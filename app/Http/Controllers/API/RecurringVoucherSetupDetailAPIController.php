@@ -390,7 +390,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
 
         $recurringVoucherSetupDetail->delete();
 
-        return $this->sendSuccess('Recurring Voucher Setup Detail deleted successfully');
+        return $this->sendResponse($id,'Recurring Voucher Setup Detail deleted successfully');
     }
 
     public function getRecurringVoucherDetails(Request $request)
@@ -430,5 +430,30 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
         }
 
         return $this->sendResponse($contract, 'Record retrived successfully');
+    }
+
+    public function recurringVoucherDeleteAllDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $rrvMasterAutoId = $input['recurringVoucherAutoId'];
+
+        $rrvMaster = RecurringVoucherSetup::find($rrvMasterAutoId);
+
+        if (empty($rrvMaster)) {
+            return $this->sendError('Recurring Voucher not found');
+        }
+
+        $detailExistAll = $this->recurringVoucherSetupDetailRepository->where('recurringVoucherAutoId', $rrvMasterAutoId)->get();
+
+        if (empty($detailExistAll)) {
+            return $this->sendError('There are no details to delete');
+        }
+
+        if (!empty($detailExistAll)) {
+            $this->recurringVoucherSetupDetailRepository->where('recurringVoucherAutoId', $rrvMasterAutoId)->delete();
+        }
+
+        return $this->sendResponse($rrvMasterAutoId, 'Details deleted successfully');
     }
 }

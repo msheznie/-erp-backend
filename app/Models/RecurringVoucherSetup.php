@@ -363,5 +363,10 @@ class RecurringVoucherSetup extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'recurringVoucherAutoId')->where('documentSystemID',119);
     }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
     
 }
