@@ -551,6 +551,14 @@ class TenderBidClarificationsAPIController extends AppBaseController
             ['emails.*' => 'email']
         );
 
+        $emailCounts = array_count_values($emailString);
+        $duplicateEmails = array();
+        foreach ($emailCounts as $email => $count) {
+            if ($count > 1) {
+                $duplicateEmails[] = $email;
+            }
+        }
+
         if ($validator->fails()) {
             $invalidEmails = [];
             foreach ($emailString as $index => $email) {
@@ -559,10 +567,12 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 }
             }
             $invalidEmailsString = implode(', ', $invalidEmails);
-            $errorMessage = "$invalidEmailsString are not valid email addresses. Please enter valid email addresses.";
-
+            $errorMessage = "$invalidEmailsString not valid email/s. Please enter valid email/s.";
             return response()->json(['message' => $errorMessage, 'invalid_emails' => $invalidEmails], 422);
-        }else {
+        }elseif (!empty($duplicateEmails)) {
+            $errorMessage = implode(', ', $duplicateEmails) . " email/s already exist.";
+            return response()->json(['message' => $errorMessage,], 422);
+        } else {
             foreach ($emailString as $email){
             $forwardEmail = email::emailAddressFormat($email);
             Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To Whom It May Concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarifications"."</b><br /><br />"." Thank You."."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
