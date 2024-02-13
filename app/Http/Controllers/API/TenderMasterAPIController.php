@@ -5178,7 +5178,7 @@ ORDER BY
                 ,'bid_opening_date_time','bid_opening_end_date_time','technical_bid_opening_date_time','technical_bid_closing_date_time'
                 ,'commerical_bid_opening_date_time','commerical_bid_closing_date_time'])->toArray();
 
-            $storeTenderMasterHistory = TenderMasterReferred::insert($tenderMasterArray);
+           // $storeTenderMasterHistory = TenderMasterReferred::insert($tenderMasterArray);
 
             $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $tenderMasterId)
                 ->where('companySystemID', $tenderMaster->company_id)
