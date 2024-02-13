@@ -4,12 +4,16 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateRecurringVoucherSetupAPIRequest;
 use App\Http\Requests\API\UpdateRecurringVoucherSetupAPIRequest;
+use App\Models\BudgetConsumedData;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\ErpProjectMaster;
+use App\Models\GeneralLedger;
 use App\Models\Months;
 use App\Models\RecurringVoucherSetup;
 use App\Models\RecurringVoucherSetupDetail;
@@ -19,6 +23,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\RecurringVoucherSetupRepository;
 use App\Repositories\UserRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -197,30 +202,6 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $recurringVoucher = $this->recurringVoucherSetupRepository->create($input);
 
-        /* TODO: create this schedule generate part in separate background job after approve */
-        /*$processDate = Carbon::parse($recurringVoucher->startDate);
-        $noOfDayMonthYear = $recurringVoucher->noOfDayMonthYear;
-
-        $rrvDebitSum = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->sum('debitAmount');
-
-        for($i=0; $i < $noOfDayMonthYear; $i++){
-            RecurringVoucherSetupSchedule::create([
-                'recurringVoucherAutoId' => $recurringVoucher->recurringVoucherAutoId,
-                'processDate' => $processDate->addMonths($i),
-                'RRVcode' => $recurringVoucher->RRVcode,
-                'currencyID' => $recurringVoucher->currencyID,
-                'amount' => $rrvDebitSum,
-                'documentStatus' => $recurringVoucher->documentStatus,
-                'documentSystemID' => $recurringVoucher->documentSystemID,
-                'documentID' => $recurringVoucher->documentID,
-                'companySystemID' => $recurringVoucher->companySystemID,
-                'companyFinanceYearID' => $recurringVoucher->companyFinanceYearID,
-                'createdUserSystemID' => $recurringVoucher->createdUserSystemID,
-                'createdUserID' => $recurringVoucher->createdUserID,
-                'createdPcID' => $recurringVoucher->createdPcID
-            ]);
-        }*/
-
         return $this->sendResponse($recurringVoucher->toArray(), 'Recurring voucher created successfully');
     }
 
@@ -366,7 +347,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($rrvMaster->currencyID);
 
-        if ($rrvMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+        if ($prevRrvConfirmedYN == 0 && $rrvConfirmedYN == 1) {
 
             $validator = \Validator::make($input, [
                 'companyFinanceYearID' => 'required|numeric|min:1',
@@ -594,7 +575,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             $query->with('project','segment');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
-            $query->where('documentSystemID', 17);
+            $query->where('documentSystemID', 119);
         },'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($rrvMasterData)) {
@@ -666,5 +647,291 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+    public function getRecurringVoucherMasterApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)->where('documentSystemID', 119)->first();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'recurring_voucher_setup.recurringVoucherAutoId',
+            'recurring_voucher_setup.RRVcode',
+            'recurring_voucher_setup.documentSystemID',
+            'recurring_voucher_setup.narration',
+            'recurring_voucher_setup.createdDateTime',
+            'recurring_voucher_setup.startDate',
+            'recurring_voucher_setup.endDate',
+            'recurring_voucher_setup.confirmedDate',
+            'recurring_voucher_setup.documentType',
+            'rrvDetailRec.debitSum',
+            'rrvDetailRec.creditSum',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->where('employeesdepartments.documentSystemID', 119)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+        })
+            ->join('recurring_voucher_setup', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'recurringVoucherAutoId')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('recurring_voucher_setup.companySystemID', $companyID)
+                ->where('recurring_voucher_setup.approved', 0)
+                ->where('recurring_voucher_setup.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'recurring_voucher_setup.currencyID', 'currencymaster.currencyID')
+            ->leftJoin(DB::raw('(SELECT COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,recurringVoucherAutoId FROM recurring_voucher_setup_detail GROUP BY recurringVoucherAutoId) as rrvDetailRec'), 'rrvDetailRec.recurringVoucherAutoId', '=', 'recurring_voucher_setup.recurringVoucherAutoId')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 119)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('RRVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $grvMasters = [];
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function getApprovedRecurringVoucherForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'recurring_voucher_setup.recurringVoucherAutoId',
+            'recurring_voucher_setup.RRVcode',
+            'recurring_voucher_setup.documentSystemID',
+            'recurring_voucher_setup.narration',
+            'recurring_voucher_setup.createdDateTime',
+            'recurring_voucher_setup.startDate',
+            'recurring_voucher_setup.endDate',
+            'recurring_voucher_setup.confirmedDate',
+            'recurring_voucher_setup.documentType',
+            'rrvDetailRec.debitSum',
+            'rrvDetailRec.creditSum',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('recurring_voucher_setup', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'recurringVoucherAutoId')
+                ->where('recurring_voucher_setup.companySystemID', $companyID)
+                ->where('recurring_voucher_setup.approved', -1)
+                ->where('recurring_voucher_setup.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'recurring_voucher_setup.currencyID', 'currencymaster.currencyID')
+            ->leftJoin(DB::raw('(SELECT COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,recurringVoucherAutoId FROM recurring_voucher_setup_detail GROUP BY recurringVoucherAutoId) as rrvDetailRec'), 'rrvDetailRec.recurringVoucherAutoId', '=', 'recurring_voucher_setup.recurringVoucherAutoId')
+            ->where('erp_documentapproved.documentSystemID', 119)
+            ->where('erp_documentapproved.companySystemID', $companyID)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('RRVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function approveRecurringVoucher(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+    }
+
+    public function rejectRecurringVoucher(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+    }
+
+    public function amendRecurringVoucherReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['rrvMasterAutoId'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $rrvMaster = RecurringVoucherSetup::find($id);
+
+        if (empty($rrvMaster)) {
+            return $this->sendError('Recurring voucher not found');
+        }
+
+        if ($rrvMaster->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this recurring voucher, it is not confirmed');
+        }
+
+        $rrvSetupScheduleStates = RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$rrvMaster->recurringVoucherAutoId)->where('rrvGeneratedYN',1)->exists();
+        if($rrvSetupScheduleStates){
+            return $this->sendError('You cannot return back to amend this recurring voucher, recurring jv has already been generated.');
+        }
+
+        $emailBody = '<p>' . $rrvMaster->RRVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $rrvMaster->RRVcode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($rrvMaster->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $rrvMaster->confirmedByEmpSystemID,
+                    'companySystemID' => $rrvMaster->companySystemID,
+                    'docSystemID' => $rrvMaster->documentSystemID,
+                    'docSystemCode' => $rrvMaster->recurringVoucherAutoId,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody);
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $rrvMaster->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $rrvMaster->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $rrvMaster->companySystemID,
+                        'docSystemID' => $rrvMaster->documentSystemID,
+                        'docSystemCode' => $rrvMaster->recurringVoucherAutoId,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody);
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $rrvMaster->companySystemID)
+                ->where('documentSystemID', $rrvMaster->documentSystemID)
+                ->delete();
+
+            //deleting from general ledger table
+            GeneralLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $rrvMaster->companySystemID)
+                ->where('documentSystemID', $rrvMaster->documentSystemID)
+                ->delete();
+
+            BudgetConsumedData::where('documentSystemCode', $id)
+                ->where('companySystemID', $rrvMaster->companySystemID)
+                ->where('documentSystemID', $rrvMaster->documentSystemID)
+                ->delete();
+
+            RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$rrvMaster->recurringVoucherAutoId)->delete();
+
+            // updating fields
+            $rrvMaster->confirmedYN = 0;
+            $rrvMaster->confirmedByEmpSystemID = null;
+            $rrvMaster->confirmedByEmpID = null;
+            $rrvMaster->confirmedByName = null;
+            $rrvMaster->confirmedDate = null;
+            $rrvMaster->RollLevForApp_curr = 1;
+
+            $rrvMaster->approved = 0;
+            $rrvMaster->approvedByUserSystemID = null;
+            $rrvMaster->approvedByUserID = null;
+            $rrvMaster->approvedDate = null;
+            $rrvMaster->postedDate = null;
+            $rrvMaster->save();
+
+            AuditTrial::createAuditTrial($rrvMaster->documentSystemID,$id,$input['returnComment'],'returned back to amend');
+
+            DB::commit();
+            return $this->sendResponse($rrvMaster->toArray(), 'Recurring voucher amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

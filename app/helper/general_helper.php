@@ -20,6 +20,7 @@ use App\Jobs\BankLedgerInsert;
 use App\Jobs\BudgetAdjustment;
 use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateGRVSupplierInvoice;
+use App\Jobs\CreateRecurringVoucherSetupSchedules;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
 use App\Jobs\CreateSupplierTransactions;
@@ -58,6 +59,7 @@ use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
+use App\Models\RecurringVoucherSetup;
 use App\Models\ReportTemplateDetails;
 use App\Models\SalesReturnDetail;
 use App\Models\SalesReturn;
@@ -4387,7 +4389,19 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "requested";
                 $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
-                break;       
+                break;
+            case 119: // Recurring Voucher
+                $docInforArr["tableName"] = 'recurring_voucher_setup';
+                $docInforArr["modelName"] = 'RecurringVoucherSetup';
+                $docInforArr["primarykey"] = 'recurringVoucherAutoId';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -4648,6 +4662,11 @@ class Helper
                                         return ['success' => false, 'message' => $result["errorMsg"]];
                                     }
                                 }
+                            }
+
+                            if($input["documentSystemID"] == 119){
+                                $recurringVoucherSetup = RecurringVoucherSetup::find($input['recurringVoucherAutoId']);
+                                CreateRecurringVoucherSetupSchedules::dispatch($recurringVoucherSetup);
                             }
 
                                 // create monthly deduction
@@ -5996,6 +6015,13 @@ class Helper
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
                     break;
+                case 119: //  Recurring Voucher
+                    $docInforArr["tableName"] = 'recurring_voucher_setup';
+                    $docInforArr["modelName"] = 'RecurringVoucherSetup';
+                    $docInforArr["primarykey"] = 'recurringVoucherAutoId';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -6083,7 +6109,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117, 119])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }

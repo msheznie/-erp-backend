@@ -40,6 +40,11 @@ Route::group([], function(){
     Route::post('getVRFApprovalByUser', 'VatReturnFillingMasterAPIController@getVRFApprovalByUser')->name("Get pending for approval - VRF");
     Route::post('getVRFApprovedByUser', 'VatReturnFillingMasterAPIController@getVRFApprovedByUser')->name("Get approved- VRF");
 
+    //Recurring Voucher
+    Route::post('getRecurringVoucherMasterApproval', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterApproval')->name("Get pending for approval RRV");
+    Route::post('getApprovedRecurringVoucherForCurrentUser', 'RecurringVoucherSetupAPIController@getApprovedRecurringVoucherForCurrentUser')->name("Get approved RRV");
+    Route::post('approveRecurringVoucher', 'RecurringVoucherSetupAPIController@approveRecurringVoucher')->name("Approve RRV");
+    Route::post('rejectRecurringVoucher', 'RecurringVoucherSetupAPIController@rejectRecurringVoucher')->name("Reject RRV");;
 });
 
 
@@ -284,6 +289,7 @@ Route::group([], function(){
     Route::get('getRecurringVoucherContracts', 'RecurringVoucherSetupDetailAPIController@getRecurringVoucherContracts')->name('Get RRV contracts');
     Route::get('getGLForRecurringVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForRecurringVoucherDirect')->name("Get gl for RRV direct");
     Route::get('getRecurringVoucherMasterRecord', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterRecord')->name('Get rrv master record');
+    Route::post('amendRecurringVoucherReview', 'RecurringVoucherSetupAPIController@amendRecurringVoucherReview')->name('JV Review');
 });
 
 
