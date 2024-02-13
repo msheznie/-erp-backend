@@ -534,8 +534,8 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $bidId = $input['bid_id'];
 
         $bidClarifications = TenderBidClarifications::with(['attachment','tender'])->where('id', '=', $bidId)->get();
-        $tenderCode = $bidClarifications[0]->tender->title;
-        $tenderTitle = $bidClarifications[0]->tender->tender_code;
+        $tenderCode = $bidClarifications[0]->tender->tender_code;
+        $tenderTitle = $bidClarifications[0]->tender->title;
         $preBidClarifications = $bidClarifications[0]->post;
         $attachments = $bidClarifications[0]->attachment;
         $file = array();
@@ -565,10 +565,10 @@ class TenderBidClarificationsAPIController extends AppBaseController
         }else {
             foreach ($emailString as $email){
             $forwardEmail = email::emailAddressFormat($email);
-            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarifications"."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
+            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To Whom It May Concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarifications"."</b><br /><br />"." Thank You."."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
             }
         }
-        return ['success' => true, 'message' => 'Email sent successfully'];
+        return ['success' => true, 'message' => 'Email/s sent successfully'];
 
     }
 }
