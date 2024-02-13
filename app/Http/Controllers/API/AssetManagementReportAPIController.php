@@ -20,6 +20,7 @@ namespace App\Http\Controllers\API;
 use App\Models\AssetFinanceCategory;
 use App\Models\Company;
 use App\Models\AssetDisposalMaster;
+use App\Models\FixedAssetCost;
 use App\Models\ItemAssigned;
 use App\Models\CompanyFinancePeriod;
 use App\Models\ExpenseAssetAllocation;
@@ -67,7 +68,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
         $assets = [];
         $expenseGL = [];
-        if (isset($request['reportID']) && $request['reportID'] == "AEA") {
+        if (isset($request['reportID']) && $request['reportID'] == "AEA" || isset($request['reportID']) && $request['reportID'] == "ATR") {
 
             $assets = FixedAssetMaster::where('confirmedYN',1)->where('approved',-1)->where('companySystemID',$selectedCompanyId)->get();
 
@@ -203,6 +204,17 @@ class AssetManagementReportAPIController extends AppBaseController
                         'assets' => 'required',
                     ]);
     
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                    break;
+                case 'ATR':
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required',
+                        'toDate' => 'required|date|after_or_equal:fromDate',
+                        'assets' => 'required',
+                    ]);
+
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
@@ -722,6 +734,14 @@ class AssetManagementReportAPIController extends AppBaseController
                 $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])->find($request->companySystemID);
 
                 return array('reportData' => $outputArr,'companyCurrency' => $companyCurrency, 'grandTotalLocal' => $grandTotalLocal, 'grandTotalRpt' => $grandTotalRpt);
+
+                break;
+
+            case 'ATR': //Asset tracking report
+                $output = $this->getAssetTrackingQRY($request);
+
+                return \DataTables::of($output)
+                    ->make(true);
 
                 break;
             default:
@@ -1790,6 +1810,22 @@ class AssetManagementReportAPIController extends AppBaseController
                     });
                 })->download('xlsx');
                 break;
+            case 'ATR':
+                $output = $this->getAssetTrackingQRY($request);
+                $fromDate = $request->fromDate;
+                $toDate = $request->toDate;
+
+                if (count($output) > 0) {
+                    $reportData = array('reportData' => $output,  'fromDate' => $fromDate, 'toDate' => $toDate);
+                    $templateName = "export_report.asset_tracking";
+
+                    return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                        $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                            $sheet->loadView($templateName, $reportData);
+                        });
+                    })->download('xlsx');
+                }
+                break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
@@ -1972,6 +2008,56 @@ FROM
                                                   ->get();
 
     }
+
+    public function getAssetTrackingQRY($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+
+        $toDate = new Carbon($request->toDate);
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('faID')->toArray() : [];
+
+         $assetTransfer = FixedAssetCost::selectRaw('erp_fa_assetcost.assetID as assetCode, erp_fa_assettype.typeDes as assetType,erp_fa_asset_master.assetDescription as assetDescription, erp_fa_category.catDescription as category,erp_fa_fa_asset_transfer.document_code as documentCode, erp_fa_fa_asset_transfer.document_date as documentDate,IFNULL(fromLocation.locationName, "-") as fromName, IFNULL(toLocation.locationName, "-") as toName, IFNULL(location.locationName, "-") as locationName, IFNULL(empRequest.empName, "-") as reqName, IFNULL(depMaster.DepartmentDescription, "-") as depName, erp_fa_asset_master.faID')->addSelect([
+                 'erp_fa_fa_asset_transfer.type',
+                 DB::raw('(CASE 
+            WHEN erp_fa_fa_asset_transfer.type = 1 THEN "Request Based - Employee"
+            WHEN erp_fa_fa_asset_transfer.type = 2 THEN "Direct to Location"
+            WHEN erp_fa_fa_asset_transfer.type = 3 THEN "Direct to Employee"
+            WHEN erp_fa_fa_asset_transfer.type = 4 THEN "Request Based - Department"
+            ELSE ""
+        END) as transferType')
+             ])
+            ->leftjoin('erp_fa_asset_master', 'erp_fa_asset_master.faID', '=', 'erp_fa_assetcost.faID')
+            ->leftjoin('erp_fa_fa_asset_transfer_details', 'erp_fa_fa_asset_transfer_details.fa_master_id', '=', 'erp_fa_assetcost.faID')
+            ->leftjoin('erp_fa_fa_asset_transfer', 'erp_fa_fa_asset_transfer.id', '=', 'erp_fa_fa_asset_transfer_details.erp_fa_fa_asset_transfer_id')
+            ->leftjoin('erp_fa_assettype', 'erp_fa_assettype.typeID', '=', 'erp_fa_asset_master.assetType')
+            ->leftjoin('erp_fa_category', 'erp_fa_category.faCatID', '=', 'erp_fa_asset_master.faCatID')
+            ->leftjoin('erp_location as fromLocation', 'fromLocation.locationID', '=', 'erp_fa_fa_asset_transfer_details.from_location_id')
+            ->leftjoin('erp_location as toLocation', 'toLocation.locationID', '=', 'erp_fa_fa_asset_transfer_details.to_location_id')
+            ->leftjoin('erp_location as location', 'location.locationID', '=', 'erp_fa_fa_asset_transfer.location')
+            ->leftjoin('erp_fa_fa_asset_request', 'erp_fa_fa_asset_request.id', '=', 'erp_fa_fa_asset_transfer_details.erp_fa_fa_asset_request_id')
+            ->leftjoin('employees as empRequest', 'empRequest.employeeSystemID', '=', 'erp_fa_fa_asset_request.emp_id')
+            ->leftjoin('departmentmaster as depMaster', 'depMaster.departmentSystemID', '=', 'erp_fa_fa_asset_request.departmentSystemID')
+            ->where('erp_fa_fa_asset_transfer.approved_yn', -1)
+            ->where('erp_fa_asset_master.approved', -1)
+            ->whereDate('erp_fa_fa_asset_transfer.document_date', '>=', $fromDate)
+            ->whereDate('erp_fa_fa_asset_transfer.document_date', '<=', $toDate)
+            ->whereIn('erp_fa_asset_master.faID', $assetIds)
+            ->where('erp_fa_fa_asset_transfer.company_id', $companyID)
+            ->orderBy('documentDate', 'asc')
+            ->get();
+
+        return $assetTransfer;
+    }
+
 
     function getAssetDisposal($request)
     {
