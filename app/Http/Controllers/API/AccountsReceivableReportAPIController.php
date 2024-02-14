@@ -59,6 +59,7 @@ use Illuminate\Support\Facades\File;
 use App\helper\CreateExcel;
 use App\Jobs\DocumentAttachments\CustomerStatementJob;
 use App\Models\CustomerMasterCategoryAssigned;
+use App\Jobs\Report\AccountsReceivablePdfJob;
 
 class AccountsReceivableReportAPIController extends AppBaseController
 {
@@ -6872,5 +6873,25 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
                 ) AS final".$whereStatus;
 
         return DB::select($sql);
+    }
+
+    function pdfExportCAReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'CA':
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+
+                $db = isset($request->db) ? $request->db : ""; 
+
+                $employeeID = \Helper::getEmployeeSystemID();
+                AccountsReceivablePdfJob::dispatch($db, $request, [$employeeID]);
+
+                return $this->sendResponse([], "Account receivable customer aging PDF report has been sent to queue");
+                break;
+
+            default:
+                return $this->sendError('No report ID found');
+        }
     }
 }

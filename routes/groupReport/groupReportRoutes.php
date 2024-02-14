@@ -88,3 +88,9 @@ Route::group([],function (){
     Route::post('getICDrillDownData', 'FinancialReportAPIController@getICDrillDownData')->name("Get inter company drill down data");
 });
 
+
+//Account Rreceivable
+Route::group([],function (){
+
+    Route::post('generateARCAReportPDF', 'AccountsReceivableReportAPIController@pdfExportCAReport')->name("Account receivable customer aging");
+});
