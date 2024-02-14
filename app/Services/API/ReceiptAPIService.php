@@ -128,6 +128,8 @@ class ReceiptAPIService
 
             foreach ($receipt['details'] as $details) {
 
+                self::checkDecimalPlaces($details,$receipt);
+
                 if($receipt->documentType == 13) {
                     self::validateInvoiceDetails($details,$receipt);
                     self::validateTotalAmount($details,$receipt);
@@ -151,13 +153,25 @@ class ReceiptAPIService
     }
 
     private function validateVatAmount($details,$receipt) {
-        if($receipt->isVATApplicable) {
+        $customerDetails = CustomerMaster::where('customerCodeSystem',$receipt->customerID)->first();
+
+        if($receipt->isVATApplicable && ($customerDetails && $customerDetails->vatEligible)) {
             if($details['vatAmount'] >= $details['amount']) {
                 $this->isError = true;
                 $error[$receipt->narration][$details['comments']] = ['VAT amount cannot be greater or equal than the amount'];
                 array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
             }
 
+
+            $countDecimals = strlen(substr(strrchr($details['vatAmount'], "."), 1));
+
+            $currencyDetails = CurrencyMaster::where('currencyID',$receipt->custTransactionCurrencyID)->first();
+
+            if($currencyDetails && $countDecimals != $currencyDetails->DecimalPlaces){
+                $this->isError = true;
+                $error[$receipt->narration][$details['comments']] = [$currencyDetails->CurrencyName. ' need '. $currencyDetails->DecimalPlaces .' decimal places in VAT'];;
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
         }
     }
 
@@ -229,6 +243,33 @@ class ReceiptAPIService
 
 
         return $receipt;
+    }
+
+    private function checkDecimalPlaces($detail,$receipt) {
+        if($receipt->documentType != 13) {
+            $countDecimals = strlen(substr(strrchr($detail['amount'], "."), 1));
+        }else {
+            $countDecimals = strlen(substr(strrchr($detail['receiptAmount'], "."), 1));
+        }
+
+        $currencyDetails = CurrencyMaster::where('currencyID',$receipt->custTransactionCurrencyID)->first();
+
+        if($currencyDetails && $countDecimals != $currencyDetails->DecimalPlaces){
+            switch ($receipt->documentType) {
+                case 13 :
+                    $this->isError = true;
+                    $error[$receipt->narration][$detail['invoiceCode']] = [$currencyDetails->CurrencyName. ' need '. $currencyDetails->DecimalPlaces .' decimal places'];
+                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                    break;
+                case 14:
+                case 15:
+                    $this->isError = true;
+                    $error[$receipt->narration][$detail['comments']] = [$currencyDetails->CurrencyName. ' need '. $currencyDetails->DecimalPlaces .' decimal places'];
+                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                    break;
+            }
+
+        }
     }
 
     private function validateGlCode($detail,$receipt) {
@@ -331,9 +372,13 @@ class ReceiptAPIService
 
         $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->select('DecimalPlaces')->first();
 
-        $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
+        if(isset($currencies)) {
+            $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
+            $receipt->bankAccountBalance = $rounded_amount;
+        }else {
+            $receipt->bankAccountBalance = $amount;
+        }
 
-        $receipt->bankAccountBalance = $rounded_amount;
 
         return $receipt;
     }
@@ -427,9 +472,12 @@ class ReceiptAPIService
     }
     private static function setLocalAndReportingAmounts($receipt): CustomerReceivePayment {
 
-
         $myCurr = $receipt->custTransactionCurrencyID;
         $customerDetails = CustomerMaster::where('customerCodeSystem',$receipt->customerID)->first();
+        $currencyDetails = CurrencyMaster::where('currencyID',$myCurr)->first();
+        $companyData = Company::with(['localcurrency', 'reportingcurrency'])->where('companySystemID', $receipt->companySystemID)
+            ->first();
+
         switch ($receipt->documentType) {
             case 15:
             case 14 :
@@ -448,37 +496,32 @@ class ReceiptAPIService
                 $totalNetAmount = 0;
                 break;
         }
-        $companyCurrencyConversionTrans = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
-        $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
-        $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
-        $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalAmount);
-        if($receipt->custTransactionCurrencyID == 1) {
+
+        if($currencyDetails) {
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
+            $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
+            $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
+            $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalAmount);
+
             $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount'])  * -1;
             $receipt->receivedAmount = $totalAmount  * -1;
             $receipt->VATAmount = $totalVatAmount;
-            $receipt->VATPercentage = ($totalVatAmount/100);
+            $receipt->VATPercentage = ($totalVatAmount / 100);
             $receipt->VATAmountLocal =  $companyCurrencyConversionVat['localAmount'];
             $receipt->VATAmountRpt = $companyCurrencyConversionVat['reportingAmount'];
             $receipt->netAmount = $totalNetAmount;
             $receipt->netAmountLocal = $companyCurrencyConversionNet['localAmount'];
             $receipt->netAmountRpt = $companyCurrencyConversionNet['reportingAmount'];
             $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount'])  * -1;
-            $receipt->bankAmount = (\Helper::roundValue($totalAmount)  * -1);
             $receipt->bankCurrencyER = $bankCurrencyConversion['transToDocER'];
 
-        }else {
-            $receipt->localAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['localAmount']),2)  * -1;
-            $receipt->receivedAmount = round($totalAmount,2)  * -1;
-            $receipt->VATAmount = round($totalVatAmount,2);
-            $receipt->VATPercentage = round(($totalVatAmount/100),2);
-            $receipt->VATAmountLocal =  round($companyCurrencyConversionVat['localAmount'],2);
-            $receipt->VATAmountRpt = round($companyCurrencyConversionVat['reportingAmount'],2);
-            $receipt->netAmount = round($totalNetAmount,2);
-            $receipt->netAmountLocal = round($companyCurrencyConversionNet['localAmount'],2);
-            $receipt->netAmountRpt = round($companyCurrencyConversionNet['reportingAmount'],2);
-            $receipt->companyRptAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),2)  * -1;
-            $receipt->bankAmount = (round(\Helper::roundValue($bankCurrencyConversion['documentAmount']),2) * -1);
-            $receipt->bankCurrencyER = round($bankCurrencyConversion['transToDocER'],2);
+            if ($receipt->custTransactionCurrencyID == $companyData->localCurrencyID) {
+                $receipt->bankAmount = \Helper::roundValue($totalAmount) * -1;
+            } else {
+                $receipt->bankAmount = \Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1;
+            }
+
+
         }
 
 
@@ -501,33 +544,32 @@ class ReceiptAPIService
 
         $customerDetails = CustomerMaster::where('CutomerCode',$customerCode)->orWhere('customer_registration_no',$customerCode)->first();
 
-        if(!$customerDetails) {
-            $this->isError = true;
-            $error[$receipt->narration] = ['Customer data not found'];
-            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        if (!$customerDetails) {
+            $errorMessage = 'Customer data not found';
+        } elseif (!$customerDetails->isCustomerActive) {
+            $errorMessage = 'Customer is not active';
+        } else {
+            $customerAssigned = CustomerAssigned::where('companySystemID', $receipt->companySystemID)
+                ->where('customerCodeSystem', $customerDetails->customerCodeSystem)
+                ->where('isAssigned', -1)
+                ->first();
 
-        }else {
-            if(!$customerDetails->isCustomerActive) {
-                $this->isError = true;
-                $error[$receipt->narration] = ['Customer is not active'];
-                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
-            }else {
-                $customerAssigned = CustomerAssigned::where('companySystemID',$receipt->companySystemID)->where('customerCodeSystem',$customerDetails->customerCodeSystem)->where('isAssigned',-1)->first();
-                if(!$customerAssigned) {
-                    $this->isError = true;
-                    $error[$receipt->narration] = ['Customer is not assigned to the company'];
-                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
-                }
+            if (!$customerAssigned) {
+                $errorMessage = 'Customer is not assigned to the company';
+            } else {
                 $receipt->customerID = $customerDetails->customerCodeSystem;
                 $receipt->customerGLCodeSystemID = $customerDetails->custGLAccountSystemID;
                 $receipt->customerGLCode = $customerDetails->custGLaccount;
-                $receipt->custAdvanceAccountSystemID =  $customerDetails->custGLAccountSystemID;
+                $receipt->custAdvanceAccountSystemID = $customerDetails->custGLAccountSystemID;
                 $receipt->custAdvanceAccount = $customerDetails->custGLaccount;
             }
         }
 
-
-
+        if (isset($errorMessage)) {
+            $this->isError = true;
+            $error[$receipt->narration] = [$errorMessage];
+            $this->validationErrorArray[$receipt->narration] = $error[$receipt->narration];
+        }
 
         return $receipt;
     }
@@ -664,6 +706,7 @@ class ReceiptAPIService
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
         }else {
             $receipt->custTransactionCurrencyID = $currencyDetails->currencyID;
+            $receipt->DecimalPlaces = $currencyDetails->DecimalPlaces;
             $this->checkCurrencyAssignedToCustomer($receipt);
         }
 
