@@ -572,7 +572,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
     public function getRecurringVoucherMasterRecord(Request $request)
     {
         $id = $request->get('matchDocumentMasterAutoID');
-        $rrvMasterData = $this->recurringVoucherSetupRepository->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'detail' => function ($query) {
+        $rrvMasterData = $this->recurringVoucherSetupRepository->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'company', 'detail' => function ($query) {
             $query->with('project','segment');
         }, 'approved_by' => function ($query) {
             $query->with('employee');

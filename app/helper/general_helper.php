@@ -4665,7 +4665,7 @@ class Helper
                             }
 
                             if($input["documentSystemID"] == 119){
-                                $recurringVoucherSetup = RecurringVoucherSetup::find($input['recurringVoucherAutoId']);
+                                $recurringVoucherSetup = RecurringVoucherSetup::find($input['documentSystemCode']);
                                 CreateRecurringVoucherSetupSchedules::dispatch($recurringVoucherSetup);
                             }
 
