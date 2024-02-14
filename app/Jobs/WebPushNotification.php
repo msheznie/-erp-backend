@@ -19,13 +19,14 @@ class WebPushNotification implements ShouldQueue
     public $userId;
     public $pushData;
     public $apps;
+    public $webPushAppNameDocumentWise;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $pushData, $userId, $apps)
+    public function __construct($dispatch_db, $pushData, $userId, $apps, $webPushAppNameDocumentWise = 0)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -36,6 +37,7 @@ class WebPushNotification implements ShouldQueue
         $this->userId = $userId;
         $this->pushData = $pushData;
         $this->apps = $apps;
+        $this->webPushAppNameDocumentWise = $webPushAppNameDocumentWise;
     }
 
     /**
@@ -45,22 +47,23 @@ class WebPushNotification implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/web-push.log'); 
+        Log::useFiles(storage_path() . '/logs/web-push.log');
         $db = $this->dispatch_db;
         $data = $this->pushData;
         $userID = $this->userId;
         $appsList = $this->apps;
         CommonJobService::db_switch($db);
 
+        $webPushAppName = $this->getWebPushNameDocumentWise($this->webPushAppNameDocumentWise);
         try {
 
             $client = new Client();
             $url = env("WEB_PUSH_URL")."/push-notification-web";
-           
+
             $params['userId'] = $userID;
             $params['data'] = $data;
             $params['apps'] = $appsList;
-            $params['appName'] = env("WEB_PUSH_APP_NAME");
+            $params['appName'] = $webPushAppName;
 
             $response = $client->request('POST', $url, ['json' => $params]);
 
@@ -71,4 +74,13 @@ class WebPushNotification implements ShouldQueue
             Log::error($exception->getResponse()->getBody(true));
         }
     }
+
+    public function getWebPushNameDocumentWise($webPushAppNameDocumentWise){
+        $webPushAppName = env("WEB_PUSH_APP_NAME");
+        if($webPushAppNameDocumentWise == 107){
+            $webPushAppName = env("WEB_PUSH_APP_NAME_SRM");
+        }
+        return $webPushAppName;
+    }
+
 }

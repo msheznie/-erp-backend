@@ -4924,4 +4924,14 @@ class SRMService
         }
         return ['status' => true, 'message' => 'Success'];
     }
+    public function getCurrentServerDateTime()
+    {
+        $currentdate = Carbon::now();
+
+        return [
+            'success' => true,
+            'message' => 'Current Server DateTime Retrieved',
+            'data' => $currentdate
+        ];
+    }
 }

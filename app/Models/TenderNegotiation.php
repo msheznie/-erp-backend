@@ -75,4 +75,9 @@ class TenderNegotiation extends Model
         return $this->hasOne('App\Models\SupplierTenderNegotiation', 'tender_negotiation_id', 'id');
     }
 
+    public function SupplierTenderNegotiationList()
+    {
+        return $this->hasMany('App\Models\SupplierTenderNegotiation', 'tender_negotiation_id', 'id');
+    }
+
 }

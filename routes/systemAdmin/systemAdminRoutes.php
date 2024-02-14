@@ -41,6 +41,7 @@ Route::group([], function(){
 	Route::post('addBusinessCategoryToSupplier', 'SupplierMasterAPIController@addBusinessCategoryToSupplier')->name("Add business categories to supplier");
 	Route::post('srmRegistrationLinkHistoryView', 'SupplierMasterAPIController@srmRegistrationLinkHistoryView')->name("SRM registration link create history");
 	Route::post('srmRegistrationLink', 'SupplierMasterAPIController@srmRegistrationLink')->name("Generate SRM registration link");
+	Route::post('reSendSupplierRegistrationsLink', 'SupplierMasterAPIController@reSendSupplierRegistrationsLink')->name("Regenerate SRM registration link");
 	Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster')->name("Export suppliers list to excel");
 	Route::post('supplierReferBack', 'SupplierMasterAPIController@supplierReferBack')->name('Supplier referback');
 	Route::post('supplierReOpen', 'SupplierMasterAPIController@supplierReOpen')->name("Supplier master re open");

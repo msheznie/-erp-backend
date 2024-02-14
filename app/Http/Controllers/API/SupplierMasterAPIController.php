@@ -2001,6 +2001,42 @@ class SupplierMasterAPIController extends AppBaseController
         }
     }
 
+    public function reSendSupplierRegistrationsLink(Request $request)
+    {
+        $companyName = "";
+        $company = Company::find($request->companySystemId);
+        if(isset($company->CompanyName)){
+            $companyName =  $company->CompanyName;
+        }
+        $data['domain'] =  Helper::getDomainForSrmDocuments($request);
+        $request->merge($data);
+        $logo = $company->getLogoUrlAttribute();
+
+        // Generate Hash Token for the current timestamp
+        $token = md5(Carbon::now()->format('YmdHisu'));
+        $apiKey = $request->input('api_key');
+
+        $supplierdata = SupplierRegistrationLink::where('id',$request->id)
+            ->where('company_id', $request->companySystemId)
+            ->first();
+
+        $email = email::emailAddressFormat($supplierdata['email']);
+
+        if (!empty($supplierdata)) {
+            if ($supplierdata['STATUS'] === 0){
+                $loginUrl = env('SRM_LINK') . $supplierdata['token'] . '/' . $apiKey;
+                $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
+                $isUpdated = SupplierRegistrationLink::where('id', $supplierdata['id'])->update($updateRec);
+                if ($isUpdated) {
+                    Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+                    return $this->sendResponse($loginUrl, 'Supplier Registration Link re-sent successfully');
+                } else{
+                    return $this->sendError(' Failed to re-send Supplier Registration Link',500);
+                }
+            }
+        }
+    }
+
     public function srmRegistrationLinkHistoryView(Request $request)
     {
         $input = $request->all();

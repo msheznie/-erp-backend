@@ -40,7 +40,7 @@ class SupplierRegistrationLink extends Model
         'sub_domain'
     ];
 
-    protected $appends = ['appointment_date_expired'];
+    protected $appends = ['appointment_date_expired','uuid_notification'];
 
     protected $casts = [
         'id' => 'integer',
@@ -71,6 +71,15 @@ class SupplierRegistrationLink extends Model
             } else {
                 return 'N/A';
             }
+        }
+
+        return '';
+    }
+
+    public function getUuidNotificationAttribute()
+    {
+        if (isset($this->attributes['uuid'])) {
+            return env("WEB_PUSH_APP_NAME_SRM")."_".$this->attributes['uuid'];
         }
 
         return '';

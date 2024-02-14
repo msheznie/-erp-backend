@@ -184,15 +184,15 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderNegotiation = TenderNegotiation::select('status','id')->find($input['id']);
         $tenderNegotiation->status = 2;
         $tenderNegotiation->save();
-        $tenderMaster = TenderMaster::select('negotiation_published','id')->find($input['srm_tender_master_id']);
+        $tenderMaster = TenderMaster::select('negotiation_published','id', 'tender_code', 'title')->find($input['srm_tender_master_id']);
         $tenderMaster->negotiation_published = 1;
         $tenderMaster->save();
 
-        $this->sendEmailToSuppliers($input);
+        $this->sendEmailToSuppliers($input, $tenderMaster->tender_code, $tenderMaster->title);
         return $this->sendResponse($tenderNegotiation->toArray(), 'Tender Negotiation published successfully');
     }
 
-    public function sendEmailToSuppliers($input) {
+    public function sendEmailToSuppliers($input, $code, $title) {
             $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id','emp_id','tender_id')->where('tender_id', $input['srm_tender_master_id'])->with('employee')->get();
             $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->select('suppliermaster_id','bidSubmissionCode')->get();
             if($srmTenderBidEmployeeDetails) {
@@ -205,8 +205,8 @@ class TenderNegotiationApprovalController extends AppBaseController
                         $url = trim($loginUrl,"/register");
                         $redirectUrl= $url."/tender-management/tenders/1";
                         $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
-                        $temp = "<p>Dear " . $employee->name . ',</p><p>We are pleased to inform you that we have selected your bid for negotiation. We appreciate the time and effort you put into preparing your proposal, and we were impressed by the quality and value it provides.</p><p>We believe that your proposal aligns with our business needs, and we look forward to discussing it in more detail during the negotiation process.</p><p>Please let us know if you have any questions or concerns regarding the negotiation process. We are committed to working collaboratively with you to ensure that we arrive at a mutually beneficial agreement that meets both our needs.</p><p>Thank you again for your bid and your interest in working with us. We look forward to a successful negotiation and a long and productive business relationship.</p><p>Please find the link below.</p><p><a href="' . $redirectUrl . '">Click here to view</a></p><br/><br/><p>Best Regards</p><p>' . $companyName . '</p>';
-                        $dataEmail['alertMessage'] = "Tender Bid For Negotiation - ".$supplierTenderNegotiation->bidSubmissionCode;
+                        $temp = "<p>Dear " . $employee->name . ',</p><p>We would like to inform you that you have been shortlisted for the tender negotiation '. $code. ' | '. $title. ' tender, and for that we would like to arrange a meeting with you, before submitting the final proposal.</p><br/><br/><p>Kind Regards,</p><p>' . $companyName . '</p>';
+                        $dataEmail['alertMessage'] = "Tender Negotiation Invitation";
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);
                     }

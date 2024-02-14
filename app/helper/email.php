@@ -104,7 +104,6 @@ class email
                 ->where('ActivationFlag', -1)
                 ->where('empLoginActive', 1)
                 ->where('empActive', 1)->first();
-            
             if(isset($employee)){
                 if (!empty($employee)) {
                     $data['empID'] = $employee->empID;

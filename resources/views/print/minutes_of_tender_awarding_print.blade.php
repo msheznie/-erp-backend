@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Minutes of Tender Awarding Report</title>
+    <title>Minutes of Tender Awarding</title>
     <style>
         @page {
             margin-left: 30px;
@@ -179,7 +179,7 @@
                     <table style="border: none">
                         <tr>
                             <td width="100px" style="border: none">
-                                <span style="font-size: 18px;font-weight: 400">Minutes of Tender Awarding Report</span>
+                                <span style="font-size: 18px;font-weight: 400">Minutes of Tender Awarding</span>
                             </td>
                         </tr>
                     </table>

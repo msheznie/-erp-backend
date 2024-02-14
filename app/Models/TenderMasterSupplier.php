@@ -117,5 +117,8 @@ class TenderMasterSupplier extends Model
     {
         return $this->belongsTo('App\Models\TenderMaster', 'tender_master_id', 'id');
     }
-    
+
+    public function supplierDetails(){
+        return $this->hasOne(SupplierRegistrationLink::class,'id','purchased_by');
+    }
 }

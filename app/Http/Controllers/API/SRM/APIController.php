@@ -44,6 +44,7 @@ define('GET_REMAINING_SLOT_COUNT', 'GET_REMAINING_SLOT_COUNT');
 define('CANCEL_APPOINTMENTS', 'CANCEL_APPOINTMENTS');
 define('GET_APPROVED_DETAILS', 'GET_APPROVED_DETAILS');
 define('GET_TENDERS', 'GET_TENDERS');
+define('GET_SERVER_DATETIME', 'GET_SERVER_DATETIME');
 define('SAVE_TENDER_PURCHASE', 'SAVE_TENDER_PURCHASE');
 define('GET_FAQ', 'GET_FAQ');
 define('GET_TENDER_PRE_BID_CLARIFICATION_LIST', 'GET_TENDER_PRE_BID_CLARIFICATION_LIST');
@@ -164,6 +165,8 @@ class APIController extends Controller
                 return $this->SRMService->getSrmApprovedDetails($request);
             case GET_TENDERS:
                 return $this->SRMService->getTenders($request);
+            case GET_SERVER_DATETIME:
+                return $this->SRMService->getCurrentServerDateTime();
             case SAVE_TENDER_PURCHASE:
                 return $this->SRMService->saveTenderPurchase($request);
             case GET_FAQ:

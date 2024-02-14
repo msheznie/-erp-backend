@@ -32,7 +32,8 @@ class TenantEnforce
             'api/v1/item_return_details/{item_return_detail}',
             'api/v1/checkManWareHouse',
             'api/v1/approveDocument',
-            'api/v1/rejectPurchaseRequest'
+            'api/v1/rejectPurchaseRequest',
+            'api/v1/reSendSupplierRegistrationsLink'
         ];
 
         $dbRoutes = [
@@ -43,7 +44,7 @@ class TenantEnforce
             'api/v1/approveCalanderDelAppointment',
             'api/v1/approveJournalVoucher',
             'api/v1/updateGLEntries',
-            'api/v1suppliers/registration/approvals/status',
+            'api/v1/suppliers/registration/approvals/status',
             'api/v1/approveDocument',
             'api/v1/postGLEntries',
             'api/v1/posMappingRequest',

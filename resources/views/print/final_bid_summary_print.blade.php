@@ -131,7 +131,7 @@
     <table style="width:100%; border: none">
         <tr>
             <td width="40%" style="border: none"><span
-                        class="font-weight-bold">Printed By :</span> {{$employeeData->empName}}
+                        class="font-weight-bold">Printed By :</span> {{ optional($employeeData)->empName ?? '' }}
             </td>
         </tr>
     </table>
@@ -246,6 +246,13 @@
         @endif
 
         @if ($tenderMaster->stage == 2)
+          @if ($isNegotiation == 1)
+            <td><strong>Technical Bid Opening Date:</strong></td>
+            <td colspan="5">
+                    -
+            </td>
+           @endif
+           @if ($isNegotiation == 0)
             <td><strong>Technical Bid Opening Date:</strong></td>
             <td colspan="2">
                 @if ($tenderMaster->technical_bid_opening_date)
@@ -256,7 +263,9 @@
                     -
                 @endif
             </td>
-            <td colspan="2"><strong>Commercial Bid Opening Date:</strong></td>
+           @endif
+        @if ($isNegotiation == 0)
+          <td colspan="2"><strong>Commercial Bid Opening Date:</strong></td>
             <td colspan="4">
 
                 @if ($tenderMaster->commerical_bid_opening_date)
@@ -267,17 +276,35 @@
                 @endif
             </td>
         @endif
+        @endif
     </tr>
-    <tr>
-        <td><strong>Comment:</strong></td>
-        <td colspan="8">
-            @if ($isNegotiation == 1 )
-                {{ $tenderMaster->negotiation_award_comment }}
-            @endif
-            @if ($isNegotiation == 0 )
+        <tr>
+        @if ($isNegotiation == 0)
+            <td><strong>Comment:</strong></td>
+            <td colspan="8">
                 {{ $tenderMaster->award_comment }}
-            @endif
-        </td>
+            </td>
+        @endif
+        @if ($isNegotiation == 1)
+             @if ($tenderMaster->stage == 2)
+                 <td><strong>Commercial Bid Opening Date:</strong></td>
+                 <td colspan="2">
+                    -
+                </td>
+             @endif
+             @if ($tenderMaster->stage == 1)
+                <td><strong>Comment:</strong></td>
+                <td colspan="8">
+                    {{ $tenderMaster->negotiation_award_comment }}
+                </td>
+             @endif
+             @if ($tenderMaster->stage == 2)
+                <td><strong>Comment:</strong></td>
+                <td colspan="5">
+                    {{ $tenderMaster->negotiation_award_comment }}
+                </td>
+             @endif
+        @endif
     </tr>
     </tbody>
 </table>

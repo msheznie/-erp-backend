@@ -3426,6 +3426,7 @@ class Helper
 
                                         $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
 
+
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
 
                                         if ($document->documentSystemID == 107){
