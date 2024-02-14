@@ -30,7 +30,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
-
+use App\Models\TaxVatCategories;
 /**
  * Class DirectReceiptDetailController
  * @package App\Http\Controllers\API
@@ -448,6 +448,31 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $inputData['comRptAmount'] = 0;
 
 
+        if ($master->isVATApplicable == 1) {
+            $companySystemID = $master->companySystemID;
+            $defaultVAT = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
+                                            $q->where('companySystemID', $companySystemID)
+                                                ->where('isActive', 1)
+                                                ->where('taxCategory', 2);
+                                        })
+                                        ->whereHas('main', function ($q) {
+                                            $q->where('isActive', 1);
+                                        })
+                                        ->where('isActive', 1)
+                                        ->where('isDefault', 1)
+                                        ->first();
+
+            if ($defaultVAT) {
+                $inputData['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
+                $inputData['vatMasterCategoryID'] = $defaultVAT->mainCategory;
+                $inputData['VATPercentage'] = $defaultVAT->percentage;
+            } else {
+                DB::rollBack();
+                return $this->sendError("Default VAT not configured");
+            }
+
+        }
+
         DB::beginTransaction();
 
         try {
@@ -470,9 +495,12 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
     public function updateDirectReceiptVoucher(request $request)
     {
-
+        
         $input = $request->all();
-        $input = array_except($input, ['segment']);
+        $updateKey =isset($input['updateKey']) ? $input['updateKey'] : '';
+
+        $input = array_except($input, ['segment','updateKey','vatMasterCategoryAutoID','itemPrimaryCode','itemDescription','subCategoryArray','subCatgeoryType']);
+
         $input = $this->convertArrayToValue($input);
         $id = $input['directReceiptDetailsID'];
         array_except($input, 'directReceiptDetailsID');
@@ -491,8 +519,8 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
         if($master->confirmedYN){
             return $this->sendError('You cannot update detail, this document already confirmed', 500);
-        }
-
+        }   
+        
         if(isset($input['detail_project_id'])){
             $input['detail_project_id'] = $input['detail_project_id'];
         } else {
@@ -521,7 +549,13 @@ class DirectReceiptDetailAPIController extends AppBaseController
             $input['serviceLineCode'] = null;
         }
 
-        if ($input['DRAmount'] != $detail->DRAmount) {
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+        ->where('companyPolicyCategoryID', 67)
+        ->where('isYesNO', 1)
+        ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+        
+      //  if ($input['DRAmount'] != $detail->DRAmount) {
             $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
             $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
 
@@ -533,43 +567,48 @@ class DirectReceiptDetailAPIController extends AppBaseController
             $currency = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $totalAmount);
             $input["comRptAmount"] = \Helper::roundValue($currency['reportingAmount']);
             $input["localAmount"] = \Helper::roundValue($currency['localAmount']);
-            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
-                ->where('companyPolicyCategoryID', 67)
-                ->where('isYesNO', 1)
-                ->first();
-            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
             if($master->isVATApplicable){
 
                 //vat amount
+                $input['VATAmount'] = round($input['DRAmount']*($input['VATPercentage']/(100+$input['VATPercentage'])),$decimal);
                 $currencyVAT = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $input['VATAmount']);
 
+                    if($policy == true) {
+                        
+                        $input['VATAmountLocal'] = round($input['VATAmount'] / $master->localCurrencyER,$decimal);
+                        $input['VATAmountRpt'] = round($input['VATAmount'] / $master->companyRptCurrencyER,$decimal);
 
-                if($policy == true) {
-                    $input['VATAmountLocal'] = $input['VATAmount'] / $master->localCurrencyER;
-                    $input['VATAmountRpt'] = $input['VATAmount'] / $master->companyRptCurrencyER;
-                }  if($policy == false) {
-                    $input["VATAmountRpt"] = \Helper::roundValue($currencyVAT['reportingAmount']);
-                    $input["VATAmountLocal"] = \Helper::roundValue($currencyVAT['localAmount']);
-                }
+
+                    }  if($policy == false) {
+                        $input["VATAmountRpt"] = round(\Helper::roundValue($currencyVAT['reportingAmount']),$decimal);
+                        $input["VATAmountLocal"] = round(\Helper::roundValue($currencyVAT['localAmount']),$decimal);
+                    }
+     
             }else{
                 $input['VATAmount'] = 0;
                 $input['VATAmountRpt'] = 0;
                 $input['VATAmountLocal'] = 0;
             }
 
+            if ($input['DRAmount'] != $detail->DRAmount || $updateKey == 'percentage')
+            {
+                $input['netAmount'] = $input['DRAmount'] - $input['VATAmount'];
+            }
+
             //net amount
             $currencyNet = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $input['netAmount']);
 
             if($policy == true) {
-                $input["netAmountRpt"] = \Helper::roundValue($input['netAmount']/$master->companyRptCurrencyER);
-                $input["netAmountLocal"] = \Helper::roundValue($input['netAmount']/$master->localCurrencyER);
+                $input["netAmountRpt"] = round(\Helper::roundValue($input['netAmount']/$master->companyRptCurrencyER),$decimal);
+                $input["netAmountLocal"] = round(\Helper::roundValue($input['netAmount']/$master->localCurrencyER),$decimal);
             }
             if($policy == false) {
-                $input["netAmountRpt"] = \Helper::roundValue($currencyNet['reportingAmount']);
-                $input["netAmountLocal"] = \Helper::roundValue($currencyNet['localAmount']);
+                $input["netAmountRpt"] = round(\Helper::roundValue($currencyNet['reportingAmount']),$decimal);
+                $input["netAmountLocal"] = round(\Helper::roundValue($currencyNet['localAmount']),$decimal);
             }
 
-        }
+       // }
 
         DB::beginTransaction();
 

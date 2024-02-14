@@ -182,7 +182,7 @@
                     <th>Narration</th>
                     <th>Currency</th>
                     <th>Invoice Amount</th>
-                    <th>Paid Amount</th>
+                    <th>Received Amount</th>
                     <th>Balance Amount</th>
                     <th>Age Days</th>
                 </tr>

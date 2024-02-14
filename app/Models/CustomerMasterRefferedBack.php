@@ -328,7 +328,9 @@ class CustomerMasterRefferedBack extends Model
         'modifiedUser',
         'customer_registration_no',
         'customer_registration_expiry_date',
-        'timeStamp'
+        'timeStamp',
+        'custAdvanceAccountSystemID',
+        'custAdvanceAccount',
     ];
 
     /**

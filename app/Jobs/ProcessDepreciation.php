@@ -200,7 +200,7 @@ class ProcessDepreciation implements ShouldQueue
                 }
             }
 
-            $depMaster->increment('counter');
+            $depMaster->counter = $depMaster->counter + 1;
 
             $depMaster->save();
 
@@ -208,8 +208,8 @@ class ProcessDepreciation implements ShouldQueue
             $totalChunks = $depMaster->totalChunks;
 
             $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
-            Log::info("Before Condition Check - newCounterValue: $newCounterValue, chunkDataSizeCounts: $totalChunks");
             if ($depDetail) {
+                Log::info("Before Condition Check - newCounterValue: $newCounterValue, chunkDataSizeCounts: $totalChunks");
                 if ($newCounterValue == $totalChunks) {
                     $fixedAssetDepreciationMasters = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1]);
                 } else {

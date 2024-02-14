@@ -276,7 +276,7 @@ class TaxLedgerDetail extends Model
 {
     use Compoships;
 
-    public $table = 'tax_ledger_details';
+        public $table = 'tax_ledger_details';
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'createdDateTime';

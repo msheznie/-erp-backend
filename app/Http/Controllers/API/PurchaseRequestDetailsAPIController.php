@@ -1231,13 +1231,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 if (isset($value['qty'])) {
                     $validateHeaderQty = true;
                 }
+                if (isset($value['estimated_unit_cost'])) {
+                    $validateEstimatedUnitCost = true;
+                }
 
-                if ((isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['item_description']) && !is_null($value['item_description']) || isset($value['comment']) && !is_null($value['comment']) || isset($value['qty']) && !is_null($value['qty'])) {
+                if ((isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['item_description']) && !is_null($value['item_description']) || isset($value['comment']) && !is_null($value['comment']) || isset($value['qty']) && !is_null($value['qty']) || isset($value['estimated_unit_cost']) && !is_null($value['estimated_unit_cost'])) {
                     $totalItemCount = $totalItemCount + 1;
                 }
             }
 
-            if (!$validateHeaderCode || !$validateHeaderCode) {
+            if (!$validateHeaderCode || !$validateHeaderCode || !$validateEstimatedUnitCost) {
                 return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
             }
 
@@ -1247,7 +1250,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             // }
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'item_description', 'comment', 'qty'))->get()->toArray();
+            })->select(array('item_code', 'item_description', 'comment', 'qty','estimated_unit_cost'))->get()->toArray();
 
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
@@ -1259,6 +1262,18 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
             }
 
+            foreach ($record as $key => $data) {
+                if (isset($data['estimated_unit_cost'])) {
+                    if (!is_numeric($data['estimated_unit_cost'])) {
+                        return $this->sendError('Records with alpha numeric values for the estimated unit cost can not be uploaded.', 500);
+                    }
+            
+                    if ($data['estimated_unit_cost'] < 0) {
+                        return $this->sendError('Estimated unit cost value can not be less than zero.', 500);
+                    }
+                }
+            }
+            
 
             if (count($record) > 0) {
                 $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount,$this->segmentAllocatedItemRepository);            

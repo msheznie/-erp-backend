@@ -91,10 +91,10 @@ class MaterialIssueService
         return $input;
     }
 
-    public static function getItemDetailsForMaterialIssueUpdate($input):Array {
+     public static function getItemDetailsForMaterialIssueUpdate($input):Array {
         $materielIssueParent = ItemIssueMaster::where('itemIssueAutoID',$input['itemIssueAutoID'])->first();
         $materielRequest = MaterielRequest::select(['RequestID'])->where('RequestID', $materielIssueParent->reqDocID)->first();
-        if($materielIssueParent->issueType == 2) {
+        if($materielIssueParent->issueType ==   2) {
             $materielAllIssues = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->get();
 
             $issuedQty = 0;

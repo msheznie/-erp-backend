@@ -1,0 +1,50 @@
+name: Code Standards Check
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'config/**'
+      - 'database/**'
+      - 'public/**'
+      - 'resources/**'
+      - 'routes/**'
+      # Add more paths as needed
+
+jobs:
+  code_standards:
+    runs-on: arc-runner-set
+
+    steps:
+      - name: Check Target Branch Name
+        run: |
+          target_branch_name="${{ github.event.pull_request.base.ref }}"
+          if [[ ! ${target_branch_name} =~ ^(erp-sprint|hr-sprint|srm-sprint) ]]; then
+            echo "Skipping Code Standard validation as the target branch does not start with 'erp-sprint'"
+            exit 0
+          fi
+      - name: Install Git
+        run: sudo apt update && sudo apt-get -y install git
+        
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Disable shallow clone
+        
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        env:
+          runner: self-hosted
+        with:
+          php-version: '7.3'
+          extensions: mbstring,PDO,xml,json,openssl,bcmath,gd
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run PHP_CodeSniffer on changed files
+        run: ./vendor/bin/phpcs --standard=PSR2 --extensions=php ${{ steps.changed-files.outputs.all_changed_files }}

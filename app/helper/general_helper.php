@@ -111,6 +111,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\BookInvSuppDet;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\CurrencyMaster;
+use App\helper\CreateCustomerThirdPartyInvoice;
 use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
 
@@ -286,7 +287,6 @@ class Helper
         if (!array_key_exists('document', $params)) {
             return ['success' => false, 'message' => 'Parameter document is missing'];
         }
-
         DB::beginTransaction();
         try {
 
@@ -863,19 +863,27 @@ class Helper
                     if ($document) {
                         //check document is already confirmed
                         $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
-
                         if (!$isConfirm) {
-                            // get current employee detail.
-                            if (!in_array($params['document'], $empInfoSkip)) {
+                            if(isset($masterRec->confirmedByEmpSystemID) && $masterRec->documentSystemID == 21) {
                                 $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
                                     $query->select('uuid', 'employee_id');
-                                }])->find(11);
-                            } else {
-                                $empInfo  =  (object) ['empName' => null, 'empID' => null, 'employeeSystemID' => null];
+                                }])->find($masterRec->confirmedByEmpSystemID);
+                            }else {
+                                // get current employee detail.
+                                if (!in_array($params['document'], $empInfoSkip)) {
+                                    $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                                        $query->select('uuid', 'employee_id');
+                                    }])->find(11);
+                                } else {
+                                    $empInfo  =  (object) ['empName' => null, 'empID' => null, 'employeeSystemID' => null];
+                                }
                             }
 
-
-                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
+                            if(isset($masterRec->confirmedDate) && $masterRec->documentSystemID == 21) {
+                                $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => $masterRec->confirmedDate, 'RollLevForApp_curr' => 1]);
+                            }else {
+                                $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
+                            }
 
                             //get the policy
                             $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
@@ -1726,10 +1734,18 @@ class Helper
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
 
-                // get current employee detail
-                $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
-                    $query->select('uuid', 'employee_id');
-                }])->find(11);
+                if(isset($input['empID'])) {
+                    // get current employee detail
+                    $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                        $query->select('uuid', 'employee_id');
+                    }])->find($input['empID']);
+                }else {
+                    // get current employee detail
+                    $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                        $query->select('uuid', 'employee_id');
+                    }])->find(11);
+                }
+
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
                 if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
@@ -2228,6 +2244,14 @@ class Helper
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
                                 if ($sourceModel->disposalType == 1) {
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
+                                }
+                                else if ($sourceModel->disposalType == 6) {
+                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase,$empInfo);
+
+                                    if (!$message['status']) {
+                                        DB::rollback();
+                                        return ['success' => false, 'message' => $message['message']];
+                                    }
                                 }
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {
@@ -4953,6 +4977,14 @@ class Helper
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
                                 if ($sourceModel->disposalType == 1) {
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
+                                }
+                                else if ($sourceModel->disposalType == 6) {
+                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase,$empInfo);
+
+                                    if (!$message['status']) {
+                                        DB::rollback();
+                                        return ['success' => false, 'message' => $message['message']];
+                                    }
                                 }
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {

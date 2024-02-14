@@ -473,24 +473,24 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $vatReturnFillingMaster = VatReturnFillingMaster::find($input['vatReturnFillingID']);
 
-        $res = $this->vatReturnFillingMasterRepository->generateFilling($vatReturnFillingMaster->date, $input['vatReturnFillingSubCatgeoryID'], $input['companyId'], true, $input['returnFilledDetailID'], $vatReturnFillingMaster->confirmedYN);
+        $res = $this->vatReturnFillingMasterRepository->generateFilling($vatReturnFillingMaster->date, $input['vatReturnFillingSubCatgeoryID'], $input['companyId'], true, $input['returnFilledDetailID'], $vatReturnFillingMaster->confirmedYN,null,false);
 
-        $results = $res['data']['taxLedgerDetailData'];
+        $results = $res;
 
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $results = $results->where(function ($query) use ($search) {
-                $query->where('documentNumber', 'like', "%{$search}%")
-                      ->orWhereHas('supplier', function ($q1) use($search){
-                            $q1->where('supplierName','LIKE',"%{$search}%");
-                        })
-                      ->orWhereHas('customer', function ($q1) use($search){
-                            $q1->where('CustomerName','LIKE',"%{$search}%");
-                        });
+                $query->where('documentNumber', 'LIKE', "%{$search}%")
+                    ->orWhereHas('supplier', function ($q1) use($search){
+                       $q1->where('supplierName','LIKE',"%{$search}%");
+                    })
+                    ->orWhereHas('customer', function ($q1) use($search){
+                        $q1->where('CustomerName','LIKE',"%{$search}%");
+                    });
             });
-        }
 
+        }
         return \DataTables::of($results)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {

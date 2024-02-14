@@ -1760,7 +1760,7 @@ class ItemMasterAPIController extends AppBaseController
             $itemMaster = ItemMaster::find($input['itemSystemCode']);
 
             if ($itemMaster) {
-                $subCategoryData = FinanceItemCategorySub::with(['finance_gl_code_bs','finance_gl_code_pl', 'finance_gl_code_revenue'])
+                $subCategoryData = FinanceItemCategorySub::with(['finance_gl_code_bs','finance_gl_code_pl','cogs_gl_code_pl','finance_gl_code_revenue'])
                                                          ->where('itemCategorySubID',$itemMaster->financeCategorySub)
                                                          ->first();
             }

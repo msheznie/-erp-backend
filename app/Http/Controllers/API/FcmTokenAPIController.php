@@ -386,4 +386,31 @@ class FcmTokenAPIController extends AppBaseController
             return $this->sendError('Something went wrong');
         }
     }
+
+    public function getPortalRedirectUrl(Request $request)
+    {
+        try {
+
+            $scheme = request()->secure() ? 'https' : 'http';
+
+            $url = $request->getHttpHost();
+            $url_array = explode('.', $url);
+            $subDomain = $url_array[0];
+            if ($subDomain == 'www') {
+                $subDomain = $url_array[1];
+            }
+
+            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+
+            if ($tenantDomain != 'localhost:8000') {
+                $portalUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home";
+            } else {
+                $portalUrl = null;
+            }
+
+            return $this->sendResponse(['portalUrl' => $portalUrl], 'Successfully Redirected to Portal');
+        } catch (\Exception $exception) {
+            return $this->sendError('Something went wrong');
+        }
+    }
 }

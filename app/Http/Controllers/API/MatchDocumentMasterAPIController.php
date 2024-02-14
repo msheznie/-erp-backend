@@ -74,6 +74,10 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\helper\TaxService;
+use App\Services\GeneralLedger\GlPostedDateService;
+use App\Models\Taxdetail;
+use App\Services\TaxLedger\RecieptVoucherTaxLedgerService;
+
 
 /**
  * Class MatchDocumentMasterController
@@ -826,7 +830,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var MatchDocumentMaster $matchDocumentMaster */
-        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by','localcurrency','rptcurrency','supplier','customer','employee', 'payment_voucher'])->findWithoutFail($id);
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by','localcurrency','rptcurrency','supplier','customer','employee', 'payment_voucher','reciept_voucher'])->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
             return $this->sendError('Match Document Master not found');
@@ -1824,343 +1828,675 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
     public function updateReceiptVoucherMatching(Request $request)
     {
-        $input = $request->all();
-        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','customer','supplier','payment_voucher']);        
-        $input = $this->convertArrayToValue($input);
+        DB::beginTransaction();
+        try {
 
-        $employee = \Helper::getEmployeeInfo();
+                 $input = $request->all();
+                $created_by = $input['created_by'];
+                $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','customer','supplier','payment_voucher','reciept_voucher']);        
+                $input = $this->convertArrayToValue($input);
+                
+                $employee = \Helper::getEmployeeInfo();
 
-        $id = $input['matchDocumentMasterAutoID'];
+                $id = $input['matchDocumentMasterAutoID'];
 
-        /** @var MatchDocumentMaster $matchDocumentMaster */
-        $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
+                /** @var MatchDocumentMaster $matchDocumentMaster */
+                $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
 
-        if (empty($matchDocumentMaster)) {
-            return $this->sendError('Match Document Master not found');
-        }
+                if (empty($matchDocumentMaster)) {
+                    return $this->sendError('Match Document Master not found');
+                }
 
-        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMaster->supplierTransCurrencyID);
+                $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMaster->supplierTransCurrencyID);
 
-        if (isset($input['matchingDocdate'])) {
-            if ($input['matchingDocdate']) {
-                $input['matchingDocdate'] = new Carbon($input['matchingDocdate']);
-            }
-        }
-
-        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
-        if (!$customValidation["success"]) {
-            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
-        }
-
-        $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
-            ->sum('receiveAmountTrans');
-
-        $detailAmountTotLoc = CustomerReceivePaymentDetail::where('matchingDocID', $id)
-            ->sum('receiveAmountLocal');
-
-        $detailAmountTotRpt = CustomerReceivePaymentDetail::where('matchingDocID', $id)
-            ->sum('receiveAmountRpt');
-
-        $input['matchingAmount'] = $detailAmountTotTran;
-        $input['matchedAmount'] = $detailAmountTotTran;
-        $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
-        $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
-
-
-        //checking below posted data
-        if ($input['documentSystemID'] == 21) {
-
-            $CustomerReceivePaymentDataUpdateCHK = CustomerReceivePayment::find($input['PayMasterAutoId']);
-
-            $postedDate = date("Y-m-d", strtotime($CustomerReceivePaymentDataUpdateCHK->postedDate));
-
-            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
-
-            if ($formattedMatchingDate < $postedDate) {
-                return $this->sendError('Receipt voucher is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
-            }
-
-        } elseif ($input['documentSystemID'] == 19) {
-
-            $creditNoteDataUpdateCHK = CreditNote::find($input['PayMasterAutoId']);
-            if (empty($creditNoteDataUpdateCHK)) {
-                return $this->sendError('Credit Note not found');
-            }
-
-            $postedDate = date("Y-m-d", strtotime($creditNoteDataUpdateCHK->postedDate));
-
-            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
-
-            if ($formattedMatchingDate < $postedDate) {
-                return $this->sendError('Credit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
-            }
-        }
-
-        if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
-
-            $pvDetailExist = CustomerReceivePaymentDetail::select(DB::raw('matchingDocID,addedDocumentSystemID'))
-                ->where('matchingDocID', $id)
-                ->first();
-
-            if (empty($pvDetailExist)) {
-                return $this->sendError('Matching document cannot confirm without details', 500, ['type' => 'confirm']);
-            }
-
-            $currencyValidate = CurrencyValidation::validateCurrency("receipt_matching", $matchDocumentMaster);
-            if (!$currencyValidate['status']) {
-                return $this->sendError($currencyValidate['message'], 500, ['type' => 'confirm']);
-            }
-
-            $detailAllRecords = CustomerReceivePaymentDetail::where('matchingDocID', $id)
-                ->get();
-
-            if ($detailAllRecords) {
-                foreach ($detailAllRecords as $row) {
-                    if ($row['addedDocumentSystemID'] == 20) {
-                        $checkAmount = CustomerReceivePaymentDetail::where('matchingDocID', $id)
-                            ->where('addedDocumentSystemID', $row['addedDocumentSystemID'])
-                            ->where('receiveAmountTrans', '<=', 0)
-                            ->count();
-
-                        if ($checkAmount > 0) {
-                            return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
-                        }
-                    } elseif ($row['addedDocumentSystemID'] == 19) {
-                        $checkAmount = CustomerReceivePaymentDetail::where('matchingDocID', $id)
-                            ->where('addedDocumentSystemID', $row['addedDocumentSystemID'])
-                            ->where('receiveAmountTrans', '=', 0)
-                            ->count();
-
-                        if ($checkAmount > 0) {
-                            return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
-                        }
+                if (isset($input['matchingDocdate'])) {
+                    if ($input['matchingDocdate']) {
+                        $input['matchingDocdate'] = new Carbon($input['matchingDocdate']);
                     }
                 }
-            }
 
-            $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
-                ->sum('receiveAmountTrans');
-
-            if (round($detailAmountTotTran, $supplierCurrencyDecimalPlace) > round($input['matchBalanceAmount'], $supplierCurrencyDecimalPlace)) {
-                return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
-            }
-
-            if ($input['matchingDocCode'] == 0) {
-
-                $company = Company::find($input['companySystemID']);
-
-                $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
-                    ->where('matchDocumentMasterAutoID', '<>', $input['matchDocumentMasterAutoID'])
-                    ->where('matchingType', 'AR')
-                    ->orderBy('serialNo', 'desc')
-                    ->first();
-
-                $lastSerialNumber = 1;
-                if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
+                if (!$customValidation["success"]) {
+                    return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
                 }
 
-                $matchingDocCode = ($company->CompanyID . '\\' . 'MT' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-
-                $input['serialNo'] = $lastSerialNumber;
-                $input['matchingDocCode'] = $matchingDocCode;
-            }
-            $itemExistArray = array();
-
-            foreach ($detailAllRecords as $item) {
-
-                $payDetailMoreBooked = CustomerReceivePaymentDetail::selectRaw('IFNULL(SUM(IFNULL(receiveAmountTrans,0)),0) as receiveAmountTrans')
-                    ->where('arAutoID', $item['arAutoID'])
-                    ->first();
-
-                $a = $payDetailMoreBooked->receiveAmountTrans;
-                $b = $item['bookingAmountTrans'];
-                $epsilon = 0.00001;
-                if(($a-$b) > $epsilon) {
-                    $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
-                    $itemExistArray[] = [$itemDrt];
-
-                }
-            }
-
-            if (!empty($itemExistArray)) {
-                return $this->sendError($itemExistArray, 422);
-            }
-
-            foreach ($detailAllRecords as $val) {
-
-                $totalReceiveAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $val['arAutoID'])
+                $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
                     ->sum('receiveAmountTrans');
 
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0) * -1 AS SumOfmatchedAmount')
-                    ->where('companySystemID', $val["companySystemID"])
-                    ->where('PayMasterAutoId', $val["bookingInvCodeSystem"])
-                    ->where('documentSystemID', $val["addedDocumentSystemID"])
-                    ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')
-                    ->first();
+                $detailAmountTotLoc = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                    ->sum('receiveAmountLocal');
 
-                if(!$matchedAmount){
-                    $matchedAmount['SumOfmatchedAmount'] = 0;
+                $detailAmountTotRpt = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                    ->sum('receiveAmountRpt');
+
+                $input['matchingAmount'] = $detailAmountTotTran;
+                $input['matchedAmount'] = $detailAmountTotTran;
+                $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
+                $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
+
+
+                //checking below posted data
+                if ($input['documentSystemID'] == 21) {
+
+                    $CustomerReceivePaymentDataUpdateCHK = CustomerReceivePayment::find($input['PayMasterAutoId']);
+
+                    $postedDate = date("Y-m-d", strtotime($CustomerReceivePaymentDataUpdateCHK->postedDate));
+
+                    $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+                    if ($formattedMatchingDate < $postedDate) {
+                        return $this->sendError('Receipt voucher is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+                    }
+
+                } elseif ($input['documentSystemID'] == 19) {
+
+                    $creditNoteDataUpdateCHK = CreditNote::find($input['PayMasterAutoId']);
+                    if (empty($creditNoteDataUpdateCHK)) {
+                        return $this->sendError('Credit Note not found');
+                    }
+
+                    $postedDate = date("Y-m-d", strtotime($creditNoteDataUpdateCHK->postedDate));
+
+                    $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+                    if ($formattedMatchingDate < $postedDate) {
+                        return $this->sendError('Credit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+                    }
                 }
 
-                $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
+                if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
 
-                $arLedgerUpdate = AccountsReceivableLedger::find($val['arAutoID']);
+                    $pvDetailExist = CustomerReceivePaymentDetail::select(DB::raw('matchingDocID,addedDocumentSystemID'))
+                        ->where('matchingDocID', $id)
+                        ->first();
 
-                if ($val['addedDocumentSystemID'] == 20) {
-                    if ($totReceiveAmount == 0) {
-                        $arLedgerUpdate->fullyInvoiced = 0;
-                        $arLedgerUpdate->selectedToPaymentInv = 0;
-                    } else if (($val->bookingAmountTrans == $totReceiveAmount) || ($totReceiveAmount > $val->bookingAmountTrans)) {
-                        $arLedgerUpdate->fullyInvoiced = 2;
-                        $arLedgerUpdate->selectedToPaymentInv = -1;
-                    } else if (($val->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
-                        $arLedgerUpdate->fullyInvoiced = 1;
-                        $arLedgerUpdate->selectedToPaymentInv = 0;
+                    if (empty($pvDetailExist)) {
+                        return $this->sendError('Matching document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
-                } else if ($val['addedDocumentSystemID'] == 19) {
-                    if ($totReceiveAmount == 0) {
-                        $arLedgerUpdate->fullyInvoiced = 0;
-                        $arLedgerUpdate->selectedToPaymentInv = 0;
-                    } else if (($val->bookingAmountTrans == $totReceiveAmount) || ($totReceiveAmount < $val->bookingAmountTrans)) {
-                        $arLedgerUpdate->fullyInvoiced = 2;
-                        $arLedgerUpdate->selectedToPaymentInv = -1;
-                    } else if (($val->bookingAmountTrans < $totReceiveAmount) && ($totReceiveAmount < 0)) {
-                        $arLedgerUpdate->fullyInvoiced = 1;
-                        $arLedgerUpdate->selectedToPaymentInv = 0;
+
+                    $currencyValidate = CurrencyValidation::validateCurrency("receipt_matching", $matchDocumentMaster);
+                    if (!$currencyValidate['status']) {
+                        return $this->sendError($currencyValidate['message'], 500, ['type' => 'confirm']);
                     }
-                }
 
-                $arLedgerUpdate->save();
-            }
+                    $detailAllRecords = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                        ->get();
+
+                    if ($detailAllRecords) {
+                        foreach ($detailAllRecords as $row) {
+                            if ($row['addedDocumentSystemID'] == 20) {
+                                $checkAmount = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                                    ->where('addedDocumentSystemID', $row['addedDocumentSystemID'])
+                                    ->where('receiveAmountTrans', '<=', 0)
+                                    ->count();
+
+                                if ($checkAmount > 0) {
+                                    return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
+                                }
+                            } elseif ($row['addedDocumentSystemID'] == 19) {
+                                $checkAmount = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                                    ->where('addedDocumentSystemID', $row['addedDocumentSystemID'])
+                                    ->where('receiveAmountTrans', '=', 0)
+                                    ->count();
+
+                                if ($checkAmount > 0) {
+                                    return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
+                                }
+                            }
+                        }
+                    }
+
+                    $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                        ->sum('receiveAmountTrans');
+
+                    if (round($detailAmountTotTran, $supplierCurrencyDecimalPlace) > round($input['matchBalanceAmount'], $supplierCurrencyDecimalPlace)) {
+                        return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
+                    }
+
+                    if ($input['matchingDocCode'] == 0) {
+
+                        $company = Company::find($input['companySystemID']);
+
+                        $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                            ->where('matchDocumentMasterAutoID', '<>', $input['matchDocumentMasterAutoID'])
+                            ->where('matchingType', 'AR')
+                            ->orderBy('serialNo', 'desc')
+                            ->first();
+
+                        $lastSerialNumber = 1;
+                        if ($lastSerial) {
+                            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                        }
+
+                        $matchingDocCode = ($company->CompanyID . '\\' . 'MT' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+
+                        $input['serialNo'] = $lastSerialNumber;
+                        $input['matchingDocCode'] = $matchingDocCode;
+                    }
+                    $itemExistArray = array();
+
+                    foreach ($detailAllRecords as $item) {
+
+                        $payDetailMoreBooked = CustomerReceivePaymentDetail::selectRaw('IFNULL(SUM(IFNULL(receiveAmountTrans,0)),0) as receiveAmountTrans')
+                            ->where('arAutoID', $item['arAutoID'])
+                            ->first();
+
+                        $a = $payDetailMoreBooked->receiveAmountTrans;
+                        $b = $item['bookingAmountTrans'];
+                        $epsilon = 0.00001;
+                        if(($a-$b) > $epsilon) {
+                            $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
+                            $itemExistArray[] = [$itemDrt];
+
+                        }
+                    }
+
+                    if (!empty($itemExistArray)) {
+                        return $this->sendError($itemExistArray, 422);
+                    }
+
+                    foreach ($detailAllRecords as $val) {
+
+                        $totalReceiveAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $val['arAutoID'])
+                            ->sum('receiveAmountTrans');
+
+                        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0) * -1 AS SumOfmatchedAmount')
+                            ->where('companySystemID', $val["companySystemID"])
+                            ->where('PayMasterAutoId', $val["bookingInvCodeSystem"])
+                            ->where('documentSystemID', $val["addedDocumentSystemID"])
+                            ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')
+                            ->first();
+
+                        if(!$matchedAmount){
+                            $matchedAmount['SumOfmatchedAmount'] = 0;
+                        }
+
+                        $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
+
+                        $arLedgerUpdate = AccountsReceivableLedger::find($val['arAutoID']);
+
+                        if ($val['addedDocumentSystemID'] == 20) {
+                            if ($totReceiveAmount == 0) {
+                                $arLedgerUpdate->fullyInvoiced = 0;
+                                $arLedgerUpdate->selectedToPaymentInv = 0;
+                            } else if (($val->bookingAmountTrans == $totReceiveAmount) || ($totReceiveAmount > $val->bookingAmountTrans)) {
+                                $arLedgerUpdate->fullyInvoiced = 2;
+                                $arLedgerUpdate->selectedToPaymentInv = -1;
+                            } else if (($val->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
+                                $arLedgerUpdate->fullyInvoiced = 1;
+                                $arLedgerUpdate->selectedToPaymentInv = 0;
+                            }
+                        } else if ($val['addedDocumentSystemID'] == 19) {
+                            if ($totReceiveAmount == 0) {
+                                $arLedgerUpdate->fullyInvoiced = 0;
+                                $arLedgerUpdate->selectedToPaymentInv = 0;
+                            } else if (($val->bookingAmountTrans == $totReceiveAmount) || ($totReceiveAmount < $val->bookingAmountTrans)) {
+                                $arLedgerUpdate->fullyInvoiced = 2;
+                                $arLedgerUpdate->selectedToPaymentInv = -1;
+                            } else if (($val->bookingAmountTrans < $totReceiveAmount) && ($totReceiveAmount < 0)) {
+                                $arLedgerUpdate->fullyInvoiced = 1;
+                                $arLedgerUpdate->selectedToPaymentInv = 0;
+                            }
+                        }
+
+                        $arLedgerUpdate->save();
+                    }
 
 
-            //updating master table
-            if ($input['documentSystemID'] == 21) {
+                    //updating master table
+                    if ($input['documentSystemID'] == 21) {
 
-                $CustomerReceivePaymentDataUpdate = CustomerReceivePayment::find($input['PayMasterAutoId']);
+                        $CustomerReceivePaymentDataUpdate = CustomerReceivePayment::find($input['PayMasterAutoId']);
 
-                $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, 
-                                                        addedDocumentSystemID, 
-                                                        bookingInvCodeSystem, 
-                                                        Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
-                                            ->where('custReceivePaymentAutoID', $input['PayMasterAutoId'])
-                                            ->where('bookingInvCode', '0')
-                                            ->groupBy('custReceivePaymentAutoID')
-                                            ->first();
-
-
-                $directDetails = DirectReceiptDetail::selectRaw("SUM(localAmount) as SumDetailAmountLocal, 
-                                                                     SUM(comRptAmount) as SumDetailAmountRpt,
-                                                                     SUM(DRAmount) as SumDetailAmountTrans")
-                                                        ->where('directReceiptAutoID', $input['PayMasterAutoId'])
-                                                        ->groupBy('directReceiptAutoID')
-                                                        ->first();
-
-                $advReceiptDetails = AdvanceReceiptDetails::selectRaw("SUM(localAmount) as SumDetailAmountLocal, 
-                                                                        SUM(comRptAmount) as SumDetailAmountRpt,
-                                                                        SUM(paymentAmount) as SumAdvDetailAmountTrans")
-                                                            ->where('custReceivePaymentAutoID', $input['PayMasterAutoId'])
-                                                            ->groupBy('custReceivePaymentAutoID')
-                                                            ->first();
-
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentSystemID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')
-                                                    ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
-                                                    ->where('documentSystemID', $matchDocumentMaster->documentSystemID)
-                                                    ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
+                        $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, 
+                                                                addedDocumentSystemID, 
+                                                                bookingInvCodeSystem, 
+                                                                Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
+                                                    ->where('custReceivePaymentAutoID', $input['PayMasterAutoId'])
+                                                    ->where('bookingInvCode', '0')
+                                                    ->groupBy('custReceivePaymentAutoID')
                                                     ->first();
 
-                $machAmount = 0;
-                if ($matchedAmount) {
-                    $machAmount = $matchedAmount["SumOfmatchedAmount"];
+
+                        $directDetails = DirectReceiptDetail::selectRaw("SUM(localAmount) as SumDetailAmountLocal, 
+                                                                            SUM(comRptAmount) as SumDetailAmountRpt,
+                                                                            SUM(DRAmount) as SumDetailAmountTrans")
+                                                                ->where('directReceiptAutoID', $input['PayMasterAutoId'])
+                                                                ->groupBy('directReceiptAutoID')
+                                                                ->first();
+
+                        $advReceiptDetails = AdvanceReceiptDetails::selectRaw("SUM(localAmount) as SumDetailAmountLocal, 
+                                                                                SUM(comRptAmount) as SumDetailAmountRpt,
+                                                                                SUM(paymentAmount) as SumAdvDetailAmountTrans")
+                                                                    ->where('custReceivePaymentAutoID', $input['PayMasterAutoId'])
+                                                                    ->groupBy('custReceivePaymentAutoID')
+                                                                    ->first();
+
+                        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentSystemID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')
+                                                            ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
+                                                            ->where('documentSystemID', $matchDocumentMaster->documentSystemID)
+                                                            ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
+                                                            ->first();
+
+                        $machAmount = 0;
+                        if ($matchedAmount) {
+                            $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                        }
+                        $receiveAmountTot = 0;
+                        if ($customerSettleAmountSum) {
+                            $receiveAmountTot = $customerSettleAmountSum["SumDetailAmount"];
+                        }
+
+                        if($directDetails){
+                            $receiveAmountTot += $directDetails["SumDetailAmountTrans"];
+                        }
+
+                        if($advReceiptDetails){
+                            $receiveAmountTot += $advReceiptDetails["SumAdvDetailAmountTrans"];
+                        }
+
+                        $RoundedMachAmount = round($machAmount, $supplierCurrencyDecimalPlace);
+                        $RoundedReceiveAmountTot = round($receiveAmountTot, $supplierCurrencyDecimalPlace);
+
+                        if ($machAmount == 0) {
+                            $CustomerReceivePaymentDataUpdate->matchInvoice = 0;
+                        } else if ($RoundedReceiveAmountTot == $RoundedMachAmount || $RoundedMachAmount > $RoundedReceiveAmountTot) {
+                            $CustomerReceivePaymentDataUpdate->matchInvoice = 2;
+                        } else if ($RoundedReceiveAmountTot > $RoundedMachAmount && $RoundedMachAmount > 0) {
+                            $CustomerReceivePaymentDataUpdate->matchInvoice = 1;
+                        }
+                        $CustomerReceivePaymentDataUpdate->save();
+                    }
+                    if ($input['documentSystemID'] == 19) {
+
+                        $creditNoteDataUpdate = CreditNote::find($input['PayMasterAutoId']);
+                        if (empty($creditNoteDataUpdate)) {
+                            return $this->sendError('Credit Note not found');
+                        }
+
+                        //when adding a new matching, checking whether debit amount more than the document value
+                        $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, companySystemID, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
+                            ->where('addedDocumentSystemID', $creditNoteDataUpdate->documentSystemiD)
+                            ->where('bookingInvCodeSystem', $creditNoteDataUpdate->creditNoteAutoID)
+                            ->groupBy('addedDocumentSystemID', 'bookingInvCodeSystem')
+                            ->first();
+
+
+                        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')
+                            ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
+                            ->where('documentSystemID', $matchDocumentMaster->documentSystemID)
+                            ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
+                            ->first();
+
+                        $machAmount = 0;
+                        if ($matchedAmount) {
+                            $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                        }
+
+                        $customerDetailSum = 0;
+                        if ($customerSettleAmountSum) {
+                            $customerDetailSum = abs($customerSettleAmountSum["SumDetailAmount"]);
+                        }
+
+                        $totalPaidAmount = ($customerDetailSum + $machAmount);
+                        $RoundedTotalPaidAmount = round($totalPaidAmount, $supplierCurrencyDecimalPlace);
+                        $RoundedCreditAmountTrans = round($creditNoteDataUpdate->creditAmountTrans, $supplierCurrencyDecimalPlace);
+
+                        if ($totalPaidAmount == 0) {
+                            $creditNoteDataUpdate->matchInvoice = 0;
+                        } elseif ($RoundedCreditAmountTrans == $RoundedTotalPaidAmount) {
+                            $creditNoteDataUpdate->matchInvoice = 2;
+                        } elseif ($RoundedTotalPaidAmount > $RoundedCreditAmountTrans) {
+                            $creditNoteDataUpdate->matchInvoice = 2;
+                        } elseif ($RoundedCreditAmountTrans > $RoundedTotalPaidAmount && ($RoundedTotalPaidAmount > 0)) {
+                            $creditNoteDataUpdate->matchInvoice = 1;
+                        }
+                        $creditNoteDataUpdate->save();
+                    }
+
+
+                    $input['matchingConfirmedYN'] = 1;
+                    $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;
+                    $input['matchingConfirmedByEmpID'] = $employee->empID;
+                    $input['matchingConfirmedByName'] = $employee->empName;
+                    $input['matchingConfirmedDate'] = \Helper::currentDateTime();
+
+
+                    if ($input['documentSystemID'] == 21)
+                    {
+                        $data = [];
+                        $taxLedgerData = [];
+                        $finalData = [];
+
+                        $validatePostedDate = GlPostedDateService::validatePostedDate($input['PayMasterAutoId'], $input["documentSystemID"]);
+
+                        if (!$validatePostedDate['status']) {
+                            return ['status' => false, 'message' => $validatePostedDate['message']];
+                        }
+                        $masterData = CustomerReceivePayment::with(['bank', 'finance_period_by'])->find($input['PayMasterAutoId']);
+                        $masterDocumentDate =  $validatePostedDate['postedDate'];
+
+                        $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
+
+
+                        $data['companySystemID'] = $matchDocumentMaster->companySystemID;
+                        $data['companyID'] = $matchDocumentMaster->companyID;
+                        $data['serviceLineSystemID'] = null;
+                        $data['serviceLineCode'] = null;
+                        $data['masterCompanyID'] = null;
+                        $data['documentSystemID'] = $matchDocumentMaster->documentSystemID;
+                        $data['documentID'] = $matchDocumentMaster->documentID;
+                        $data['documentSystemCode'] = $input["PayMasterAutoId"];
+                        $data['documentCode'] = $masterData->custPaymentReceiveCode;
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
+                        $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                        $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                        $data['documentConfirmedDate'] = $matchDocumentMaster->matchingConfirmedDate;
+                        $data['documentConfirmedBy'] = $matchDocumentMaster->confirmedByEmpID;
+                        $data['documentConfirmedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
+                        $data['documentFinalApprovedDate'] = $matchDocumentMaster->approvedDate;
+                        $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                        $data['documentFinalApprovedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
+                        $data['documentNarration'] = "Matching Entry ".$matchDocumentMaster->matchingDocCode;
+                        $data['clientContractID'] = 'X';
+                        $data['contractUID'] = 159;
+                        $data['supplierCodeSystem'] = $masterData->customerID;
+                        $data['holdingShareholder'] = null;
+                        $data['holdingPercentage'] = 0;
+                        $data['nonHoldingPercentage'] = 0;
+                        $data['chequeNumber'] = $masterData->custChequeNo;
+                        $data['documentType'] = $masterData->documentType;
+                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdUserID'] = \Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data['createdUserPC'] = gethostname();
+                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
+
+                        $directReceipts = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt")
+                                                                ->WHERE('directReceiptAutoID', $input['PayMasterAutoId'])
+                                                                ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID')
+                                                                ->get();
+
+                        $advReceipts = AdvanceReceiptDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount, SUM(paymentAmount) as transAmount, localCurrencyID as localCurrencyID, comRptCurrencyID as reportingCurrencyID,customerTransCurrencyID as transCurrencyID, comRptER as reportingCurrencyER, localER, customerTransER as transCurrencyER,serviceLineSystemID,serviceLineCode, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt")
+                                                                ->WHERE('custReceivePaymentAutoID', $input["PayMasterAutoId"])
+                                                                ->groupBy('serviceLineSystemID')
+                                                                ->get();
+
+
+                                                                
+                                foreach ($directReceipts as $directReceipt)
+                                {
+                                    $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $directReceipt->serviceLineCode;
+                                    $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
+                                    $data['glCode'] = $masterData->custAdvanceAccount;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                    $data['documentTransAmount'] =  \Helper::roundValue($detailAmountTotTran);
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+
+                                foreach ($directReceipts as $directReceipt)
+                                {
+                                    $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $directReceipt->serviceLineCode;
+                                    $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
+                                    $data['glCode'] = $masterData->customerGLCode;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                    $data['documentTransAmount'] =  \Helper::roundValue($detailAmountTotTran) * -1;
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($detailAmountTotLoc) * -1;
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($detailAmountTotRpt) * -1;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+
+
+
+
+                                foreach ($advReceipts as $advReceipt) {
+                                    $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $advReceipt->serviceLineCode;
+                                    $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
+                                    $data['glCode'] = $masterData->custAdvanceAccount;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($detailAmountTotTran);
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] =\Helper::roundValue($detailAmountTotLoc);
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+
+
+
+
+                                foreach ($advReceipts as $advReceipt)
+                                {
+                                    $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
+                                    $data['glCode'] = $masterData->customerGLCode;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($advReceipt->transAmount) * -1;;
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($advReceipt->localAmount) * -1;;
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($advReceipt->rptAmount) * -1;;
+                                    $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $advReceipt->serviceLineCode;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+                                
+                                if ($masterData->isVATApplicable == 1 && $masterData->documentType == 15) {
+
+                                    if($input['validInvoice'])
+                                    {    
+                                        $detailAllRecordsObj = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                                        ->with('reciept_vocuher')->get();
+            
+                                            foreach($detailAllRecordsObj as $records)
+                                            {
+                                                if($records->reciept_vocuher->VATAmount == 0)
+                                                {
+                                                    return $this->sendError('Invoice without VAT is being matched with reciept with VAT.This will nullify the VAT entries to zero.Are you sure you want to proceed ?', 300,['type' => 'UnconfirmAsset']);
+            
+                                                }
+            
+                                            }   
+                                    }
+                            
+
+
+                                    $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, 
+                                                                SUM(rptAmount) as rptAmount,
+                                                                SUM(amount) as transAmount,
+                                                                localCurrencyID,
+                                                                rptCurrencyID as reportingCurrencyID,
+                                                                currency as supplierTransactionCurrencyID,
+                                                                currencyER as supplierTransactionER,
+                                                                rptCurrencyER as companyReportingER,
+                                                                localCurrencyER")
+                                                                ->WHERE('documentSystemCode', $input["PayMasterAutoId"])
+                                                                ->WHERE('documentSystemID', $input["documentSystemID"])
+                                                                ->groupBy('documentSystemCode')
+                                                                ->first();
+                                        $taxLedgerData = [];
+
+                                        $customerMatchingDetails = CustomerReceivePaymentDetail::with(['ar_data'])->selectRaw("SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt,arAutoID")
+                                                            ->where('custReceivePaymentAutoID', $input["PayMasterAutoId"])
+                                                            ->get();
+
+                                        $taxConfigData = TaxService::getOutputVATGLAccount($input["companySystemID"]);
+
+                                        if (!empty($taxConfigData)) {  // out put vat entries
+                                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData->outputVatGLAccountAutoID)
+                                                ->where('companySystemID', $input["companySystemID"])
+                                                ->first();
+                        
+                                            if (!empty($chartOfAccountData)) {
+                                                $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                                $data['glCode'] = $chartOfAccountData->AccountCode;
+                                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                                $taxLedgerData['outputVatGLAccountID'] = $data['chartOfAccountSystemID'];
+                                            } else {
+                                                Log::info('Receipt voucher VAT GL Entry Issues Id :' . $input["PayMasterAutoId"] . ', date :' . date('H:i:s'));
+                                                Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
+                                            }
+                                        } else {
+                                            Log::info('Receipt voucher VAT GL Entry IssuesId :' . $input["PayMasterAutoId"] . ', date :' . date('H:i:s'));
+                                            Log::info('Output Vat GL Account not configured' . date('H:i:s'));
+                                        }
+
+                                        $data['clientContractID'] = 'X';
+                                        $data['contractUID'] = 159;
+                                        
+                                        if($tax)
+                                        {   
+                                            $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
+                                            $data['documentTransCurrencyER'] = $tax->supplierTransactionER;
+                                            $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
+                                            $data['documentRptCurrencyID'] = $tax->reportingCurrencyID;
+                                            $data['documentRptCurrencyER'] = $tax->companyReportingER;
+                                        }
+                                        else
+                                        {
+                                            $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                            $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                        }
+
+
+                                        foreach ($customerMatchingDetails as $key => $value) {
+                                            $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) ;
+                                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) ;
+                                            $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) ;
+                                            $data['serviceLineSystemID'] = $value->ar_data->serviceLineSystemID;
+                                            $data['serviceLineCode'] = $value->ar_data->serviceLineCode;
+                                            array_push($finalData, $data);
+                                        }
+
+                        
+                                        $taxConfigData = TaxService::getOutputVATTransferGLAccount($input["companySystemID"]);
+                    
+                                        if (!empty($taxConfigData)) {
+                                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData->outputVatTransferGLAccountAutoID)
+                                                ->where('companySystemID', $masterData->companySystemID)
+                                                ->first();
+                    
+                                            if (!empty($chartOfAccountData)) {
+                                                $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                                $data['glCode'] = $chartOfAccountData->AccountCode;
+                                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    
+                                                $taxLedgerData['outputVatTransferGLAccountID'] = $data['chartOfAccountSystemID'];
+                                            } else {
+                                                Log::info('Receipt voucher VAT GL Entry Issues Id :' . $input["PayMasterAutoId"] . ', date :' . date('H:i:s'));
+                                                Log::info('Output Vat transfer GL Account not assigned to company' . date('H:i:s'));
+                                            }
+                                        } else {
+                                            Log::info('Receipt voucher VAT GL Entry IssuesId :' . $input["PayMasterAutoId"] . ', date :' . date('H:i:s'));
+                                            Log::info('Output VAT transfer GL Account not configured' . date('H:i:s'));
+                                        }
+                                        foreach ($customerMatchingDetails as $key => $value) {
+                                            $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) * -1;
+                                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
+                                            $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
+                                            $data['serviceLineSystemID'] = $value->ar_data->serviceLineSystemID;
+                                            $data['serviceLineCode'] = $value->ar_data->serviceLineCode;
+                                            array_push($finalData, $data);
+                                        }
+                                        
+
+                                        if (count($taxLedgerData) > 0) {
+                                            $masterModel = [
+                                                'employeeSystemID' => $created_by['employeeSystemID'],
+                                                'documentSystemID' => $matchDocumentMaster->documentSystemID,
+                                                'matchDocumentMasterAutoID' => $matchDocumentMaster->matchDocumentMasterAutoID,
+                                                'autoID' => $input['PayMasterAutoId'],
+                                                'matching' => true,
+                                                'companySystemID' => $matchDocumentMaster->companySystemID,
+                                                'documentDate' => $matchDocumentMaster->matchingDocdate
+                                            ];
+
+                                            $taxResponse = RecieptVoucherTaxLedgerService::processEntry($taxLedgerData, $masterModel);
+
+                                            if ($taxResponse['status']) {
+                                                $finalDataTax = $taxResponse['data']['finalData'];
+                                                $finalDetailDataTax = $taxResponse['data']['finalDetailData'];
+
+
+                                                if ($finalDataTax) {
+                                                    foreach ($finalDataTax as $data)
+                                                    {
+                                                        TaxLedger::create($data);
+                                                    }
+
+                                                    foreach ($finalDetailDataTax as $data)
+                                                    {
+                                                        TaxLedgerDetail::create($data);
+                                                    }
+                                                }
+                                            } 
+                                        }
+
+                                }
+                                
+                                foreach ($finalData as $data) {
+                                GeneralLedger::create($data);
+                                }
+                    }
+
+
                 }
-                $receiveAmountTot = 0;
-                if ($customerSettleAmountSum) {
-                    $receiveAmountTot = $customerSettleAmountSum["SumDetailAmount"];
-                }
 
-                if($directDetails){
-                    $receiveAmountTot += $directDetails["SumDetailAmountTrans"];
-                }
+                $input['modifiedPc'] = gethostname();
+                $input['modifiedUser'] = $employee->empID;
+                $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
-                if($advReceiptDetails){
-                    $receiveAmountTot += $advReceiptDetails["SumAdvDetailAmountTrans"];
-                }
-
-                $RoundedMachAmount = round($machAmount, $supplierCurrencyDecimalPlace);
-                $RoundedReceiveAmountTot = round($receiveAmountTot, $supplierCurrencyDecimalPlace);
-
-                if ($machAmount == 0) {
-                    $CustomerReceivePaymentDataUpdate->matchInvoice = 0;
-                } else if ($RoundedReceiveAmountTot == $RoundedMachAmount || $RoundedMachAmount > $RoundedReceiveAmountTot) {
-                    $CustomerReceivePaymentDataUpdate->matchInvoice = 2;
-                } else if ($RoundedReceiveAmountTot > $RoundedMachAmount && $RoundedMachAmount > 0) {
-                    $CustomerReceivePaymentDataUpdate->matchInvoice = 1;
-                }
-                $CustomerReceivePaymentDataUpdate->save();
-            }
-            if ($input['documentSystemID'] == 19) {
-
-                $creditNoteDataUpdate = CreditNote::find($input['PayMasterAutoId']);
-                if (empty($creditNoteDataUpdate)) {
-                    return $this->sendError('Credit Note not found');
-                }
-
-                //when adding a new matching, checking whether debit amount more than the document value
-                $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, companySystemID, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
-                    ->where('addedDocumentSystemID', $creditNoteDataUpdate->documentSystemiD)
-                    ->where('bookingInvCodeSystem', $creditNoteDataUpdate->creditNoteAutoID)
-                    ->groupBy('addedDocumentSystemID', 'bookingInvCodeSystem')
-                    ->first();
+                $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
 
 
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')
-                    ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
-                    ->where('documentSystemID', $matchDocumentMaster->documentSystemID)
-                    ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
-                    ->first();
-
-                $machAmount = 0;
-                if ($matchedAmount) {
-                    $machAmount = $matchedAmount["SumOfmatchedAmount"];
-                }
-
-                $customerDetailSum = 0;
-                if ($customerSettleAmountSum) {
-                    $customerDetailSum = abs($customerSettleAmountSum["SumDetailAmount"]);
-                }
-
-                $totalPaidAmount = ($customerDetailSum + $machAmount);
-                $RoundedTotalPaidAmount = round($totalPaidAmount, $supplierCurrencyDecimalPlace);
-                $RoundedCreditAmountTrans = round($creditNoteDataUpdate->creditAmountTrans, $supplierCurrencyDecimalPlace);
-
-                if ($totalPaidAmount == 0) {
-                    $creditNoteDataUpdate->matchInvoice = 0;
-                } elseif ($RoundedCreditAmountTrans == $RoundedTotalPaidAmount) {
-                    $creditNoteDataUpdate->matchInvoice = 2;
-                } elseif ($RoundedTotalPaidAmount > $RoundedCreditAmountTrans) {
-                    $creditNoteDataUpdate->matchInvoice = 2;
-                } elseif ($RoundedCreditAmountTrans > $RoundedTotalPaidAmount && ($RoundedTotalPaidAmount > 0)) {
-                    $creditNoteDataUpdate->matchInvoice = 1;
-                }
-                $creditNoteDataUpdate->save();
-            }
-
-
-            $input['matchingConfirmedYN'] = 1;
-            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;
-            $input['matchingConfirmedByEmpID'] = $employee->empID;
-            $input['matchingConfirmedByName'] = $employee->empName;
-            $input['matchingConfirmedDate'] = \Helper::currentDateTime();
+            DB::commit();
+            return $this->sendResponse($matchDocumentMaster->toArray(), 'Receipt voucher matching updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
 
-        $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $employee->empID;
-        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
-
-        $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
-
-        return $this->sendResponse($matchDocumentMaster->toArray(), 'Receipt voucher matching updated successfully');
+        
     }
 
     /**
@@ -3428,8 +3764,15 @@ ORDER BY
                     $debitNote->save();
                 }
             }
+            else if($masterData->documentSystemID == 21){
+                $receiveVoucher = CustomerReceivePayment::find($masterData->PayMasterAutoId);
+                if (!empty($receiveVoucher)) {
+                    $receiveVoucher->matchInvoice = 0;
+                    $receiveVoucher->save();
+                }
+            }
 
-            if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15){
+            if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15 || $masterData->documentSystemID == 21){
                 GeneralLedger::where('documentSystemID',$masterData->documentSystemID)
                                ->where('documentSystemCode',$masterData->PayMasterAutoId)
                                ->where('documentSystemID',$masterData->documentSystemID)

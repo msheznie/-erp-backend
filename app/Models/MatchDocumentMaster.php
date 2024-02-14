@@ -474,6 +474,12 @@ class MatchDocumentMaster extends Model
         return $this->belongsTo(CustomerReceivePayment::class, 'PayMasterAutoId', 'custReceivePaymentAutoID');
     }
 
+    public function reciept_voucher_doc()
+    {
+        return $this->belongsTo(CustomerReceivePayment::class, 'PayMasterAutoId', 'custReceivePaymentAutoID')->where('documentSystemID', 21);
+    }
+
+
     public function segment(){
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }

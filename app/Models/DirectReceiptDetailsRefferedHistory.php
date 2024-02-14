@@ -177,7 +177,11 @@ class DirectReceiptDetailsRefferedHistory extends Model
         'comRptAmount',
         'timesReferred',
         'timeStamp',
-        'detail_project_id'
+        'detail_project_id',
+        'VATPercentage',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
+        'amountBeforeVAT'
     ];
 
     /**

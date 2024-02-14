@@ -4,6 +4,7 @@ namespace App\Observers;
 use App\Jobs\CreateDepreciation;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetDepreciationPeriod;
+use Illuminate\Support\Facades\Log;
 
 class DepreciationObserver
 {
@@ -27,5 +28,12 @@ class DepreciationObserver
     public function deleted(FixedAssetDepreciationMaster $fixedAssetDepreciationMaster)
     {
         $fixedAssetDepreciationPeriod = FixedAssetDepreciationPeriod::OfDepreciation($fixedAssetDepreciationMaster->depMasterAutoID)->delete();
+    }
+
+     public function updated(FixedAssetDepreciationMaster $fixedAssetDepreciationMaster)
+    {
+        if ($fixedAssetDepreciationMaster->counter == $fixedAssetDepreciationMaster->totalChunks) {
+            FixedAssetDepreciationMaster::where('depMasterAutoID', $fixedAssetDepreciationMaster->depMasterAutoID)->update(['isDepProcessingYN' => 1]);
+        }
     }
 }
