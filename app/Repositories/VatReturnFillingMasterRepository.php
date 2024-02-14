@@ -531,8 +531,8 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     ->selectRaw('SUM(taxAmount) as totalTaxAmount, SUM(taxableAmount) as totalTaxableAmount')
                     ->first();
 
-                $taxAmount = (($sevenA) ? $sevenA->totalTaxAmount : 0) + (($sevenB) ? $sevenB->totalTaxAmount : 0);
-                $taxableAmount = (($sevenA) ? $sevenA->totalTaxableAmount : 0) + (($sevenB) ? $sevenB->totalTaxableAmount : 0);
+                $taxAmount = (($sevenA) ? $sevenA->totalTaxAmount : 0) - (($sevenB) ? $sevenB->totalTaxAmount : 0);
+                $taxableAmount = (($sevenA) ? $sevenA->totalTaxableAmount : 0) - (($sevenB) ? $sevenB->totalTaxableAmount : 0);
                 break;
             default:
                 # code...
