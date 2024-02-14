@@ -6119,7 +6119,10 @@ class Helper
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }
                     DB::commit();
-                    return ['success' => true, 'message' => 'Document is successfully rejected'];
+
+                    $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? 'referred back' : 'rejected';
+                    return ['success' => true, 'message' => 'Document is successfully '.$rejectedMsg];
+
                 } else {
                     return ['success' => false, 'message' => 'Level is already rejected'];
                 }
