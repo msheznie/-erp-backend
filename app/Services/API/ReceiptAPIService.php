@@ -167,7 +167,7 @@ class ReceiptAPIService
 
             $currencyDetails = CurrencyMaster::where('currencyID',$receipt->custTransactionCurrencyID)->first();
 
-            if($currencyDetails && $countDecimals != $currencyDetails->DecimalPlaces){
+            if($currencyDetails && ($countDecimals != $currencyDetails->DecimalPlaces)){
                 $this->isError = true;
                 $error[$receipt->narration][$details['comments']] = [$currencyDetails->CurrencyName. ' need '. $currencyDetails->DecimalPlaces .' decimal places in VAT'];;
                 array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
