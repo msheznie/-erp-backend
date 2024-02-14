@@ -5211,7 +5211,7 @@ ORDER BY
             }
 
             DB::commit();
-            return $this->sendResponse($tenderMaster->toArray(), 'Tender Master amended successfully');
+            return $this->sendResponse($tenderMaster->toArray(), 'Tender amended successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

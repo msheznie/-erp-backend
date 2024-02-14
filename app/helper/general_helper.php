@@ -6091,7 +6091,7 @@ class Helper
                                     $sub = $sourceModel->tender_code." Referred Back";
                                     $body = "<p>Dear " .$confirmedUserEmail->empName. ',</p>' .
                                         "<p>The document " . $sourceModel->tender_code . ' ' . $sourceModel->title . ' has been referred back for your review with the below comment:' .
-                                        "<br><br>" . $input["rejectedComments"] . "." . " <br><br>" .
+                                        "<br><br>" . $input["rejectedComments"] . "." . " <br>" .
                                         "<br>Kindly review the document. <br>" .
                                         "Thank You.</p>";
 
