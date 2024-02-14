@@ -79,9 +79,8 @@ class DirectReceiptDetailAPIService
             $objDirectReceipt->VATAmountRpt = \Helper::roundValue($currencyVAT['reportingAmount']);
             $objDirectReceipt->VATAmountLocal = \Helper::roundValue($currencyVAT['localAmount']);
         }
-
         $netAmount = ($directReceipt['amount'] - $vatAmount);
-        $objDirectReceipt->netAmount =  bcdiv($netAmount, 1, $currencyDetails->DecimalPlaces);
+        $objDirectReceipt->netAmount =  \Helper::roundValue($netAmount);
         $currencyNet = \Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $objDirectReceipt->directReceiptAutoID, $netAmount);
         if($policy == true) {
             $objDirectReceipt->netAmountRpt = \Helper::roundValue($netAmount/$receiptVoucher->companyRptCurrencyER);
