@@ -17,6 +17,9 @@ use App\Http\Requests\API\CreatePoPaymentTermsAPIRequest;
 use App\Http\Requests\API\UpdatePoPaymentTermsAPIRequest;
 use App\Models\PoAddons;
 use App\Models\PoPaymentTerms;
+use App\Models\PaymentTermTemplateAssigned;
+use App\Models\PaymentTermConfig;
+use App\Models\PaymentTermTemplate;
 use App\Models\SupplierMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
@@ -276,6 +279,49 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->get();
 
         return $this->sendResponse($poAdvancePaymentType->toArray(), 'Data retrieved successfully');
+    }
+
+    public function getProcumentOrderPaymentTermConfigs(Request $request)
+    {
+        $input = $request->all();
+        $purchaseOrderID = $input['purchaseOrderID'];
+        $supplierID = $input['supplierID'];
+
+        $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->value('templateID');
+        $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->value('isActive');
+
+        if ($assignedTemplateId != null && $isActiveTemplate) {
+            $poAssignedTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->first();
+            if (!$poAssignedTemplateConfigs) {
+                $paymentTermConfigs = PaymentTermConfig::where('templateId', $assignedTemplateId)->get();
+                $this->createProcumentOrderPaymentTermConfigs($assignedTemplateId, $purchaseOrderID, $supplierID, $paymentTermConfigs);
+            }
+            $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->orderBy('sortOrder')->get();
+        } else {
+            $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
+            $poDefaultTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
+            if (!$poDefaultTemplateConfigs) {
+                $paymentTermConfigs = PaymentTermConfig::where('templateId', $defaultTemplateID)->get();
+                $this->createProcumentOrderPaymentTermConfigs($defaultTemplateID, $purchaseOrderID, $supplierID, $paymentTermConfigs);
+            }
+            $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->orderBy('sortOrder')->get();
+        }
+
+        return $this->sendResponse($purchaseOrderPaymentTermConfigs->toArray(), 'Payment terms and conditions retrieved successfully');
+    }
+
+    public function createProcumentOrderPaymentTermConfigs($templateID, $purchaseOrderID, $supplierID, $paymentTermConfigs) {
+        foreach ($paymentTermConfigs as $paymentTermConfig) {
+            DB::table('po_wise_payment_term_config')->insert([
+                'templateID' => $templateID,
+                'purchaseOrderID' => $purchaseOrderID,
+                'supplierID' => $supplierID,
+                'term' => $paymentTermConfig->term,
+                'description' => $paymentTermConfig->description,
+                'sortOrder' => $paymentTermConfig->sortOrder,
+                'isSelected' => $paymentTermConfig->isSelected
+            ]);
+        }
     }
 
     public function updateAllPaymentTerms(Request $request)

@@ -9070,4 +9070,40 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         return $this->sendResponse($procumentArray, 'Data retrieved successfully');
     }
+
+    public function poConfigDescriptionUpdate($id, Request $request){
+
+        $input = $request->all();
+
+        $paymentTermConfig = DB::table('po_wise_payment_term_config')->find($id);
+
+        if (empty($paymentTermConfig)) {
+            return $this->sendError('Payment Term Config not found');
+        }
+
+        $paymentTermConfig = DB::table('po_wise_payment_term_config')
+            ->where('id', $id)
+            ->update(['description' => $input['description']]);
+
+        return $this->sendResponse($paymentTermConfig, 'Description updated successfully');
+
+    }
+
+    public function updatePoConfigSelection(Request $request){
+
+        $input = $request->all();
+
+        $paymentTermConfig = DB::table('po_wise_payment_term_config')->find($input['id']);
+
+        if (empty($paymentTermConfig)) {
+            return $this->sendError('Payment Term Config not found');
+        }
+
+        $paymentTermConfig = DB::table('po_wise_payment_term_config')
+            ->where('id', $input['id'])
+            ->update(['isSelected' => $input['isSelected']]);
+
+        return $this->sendResponse($paymentTermConfig, 'Payment term config updated successfully');
+
+    }
 }

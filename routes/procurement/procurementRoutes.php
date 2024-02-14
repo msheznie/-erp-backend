@@ -89,6 +89,7 @@ Route::group([], function() {
     Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder')->name('Get items option for procurement order');
     Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails')->name('Get shipping and invoice details');
     Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms')->name('Get procurement order payment terms');
+    Route::get('getProcumentOrderPaymentTermConfigs', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTermConfigs')->name('Get procurement order payment term configs');
     Route::get('procumentOrderDetailTotal', 'ProcumentOrderAPIController@procumentOrderDetailTotal')->name('Procurement order detail total');
     Route::get('poPaymentTermsAdvanceDetailView', 'PoAdvancePaymentAPIController@poPaymentTermsAdvanceDetailView')->name('Po payment terms advance detail view');
     Route::get('getLogisticsItemsByProcumentOrder', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogistic')->name('Get logistics items by procurement order');
@@ -110,8 +111,9 @@ Route::group([], function() {
     Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit')->name('Procurement order audit');
     Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail')->name('Get logistic print detail');
     Route::get('procumentOrderTotals', 'ProcumentOrderAPIController@procumentOrderTotals')->name('Procurement order totals');
+    Route::put('poConfigDescriptionUpdate/{id}', 'ProcumentOrderAPIController@poConfigDescriptionUpdate')->name('Update purchase order configuration description');
 
-
+    Route::post('updatePoConfigSelection', 'ProcumentOrderAPIController@updatePoConfigSelection')->name('Update po config selection for print');
     Route::post('allocateExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@allocateExpectedDeliveryDates')->name('Allocate expected delivery dates');
     Route::post('getAllocatedExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@getAllocatedExpectedDeliveryDates')->name('Get allocated expected delivery dates');
     Route::post('exportProcumentOrderMaster', 'ProcumentOrderAPIController@exportProcumentOrderMaster')->name('Export procurement order master');
