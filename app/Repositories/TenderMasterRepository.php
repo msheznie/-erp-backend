@@ -105,8 +105,8 @@ class TenderMasterRepository extends BaseRepository
         $status =array(
             array('value'=> 1 , 'label'=> 'Not Confirmed'),
             array('value'=> 2 , 'label'=> 'Pending Approval'), 
-            array('value'=> 3 , 'label'=> 'Fully Approved'), 
-            array('value'=> 4 , 'label'=> 'Referredback'),
+            array('value'=> 3 , 'label'=> 'Fully Approved'),  
+            array('value'=> 4 , 'label'=> 'Referred Back'), 
         );
 
         $rfxTypes = array(
