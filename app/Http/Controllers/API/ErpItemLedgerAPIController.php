@@ -16,11 +16,15 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Exports\Inventory\ItemLedgerReport;
+use App\Exports\Inventory\StockValuationReport;
 use App\Http\Requests\API\CreateErpItemLedgerAPIRequest;
 use App\Http\Requests\API\UpdateErpItemLedgerAPIRequest;
 use App\Models\ErpItemLedger;
 use App\Models\WarehouseMaster;
 use App\Repositories\ErpItemLedgerRepository;
+use App\Services\Currency\CurrencyService;
+use App\Services\Excel\ExportReportToExcelService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -878,7 +882,7 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
 
 
 
-    public function exportStockLedgerReport(Request $request)
+    public function exportStockLedgerReport(Request $request, ExportReportToExcelService $exportReportToExcelService)
     {
 
         $selectedCompanyId = $request['companySystemID'];
@@ -1024,57 +1028,67 @@ WHERE
 	erp_itemledger.documentSystemID IN (" . join(',', json_decode($docs)) . ") AND
 	erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ") AND 
 	DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.financeCategoryMaster = 1 GROUP BY erp_itemledger.itemSystemCode HAVING inOutQty > 0) a ORDER BY a.transactionDate asc");
-        //dd(DB::getQueryLog());
+
+       if(empty($data)) {
+           $itemLedgerReportHeaderObj = new ItemLedgerReport();
+           array_push($data,collect($itemLedgerReportHeaderObj->getHeader())->toArray());
+       }
+
         foreach ($output as $val) {
-            $data[] = array(
-                'Item Code' => $val->itemPrimaryCode,
-                'Item Description' => $val->itemDescription,
-                'Part No / Ref.Number' => $val->secondaryItemCode,
-                'Tran Type' => $val->documentID,
-                'Document Code' => $val->documentCode,
-                'Warehouse' => $val->wareHouseDescription,
-                'Processed By' => $val->empName,
-                'Transaction Date' => $val->transactionDate != '1970-01-01' ? \Helper::dateFormat($val->transactionDate) : '',
-                'UOM' => $val->UnitShortCode,
-                'Qty' => $val->inOutQty,
-                'WAC Local' => number_format($val->wacLocal, $val->LocalCurrencyDecimals),
-                'Local Amount' => number_format($val->TotalWacLocal, $val->LocalCurrencyDecimals),
-                'WAC Rep' => number_format($val->wacRpt, $val->RptCurrencyDecimals),
-                'Rep Amount' => number_format($val->TotalWacRpt, $val->RptCurrencyDecimals)
-            );
+            $itemLedgerReportObj = new ItemLedgerReport();
+
+            $itemLedgerReportObj->setItemCode($val->itemPrimaryCode);
+            $itemLedgerReportObj->setItemDescription($val->itemDescription);
+            $itemLedgerReportObj->setPartNumber($val->secondaryItemCode);
+            $itemLedgerReportObj->setTranType($val->documentID);
+            $itemLedgerReportObj->setDocumentCode($val->documentCode);
+            $itemLedgerReportObj->setWarehouse($val->wareHouseDescription);
+            $itemLedgerReportObj->setProcessedBy($val->empName);
+            $itemLedgerReportObj->setTransactionDate($val->transactionDate);
+            $itemLedgerReportObj->setUom($val->UnitShortCode);
+            $itemLedgerReportObj->setQty($val->inOutQty);
+            $itemLedgerReportObj->setWacLocal(CurrencyService::convertNumberFormatToNumber(number_format($val->wacLocal, $val->LocalCurrencyDecimals)));
+            $itemLedgerReportObj->setLocalAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->TotalWacLocal, $val->LocalCurrencyDecimals)));
+            $itemLedgerReportObj->setWacRep(CurrencyService::convertNumberFormatToNumber(number_format($val->wacRpt, $val->RptCurrencyDecimals)));
+            $itemLedgerReportObj->setRepAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->TotalWacRpt, $val->RptCurrencyDecimals)));
+            array_push($data,collect($itemLedgerReportObj)->toArray());
         }
 
-        //  \Excel::create('Stock_ledger_report', function ($excel) use ($data) {
-        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
-        //         $sheet->fromArray($data, null, 'A1', true);
-        //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-        //         $sheet->setAutoSize(true);
-        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-        //     });
-        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
-        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        // })->download($request->type);
-
-        // return $this->sendResponse(array(), 'successfully export');
-
         $requestCurrency = null;
+        $excelColumnFormat = [
+            'H' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+
+        ];
         $fileName = 'stock_ledger_report';
         $title = 'Stock Ledger Report';
         $path = 'inventory/report/stock_ledger_report/excel/';
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
 
-        $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode, 'cur'=>$requestCurrency,'title'=>$title);
+        $exportToExcel = $exportReportToExcelService
+            ->setTitle($title)
+            ->setFileName($fileName)
+            ->setPath($path)
+            ->setCompanyCode($companyCode)
+            ->setCompanyName($company_name)
+            ->setFromDate($from_date)
+            ->setToDate($to_date)
+            ->setData($data)
+            ->setReportType(1)
+            ->setType('xls')
+            ->setExcelFormat($excelColumnFormat)
+            ->setCurrency($requestCurrency)
+            ->setDateType(2)
+            ->setDetails()
+            ->generateExcel();
 
-        $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
+        if(!$exportToExcel['success'])
+            return $this->sendError('Unable to export excel');
 
-        if($basePath == '')
-        {
-             return $this->sendError('Unable to export excel');
-        }
-        else
-        {
-             return $this->sendResponse($basePath, trans('custom.success_export'));
-        }
+        return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
     }
 
@@ -1304,7 +1318,7 @@ WHERE
 
     }
 
-    public function exportStockEvaluation(Request $request)
+    public function exportStockEvaluation(Request $request,ExportReportToExcelService $exportReportToExcelService)
     {
 
         $input = $request->all();
@@ -1408,54 +1422,65 @@ WHERE
                 ItemLedger.itemSystemCode";
         $items = DB::select($sql);
 
-        foreach ($items as $val) {
-            $data[] = array(
-                'Category' => $val->categoryDescription,
-                'Item Code' => $val->itemPrimaryCode,
-                'Item Description' => $val->itemDescription,
-                'UOM' => $val->UnitShortCode,
-                'Part No / Ref.Number' => $val->secondaryItemCode,
-                'Min Qty' => $val->minimumQty,
-                'Max Qty' => $val->maximunQty,
-                'Qty' => $val->Qty,
-                'WAC Local' => number_format($val->WACLocal, $val->LocalCurrencyDecimals),
-                'Local Amount' => number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals),
-                'WAC Rep' => number_format($val->WACRpt, $val->LocalCurrencyDecimals),
-                'Rep Amount' => number_format($val->WacRptAmount, $val->LocalCurrencyDecimals)
-            );
+        if(empty($data)) {
+            $stockValuationReportHeader = new StockValuationReport();
+            array_push($data,collect($stockValuationReportHeader->getHeader())->toArray());
         }
 
-        //  \Excel::create('Stock_valuation_report', function ($excel) use ($data) {
-        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
-        //         $sheet->fromArray($data, null, 'A1', true);
-        //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-        //         $sheet->setAutoSize(true);
-        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-        //     });
-        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
-        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        // })->download($request->type);
+        foreach ($items as $val) {
 
-        // return $this->sendResponse(array(), 'successfully export');
+            $stockValuationReport = new StockValuationReport();
 
+            $stockValuationReport->setCategory($val->categoryDescription);
+            $stockValuationReport->setItemCode($val->itemPrimaryCode);
+            $stockValuationReport->setItemDescription($val->itemDescription);
+            $stockValuationReport->setUom($val->UnitShortCode);
+            $stockValuationReport->setPartNumber($val->secondaryItemCode);
+            $stockValuationReport->setMinQty($val->minimumQty);
+            $stockValuationReport->setMaxQty($val->maximunQty);
+            $stockValuationReport->setQty($val->Qty);
+            $stockValuationReport->setWacLocal(CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal, $val->LocalCurrencyDecimals)));
+            $stockValuationReport->setLocalAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals)));
+            $stockValuationReport->setWacRep(CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt, $val->LocalCurrencyDecimals)));
+            $stockValuationReport->setRepAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->LocalCurrencyDecimals)));
+
+            array_push($data,collect($stockValuationReport)->toArray());
+        }
 
         $fileName = 'stock_valuation_report';
         $title = 'Stock Valuation Report';
         $path = 'inventory/report/stock_valuation_report/excel/';
         $cur = NULL;
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+        $excelColumnFormat = [
+            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+        ];
 
-        $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name, 'company_code'=>$companyCode, 'cur'=>$cur,'title'=>$title);
-        $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
 
-        if($basePath == '')
-        {
-             return $this->sendError('Unable to export excel');
-        }
-        else
-        {
-             return $this->sendResponse($basePath, trans('custom.success_export'));
-        }
+        $exportToExcel = $exportReportToExcelService
+            ->setTitle($title)
+            ->setFileName($fileName)
+            ->setPath($path)
+            ->setCompanyCode($companyCode)
+            ->setCompanyName($company_name)
+            ->setFromDate($from_date)
+            ->setToDate($to_date)
+            ->setData($data)
+            ->setReportType(2)
+            ->setType('xls')
+            ->setExcelFormat($excelColumnFormat)
+            ->setCurrency($cur)
+            ->setDateType(2)
+            ->setDetails()
+            ->generateExcel();
+
+        if(!$exportToExcel['success'])
+            return $this->sendError('Unable to export excel');
+
+        return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
 
     }

@@ -25,6 +25,10 @@ interface ExportToExcelInterface {
     // 2 - From Obj
     public function setDateType($dataType);
 
+    // template from s3 - 1
+    // create excel and download to local - 2
+    public function setExcelType($type);
+
     public function generateExcel():Array;
 
 
