@@ -3334,12 +3334,12 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                     $isDefaultAssign = false;
                     $this->createProcumentOrderPaymentTermConfigs($assignedTemplateId, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
                 }
-                $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->orderBy('sortOrder')->get();
+                $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->where('isSelected', true)->orderBy('sortOrder')->get();
             } else {
                 $poDefaultConfigUpdate = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
                 if ($poDefaultConfigUpdate) {
                     $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
-                        ->where('isDefaultAssign', true)->orderBy('sortOrder')->get();
+                        ->where('isDefaultAssign', true)->where('isSelected', true)->orderBy('sortOrder')->get();
                 } else {
                     $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
                     $poDefaultTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
@@ -3348,7 +3348,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                         $isDefaultAssign = true;
                         $this->createProcumentOrderPaymentTermConfigs($defaultTemplateID, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
                     }
-                    $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->orderBy('sortOrder')->get();
+                    $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->where('isSelected', true)->orderBy('sortOrder')->get();
                 }
             }
         }
