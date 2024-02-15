@@ -1760,7 +1760,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
                 $detail_array = array(
                     'company_code'=>$companyCode,
-                    'excelColumnFormat'=>$excelColumnFormat
+                    'excelFormat'=>$excelColumnFormat
                 );
 
                 $fileName = 'asset_depreciation_register';
