@@ -130,6 +130,9 @@ use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\PoCategory;
+use App\Models\PaymentTermTemplateAssigned;
+use App\Models\PaymentTermConfig;
+use App\Models\PaymentTermTemplate;
 use App\Repositories\ProcumentOrderRepository;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\PoDetailExpectedDeliveryDateRepository;
@@ -3241,7 +3244,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
 
 
-      
+
         $is_specification = 0;       
 
         if (!empty($outputRecord)) {
@@ -3316,6 +3319,40 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         ->where('isYesNO', 1)
         ->exists();
 
+        $supplierID = $outputRecord[0]->supplierID;
+        $purchaseOrderID = $outputRecord[0]->purchaseOrderID;
+        $purchaseOrderPaymentTermConfigs = [];
+
+        if ($typeID == 1) {
+            $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->value('templateID');
+            $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->value('isActive');
+
+            if ($assignedTemplateId != null && $isActiveTemplate) {
+                $poAssignedTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->first();
+                if (!$poAssignedTemplateConfigs) {
+                    $paymentTermConfigs = PaymentTermConfig::where('templateId', $assignedTemplateId)->get();
+                    $isDefaultAssign = false;
+                    $this->createProcumentOrderPaymentTermConfigs($assignedTemplateId, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
+                }
+                $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->orderBy('sortOrder')->get();
+            } else {
+                $poDefaultConfigUpdate = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
+                if ($poDefaultConfigUpdate) {
+                    $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
+                        ->where('isDefaultAssign', true)->orderBy('sortOrder')->get();
+                } else {
+                    $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
+                    $poDefaultTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
+                    if (!$poDefaultTemplateConfigs) {
+                        $paymentTermConfigs = PaymentTermConfig::where('templateId', $defaultTemplateID)->get();
+                        $isDefaultAssign = true;
+                        $this->createProcumentOrderPaymentTermConfigs($defaultTemplateID, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
+                    }
+                    $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->orderBy('sortOrder')->get();
+                }
+            }
+        }
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
@@ -3328,7 +3365,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'paymentTermsView' => $paymentTermsView,
             'addons' => $orderAddons,
             'isProjectBase' => $isProjectBase,
-            'allowAltUom' => ($checkAltUOM) ? $checkAltUOM->isYesNO : false
+            'allowAltUom' => ($checkAltUOM) ? $checkAltUOM->isYesNO : false,
+            'paymentTermConfigs' => $purchaseOrderPaymentTermConfigs
         );
 
 
@@ -3364,6 +3402,21 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $mpdf->SetHTMLFooter($htmlFooter);
         $mpdf->WriteHTML($html);
         return $mpdf->Output($fileName, 'I');
+    }
+
+    public function createProcumentOrderPaymentTermConfigs($templateID, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign) {
+        foreach ($paymentTermConfigs as $paymentTermConfig) {
+            DB::table('po_wise_payment_term_config')->insert([
+                'templateID' => $templateID,
+                'purchaseOrderID' => $purchaseOrderID,
+                'supplierID' => $supplierID,
+                'term' => $paymentTermConfig->term,
+                'description' => $paymentTermConfig->description,
+                'sortOrder' => $paymentTermConfig->sortOrder,
+                'isSelected' => $paymentTermConfig->isSelected,
+                'isDefaultAssign' => $isDefaultAssign
+            ]);
+        }
     }
 
     public function procumentOrderSegmentchk(Request $request)
@@ -9083,7 +9136,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $paymentTermConfig = DB::table('po_wise_payment_term_config')
             ->where('id', $id)
-            ->update(['description' => $input['description']]);
+            ->update(['description' => $input['description'], 'isConfigUpdate' => true]);
 
         return $this->sendResponse($paymentTermConfig, 'Description updated successfully');
 

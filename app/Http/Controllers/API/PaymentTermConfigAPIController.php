@@ -9,6 +9,7 @@ use App\Models\ProcumentOrder;
 use App\Repositories\PaymentTermConfigRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -331,9 +332,19 @@ class PaymentTermConfigAPIController extends AppBaseController
             return $this->sendError('Payment Term Config not found');
         }
 
+        $configUpdateTempId = $paymentTermConfig->templateId;
+
         $paymentTermConfig = $this->paymentTermConfigRepository->update($input, $id);
 
-        return $this->sendResponse($paymentTermConfig->toArray(), 'Description updated successfully');
+        $configUpdatedPo = DB::table('po_wise_payment_term_config')->where('templateID', $configUpdateTempId)->where('isConfigUpdate', true)
+            ->pluck('purchaseOrderID')->unique()->values()->all();
+
+        DB::table('po_wise_payment_term_config')
+            ->where('templateID', $configUpdateTempId)
+            ->whereNotIn('purchaseOrderID', $configUpdatedPo)
+            ->delete();
+
+        return $this->sendResponse($paymentTermConfig, 'Description updated successfully');
 
     }
 
@@ -359,6 +370,14 @@ class PaymentTermConfigAPIController extends AppBaseController
             return $this->sendError('The template has already been applied to certain purchase orders.', 500);
         }
         $paymentTermConfig = PaymentTermConfig::where('id', $configId)->update(['description' => '']);
+
+        $configUpdatedPo = DB::table('po_wise_payment_term_config')->where('templateID', $templateID)->where('isConfigUpdate', true)
+            ->pluck('purchaseOrderID')->unique()->values()->all();
+
+        DB::table('po_wise_payment_term_config')
+            ->where('templateID', $templateID)
+            ->whereNotIn('purchaseOrderID', $configUpdatedPo)
+            ->delete();
 
         return $this->sendResponse($paymentTermConfig, 'Description removed successfully');
 

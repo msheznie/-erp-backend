@@ -294,23 +294,31 @@ class PoPaymentTermsAPIController extends AppBaseController
             $poAssignedTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->first();
             if (!$poAssignedTemplateConfigs) {
                 $paymentTermConfigs = PaymentTermConfig::where('templateId', $assignedTemplateId)->get();
-                $this->createProcumentOrderPaymentTermConfigs($assignedTemplateId, $purchaseOrderID, $supplierID, $paymentTermConfigs);
+                $isDefaultAssign = false;
+                $this->createProcumentOrderPaymentTermConfigs($assignedTemplateId, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
             }
             $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->orderBy('sortOrder')->get();
         } else {
-            $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
-            $poDefaultTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
-            if (!$poDefaultTemplateConfigs) {
-                $paymentTermConfigs = PaymentTermConfig::where('templateId', $defaultTemplateID)->get();
-                $this->createProcumentOrderPaymentTermConfigs($defaultTemplateID, $purchaseOrderID, $supplierID, $paymentTermConfigs);
+            $poDefaultConfigUpdate = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
+            if ($poDefaultConfigUpdate) {
+                $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
+                    ->where('isDefaultAssign', true)->orderBy('sortOrder')->get();
+            } else {
+                $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
+                $poDefaultTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
+                if (!$poDefaultTemplateConfigs) {
+                    $paymentTermConfigs = PaymentTermConfig::where('templateId', $defaultTemplateID)->get();
+                    $isDefaultAssign = true;
+                    $this->createProcumentOrderPaymentTermConfigs($defaultTemplateID, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
+                }
+                $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->orderBy('sortOrder')->get();
             }
-            $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->orderBy('sortOrder')->get();
         }
 
         return $this->sendResponse($purchaseOrderPaymentTermConfigs->toArray(), 'Payment terms and conditions retrieved successfully');
     }
 
-    public function createProcumentOrderPaymentTermConfigs($templateID, $purchaseOrderID, $supplierID, $paymentTermConfigs) {
+    public function createProcumentOrderPaymentTermConfigs($templateID, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign) {
         foreach ($paymentTermConfigs as $paymentTermConfig) {
             DB::table('po_wise_payment_term_config')->insert([
                 'templateID' => $templateID,
@@ -319,7 +327,8 @@ class PoPaymentTermsAPIController extends AppBaseController
                 'term' => $paymentTermConfig->term,
                 'description' => $paymentTermConfig->description,
                 'sortOrder' => $paymentTermConfig->sortOrder,
-                'isSelected' => $paymentTermConfig->isSelected
+                'isSelected' => $paymentTermConfig->isSelected,
+                'isDefaultAssign' => $isDefaultAssign
             ]);
         }
     }
