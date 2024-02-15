@@ -61,6 +61,9 @@ class LokiService
             case 'item_finance_sub_category':
                 $table = 'financeitemcategorysub';
                 break;
+            case 'customer':
+                $table = 'customermaster';
+                break;
             default:
                 $table = null;
                 break;

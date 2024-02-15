@@ -72,6 +72,7 @@ use App\Models\CreditNote;
 use App\Models\CustomerReceivePayment;
 use App\Models\QuotationMaster;
 use App\Models\MatchDocumentMaster;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class CustomerMasterController
@@ -84,6 +85,9 @@ class CustomerMasterAPIController extends AppBaseController
     private $userRepository;
     private $supplierMasterRepository;
     private $itemMasterRepository;
+
+    use AuditLogsTrait;
+
     public function __construct(ItemMasterRepository $itemMasterRepo,SupplierMasterRepository $supplierMasterRepo,CustomerMasterRepository $customerMasterRepo, UserRepository $userRepo)
     {
         $this->customerMasterRepository = $customerMasterRepo;
@@ -580,6 +584,13 @@ class CustomerMasterAPIController extends AppBaseController
                         return $this->sendError($validator->messages(), 422);
                     }
 
+                    $previosValue = $customerMasters->toArray();
+
+
+                    $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+                    $db = isset($input['db']) ? $input['db'] : '';
+                    $newValue = $input;
+ 
                     $customerMasters = $this->customerMasterRepository->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']), $customerId);
                     CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
                     // user activity log table
@@ -596,6 +607,9 @@ class CustomerMasterAPIController extends AppBaseController
                             }
                         }
                     }
+
+                    $this->auditLog($db, $input['customerCodeSystem'],$uuid, "customermaster", $input['CutomerCode']." has updated", "U", $newValue, $previosValue);
+
                     
                     return $this->sendResponse($customerMasters, 'Customer Master updated successfully');
                 }

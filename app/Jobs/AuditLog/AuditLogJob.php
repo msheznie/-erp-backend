@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use App\helper\CommonJobService;
 use App\Services\AuditLog\ItemFinanceCategoryAuditService;
 use App\Services\AuditLog\ErpAttributeAuditService;
+use App\Services\AuditLog\CustomerMasterAuditService;
 use Illuminate\Support\Facades\Log;
 
 class AuditLogJob implements ShouldQueue
@@ -88,6 +89,9 @@ class AuditLogJob implements ShouldQueue
                 break;
             case 'financeitemcategorysubassigned':
                 $data = ItemFinanceCategorySubAssignedAuditService::process($auditData);
+                break;
+            case 'customermaster':
+                $data = CustomerMasterAuditService::process($auditData);
                 break;
             
             default:
