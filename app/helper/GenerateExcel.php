@@ -8,7 +8,7 @@ class GenerateExcel
 {
     public static function process($data,$type,$fileName = 'payment_suppliers_by_year',$path_dir,$array=NULL)
     {
-        dd($type);
+        
         $columnFormat = isset($array['excelFormat']) ? $array['excelFormat'] : NULL;
         $excel_content =  \Excel::create($fileName, function ($excel) use ($data,$fileName,$array,$columnFormat) {
             if(isset($array['origin']) && $array['origin'] == 'SRM'){
