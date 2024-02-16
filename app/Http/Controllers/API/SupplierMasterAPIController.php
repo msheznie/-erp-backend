@@ -84,6 +84,8 @@ use App\Models\RegisterSupplierBusinessCategoryAssign;
 use App\Models\RegisterSupplierSubcategoryAssign;
 use App\Repositories\SupplierBlockRepository;
 use App\Models\SupplierBlock;
+use App\Traits\AuditLogsTrait;
+
 
 /**
  * Class SupplierMasterController
@@ -96,6 +98,7 @@ class SupplierMasterAPIController extends AppBaseController
     private $userRepository;
     private $registrationLinkRepository;
     private $supplierBlockRepository;
+    use AuditLogsTrait;
 
     public function __construct(SupplierBlockRepository $supplierBlockRepo,SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
     {
@@ -861,6 +864,20 @@ class SupplierMasterAPIController extends AppBaseController
                     $input['blockedReason'] = null;
                 }
 
+                $previosValue = $supplierMaster->toArray();;
+
+
+                $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+                $db = isset($input['db']) ? $input['db'] : '';
+                $newValue = $input;
+
+                if(isset($input['tenant_uuid']) ){
+                    unset($input['tenant_uuid']);
+                }
+
+                if(isset($input['db']) ){
+                    unset($input['db']);
+                }
                 $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID']), $id);
                 SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID']));
                 // user activity log table
@@ -876,6 +893,9 @@ class SupplierMasterAPIController extends AppBaseController
                         }
                     }
                 }
+
+                $this->auditLog($db, $input['supplierCodeSystem'],$uuid, "suppliermaster", $input['primarySupplierCode']." has updated", "U", $newValue, $previosValue);
+
                 return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
             }
 

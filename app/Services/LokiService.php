@@ -64,6 +64,9 @@ class LokiService
             case 'customer':
                 $table = 'customermaster';
                 break;
+            case 'supplier':
+                $table = 'suppliermaster';
+                break;
             default:
                 $table = null;
                 break;
