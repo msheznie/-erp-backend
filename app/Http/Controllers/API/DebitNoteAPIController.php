@@ -72,6 +72,8 @@ use App\helper\CreateExcel;
 use App\Models\Employee;
 use App\Models\CurrencyMaster;
 use App\helper\Helper;
+use App\Models\SupplierBlock;
+
 /**
  * Class DebitNoteController
  * @package App\Http\Controllers\API
@@ -517,16 +519,6 @@ class DebitNoteAPIController extends AppBaseController
         $type =  $input['type'];
         $supplier_id = $input['supplierID'];
         $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
-
-
-        if($type == 1 && ($input['isSupplierBlocked']))
-        {
-            $validatorResult = \Helper::checkBlockSuppliers($supplierMaster->blockType,$supplierMaster->blockFrom,$supplierMaster->blockTo,$input['debitNoteDate']);
-            if (!$validatorResult['success']) {              
-                 return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
-
-            }
-        }
         
         if($type == 2)
         {   
@@ -717,6 +709,16 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         if ($debitNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            if($type == 1 && ($input['isSupplierBlocked']))
+            {
+               
+                $validatorResult = \Helper::checkBlockSuppliers($input['debitNoteDate'],$input['supplierID']);
+                if (!$validatorResult['success']) {              
+                     return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+    
+                }
+            }
 
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',

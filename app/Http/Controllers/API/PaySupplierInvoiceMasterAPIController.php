@@ -88,6 +88,7 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\SupplierBlock;
 
 /**
  * Class PaySupplierInvoiceMasterController
@@ -1525,14 +1526,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $supplier_id = $input['BPVsupplierID'];
             $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
     
-            if(($input['isSupplierBlocked']) && ($paySupplierInvoiceMaster->invoiceType == 2))
-            {
-                $validatorResult = \Helper::checkBlockSuppliers($supplierMaster->blockType,$supplierMaster->blockFrom,$supplierMaster->blockTo,$input['BPVdate']);
-                if (!$validatorResult['success']) {              
-                     return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
-    
-                }
-            }
 
             $companySystemID = $paySupplierInvoiceMaster->companySystemID;
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
@@ -1748,6 +1741,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
             Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+                
+                if(($input['isSupplierBlocked']) && ($paySupplierInvoiceMaster->invoiceType == 2))
+                {
+
+                    $validatorResult = \Helper::checkBlockSuppliers($input['BPVdate'],$supplier_id);
+                    if (!$validatorResult['success']) {              
+                        return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+        
+                    }
+                }
 
                 if ($input['pdcChequeYN']) {
                     

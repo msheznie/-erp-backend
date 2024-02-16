@@ -158,6 +158,8 @@ use App\Models\GeneralLedger;
 use App\helper\CreateExcel;
 use App\helper\BudgetConsumptionService;
 use App\Jobs\DocumentAttachments\PoSentToSupplierJob;
+use App\Models\SupplierBlock;
+
 /**
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
@@ -490,8 +492,15 @@ class ProcumentOrderAPIController extends AppBaseController
        
         $isAmendAccess = $input['isAmendAccess'];
 
+
         $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location']);
         $input = $this->convertArrayToValue($input);
+
+        
+        if (isset($input['isSupplierBlocked'])) {
+            $isSupplierBlocked = $input['isSupplierBlocked'];
+            unset($input['isSupplierBlocked']);
+        }
 
         if (isset($input['VATAmountPreview'])) {
             unset($input['VATAmountPreview']);
@@ -942,8 +951,20 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->VATAmountLocal = 0;
             $procumentOrderUpdate->VATAmountRpt = 0;
         }
-
         if (($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) || $isAmendAccess == 1) {
+
+            if(($isSupplierBlocked) && ($procumentOrderUpdate->poTypeID == 1))
+            {
+
+                $block_date = Carbon::parse(now())->format('Y-m-d');
+
+                $validatorResult = \Helper::checkBlockSuppliers($block_date,$input['supplierID']);
+
+                if (!$validatorResult['success']) {              
+                     return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+    
+                }
+            }
 
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                 ->where('companySystemID', $procumentOrder->companySystemID)

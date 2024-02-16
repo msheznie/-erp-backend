@@ -82,7 +82,8 @@ use App\Models\DebitNote;
 use Illuminate\Http\Request as LaravelRequest;
 use App\Models\RegisterSupplierBusinessCategoryAssign;
 use App\Models\RegisterSupplierSubcategoryAssign;
-
+use App\Repositories\SupplierBlockRepository;
+use App\Models\SupplierBlock;
 
 /**
  * Class SupplierMasterController
@@ -94,12 +95,14 @@ class SupplierMasterAPIController extends AppBaseController
     private $supplierMasterRepository;
     private $userRepository;
     private $registrationLinkRepository;
+    private $supplierBlockRepository;
 
-    public function __construct(SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
+    public function __construct(SupplierBlockRepository $supplierBlockRepo,SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
     {
         $this->supplierMasterRepository = $supplierMasterRepo;
         $this->userRepository = $userRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
+        $this->supplierBlockRepository = $supplierBlockRepo;
     }
 
     /**
@@ -2222,7 +2225,7 @@ class SupplierMasterAPIController extends AppBaseController
     {
         
         $input = $request->all();      
-        
+        $input = $this->convertArrayToSelectedValue($input, array('blockType'));
         $id = $input['id'];
         $isDelete = $input['isDelete'];
         $isEdit = $input['isEdit'];
@@ -2231,8 +2234,63 @@ class SupplierMasterAPIController extends AppBaseController
         $SI = [];
         $PV= [];
         $GRV = [];
+        if($isDelete)
+        {
+            $supplierBlock = $this->supplierBlockRepository->findWithoutFail($id);
 
-        $purchaseOrder = ProcumentOrder::where('supplierID',$id)->where('approved',0);
+            if (empty($supplierBlock)) {
+                return $this->sendError('Supplier Block not found');
+            }
+            $supplierBlock->delete();
+            return $this->sendResponse(true,'Supplier Block deleted successfully');
+
+        }
+
+        if($isEdit == 2)
+        {
+            $blockID = $input['blockId'];
+            $updated['blockReason'] = $input['blockReason'];
+            $supplierBlock = $this->supplierBlockRepository->update($updated, $blockID);
+            return $this->sendResponse(true,'Supplier Block updated successfully');
+        }
+
+        $input['supplierCodeSytem'] = $id;
+        $isPermenentExist = SupplierBlock::where('supplierCodeSytem',$id)->where('blockType',1)->first();
+
+        if($isPermenentExist)
+        {
+            return $this->sendError('you cant add permenent type !already have a perment type',422);
+        }
+        
+        $isPeriodExist = SupplierBlock::where('supplierCodeSytem',$id)->where('blockType',2);
+        if(($isPeriodExist->count()) > 0 && $input['blockType'] == 2)
+        {
+
+            $from =  Carbon::parse($input['blockFrom'])->format('Y-m-d');
+            $to =  Carbon::parse($input['blockTo'])->format('Y-m-d');
+
+            $overlapRecord = $isPeriodExist->where(function ($query) use ($from, $to) {
+                    $query->where('blockFrom', '>=', $from)
+                        ->where('blockFrom', '<=', $to);
+                })
+                ->orWhere(function ($query) use ($from, $to) {
+                    $query->where('blockTo', '>=', $from)
+                        ->where('blockTo', '<=', $to);
+                })
+                ->orWhere(function ($query) use ($from, $to) {
+                    $query->where('blockFrom', '<=', $from)
+                        ->where('blockTo', '>=', $to);
+                })
+                ->exists();
+            
+            if($overlapRecord)
+            {
+                return $this->sendError('The selected period already has a block',422);
+            }
+        }
+
+
+        $purchaseOrder = ProcumentOrder::where('supplierID',$id)->where('approved',0)->where('poTypeID',2);
         if($purchaseOrder->count() > 0)
         {
            $PO =  $purchaseOrder->pluck('purchaseOrderCode')->toArray();
@@ -2280,7 +2338,6 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
 
-        $input = $this->convertArrayToSelectedValue($input, array('blockType'));
         if($isDelete == false)
         {
             $validator = \Validator::make($request->all(), [
@@ -2295,9 +2352,8 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
-         $msg = 
-         $supplierMaster = $this->supplierMasterRepository->update($input, $id);
-         return $this->sendResponse($supplierMaster,'Data updated successfully');
+         $supplierBlock = $this->supplierBlockRepository->create($input);
+         return $this->sendResponse($supplierBlock,'Data updated successfully');
 
     }
 
@@ -2306,8 +2362,9 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $request->all();
         $supplier_id = $input['supplierId'];
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($supplier_id);
+
         $date = isset($input['date'])?$input['date']:null;
-        $validatorResult = \Helper::checkBlockSuppliers($supplierMaster->blockType,$supplierMaster->blockFrom,$supplierMaster->blockTo,$date);
+        $validatorResult = \Helper::checkBlockSuppliers($date,$supplier_id);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
         }
@@ -2339,5 +2396,15 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         return ['status' => true, 'message' => 'Success'];
+    }
+
+
+    public function getSupplierBlock(Request $request)
+    {
+        $supplierId = $request['supplierId'];
+        $data['supplierBlocks'] = $this->supplierBlockRepository->where('supplierCodeSytem',$supplierId)->get();
+        $data['isPermentExists'] = $this->supplierBlockRepository->where('supplierCodeSytem',$supplierId)->where('blockType',1)->exists();
+
+        return $this->sendResponse($data, 'Supplier Category Subs retrieved successfully');
     }
 }

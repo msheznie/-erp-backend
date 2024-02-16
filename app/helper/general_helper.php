@@ -117,7 +117,7 @@ use App\Models\CurrencyMaster;
 use App\helper\CreateCustomerThirdPartyInvoice;
 use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
-
+use App\Models\SupplierBlock;
 class Helper
 {
     /**
@@ -9238,9 +9238,13 @@ class Helper
     }
 
 
-    public static function checkBlockSuppliers($type, $from, $to, $date)
+    public static function checkBlockSuppliers($date,$supplier_id)
     {
        $isValidate = true;
+
+       $isPermenentExist = SupplierBlock::where('supplierCodeSytem',$supplier_id)->where('blockType',1)->exists();
+       $isPeriodExist = SupplierBlock::where('supplierCodeSytem',$supplier_id)->where('blockType',2)->exists();
+       $type = $isPermenentExist ? 1 : ($isPeriodExist ? 2 : 0);
 
         if($type == 1)
         {
@@ -9252,10 +9256,13 @@ class Helper
             $date =  ((new Carbon(($date)))->format('Y-m-d'));
             $check_date = Carbon::parse($date);
 
-            $from = Carbon::parse($from);
-            $to = Carbon::parse($to);
+            
+            $withinDateRanges = SupplierBlock::where('supplierCodeSytem',$supplier_id)->where('blockType',2)->where('blockFrom', '<=', $check_date)
+                                ->where('blockTo', '>=', $check_date)
+                                ->exists();
 
-            if ($check_date->between($from, $to)) {
+
+            if ($withinDateRanges) {
                 $isValidate = false;
 
             }

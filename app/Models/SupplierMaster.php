@@ -167,10 +167,6 @@ class SupplierMaster extends Model
         'last_activity',
         'advanceAccountSystemID',
         'AdvanceAccount',
-        'blockType',
-        'blockFrom',
-        'blockTo',
-        'blockReason',
     ];
 
     /**
