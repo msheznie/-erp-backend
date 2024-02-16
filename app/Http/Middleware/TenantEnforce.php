@@ -71,7 +71,7 @@ class TenantEnforce
             'api/v1/uploadBudgets',
             'api/v1/uploadCustomerInvoice',
             'api/v1/create_receipts_voucher',
-            'api/v1/generateARReportPDF'
+            'api/v1/generateARCAReportPDF'
         ];
 
         
