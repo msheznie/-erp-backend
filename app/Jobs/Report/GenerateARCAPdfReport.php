@@ -152,7 +152,7 @@ class GenerateARCAPdfReport implements ShouldQueue
         $path = $rootPaths.'/'.$fileName;
 
         $result = Storage::disk('local_public')->put($path, $pdf_content);
-
+        Log::info('saving to local public...');
         $files = File::files(public_path($rootPaths));
         if (count($files) == $outputChunkCount) {
             $fromDate = new Carbon($request->fromDate);
@@ -193,7 +193,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 'url' => "",
                 'path' => $zipPath,
             ];
-
+            Log::info('notification start...');
             WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds);
 
             Storage::disk('local_public')->deleteDirectory('account-recivable-pdf');

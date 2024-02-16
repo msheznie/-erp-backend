@@ -51,7 +51,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
     {
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
         ini_set('memory_limit', -1);
-        Log::useFiles(storage_path() . '/logs/accounts_receivable_ledger_jobs.log'); 
+        Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
         $request = $this->requestData;
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
@@ -65,6 +65,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
         $reportCount = 1;
 
         foreach ($outputChunkData as $key1 => $output1) {
+            Log::info('starting...');
             GenerateARCAPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root);
             $reportCount++;
         }
