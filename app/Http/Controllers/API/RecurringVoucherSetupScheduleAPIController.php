@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateRecurringVoucherSetupScheduleAPIRequest;
 use App\Http\Requests\API\UpdateRecurringVoucherSetupScheduleAPIRequest;
 use App\Models\RecurringVoucherSetupSchedule;
 use App\Repositories\RecurringVoucherSetupScheduleRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -172,6 +173,12 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), 'Recurring Voucher Setup Schedule retrieved successfully');
     }
 
+    public function dateCalculate($oldDate,$newDate){
+        $tempDate = explode("-",explode(" ",$oldDate)[0]);
+        $tempDate[2] = explode("/",$newDate)[1];
+        return implode("-",$tempDate);
+    }
+
     /**
      * @param int $id
      * @param Request $request
@@ -229,18 +236,77 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
      */
     public function update($id, UpdateRecurringVoucherSetupScheduleAPIRequest $request)
     {
-        $input = $request->all();
+        try{
+            $input = $request->all();
 
-        /** @var RecurringVoucherSetupSchedule $recurringVoucherSetupSchedule */
-        $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->findWithoutFail($id);
+            /** @var RecurringVoucherSetupSchedule $recurringVoucherSetupSchedule */
 
-        if (empty($recurringVoucherSetupSchedule)) {
-            return $this->sendError('Recurring Voucher Setup Schedule not found');
+            if(isset($input['state']) && $input['state'] == 'stop'){
+                $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->find($id);
+
+                if (empty($recurringVoucherSetupSchedule)) {
+                    return $this->sendError('Recurring Voucher Setup Schedule not found');
+                }
+
+                $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->update(['stopYN' => 1], $id);
+                return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), 'RRV schedule stopped successfully');
+            }
+            else{
+
+                $employee = \Helper::getEmployeeInfo();
+
+                if(count($input) == 1){
+                    if($input[0]['id'] == 0){
+                        $recurringVoucherSetupSchedule = RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$id)
+                            ->where('rrvGeneratedYN',0)->where('stopYN',0)->get();
+
+                        foreach ($recurringVoucherSetupSchedule as $data){
+                            $tempDate = $this->dateCalculate($data->processDate,$input[0]['date']);
+
+                            $data->update([
+                                'processDate' => new Carbon($tempDate),
+                                'modifiedPc' => gethostname(),
+                                'modifiedUser' => $employee->empID,
+                                'modifiedUserSystemID' => $employee->employeeSystemID
+                            ]);
+                        }
+                    }
+                    else{
+                        $recurringVoucherSetupSchedule = RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$id)
+                            ->where('rrvSetupScheduleAutoID',$input[0]['id'])->first();
+
+                        $tempDate = $this->dateCalculate($recurringVoucherSetupSchedule->processDate,$input[0]['date']);
+
+                        $recurringVoucherSetupSchedule->update([
+                            'processDate' => new Carbon($tempDate),
+                            'modifiedPc' => gethostname(),
+                            'modifiedUser' => $employee->empID,
+                            'modifiedUserSystemID' => $employee->employeeSystemID
+                        ]);
+                    }
+                }
+                else{
+                    foreach ($input as $schedule){
+                        $recurringVoucherSetupSchedule = RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$id)
+                            ->where('rrvSetupScheduleAutoID',$schedule['id'])->first();
+
+                        $tempDate = $this->dateCalculate($recurringVoucherSetupSchedule->processDate,$schedule['date']);
+
+                        $recurringVoucherSetupSchedule->update([
+                            'processDate' => new Carbon($tempDate),
+                            'modifiedPc' => gethostname(),
+                            'modifiedUser' => $employee->empID,
+                            'modifiedUserSystemID' => $employee->employeeSystemID
+                        ]);
+                    }
+                }
+
+                return $this->sendResponse($recurringVoucherSetupSchedule, 'RRV rescheduled successfully');
+            }
+
+        }catch(\Exception $e){
+            return $this->sendError($e->getMessage());
         }
-
-        $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->update($input, $id);
-
-        return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), 'RecurringVoucherSetupSchedule updated successfully');
     }
 
     /**
@@ -295,4 +361,36 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
         return $this->sendSuccess('Recurring Voucher Setup Schedule deleted successfully');
     }
+
+    public function getAllRecurringVoucherSchedules(Request $request)
+    {
+        $masterId = $request['recurringVoucherAutoId'];
+
+        $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->get();
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function recurringVoucherSchedulesAllStop(Request $request)
+    {
+        try{
+            $masterId = $request['recurringVoucherAutoId'];
+
+            $employee = \Helper::getEmployeeInfo();
+
+            $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)
+                ->where('rrvGeneratedYN', 0)
+                ->update([
+                    'stopYN' => 1,
+                    'modifiedPc' => gethostname(),
+                    'modifiedUser' => $employee->empID,
+                    'modifiedUserSystemID' => $employee->employeeSystemID
+                ]);
+
+            return $this->sendResponse($output, 'All schedules stopped successfully');
+        }catch (\Exception $e){
+            return $this->sendError('Try Again');
+        }
+    }
+
 }

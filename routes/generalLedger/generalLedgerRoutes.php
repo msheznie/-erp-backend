@@ -292,6 +292,8 @@ Route::group([], function(){
     Route::post('amendRecurringVoucherReview', 'RecurringVoucherSetupAPIController@amendRecurringVoucherReview')->name('JV Review');
     Route::post('recurringVoucherReopen', 'RecurringVoucherSetupAPIController@recurringVoucherReopen')->name('RRV Reopen');
     Route::post('recurringVoucherDeleteAllDetails', 'RecurringVoucherSetupDetailAPIController@recurringVoucherDeleteAllDetails')->name('RRV details delete all');
+    Route::get('getAllRecurringVoucherSchedules', 'RecurringVoucherSetupScheduleAPIController@getAllRecurringVoucherSchedules')->name('Get all recurring voucher schedules');
+    Route::put('recurringVoucherSchedulesAllStop', 'RecurringVoucherSetupScheduleAPIController@recurringVoucherSchedulesAllStop')->name('Stop all recurring voucher schedules');
 });
 
 
