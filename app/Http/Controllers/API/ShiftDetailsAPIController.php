@@ -3014,16 +3014,16 @@ class ShiftDetailsAPIController extends AppBaseController
 
                 foreach ($returns as $return) {
 
-                    $bankGL = DB::table('pos_source_invoice')
-                        ->selectRaw('pos_source_salesreturn.refundAmount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
-                        ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
-                        ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_invoice.invoiceID')
-                        ->where('pos_source_salesreturn.salesReturnID', $return->salesReturnID)
-                        ->groupBy('pos_source_invoicepayments.paymentConfigMasterID')
-                        ->groupBy('pos_source_invoicepayments.GLCode')
-                        ->groupBy('pos_source_salesreturn.salesReturnID')
-                        ->where('pos_source_invoice.isCreditSales', 0)
-                        ->get();
+                        $bankGL = DB::table('pos_source_invoice')
+                            ->selectRaw('pos_source_salesreturn.refundAmount as amount, pos_source_salesreturn.returnMode as returnMode, pos_source_invoice.wareHouseAutoID as wareHouseID, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
+                            ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
+                            ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_invoice.invoiceID')
+                            ->where('pos_source_salesreturn.salesReturnID', $return->salesReturnID)
+                            ->groupBy('pos_source_invoicepayments.paymentConfigMasterID')
+                            ->groupBy('pos_source_invoicepayments.GLCode')
+                            ->groupBy('pos_source_salesreturn.salesReturnID')
+                            ->where('pos_source_invoice.isCreditSales', 0)
+                            ->get();
 
 
                     $invItems = DB::table('pos_source_invoicedetail')
@@ -3094,6 +3094,14 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->get();
 
                     foreach ($bankGL as $gl) {
+                        $glCode = null;
+                        if($gl->returnMode == 1){
+                            $exchangeGL = POSSOURCEPaymentGlConfigDetail::where('paymentConfigMasterID', 2)->where('warehouseID', $gl->wareHouseID)->first();
+
+                            $glCode = $exchangeGL->GLCode;
+                        } else if ($gl->returnMode == 2){
+                            $glCode = $gl->glCode;
+                        }
 
                         $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                         $bankGLReturnArray[] = array(
@@ -3101,7 +3109,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 110,
                             'documentCode' => $documentCode,
-                            'glCode' => $gl->glCode,
+                            'glCode' => $glCode,
                             'logId' => $logs['id'],
                             'isReturnYN' => 1,
                             'amount' => round($gl->amount * -1,3)
