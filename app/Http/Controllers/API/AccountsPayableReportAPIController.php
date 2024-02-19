@@ -40,6 +40,7 @@ use App\Models\AccountsPayableLedger;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
@@ -50,6 +51,7 @@ use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierContactDetails;
 use App\Models\SupplierMaster;
+use App\Models\SystemGlCodeScenario;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
@@ -128,9 +130,34 @@ class AccountsPayableReportAPIController extends AppBaseController
         $countries = CountryMaster::all();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
 
+        $isConfigured = SystemGlCodeScenario::find(12);
+        $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 12)->where('companySystemID', $companiesByGroup)->first();
+        if($isConfigured && $isDetailConfigured) {
+            if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
+                return $this->sendError('Chart of account is not configured for employee control account', 500);
+            }
+            $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->first();
+            if($isChartOfAccountConfigured){
+                if ($isChartOfAccountConfigured->isActive != 1 || $isChartOfAccountConfigured->chartOfAccountSystemID == null || $isChartOfAccountConfigured->isAssigned != -1 || $isChartOfAccountConfigured->chartOfAccountSystemID == 0 || $isChartOfAccountConfigured->companySystemID == 0 || $isChartOfAccountConfigured->companySystemID == null) {
+                    return $this->sendError('Chart of account is not configured for employee control account', 500);
+                }
+            }
+            else{
+                return $this->sendError('Chart of account is not configured for employee control account', 500);
+            }
+        }
+        else{
+            return $this->sendError('Chart of account is not configured for employee control account', 500);
+        }
+
+        $controlAccountEmployeeID = $isDetailConfigured->chartOfAccountSystemID;
+        $controlAccountEmployee = ChartOfAccount::where('chartOfAccountSystemID', $controlAccountEmployeeID)->get();
+
+
         $categories = FinanceItemCategoryMaster::all();
         $output = array(
             'controlAccount' => $controlAccount,
+            'controlAccountEmployee' => $controlAccountEmployee,
             'suppliers' => $supplierMaster,
             'employees' => $employeeMaster,
             'departments' => $departments,
@@ -147,6 +174,7 @@ class AccountsPayableReportAPIController extends AppBaseController
     public function validateAPReport(Request $request)
     {
         $reportID = $request->reportID;
+
         switch ($reportID) {
             case 'APSL':
                 $validator = \Validator::make($request->all(), [
@@ -253,14 +281,15 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             case 'APSA':
+
                 $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'suppliers' => 'required',
-                    'controlAccountsSystemID' => 'required',
-                    'currencyID' => 'required',
-                    'interval' => 'required',
-                    'through' => 'required'
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'suppliers' => 'required',
+                        'controlAccountsSystemID' => 'required',
+                        'currencyID' => 'required',
+                        'interval' => 'required',
+                        'through' => 'required'
                 ]);
 
                 if ($validator->fails()) {
@@ -472,8 +501,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingDetailQRY($request);
-
-//                    return $output;
 
                     $outputArr = array();
                     $grandTotalArr = array();
@@ -3143,9 +3170,9 @@ class AccountsPayableReportAPIController extends AppBaseController
             $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
         }
 
-
         $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
+
 
         $currency = $request->currencyID;
 
@@ -3239,7 +3266,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $typeSupEmpQryMain3 = "employees.empName as suppliername";
         }
 
-        $output = \DB::select('SELECT *,' . $agingField . ' FROM (SELECT
+        $output =  \DB::select('SELECT *,' . $agingField . ' FROM (SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
                                 finalAgingDetail.CompanyName,
@@ -3483,6 +3510,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal;');
+
 
 
         $output = $this->exchangeGainLoss($output, $currency);

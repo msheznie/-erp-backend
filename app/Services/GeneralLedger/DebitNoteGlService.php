@@ -129,6 +129,7 @@ class DebitNoteGlService
             $data['clientContractID'] = 'X';
             $data['contractUID'] = 159;
             $data['supplierCodeSystem'] = $masterData->supplierID;
+            $data['employeeSystemID'] = $masterData->empID;
 
             if($masterData->type == 1)
             {
