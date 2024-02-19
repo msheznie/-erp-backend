@@ -509,6 +509,21 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $criteriaDetail = EvaluationCriteriaDetails::create($data);
 
         if ($result->is_final_level == 1 && $result->critera_type_id == 2) {
+            if($result->answer_type_id == 2 ){
+                EvaluationCriteriaScoreConfig::where('criteria_detail_id', $result['id'])->delete();
+                $datayes['criteria_detail_id'] = $result['id'];
+                $datayes['label'] = 'Yes';
+                $datayes['score'] = $result->max_value;
+                $datayes['created_by'] = $employee->employeeSystemID;
+                EvaluationCriteriaScoreConfig::create($datayes);
+
+                $datano['criteria_detail_id'] = $result['id'];
+                $datano['label'] = 'No';
+                $datano['score'] = $result->min_value;
+                $datano['created_by'] = $employee->employeeSystemID;
+                EvaluationCriteriaScoreConfig::create($datano);
+            }
+
             EvaluationCriteriaScoreConfig::where('criteria_detail_id', $result->id)->update(['criteria_detail_id' => $criteriaDetail->id]);
         }
 
