@@ -183,7 +183,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $chartOfAccount = ChartOfAccount::all();
 
         /** expense chart of accounts */
-        $expenseChartOfAccount = ChartOfAccount::where(['controlAccountsSystemID' => 2, 'isActive' => 1])->get();
+        $expenseChartOfAccount = ChartOfAccount::whereIn('controlAccountsSystemID',[2,3,4])->where('isActive',1)->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
