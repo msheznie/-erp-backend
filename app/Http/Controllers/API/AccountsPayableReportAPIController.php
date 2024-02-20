@@ -120,7 +120,22 @@ class AccountsPayableReportAPIController extends AppBaseController
 
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
 
-            $employeeMaster = DB::table('employees')->join('erp_bookinvsuppmaster', 'erp_bookinvsuppmaster.employeeID', '=', 'employees.employeeSystemID')->whereIn('companySystemID', $companiesByGroup)->groupBy('employees.employeeSystemID')->get();
+            $employeeMaster = DB::table('employees')
+                ->select('employees.*')
+                ->leftJoin('erp_bookinvsuppmaster', 'erp_bookinvsuppmaster.employeeID', '=', 'employees.employeeSystemID')
+                ->leftJoin('erp_paysupplierinvoicemaster', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID', '=', 'employees.employeeSystemID')
+                ->leftJoin('erp_debitnote', 'erp_debitnote.empID', '=', 'employees.employeeSystemID')
+                ->whereIn('employees.empCompanySystemID', $companiesByGroup)
+                ->groupBy('employees.employeeSystemID')
+                ->where(function($query) {
+                    $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
+                        ->where('erp_bookinvsuppmaster.approved', -1)
+                        ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
+                        ->where('erp_paysupplierinvoicemaster.approved', -1)
+                        ->orWhereNotNull('erp_debitnote.empID')
+                        ->where('erp_debitnote.approved', -1);
+                })
+                ->get();
         }
 
 
