@@ -35,12 +35,15 @@ class SystemGlCodeScenarioDetailRepository extends BaseRepository
         return SystemGlCodeScenarioDetail::class;
     }
 
-    public function fetch_company_scenarios($company_list, $search){
+    public function fetch_company_scenarios($company_list, $search,$departmentID = null){
         $data = $this->model;
         $data = $data->with('master');
         $data = $data->with('chart_of_account:chartOfAccountSystemID,AccountCode,AccountDescription');
         $data = $data->with('company:companySystemID,CompanyID,CompanyName');
         $data = $data->whereIn('companySystemID', $company_list);
+        $data = $data->WhereHas('master',function ($q) use($departmentID){
+            $q->where('department_master_id',$departmentID);
+        });
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);

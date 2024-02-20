@@ -238,8 +238,8 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
             return $this->sendError('System Gl Code Scenario Detail not found');
         }
 
-        $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
 
+        $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
         DB::beginTransaction();
         try {
 
@@ -372,7 +372,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
         $companyId = $input['companyId'];
         $company_list = CompanyService::get_company_with_sub($companyId);
 
-        $qry = $this->systemGlCodeScenarioDetailRepository->fetch_company_scenarios($company_list, $search);
+        $qry = $this->systemGlCodeScenarioDetailRepository->fetch_company_scenarios($company_list, $search,$input['id']);
         return DataTables::eloquent($qry)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {

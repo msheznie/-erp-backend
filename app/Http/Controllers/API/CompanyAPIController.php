@@ -198,7 +198,14 @@ class CompanyAPIController extends AppBaseController
                                                                 ->where('isYesNO',1)
                                                                 ->exists();
 
-        $hasSupplierGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 76);  
+        $hasSupplierGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 76);
+
+        $discountsChartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->where('controlAccountsSystemID', 1)
+            ->where('catogaryBLorPL', '=', 'PL')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
 
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,
@@ -219,7 +226,8 @@ class CompanyAPIController extends AppBaseController
             'supplierCategories' => $supplierCategories,
             'supplierGroups' => $supplierGroups,
             'isGroup' => $isGroup,
-            'hasSupplierGeneratePolicy'=> $hasSupplierGeneratePolicy
+            'hasSupplierGeneratePolicy'=> $hasSupplierGeneratePolicy,
+            'discountsChartOfAccounts' => $discountsChartOfAccounts
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 

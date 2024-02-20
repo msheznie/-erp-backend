@@ -358,7 +358,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             });
         }
 
-        $data = $data->take(20)->get();
+        $data = $data->get();
         return $this->sendResponse($data->toArray(), 'Data retrieved successfully');
     }
 
