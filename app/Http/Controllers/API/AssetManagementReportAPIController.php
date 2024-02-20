@@ -2131,7 +2131,7 @@ FROM
 
         $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('faID')->toArray() : [];
 
-         $assetTransfer = FixedAssetCost::selectRaw('erp_fa_assetcost.assetID as assetCode, erp_fa_assettype.typeDes as assetType,erp_fa_asset_master.assetDescription as assetDescription, erp_fa_category.catDescription as category,erp_fa_fa_asset_transfer.document_code as documentCode, erp_fa_fa_asset_transfer.document_date as documentDate,IFNULL(fromLocation.locationName, "-") as fromName, IFNULL(toLocation.locationName, "-") as toName, IFNULL(location.locationName, "-") as locationName, IFNULL(empRequest.empName, "-") as reqName, IFNULL(depMaster.DepartmentDescription, "-") as depName, erp_fa_asset_master.faID')->addSelect([
+         $assetTransfer = FixedAssetCost::selectRaw('erp_fa_assetcost.assetID as assetCode, erp_fa_assettype.typeDes as assetType,erp_fa_asset_master.assetDescription as assetDescription, erp_fa_category.catDescription as category,erp_fa_fa_asset_transfer.document_code as documentCode, erp_fa_fa_asset_transfer.document_date as documentDate,IFNULL(fromLocation.locationName, "-") as fromName, IFNULL(toLocation.locationName, "-") as toName, IFNULL(location.locationName, "-") as locationName, IFNULL(empRequest.empName, "-") as reqName, IFNULL(depMaster.DepartmentDescription, "-") as depName, IFNULL(fromEmployee.empName, "-") as fromEmpName, IFNULL(toEmployee.empName, "-") as toEmpName, erp_fa_asset_master.faID')->addSelect([
                  'erp_fa_fa_asset_transfer.type',
                  DB::raw('(CASE 
             WHEN erp_fa_fa_asset_transfer.type = 1 THEN "Request Based - Employee"
@@ -2151,7 +2151,9 @@ FROM
             ->leftjoin('erp_location as location', 'location.locationID', '=', 'erp_fa_fa_asset_transfer.location')
             ->leftjoin('erp_fa_fa_asset_request', 'erp_fa_fa_asset_request.id', '=', 'erp_fa_fa_asset_transfer_details.erp_fa_fa_asset_request_id')
             ->leftjoin('employees as empRequest', 'empRequest.employeeSystemID', '=', 'erp_fa_fa_asset_request.emp_id')
-            ->leftjoin('departmentmaster as depMaster', 'depMaster.departmentSystemID', '=', 'erp_fa_fa_asset_request.departmentSystemID')
+            ->leftjoin('departmentmaster as depMaster', 'depMaster.departmentSystemID', '=', 'erp_fa_asset_master.departmentSystemID')
+            ->leftjoin('employees as fromEmployee', 'fromEmployee.employeeSystemID', '=', 'erp_fa_fa_asset_transfer_details.from_emp_id')
+            ->leftjoin('employees as toEmployee', 'toEmployee.employeeSystemID', '=', 'erp_fa_fa_asset_transfer_details.to_emp_id')
             ->where('erp_fa_fa_asset_transfer.approved_yn', -1)
             ->where('erp_fa_asset_master.approved', -1)
             ->whereDate('erp_fa_fa_asset_transfer.document_date', '>=', $fromDate)
