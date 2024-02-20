@@ -1419,6 +1419,14 @@ ORDER BY
                         if (empty($technical) && !$rfq) {
                             return ['success' => false, 'message' => 'At least one technical criteria should be added'];
                         }
+                        if($input['tender_type_id'] == 2 || $input['tender_type_id'] == 3){
+                            $assignSupplier = TenderSupplierAssignee::with(['supplierAssigned'])
+                                ->where('company_id', $input['company_id'])
+                                ->where('tender_master_id', $input['id'])->first();
+                            if (empty($assignSupplier)) {
+                                return ['success' => false, 'message' => 'At least one supplier should be added'];
+                            }
+                        }
 
                         if (($input['is_active_go_no_go'] == 1) || $input['is_active_go_no_go'] == true) {
                             $goNoGo = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 1)->first();
