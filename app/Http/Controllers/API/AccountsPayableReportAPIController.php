@@ -1344,7 +1344,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $to_date = $request->toDate;
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
-                    $from_date = ((new Carbon($from_date))->format('d/m/Y'));
 
                     if ($reportTypeID == 'SAD') { //supplier aging detail
                         if($typeAging == 1){
