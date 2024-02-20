@@ -27,12 +27,13 @@ class GenerateARCAPdfReport implements ShouldQueue
     public $outputChunkData;
     public $outputData;
     public $rootPath;
+    public $aging;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath)
+    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath,$aging)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -46,6 +47,7 @@ class GenerateARCAPdfReport implements ShouldQueue
         $this->outputChunkData = $outputChunkData;
         $this->outputData = $outputData;
         $this->rootPath = $rootPath;
+        $this->aging = $aging;
     }
 
     /**
@@ -62,6 +64,7 @@ class GenerateARCAPdfReport implements ShouldQueue
         $outputChunkCount = $this->outputChunkData;
         $output = $this->outputData;
         $rootPaths = $this->rootPath;
+        $aging = $this->aging;
 
         $count = $this->reportCount;
         CommonJobService::db_switch($db);
@@ -74,15 +77,15 @@ class GenerateARCAPdfReport implements ShouldQueue
             $name = 'customer_aging_summary';
             $outputArr = array();
             $grandTotalArr = array();
-            if ($output['aging']) {
-                foreach ($output['aging'] as $val) {
-                    $total = collect($output['data'])->pluck($val)->toArray();
+            if ($aging) {
+                foreach ($aging as $val) {
+                    $total = collect($output)->pluck($val)->toArray();
                     $grandTotalArr[$val] = array_sum($total);
                 }
             }
     
-            if ($output['data']) {
-                foreach ($output['data'] as $val) {
+            if ($output) {
+                foreach ($output as $val) {
                     $outputArr[$val->concatCompanyName][$val->documentCurrency][] = $val;
                 }
             }
@@ -97,7 +100,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 }
             }
     
-            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate));
+            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate));
     
             $html = view('print.customer_aging_summary', $dataArr);
     
@@ -110,15 +113,15 @@ class GenerateARCAPdfReport implements ShouldQueue
             $outputArr = array();
             $customerCreditDays = array();
             $grandTotalArr = array();
-            if ($output['aging']) {
-                foreach ($output['aging'] as $val) {
-                    $total = collect($output['data'])->pluck($val)->toArray();
+            if ($aging) {
+                foreach ($aging as $val) {
+                    $total = collect($output)->pluck($val)->toArray();
                     $grandTotalArr[$val] = array_sum($total);
                 }
             }
 
-            if ($output['data']) {
-                foreach ($output['data'] as $val) {
+            if ($output) {
+                foreach ($output as $val) {
                     $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                     $customerCreditDays[$val->customerName] = $val->creditDays;
                 }
@@ -134,10 +137,10 @@ class GenerateARCAPdfReport implements ShouldQueue
                 }
             }
 
-            $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
+            $invoiceAmountTotal = collect($output)->pluck('invoiceAmount')->toArray();
             $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
-            $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
+            $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
 
             $html = view('print.customer_aging_detail', $dataArr);
 

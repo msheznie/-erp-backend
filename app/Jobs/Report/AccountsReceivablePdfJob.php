@@ -60,13 +60,13 @@ class AccountsReceivablePdfJob implements ShouldQueue
         $root = "account-recivable-pdf/".$currentDate;
 
         $output = $this->getCustomerAgingForPDF($request);
-        $outputChunkData = collect($output)->chunk(300);
-
+        $outputChunkData = collect($output['data'])->chunk(300);
+        $aging = $output['aging'];
         $reportCount = 1;
 
         foreach ($outputChunkData as $key1 => $output1) {
             Log::info('starting...');
-            GenerateARCAPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root);
+            GenerateARCAPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root,$aging);
             $reportCount++;
         }
     }
