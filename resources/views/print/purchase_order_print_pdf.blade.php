@@ -833,7 +833,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="font-size: 11px;"><h3  style="font-weight: bold">Payment term and condition</h3></td>
+                <td width="100%" style="font-size: 11px;"><h3  style="font-weight: bold">Payment Terms and Conditions</h3></td>
             </tr>
         </table>
         <br>

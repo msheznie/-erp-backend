@@ -363,7 +363,9 @@ class PaymentTermConfigAPIController extends AppBaseController
             ->pluck('purchaseOrderID')->unique()->values()->all();
 
         $pendingApprovalCount = ProcumentOrder::whereIn('purchaseOrderID', $templatePulledPO)
+            ->where('poConfirmedYN', 1)
             ->where('approved', 0)
+            ->where('refferedBackYN', 0)
             ->count();
 
         if ($pendingApprovalCount > 0) {

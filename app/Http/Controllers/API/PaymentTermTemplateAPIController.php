@@ -379,11 +379,13 @@ class PaymentTermTemplateAPIController extends AppBaseController
                 ->pluck('purchaseOrderID')->unique()->values()->all();
 
             $pendingApprovalCount = ProcumentOrder::whereIn('purchaseOrderID', $defaultTempPulledPO)
+                ->where('poConfirmedYN', 1)
                 ->where('approved', 0)
+                ->where('refferedBackYN', 0)
                 ->count();
 
             if ($pendingApprovalCount > 0) {
-                return $this->sendError('The template has already been applied to certain purchase orders that are pending for approval.', 500);
+                return $this->sendError('The default template has already been applied to certain purchase orders that are pending for approval.', 500);
             }
         }
 
