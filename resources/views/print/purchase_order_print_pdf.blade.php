@@ -828,7 +828,7 @@
 
 
 @endif
-@if ($termsCond==1 && isset($paymentTermConfigs))
+@if ($termsCond==1 && isset($paymentTermConfigs) && count($paymentTermConfigs) > 0)
     <div class="row" id="paymentTermsCond">
         <div class="page_break"></div>
         <table style="width:100%">
