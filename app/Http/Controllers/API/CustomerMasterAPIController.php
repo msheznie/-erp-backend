@@ -357,6 +357,16 @@ class CustomerMasterAPIController extends AppBaseController
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
 
+        $data['gl_secanrio'] = SystemGlCodeScenarioDetail::select('systemGlScenarioID','chartOfAccountSystemID')->with('master')->whereHas('master', function ($q) {
+                                        $q->where('department_master_id', 4)->where(function ($q) {
+                                            $q->where('slug', 'account-receivable-receivable-account')
+                                                ->orWhere('slug', 'account-receivable-advance-account')
+                                                ->orWhere('slug', 'account-receivable-unbilled-account');
+                                        });
+                                    })
+                                    ->where('companySystemID', $selectedCompanyId)
+                                    ->get();
+
         return $this->sendResponse($data, 'Record retrieved successfully');
 
     }
