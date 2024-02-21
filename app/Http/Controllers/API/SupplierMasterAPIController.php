@@ -812,6 +812,16 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
 
         if($supplierMaster->approvedYN){
 
@@ -865,19 +875,8 @@ class SupplierMasterAPIController extends AppBaseController
                 }
 
                 $previosValue = $supplierMaster->toArray();;
-
-
-                $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
-                $db = isset($input['db']) ? $input['db'] : '';
                 $newValue = $input;
 
-                if(isset($input['tenant_uuid']) ){
-                    unset($input['tenant_uuid']);
-                }
-
-                if(isset($input['db']) ){
-                    unset($input['db']);
-                }
                 $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID']), $id);
                 SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID']));
                 // user activity log table
