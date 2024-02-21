@@ -209,7 +209,7 @@ class RecurringVoucherSetupSchedule extends Model
         'processDate' => 'datetime',
         'RRVcode' => 'string',
         'currencyID' => 'integer',
-        'amount' => 'integer',
+        'amount' => 'float',
         'rrvGeneratedYN' => 'integer',
         'stopYN' => 'integer',
         'documentSystemID' => 'integer',
