@@ -3032,7 +3032,6 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                         ->join('pos_source_salesreturndetails', 'pos_source_salesreturndetails.invoiceDetailID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
-                        ->groupBy('pos_source_salesreturndetails.salesReturnID')
                         ->where('pos_source_salesreturndetails.salesReturnID', $return->salesReturnID)
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->get();
@@ -3078,7 +3077,6 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('pos_source_salesreturndetails', 'pos_source_salesreturndetails.invoiceDetailID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
                         ->where('pos_source_salesreturndetails.salesReturnID', $return->salesReturnID)
                         ->where('pos_source_invoice.isCreditSales', 0)
-                        ->groupBy('pos_source_salesreturndetails.salesReturnID')
                         ->get();
 
                     $bankItems = DB::table('pos_source_invoice')
