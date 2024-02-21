@@ -159,7 +159,11 @@ class GPOSSalesGlService
                 $data['documentRptCurrencyID'] = $invItems->companyReportingCurrencyID;
                 $data['documentRptCurrencyER'] = $invItems->companyReportingExchangeRate;
                 $data['documentRptAmount'] = $gl->totAmount / $invItems->companyReportingExchangeRate;
-                $data['documentNarration'] = "Bill No: ". $invItems->invoiceCode;
+                if($gl->isReturnYN == 1) {
+                    $data['documentNarration'] = "Bill No: " . $invItems->documentSystemCode;
+                } else {
+                    $data['documentNarration'] = "Bill No: " . $invItems->invoiceCode;
+                }
             }
             else {
                 return ['status' => false, 'message' => 'error bill was not found', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
