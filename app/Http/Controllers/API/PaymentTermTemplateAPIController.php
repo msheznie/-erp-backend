@@ -324,6 +324,19 @@ class PaymentTermTemplateAPIController extends AppBaseController
             return $this->sendError('Payment Term Template not found');
         }
 
+        $templatePulledPO = \DB::table('po_wise_payment_term_config')->where('templateID', $id)
+            ->pluck('purchaseOrderID')->unique()->values()->all();
+
+        $pendingApprovalCount = ProcumentOrder::whereIn('purchaseOrderID', $templatePulledPO)
+            ->where('poConfirmedYN', 1)
+            ->where('approved', 0)
+            ->where('refferedBackYN', 0)
+            ->count();
+
+        if ($pendingApprovalCount > 0) {
+            return $this->sendError('The template has already been applied to certain purchase orders that are pending for approval.', 500);
+        }
+
         $paymentTermTemplate->delete();
 
         return $this->sendResponse($id, 'Payment Term Template deleted successfully');
