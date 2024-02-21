@@ -336,6 +336,8 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $selectedCompanyId = $input['companySystemID'];
+
         $data['chartOfAccounts'] = ChartOfAccount::where('controllAccountYN', '=', 1)
                                          ->whereHas('chartofaccount_assigned', function($query) use ($input) {
                                             $query->where('companySystemID', $input['companySystemID'])
