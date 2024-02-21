@@ -3384,9 +3384,10 @@ class Helper
                                                         $file[$amendments->originalFileName] = Helper::getFileUrlFromS3($amendments->path);
                                                     }     
                                             }
-                                        } 
- 
-                                        
+                                        }
+
+                                        $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+
                                         if($params["document"] == 56 )
                                         {
                                             $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->supplierName . '</b>';
@@ -3444,9 +3445,6 @@ class Helper
                                         }
 
                                         $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
-
-
-                                        $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
 
                                         if ($document->documentSystemID == 107){
                                             $subject = "Pending " . $document->documentDescription . " approval " .'"' . $documentApproved->suppliername->name .'"';
