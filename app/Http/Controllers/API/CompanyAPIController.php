@@ -41,6 +41,7 @@ use App\Repositories\CompanyRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\CompanyDigitalStamp;
+use App\Models\SystemGlCodeScenario;
 use App\Repositories\CompanyPolicyCategoryRepository;
 use App\Repositories\CompanyPolicyMasterRepository;
 use App\Repositories\CompanyDigitalStampRepository;
@@ -273,6 +274,45 @@ class CompanyAPIController extends AppBaseController
 
     }
 
+    public function getChartOfAccountConfigs(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+
+        $liabilityAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-liability-account')
+                        ->with(['detail'=>function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        }])
+                        ->whereHas('detail',function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        })
+                        ->first();
+
+        $unbilledAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-unbilled-account')
+                        ->with(['detail'=>function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        }])                        
+                        ->whereHas('detail',function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        })
+                        ->first();
+
+        $advanceAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-advance-account')
+                        ->with(['detail'=>function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        }])                        
+                        ->whereHas('detail',function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        })
+                        ->first();
+
+        $output = array('advanceAccountConfigs' => $advanceAccountConfigs,
+                        'unbilledAccountConfigs' => $unbilledAccountConfigs,
+                        'liabilityAccountConfigs' => $liabilityAccountConfigs
+                    );
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+    }
+    
     /**
      * Get all companies
      * Created by Fayas

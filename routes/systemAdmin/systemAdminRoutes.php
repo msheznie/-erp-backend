@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::group([], function(){
 	Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData')->name('Supplier Form Data');
 	Route::get('getAdvanceAccount', 'CompanyAPIController@getAdvanceAccount')->name("Advance accounts for selected company");
+	Route::get('getChartOfAccountConfigs', 'CompanyAPIController@getChartOfAccountConfigs')->name("Chart of accounts configs for selected company");
 	Route::get('getApprovedCustomers', 'CustomerMasterAPIController@getApprovedCustomers')->name("Approved customer list");
 	Route::get('supplier/currencies', 'CurrencyMasterAPIController@getCurrenciesBySupplier')->name('Currencies by supplier');
 	Route::get('supplier/assignedCompanies', 'SupplierMasterAPIController@getAssignedCompaniesBySupplier')->name("Companies assigned by supplier");

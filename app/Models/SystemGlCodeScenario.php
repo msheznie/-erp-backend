@@ -72,4 +72,9 @@ class SystemGlCodeScenario extends Model
     public function company_scenario(){
         return $this->hasOne(SystemGlCodeScenarioDetail::class, 'systemGlScenarioID', 'id');
     }
+
+    public function detail()
+    {
+        return $this->belongsTo('App\Models\SystemGlCodeScenarioDetail', 'id', 'systemGlScenarioID');
+    }
 }
