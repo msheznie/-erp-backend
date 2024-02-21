@@ -394,9 +394,36 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
             }
 
-            $checkItems = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->count();
-            if ($checkItems == 0) {
+            $rrvDetails = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->get();
+            if (count($rrvDetails) == 0) {
                 return $this->sendError('Recurring Voucher should have at least one item', 500);
+            }
+
+            $finalError = array(
+                'required_serviceLine' => array()
+            );
+            $error_count = 0;
+
+            foreach ($rrvDetails as $item) {
+                $updateItem = RecurringVoucherSetupDetail::find($item['rrvDetailAutoId']);
+
+                if (($updateItem->serviceLineSystemID == 0) && is_null($updateItem->serviceLineCode)) {
+                    array_push($finalError['required_serviceLine'], $updateItem->glAccount);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
+            $checkQuantity = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)
+                ->where('debitAmount', '<=', 0)
+                ->where('creditAmount', '<=', 0)
+                ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
             }
 
             $rrvDetailDebitSum = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->sum('debitAmount');
