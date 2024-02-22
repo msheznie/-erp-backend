@@ -1407,7 +1407,6 @@ class SupplierMasterAPIController extends AppBaseController
     public function validateSupplierRegistrationLink(Request $request)
     {
         $input = $request->all();
-        $isExpired = 0;
 
         if (!isset($input['uid'])) {
             return $this->sendError("Hash not found");
@@ -1425,7 +1424,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse(['isExpired' => $isExpired], 'External link validated successfully');
+        return $this->sendResponse([], 'External link validated successfully');
     }
 
     public function getSupplierRegisterFormData(Request $request)
