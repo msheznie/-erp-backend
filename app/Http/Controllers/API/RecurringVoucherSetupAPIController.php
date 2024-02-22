@@ -399,23 +399,12 @@ class RecurringVoucherSetupAPIController extends AppBaseController
                 return $this->sendError('Recurring Voucher should have at least one item', 500);
             }
 
-            $finalError = array(
-                'required_serviceLine' => array()
-            );
-            $error_count = 0;
-
             foreach ($rrvDetails as $item) {
                 $updateItem = RecurringVoucherSetupDetail::find($item['rrvDetailAutoId']);
 
                 if (($updateItem->serviceLineSystemID == 0) && is_null($updateItem->serviceLineCode)) {
-                    array_push($finalError['required_serviceLine'], $updateItem->glAccount);
-                    $error_count++;
+                    return $this->sendError("Cannot confirm. Segment is not updated", 500);
                 }
-            }
-
-            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
-            if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
 
             $checkQuantity = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)
