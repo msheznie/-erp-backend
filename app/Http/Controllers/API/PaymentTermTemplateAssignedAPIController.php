@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePaymentTermTemplateAssignedAPIRequest;
 use App\Http\Requests\API\UpdatePaymentTermTemplateAssignedAPIRequest;
 use App\Models\PaymentTermTemplateAssigned;
+use App\Models\ProcumentOrder;
 use App\Repositories\PaymentTermTemplateAssignedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -317,6 +318,20 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
             return $this->sendError('Payment Term Template Assigned not found');
         }
 
+        $templateID = $paymentTermTemplateAssigned->templateID;
+        $supplierID = $paymentTermTemplateAssigned->supplierID;
+        $templatePulledPO = \DB::table('po_wise_payment_term_config')->where('templateID', $templateID)->where('supplierID', $supplierID)
+            ->where('isDefaultAssign', false)->pluck('purchaseOrderID')->unique()->values()->all();
+
+        $pendingApprovalCount = ProcumentOrder::whereIn('purchaseOrderID', $templatePulledPO)
+            ->where('poConfirmedYN', 1)
+            ->where('approved', 0)
+            ->where('refferedBackYN', 0)
+            ->count();
+
+        if ($pendingApprovalCount > 0) {
+            return $this->sendError('The assigned supplier has already been pulled to pending purchase orders.', 500);
+        }
         $paymentTermTemplateAssigned->delete();
 
         return $this->sendResponse($id, 'Payment Term Template Assigned deleted successfully');
