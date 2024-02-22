@@ -1392,7 +1392,7 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError("Hash not found");
         }
 
-        if (Carbon::parse($checkHash->expiredIn) < Carbon::now()) {
+        if (Carbon::parse($checkHash->expiredIn)->startOfDay() < Carbon::now()->startOfDay()) {
 
             return $this->sendError('This link for Supplier Registration has expired. Obtain an active link to proceed with the registration');
 
