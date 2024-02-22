@@ -305,7 +305,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'currencyID' => 'required',
                         'interval' => 'required',
                         'through' => 'required'
+                ], [
+                    'suppliers.required' => 'The supplier/employee field is required.'
                 ]);
+
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
