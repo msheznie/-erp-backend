@@ -1302,11 +1302,13 @@ class SupplierMasterAPIController extends AppBaseController
         $hashKey = bin2hex($bytes);
         $empID = \Helper::getEmployeeSystemID();
 
+        $expiredDays = $input['expiryPeriod'];
+
         $insertData = [
             'hashKey' => $hashKey,
             'generatedBy' => $empID,
             'genratedDate' => Carbon::now(),
-            'expiredIn' => Carbon::now()->addDays(2),
+            'expiredIn' => Carbon::now()->addDays($expiredDays),
             'isUsed' => 0,
             'companySystemID' => $input['companySystemID']
         ];
@@ -1324,16 +1326,16 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError("Hash not found");
         }
 
-        $checkHash = ExternalLinkHash::where('hashKey', $input['uid'])
-                                     ->where('isUsed', 0)
-                                     ->first();
+        $checkHash = ExternalLinkHash::where('hashKey', $input['uid'])->first();
 
         if (!$checkHash) {
             return $this->sendError("Hash not found");
         }
 
-        if (Carbon::parse($checkHash->expiredIn) < Carbon::now()) {
-             return $this->sendError("Hash expired");
+        if (Carbon::parse($checkHash->expiredIn)->startOfDay() < Carbon::now()->startOfDay()) {
+
+            return $this->sendError('This link for Supplier Registration has expired. Obtain an active link to proceed with the registration');
+
         }
 
         return $this->sendResponse([], 'External link validated successfully');
@@ -1374,9 +1376,7 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError("Hash not found");
         }
 
-        $checkHash = ExternalLinkHash::where('hashKey', $input['uid'])
-                                     ->where('isUsed', 0)
-                                     ->first();
+        $checkHash = ExternalLinkHash::where('hashKey', $input['uid'])->first();
 
         if (!$checkHash) {
             return $this->sendError("Hash not found");
@@ -1500,7 +1500,6 @@ class SupplierMasterAPIController extends AppBaseController
 
             }
 
-            $checkHash->isUsed = 1;
             $checkHash->save();
 
             foreach ($input['attachments'] as $key => $value) {
