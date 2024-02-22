@@ -257,7 +257,9 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
                     Company::where('companySystemID', $systemGlCodeScenarioDetail->companySystemID)->update(['exchangeGainLossGLCodeSystemID' => $systemGlCodeScenarioDetail->chartOfAccountSystemID, 'exchangeGainLossGLCode' => $chartOfAccountAssigned->AccountCode]);
                 }
                 else {
-                    return $this->sendError('GL Code is not assigned to the company');
+                    if(!isset($input['isFromGLConfig'])) {
+                        return $this->sendError('GL Code is not assigned to the company');
+                    }
                 }
 
             }
