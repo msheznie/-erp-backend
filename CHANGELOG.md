@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.33.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.32.2...v10.33.0) (2024-02-22)
+
+
+### Features
+
+* **system admin:** supplier registration link expiry validation enhanced [GCP-2931] ([#5710](https://github.com/pbsgears/Gears_BackEnd/issues/5710)) ([96bfea1](https://github.com/pbsgears/Gears_BackEnd/commit/96bfea193a6173769c13f96d9bb9eb5a034b4e01))
+
+
+### Bug Fixes
+
+* **accounts payable:** payment Voucher Matching Error ,while confirming the doc [GCP-2954] ([#5711](https://github.com/pbsgears/Gears_BackEnd/issues/5711)) ([4f49b01](https://github.com/pbsgears/Gears_BackEnd/commit/4f49b01a88b642be79bc9f0ef6459ee93c952f40))
+
 ## [10.31.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.30.3...v10.31.0) (2024-02-09)
 
 
