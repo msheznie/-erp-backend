@@ -3348,7 +3348,18 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->value('templateID');
             $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->value('isActive');
 
-            if ($assignedTemplateId != null && $isActiveTemplate) {
+            $approvedPoConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)
+                ->where(function ($query) {
+                    $query->where('isApproved', true)
+                        ->orWhere('isRejected', true);
+                })
+                ->where('isSelected', true)->orderBy('sortOrder')->get();
+            if ($approvedPoConfigs->isNotEmpty())
+            {
+                $purchaseOrderPaymentTermConfigs = $approvedPoConfigs;
+            }
+            else if ($assignedTemplateId != null && $isActiveTemplate)
+            {
                 $poAssignedTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->first();
                 if (!$poAssignedTemplateConfigs) {
                     $paymentTermConfigs = PaymentTermConfig::where('templateId', $assignedTemplateId)->get();
@@ -3356,7 +3367,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                     $this->createProcumentOrderPaymentTermConfigs($assignedTemplateId, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
                 }
                 $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->where('isSelected', true)->orderBy('sortOrder')->get();
-            } else {
+            } else
+            {
                 $poDefaultConfigUpdate = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
                 if ($poDefaultConfigUpdate) {
                     $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
@@ -5067,6 +5079,8 @@ ORDER BY
             $purchaseOrder->RollLevForApp_curr = 1;
             $purchaseOrder->save();
         }
+
+        DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->update(['isRejected' => false]);
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order Amend successfully');
     }

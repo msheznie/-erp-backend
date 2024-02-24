@@ -411,6 +411,38 @@ class PaymentTermTemplateAPIController extends AppBaseController
 
     }
 
+    public function changeActiveStatus(UpdatePaymentTermTemplateAPIRequest $request){
+
+        $input = $request->all();
+
+        $paymentTermTemplate = $this->paymentTermTemplateRepository->findWithoutFail($input['id']);
+
+        if (empty($paymentTermTemplate)) {
+            return $this->sendError('Payment Term Template not found');
+        }
+
+        if($input['isActive'] == false)
+        {
+            $tempPulledPO = DB::table('po_wise_payment_term_config')->where('templateID', $input['id'])
+                ->pluck('purchaseOrderID')->unique()->values()->all();
+
+            $pendingApprovalCount = ProcumentOrder::whereIn('purchaseOrderID', $tempPulledPO)
+                ->where('poConfirmedYN', 1)
+                ->where('approved', 0)
+                ->where('refferedBackYN', 0)
+                ->count();
+
+            if ($pendingApprovalCount > 0) {
+                return $this->sendError('There are pending purchase orders awaiting approval with this template.', 500);
+            }
+        }
+
+        $paymentTermTemplate = $paymentTermTemplate->update(['isActive' => $input['isActive']]);
+
+        return $this->sendResponse(null, 'Payment Term Template updated successfully');
+
+    }
+
     public function insertPreDefinedConfigTerms($templateId) {
         $predefinedTerms = [
             'Payment Terms',

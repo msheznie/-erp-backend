@@ -145,4 +145,5 @@ Route::group([], function() {
     Route::post('getSupplierList', 'PaymentTermTemplateAssignedAPIController@getSupplierList')->name('Get supplier list');
     Route::resource('template_assign_suppliers', 'PaymentTermTemplateAssignedAPIController');
     Route::post('getAllAssignedSuppliers', 'PaymentTermTemplateAssignedAPIController@getAllAssignedSuppliers')->name('Get all assigned suppliers');
+    Route::post('changeActiveStatus', 'PaymentTermTemplateAPIController@changeActiveStatus')->name('Change template active status');
 });

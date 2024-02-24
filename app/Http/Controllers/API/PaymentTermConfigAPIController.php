@@ -342,6 +342,10 @@ class PaymentTermConfigAPIController extends AppBaseController
         DB::table('po_wise_payment_term_config')
             ->where('templateID', $configUpdateTempId)
             ->whereNotIn('purchaseOrderID', $configUpdatedPo)
+            ->where(function ($query) {
+                $query->where('isApproved', false)
+                    ->where('isRejected', false);
+            })
             ->delete();
 
         return $this->sendResponse($paymentTermConfig, 'Description updated successfully');
@@ -379,6 +383,10 @@ class PaymentTermConfigAPIController extends AppBaseController
         DB::table('po_wise_payment_term_config')
             ->where('templateID', $templateID)
             ->whereNotIn('purchaseOrderID', $configUpdatedPo)
+            ->where(function ($query) {
+                $query->where('isApproved', false)
+                    ->where('isRejected', false);
+            })
             ->delete();
 
         return $this->sendResponse($paymentTermConfig, 'Description removed successfully');
