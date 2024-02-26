@@ -2297,7 +2297,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
     public function downloadProjectUtilizationReport(Request $request)
     {
-        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15];
+        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15, 17];
         $dateFrom = (new Carbon($request->fromDate))->format('d/m/Y');
         $dateTo = (new Carbon($request->toDate))->format('d/m/Y');
 
