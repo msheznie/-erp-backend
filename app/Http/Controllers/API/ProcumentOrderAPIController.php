@@ -3353,10 +3353,10 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                     $query->where('isApproved', true)
                         ->orWhere('isRejected', true);
                 })
-                ->where('isSelected', true)->orderBy('sortOrder')->get();
+                ->orderBy('sortOrder')->get();
             if ($approvedPoConfigs->isNotEmpty())
             {
-                $purchaseOrderPaymentTermConfigs = $approvedPoConfigs;
+                $purchaseOrderPaymentTermConfigs = $approvedPoConfigs->where('isSelected', true);
             }
             else if ($assignedTemplateId != null && $isActiveTemplate)
             {
