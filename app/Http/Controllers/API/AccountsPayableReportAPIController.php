@@ -2043,7 +2043,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
-                                erp_paysupplierinvoicedetail.isRetention = 0
+                                erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
