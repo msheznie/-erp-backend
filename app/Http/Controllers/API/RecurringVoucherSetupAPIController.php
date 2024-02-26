@@ -940,6 +940,8 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             $rrvMaster->approvedByUserID = null;
             $rrvMaster->approvedDate = null;
             $rrvMaster->postedDate = null;
+
+            $rrvMaster->refferedBackYN = 0;
             $rrvMaster->save();
 
             AuditTrial::createAuditTrial($rrvMaster->documentSystemID,$id,$input['returnComment'],'returned back to amend');
