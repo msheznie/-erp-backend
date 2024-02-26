@@ -60,10 +60,7 @@ class RecurringVoucherSetupRepository extends BaseRepository
     public function rrvMasterListQuery($request, $input, $search = '') {
 
         $rrvMaster = RecurringVoucherSetup::where('companySystemID', $input['companySystemID']);
-        $rrvMaster->with(['created_by', 'transactioncurrency', 'detail' => function ($query) {
-            $query->selectRaw('COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,recurringVoucherAutoId');
-            $query->groupBy('recurringVoucherAutoId');
-        }]);
+        $rrvMaster->with(['created_by', 'transactioncurrency']);
 
         if (array_key_exists('documentType', $input)) {
             if (($input['documentType'] == 0 || $input['documentType'] == 1 || $input['documentType'] == 2) && !is_null($input['documentType'])) {

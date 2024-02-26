@@ -316,6 +316,12 @@ class RecurringVoucherSetup extends Model
         'refferedBackYN' => 'integer',
     ];
 
+    protected $appends = [
+      'creditSum',
+      'debitSum',
+      'isStopAllSchedule'
+    ];
+
     /**
      * Validation rules
      *
@@ -354,6 +360,11 @@ class RecurringVoucherSetup extends Model
         return $this->hasMany('App\Models\RecurringVoucherSetupDetail', 'recurringVoucherAutoId', 'recurringVoucherAutoId');
     }
 
+    public function schedules()
+    {
+        return $this->hasMany('App\Models\RecurringVoucherSetupSchedule', 'recurringVoucherAutoId', 'recurringVoucherAutoId');
+    }
+
     public function approved_by()
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'recurringVoucherAutoId');
@@ -367,6 +378,23 @@ class RecurringVoucherSetup extends Model
     public function company()
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function getDebitSumAttribute(){
+        $result = $this->detail()->selectRaw('COALESCE(SUM(debitAmount),0) as debitSum')->groupBy('recurringVoucherAutoId')->first();
+
+        return $result ? $result->debitSum : null;
+    }
+
+    public function getCreditSumAttribute(){
+        $result = $this->detail()->selectRaw('COALESCE(SUM(creditAmount),0) as creditSum')->groupBy('recurringVoucherAutoId')->first();
+
+        return $result ? $result->creditSum : null;
+    }
+
+    public function getIsStopAllScheduleAttribute(){
+        $result = $this->schedules()->selectRaw('MIN(stopYN) as stopAll')->groupBy('recurringVoucherAutoId')->first();
+        return $result ? $result->stopAll : 0;
     }
     
 }
