@@ -92,6 +92,7 @@ Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsU
 Route::post('getPreBidClarifications', 'TenderBidClarificationsAPIController@getPreBidClarifications')->name("Get pre bid clarifications");
 Route::post('getPreBidClarificationsResponse', 'TenderBidClarificationsAPIController@getPreBidClarificationsResponse')->name("Get pre bid clarifications response");
 Route::post('forwardPreBidClarification', 'TenderBidClarificationsAPIController@forwardPreBidClarification')->name("Forward pre bid clarifications");
+Route::post('getPreBidClarificationsPolicyData', 'TenderBidClarificationsAPIController@getPreBidClarificationsPolicyData')->name("Get pre bid clarifications policy data");
 Route::post('createResponse', 'TenderBidClarificationsAPIController@createResponse')->name("Create response");
 Route::post('getTenderMasterApproval', 'TenderMasterAPIController@getTenderMasterApproval')->name("Get tender master approval");
 Route::post('getTenderMasterFullApproved', 'TenderMasterAPIController@getTenderMasterFullApproved')->name("Get tender master full approved");

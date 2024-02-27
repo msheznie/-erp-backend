@@ -90,6 +90,7 @@ define('GET_PAYMENT_VOUCHER_DETAILS', 'GET_PAYMENT_VOUCHER_DETAILS');
 define('CHECK_GRV_CREATION', 'CHECK_GRV_CREATION');
 define('GET_NEGOTIATION_TENDERS', 'GET_NEGOTIATION_TENDERS');
 define('GET_SUPPLIER_REGISTRATION_DATA', 'GET_SUPPLIER_REGISTRATION_DATA');
+define('GET_PREBID_CLARIFICATION_POLICY', 'GET_PREBID_CLARIFICATION_POLICY');
 
 
 class APIController extends Controller
@@ -255,6 +256,8 @@ class APIController extends Controller
                 return $this->SRMService->getNegotiationTenders($request);
             case GET_SUPPLIER_REGISTRATION_DATA:
                 return $this->SRMService->getSupplierRegistrationData($request);
+            case GET_PREBID_CLARIFICATION_POLICY:
+                return $this->SRMService->getPreBidClarificationPolicy($request);
             default:
                 return [
                     'success'   => false,

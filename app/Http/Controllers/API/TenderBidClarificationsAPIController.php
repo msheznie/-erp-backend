@@ -7,6 +7,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderBidClarificationsAPIRequest;
 use App\Http\Requests\API\UpdateTenderBidClarificationsAPIRequest;
 use App\Mail\EmailForQueuing;
+use App\Models\CompanyPolicyMaster;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderBidClarifications;
 use App\Repositories\TenderBidClarificationsRepository;
@@ -359,6 +360,9 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $company = Company::where('companySystemID', $companySystemID)->first();
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
 
+
+
+
         DB::beginTransaction();
         try {
             $data['tender_master_id'] = $tenderParentPost['tender_master_id'];
@@ -371,6 +375,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $data['company_id'] = $companySystemID;
             $data['document_system_id'] = $documentCode->documentSystemID;
             $data['document_id'] = $documentCode->documentID;
+            $data['is_checked'] = $input['is_checked'];
             $result = TenderBidClarifications::create($data);
             if (isset($input['Attachment']) && !empty($input['Attachment'])) {
                 $attachment = $input['Attachment'];
@@ -379,6 +384,9 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
             if ($result) {
                 $updateRec['is_answered'] = 1;
+                if($input['is_checked'] == 1){
+                    $updateRec['is_checked'] = 1;
+                }
                 $result =  TenderBidClarifications::where('id', $id)
                     ->update($updateRec);
                 DB::commit();
@@ -581,5 +589,14 @@ class TenderBidClarificationsAPIController extends AppBaseController
         }
         return ['success' => true, 'message' => 'Email/s sent successfully'];
 
+    }
+
+    public function getPreBidClarificationsPolicyData(Request $request){
+
+        $input = $request->all();
+        $companySystemID = $input['companySystemID'];
+        $raiseAsPrivate = \Helper::checkPolicy($companySystemID,87);
+
+        return $this->sendResponse($raiseAsPrivate, 'PreBid Clarifications Policy retrieved successfully');
     }
 }
