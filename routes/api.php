@@ -13,12 +13,9 @@
 
 use Illuminate\Support\Facades\Route;
 
-
 Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTaxLedgerForSupplierInvoice');
 
-
 Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
-
 
 Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getAppearance', 'CompanyAPIController@getAppearance');

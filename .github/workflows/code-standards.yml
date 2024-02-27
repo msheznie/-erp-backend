@@ -2,14 +2,8 @@ name: Code Standards Check
 
 on:
   pull_request:
-    paths:
-      - 'app/**'
-      - 'config/**'
-      - 'database/**'
-      - 'public/**'
-      - 'resources/**'
-      - 'routes/**'
-      # Add more paths as needed
+    branches:
+      - 'erp-sprint-*'
 
 jobs:
   code_standards:
@@ -47,4 +41,4 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Run PHP_CodeSniffer on changed files
-        run: ./vendor/bin/phpcs --standard=PSR2 --extensions=php ${{ steps.changed-files.outputs.all_changed_files }}
+        run: ./vendor/bin/phpcs --standard=PSR12 --extensions=php ${{ steps.changed-files.outputs.all_changed_files }}
