@@ -49,13 +49,10 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->updated_by = '';
         $supplierRegistrationLink->is_bid_tender =  ($request->input('is_bid_tender') == true ? 1:0);
         $supplierRegistrationLink->created_via =  1;
+        $supplierRegistrationLink->is_existing_erp_supplier = 0;
         if (isset($supplierCodeSystem) && $supplierCodeSystem != null) {
             $supplierRegistrationLink->supplier_master_id = $request->input('supplierCodeSystem');
             $supplierRegistrationLink->is_existing_erp_supplier = 1;
-            $supplierRegistrationLink->confirmed_yn = 1;
-            $supplierRegistrationLink->approved_yn = -1;
-        } else {
-            $supplierRegistrationLink->is_existing_erp_supplier = 0; // Default to 0 if not an existing ERP supplier
         }
         $supplierRegistrationLink->sub_domain = $request->input('domain');
         $result = $supplierRegistrationLink->save();
