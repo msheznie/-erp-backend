@@ -3,6 +3,7 @@ namespace App\Services\hrms\attendance;
 
 use App\enums\modules\Modules;
 use App\enums\shift\Shifts;
+use App\Models\SrpEmployeeDetails;
 use App\Services\hrms\modules\HrModuleAssignService;
 use Collator;
 use Exception;
@@ -27,6 +28,7 @@ class AttendanceDataPullingService{
     private $pulledVia;
 
     private $isShiftModule;
+    private $chunkSize;
 
 
     public function __construct($companyId, $pullingDate, $isClockOutPulling)
@@ -39,7 +41,9 @@ class AttendanceDataPullingService{
         $this->dateTime = Carbon::now()->format('Y-m-d H:i:s');
         $this->pulledVia = ($isClockOutPulling)? 1: 2;
 
-        $this->uniqueKey = "{$this->companyId}" . rand(2, 500) . '' . Carbon::now()->timestamp;        
+        $this->uniqueKey = "{$this->companyId}" . rand(2, 500) . '' . Carbon::now()->timestamp;
+        $this->chunkSize = 200;
+        $this->isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
     }
 
     function execute(){
@@ -50,26 +54,7 @@ class AttendanceDataPullingService{
 
         try{
 
-            $moduleAssignServiceObj = new HrModuleAssignService(Modules::SHIFT, $this->companyId);
-            $this->isShiftModule = $moduleAssignServiceObj->__destruct();
-
-            if($this->isClockOutPulling){
-                $this->deleteEntries();
-            }
-            
-            if(!$this->is_all_data_pulled()){ return false; }
-
-            $this->step1();
-        
-            if($this->isClockOutPulling){
-                $this->step2();
-            }
-            
-            if(!$this->step3()){ return false; }
-
-            $this->step4();
-
-            $this->step5();
+            $this->handleAttendance();
 
             DB::commit();
 
@@ -89,7 +74,29 @@ class AttendanceDataPullingService{
             Log::error($msg);
             return false;
         }
-        
+    }
+
+    function handleAttendance(){
+
+        if($this->isClockOutPulling){
+            $this->deleteEntries();
+        }
+
+        if(!$this->isClockOutPulling){
+            if(!$this->is_all_data_pulled()){ return false; }
+        }
+
+        $this->step1();
+
+        if($this->isClockOutPulling){
+            $this->step2();
+        }
+
+        if(!$this->step3()){ return false; }
+
+        $this->step4();
+
+        $this->step5();
     }
 
     function is_all_data_pulled(){
@@ -110,8 +117,15 @@ class AttendanceDataPullingService{
     }
 
     function step1(){
+        $this->updateEmpIdList();
+        $empIdList = $this->getEmpIdList();
+        $this->step1ChukInsert($empIdList);
+
+    }
+
+    function step1ChukInsert($empIdList){
+
         $isUpdateWhere = (!$this->isClockOutPulling)? ' AND t.isUpdated = 0 ': '';
-        
         $q = "SELECT t.autoID, l.empID, t.device_id, t.empMachineID, l.floorID, t.attDate, t.attTime, t.uploadType
         FROM srp_erp_pay_empattendancetemptable AS t
         JOIN srp_erp_empattendancelocation AS l ON l.deviceID = t.device_id AND t.empMachineID = l.empMachineID               
@@ -119,20 +133,68 @@ class AttendanceDataPullingService{
         AND NOT EXISTS (
             SELECT * FROM srp_erp_pay_empattendancereview AS r
             WHERE r.companyID = {$this->companyId} AND r.attendanceDate = t.attDate AND r.empID = l.empID 
-        )        
-        ORDER BY l.empID, t.attTime ASC";
+        )";
 
-        $this->tempData = DB::select($q);
+        $chunks = array_chunk($empIdList, $this->chunkSize);
 
-        if(empty($this->tempData)){
-            Log::error('No records found for pulling step-1'.$this->log_suffix(__LINE__));
-            return false;
+        foreach ($chunks as $chunk) {
+            $qWithEmpIds = $q . " AND l.empID IN (" . implode(",", $chunk) . ")";
+            $tempAttData = DB::table(DB::raw("($qWithEmpIds) as tempTable"))
+                ->orderBy('empID')
+                ->orderBy('attTime')
+                ->get()
+                ->toArray();
+
+            $this->tempData = $tempAttData;
+            if (empty($this->tempData)) {
+                Log::error('No records found for pulling step-1'.$this->log_suffix(__LINE__));
+                return false;
+            }
+
+            $this->insert_to_temp_tb();
         }
 
-        $this->insert_to_temp_tb();
+        return true;
+    }
 
-        return true;        
-    }    
+    public function getEmpIdList()
+    {
+        return SrpEmployeeDetails::select('EIdNo')
+            ->where('Erp_companyID', 1)
+            ->where('isDischarged', 0)
+            ->where(function ($query) {
+                $query->whereNull('dischargedDate')
+                    ->orWhere('dischargedDate', '<=', $this->pullingDate);
+            })
+            ->where('isSystemAdmin', 0)
+            ->where('empConfirmedYN', 1)
+            ->pluck('EIdNo')
+            ->toArray();
+    }
+
+    function updateEmpIdList(){
+
+        $q = "SELECT t.autoID, t.emp_id as attEmpId, l.empID as mEmpId
+        FROM srp_erp_pay_empattendancetemptable AS t
+        JOIN srp_erp_empattendancelocation AS l ON l.deviceID = t.device_id AND t.empMachineID = l.empMachineID               
+        WHERE t.companyID = {$this->companyId} AND t.attDate = '{$this->pullingDate}' 
+        AND (t.emp_id = 0 OR t.emp_id IS NULL)
+        AND NOT EXISTS (
+            SELECT * FROM srp_erp_pay_empattendancereview AS r
+            WHERE r.companyID = {$this->companyId} AND r.attendanceDate = t.attDate AND r.empID = l.empID 
+        )";
+
+        DB::table(DB::raw("($q) as tempTable"))
+            ->orderBy('autoID')
+            ->chunk($this->chunkSize, function ($tempAttData) {
+                foreach ($tempAttData as $row) {
+                    DB::table('srp_erp_pay_empattendancetemptable')
+                        ->where('autoID', $row->autoID)
+                        ->update(['emp_id' => $row->mEmpId]);
+                }
+            });
+
+    }
 
     function insert_to_temp_tb(){ 
         $temp = collect($this->tempData);
@@ -183,11 +245,6 @@ class AttendanceDataPullingService{
 
             $data[] = $thisData;
 
-            DB::table('srp_erp_pay_empattendancetemptable')
-            ->whereIn('autoID', array_column($row, 'autoID'))
-            ->update([
-                'emp_id'=> $empId 
-            ]); 
         }
         
         unset($temp);
@@ -213,26 +270,32 @@ class AttendanceDataPullingService{
             WHERE att.company_id = {$this->companyId} AND att.att_date = '{$this->pullingDate}' AND att.emp_id = e.EIdNo
         )";
 
-        
-        $temp = DB::select($q);
-         
-        if(empty($temp)){
+        DB::table(DB::raw("($q) as tempTable"))
+            ->orderBy('EIdNo')
+            ->chunk($this->chunkSize, function ($tempAttData) {
+                $chunkedTempData = $tempAttData->toArray();
+                $this->step2InsertChunkData($chunkedTempData);
+            });
+    }
+
+    function step2InsertChunkData($chunkedTempData){
+        if(empty($chunkedTempData)){
             return true;
-        } 
-        
+        }
+
         $data = [];
-        foreach ($temp as $row) {
+
+        foreach ($chunkedTempData as $chunkedRow) {
             $thisData = [];
 
-            $thisData['emp_id'] = $row->EIdNo;          
-            $thisData['att_date'] = $this->pullingDate; 
+            $thisData['emp_id'] = $chunkedRow->EIdNo;
+            $thisData['att_date'] = $this->pullingDate;
             $thisData['company_id'] = $this->companyId;
             $thisData['uniqueID'] = $this->uniqueKey;
 
             $data[] = $thisData;
         }
-        
-        unset($temp);
+
         DB::table('attendance_temporary_tbl')->insert($data);
     }
 
