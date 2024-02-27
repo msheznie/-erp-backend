@@ -28,24 +28,24 @@ class ItemFinanceCategoryAuditService
             if (!empty($amendedFields)) {
                 unset($amendedFields['financeGLcodebBS'], $amendedFields['financeGLcodePL'], $amendedFields['financeCogsGLcodePL'], $amendedFields['financeGLcodeRevenue']);
                 $fieldMappingsGL = [
-                    'financeGLcodebBSSystemID' => 'Balance sheet GL Code',
-                    'financeGLcodePLSystemID' => 'Consumption GL Code',
-                    'financeGLcodeRevenueSystemID' => 'Revenue GL Code',
-                    'financeCogsGLcodePLSystemID' => 'COGS GL Code',
+                    'financeGLcodebBSSystemID' => 'balance_sheet_gl_code',
+                    'financeGLcodePLSystemID' => 'consumption_gl_code',
+                    'financeGLcodeRevenueSystemID' => 'revenue_gl_code',
+                    'financeCogsGLcodePLSystemID' => 'cogs_gl_code',
                 ];
                 $fieldMappings = [
-                    'categoryDescription' => 'Category Description',
-                    'enableSpecification' => 'Enable Specification',
-                    'includePLForGRVYN' => 'Include PL For GRV YN',
-                    'expiryYN' => 'Expiry',
-                    'isActive' => 'Is Active',
-                    'attributesYN' => 'Attributes',
-                    'trackingType' => 'Tracking'
+                    'categoryDescription' => 'category_description',
+                    'enableSpecification' => 'enable_specification',
+                    'includePLForGRVYN' => 'include_pl_for_grv_yn',
+                    'expiryYN' => 'expiry',
+                    'isActive' => 'is_active',
+                    'attributesYN' => 'attributes',
+                    'trackingType' => 'tracking'
                 ];
                 $fieldMappingsTracking = [
-                    0 => 'No Tracking',
-                    1 => 'Batch/Lot No',
-                    2 => 'Unique Serial No',
+                    0 => 'no_tracking',
+                    1 => 'batch/lot_no',
+                    2 => 'unique_serial_no',
                 ];
                 foreach ($amendedFields as $field => $value) {
 
