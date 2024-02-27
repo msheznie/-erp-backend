@@ -85,11 +85,11 @@ class CustomerMasterAuditService
             }
 
             if($auditData['previosValue']['isCustomerActive'] != $auditData['newValue']['isCustomerActive']) {
-                $modifiedData[] = ['amended_field' => "is_active", 'previous_value' => ($auditData['previosValue']['isCustomerActive']==1) ? 'Yes' : 'No', 'new_value' => ($auditData['newValue']['isCustomerActive'] == 1) ? 'Yes' : 'No'];
+                $modifiedData[] = ['amended_field' => "is_active", 'previous_value' => ($auditData['previosValue']['isCustomerActive']==1) ? 'yes' : 'no', 'new_value' => ($auditData['newValue']['isCustomerActive'] == 1) ? 'yes' : 'no'];
             }
             
             if($auditData['previosValue']['vatEligible'] != $auditData['newValue']['vatEligible']) {
-                $modifiedData[] = ['amended_field' => "vat_eligible", 'previous_value' => ($auditData['previosValue']['vatEligible']==1) ? 'Yes' : 'No', 'new_value' => ($auditData['newValue']['vatEligible'] == 1) ? 'Yes' : 'No'];
+                $modifiedData[] = ['amended_field' => "vat_eligible", 'previous_value' => ($auditData['previosValue']['vatEligible']==1) ? 'yes' : 'no', 'new_value' => ($auditData['newValue']['vatEligible'] == 1) ? 'yes' : 'no'];
 
             }
 

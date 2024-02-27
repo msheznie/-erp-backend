@@ -60,8 +60,8 @@ class ItemFinanceCategoryAuditService
                     } else {
                         $fieldName = $fieldMappings[$field] ?? $field;
                         if ($field == "enableSpecification" || $field == "includePLForGRVYN" || $field == "expiryYN" || $field == "attributesYN" || $field == "isActive") {
-                            $newValue = ($value['new_value'] == true || $value['new_value'] == 1) ? 'True' : 'False';
-                            $oldValue = is_null($value['old_value'])  ? null : (($value['new_value'] == true || $value['new_value'] == 1) ? 'False' : 'True');
+                            $newValue = ($value['new_value'] == true || $value['new_value'] == 1) ? 'yes' : 'no';
+                            $oldValue = is_null($value['old_value'])  ? null : (($value['new_value'] == true || $value['new_value'] == 1) ? 'no' : 'yes');
                         } else if ($field == "trackingType") {
                             $newValue = $fieldMappingsTracking[$value['new_value']] ?? $value['new_value'];
                             $oldValue = $fieldMappingsTracking[$value['old_value']] ?? $value['old_value'];
