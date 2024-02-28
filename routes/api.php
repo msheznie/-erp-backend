@@ -186,16 +186,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             /** Segment master Created by Nazir  */
 
             Route::post('getAllSegmentMaster', 'SegmentMasterAPIController@getAllSegmentMaster');
-            Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData');
-            Route::get('getOrganizationStructure', 'SegmentMasterAPIController@getOrganizationStructure');
-            Route::resource('segment/masters', 'SegmentMasterAPIController');
-            Route::post('getAffectedDocuments', 'SegmentMasterAPIController@getAffectedDocuments');
-            Route::post('getAssignedEmployees', 'SegmentMasterAPIController@getAssignedEmployees');
-            Route::post('exportAssignedEmp', 'SegmentMasterAPIController@exportAssignedEmp');
-            Route::post('exportProcessedSegments', 'SegmentMasterAPIController@exportProcessedSegments');
 
 
-            Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster');
 
             //confirmation
             Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
@@ -659,10 +651,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('lpt_permissions', 'LptPermissionAPIController');
             Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
             Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
-            Route::resource('segment_rights', 'SegmentRightsAPIController');
-            Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
             Route::resource('service_lines', 'ServiceLineAPIController');
-            Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
             Route::resource('chartOfAccount/allocation/histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
             Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
             Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
@@ -698,11 +687,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
 
 
-            Route::resource('segment_rights', 'SegmentRightsAPIController');
-            Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
 
             Route::resource('service_lines', 'ServiceLineAPIController');
-            Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
             //Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
 
             Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');

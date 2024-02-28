@@ -94,3 +94,9 @@ Route::group([],function (){
 
     Route::post('generateARCAReportPDF', 'AccountsReceivableReportAPIController@pdfExportCAReport')->name("Account receivable customer aging");
 });
+
+//segment 
+Route::group([],function (){
+    Route::post('exportProcessedSegments', 'SegmentMasterAPIController@exportProcessedSegments')->name('Export processed segments');
+    Route::post('exportAssignedEmp', 'SegmentMasterAPIController@exportAssignedEmp')->name('Export segment assigned employees');
+});
