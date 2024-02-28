@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\enums\modules\Modules;
 use App\Jobs\BirthdayWishInitiate;
+use App\Services\hrms\attendance\SMAttendancePullingService;
+use App\Services\hrms\modules\HrModuleAssignService;
 use Exception;
 use Carbon\Carbon;
 use App\Models\CompanyJobs;
@@ -150,9 +153,16 @@ class HRJobInvokeAPIController extends AppBaseController
             'log_data'=> json_encode(['manually triggered', $data]),
         ]);
 
-        $obj = new AttendanceDataPullingService($companyId, $pullingDate, $isClockOutPulling);
-        $resp = $obj->execute();
+        $isShiftModule = HrModuleAssignService::checkModuleAvailability($companyId, Modules::SHIFT);
 
+        if($isShiftModule){
+            $obj = new SMAttendancePullingService($companyId, $pullingDate, $isClockOutPulling);
+            $obj->execute();
+            return $this->sendResponse($data, 'clock out pulling job added to queue');
+        }
+
+        $obj = new AttendanceDataPullingService($companyId, $pullingDate, $isClockOutPulling);
+        $obj->execute();
         return $this->sendResponse($data, 'clock out pulling job added to queue');
     }
 

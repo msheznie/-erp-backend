@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use App\enums\modules\Modules;
+use App\Services\hrms\attendance\SMAttendancePullingService;
+use App\Services\hrms\modules\HrModuleAssignService;
 use Illuminate\Bus\Queueable;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
@@ -51,7 +54,13 @@ class AttendanceDayEndPulling implements ShouldQueue
         $msg = "Company id {$this->companyId} started to execute the day end pulling in {$this->dispatchDb} DB ( {$this->attDate} )";
         Log::info("$msg \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
-        $obj = new AttendanceDataPullingService($this->companyId, $this->attDate, true);
+        $isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
+        if($isShiftModule){
+            $obj = new SMAttendancePullingService($this->companyId, $this->attDate, true);
+        }else{
+            $obj = new AttendanceDataPullingService($this->companyId, $this->attDate, true);
+        }
+
         $obj->execute();
     }
 }
