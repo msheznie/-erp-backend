@@ -79,7 +79,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");
 
 
-            Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
             Route::resource('navigation_menuses', 'NavigationMenusAPIController');
 
@@ -278,11 +277,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
 
             Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
-
-
-            Route::post('generateEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport');
-
-            Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport');
 
             Route::get('getNotifications', 'UserAPIController@getNotifications');
             Route::post('updateNotification', 'UserAPIController@updateNotification');

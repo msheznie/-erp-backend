@@ -260,6 +260,7 @@ Route::group([], function(){
     Route::post('getCashFlowPullingItemsForProceeds', 'CashFlowReportAPIController@getCashFlowPullingItemsForProceeds')->name('Get cashflow pulling items for proceeds');
     Route::post('postCashFlowPulledItems', 'CashFlowReportAPIController@postCashFlowPulledItems')->name('Post Cash flow pulled items');
     Route::post('postCashFlowPulledItemsForProceeds', 'CashFlowReportAPIController@postCashFlowPulledItemsForProceeds')->name('Post Cashflow pulled items for proceeds');
+    Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport')->name('Download Employee ledger report');
     Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport')->name('Download project utilization report');
 
 });
