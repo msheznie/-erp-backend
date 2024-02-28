@@ -279,13 +279,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
 
-            Route::get('getUtilizationFilterFormData', 'FinancialReportAPIController@getUtilizationFilterFormData');
-            Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
-            Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
 
             Route::post('generateEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport');
 
-            Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
             Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport');
 
             Route::get('getNotifications', 'UserAPIController@getNotifications');
