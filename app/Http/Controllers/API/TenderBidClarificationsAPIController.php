@@ -541,14 +541,52 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $input = $request->all();
         $bidId = $input['bid_id'];
 
-        $bidClarifications = TenderBidClarifications::with(['attachment','tender'])->where('id', '=', $bidId)->get();
+        $bidClarifications = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
+            $q->with(['profilepic']);
+        }, 'attachment','tender'])
+            ->where('id', '=', $bidId)
+            ->orWhere('parent_id', '=', $bidId)
+            ->orderBy('parent_id', 'asc')
+            ->get();
+
         $tenderCode = $bidClarifications[0]->tender->tender_code;
         $tenderTitle = $bidClarifications[0]->tender->title;
-        $preBidClarifications = $bidClarifications[0]->post;
-        $attachments = $bidClarifications[0]->attachment;
+
+        $preBidClarificationsString = "";
         $file = array();
-        foreach ($attachments as $attachment){
-            $file[$attachment->originalFileName] = Helper::getFileUrlFromS3($attachment->path);
+
+        foreach ($bidClarifications as $bidClarification){
+
+            if($bidClarification->supplier){
+                $supplierName = isset($bidClarification->supplier) ? $bidClarification->supplier->name : "Supplier";
+                $clarificationText = "<span style='font-weight: bold; font-size: 16px'>$supplierName</span><br />";
+            }
+            if($bidClarification->employee){
+                $supplierName = isset($bidClarification->employee) ? $bidClarification->employee->empName : "Admin";
+                $clarificationText = "<span style='font-weight: bold; font-size: 16px'>$supplierName</span><br />";
+            }
+
+            $clarificationText .= "<span style='font-size: 12px;font-style: italic'>$bidClarification->created_at</span><br />";
+
+            if($bidClarification->post){
+                $clarificationText .= "<span style='font-size: 14px'>$bidClarification->post</span><br />";
+            }else{
+                $clarificationText .= " <br />";
+            }
+
+            $attachments = $bidClarification->attachment;
+            if($attachments) {
+                foreach ($attachments as $attachment) {
+                if ($attachment) {
+                    $clarificationText .= "<span style='font-size: 12px;font-weight: bold;'>$attachment->originalFileName</span><br /><br />";
+                } else {
+                    $clarificationText .= "<br /><br />";
+                }
+                    $file[$attachment->originalFileName] = Helper::getFileUrlFromS3($attachment->path);
+                }
+            }
+
+            $preBidClarificationsString .= $clarificationText;
         }
 
         $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
@@ -583,7 +621,6 @@ class TenderBidClarificationsAPIController extends AppBaseController
         } else {
             foreach ($emailString as $email){
             $forwardEmail = email::emailAddressFormat($email);
-
             Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarifications"."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
             }
         }
