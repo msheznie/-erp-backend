@@ -138,9 +138,16 @@ class CompanyAPIController extends AppBaseController
             $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
         })
         ->orderBy('AccountDescription', 'asc')
-        ->get();    
+        ->get();
 
-
+        $assetAndLiabilityAccountCOA = ChartOfAccount::where('isBank',0)
+            ->where('isApproved',1)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
+            })
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
 
 
         /**Country Drop Down */
@@ -201,8 +208,8 @@ class CompanyAPIController extends AppBaseController
 
         $hasSupplierGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 76);
 
-        $discountsChartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
-            ->where('controlAccountsSystemID', 1)
+        $discountsChartOfAccounts = ChartOfAccount::where('isApproved',1)
+            ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'PL')
             ->orderBy('AccountDescription', 'asc')
             ->get();
@@ -228,7 +235,8 @@ class CompanyAPIController extends AppBaseController
             'supplierGroups' => $supplierGroups,
             'isGroup' => $isGroup,
             'hasSupplierGeneratePolicy'=> $hasSupplierGeneratePolicy,
-            'discountsChartOfAccounts' => $discountsChartOfAccounts
+            'discountsChartOfAccounts' => $discountsChartOfAccounts,
+            'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccountCOA
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 

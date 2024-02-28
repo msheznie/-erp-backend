@@ -359,6 +359,14 @@ class CustomerMasterAPIController extends AppBaseController
                                         ->where('catogaryBLorPL', '=', 'BS')
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
+        $data['liabilityAccountsCOA'] = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                            $query->where('companySystemID', $input['companySystemID'])
+                                                ->where('isAssigned', -1)
+                                                ->where('isActive', 1);
+                                        })
+                                        ->where('catogaryBLorPL', '=', 'BS')
+                                        ->orderBy('AccountDescription', 'asc')
+                                        ->get();
 
         $data['gl_secanrio'] = SystemGlCodeScenarioDetail::select('systemGlScenarioID','chartOfAccountSystemID')->with('master')->whereHas('master', function ($q) {
                                         $q->where('department_master_id', 4)->where(function ($q) {
