@@ -882,15 +882,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
 
 
-            Route::resource('cash_flow_reports', 'CashFlowReportAPIController');
-            Route::get('getCashFlowFormData', 'CashFlowReportAPIController@getCashFlowFormData');
-            Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports');
-            Route::post('cashFlowConfirmation', 'CashFlowReportAPIController@cashFlowConfirmation');
-            Route::post('getCashFlowPullingItems', 'CashFlowReportAPIController@getCashFlowPullingItems');
-            Route::post('getCashFlowPullingItemsForProceeds', 'CashFlowReportAPIController@getCashFlowPullingItemsForProceeds');
-            Route::post('postCashFlowPulledItems', 'CashFlowReportAPIController@postCashFlowPulledItems');
-            Route::post('postCashFlowPulledItemsForProceeds', 'CashFlowReportAPIController@postCashFlowPulledItemsForProceeds');
-            Route::get('getCashFlowReportData', 'CashFlowReportAPIController@getCashFlowReportData');
             Route::post('getAllShiftsRPOS', 'POS\PosAPIController@getAllShiftsRPOS');
             Route::post('getAllInvoicesPos', 'POS\PosAPIController@getAllInvoicesPos');
             Route::post('getPosInvoiceData', 'POS\PosAPIController@getPosInvoiceData');
