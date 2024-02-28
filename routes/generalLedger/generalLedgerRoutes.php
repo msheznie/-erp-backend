@@ -277,6 +277,10 @@ Route::group([], function(){
     Route::resource('recurring_voucher_setup_details', 'RecurringVoucherSetupDetailAPIController');
     Route::resource('recurring_voucher_setup_schedules', 'RecurringVoucherSetupScheduleAPIController');
 
+    Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData')->name('Get allocation configuration assign form data');
+    Route::resource('coa_allocation_details', 'ChartOfAccountAllocationDetailAPIController');
+    Route::resource('coa_allocation_masters', 'ChartOfAccountAllocationMasterAPIController');
+
 
     Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData')->name('Get Finance Year Form data');
 

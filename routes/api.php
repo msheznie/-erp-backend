@@ -601,11 +601,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('allocation_masters', 'AllocationMasterAPIController');
 
-            Route::resource('coa_allocation_masters', 'ChartOfAccountAllocationMasterAPIController');
 
-            Route::resource('coa_allocation_details', 'ChartOfAccountAllocationDetailAPIController');
-
-            Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData');
 
             Route::get('getLeaveTypeWithBalance', 'LeaveDataMasterAPIController@getLeaveTypeWithBalance');
 
