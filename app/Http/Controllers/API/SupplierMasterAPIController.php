@@ -2287,16 +2287,18 @@ class SupplierMasterAPIController extends AppBaseController
         }
         
         $isPeriodExist = SupplierBlock::where('supplierCodeSytem',$id)->where('blockType',2);
-        if(($isPeriodExist->count()) > 0 && $input['blockType'] == 2)
+        if($input['blockType'] == 2)
         {
 
             $from =  Carbon::parse($input['blockFrom'])->format('Y-m-d');
             $to =  Carbon::parse($input['blockTo'])->format('Y-m-d');
-
+            
             $input['blockFrom'] = $from;
             $input['blockTo'] = $to;
 
-            $overlapRecord = $isPeriodExist->where(function ($query) use ($from, $to) {
+            if(($isPeriodExist->count()) > 0)
+            {
+                $overlapRecord = $isPeriodExist->where(function ($query) use ($from, $to) {
                     $query->where('blockFrom', '>=', $from)
                         ->where('blockFrom', '<=', $to);
                 })
@@ -2310,10 +2312,13 @@ class SupplierMasterAPIController extends AppBaseController
                 })
                 ->exists();
             
-            if($overlapRecord)
-            {
-                return $this->sendError('The selected period already has a block',422);
+                if($overlapRecord)
+                {
+                    return $this->sendError('The selected period already has a block',422);
+                }
             }
+
+
         }
 
 
