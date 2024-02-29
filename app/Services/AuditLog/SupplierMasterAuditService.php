@@ -139,10 +139,40 @@ class SupplierMasterAuditService
                 $modifiedData[] = ['amended_field' => "icv_sub_category", 'previous_value' => ($previousSubICVCategory) ? $previousSubICVCategory->categoryDescription: '', 'new_value' => ($newSubICVCategory) ? $newSubICVCategory->categoryDescription : ''];
             }
             if($auditData['previosValue']['isLCCYN'] != $auditData['newValue']['isLCCYN']) {
-                $modifiedData[] = ['amended_field' => "lcc", 'previous_value' => ($auditData['previosValue']['isLCCYN']==1) ? 'yes' : 'no', 'new_value' => ($auditData['newValue']['isLCCYN'] == 1) ? 'yes' : 'no'];
+                if($auditData['previosValue']['isLCCYN'] == 1){
+                    $previosValue = 'Yes';
+                } elseif ($auditData['previosValue']['isLCCYN'] == 0){
+                    $previosValue = 'No';
+                } elseif($auditData['previosValue']['isLCCYN'] == -1){
+                    $previosValue = '';
+                }
+
+                if($auditData['newValue']['isLCCYN'] == 1){
+                    $newValue = 'Yes';
+                } elseif ($auditData['newValue']['isLCCYN'] == 0){
+                    $newValue = 'No';
+                } elseif($auditData['newValue']['isLCCYN'] == -1){
+                    $newValue = '';
+                }
+                $modifiedData[] = ['amended_field' => "LCC", 'previous_value' => $previosValue, 'new_value' => $newValue];
             }
             if($auditData['previosValue']['isSMEYN'] != $auditData['newValue']['isSMEYN']) {
-                $modifiedData[] = ['amended_field' => "sme", 'previous_value' => ($auditData['previosValue']['isSMEYN']==1) ? 'yes' : 'no', 'new_value' => ($auditData['newValue']['isSMEYN'] == 1) ? 'yes' : 'no'];
+                if($auditData['previosValue']['isSMEYN'] == 1){
+                    $previosValue = 'Yes';
+                } elseif ($auditData['previosValue']['isSMEYN'] == 0){
+                    $previosValue = 'No';
+                } elseif($auditData['previosValue']['isSMEYN'] == -1){
+                    $previosValue = '';
+                }
+
+                if($auditData['newValue']['isSMEYN'] == 1){
+                    $newValue = 'Yes';
+                } elseif ($auditData['newValue']['isSMEYN'] == 0){
+                    $newValue = 'No';
+                } elseif($auditData['newValue']['isSMEYN'] == -1){
+                    $newValue = '';
+                }
+                $modifiedData[] = ['amended_field' => "SME", 'previous_value' => $previosValue, 'new_value' => $newValue];
             }
             if($auditData['previosValue']['supplierImportanceID'] != $auditData['newValue']['supplierImportanceID']) {
                 $newImportance = SupplierImportance::where('supplierImportanceID',$auditData['newValue']['supplierImportanceID'])->first();
