@@ -248,27 +248,37 @@ class ReceiptAPIService
     private function checkDecimalPlaces($detail,$receipt) {
         if($receipt->documentType != 13) {
             $countDecimals = strlen(substr(strrchr($detail['amount'], "."), 1));
+            $countDecimalsVat = strlen(substr(strrchr($detail['vatAmount'], "."), 1));
         }else {
             $countDecimals = strlen(substr(strrchr($detail['receiptAmount'], "."), 1));
+            $countDecimalsVat = 0;
         }
 
         $currencyDetails = CurrencyMaster::where('currencyID',$receipt->custTransactionCurrencyID)->first();
 
-        if($currencyDetails && $countDecimals != $currencyDetails->DecimalPlaces){
+        if($currencyDetails && $countDecimals > $currencyDetails->DecimalPlaces){
             switch ($receipt->documentType) {
                 case 13 :
                     $this->isError = true;
-                    $error[$receipt->narration][$detail['invoiceCode']] = [$currencyDetails->CurrencyName. ' need '. $currencyDetails->DecimalPlaces .' decimal places'];
+                    $error[$receipt->narration][$detail['invoiceCode']] = [$currencyDetails->CurrencyName. ' receiptAmount need '. $currencyDetails->DecimalPlaces .' decimal places'];
                     array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
                     break;
                 case 14:
                 case 15:
                     $this->isError = true;
-                    $error[$receipt->narration][$detail['comments']] = [$currencyDetails->CurrencyName. ' need '. $currencyDetails->DecimalPlaces .' decimal places'];
+                    $error[$receipt->narration][$detail['comments']] = [$currencyDetails->CurrencyName. ' amount need '. $currencyDetails->DecimalPlaces .' decimal places'];
                     array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
                     break;
             }
 
+        }
+
+        if($currencyDetails && $countDecimalsVat > $currencyDetails->DecimalPlaces) {
+            if ($receipt->documentType != 13) {
+                $this->isError = true;
+                $error[$receipt->narration][$detail['comments']] = [$currencyDetails->CurrencyName. ' vatAmount need '. $currencyDetails->DecimalPlaces .' decimal places'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
         }
     }
 
