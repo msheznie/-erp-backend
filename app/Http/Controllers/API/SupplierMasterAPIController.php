@@ -2293,6 +2293,9 @@ class SupplierMasterAPIController extends AppBaseController
             $from =  Carbon::parse($input['blockFrom'])->format('Y-m-d');
             $to =  Carbon::parse($input['blockTo'])->format('Y-m-d');
 
+            $input['blockFrom'] = $from;
+            $input['blockTo'] = $to;
+
             $overlapRecord = $isPeriodExist->where(function ($query) use ($from, $to) {
                     $query->where('blockFrom', '>=', $from)
                         ->where('blockFrom', '<=', $to);
