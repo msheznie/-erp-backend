@@ -64,6 +64,13 @@ class CustomerMasterAuditService
                 $modifiedData[] = ['amended_field' => "country", 'previous_value' => ($previousCountry) ? $previousCountry->countryName : '', 'new_value' => ($newCountry) ? $newCountry->countryName : ''];
             }
 
+            if($auditData['previosValue']['companyLinkedToSystemID'] != $auditData['newValue']['companyLinkedToSystemID']) {
+                $newLinkedCompany = Company::where('companySystemID',$auditData['newValue']['companyLinkedToSystemID'])->first();
+                $previousLinkedCompany = Company::where('companySystemID',$auditData['previosValue']['companyLinkedToSystemID'])->first();
+
+                $modifiedData[] = ['amended_field' => "linked_company", 'previous_value' => ($previousLinkedCompany) ? $previousLinkedCompany->CompanyName : '', 'new_value' => ($newLinkedCompany) ? $newLinkedCompany->CompanyName : ''];
+            }
+
             if($auditData['previosValue']['customerCity'] != $auditData['newValue']['customerCity']) {
                 $modifiedData[] = ['amended_field' => "city", 'previous_value' => ($auditData['previosValue']['customerCity']) ? $auditData['previosValue']['customerCity'] : '', 'new_value' => ($auditData['newValue']['customerCity']) ? $auditData['newValue']['customerCity'] : ''];
             }
@@ -86,6 +93,10 @@ class CustomerMasterAuditService
 
             if($auditData['previosValue']['isCustomerActive'] != $auditData['newValue']['isCustomerActive']) {
                 $modifiedData[] = ['amended_field' => "is_active", 'previous_value' => ($auditData['previosValue']['isCustomerActive']==1) ? 'yes' : 'no', 'new_value' => ($auditData['newValue']['isCustomerActive'] == 1) ? 'yes' : 'no'];
+            }
+
+            if($auditData['previosValue']['interCompanyYN'] != $auditData['newValue']['interCompanyYN']) {
+                $modifiedData[] = ['amended_field' => "inter_company_yn", 'previous_value' => ($auditData['previosValue']['interCompanyYN']==1) ? 'yes' : 'no', 'new_value' => ($auditData['newValue']['interCompanyYN'] == 1) ? 'yes' : 'no'];
             }
             
             if($auditData['previosValue']['vatEligible'] != $auditData['newValue']['vatEligible']) {
