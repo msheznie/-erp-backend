@@ -23,9 +23,10 @@ class LokiService
                 return $entry;
             }, $data['data']['result']);
 
+
             usort($logEntriesAsArrays, function ($a, $b) {
-                $timestampA = strtotime($a['metric']['log']['date_time']);
-                $timestampB = strtotime($b['metric']['log']['date_time']);
+                $timestampA = strtotime(isset($a['metric']['log']['date_time']) ? $a['metric']['log']['date_time']: null);
+                $timestampB = strtotime(isset($b['metric']['log']['date_time']) ? $b['metric']['log']['date_time']: null);
 
                 return $timestampB - $timestampA;
             });
