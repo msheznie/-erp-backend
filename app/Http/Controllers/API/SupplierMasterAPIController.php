@@ -2367,7 +2367,7 @@ class SupplierMasterAPIController extends AppBaseController
             ],[ 'blockTo.required_if' => 'From Date must be grater than less than or equal to TO date' ]);
     
             if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
+                return $this->sendError($validator->messages(), 422, ['type' => 'validation']);
             }
         }
 
