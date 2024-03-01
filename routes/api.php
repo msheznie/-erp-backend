@@ -257,8 +257,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('g_r_v_types', 'GRVTypesAPIController');
             Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
-            Route::post('getBudgetConsumptionByDoc', 'BudgetConsumedDataAPIController@getBudgetConsumptionByDoc');
-            Route::post('changeBudgetConsumption', 'BudgetConsumedDataAPIController@changeBudgetConsumption');
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
 
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
