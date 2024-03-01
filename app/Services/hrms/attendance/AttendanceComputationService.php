@@ -213,11 +213,14 @@ class AttendanceComputationService
 
     public function calculateRealTime()
     {
+<<<<<<< HEAD
 
         if (!$this->isShiftHoursSet || !$this->isClockInOutSet) {
             return false;
         }
 
+=======
+>>>>>>> 820e688cc (chore(attendance) job failing issue fixed and missed codes added [GHR-1310])
         if ($this->actualWorkingHours && $this->shiftHours) {
             $realtime = $this->shiftHours / $this->actualWorkingHours;
             $this->realTime = round($realtime, 1);
@@ -305,10 +308,13 @@ class AttendanceComputationService
     // early hour computation  [ same function for flexible hour and general ]
     public function earlyHourComputation($clockIn_dt, $clockOut_dt)
     {
+<<<<<<< HEAD
         if (!$this->isClockInOutSet) {
             return false;
         }
 
+=======
+>>>>>>> 820e688cc (chore(attendance) job failing issue fixed and missed codes added [GHR-1310])
         $this->calcClockOut = clone $clockIn_dt;
         $this->calcClockOut->modify("+{$this->shiftHours} minutes");
 
@@ -352,10 +358,13 @@ class AttendanceComputationService
     // OT computation  [ same function for flexible hour and general ]
     public function overTimeComputation($clockIn_dt_ot, $clockOut_dt_ot)
     {
+<<<<<<< HEAD
 
         if (!$this->isClockInOutSet) {
             return false;
         }
+=======
+>>>>>>> 820e688cc (chore(attendance) job failing issue fixed and missed codes added [GHR-1310])
 
         if ($clockOut_dt_ot <= $this->calcClockOut) {
             return true;
@@ -434,18 +443,27 @@ class AttendanceComputationService
 
     public function flxCalculateActualTime()
     {
+<<<<<<< HEAD
         if ($this->presentAbsentType != AbsentType::ON_TIME || !$this->isClockInOutSet) {
             return false;
         }
 
+=======
+>>>>>>> 820e688cc (chore(attendance) job failing issue fixed and missed codes added [GHR-1310])
         $t1 = new DateTime($this->clockOut);
         $t2 = ($this->isShiftHoursSet && ($this->flexibleHourFrom >= $this->clockIn))
             ? new DateTime($this->flexibleHourFrom)
             : new DateTime($this->clockIn);
 
+<<<<<<< HEAD
         $totWorkingHoursObj = $t1->diff($t2);
         $hours = $totWorkingHoursObj->format('%h');
         $minutes = $totWorkingHoursObj->format('%i');
+=======
+        $totWorkingHours_obj = $t1->diff($t2);
+        $hours = $totWorkingHours_obj->format('%h');
+        $minutes = $totWorkingHours_obj->format('%i');
+>>>>>>> 820e688cc (chore(attendance) job failing issue fixed and missed codes added [GHR-1310])
         $this->actualWorkingHours = ($hours * 60) + $minutes;
     }
 
@@ -503,6 +521,7 @@ class AttendanceComputationService
     }
 
     public function flxLateHourComputation()
+<<<<<<< HEAD
     {
         if (!$this->clockIn) {
             return false;
@@ -539,6 +558,44 @@ class AttendanceComputationService
         }
     }
 
+=======
+    {
+        if (!$this->clockIn) {
+            return false;
+        }
+
+        $clockIn_dt = new DateTime($this->clockIn);
+        $flxHrTo_dt = new DateTime($this->flexibleHourTo);
+
+        if ($clockIn_dt->format('H:i:s') > $flxHrTo_dt->format('H:i:s')) {
+            $this->presentAbsentType = AbsentType::LATE;
+
+            $interval = $clockIn_dt->diff($flxHrTo_dt);
+            $hours = ($interval->format('%h') != 0) ? $interval->format('%h') : 0;
+            $minutes = ($interval->format('%i') != 0) ? $interval->format('%i') : 0;
+            $this->lateHours = $hours * 60 + $minutes;
+        }
+    }
+
+    public function openShiftCalculateWorkedHours()
+    {
+        $this->otherComputation();
+        $this->actualWorkingHours =  $this->calculateOpenShiftActualWorkingHrs();
+        $shiftHours = ($this->data['shiftType'] == 1)? $this->data['workingHour']: $this->shiftHours;
+        $shiftHours = (empty($shiftHours))? 0: $shiftHours;
+        $this->officialWorkTime = ($shiftHours > $this->actualWorkingHours) ? $this->actualWorkingHours : $shiftHours;
+        if($this->holidayData['true_false'] == 1 || $this->presentAbsentType == 5){
+            $this->officialWorkTime = 0;
+        }
+
+        if ($this->actualWorkingHours && $this->data['workingHour']) {
+            $realtime = $this->data['workingHour'] / $this->actualWorkingHours;
+            $this->realTime = round($realtime, 1);
+            $this->openShiftCommonComputations();
+        }
+    }
+
+>>>>>>> 820e688cc (chore(attendance) job failing issue fixed and missed codes added [GHR-1310])
     public function calculateOpenShiftActualWorkingHrs()
     {
         $attTempRec = DB::table('srp_erp_pay_empattendancetemptable')
