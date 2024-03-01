@@ -75,7 +75,9 @@ class ReceiptAPIService
                         $documentApproved["db"] = $db;
                         $documentApproved['empID'] = $receipt->approvedByUserSystemID;
                         $documentApproved['documentSystemID'] = $saveReceipt->documentSystemID;
-                            $approval = \Helper::approveDocumentForApi($documentApproved);
+                        $documentApproved['approvedDate'] = $receipt->approvedDate;
+
+                        $approval = \Helper::approveDocumentForApi($documentApproved);
                     }
                 }
             }
