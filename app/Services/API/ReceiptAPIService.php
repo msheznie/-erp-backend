@@ -135,7 +135,7 @@ class ReceiptAPIService
                 if($receipt->documentType == 13) {
                     self::validateInvoiceDetails($details,$receipt);
                     self::validateTotalAmount($details,$receipt);
-                    self::validateDocumentDate($details,$receipt);
+                    self::validateDocumentDate($details,$receipt,$dt);
                 }
 
                 if($receipt->documentType == 14) {
@@ -310,12 +310,15 @@ class ReceiptAPIService
 
 
     }
-    private function validateDocumentDate($details,$receipt) {
+    private function validateDocumentDate($details,$receipt,$dt) {
         if($receipt->documentType == 13) {
             $invCode = $details['invoiceCode'];
             $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
             if($invoice) {
-                if(Carbon::parse($receipt->postedDate)->format('d/m/Y') < Carbon::parse($invoice->postedDate)->format('d/m/Y')) {
+                $postedData = Carbon::parse($dt['documentDate']);
+                $postedData->setTime(23,59,59); 
+                $invoicePostedDate = Carbon::parse($invoice->postedDate);
+                if($postedData->lessThan($invoicePostedDate)) {
                     $this->isError = true;
                     $error[$receipt->narration][$details['invoiceCode']] = ['Document date of a customer invoice receipt voucher should not be lesser than the invoice dates of customer invoices pulled'];
                     array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
