@@ -2295,23 +2295,23 @@ class SupplierMasterAPIController extends AppBaseController
             
             $input['blockFrom'] = $from;
             $input['blockTo'] = $to;
-
+            
             if(($isPeriodExist->count()) > 0)
             {
                 $overlapRecord = $isPeriodExist->where(function ($query) use ($from, $to) {
                     $query->where('blockFrom', '>=', $from)
-                        ->where('blockFrom', '<=', $to);
-                })
-                ->orWhere(function ($query) use ($from, $to) {
-                    $query->where('blockTo', '>=', $from)
-                        ->where('blockTo', '<=', $to);
-                })
-                ->orWhere(function ($query) use ($from, $to) {
-                    $query->where('blockFrom', '<=', $from)
-                        ->where('blockTo', '>=', $to);
+                        ->where('blockFrom', '<=', $to)
+                        ->orWhere(function ($query) use ($from, $to) {
+                            $query->where('blockTo', '>=', $from)
+                                ->where('blockTo', '<=', $to);
+                        })
+                        ->orWhere(function ($query) use ($from, $to) {
+                            $query->where('blockFrom', '<=', $from)
+                                ->where('blockTo', '>=', $to);
+                        });
                 })
                 ->exists();
-            
+
                 if($overlapRecord)
                 {
                     return $this->sendError('The selected period already has a block',422);
