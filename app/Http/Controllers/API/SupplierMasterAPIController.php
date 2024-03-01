@@ -608,9 +608,21 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($request->all());
         $employee = \Helper::getEmployeeInfo();
      
+        if( !isset($input['liabilityAccountSysemID']) || (isset($input['liabilityAccountSysemID']) && $input['liabilityAccountSysemID'] == null)){
+            return $this->sendError('Please select liability account.');
+        }
+        if( !isset($input['UnbilledGRVAccountSystemID']) || (isset($input['UnbilledGRVAccountSystemID']) && $input['UnbilledGRVAccountSystemID'] == null)){
+            return $this->sendError('Please select unbilled account.');
+        }
+
         if($input['UnbilledGRVAccountSystemID'] == $input['liabilityAccountSysemID'] ){
             return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
         }
+
+        if( !isset($input['advanceAccountSystemID']) || (isset($input['advanceAccountSystemID']) && $input['advanceAccountSystemID'] == null)){
+            return $this->sendError('Please select advance account.');
+        }
+
 
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
@@ -723,8 +735,19 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $input = $this->convertArrayToValue(array_except($request->all(),['company', 'final_approved_by', 'blocked_by']));
 
+        if( !isset($input['liabilityAccountSysemID']) || (isset($input['liabilityAccountSysemID']) && $input['liabilityAccountSysemID'] == null)){
+            return $this->sendError('Please select liability account.');
+        }
+        if( !isset($input['UnbilledGRVAccountSystemID']) || (isset($input['UnbilledGRVAccountSystemID']) && $input['UnbilledGRVAccountSystemID'] == null)){
+            return $this->sendError('Please select unbilled account.');
+        }
+
         if($input['liabilityAccountSysemID'] == $input['UnbilledGRVAccountSystemID'] ){
             return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
+
+        if( !isset($input['advanceAccountSystemID']) || (isset($input['advanceAccountSystemID']) && $input['advanceAccountSystemID'] == null)){
+            return $this->sendError('Please select advance account.');
         }
 
         $id = $input['supplierCodeSystem'];
