@@ -128,14 +128,11 @@ trait AttendanceComputationTrait{
     }
     public function flxCalculateActualTime()
     {
-<<<<<<< HEAD
 
         if ($this->presentAbsentType != AbsentType::ON_TIME || !$this->isClockInOutSet) {
             return false;
         }
 
-=======
->>>>>>> 820e688cc (chore(attendance) job failing issue fixed and missed codes added [GHR-1310])
         $t1 = new DateTime($this->clockOut);
         $t2 = ($this->isShiftHoursSet && ($this->flexibleHourFrom >= $this->clockIn))
             ? new DateTime($this->flexibleHourFrom)
@@ -288,14 +285,11 @@ trait AttendanceComputationTrait{
     }
 
     public function calculateRealTime(){
-<<<<<<< HEAD
 
         if (!$this->isShiftHoursSet || !$this->isClockInOutSet) {
             return false;
         }
 
-=======
->>>>>>> 820e688cc (chore(attendance) job failing issue fixed and missed codes added [GHR-1310])
         if ($this->actualWorkingHours && $this->shiftHours) {
             $realtime = $this->shiftHours / $this->actualWorkingHours;
             $this->realTime = round($realtime, 1);
@@ -323,12 +317,9 @@ trait AttendanceComputationTrait{
 
     public function earlyHourComputation($clockInDt, $clockOutDt){
 
-<<<<<<< HEAD
         if (!$this->isClockInOutSet) {
             return false;
         }
-=======
->>>>>>> 820e688cc (chore(attendance) job failing issue fixed and missed codes added [GHR-1310])
         $this->calcClockOut = clone $clockInDt;
         $this->calcClockOut->modify("+{$this->shiftHours} minutes");
 
