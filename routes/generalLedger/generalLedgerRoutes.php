@@ -295,7 +295,7 @@ Route::group([], function(){
     Route::get('getRecurringVoucherContracts', 'RecurringVoucherSetupDetailAPIController@getRecurringVoucherContracts')->name('Get RRV contracts');
     Route::get('getGLForRecurringVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForRecurringVoucherDirect')->name("Get gl for RRV direct");
     Route::get('getRecurringVoucherMasterRecord', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterRecord')->name('Get rrv master record');
-    Route::post('amendRecurringVoucherReview', 'RecurringVoucherSetupAPIController@amendRecurringVoucherReview')->name('JV Review');
+    Route::post('amendRecurringVoucherReview', 'RecurringVoucherSetupAPIController@amendRecurringVoucherReview')->name('RRV Review');
     Route::post('recurringVoucherReopen', 'RecurringVoucherSetupAPIController@recurringVoucherReopen')->name('RRV Reopen');
     Route::post('recurringVoucherDeleteAllDetails', 'RecurringVoucherSetupDetailAPIController@recurringVoucherDeleteAllDetails')->name('RRV details delete all');
     Route::get('getAllRecurringVoucherSchedules', 'RecurringVoucherSetupScheduleAPIController@getAllRecurringVoucherSchedules')->name('Get all recurring voucher schedules');
