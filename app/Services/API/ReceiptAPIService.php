@@ -315,7 +315,7 @@ class ReceiptAPIService
             $invCode = $details['invoiceCode'];
             $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
             if($invoice) {
-                if($receipt->postedDate < Carbon::parse($invoice->postedDate)) {
+                if(Carbon::parse($receipt->postedDate)->format('d/m/Y') < Carbon::parse($invoice->postedDate)->format('d/m/Y')) {
                     $this->isError = true;
                     $error[$receipt->narration][$details['invoiceCode']] = ['Document date of a customer invoice receipt voucher should not be lesser than the invoice dates of customer invoices pulled'];
                     array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
