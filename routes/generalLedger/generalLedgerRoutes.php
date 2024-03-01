@@ -300,6 +300,15 @@ Route::group([], function(){
     Route::post('recurringVoucherDeleteAllDetails', 'RecurringVoucherSetupDetailAPIController@recurringVoucherDeleteAllDetails')->name('RRV details delete all');
     Route::get('getAllRecurringVoucherSchedules', 'RecurringVoucherSetupScheduleAPIController@getAllRecurringVoucherSchedules')->name('Get all recurring voucher schedules');
     Route::put('recurringVoucherSchedulesAllStop', 'RecurringVoucherSetupScheduleAPIController@recurringVoucherSchedulesAllStop')->name('Stop all recurring voucher schedules');
+
+    Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData')->name('Get project masters form');
+    Route::get('erp_project_masters/segments_by_company', 'ErpProjectMasterAPIController@segmentsByCompany')->name('Get project masters by company');
+    Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index')->name('Get project masters');
+    Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store')->name('Create project masters');
+    Route::get('erp_project_masters/{id}', 'ErpProjectMasterAPIController@show')->name('Get project masters by ID');
+    Route::put('erp_project_masters/{id}', 'ErpProjectMasterAPIController@update')->name('Update project masters');
+    Route::post('getglDetails','ChartOfAccountsAssignedAPIController@getglDetails')->name('Get Gl Details');
+
 });
 
 
