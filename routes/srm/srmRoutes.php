@@ -283,4 +283,5 @@ Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController
 Route::post('getTenderNegotiationList', 'TenderMasterAPIController@getTenderNegotiationList')->name("Get tender negotiation list");
 Route::post('getIsExistCommonAttachment', 'BidSubmissionMasterAPIController@getIsExistCommonAttachment');
 Route::post('getTenderPurchaseList', 'TenderMasterAPIController@getTenderPurchaseList');
+Route::post('getBudgetItemTotalAmount', 'TenderMasterAPIController@getBudgetItemTotalAmount');
 

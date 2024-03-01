@@ -49,7 +49,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_customer_master', 'POS\PosAPIController@pullCustomerMaster');
         Route::post('fetch_item_wac_amount', 'POS\PosAPIController@fetchItemWacAmount');
         Route::post('create_receipts_voucher','ReceiptAPIController@store');
-
+        Route::post('fetch_item_for_tender', 'SRM\ThirdPartySystemsController@fetchItemWithAmount');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {

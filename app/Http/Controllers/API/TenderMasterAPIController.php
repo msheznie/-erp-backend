@@ -19,7 +19,9 @@ use App\Models\Employee;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
+use App\Models\SrmBudgetItem;
 use App\Models\SrmDepartmentMaster;
+use App\Models\SrmTenderBudgetItem;
 use App\Models\SrmTenderDepartment;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
@@ -795,6 +797,29 @@ ORDER BY
             ->get();
         $data['tenderPurchaseRequestList'] = $tenderPurchaseRequestList;
 
+        // Get the data from srm_tender_budget_items if it exists, otherwise from srm_budget_items
+        $srmBudgetItem = DB::table('srm_tender_budget_items')
+            ->select('srm_tender_budget_items.item_id as id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_tender_budget_items.budget_amount) AS item_name"))
+            ->leftJoin('srm_budget_items', 'srm_tender_budget_items.item_id', '=', 'srm_budget_items.item_id')
+            ->where('srm_tender_budget_items.tender_id', $tenderMasterId)
+            ->where('srm_budget_items.is_active', 1)
+            ->unionAll(DB::table('srm_budget_items')
+                ->select('srm_budget_items.id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_budget_items.budget_amount) AS item_name"))
+                ->where('srm_budget_items.is_active', 1)
+                ->whereNotIn('srm_budget_items.item_id', function ($query) use ($tenderMasterId) {
+                    $query->select('item_id')->from('srm_tender_budget_items')->where('tender_id', $tenderMasterId);
+                }))
+            ->get();
+
+        $data['srmBudgetItem'] = $srmBudgetItem;
+
+        $srmBudgetItemList = SrmBudgetItem::select('srm_budget_items.id as id', 'item_name AS itemName')
+            ->whereHas('tenderBudgetItems', function ($query) use ($tenderMasterId) {
+                $query->where('tender_id', $tenderMasterId);
+            })->get();
+
+        $data['srmBudgetItemList'] = $srmBudgetItemList;
+
         // Get Department Master Data
         $departmentMaster = SrmDepartmentMaster::where('company_id', $companySystemID)->where('is_active', 1)->get();
         $data['departmentMaster'] = $departmentMaster;
@@ -1266,6 +1291,10 @@ ORDER BY
             return ['success' => false, 'message' => 'Total technical weightage cannot exceed 100 percent'];
         }
 
+        if($input['allocated_budget'] > $input['estimated_value']){
+            return ['success' => false, 'message' => 'Estimated values cannot be more than Allocated Budget'];
+        }
+
         DB::beginTransaction();
 
         try {
@@ -1585,6 +1614,40 @@ ORDER BY
                     }
 
                 }
+
+                // Insert to srm_tender_budget_items
+                $existingItems = SrmTenderBudgetItem::where('tender_id', $input['id'])->pluck('item_id')->toArray();
+
+                $itemsToDelete = array_diff($existingItems, array_column($input['srmBudgetItem'], 'id'));
+                SrmTenderBudgetItem::where('tender_id', $input['id'])->whereIn('item_id', $itemsToDelete)->delete();
+
+                if (isset($input['srmBudgetItem']) && is_array($input['srmBudgetItem']) && count($input['srmBudgetItem']) > 0) {
+                    foreach ($input['srmBudgetItem'] as $pr) {
+                        $existingBudgetItem = SrmTenderBudgetItem::where('item_id', $pr['id'])
+                            ->where('tender_id', $input['id'])
+                            ->first();
+
+                        if ($existingBudgetItem) {
+                            $budget_amount = $existingBudgetItem->budget_amount;
+                        } else {
+                            $srmBudgetItem = SrmBudgetItem::select('budget_amount')
+                                ->where('item_id', $pr['id'])
+                                ->first();
+
+                            $budget_amount = $srmBudgetItem ? $srmBudgetItem->budget_amount : 0;
+                        }
+
+                        $data = [
+                            'item_id' => $pr['id'],
+                            'tender_id' => $input['id'],
+                            'budget_amount' => $budget_amount,
+                            'created_at' => now()
+                        ];
+
+                        SrmTenderBudgetItem::updateOrCreate(['item_id' => $pr['id'], 'tender_id' => $input['id']], $data);
+                    }
+                }
+
 
                 $getinactivedepartments = SrmDepartmentMaster::select('id','description')
                     ->where('company_id', $input['company_id'])
@@ -5317,4 +5380,22 @@ ORDER BY
 
         return $tenderData;
     }
+
+    public function getBudgetItemTotalAmount(Request $request){
+        $input = $request->all();
+        $tenderMasterId = $input['tenderMasterId'];
+        // Get the budget amount for each item in the idList
+        $totalBudgetAmount = collect($input['idList'])->map(function($itemId) use ($tenderMasterId) {
+            $existingItem = SrmTenderBudgetItem::where('item_id', $itemId)->where('tender_id', $tenderMasterId)->first();
+            if ($existingItem) {
+                return $existingItem->budget_amount;
+            } else {
+                $budgetItem = SrmBudgetItem::find($itemId);
+                return $budgetItem ? $budgetItem->budget_amount : 0;
+            }
+        })->sum();
+
+        return $totalBudgetAmount;
+    }
+
 } 
