@@ -34,6 +34,7 @@ use App\Models\SupplierImportance;
 use App\Models\SupplierMaster;
 use App\Models\suppliernature;
 use App\Models\SupplierContactType;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\YesNoSelection;
 use App\Models\SupplierCritical;
 use App\Models\SupplierType;
@@ -905,6 +906,112 @@ class CompanyAPIController extends AppBaseController
         $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     
         return substr(str_shuffle(str_repeat($pool, 2)), 0, $length);
+    }
+
+    public function getChartOfAccountsForDropwdown(Request $request) {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $liabilityAccount = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+            $query->where('companySystemID', $selectedCompanyId)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        })->where('controllAccountYN', '=', 1)
+            ->where('controlAccountsSystemID', 4)
+            ->where('isApproved',1)
+            ->where('isActive',1)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+
+        $assetAndLiabilityAccount = ChartOfAccount::
+        where(function ($query)  {
+            $query->where('controlAccountsSystemID', 3)
+                ->orWhere('controlAccountsSystemID', 4);
+        })
+            ->where('isBank',0)
+            ->where('isApproved',1)
+            ->where('isActive',1)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1)->where('isActive',1);
+            })
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+        $assetAndLiabilityAccountCOA = ChartOfAccount::where('isBank',0)
+            ->where('isApproved',1)
+            ->where('isActive',1)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1)->where('isActive',1);
+            })
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+
+        $discountsChartOfAccounts = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+            $query->where('companySystemID', $selectedCompanyId)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        })->where('isApproved',1)
+            ->where('isActive',1)
+            ->where('catogaryBLorPL', '=', 'PL')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+
+        $chartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+                $query->where('companySystemID', $selectedCompanyId)
+                    ->where('isAssigned', -1)
+                    ->where('isActive', 1);
+            })
+            ->where('controlAccountsSystemID',3)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->where('isApproved',1)
+            ->where('isActive',1)
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+        $liabilityAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+                $query->where('companySystemID', $selectedCompanyId)
+                    ->where('isAssigned', -1)
+                    ->where('isActive', 1);
+            })
+            ->where('controlAccountsSystemID',4)
+            ->where('isApproved',1)
+            ->where('isActive',1)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+
+        $liabilityAccountsCOA = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+            $query->where('companySystemID', $selectedCompanyId)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        })
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->where('isApproved',1)
+            ->where('isActive',1)
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+
+        $output = array(
+            'liabilityAccountsCOA' => $liabilityAccountsCOA,
+            'liabilityAccounts' => $liabilityAccounts,
+            'chartOfAccounts' => $chartOfAccounts,
+            'discountsChartOfAccounts' => $discountsChartOfAccounts,
+            'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccountCOA,
+            'liabilityAccount' => $liabilityAccount,
+            'assetAndLiabilityAccount' => $assetAndLiabilityAccount
+
+        );
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+
     }
 
 }

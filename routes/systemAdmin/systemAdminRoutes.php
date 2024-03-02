@@ -102,6 +102,8 @@ Route::group([], function(){
 	Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack')->name("Chart of account refer back");
 	Route::post('chartOfAccountReopen', 'ChartOfAccountAPIController@chartOfAccountReopen')->name("Chart of account reopen");
 	Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount')->name("Chart of account refer back history");
+    Route::post('getChartOfAccountsForDropwdownData', 'CompanyAPIController@getChartOfAccountsForDropwdown')->name("Get All chart of account for dropdown");
+
 
 	Route::resource('gl-config-scenario-details', 'SystemGlCodeScenarioDetailAPIController');
 	Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
