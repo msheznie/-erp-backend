@@ -1176,15 +1176,30 @@ class AssetManagementReportAPIController extends AppBaseController
 
 
                     $excelColumnFormat = [
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'B' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'C' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Y' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
 
                     $title = "Asset Register Summary Report";
@@ -1539,7 +1554,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $data[$x]['Company ID'] = $val->companyID;
                     $data[$x]['Company Name'] = $val->CompanyName;
 
-                    $data[$x]['Disposal Date'] = \Helper::dateFormat($val->disposalDate);
+                    $data[$x]['Disposal Date'] = ($val->disposalDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($val->disposalDate)): null;
                     $data[$x]['Doc.Code'] = $val->disposalDocumentCode;
                     $data[$x]['Narration'] = $val->narration;
                     $data[$x]['Category'] = $val->AssetCategory;
@@ -1550,29 +1565,45 @@ class AssetManagementReportAPIController extends AppBaseController
                     $data[$x]['Currency (Local)'] = $val->localCurrency;
                     $data[$x]['Currency (Reporting)'] = $val->reportCurrency;
 
-                    $data[$x]['Asset Cost (Local)'] = round($val->AssetCostLocal, $val->localCurrencyDeci);
-                    $data[$x]['Asset Cost (Reporting)'] = round($val->AssetCostRPT, $val->reportCurrencyDeci);
+                    $data[$x]['Asset Cost (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->AssetCostLocal, $val->localCurrencyDeci));
+                    $data[$x]['Asset Cost (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->AssetCostRPT, $val->reportCurrencyDeci));
 
-                    $data[$x]['Accumulated Depreciation (Local)'] = round($val->AccumulatedDepreciationLocal, $val->localCurrencyDeci);
-                    $data[$x]['Accumulated Depreciation (Reporting)'] = round($val->AccumulatedDepreciationRPT, $val->reportCurrencyDeci);
+                    $data[$x]['Accumulated Depreciation (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->AccumulatedDepreciationLocal, $val->localCurrencyDeci));
+                    $data[$x]['Accumulated Depreciation (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->AccumulatedDepreciationRPT, $val->reportCurrencyDeci));
 
-                    $data[$x]['Net Book Value (Local)'] = round($val->NetBookVALUELocal, $val->localCurrencyDeci);
-                    $data[$x]['Net Book Value (Reporting)'] = round($val->NetBookVALUERPT, $val->reportCurrencyDeci);
+                    $data[$x]['Net Book Value (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->NetBookVALUELocal, $val->localCurrencyDeci));
+                    $data[$x]['Net Book Value (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->NetBookVALUERPT, $val->reportCurrencyDeci));
 
 
-                    $data[$x]['Selling Price (Local)'] = round($val->SellingPriceLocal, $val->localCurrencyDeci);
-                    $data[$x]['Selling Price (Reporting)'] = round($val->SellingPriceRpt, $val->reportCurrencyDeci);
+                    $data[$x]['Selling Price (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->SellingPriceLocal, $val->localCurrencyDeci));
+                    $data[$x]['Selling Price (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->SellingPriceRpt, $val->reportCurrencyDeci));
 
-                    $data[$x]['Profit/Loss (Local)'] = round($val->ProfitLocal, $val->localCurrencyDeci);
-                    $data[$x]['Profit/Loss (Reporting)'] = round($val->ProfitRpt, $val->reportCurrencyDeci);
+                    $data[$x]['Profit/Loss (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->ProfitLocal, $val->localCurrencyDeci));
+                    $data[$x]['Profit/Loss (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->ProfitRpt, $val->reportCurrencyDeci));
 
 
                     $x++;
                 }
+
+                $excelColumnFormat = [
+                    'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                    'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                ];
+
                 $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
                 $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
                 $detail_array = array(
                     'company_code'=>$companyCode,
+                    'excelFormat' => $excelColumnFormat
                 );
                 $fileName = 'asset_disposal';
                 $path = 'asset/report/asset_disposal/excel/';
