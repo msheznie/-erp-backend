@@ -1115,10 +1115,8 @@ class Helper
                                             }
                                         }
 
-
-
-
-                                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+                                        if(!isset($params['sendNotication']) || (isset($params['sendNotication']) && $params['sendNotication']))
+                                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
 //                                        $webPushData = [
 //                                            'title' => $pushNotificationMessage,
@@ -2472,13 +2470,15 @@ class Helper
                         $notifyConfirm = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
 
                         if ($notifyConfirm) {
-                            $sendEmail = \Email::sendEmail($emails);
+                            if(!isset($input['sendMail']) || (isset($input['sendMail']) && $input['sendMail']))
+                                $sendEmail = \Email::sendEmail($emails);
 
                             if (!$sendEmail["success"]) {
                                 return ['success' => false, 'message' => $sendEmail["message"]];
                             }
 
-                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
+                            if(!isset($input['sendNotication']) || (isset($input['sendNotication']) && $input['sendNotication']))
+                                $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
                         }
 
 

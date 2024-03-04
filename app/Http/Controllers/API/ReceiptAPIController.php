@@ -13,6 +13,11 @@ class ReceiptAPIController extends AppBaseController
     {
         $input = $request->input();
         $db = isset($request->db) ? $request->db : "";
+
+        if(!isset($input['data'])) {
+            return $this->sendError("Unprocessable Entity",422);
+        }
+
         $data = $receiptAPIService->buildDataToStore($input,$db);
         $createReceiptVoucher = $receiptAPIService->storeReceiptVoucherData($data,$db);
 

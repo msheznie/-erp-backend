@@ -61,7 +61,9 @@ class ReceiptAPIService
                     'segment' => '',
                     'category' => '',
                     'amount' => '',
-                    'receipt' => true
+                    'receipt' => true,
+                    'sendMail' => false,
+                    'sendNotication' => false
                 );
 
                 $receipt = self::setTaxDetails($saveReceipt);
@@ -76,6 +78,8 @@ class ReceiptAPIService
                         $documentApproved['empID'] = $receipt->approvedByUserSystemID;
                         $documentApproved['documentSystemID'] = $saveReceipt->documentSystemID;
                         $documentApproved['approvedDate'] = $receipt->approvedDate;
+                        $documentApproved['sendMail'] = false;
+                        $documentApproved['sendNotication'] = false;
 
                         $approval = \Helper::approveDocumentForApi($documentApproved);
                     }
@@ -316,7 +320,7 @@ class ReceiptAPIService
             $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
             if($invoice) {
                 $postedData = Carbon::parse($dt['documentDate']);
-                $postedData->setTime(23,59,59); 
+                $postedData->setTime(23,59,59);
                 $invoicePostedDate = Carbon::parse($invoice->postedDate);
                 if($postedData->lessThan($invoicePostedDate)) {
                     $this->isError = true;
@@ -433,7 +437,10 @@ class ReceiptAPIService
     private function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = Employee::where('empID',$detail['confirmedBy'])->first();
 
-        if(Carbon::parse($detail['documentDate']) > Carbon::parse($detail['confirmedDate'])) {
+        $documentDate = Carbon::createFromFormat('d-m-Y',$detail['documentDate']);
+        $confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
+
+        if($documentDate > $confirmedDate) {
             $this->isError = true;
             $error[$receipt->narration] = ['Confirmed date should greater than document date'];
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
@@ -448,7 +455,7 @@ class ReceiptAPIService
             $receipt->confirmedByEmpSystemID = $userDetails->employeeSystemID;
             $receipt->confirmedByEmpID = $userDetails->empID;
             $receipt->confirmedByName = $userDetails->empFullName;
-            $receipt->confirmedDate = Carbon::parse($detail['confirmedDate']);
+            $receipt->confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
         }
 
 
@@ -457,7 +464,7 @@ class ReceiptAPIService
     private function setApprovedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = Employee::where('empID',$detail['approvedBy'])->first();
 
-        if(Carbon::parse($detail['confirmedDate']) > Carbon::parse($detail['approvedDate'])) {
+        if(Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']) > Carbon::createFromFormat('d-m-Y',$detail['approvedDate'])) {
             $this->isError = true;
             $error[$receipt->narration] = ['Approved date should greater than confirmed date'];
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
@@ -471,7 +478,7 @@ class ReceiptAPIService
         }else {
             $receipt->approvedByUserSystemID = $userDetails->employeeSystemID;
             $receipt->approvedByUserID = $userDetails->empID;
-            $receipt->approvedDate = Carbon::parse($detail['approvedDate']);
+            $receipt->approvedDate = Carbon::createFromFormat('d-m-Y',$detail['approvedDate']);
         }
 
         return $receipt;
@@ -807,7 +814,9 @@ class ReceiptAPIService
     private function setFinancialYear($documentDate,$receipt):CustomerReceivePayment
     {
         if(isset($documentDate)) {
-            $receipt->postedDate = Carbon::parse($documentDate)->format('d-m-Y');
+            $postedData = Carbon::parse($documentDate);
+            $postedData->setTime(23,59,59);
+            $receipt->postedDate =  $postedData;
             $data = $this->getFinancialYear($receipt);
 
             if($data['success'])
