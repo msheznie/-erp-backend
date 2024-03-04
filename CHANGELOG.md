@@ -1,5 +1,31 @@
 # Changelog
 
+## [10.34.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.33.0...v10.34.0) (2024-03-04)
+
+
+### Features
+
+* **email configuration:** changing the supplier email form GEARS to … ([#5585](https://github.com/pbsgears/Gears_BackEnd/issues/5585)) ([996d891](https://github.com/pbsgears/Gears_BackEnd/commit/996d891af1f20f4fc8febee50d7a68273df4005e))
+* **sourcing management:** bid opening technical evaluation enhancement [GSUP-1536] ([#5537](https://github.com/pbsgears/Gears_BackEnd/issues/5537)) ([e34c76c](https://github.com/pbsgears/Gears_BackEnd/commit/e34c76c9ec40fa15818c7b1721b0b860f1c614f7))
+* **sourcing management:** forward pre bid clarification via email to other users [GSUP-1530] ([#5571](https://github.com/pbsgears/Gears_BackEnd/issues/5571)) ([fa1d593](https://github.com/pbsgears/Gears_BackEnd/commit/fa1d593b05b0328f31ad012d8d4a52bbea742870))
+* **SRM KYC:** supplier certification documents and vat certification documents [GSUP-1591] ([#5618](https://github.com/pbsgears/Gears_BackEnd/issues/5618)) ([22eb7f4](https://github.com/pbsgears/Gears_BackEnd/commit/22eb7f4506874a4bbb802c35210b93252b816a2b))
+* **SRM Tender:** Supplier Creation | Autofill Details 2 [GSUP-1560] ([#5589](https://github.com/pbsgears/Gears_BackEnd/issues/5589)) ([f0e372d](https://github.com/pbsgears/Gears_BackEnd/commit/f0e372d6623f6817ba975624d67a737279ed7a70))
+* **SRM Tender:** Supplier Creation | Autofill Details 2 [GSUP-1560] ([#5596](https://github.com/pbsgears/Gears_BackEnd/issues/5596)) ([7fcc04f](https://github.com/pbsgears/Gears_BackEnd/commit/7fcc04fc99010bcc32c5ba101fd2fdf3839bbdd8))
+* **SRM Tender:** Supplier Portal | History Tab [GSUP-1531] ([66bc587](https://github.com/pbsgears/Gears_BackEnd/commit/66bc58746c5e6c9ecc4443c22a6c2617584e90bd))
+* **Tender:** Publish Open Tender Invitation Link in company website [GSUP-1305] ([fbfb3f9](https://github.com/pbsgears/Gears_BackEnd/commit/fbfb3f968edaf6fb27f8784c89d18a71a8b96aec))
+* **Tender:** Publish Open Tender Invitation Link in company website [GSUP-1305] ([64df1ba](https://github.com/pbsgears/Gears_BackEnd/commit/64df1bad1dac171e36556b04c0d327b1148b0cc6))
+* **Tender:** Publish Open Tender Invitation Link in company website [GSUP-1305] ([d69e6b0](https://github.com/pbsgears/Gears_BackEnd/commit/d69e6b02f115d9757c901a2da675f25af5411ce2))
+* **Tender:** Publish Open Tender Invitation Link in company website [GSUP-1305] ([96e5ee3](https://github.com/pbsgears/Gears_BackEnd/commit/96e5ee3f480f3f98696400794981a51c0d29836d))
+* **Tender:** Publish Open Tender Invitation Link in company website [GSUP-1305] ([#5594](https://github.com/pbsgears/Gears_BackEnd/issues/5594)) ([ad2b5a4](https://github.com/pbsgears/Gears_BackEnd/commit/ad2b5a4648f0e7da461bbfb84e4c9cc46cd20880))
+* **Tender:** Publish Open Tender Invitation Link in company website [GSUP-1305] ([#5612](https://github.com/pbsgears/Gears_BackEnd/issues/5612)) ([0536090](https://github.com/pbsgears/Gears_BackEnd/commit/05360902844a181963a385597c633528d89368e3))
+* **TenderRFX:** Tender & RFX | Refere Back Option [GSUP-1537] ([#5574](https://github.com/pbsgears/Gears_BackEnd/issues/5574)) ([ea55d5e](https://github.com/pbsgears/Gears_BackEnd/commit/ea55d5e7e95ec3f9212af6f2e4596873a705873f))
+
+
+### Bug Fixes
+
+* **Bid Opening:** User unable to add new bids to the Technical Group Evaluation [GSUP-1580] ([#5620](https://github.com/pbsgears/Gears_BackEnd/issues/5620)) ([0aec715](https://github.com/pbsgears/Gears_BackEnd/commit/0aec715da0a3757bff93fa89d4ebf38703fdec55))
+* **SRM KYC:** User unable to view the 'Supplier KYC Approval View' page contents [GSUP-1598] ([#5622](https://github.com/pbsgears/Gears_BackEnd/issues/5622)) ([9bcaf96](https://github.com/pbsgears/Gears_BackEnd/commit/9bcaf96e94c15dcff1f6d087b4c3c85f3c5f1a2a))
+
 ## [10.33.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.32.2...v10.33.0) (2024-02-22)
 
 
