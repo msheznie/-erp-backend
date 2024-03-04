@@ -176,4 +176,8 @@ class TenderBidClarifications extends Model
     {
         return $this->hasMany('App\Models\TenderBidClarifications','parent_id', 'id')->with('replies');
     }
+    public function tender()
+    {
+        return $this->hasOne('App\Models\TenderMaster', 'id', 'tender_master_id');
+    }
 }

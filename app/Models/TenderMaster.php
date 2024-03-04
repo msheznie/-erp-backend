@@ -642,4 +642,29 @@ class TenderMaster extends Model
  
     }
 
+    public function createdBy()
+    {
+        return $this->belongsTo('App\Models\Employee', 'created_by', 'employeeSystemID');
+    }
+
+    public function modifiedBy()
+    {
+        return $this->belongsTo('App\Models\Employee', 'updated_by', 'employeeSystemID');
+    }
+
+    public function approvedBy()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'id');
+    }
+     
+    public function awardedSupplier()
+    {
+        return $this->hasOne('App\Models\TenderFinalBids', 'tender_id', 'id')->where('award', 1);
+    }
+
+    public function srmTenderMasterSuppliers()
+    {
+        return $this->hasOne('App\Models\TenderMasterSupplier', 'tender_master_id', 'id');
+    }
+
 }

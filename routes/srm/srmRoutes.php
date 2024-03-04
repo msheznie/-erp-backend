@@ -91,6 +91,7 @@ Route::post('deleteTenderBoqItem', 'TenderBoqItemsAPIController@deleteTenderBoqI
 Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsUpload')->name("Tender boq items upload");
 Route::post('getPreBidClarifications', 'TenderBidClarificationsAPIController@getPreBidClarifications')->name("Get pre bid clarifications");
 Route::post('getPreBidClarificationsResponse', 'TenderBidClarificationsAPIController@getPreBidClarificationsResponse')->name("Get pre bid clarifications response");
+Route::post('forwardPreBidClarification', 'TenderBidClarificationsAPIController@forwardPreBidClarification')->name("Forward pre bid clarifications");
 Route::post('createResponse', 'TenderBidClarificationsAPIController@createResponse')->name("Create response");
 Route::post('getTenderMasterApproval', 'TenderMasterAPIController@getTenderMasterApproval')->name("Get tender master approval");
 Route::post('getTenderMasterFullApproved', 'TenderMasterAPIController@getTenderMasterFullApproved')->name("Get tender master full approved");
@@ -262,6 +263,10 @@ Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationContr
 Route::post('saveTenderNegotiationDetails', 'TenderNegotiationController@saveTenderNegotiationDetails');
 Route::get('getTenderPr', 'TenderMasterAPIController@getTenderPr');
 Route::get('getPurchaseRequestDetails', 'TenderMasterAPIController@getPurchaseRequestDetails');
+Route::post('referBackTenderMaster', 'TenderMasterAPIController@referBackTenderMaster');
+Route::post('getTenderAmendHistory', 'TenderMasterAPIController@getTenderAmendHistory');
+Route::post('getTenderRfxAudit', 'TenderMasterAPIController@getTenderRfxAudit');
+
 
 Route::group(['prefix' => 'srm'], function (){
         

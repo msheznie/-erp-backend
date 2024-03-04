@@ -14,6 +14,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
@@ -22,7 +23,9 @@ use App\Models\SrmDepartmentMaster;
 use App\Models\SrmTenderDepartment;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
+use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderBidNegotiation;
+use App\Models\TenderMasterReferred;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
 use App\Models\EnvelopType;
@@ -2336,6 +2339,10 @@ ORDER BY
             ->distinct()
             ->get();
 
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
+        $file = array();
+
         foreach ($getFullyApprovedSupplierList as $SupplierList){
 
             $docType = 'Tender';
@@ -2349,7 +2356,7 @@ ORDER BY
             " . "<b>" . " ".$docType." Description :" . "</b> " . $tenderDescription . "<br /><br />" . "
             " . "<b>" . "Link :" . "</b> " . "<a href='" . $urlString . "'>" . $urlString . "</a><br /><br />" . "
             If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
-            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />"));
+            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />",null, $file,"#C23C32","GEARS","$fromName"));
         }
     }
 
@@ -2394,11 +2401,14 @@ ORDER BY
         $data['domain'] =  Helper::getDomainForSrmDocuments($request);
         $request->merge($data);
 
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
+        $file = array();
 
         $isCreated = $this->registrationLinkRepository->save($request, $token);
         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
         if ($isCreated['status'] == true) {
-            Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>",null, $file,"#C23C32","GEARS","$fromName"));
             return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         } else {
             return $this->sendError('Supplier Registration Link Generation Failed', 500);
@@ -5143,5 +5153,160 @@ ORDER BY
             ->flatten()
             ->pluck('suppliermaster_id')
            ->toArray();
+    }
+
+    public function referBackTenderMaster(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $tenderMasterId = $input['tenderMasterId'];
+
+            $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tenderMasterId);
+            if (empty($tenderMaster)) {
+                return $this->sendError('Tender Master not found');
+            }
+
+            if ($tenderMaster->refferedBackYN != -1) {
+                return $this->sendError('You cannot amend this document');
+            }
+
+
+            $tenderMasterArray = $tenderMaster->toArray();
+            $tenderMasterArray = collect($tenderMasterArray)->except(['document_sales_start_time', 'document_sales_end_time','pre_bid_clarification_start_time'
+                ,'pre_bid_clarification_end_time','site_visit_start_time','site_visit_end_time','bid_submission_opening_time','bid_submission_closing_time'
+                ,'bid_opening_date_time','bid_opening_end_date_time','technical_bid_opening_date_time','technical_bid_closing_date_time'
+                ,'commerical_bid_opening_date_time','commerical_bid_closing_date_time'])->toArray();
+
+           // $storeTenderMasterHistory = TenderMasterReferred::insert($tenderMasterArray);
+
+            $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $tenderMasterId)
+                ->where('companySystemID', $tenderMaster->company_id)
+                ->where('documentSystemID', $tenderMaster->document_system_id)
+                ->get();
+
+            if (!empty($fetchDocumentApproved)) {
+                foreach ($fetchDocumentApproved as $DocumentApproved) {
+                    $DocumentApproved['refTimes'] = $tenderMaster->timesReferred;
+                }
+            }
+
+            $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+            $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $tenderMasterId)
+                ->where('companySystemID', $tenderMaster->company_id)
+                ->where('documentSystemID', $tenderMaster->document_system_id)
+                ->delete();
+
+            if ($deleteApproval) {
+                $tenderMaster->refferedBackYN = 0;
+                $tenderMaster->confirmed_yn = 0;
+                $tenderMaster->confirmed_by_emp_system_id = null;
+                $tenderMaster->confirmed_by_name = null;
+                $tenderMaster->confirmed_date = null;
+                $tenderMaster->RollLevForApp_curr = 1;
+                $tenderMaster->save();
+            }
+
+            DB::commit();
+            return $this->sendResponse($tenderMaster->toArray(), 'Tender amended successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function getTenderAmendHistory(Request $request){
+        $input = $request->all();
+
+        $tenderAmendHistory = TenderMasterReferred::with(['currency', 'tender_type', 'envelop_type','createdBy'])
+        ->where('id',$input['tenderMasterId'])
+        ->get();
+
+        return $this->sendResponse($tenderAmendHistory, 'Tender Master retrieved successfully');
+    }
+    public function getTenderRfxAudit(Request $request){
+        $input = $request->all();
+
+        $id = $input['id'];
+        $documentId = $input['documentId'];
+
+        $data['tenderMaster'] = $this->tenderMasterRepository
+            ->with(['createdBy', 'confirmed_by', 'modifiedBy', 'approvedBy' => function ($query) use ($documentId) {
+                $query->with('employee')
+                    ->where('documentSystemID', $documentId);
+            }])
+            ->findWithoutFail($id);
+
+        $data['rejectedHistory'] = DocumentReferedHistory::select('documentReferedID','documentApprovedID','companySystemID','documentSystemID','documentSystemCode',
+        'employeeSystemID','rejectedYN','rejectedDate','rejectedComments')
+            ->with(['employee' => function ($q){
+                $q->select('employeeSystemID','empFullName');
+            }])
+            ->where('documentSystemID',$documentId)
+            ->where('documentSystemCode',$id)
+            ->where('rejectedYN',-1)
+            ->get();
+
+        if (empty($data['tenderMaster'])) {
+            return $this->sendError('Tender Master not found');
+        }
+        return $this->sendResponse($data, 'Tender Master retrieved successfully');
+    }
+
+    public function getCompanyTenderList(Request $request){
+        $input = $request->all();
+        $srmUrl = env("SRM_LINK");
+        $tenderUrl = str_replace('/register/', '/tender-management/tenders/', $srmUrl);
+
+        $search = isset($input['search']) ? $input['search'] : '';
+        $data = TenderMaster::select('title','title_sec_lang','description','pre_bid_clarification_method','site_visit_date',
+        'document_sales_start_date','document_sales_end_date','pre_bid_clarification_start_date','pre_bid_clarification_end_date',
+        'pre_bid_clarification_end_date','bid_submission_opening_date','bid_submission_closing_date')
+            ->selectRaw('CASE 
+                    WHEN pre_bid_clarification_method = 1 THEN "Online"
+                    WHEN pre_bid_clarification_method = 0 THEN "Offline"
+                    WHEN pre_bid_clarification_method = 2 THEN "Both"
+                    ELSE "-"
+                END as clarification_method')
+            ->where('document_type',0)
+            ->where('tender_type_id',1)
+            ->where('approved',-1)
+            ->where('published_yn',1)
+            ->orderBy('id','desc');
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\\\\\", $search);
+            $data->where(function ($q) use ($search) {
+                $q->orWhere('title', 'like', "%{$search}%")
+                    ->orWhere('title_sec_lang','like', "%{$search}%")
+                    ->orWhere('description','like', "%{$search}%")
+                    ->orWhereRaw('CASE 
+                                WHEN pre_bid_clarification_method = 1 THEN "Online"
+                                WHEN pre_bid_clarification_method = 0 THEN "Offline"
+                                WHEN pre_bid_clarification_method = 2 THEN "Both"
+                                ELSE "-"
+                            END like ?', ['%' . $search . '%']);
+            });
+        }
+
+        $limit = isset($input['limit']) ? $input['limit'] : 5;
+        if($data){
+            $data = $data->paginate($limit);
+        }
+
+
+        $companyData = Company::select('CompanyName','logoPath','masterCompanySystemIDReorting')
+            ->orderBy('companySystemID','asc')
+            ->first();
+
+        $tenderData['data'] = $data;
+        $tenderData['srmLink'] = $tenderUrl;
+        $tenderData['companyData'] = $companyData;
+
+        return $tenderData;
     }
 } 

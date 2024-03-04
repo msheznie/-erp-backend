@@ -994,7 +994,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM'); 
     Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
     Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
-
+    Route::post('getCompanyTenderList', 'TenderMasterAPIController@getCompanyTenderList');
     if (env("LOG_ENABLE", false)) {
         Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
         // Route::get('/phpinfo', function () { phpinfo(); });
@@ -1058,7 +1058,6 @@ Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloa
 Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
 Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
 Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
- 
 
 if (env("LOG_ENABLE", false)) {
     Route::get('runCronJob/{cron}', function ($cron) {

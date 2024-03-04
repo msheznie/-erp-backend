@@ -16,6 +16,7 @@ use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\SupplierRegistrationLink;
+use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderMaster;
 use App\Models\VatReturnFillingMaster;
 use App\Models\AssetDisposalMaster;
@@ -67,6 +68,7 @@ use App\Models\CurrencyConversionMaster;
 use App\Models\ERPAssetTransfer;
 use App\Models\ContingencyBudgetPlan;
 use App\Models\Appointment;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\DocumentModifyRequest;
@@ -533,6 +535,8 @@ class email
                     $text = $textObj->value;
                 }
 
+                $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
                 // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
                 if ($data) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
@@ -540,14 +544,13 @@ class email
                     ->where('isYesNO', 1)
                     ->exists();
 
-                if ($hasPolicy) {
-                    Log::info('Email send start');
-                    $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
-                    $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
-                    if (isset($data['empEmail']) && $data['empEmail']) {
-                        $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
-                        if ($data['empEmail']) {
-                            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text));
+                    if ($hasPolicy) {
+                        Log::info('Email send start');
+                        $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
+                        if (isset($data['empEmail']) && $data['empEmail']) {
+                            $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
+                            if ($data['empEmail']) {
+                                Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
                             }
                         }
                         Log::info('email sent success fully to :' . $data['empEmail']);
@@ -583,6 +586,8 @@ class email
              $text = $textObj->value;
         }
 
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
             ->where('companyPolicyCategoryID', 37)
             ->where('isYesNO', 1)
@@ -594,7 +599,7 @@ class email
             if (isset($data['empEmail']) && $data['empEmail']) {
                 $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
                 if ($data['empEmail']) {
-                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text));
+                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
                 }
             }
             Log::info('email sent success fully to - :' . $data['empEmail']);

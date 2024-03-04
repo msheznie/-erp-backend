@@ -51,6 +51,7 @@ use App\Models\ExternalLinkHash;
 use App\Models\RegisteredSupplier;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierSubCategoryAssign;
+use App\Models\SystemConfigurationAttributes;
 use App\Models\YesNoSelection;
 use App\Models\SupplierContactType;
 use App\Models\BankMemoTypes;
@@ -1970,6 +1971,10 @@ class SupplierMasterAPIController extends AppBaseController
             ->orderBy("id", "desc")
             ->first();
 
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
+        $file = array();
+
         $email = email::emailAddressFormat($request->input('email'));
 
         if (!empty($isExist)) {
@@ -1981,7 +1986,7 @@ class SupplierMasterAPIController extends AppBaseController
                 $updateRec['sub_domain'] =  Helper::getDomainForSrmDocuments($request);
                 $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                 if ($isUpdated) {
-                    Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+                    Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>",null, $file,"#C23C32","GEARS","$fromName"));
                     return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
                 } else{
                     return $this->sendError('Supplier Registration Link Generation Failed',500);
@@ -1991,7 +1996,7 @@ class SupplierMasterAPIController extends AppBaseController
             $loginUrl = env('SRM_LINK').$token.'/'.$apiKey;
             $isCreated = $this->registrationLinkRepository->save($request, $token);
             if ($isCreated['status'] == true) {
-                Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+                Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>",null, $file,"#C23C32","GEARS","$fromName"));
 
                 return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
             } else {
@@ -2019,6 +2024,10 @@ class SupplierMasterAPIController extends AppBaseController
             ->where('company_id', $request->companySystemId)
             ->first();
 
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
+        $file = array();
+
         $email = email::emailAddressFormat($supplierdata['email']);
 
         if (!empty($supplierdata)) {
@@ -2027,7 +2036,7 @@ class SupplierMasterAPIController extends AppBaseController
                 $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
                 $isUpdated = SupplierRegistrationLink::where('id', $supplierdata['id'])->update($updateRec);
                 if ($isUpdated) {
-                    Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+                    Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>",null, $file,"#C23C32","GEARS","$fromName"));
                     return $this->sendResponse($loginUrl, 'Supplier Registration Link re-sent successfully');
                 } else{
                     return $this->sendError(' Failed to re-send Supplier Registration Link',500);

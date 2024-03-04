@@ -63,6 +63,7 @@ use App\Models\SalesReturnDetail;
 use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
 use App\Models\SupplierMaster;
+use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderMaster;
 use App\Models\User;
 use App\Models\DebitNote;
@@ -6075,15 +6076,36 @@ class Helper
                                     $dataEmail['alertMessage'] = $msg;
                                     $dataEmail['emailAlertMessage'] = $temp;
 
-                             
+
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
                                 else
                                 {
-                                    return ['success' => false, 'message' => "Unable to send the email"]; 
+                                    return ['success' => false, 'message' => "Unable to send the email"];
                                 }
-                            }
-                            else
+                            }else if($input["document_system_id"] == 108 || $input["document_system_id"] == 113){
+                                $confirmedUserEmail = Employee::select('empName','empEmail')
+                                    ->where('employeeSystemID',$sourceModel->confirmed_by_emp_system_id)
+                                    ->first();
+                                if (isset($confirmedUserEmail->empEmail) && !empty($confirmedUserEmail->empEmail)) {
+                                    $sub = $sourceModel->tender_code." Referred Back";
+                                    $body = "<p>Dear " .$confirmedUserEmail->empName. ',</p>' .
+                                        "<p>The document " . $sourceModel->tender_code . ' ' . $sourceModel->title . ' has been referred back for your review with the below comment:' .
+                                        "<br><br>" . $input["rejectedComments"] . "." . " <br>" .
+                                        "<br>Kindly review the document. <br>" .
+                                        "Thank You.</p>";
+
+                                    $dataEmail['empEmail'] = $confirmedUserEmail->empEmail;
+                                    $dataEmail['companySystemID'] = $sourceModel->company_id;
+                                    $temp = $body;
+                                    $dataEmail['alertMessage'] = $sub;
+                                    $dataEmail['emailAlertMessage'] = $temp;
+                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                }else {
+                                    return ['success' => false, 'message' => "Unable to send the email"];
+                                }
+
+                            }else
                             {
                                 $sendEmail = email::sendEmail($emails);
                             }
@@ -6097,7 +6119,10 @@ class Helper
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }
                     DB::commit();
-                    return ['success' => true, 'message' => 'Document is successfully rejected'];
+
+                    $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? 'referred back' : 'rejected';
+                    return ['success' => true, 'message' => 'Document is successfully '.$rejectedMsg];
+
                 } else {
                     return ['success' => false, 'message' => 'Level is already rejected'];
                 }
@@ -9104,6 +9129,20 @@ class Helper
         $url_array = explode('.', $url);
         $subDomain = $url_array[0];
         return $subDomain;
+    }
+
+    public static function getEmailConfiguration($slug='', $defaultValue = 'GEARS')
+    {
+        $emailConfiguration = SystemConfigurationAttributes::where('slug', $slug)
+            ->whereHas('systemConfigurationDetail')
+            ->with('systemConfigurationDetail')
+            ->first();
+
+        if(!$emailConfiguration) {
+            return $defaultValue;
+        }
+
+        return $emailConfiguration['systemConfigurationDetail']['value'];
     }
 
 }

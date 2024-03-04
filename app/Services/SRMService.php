@@ -38,6 +38,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
+use App\Models\SupplierContactType;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
@@ -889,11 +890,13 @@ class SRMService
         $countryMaster = CountryMaster::select('countryID', 'countryCode', 'countryName')->get();
         $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID', 'categoryCode', 'categoryName')->get();
         $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID', 'supMasterCategoryID', 'subCategoryCode', 'categoryName')->get();
+        $supplierContactType = SupplierContactType::select('supplierContactTypeID', 'supplierContactDescription')->get();
         $formData = array(
             'currencyMaster' => $currencyMaster,
             'countryMaster' => $countryMaster,
             'supplierCategoryMaster' => $supplierCategoryMaster,
             'supplierCategorySubMaster' => $supplierCategorySubMaster,
+            'supplierContactType' => $supplierContactType,
         );
 
         return [
@@ -1353,7 +1356,7 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             }, 'tenderSupplierAssignee'])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })->whereIn('id', $tenderMasterId)->where('published_yn', 1);
+            })->whereIn('id', $tenderMasterId)->where('published_yn', 1)->where('final_tender_awarded', 0);
         } else if ($request->input('extra.tender_status') == 2) {
 
             $negotiatedTenders = TenderNegotiation::select('srm_tender_master_id')
@@ -1367,8 +1370,27 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })->whereNotIn('id', $negotiatedTenders)->where('published_yn', 1);
-        }
+            })->whereNotIn('id', $negotiatedTenders)->where('published_yn', 1)->where('final_tender_awarded', 0);
+        } else if ($request->input('extra.tender_status') == 3) {
+
+            $query = TenderMaster::with(['currency', 'tender_negotiation.SupplierTenderNegotiation' => function ($q) use ($supplierRegId) {
+                $q->with(['SrmTenderBidNegotiation.BidSubmissionMaster' => function($q){
+                   $q->where('status', 1);
+                }])->where('suppliermaster_id', $supplierRegId);
+            }, 'srm_bid_submission_master' => function ($query) use ($supplierRegId) {
+                    $query->where('supplier_registration_id', '=', $supplierRegId);
+            }, 'srmTenderMasterSuppliers' => function ($q) use ($supplierRegId) {
+                    $q->where('purchased_by', '=', $supplierRegId);
+            }, 'awardedSupplier' => function ($query) use ($supplierRegId) {
+                    $query->where('supplier_id', $supplierRegId);
+                }])->where(function ($query) {
+                $query->where('final_tender_awarded', 1)
+                    ->orWhere(function ($query) {
+                        $query->where('negotiation_is_awarded', 1)
+                            ->where('final_tender_awarded', 1);
+                    });
+            })->where('published_yn', 1);
+    }
 
             if($is_rfx)
             {
@@ -1446,7 +1468,7 @@ class SRMService
                 $q->where('status', '=', 2);
             })->whereHas('tender_negotiation.SupplierTenderNegotiation', function ($q) use ($supplierRegId) {
                 $q->where('suppliermaster_id', $supplierRegId);
-            })->where('published_yn', 1);
+            })->where('published_yn', 1)->where('final_tender_awarded', '!=', 1);
         }
 
         $type = $is_rfx ? [1, 2, 3] : [0];
