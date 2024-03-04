@@ -91,7 +91,9 @@ trait AttendanceComputationTrait{
 
         if ($clockInDt->format('H:i:s') < $flexibleHrFromDt->format('H:i:s')) {
             $clockInDt = $flexibleHrFromDt;
-            $this->clockIn = $this->flexibleHourFrom;
+            if($this->isClockInOutSet){
+                $this->clockIn = $this->flexibleHourFrom;
+            }
         }
 
         $this->earlyHourComputation($clockInDt, $this->clockOutDtObj);
