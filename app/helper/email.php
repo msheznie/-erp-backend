@@ -547,6 +547,7 @@ class email
                     if ($hasPolicy) {
                         Log::info('Email send start');
                         $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
+                        $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
                         if (isset($data['empEmail']) && $data['empEmail']) {
                             $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
                             if ($data['empEmail']) {
