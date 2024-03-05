@@ -2470,12 +2470,14 @@ class Helper
                         $notifyConfirm = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
 
                         if ($notifyConfirm) {
-                            if(!isset($input['sendMail']) || (isset($input['sendMail']) && $input['sendMail']))
+                            if(!isset($input['sendMail']) || (isset($input['sendMail']) && $input['sendMail'])) {
                                 $sendEmail = \Email::sendEmail($emails);
 
-                            if (!$sendEmail["success"]) {
-                                return ['success' => false, 'message' => $sendEmail["message"]];
+                                if (!$sendEmail["success"]) {
+                                    return ['success' => false, 'message' => $sendEmail["message"]];
+                                }
                             }
+
 
                             if(!isset($input['sendNotication']) || (isset($input['sendNotication']) && $input['sendNotication']))
                                 $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
