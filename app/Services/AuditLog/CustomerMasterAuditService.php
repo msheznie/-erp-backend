@@ -54,7 +54,7 @@ class CustomerMasterAuditService
                 $newAdvanceAccount = ChartOfAccount::where('chartOfAccountSystemID', $auditData['newValue']['custAdvanceAccountSystemID'])->first();
                 $previousAdvanceAccount = ChartOfAccount::where('chartOfAccountSystemID', $auditData['previosValue']['custAdvanceAccountSystemID'])->first();
 
-                $modifiedData[] = ['amended_field' => "advance_account", 'previous_value' => ($previousAdvanceAccount) ? $previousAdvanceAccount->AccountCode.'-'.$previousAdvanceAccount->AccountDescription : '', 'new_value' => ($newAdvanceAccount) ? $newUnbilledAccount->AccountCode.'-'.$newAdvanceAccount->AccountDescription : ''];
+                $modifiedData[] = ['amended_field' => "advance_account", 'previous_value' => ($previousAdvanceAccount) ? $previousAdvanceAccount->AccountCode.'-'.$previousAdvanceAccount->AccountDescription : '', 'new_value' => ($newAdvanceAccount) ? $newAdvanceAccount->AccountCode.'-'.$newAdvanceAccount->AccountDescription : ''];
             }
 
             if($auditData['previosValue']['customerCountry'] != $auditData['newValue']['customerCountry']) {
