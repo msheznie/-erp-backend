@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.34.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.34.0...v10.34.1) (2024-03-05)
+
+
+### Bug Fixes
+
+* **email:** Undefined Index error! displayed in approvals [GSUP-1666] ([0c69f20](https://github.com/pbsgears/Gears_BackEnd/commit/0c69f2075db1b6c39cd021999395ad3167b16086))
+
 ## [10.34.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.33.0...v10.34.0) (2024-03-04)
 
 
