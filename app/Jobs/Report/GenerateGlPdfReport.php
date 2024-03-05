@@ -140,7 +140,7 @@ class GenerateGlPdfReport implements ShouldQueue
         $html = view('print.report_general_ledger', $dataArr);
 
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        $pdf->setOptions(['logOutputFile' => null])->loadHTML($html);
 
         $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
 
