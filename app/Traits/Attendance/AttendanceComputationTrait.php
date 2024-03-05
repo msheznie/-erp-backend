@@ -36,11 +36,11 @@ trait AttendanceComputationTrait{
 
         $this->isShiftHoursSet = true;
 
-        $t1 = new DateTime($this->onDutyTime);
-        $t2 = new DateTime($this->offDutyTime);
-        $this->shiftHours_obj = $t1->diff($t2);
-        $hours = $this->shiftHours_obj->format('%h');
-        $minutes = $this->shiftHours_obj->format('%i');
+        $shiftOnDutyTimeObj = new DateTime($this->onDutyTime);
+        $shiftOffDutyTimeObj = new DateTime($this->offDutyTime);
+        $this->shiftHoursObj = $shiftOnDutyTimeObj->diff($shiftOffDutyTimeObj);
+        $hours = $this->shiftHoursObj->format('%h');
+        $minutes = $this->shiftHoursObj->format('%i');
 
         $this->shiftHours = ($hours * 60) + $minutes;
     }
