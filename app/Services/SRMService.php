@@ -1723,12 +1723,14 @@ class SRMService
 
             $getDates = TenderMaster::select('pre_bid_clarification_start_date', 'pre_bid_clarification_end_date')->where('id', $extra['tenderId'])->get();
 
-            $getCompanyId = TenderMaster::select('company_id')->where('id', $extra['tenderId'])->get();
+            $companyId = TenderMaster::select('company_id')->where('id', $extra['tenderId'])->first();
+
+            $raiseAsPrivate = \Helper::checkPolicy($companyId->company_id,87);
 
             $data = [
                 'data' => $data,
                 'dates' => $getDates,
-                'company_id' => $getCompanyId,
+                'raiseAsPrivate' => $raiseAsPrivate,
                 'supplier_id' => self::getSupplierRegIdByUUID($request->input('supplier_uuid')),
             ];
 
