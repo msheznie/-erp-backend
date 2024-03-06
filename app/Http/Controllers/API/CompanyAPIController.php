@@ -910,18 +910,12 @@ class CompanyAPIController extends AppBaseController
 
     public function getChartOfAccountsForDropwdown(Request $request) {
         $selectedCompanyId = $request['selectedCompanyId'];
-        $liabilityAccount = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
-            $query->where('companySystemID', $selectedCompanyId)
-                ->where('isAssigned', -1)
-                ->where('isActive', 1);
-        })->where('controllAccountYN', '=', 1)
+
+        $liabilityAccount = ChartOfAccount::where('controllAccountYN', '=', 1)
             ->where('controlAccountsSystemID', 4)
-            ->where('isApproved',1)
-            ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'BS')
             ->orderBy('AccountDescription', 'asc')
             ->get();
-
 
         $assetAndLiabilityAccount = ChartOfAccount::
         where(function ($query)  {
@@ -930,24 +924,12 @@ class CompanyAPIController extends AppBaseController
         })
             ->where('isBank',0)
             ->where('isApproved',1)
-            ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'BS')
             ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
-                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1)->where('isActive',1);
+                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
             })
             ->orderBy('AccountDescription', 'asc')
             ->get();
-
-        $assetAndLiabilityAccountCOA = ChartOfAccount::where('isBank',0)
-            ->where('isApproved',1)
-            ->where('isActive',1)
-            ->where('catogaryBLorPL', '=', 'BS')
-            ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
-                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1)->where('isActive',1);
-            })
-            ->orderBy('AccountDescription', 'asc')
-            ->get();
-
 
         $discountsChartOfAccounts = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
             $query->where('companySystemID', $selectedCompanyId)
@@ -968,43 +950,27 @@ class CompanyAPIController extends AppBaseController
             })
             ->where('controlAccountsSystemID',3)
             ->where('catogaryBLorPL', '=', 'BS')
-            ->where('isApproved',1)
-            ->where('isActive',1)
             ->orderBy('AccountDescription', 'asc')
             ->get();
 
-        $liabilityAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+
+        $liabilityAccountsCOA =  ChartOfAccount::where('controllAccountYN', '=', 1)
             ->whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
                 $query->where('companySystemID', $selectedCompanyId)
                     ->where('isAssigned', -1)
                     ->where('isActive', 1);
             })
             ->where('controlAccountsSystemID',4)
-            ->where('isApproved',1)
-            ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'BS')
-            ->orderBy('AccountDescription', 'asc')
-            ->get();
-
-
-        $liabilityAccountsCOA = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
-            $query->where('companySystemID', $selectedCompanyId)
-                ->where('isAssigned', -1)
-                ->where('isActive', 1);
-        })
-            ->where('catogaryBLorPL', '=', 'BS')
-            ->where('isApproved',1)
-            ->where('isActive',1)
             ->orderBy('AccountDescription', 'asc')
             ->get();
 
 
         $output = array(
             'liabilityAccountsCOA' => $liabilityAccountsCOA,
-            'liabilityAccounts' => $liabilityAccounts,
             'chartOfAccounts' => $chartOfAccounts,
             'discountsChartOfAccounts' => $discountsChartOfAccounts,
-            'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccountCOA,
+            'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccount,
             'liabilityAccount' => $liabilityAccount,
             'assetAndLiabilityAccount' => $assetAndLiabilityAccount
 
