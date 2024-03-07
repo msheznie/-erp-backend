@@ -36,8 +36,10 @@ class GenerateARCAPdfReport implements ShouldQueue
     public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath,$aging)
     {
         if(env('IS_MULTI_TENANCY',false)){
+            Log::info('databse switch...11');
             self::onConnection('database_main');
         }else{
+            Log::info('databse switch...22');
             self::onConnection('database');
         }
         $this->dispatch_db = $dispatch_db;
@@ -57,8 +59,10 @@ class GenerateARCAPdfReport implements ShouldQueue
      */
     public function handle()
     {
+        Log::info('gennerate job start');
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
         ini_set('memory_limit', -1);
+        Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
         $db = $this->dispatch_db;
         $request = $this->requestData;
         $outputChunkCount = $this->outputChunkData;
@@ -68,7 +72,7 @@ class GenerateARCAPdfReport implements ShouldQueue
 
         $count = $this->reportCount;
         CommonJobService::db_switch($db);
-
+        Log::info('database switch success');
         $checkIsGroup = Company::find($request->companySystemID);
         $companyLogo = $checkIsGroup->logo_url;
 
@@ -150,13 +154,14 @@ class GenerateARCAPdfReport implements ShouldQueue
 
         
         $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
-
+        Log::info('pdf generated');
         $fileName = $name.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
         $path = $rootPaths.'/'.$fileName;
 
         $result = Storage::disk('local_public')->put($path, $pdf_content);
         Log::info('saving to local public...');
         $files = File::files(public_path($rootPaths));
+        Log::info('zipping start...');
         if (count($files) == $outputChunkCount) {
             $fromDate = new Carbon($request->fromDate);
             $fromDate = $fromDate->format('Y-m-d');
