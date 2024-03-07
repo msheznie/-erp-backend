@@ -149,6 +149,7 @@ class GenerateARCAPdfReport implements ShouldQueue
 
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
+                Log::info('pdf rendered');
             }
 
             $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
