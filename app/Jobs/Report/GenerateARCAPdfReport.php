@@ -75,139 +75,144 @@ class GenerateARCAPdfReport implements ShouldQueue
         Log::info('database switch success');
         $checkIsGroup = Company::find($request->companySystemID);
         $companyLogo = $checkIsGroup->logo_url;
+        Log::info('reportTypeID : '.$request->reportTypeID);
 
-        if ($request->reportTypeID == 'CAS') {
+        try {
+            if ($request->reportTypeID == 'CAS') {
 
-            $name = 'customer_aging_summary';
-            $outputArr = array();
-            $grandTotalArr = array();
-            if ($aging) {
-                foreach ($aging as $val) {
-                    $total = collect($output)->pluck($val)->toArray();
-                    $grandTotalArr[$val] = array_sum($total);
+                $name = 'customer_aging_summary';
+                $outputArr = array();
+                $grandTotalArr = array();
+                if ($aging) {
+                    foreach ($aging as $val) {
+                        $total = collect($output)->pluck($val)->toArray();
+                        $grandTotalArr[$val] = array_sum($total);
+                    }
                 }
-            }
-    
-            if ($output) {
-                foreach ($output as $val) {
-                    $outputArr[$val->concatCompanyName][$val->documentCurrency][] = $val;
-                }
-            }
-    
-            $decimalPlaces = 2;
-            $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-            if ($companyCurrency) {
-                if ($request->currencyID == 2) {
-                    $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
-                } else if ($request->currencyID == 3) {
-                    $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
-                }
-            }
-    
-            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate));
-    
-            $html = view('print.customer_aging_summary', $dataArr);
-    
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
-        }
-        elseif ($request->reportTypeID == 'CAD')
-        {
-            $name = 'customer_aging_details';
-            $outputArr = array();
-            $customerCreditDays = array();
-            $grandTotalArr = array();
-            if ($aging) {
-                foreach ($aging as $val) {
-                    $total = collect($output)->pluck($val)->toArray();
-                    $grandTotalArr[$val] = array_sum($total);
-                }
-            }
-
-            if ($output) {
-                foreach ($output as $val) {
-                    $outputArr[$val->customerName][$val->documentCurrency][] = $val;
-                    $customerCreditDays[$val->customerName] = $val->creditDays;
-                }
-            }
-
-            $decimalPlaces = 2;
-            $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-            if ($companyCurrency) {
-                if ($request->currencyID == 2) {
-                    $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
-                } else if ($request->currencyID == 3) {
-                    $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
-                }
-            }
-
-            $invoiceAmountTotal = collect($output)->pluck('invoiceAmount')->toArray();
-            $invoiceAmountTotal = array_sum($invoiceAmountTotal);
-
-            $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
-
-            $html = view('print.customer_aging_detail', $dataArr);
-
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
-        }
-
         
-        $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
-        Log::info('pdf generated');
-        $fileName = $name.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
-        $path = $rootPaths.'/'.$fileName;
-
-        $result = Storage::disk('local_public')->put($path, $pdf_content);
-        Log::info('saving to local public...');
-        $files = File::files(public_path($rootPaths));
-        Log::info('zipping start...');
-        if (count($files) == $outputChunkCount) {
-            $fromDate = new Carbon($request->fromDate);
-            $fromDate = $fromDate->format('Y-m-d');
-
-            $toDate = new Carbon($request->toDate);
-            $toDate = $toDate->format('Y-m-d');
-
-            $companyCode = isset($checkIsGroup->CompanyID)?$checkIsGroup->CompanyID:'common';
-
-
-            $zip = new ZipArchive;
-            $fileName = $companyCode.'_'.'account_recivable_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
-            if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE)
+                if ($output) {
+                    foreach ($output as $val) {
+                        $outputArr[$val->concatCompanyName][$val->documentCurrency][] = $val;
+                    }
+                }
+        
+                $decimalPlaces = 2;
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                if ($companyCurrency) {
+                    if ($request->currencyID == 2) {
+                        $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                    } else if ($request->currencyID == 3) {
+                        $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                    }
+                }
+        
+                $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate));
+        
+                $html = view('print.customer_aging_summary', $dataArr);
+        
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+            }
+            elseif ($request->reportTypeID == 'CAD')
             {
-                foreach($files as $key => $value) {
-                    $relativeNameInZipFile = basename($value);
-                    $zip->addFile($value, $relativeNameInZipFile);
+                $name = 'customer_aging_details';
+                $outputArr = array();
+                $customerCreditDays = array();
+                $grandTotalArr = array();
+                if ($aging) {
+                    foreach ($aging as $val) {
+                        $total = collect($output)->pluck($val)->toArray();
+                        $grandTotalArr[$val] = array_sum($total);
+                    }
                 }
-                $zip->close();
+
+                if ($output) {
+                    foreach ($output as $val) {
+                        $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                        $customerCreditDays[$val->customerName] = $val->creditDays;
+                    }
+                }
+
+                $decimalPlaces = 2;
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                if ($companyCurrency) {
+                    if ($request->currencyID == 2) {
+                        $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                    } else if ($request->currencyID == 3) {
+                        $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                    }
+                }
+
+                $invoiceAmountTotal = collect($output)->pluck('invoiceAmount')->toArray();
+                $invoiceAmountTotal = array_sum($invoiceAmountTotal);
+
+                $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
+
+                $html = view('print.customer_aging_detail', $dataArr);
+
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
             }
 
-            $contents = Storage::disk('local_public')->get($fileName);
-            $zipPath = $companyCode."/account-recivable/repots/".$fileName;
-            $fileMoved = Storage::disk('s3')->put($zipPath, $contents);
+            
+            $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
+            Log::info('pdf generated');
+            $fileName = $name.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
+            $path = $rootPaths.'/'.$fileName;
 
-            if ($fileMoved) {
-                if ($exists = Storage::disk('local_public')->exists($fileName)) {
-                    $fileDeleted = Storage::disk('local_public')->delete($fileName);
+            $result = Storage::disk('local_public')->put($path, $pdf_content);
+            Log::info('saving to local public...');
+            $files = File::files(public_path($rootPaths));
+            Log::info('zipping start...');
+            if (count($files) == $outputChunkCount) {
+                $fromDate = new Carbon($request->fromDate);
+                $fromDate = $fromDate->format('Y-m-d');
+
+                $toDate = new Carbon($request->toDate);
+                $toDate = $toDate->format('Y-m-d');
+
+                $companyCode = isset($checkIsGroup->CompanyID)?$checkIsGroup->CompanyID:'common';
+
+
+                $zip = new ZipArchive;
+                $fileName = $companyCode.'_'.'account_recivable_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
+                if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE)
+                {
+                    foreach($files as $key => $value) {
+                        $relativeNameInZipFile = basename($value);
+                        $zip->addFile($value, $relativeNameInZipFile);
+                    }
+                    $zip->close();
                 }
+
+                $contents = Storage::disk('local_public')->get($fileName);
+                $zipPath = $companyCode."/account-recivable/repots/".$fileName;
+                $fileMoved = Storage::disk('s3')->put($zipPath, $contents);
+
+                if ($fileMoved) {
+                    if ($exists = Storage::disk('local_public')->exists($fileName)) {
+                        $fileDeleted = Storage::disk('local_public')->delete($fileName);
+                    }
+                }
+
+                $reportTitle = "Account receivable Report PDF has been generated";
+
+                $webPushData = [
+                    'title' => $reportTitle,
+                    'body' => 'Period : '.$fromDate.' - '.$toDate,
+                    'url' => "",
+                    'path' => $zipPath,
+                ];
+                Log::info('notification start...');
+                WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds);
+
+                Storage::disk('local_public')->deleteDirectory('account-recivable-pdf');
             }
 
-            $reportTitle = "Account receivable Report PDF has been generated";
-
-            $webPushData = [
-                'title' => $reportTitle,
-                'body' => 'Period : '.$fromDate.' - '.$toDate,
-                'url' => "",
-                'path' => $zipPath,
-            ];
-            Log::info('notification start...');
-            WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds);
-
-            Storage::disk('local_public')->deleteDirectory('account-recivable-pdf');
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
         }
-
-        return true;
-
     }
 }
