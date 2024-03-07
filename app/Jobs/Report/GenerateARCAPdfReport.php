@@ -79,6 +79,7 @@ class GenerateARCAPdfReport implements ShouldQueue
 
         try {
             if ($request->reportTypeID == 'CAS') {
+        Log::info('reportTypeID inside: '.$request->reportTypeID);
 
                 $name = 'customer_aging_summary';
                 $outputArr = array();
@@ -108,10 +109,13 @@ class GenerateARCAPdfReport implements ShouldQueue
         
                 $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate));
         
+        Log::info('$dataArr');
+        Log::info($dataArr);
                 $html = view('print.customer_aging_summary', $dataArr);
         
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
+        Log::info('$dataArr cd');
             }
             elseif ($request->reportTypeID == 'CAD')
             {
@@ -153,6 +157,45 @@ class GenerateARCAPdfReport implements ShouldQueue
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
             }
+
+
+             Log::info('reportTypeIDcc inside: '.$request->reportTypeID);
+
+                $name = 'customer_aging_summary';
+                $outputArr = array();
+                $grandTotalArr = array();
+                if ($aging) {
+                    foreach ($aging as $val) {
+                        $total = collect($output)->pluck($val)->toArray();
+                        $grandTotalArr[$val] = array_sum($total);
+                    }
+                }
+        
+                if ($output) {
+                    foreach ($output as $val) {
+                        $outputArr[$val->concatCompanyName][$val->documentCurrency][] = $val;
+                    }
+                }
+        
+                $decimalPlaces = 2;
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                if ($companyCurrency) {
+                    if ($request->currencyID == 2) {
+                        $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                    } else if ($request->currencyID == 3) {
+                        $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                    }
+                }
+        
+                $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate));
+        
+        Log::info('$dataArrcc');
+        Log::info($dataArr);
+                $html = view('print.customer_aging_summary', $dataArr);
+        
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+        Log::info('$dataArrcc cd');
 
             
             $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
