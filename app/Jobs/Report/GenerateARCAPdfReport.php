@@ -110,7 +110,7 @@ class GenerateARCAPdfReport implements ShouldQueue
         
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
-                Log::info('pdf rendered');
+                Log::info('pdf rendered summary');
             }
             elseif ($request->reportTypeID == 'CAD')
             {
@@ -151,7 +151,7 @@ class GenerateARCAPdfReport implements ShouldQueue
 
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
-                Log::info('pdf rendered');
+                Log::info('pdf rendered detail');
             }
 
             $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
@@ -160,6 +160,8 @@ class GenerateARCAPdfReport implements ShouldQueue
 
             $result = Storage::disk('local_public')->put($path, $pdf_content);
             $files = File::files(public_path($rootPaths));
+            Log::info('count files : '.count($files));
+            Log::info('outputChunkCount : '.$outputChunkCount);
             if (count($files) == $outputChunkCount) {
                 $fromDate = new Carbon($request->fromDate);
                 $fromDate = $fromDate->format('Y-m-d');
