@@ -40,6 +40,11 @@ Route::group([], function(){
     Route::post('getVRFApprovalByUser', 'VatReturnFillingMasterAPIController@getVRFApprovalByUser')->name("Get pending for approval - VRF");
     Route::post('getVRFApprovedByUser', 'VatReturnFillingMasterAPIController@getVRFApprovedByUser')->name("Get approved- VRF");
 
+    //Recurring Voucher
+    Route::post('getRecurringVoucherMasterApproval', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterApproval')->name("Get pending for approval RRV");
+    Route::post('getApprovedRecurringVoucherForCurrentUser', 'RecurringVoucherSetupAPIController@getApprovedRecurringVoucherForCurrentUser')->name("Get approved RRV");
+    Route::post('approveRecurringVoucher', 'RecurringVoucherSetupAPIController@approveRecurringVoucher')->name("Approve RRV");
+    Route::post('rejectRecurringVoucher', 'RecurringVoucherSetupAPIController@rejectRecurringVoucher')->name("Reject RRV");;
 });
 
 
@@ -138,9 +143,6 @@ Route::group([], function(){
     Route::get('contingency_budget_list', 'ContingencyBudgetPlanAPIController@budget_list')->name('Get contingency budget list');
     Route::get('getContingencyBudgetFormData', 'ContingencyBudgetPlanAPIController@getFormData')->name('Get contingency budget form data');
     Route::get('getBudgetAmount/{id}', 'ContingencyBudgetPlanAPIController@getBudgetAmount')->name('Get contingency budget amount');
-
-    Route::post('get_contingency_budget', 'ContingencyBudgetPlanAPIController@get_contingency_budget')->name('Get contingency budget');
-
 
     // Budget Additions
     Route::resource('budget_addition', 'ErpBudgetAdditionAPIController');
@@ -258,7 +260,9 @@ Route::group([], function(){
     Route::post('getCashFlowPullingItemsForProceeds', 'CashFlowReportAPIController@getCashFlowPullingItemsForProceeds')->name('Get cashflow pulling items for proceeds');
     Route::post('postCashFlowPulledItems', 'CashFlowReportAPIController@postCashFlowPulledItems')->name('Post Cash flow pulled items');
     Route::post('postCashFlowPulledItemsForProceeds', 'CashFlowReportAPIController@postCashFlowPulledItemsForProceeds')->name('Post Cashflow pulled items for proceeds');
-    
+    Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport')->name('Download Employee ledger report');
+    Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport')->name('Download project utilization report');
+
 });
 
 
@@ -269,6 +273,14 @@ Route::group([], function(){
     Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
     Route::resource('project_gl_details', 'ProjectGlDetailAPIController');
     Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
+    Route::resource('recurring_voucher_setups', 'RecurringVoucherSetupAPIController');
+    Route::resource('recurring_voucher_setup_details', 'RecurringVoucherSetupDetailAPIController');
+    Route::resource('recurring_voucher_setup_schedules', 'RecurringVoucherSetupScheduleAPIController');
+
+    Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData')->name('Get allocation configuration assign form data');
+    Route::resource('coa_allocation_details', 'ChartOfAccountAllocationDetailAPIController');
+    Route::resource('coa_allocation_masters', 'ChartOfAccountAllocationMasterAPIController');
+
 
     Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData')->name('Get Finance Year Form data');
 
@@ -276,6 +288,26 @@ Route::group([], function(){
     Route::post('getFinancialPeriodsByYear', 'CompanyFinancePeriodAPIController@getFinancialPeriodsByYear')->name('Get Financial periods by year');
 
     Route::post('erp_project_masters/get_gl_accounts','ChartOfAccountsAssignedAPIController@getGlAccounts')->name('Get GL Accounts');
+
+    Route::get('getRecurringVoucherMasterFormData', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterFormData')->name('Get recurring voucher master form data');
+    Route::post('getRecurringVoucherMasterView', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterView')->name('Get recurring voucher master view');
+    Route::get('getRecurringVoucherDetails', 'RecurringVoucherSetupDetailAPIController@getRecurringVoucherDetails')->name('Get RRV details');
+    Route::get('getRecurringVoucherContracts', 'RecurringVoucherSetupDetailAPIController@getRecurringVoucherContracts')->name('Get RRV contracts');
+    Route::get('getGLForRecurringVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForRecurringVoucherDirect')->name("Get gl for RRV direct");
+    Route::get('getRecurringVoucherMasterRecord', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterRecord')->name('Get rrv master record');
+    Route::post('amendRecurringVoucherReview', 'RecurringVoucherSetupAPIController@amendRecurringVoucherReview')->name('RRV Review');
+    Route::post('recurringVoucherReopen', 'RecurringVoucherSetupAPIController@recurringVoucherReopen')->name('RRV Reopen');
+    Route::post('recurringVoucherDeleteAllDetails', 'RecurringVoucherSetupDetailAPIController@recurringVoucherDeleteAllDetails')->name('RRV details delete all');
+    Route::get('getAllRecurringVoucherSchedules', 'RecurringVoucherSetupScheduleAPIController@getAllRecurringVoucherSchedules')->name('Get all recurring voucher schedules');
+    Route::put('recurringVoucherSchedulesAllStop', 'RecurringVoucherSetupScheduleAPIController@recurringVoucherSchedulesAllStop')->name('Stop all recurring voucher schedules');
+
+    Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData')->name('Get project masters form');
+    Route::get('erp_project_masters/segments_by_company', 'ErpProjectMasterAPIController@segmentsByCompany')->name('Get project masters by company');
+    Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index')->name('Get project masters');
+    Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store')->name('Create project masters');
+    Route::get('erp_project_masters/{id}', 'ErpProjectMasterAPIController@show')->name('Get project masters by ID');
+    Route::put('erp_project_masters/{id}', 'ErpProjectMasterAPIController@update')->name('Update project masters');
+    Route::post('getglDetails','ChartOfAccountsAssignedAPIController@getglDetails')->name('Get Gl Details');
 
 });
 
@@ -285,5 +317,8 @@ Route::group([], function(){
 
 Route::group([], function(){ 
     Route::post('getBudgetConsumptionForReview', 'BudgetConsumedDataAPIController@getBudgetConsumptionForReview')->name('Get Buget Consumption for review');
+    Route::post('getBudgetConsumptionByDoc', 'BudgetConsumedDataAPIController@getBudgetConsumptionByDoc')->name('Get budget consumption for review');
+    Route::post('changeBudgetConsumption', 'BudgetConsumedDataAPIController@changeBudgetConsumption')->name('Change budget consumption');
+
 });
 

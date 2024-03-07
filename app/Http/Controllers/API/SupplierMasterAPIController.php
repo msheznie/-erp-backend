@@ -78,9 +78,13 @@ use App\Mail\EmailForQueuing;
 use Illuminate\Support\Facades\Hash;
 use App\helper\CreateExcel;
 use App\helper\email;
+use App\Models\DebitNote;
 use Illuminate\Http\Request as LaravelRequest;
 use App\Models\RegisterSupplierBusinessCategoryAssign;
 use App\Models\RegisterSupplierSubcategoryAssign;
+use App\Repositories\SupplierBlockRepository;
+use App\Models\SupplierBlock;
+use App\Traits\AuditLogsTrait;
 
 
 /**
@@ -93,12 +97,15 @@ class SupplierMasterAPIController extends AppBaseController
     private $supplierMasterRepository;
     private $userRepository;
     private $registrationLinkRepository;
+    private $supplierBlockRepository;
+    use AuditLogsTrait;
 
-    public function __construct(SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
+    public function __construct(SupplierBlockRepository $supplierBlockRepo,SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
     {
         $this->supplierMasterRepository = $supplierMasterRepo;
         $this->userRepository = $userRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
+        $this->supplierBlockRepository = $supplierBlockRepo;
     }
 
     /**
@@ -601,9 +608,21 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($request->all());
         $employee = \Helper::getEmployeeInfo();
      
+        if( !isset($input['liabilityAccountSysemID']) || (isset($input['liabilityAccountSysemID']) && $input['liabilityAccountSysemID'] == null)){
+            return $this->sendError('Please select liability account.');
+        }
+        if( !isset($input['UnbilledGRVAccountSystemID']) || (isset($input['UnbilledGRVAccountSystemID']) && $input['UnbilledGRVAccountSystemID'] == null)){
+            return $this->sendError('Please select unbilled account.');
+        }
+
         if($input['UnbilledGRVAccountSystemID'] == $input['liabilityAccountSysemID'] ){
             return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
         }
+
+        if( !isset($input['advanceAccountSystemID']) || (isset($input['advanceAccountSystemID']) && $input['advanceAccountSystemID'] == null)){
+            return $this->sendError('Please select advance account.');
+        }
+
 
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
@@ -716,8 +735,19 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $input = $this->convertArrayToValue(array_except($request->all(),['company', 'final_approved_by', 'blocked_by']));
 
+        if( !isset($input['liabilityAccountSysemID']) || (isset($input['liabilityAccountSysemID']) && $input['liabilityAccountSysemID'] == null)){
+            return $this->sendError('Please select liability account.');
+        }
+        if( !isset($input['UnbilledGRVAccountSystemID']) || (isset($input['UnbilledGRVAccountSystemID']) && $input['UnbilledGRVAccountSystemID'] == null)){
+            return $this->sendError('Please select unbilled account.');
+        }
+
         if($input['liabilityAccountSysemID'] == $input['UnbilledGRVAccountSystemID'] ){
             return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
+
+        if( !isset($input['advanceAccountSystemID']) || (isset($input['advanceAccountSystemID']) && $input['advanceAccountSystemID'] == null)){
+            return $this->sendError('Please select advance account.');
         }
 
         $id = $input['supplierCodeSystem'];
@@ -805,6 +835,16 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
 
         if($supplierMaster->approvedYN){
 
@@ -857,12 +897,20 @@ class SupplierMasterAPIController extends AppBaseController
                     $input['blockedReason'] = null;
                 }
 
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']), $id);
-                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity']));
+                $previosValue = $supplierMaster->toArray();
+                $newValue = $input;
+
+                $previosValue['isLCCYN'] = isset($previosValue['isLCCYN'])?$previosValue['isLCCYN']:-1;
+                $previosValue['isSMEYN'] = isset($previosValue['isSMEYN'])?$previosValue['isSMEYN']:-1;
+                $newValue['isLCCYN'] = isset($input['isLCCYN'])?$input['isLCCYN']:-1;
+                $newValue['isSMEYN'] = isset($input['isSMEYN'])?$input['isSMEYN']:-1;
+
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID']), $id);
+                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID']));
                 // user activity log table
                 if($supplierMaster){
-                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
-                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
+                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID']);
+                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID']);
 
                     // update in to user log table
                     foreach ($old_array as $key => $old){
@@ -872,6 +920,9 @@ class SupplierMasterAPIController extends AppBaseController
                         }
                     }
                 }
+
+                $this->auditLog($db, $input['supplierCodeSystem'],$uuid, "suppliermaster", $input['primarySupplierCode']." has updated", "U", $newValue, $previosValue);
+
                 return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
             }
 
@@ -1021,6 +1072,42 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($supplierMaster->toArray(), 'Supplier Master retrieved successfully');
+    }
+
+    public function supplierUsage(Request $request){
+        $input = $request->all();
+        $supplierCodeSystem = $input['supplierCodeSystem'];
+
+        $PO = ProcumentOrder::where('supplierID',$supplierCodeSystem)->where('approved',0)->get();
+        $GRV = GRVMaster::where('supplierID',$supplierCodeSystem)->where('approved',0)->get();
+        $supplierInvoice = BookInvSuppMaster::where('supplierID',$supplierCodeSystem)->where('approved',0)->get();
+        $paymentVoucher = PaySupplierInvoiceMaster::where('BPVsupplierID',$supplierCodeSystem)->where('approved',0)->get();
+        $debitNote = DebitNote::where('supplierID',$supplierCodeSystem)->where('approved',0)->get();
+
+        $supplierUsageData=[];
+
+        foreach ($PO as $order) {
+            $supplierUsageData[] = $order->purchaseOrderCode;
+        }
+        
+        foreach ($GRV as $grv) {
+            $supplierUsageData[] = $grv->grvPrimaryCode;
+        }
+        
+        foreach ($supplierInvoice as $invoice) {
+            $supplierUsageData[] = $invoice->bookingInvCode;
+        }
+        
+        foreach ($paymentVoucher as $voucher) {
+            $supplierUsageData[] = $voucher->BPVcode;
+        }
+        
+        foreach ($debitNote as $note) {
+            $supplierUsageData[] = $note->debitNoteCode;
+        }
+
+        return $this->sendResponse($supplierUsageData, 'Supplier usage retrieved successfully');
+
     }
 
     public function getSupplierMaster(Request $request)
@@ -2181,6 +2268,166 @@ class SupplierMasterAPIController extends AppBaseController
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
     }
 
+    public function updateSupplierBlocker(Request $request)
+    {
+        
+        $input = $request->all();      
+        $input = $this->convertArrayToSelectedValue($input, array('blockType'));
+        $id = $input['id'];
+        $isDelete = $input['isDelete'];
+        $isEdit = $input['isEdit'];
+        $input = array_except($input, ['isDelete', 'id','isEdit']);
+        $PO = [];
+        $SI = [];
+        $PV= [];
+        $GRV = [];
+        if($isDelete)
+        {
+            $supplierBlock = $this->supplierBlockRepository->findWithoutFail($id);
+
+            if (empty($supplierBlock)) {
+                return $this->sendError('Supplier Block not found');
+            }
+            $supplierBlock->delete();
+            return $this->sendResponse(true,'Supplier Block deleted successfully');
+
+        }
+
+        if($isEdit == 2)
+        {
+            $blockID = $input['blockId'];
+            $updated['blockReason'] = $input['blockReason'];
+            $supplierBlock = $this->supplierBlockRepository->update($updated, $blockID);
+            return $this->sendResponse(true,'Supplier Block updated successfully');
+        }
+
+        $input['supplierCodeSytem'] = $id;
+        $isPermenentExist = SupplierBlock::where('supplierCodeSytem',$id)->where('blockType',1)->first();
+
+        if($isPermenentExist)
+        {
+            return $this->sendError('you cant add permenent type !already have a perment type',422);
+        }
+        
+        $isPeriodExist = SupplierBlock::where('supplierCodeSytem',$id)->where('blockType',2);
+        if($input['blockType'] == 2)
+        {
+
+            $from =  Carbon::parse($input['blockFrom'])->format('Y-m-d');
+            $to =  Carbon::parse($input['blockTo'])->format('Y-m-d');
+            
+            $input['blockFrom'] = $from;
+            $input['blockTo'] = $to;
+            
+            if(($isPeriodExist->count()) > 0)
+            {
+                $overlapRecord = $isPeriodExist->where(function ($query) use ($from, $to) {
+                    $query->where('blockFrom', '>=', $from)
+                        ->where('blockFrom', '<=', $to)
+                        ->orWhere(function ($query) use ($from, $to) {
+                            $query->where('blockTo', '>=', $from)
+                                ->where('blockTo', '<=', $to);
+                        })
+                        ->orWhere(function ($query) use ($from, $to) {
+                            $query->where('blockFrom', '<=', $from)
+                                ->where('blockTo', '>=', $to);
+                        });
+                })
+                ->exists();
+
+                if($overlapRecord)
+                {
+                    return $this->sendError('The selected period already has a block',422);
+                }
+            }
+
+
+        }
+
+
+        $purchaseOrder = ProcumentOrder::where('supplierID',$id)->where('approved',0)->where('poTypeID',2);
+        if($purchaseOrder->count() > 0)
+        {
+           $PO =  $purchaseOrder->pluck('purchaseOrderCode')->toArray();
+        }
+
+        $Invoice = BookInvSuppMaster::where('supplierID',$id)->where('approved',0)
+                            ->where(function($q)
+                        {
+                            $q->where('documentType',1)->orWhere('documentType',3);
+                        });
+        if($Invoice->count() > 0)
+        {
+           $SI =  $Invoice->pluck('bookingInvCode')->toArray();
+        }
+
+
+        $paymountVOcuher = PaySupplierInvoiceMaster::where('BPVsupplierID',$id)->where('approved',0)
+        ->where(function($q)
+            {
+                $q->where('invoiceType',5)->orWhere('invoiceType',3);
+            });
+
+        if($paymountVOcuher->count() > 0)
+        {
+            $PV =  $paymountVOcuher->pluck('BPVcode')->toArray();
+        }
+
+
+        $grv = GRVMaster::where('supplierID',$id)->where('approved',0)->where('grvTypeID',1);
+
+        if($grv->count() > 0)
+        {
+            $GRV =  $grv->pluck('grvPrimaryCode')->toArray();
+        }
+    
+    
+        if($isEdit == 1)
+        {
+            $mergedArray = array_merge($PO, $SI, $PV,$GRV);
+            if(count($mergedArray) > 0)
+            {
+                return $this->sendError('The supplier cannot be blocked as the supplier selected in the following documents.',500,['type' => 'blockSupplier','data' =>$mergedArray]);
+    
+            }
+        }
+
+
+        if($isDelete == false)
+        {
+            $validator = \Validator::make($request->all(), [
+                'blockType' => 'required',
+                'blockFrom' => 'required_if:blockType,2|nullable|date',
+                'blockReason' => 'required',
+                'blockTo' => 'required_if:blockType,2|nullable|date|after_or_equal:blockFrom',
+            ],[ 'blockTo.required_if' => 'From Date must be grater than less than or equal to TO date' ]);
+    
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422, ['type' => 'validation']);
+            }
+        }
+
+         $supplierBlock = $this->supplierBlockRepository->create($input);
+         return $this->sendResponse($supplierBlock,'Data updated successfully');
+
+    }
+
+    public function validateSupplier(Request $request)
+    {
+        $input = $request->all();
+        $supplier_id = $input['supplierId'];
+        $supplierMaster = $this->supplierMasterRepository->findWithoutFail($supplier_id);
+
+        $date = isset($input['date'])?$input['date']:null;
+        $validatorResult = \Helper::checkBlockSuppliers($date,$supplier_id);
+        if (!$validatorResult['success']) {
+            return $this->sendError($validatorResult['message']);
+        }
+     
+        return $this->sendResponse(true,$validatorResult['message']);
+
+    }
+
     public function validateEmailExist($request)
     {
         $email = $request->input('email');
@@ -2204,5 +2451,15 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         return ['status' => true, 'message' => 'Success'];
+    }
+
+
+    public function getSupplierBlock(Request $request)
+    {
+        $supplierId = $request['supplierId'];
+        $data['supplierBlocks'] = $this->supplierBlockRepository->where('supplierCodeSytem',$supplierId)->get();
+        $data['isPermentExists'] = $this->supplierBlockRepository->where('supplierCodeSytem',$supplierId)->where('blockType',1)->exists();
+
+        return $this->sendResponse($data, 'Supplier Category Subs retrieved successfully');
     }
 }

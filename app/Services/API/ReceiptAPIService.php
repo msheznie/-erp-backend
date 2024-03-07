@@ -61,7 +61,9 @@ class ReceiptAPIService
                     'segment' => '',
                     'category' => '',
                     'amount' => '',
-                    'receipt' => true
+                    'receipt' => true,
+                    'sendMail' => false,
+                    'sendNotication' => false
                 );
 
                 $receipt = self::setTaxDetails($saveReceipt);
@@ -75,6 +77,10 @@ class ReceiptAPIService
                         $documentApproved["db"] = $db;
                         $documentApproved['empID'] = $receipt->approvedByUserSystemID;
                         $documentApproved['documentSystemID'] = $saveReceipt->documentSystemID;
+                        $documentApproved['approvedDate'] = $receipt->approvedDate;
+                        $documentApproved['sendMail'] = false;
+                        $documentApproved['sendNotication'] = false;
+
                         $approval = \Helper::approveDocumentForApi($documentApproved);
                     }
                 }
@@ -98,6 +104,13 @@ class ReceiptAPIService
             $receipt->details = $dt['details'];
             $receipt->payeeTypeID = $dt['payeeType'];
             $receipt->payment_type_id = $dt['paymentMode'];
+
+
+            if(isset($dt['vatApplicable'])) {
+                $receipt = self::setVatDetails($dt['vatApplicable'],$receipt);
+            }
+
+
             $receipt = self::setCommonValidation($dt,$receipt);
             $receipt = self::setCompanyDetails($companyID,$receipt); // set company details of the document
             $receipt = self::setDocumentDetails($dt,$receipt); // set document details (narration,custPaymentReceiveDate,documentIds)
@@ -118,16 +131,15 @@ class ReceiptAPIService
                 $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
             }
 
-            if(isset($dt['vatApplicable'])) {
-                $receipt = self::setVatDetails($dt['vatApplicable'],$receipt);
-            }
 
             foreach ($receipt['details'] as $details) {
+
+                self::checkDecimalPlaces($details,$receipt);
 
                 if($receipt->documentType == 13) {
                     self::validateInvoiceDetails($details,$receipt);
                     self::validateTotalAmount($details,$receipt);
-                    self::validateDocumentDate($details,$receipt);
+                    self::validateDocumentDate($details,$receipt,$dt);
                 }
 
                 if($receipt->documentType == 14) {
@@ -147,13 +159,25 @@ class ReceiptAPIService
     }
 
     private function validateVatAmount($details,$receipt) {
-        if($receipt->isVATApplicable) {
+        $customerDetails = CustomerMaster::where('customerCodeSystem',$receipt->customerID)->first();
+
+        if($receipt->isVATApplicable && ($customerDetails && $customerDetails->vatEligible)) {
             if($details['vatAmount'] >= $details['amount']) {
                 $this->isError = true;
                 $error[$receipt->narration][$details['comments']] = ['VAT amount cannot be greater or equal than the amount'];
                 array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
             }
 
+
+            $countDecimals = strlen(substr(strrchr($details['vatAmount'], "."), 1));
+
+            $currencyDetails = CurrencyMaster::where('currencyID',$receipt->custTransactionCurrencyID)->first();
+
+            if($currencyDetails && ($countDecimals > $currencyDetails->DecimalPlaces)){
+                $this->isError = true;
+                $error[$receipt->narration][$details['comments']] = [$currencyDetails->CurrencyName. ' vatAmount cannot exceed '. $currencyDetails->DecimalPlaces .' decimal places'];;
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
         }
     }
 
@@ -227,6 +251,34 @@ class ReceiptAPIService
         return $receipt;
     }
 
+    private function checkDecimalPlaces($detail,$receipt) {
+        if($receipt->documentType != 13) {
+            $countDecimals = strlen(substr(strrchr($detail['amount'], "."), 1));
+        }else {
+            $countDecimals = strlen(substr(strrchr($detail['receiptAmount'], "."), 1));
+        }
+
+        $currencyDetails = CurrencyMaster::where('currencyID',$receipt->custTransactionCurrencyID)->first();
+
+        if($currencyDetails && $countDecimals > $currencyDetails->DecimalPlaces){
+            switch ($receipt->documentType) {
+                case 13 :
+                    $this->isError = true;
+                    $error[$receipt->narration][$detail['invoiceCode']] = [$currencyDetails->CurrencyName. ' receiptAmount cannot exceed '. $currencyDetails->DecimalPlaces .' decimal places'];
+                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                    break;
+                case 14:
+                case 15:
+                    $this->isError = true;
+                    $error[$receipt->narration][$detail['comments']] = [$currencyDetails->CurrencyName. ' amount cannot exceed '. $currencyDetails->DecimalPlaces .' decimal places'];
+                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+                    break;
+            }
+
+        }
+
+    }
+
     private function validateGlCode($detail,$receipt) {
         $chartOfAccountDetails = ChartOfAccount::where('AccountCode',$detail['glCode'])->where('controllAccountYN', 0)->first();
 
@@ -262,12 +314,15 @@ class ReceiptAPIService
 
 
     }
-    private function validateDocumentDate($details,$receipt) {
+    private function validateDocumentDate($details,$receipt,$dt) {
         if($receipt->documentType == 13) {
             $invCode = $details['invoiceCode'];
             $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
             if($invoice) {
-                if($receipt->postedDate < Carbon::parse($invoice->postedDate)) {
+                $postedData = Carbon::parse($dt['documentDate']);
+                $postedData->setTime(23,59,59);
+                $invoicePostedDate = Carbon::parse($invoice->postedDate);
+                if($postedData->lessThan($invoicePostedDate)) {
                     $this->isError = true;
                     $error[$receipt->narration][$details['invoiceCode']] = ['Document date of a customer invoice receipt voucher should not be lesser than the invoice dates of customer invoices pulled'];
                     array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
@@ -327,9 +382,13 @@ class ReceiptAPIService
 
         $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->select('DecimalPlaces')->first();
 
-        $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
+        if(isset($currencies)) {
+            $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
+            $receipt->bankAccountBalance = $rounded_amount;
+        }else {
+            $receipt->bankAccountBalance = $amount;
+        }
 
-        $receipt->bankAccountBalance = $rounded_amount;
 
         return $receipt;
     }
@@ -378,7 +437,10 @@ class ReceiptAPIService
     private function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = Employee::where('empID',$detail['confirmedBy'])->first();
 
-        if(Carbon::parse($detail['documentDate']) > Carbon::parse($detail['confirmedDate'])) {
+        $documentDate = Carbon::createFromFormat('d-m-Y',$detail['documentDate']);
+        $confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
+
+        if($documentDate > $confirmedDate) {
             $this->isError = true;
             $error[$receipt->narration] = ['Confirmed date should greater than document date'];
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
@@ -393,7 +455,7 @@ class ReceiptAPIService
             $receipt->confirmedByEmpSystemID = $userDetails->employeeSystemID;
             $receipt->confirmedByEmpID = $userDetails->empID;
             $receipt->confirmedByName = $userDetails->empFullName;
-            $receipt->confirmedDate = Carbon::parse($detail['confirmedDate']);
+            $receipt->confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
         }
 
 
@@ -402,7 +464,7 @@ class ReceiptAPIService
     private function setApprovedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = Employee::where('empID',$detail['approvedBy'])->first();
 
-        if(Carbon::parse($detail['confirmedDate']) > Carbon::parse($detail['approvedDate'])) {
+        if(Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']) > Carbon::createFromFormat('d-m-Y',$detail['approvedDate'])) {
             $this->isError = true;
             $error[$receipt->narration] = ['Approved date should greater than confirmed date'];
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
@@ -416,7 +478,7 @@ class ReceiptAPIService
         }else {
             $receipt->approvedByUserSystemID = $userDetails->employeeSystemID;
             $receipt->approvedByUserID = $userDetails->empID;
-            $receipt->approvedDate = Carbon::parse($detail['approvedDate']);
+            $receipt->approvedDate = Carbon::createFromFormat('d-m-Y',$detail['approvedDate']);
         }
 
         return $receipt;
@@ -424,16 +486,20 @@ class ReceiptAPIService
     private static function setLocalAndReportingAmounts($receipt): CustomerReceivePayment {
 
         $myCurr = $receipt->custTransactionCurrencyID;
+        $customerDetails = CustomerMaster::where('customerCodeSystem',$receipt->customerID)->first();
+        $currencyDetails = CurrencyMaster::where('currencyID',$myCurr)->first();
+        $companyData = Company::with(['localcurrency', 'reportingcurrency'])->where('companySystemID', $receipt->companySystemID)
+            ->first();
 
         switch ($receipt->documentType) {
             case 15:
             case 14 :
-                $totalVatAmount = collect($receipt->details)->sum('vatAmount');
+                $totalVatAmount = (($customerDetails && $customerDetails->vatEligible) && $receipt->isVATApplicable) ? collect($receipt->details)->sum('vatAmount') : 0;
                 $totalAmount = collect($receipt->details)->sum('amount');
                 $totalNetAmount = ($totalAmount-$totalVatAmount);
                 break;
             case 13 :
-                $totalVatAmount = collect($receipt->details)->sum('vatAmount');
+                $totalVatAmount = (($customerDetails && $customerDetails->vatEligible) && $receipt->isVATApplicable) ? collect($receipt->details)->sum('vatAmount') : 0;
                 $totalAmount = collect($receipt->details)->sum('receiptAmount');
                 $totalNetAmount = ($totalAmount-$totalVatAmount);
                 break;
@@ -443,37 +509,32 @@ class ReceiptAPIService
                 $totalNetAmount = 0;
                 break;
         }
-        $companyCurrencyConversionTrans = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
-        $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
-        $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
-        $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalAmount);
-        if($receipt->custTransactionCurrencyID == 1) {
-            $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount']);
-            $receipt->receivedAmount = $totalAmount;
+
+        if($currencyDetails) {
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
+            $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
+            $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
+            $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalAmount);
+
+            $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount'])  * -1;
+            $receipt->receivedAmount = $totalAmount  * -1;
             $receipt->VATAmount = $totalVatAmount;
-            $receipt->VATPercentage = ($totalVatAmount/100);
+            $receipt->VATPercentage = ($totalVatAmount / 100);
             $receipt->VATAmountLocal =  $companyCurrencyConversionVat['localAmount'];
             $receipt->VATAmountRpt = $companyCurrencyConversionVat['reportingAmount'];
             $receipt->netAmount = $totalNetAmount;
             $receipt->netAmountLocal = $companyCurrencyConversionNet['localAmount'];
             $receipt->netAmountRpt = $companyCurrencyConversionNet['reportingAmount'];
-            $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']);
-            $receipt->bankAmount = $totalAmount;
+            $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount'])  * -1;
             $receipt->bankCurrencyER = $bankCurrencyConversion['transToDocER'];
 
-        }else {
-            $receipt->localAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['localAmount']),2);
-            $receipt->receivedAmount = round($totalAmount,2);
-            $receipt->VATAmount = round($totalVatAmount,2);
-            $receipt->VATPercentage = round(($totalVatAmount/100),2);
-            $receipt->VATAmountLocal =  round($companyCurrencyConversionVat['localAmount'],2);
-            $receipt->VATAmountRpt = round($companyCurrencyConversionVat['reportingAmount'],2);
-            $receipt->netAmount = round($totalNetAmount,2);
-            $receipt->netAmountLocal = round($companyCurrencyConversionNet['localAmount'],2);
-            $receipt->netAmountRpt = round($companyCurrencyConversionNet['reportingAmount'],2);
-            $receipt->companyRptAmount = round(\Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),2);
-            $receipt->bankAmount = round(\Helper::roundValue($bankCurrencyConversion['documentAmount']),2);
-            $receipt->bankCurrencyER = round($bankCurrencyConversion['transToDocER'],2);
+            if ($receipt->custTransactionCurrencyID == $companyData->localCurrencyID) {
+                $receipt->bankAmount = \Helper::roundValue($totalAmount) * -1;
+            } else {
+                $receipt->bankAmount = \Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1;
+            }
+
+
         }
 
 
@@ -496,33 +557,32 @@ class ReceiptAPIService
 
         $customerDetails = CustomerMaster::where('CutomerCode',$customerCode)->orWhere('customer_registration_no',$customerCode)->first();
 
-        if(!$customerDetails) {
-            $this->isError = true;
-            $error[$receipt->narration] = ['Customer data not found'];
-            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        if (!$customerDetails) {
+            $errorMessage = 'Customer data not found';
+        } elseif (!$customerDetails->isCustomerActive) {
+            $errorMessage = 'Customer is not active';
+        } else {
+            $customerAssigned = CustomerAssigned::where('companySystemID', $receipt->companySystemID)
+                ->where('customerCodeSystem', $customerDetails->customerCodeSystem)
+                ->where('isAssigned', -1)
+                ->first();
 
-        }else {
-            if(!$customerDetails->isCustomerActive) {
-                $this->isError = true;
-                $error[$receipt->narration] = ['Customer is not active'];
-                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
-            }else {
-                $customerAssigned = CustomerAssigned::where('companySystemID',$receipt->companySystemID)->where('customerCodeSystem',$customerDetails->customerCodeSystem)->where('isAssigned',-1)->first();
-                if(!$customerAssigned) {
-                    $this->isError = true;
-                    $error[$receipt->narration] = ['Customer is not assigned to the company'];
-                    array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
-                }
+            if (!$customerAssigned) {
+                $errorMessage = 'Customer is not assigned to the company';
+            } else {
                 $receipt->customerID = $customerDetails->customerCodeSystem;
                 $receipt->customerGLCodeSystemID = $customerDetails->custGLAccountSystemID;
                 $receipt->customerGLCode = $customerDetails->custGLaccount;
-                $receipt->custAdvanceAccountSystemID =  $customerDetails->custGLAccountSystemID;
+                $receipt->custAdvanceAccountSystemID = $customerDetails->custGLAccountSystemID;
                 $receipt->custAdvanceAccount = $customerDetails->custGLaccount;
             }
         }
 
-
-
+        if (isset($errorMessage)) {
+            $this->isError = true;
+            $error[$receipt->narration] = [$errorMessage];
+            $this->validationErrorArray[$receipt->narration] = $error[$receipt->narration];
+        }
 
         return $receipt;
     }
@@ -659,6 +719,7 @@ class ReceiptAPIService
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
         }else {
             $receipt->custTransactionCurrencyID = $currencyDetails->currencyID;
+            $receipt->DecimalPlaces = $currencyDetails->DecimalPlaces;
             $this->checkCurrencyAssignedToCustomer($receipt);
         }
 
@@ -753,7 +814,9 @@ class ReceiptAPIService
     private function setFinancialYear($documentDate,$receipt):CustomerReceivePayment
     {
         if(isset($documentDate)) {
-            $receipt->postedDate = Carbon::parse($documentDate)->format('d-m-Y');
+            $postedData = Carbon::parse($documentDate);
+            $postedData->setTime(23,59,59);
+            $receipt->postedDate =  $postedData;
             $data = $this->getFinancialYear($receipt);
 
             if($data['success'])

@@ -424,7 +424,7 @@ class POSSatgSalesReturn extends Model
         'promotiondiscountAmount' => 'float',
         'subTotal' => 'float',
         'netTotal' => 'float',
-        'returnMode' => 'boolean',
+        'returnMode' => 'integer',
         'isRefund' => 'boolean',
         'refundAmount' => 'float',
         'wareHouseAutoID' => 'integer',

@@ -13,12 +13,9 @@
 
 use Illuminate\Support\Facades\Route;
 
-
 Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTaxLedgerForSupplierInvoice');
 
-
 Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
-
 
 Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getAppearance', 'CompanyAPIController@getAppearance');
@@ -51,7 +48,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_supplier_master', 'POS\PosAPIController@pullSupplierMaster');
         Route::post('pull_customer_master', 'POS\PosAPIController@pullCustomerMaster');
         Route::post('fetch_item_wac_amount', 'POS\PosAPIController@fetchItemWacAmount');
-//        Route::post('create_receipts_voucher','ReceiptAPIController@store');
+        Route::post('create_receipts_voucher','ReceiptAPIController@store');
 
     });
 
@@ -82,7 +79,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");
 
 
-            Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
             Route::resource('navigation_menuses', 'NavigationMenusAPIController');
 
@@ -190,16 +186,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             /** Segment master Created by Nazir  */
 
             Route::post('getAllSegmentMaster', 'SegmentMasterAPIController@getAllSegmentMaster');
-            Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData');
-            Route::get('getOrganizationStructure', 'SegmentMasterAPIController@getOrganizationStructure');
-            Route::resource('segment/masters', 'SegmentMasterAPIController');
-            Route::post('getAffectedDocuments', 'SegmentMasterAPIController@getAffectedDocuments');
-            Route::post('getAssignedEmployees', 'SegmentMasterAPIController@getAssignedEmployees');
-            Route::post('exportAssignedEmp', 'SegmentMasterAPIController@exportAssignedEmp');
-            Route::post('exportProcessedSegments', 'SegmentMasterAPIController@exportProcessedSegments');
 
 
-            Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster');
 
             //confirmation
             Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
@@ -269,8 +257,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('g_r_v_types', 'GRVTypesAPIController');
             Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
-            Route::post('getBudgetConsumptionByDoc', 'BudgetConsumedDataAPIController@getBudgetConsumptionByDoc');
-            Route::post('changeBudgetConsumption', 'BudgetConsumedDataAPIController@changeBudgetConsumption');
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
 
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
@@ -281,15 +267,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
 
             Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
-
-            Route::get('getUtilizationFilterFormData', 'FinancialReportAPIController@getUtilizationFilterFormData');
-            Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
-            Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
-
-            Route::post('generateEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport');
-
-            Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
-            Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport');
 
             Route::get('getNotifications', 'UserAPIController@getNotifications');
             Route::post('updateNotification', 'UserAPIController@updateNotification');
@@ -343,7 +320,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('performa_masters', 'PerformaMasterAPIController');
             Route::resource('rig_masters', 'RigMasterAPIController');
 
-            Route::post('getglDetails','ChartOfAccountsAssignedAPIController@getglDetails');
+            
 
             //Logistic Configuration Master
 
@@ -387,7 +364,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
 
-            Route::post('journalVoucherBudgetUpload', 'JvMasterAPIController@journalVoucherBudgetUpload');
 
             Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
             Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
@@ -622,11 +598,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('allocation_masters', 'AllocationMasterAPIController');
 
-            Route::resource('coa_allocation_masters', 'ChartOfAccountAllocationMasterAPIController');
 
-            Route::resource('coa_allocation_details', 'ChartOfAccountAllocationDetailAPIController');
-
-            Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData');
 
             Route::get('getLeaveTypeWithBalance', 'LeaveDataMasterAPIController@getLeaveTypeWithBalance');
 
@@ -672,10 +644,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('lpt_permissions', 'LptPermissionAPIController');
             Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
             Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
-            Route::resource('segment_rights', 'SegmentRightsAPIController');
-            Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
             Route::resource('service_lines', 'ServiceLineAPIController');
-            Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
             Route::resource('chartOfAccount/allocation/histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
             Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
             Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
@@ -711,11 +680,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
 
 
-            Route::resource('segment_rights', 'SegmentRightsAPIController');
-            Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
 
             Route::resource('service_lines', 'ServiceLineAPIController');
-            Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
             //Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
 
             Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
@@ -809,12 +775,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('budget_detail_histories', 'BudgetDetailHistoryAPIController');
 
 
-            Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index');
-            Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store');
-            Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData');
-            Route::get('erp_project_masters/segments_by_company', 'ErpProjectMasterAPIController@segmentsByCompany');
-            Route::get('erp_project_masters/{id}', 'ErpProjectMasterAPIController@show');
-            Route::put('erp_project_masters/{id}', 'ErpProjectMasterAPIController@update');
+         
 
             /* Asset Request */
             Route::resource('asset_requests', 'AssetRequestAPIController');
@@ -889,15 +850,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
 
 
-            Route::resource('cash_flow_reports', 'CashFlowReportAPIController');
-            Route::get('getCashFlowFormData', 'CashFlowReportAPIController@getCashFlowFormData');
-            Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports');
-            Route::post('cashFlowConfirmation', 'CashFlowReportAPIController@cashFlowConfirmation');
-            Route::post('getCashFlowPullingItems', 'CashFlowReportAPIController@getCashFlowPullingItems');
-            Route::post('getCashFlowPullingItemsForProceeds', 'CashFlowReportAPIController@getCashFlowPullingItemsForProceeds');
-            Route::post('postCashFlowPulledItems', 'CashFlowReportAPIController@postCashFlowPulledItems');
-            Route::post('postCashFlowPulledItemsForProceeds', 'CashFlowReportAPIController@postCashFlowPulledItemsForProceeds');
-            Route::get('getCashFlowReportData', 'CashFlowReportAPIController@getCashFlowReportData');
             Route::post('getAllShiftsRPOS', 'POS\PosAPIController@getAllShiftsRPOS');
             Route::post('getAllInvoicesPos', 'POS\PosAPIController@getAllInvoicesPos');
             Route::post('getPosInvoiceData', 'POS\PosAPIController@getPosInvoiceData');

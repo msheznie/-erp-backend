@@ -742,6 +742,57 @@ WHERE
 	AND erp_documentapproved.documentSystemID IN ( 21 )
 	AND erp_documentapproved.employeeSystemID = $employeeSystemID
 	) AS PendingReceiptVoucherApprovals
+	UNION All
+	SELECT
+	* 
+FROM
+	(
+SELECT
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	recurring_voucher_setup.narration AS comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS approvedEmployee,
+	'' AS SupplierOrCustomer,
+	currencymaster.DecimalPlaces ,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	rrvDetails.debitSum AS DocumentValue,
+	0 AS amended,
+	erp_documentapproved.approvedYN,
+	recurring_voucher_setup.documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employees ON erp_documentapproved.employeeSystemID = employees.employeeSystemID
+	INNER JOIN recurring_voucher_setup ON recurring_voucher_setup.companySystemID = erp_documentapproved.companySystemID 
+	AND recurring_voucher_setup.documentSystemID = erp_documentapproved.documentSystemID 
+	AND recurring_voucher_setup.recurringVoucherAutoId = erp_documentapproved.documentSystemCode 
+	AND recurring_voucher_setup.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND recurring_voucher_setup.approved = -1 
+	INNER JOIN currencymaster ON currencymaster.currencyID = recurring_voucher_setup.currencyID 
+	INNER JOIN(
+                SELECT
+                    COALESCE(SUM(debitAmount),0) as debitSum,
+                    recurringVoucherAutoId 
+                FROM
+                    recurring_voucher_setup_detail
+                GROUP BY recurringVoucherAutoId
+                ) AS rrvDetails
+        ON
+            rrvDetails.recurringVoucherAutoId = recurring_voucher_setup.recurringVoucherAutoId 
+WHERE
+	erp_documentapproved.approvedYN = -1
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 119 ) 
+	AND erp_documentapproved.employeeSystemID = $employeeSystemID
+	) AS PendingRRVApprovals
 	)t 
 	INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID 
 	LEFT JOIN erp_documentmaster ON t.documentSystemID = erp_documentmaster.documentSystemID 
@@ -2901,9 +2952,59 @@ WHERE
 		AND erp_documentapproved.approvalGroupID > 0 
 		AND erp_documentapproved.documentSystemID IN ( 108,113 ) 
 		AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
-		) as tenderPendingApprovals
-		 
-		 )t 
+		) as tenderPendingApprovals UNION ALL 
+	SELECT * FROM (
+    SELECT
+    DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	recurring_voucher_setup.narration AS comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	currencymaster.DecimalPlaces ,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	rrvDetails.debitSum AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	recurring_voucher_setup.documentType,
+	'' as srmValue
+    FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN recurring_voucher_setup ON recurring_voucher_setup.companySystemID = erp_documentapproved.companySystemID 
+	AND recurring_voucher_setup.documentSystemID = erp_documentapproved.documentSystemID 
+	AND recurring_voucher_setup.recurringVoucherAutoId = erp_documentapproved.documentSystemCode 
+	AND recurring_voucher_setup.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND recurring_voucher_setup.approved = 0 
+	AND recurring_voucher_setup.confirmedYN = 1 
+	INNER JOIN currencymaster ON currencymaster.currencyID = recurring_voucher_setup.currencyID 
+	INNER JOIN(SELECT COALESCE(SUM(debitAmount),0) as debitSum,recurringVoucherAutoId FROM recurring_voucher_setup_detail GROUP BY recurringVoucherAutoId) AS rrvDetails
+    ON rrvDetails.recurringVoucherAutoId = recurring_voucher_setup.recurringVoucherAutoId  
+    WHERE
+	erp_documentapproved.approvedYN = 0
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 119 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingRRVApprovals
+    )t 
 			
 	INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID 
 	LEFT JOIN erp_documentmaster ON t.documentSystemID = erp_documentmaster.documentSystemID 

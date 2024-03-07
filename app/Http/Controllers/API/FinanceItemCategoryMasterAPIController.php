@@ -30,6 +30,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class FinanceItemCategoryMasterController
@@ -40,7 +41,8 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 {
     /** @var  FinanceItemCategoryMasterRepository */
     private $financeItemCategoryMasterRepository;
-
+    use AuditLogsTrait;
+    
     public function __construct(FinanceItemCategoryMasterRepository $financeItemCategoryMasterRepo)
     {
         $this->financeItemCategoryMasterRepository = $financeItemCategoryMasterRepo;
@@ -181,7 +183,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $chartOfAccount = ChartOfAccount::all();
 
         /** expense chart of accounts */
-        $expenseChartOfAccount = ChartOfAccount::where(['controlAccountsSystemID' => 2, 'isActive' => 1])->get();
+        $expenseChartOfAccount = ChartOfAccount::whereIn('controlAccountsSystemID',[2,3,4])->where('isActive',1)->where('isApproved',1)->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -236,6 +238,15 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
                     'field_type_id' => $input['field_type_id']
                 ];
                 $attributes = ErpAttributes::create($masterData);
+
+
+                $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+                $db = isset($input['db']) ? $input['db'] : '';
+
+                if ($input['document_id'] == "SUBCAT") {
+                    $this->auditLog($db, $attributes['id'],$uuid, "erp_attributes", "Attribute ".$input['description']." has created", "C", $masterData, [], $input['document_master_id'], 'financeitemcategorysub');
+                }
+
             DB::commit();
             return $this->sendResponse([], 'Attributes Created successfully');
         } catch (\Exception $exception) {

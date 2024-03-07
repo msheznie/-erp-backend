@@ -66,6 +66,7 @@ class POSItemLedgerInsert implements ShouldQueue
                             ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
                             ->where('pos_source_invoice.shiftID', $masterModel["autoID"])
                             ->where('pos_source_invoicedetail.itemAutoID', $item->itemAutoId)
+                            ->where('pos_source_invoicedetail.invoiceID', $item->invoiceID)
                             ->first();
                         $data['unitOfMeasure'] = $item->uom;
                         if($item->isReturnYN == 1) {

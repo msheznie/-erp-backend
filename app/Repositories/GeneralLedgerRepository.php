@@ -49,6 +49,7 @@ class GeneralLedgerRepository extends BaseRepository
         'contractUID',
         'clientContractID',
         'supplierCodeSystem',
+        'employeeSystemID',
         'venderName',
         'documentTransCurrencyID',
         'documentTransCurrencyER',

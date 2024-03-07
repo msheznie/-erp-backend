@@ -70,10 +70,11 @@ class TenantEnforce
             'api/v1/postEmployeeFromPortal',
             'api/v1/uploadBudgets',
             'api/v1/uploadCustomerInvoice',
-            'api/v1/create_receipts_voucher'
+            'api/v1/create_receipts_voucher',
+            'api/v1/generateARCAReportPDF'
         ];
 
-
+        
         if (env('IS_MULTI_TENANCY', false)) {
 
             
@@ -95,7 +96,7 @@ class TenantEnforce
                         $request->request->add(['api_key' => $tenant->api_key]);
                     }
 
-                    if (in_array($request->route()->uri, $dbRoutes)) {
+                    if (in_array($request->route()->uri, $dbRoutes) || in_array($request->route()->uri, AuditRoutesTenantService::getTenantRoutes())) {
                         $request->request->add(['db' => $tenant->database]);
                     }
 

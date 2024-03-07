@@ -13,6 +13,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\DocumentMaster;
@@ -22,6 +23,8 @@ use App\Models\GrvDetailsPrn;
 use App\Models\ItemAssigned;
 use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
+use App\Services\Currency\CurrencyService;
+use App\Services\Excel\ExportReportToExcelService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -1122,7 +1125,7 @@ FROM
         return $output;
     }
 
-    public function exportReport(Request $request)
+    public function exportReport(Request $request,ExportReportToExcelService $exportReportToExcelService)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
@@ -1492,116 +1495,143 @@ FROM
                                 $data[$x]['Qty'] = $val->Qty;
 
                                 if ($input['currencyID'] == 1) {
-                                    $data[$x]['WAC Local'] = number_format($val->WACLocal, $val->LocalCurrencyDecimals);
-                                    $data[$x]['Local Amount'] = number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals);
+                                    $data[$x]['WAC Local'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal, $val->LocalCurrencyDecimals));
+                                    $data[$x]['Local Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals));
                                 } else if ($input['currencyID'] == 2) {
-                                    $data[$x]['WAC Rep'] = number_format($val->WACRpt, $val->RptCurrencyDecimals);
-                                    $data[$x]['Rep Amount'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
+                                    $data[$x]['WAC Rep'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt, $val->RptCurrencyDecimals));
+                                    $data[$x]['Rep Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals));
                                 }
 
                                 if ($input['reportCategory'] == 2) { // yearly
                                     //$aging = ['0-365', '366-730', '730-1095', '1096-1460', '1461-1825', '> 1826‬'];
-
+                                    $excelColumnFormat = [
+                                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                    ];
                                     $data[$x]['<= 1 year (Qty)'] = $val->case1;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['<= 1 year (Value)'] = number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals);
+                                        $data[$x]['<= 1 year (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['<= 1 year (Value)'] = number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals);
+                                        $data[$x]['<= 1 year (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals));
                                     }
 
 
                                     $data[$x]['1 to 2 years (Qty)'] = $val->case2;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['1 to 2 years (Value)'] = number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals);
+                                        $data[$x]['1 to 2 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['1 to 2 years (Value)'] = number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals);
+                                        $data[$x]['1 to 2 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals));
                                     }
 
                                     $data[$x]['2 to 3 years (Qty)'] = $val->case3;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['2 to 3 years (Value)'] = number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals);
+                                        $data[$x]['2 to 3 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['2 to 3 years (Value)'] = number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals);
+                                        $data[$x]['2 to 3 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals));
                                     }
 
                                     $data[$x]['3 to 4 years (Qty)'] = $val->case4;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['3 to 4 years (Value)'] = number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals);
+                                        $data[$x]['3 to 4 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['3 to 4 years (Value)'] = number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals);
+                                        $data[$x]['3 to 4 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals));
                                     }
 
                                     $data[$x]['4 to 5 years (Qty)'] = $val->case5;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['4 to 5 years (Value)'] = number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals);
+                                        $data[$x]['4 to 5 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['4 to 5 years (Value)'] = number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals);
+                                        $data[$x]['4 to 5 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals));
                                     }
 
                                     $data[$x]['Over 5 years (Qty)'] = $val->case6;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['Over 5 years (Value)'] = number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals);
+                                        $data[$x]['Over 5 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['Over 5 years (Value)'] = number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals);
+                                        $data[$x]['Over 5 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals));
                                     }
 
                                 } else { // 0 - 730 days
 
+                                    $excelColumnFormat = [
+                                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                        'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                                    ];
+
                                     $data[$x]['<=30 (Qty)'] = $val->case1;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['<=30 (Value)'] = number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals);
+                                        $data[$x]['<=30 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['<=30 (Value)'] = number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals);
+                                        $data[$x]['<=30 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals));
                                     }
 
 
                                     $data[$x]['31 to 60 (Qty)'] = $val->case2;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['31 to 60 (Value)'] = number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals);
+                                        $data[$x]['31 to 60 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['31 to 60 (Value)'] = number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals);
+                                        $data[$x]['31 to 60 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals));
                                     }
 
                                     $data[$x]['61 to 90 (Qty)'] = $val->case3;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['61 to 90 (Value)'] = number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals);
+                                        $data[$x]['61 to 90 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['61 to 90 (Value)'] = number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals);
+                                        $data[$x]['61 to 90 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals));
                                     }
 
                                     $data[$x]['91 to 120 (Qty)'] = $val->case4;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['91 to 120 (Value)'] = number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals);
+                                        $data[$x]['91 to 120 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['91 to 120 (Value)'] = number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals);
+                                        $data[$x]['91 to 120 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals));
                                     }
 
                                     $data[$x]['121 to 365 (Qty)'] = $val->case5;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['121 to 365 (Value)'] = number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals);
+                                        $data[$x]['121 to 365 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['121 to 365 (Value)'] = number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals);
+                                        $data[$x]['121 to 365 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals));
                                     }
 
                                     $data[$x]['366 to 730 (Qty)'] = $val->case6;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['366 to 730 (Value)'] = number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals);
+                                        $data[$x]['366 to 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['366 to 730 (Value)'] = number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals);
+                                        $data[$x]['366 to 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals));
                                     }
 
                                     $data[$x]['Over 730 (Qty)'] = $val->case7;
                                     if ($input['currencyID'] == 1) {
                                         if ($val->Qty == 0) {
-                                            $data[$x]['Over 730 (Value)'] = number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals);
+                                            $data[$x]['Over 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals));
                                         } else {
-                                            $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7, $val->LocalCurrencyDecimals);
+                                            $data[$x]['Over 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case7, $val->LocalCurrencyDecimals));
                                         }
                                     } else if ($input['currencyID'] == 2) {
                                         if ($val->Qty == 0) {
-                                            $data[$x]['Over 730 (Value)'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
+                                            $data[$x]['Over 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals));
                                         } else {
-                                            $data[$x]['Over 730 (Value)'] = number_format($val->WACRpt * $val->case7, $val->RptCurrencyDecimals);
+                                            $data[$x]['Over 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case7, $val->RptCurrencyDecimals));
                                         }
                                     }
 
@@ -1611,36 +1641,33 @@ FROM
                         }
                     }
 
-                    //  \Excel::create('stock_aging', function ($excel) use ($data) {
-                    //     $excel->sheet('sheet name', function ($sheet) use ($data) {
-                    //         $sheet->fromArray($data, null, 'A1', true);
-                    //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                    //         $sheet->setAutoSize(true);
-                    //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    //     });
-                    //     $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    // })->download('csv');
-
-                    // return $this->sendResponse(array(), 'successfully export');
-
                     $fileName = 'stock_aging';
                     $title = 'Stock Aging Report';
                     $path = 'inventory/report/stock_aging/excel/';
                     $cur = NULL;
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
 
-                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$cur,'title'=>$title);
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-            
-                    if($basePath == '')
-                    {
-                         return $this->sendError('Unable to export excel');
-                    }
-                    else
-                    {
-                         return $this->sendResponse($basePath, trans('custom.success_export'));
-                    }
+                    $exportToExcel = $exportReportToExcelService
+                        ->setTitle($title)
+                        ->setFileName($fileName)
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
+                        ->setCompanyName($company_name)
+                        ->setFromDate($from_date)
+                        ->setToDate($to_date)
+                        ->setData($data)
+                        ->setReportType(2)
+                        ->setType('xls')
+                        ->setExcelFormat($excelColumnFormat)
+                        ->setCurrency($cur)
+                        ->setDateType(1)
+                        ->setDetails()
+                        ->generateExcel();
+
+                    if(!$exportToExcel['success'])
+                        return $this->sendError('Unable to export excel');
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
                 }
             case 'INVSD':
                 $data = [];
@@ -1650,6 +1677,7 @@ FROM
 
                 $company = Company::find($request->companySystemID);
                 $company_name = $company->CompanyName;
+
 
                 if ($request->detail == 1) {
                     $output = $this->stockDetailQry($request);
@@ -1663,10 +1691,10 @@ FROM
                                     'Part No / Ref.Number' => $val->secondaryItemCode,
                                     'Sub Category' => $val->categoryDescription,
                                     'Stock Qty' => $val->Qty,
-                                    'Total Value (USD)' => number_format($val->WacRptAmount, $val->RptCurrencyDecimals),
-                                    'Last Receipt Date' => \Helper::dateFormat($val->lastReceiptDate),
+                                    'Total Value (USD)' => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
+                                    'Last Receipt Date' => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
                                     'Last Receipt Qty' => $val->lastReceiptQty,
-                                    'Last Issued Date' => \Helper::dateFormat($val->lastIssuedDate),
+                                    'Last Issued Date' => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
                                     'Last Issued Qty' => $val->lastIssuedQty
                                 );
                             }
@@ -1686,31 +1714,21 @@ FROM
                                     'Part No / Ref.Number' => $val->secondaryItemCode,
                                     'Sub Category' => $val->categoryDescription,
                                     'Stock Qty' => $val->Qty,
-                                    'Total Value (USD)' => number_format($val->WacRptAmount, $val->RptCurrencyDecimals),
-                                    'Last Receipt Date' => \Helper::dateFormat($val->lastReceiptDate),
+                                    'Total Value (USD)' => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
+                                    'Last Receipt Date' => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
                                     'Last Receipt Qty' => $val->lastReceiptQty,
-                                    'Last Issued Date' => \Helper::dateFormat($val->lastIssuedDate),
+                                    'Last Issued Date' => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
                                     'Last Issued Qty' => $val->lastIssuedQty
                                 );
                             }
                         }
                     }
                 }
-                //  \Excel::create('stock_Detail', function ($excel) use ($data) {
-                //     $excel->sheet('sheet name', function ($sheet) use ($data) {
-                //         $sheet->fromArray($data, null, 'A1', true);
-                //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                //         $sheet->setAutoSize(true);
-                //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                //     });
-                //     $lastrow = $excel->getActiveSheet()->getHighestRow();
-                //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                // })->download('csv');
-
-                // return $this->sendResponse(array(), 'successfully export');
-
-
-                
+                $excelColumnFormat = [
+                    'H' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                    'J' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                    'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                ];
 
                 $fileName = 'stock_detail';
                 $title = 'Stock Details Report';
@@ -1718,18 +1736,28 @@ FROM
                 $cur = NULL;
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
 
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$cur,'title'=>$title);
 
-                $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
-        
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
+                $exportToExcel = $exportReportToExcelService
+                    ->setTitle($title)
+                    ->setFileName($fileName)
+                    ->setPath($path)
+                    ->setCompanyCode($companyCode)
+                    ->setCompanyName($company_name)
+                    ->setFromDate($from_date)
+                    ->setToDate($to_date)
+                    ->setData($data)
+                    ->setReportType(2)
+                    ->setType('xls')
+                    ->setExcelFormat($excelColumnFormat)
+                    ->setCurrency($cur)
+                    ->setDateType(1)
+                    ->setDetails()
+                    ->generateExcel();
+
+                if(!$exportToExcel['success'])
+                    return $this->sendError('Unable to export excel');
+
+                return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
                 
                 break;

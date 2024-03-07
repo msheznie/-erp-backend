@@ -15,6 +15,7 @@ namespace App\helper;
 use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
+use App\Models\RecurringVoucherSetup;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderMaster;
@@ -510,6 +511,13 @@ class email
                         if (!empty($editRequedt)) {
                             $data['docApprovedYN'] = $editRequedt->confirmation_approved;
                             $data['docCode'] = $editRequedt->code;
+                        }
+                        break;
+                    case 119:
+                        $recurringVoucher = RecurringVoucherSetup::where('recurringVoucherAutoId', $data['docSystemCode'])->first();
+                        if (!empty($recurringVoucher)) {
+                            $data['docApprovedYN'] = $recurringVoucher->approved;
+                            $data['docCode'] = $recurringVoucher->RRVcode;
                         }
                         break;
                     default:

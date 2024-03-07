@@ -99,6 +99,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Response;
+use App\Models\SupplierBlock;
+
 
 /**
  * Class BookInvSuppMasterController
@@ -511,6 +513,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
+        $supplier_id = $input['supplierID'];
+        $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
+
+
+
         if ($input['supplierID'] != $bookInvSuppMaster->supplierID && $input['documentType'] != 4) {
             $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
         }
@@ -708,6 +715,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+
+            if(($input['isSupplierBlocked']) && ($bookInvSuppMaster->documentType == 0 ||$bookInvSuppMaster->documentType == 2) )
+            {
+       
+                $validatorResult = \Helper::checkBlockSuppliers($input['bookingDate'],$supplier_id);
+                if (!$validatorResult['success']) {              
+                     return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+    
+                }
+            }
 
 
             $validator = \Validator::make($input, [

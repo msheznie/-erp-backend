@@ -259,6 +259,7 @@ class PaySupplierInvoiceDetail extends Model
         'bookingInvoiceDate',
         'addedDocumentType',
         'supplierCodeSystem',
+        'employeeSystemID',
         'supplierInvoiceNo',
         'supplierInvoiceDate',
         'supplierTransCurrencyID',

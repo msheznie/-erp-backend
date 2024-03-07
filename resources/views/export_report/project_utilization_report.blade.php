@@ -83,12 +83,16 @@ use Carbon\CarbonPeriod;
                 $date = '';
                 if ($item->documentSystemID == 2 && isset($item->purchase_order_detail->approvedDate)) {
                   $date = explode(' ',$item->purchase_order_detail->approvedDate);
-                } elseif ($item->documentSystemID == 15 && isset($item->debit_note_detail->approvedDate)) {
-                  $date = explode(' ',$item->debit_note_detail->approvedDate);
-                } elseif ($item->documentSystemID == 19 && isset($item->credit_note_detail->approvedDate)) {
-                  $date = explode(' ',$item->credit_note_detail->approvedDate);
-                } elseif ($item->documentSystemID == 4 && isset($item->direct_payment_voucher_detail->approvedDate)) {
-                  $date = explode(' ',$item->direct_payment_voucher_detail->approvedDate);
+                } elseif ($item->documentSystemID == 15 && isset($item->debit_note_detail->debitNoteDate)) {
+                  $date = explode(' ',$item->debit_note_detail->debitNoteDate);
+                } elseif ($item->documentSystemID == 19 && isset($item->credit_note_detail->creditNoteDate)) {
+                  $date = explode(' ',$item->credit_note_detail->creditNoteDate);
+                } elseif ($item->documentSystemID == 4 && isset($item->direct_payment_voucher_detail->postedDate)) {
+                  $date = explode(' ',$item->direct_payment_voucher_detail->postedDate);
+                } elseif ($item->documentSystemID == 3 && isset($item->grv_master_detail->grvDate)) {
+                  $date = explode(' ',$item->grv_master_detail->grvDate);
+                } elseif ($item->documentSystemID == 17 && isset($item->jv_master_detail->JVdate)) {
+                  $date = explode(' ',$item->jv_master_detail->JVdate);
                 }
                   $date = $date?  (new Carbon($date[0]))->format('d/m/Y'):'';
                 ?>

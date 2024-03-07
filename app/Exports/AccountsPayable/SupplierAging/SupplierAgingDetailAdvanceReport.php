@@ -41,27 +41,50 @@ class SupplierAgingDetailAdvanceReport
             'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
         ];
     }
-    public function getHeader() :Array {
-        return [
-            'Company ID',
-            'Company Name',
-            'Doc Date',
-            'Doc Number',
-            'Account',
-            'Narration',
-            'Supplier Code',
-            'Supplier Name',
-            'Invoice Number',
-            'Invoice Date',
-            'Currency',
-            'Aging Days',
-            '0-30',
-            '31-60',
-            '61-90',
-            '91-100',
-            '> 100',
-            'Advance/UnAllocated Amount'
-        ];
+    public function getHeader($typeAging) :Array {
+        if($typeAging == 1) {
+            return [
+                'Company ID',
+                'Company Name',
+                'Doc Date',
+                'Doc Number',
+                'Account',
+                'Narration',
+                'Supplier Code',
+                'Supplier Name',
+                'Invoice Number',
+                'Invoice Date',
+                'Currency',
+                'Aging Days',
+                '0-30',
+                '31-60',
+                '61-90',
+                '91-100',
+                '> 100',
+                'Advance/UnAllocated Amount'
+            ];
+        } else {
+            return [
+                'Company ID',
+                'Company Name',
+                'Doc Date',
+                'Doc Number',
+                'Account',
+                'Narration',
+                'Employee Code',
+                'Employee Name',
+                'Invoice Number',
+                'Invoice Date',
+                'Currency',
+                'Aging Days',
+                '0-30',
+                '31-60',
+                '61-90',
+                '91-100',
+                '> 100',
+                'Advance/UnAllocated Amount'
+            ];
+        }
     }
 
     /**

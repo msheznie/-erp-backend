@@ -138,6 +138,7 @@ class PaymentVoucherGlService
             $data['clientContractID'] = 'X';
             $data['contractUID'] = 159;
             $data['supplierCodeSystem'] = $masterData->BPVsupplierID;
+            $data['employeeSystemID'] = $masterData->directPaymentPayeeEmpID;
             $data['holdingShareholder'] = null;
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;

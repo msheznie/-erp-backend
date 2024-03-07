@@ -10,14 +10,14 @@ use App\Services\Currency\CurrencyService;
 
 class SupplierAgingReportService
 {
-    public function getSupplierAgingExportToExcelData($output): Array {
+    public function getSupplierAgingExportToExcelData($output, $typeAging): Array {
         $data = array();
 
         if ($output['data']) {
             $x = 0;
             if(empty($data)) {
                 $objSupplierAgingDetailHeader = new SupplierAgingDetailReport();
-                array_push($data,collect($objSupplierAgingDetailHeader->getHeader())->toArray());
+                array_push($data,collect($objSupplierAgingDetailHeader->getHeader($typeAging))->toArray());
             }
             foreach ($output['data'] as $val) {
                 $lineTotal = 0;
@@ -54,13 +54,13 @@ class SupplierAgingReportService
 
     }
 
-    public function getSupplierAgingSummaryExportToExcelData($output): Array
+    public function getSupplierAgingSummaryExportToExcelData($output, $typeAging): Array
     {
         $data = array();
         if ($output['data']) {
             if(empty($data)) {
                 $objSupplierAgingDetailHeader = new SupplierAgingSummaryReport();
-                array_push($data,collect($objSupplierAgingDetailHeader->getHeader())->toArray());
+                array_push($data,collect($objSupplierAgingDetailHeader->getHeader($typeAging))->toArray());
             }
             foreach ($output['data'] as $val) {
                 $lineTotal = 0;
@@ -93,13 +93,13 @@ class SupplierAgingReportService
         return $data;
     }
 
-    public function getSupplierAgingDetailAdvanceExportToExcelData($output): Array {
+    public function getSupplierAgingDetailAdvanceExportToExcelData($output, $typeAging): Array {
         $data = array();
         if ($output['data']) {
             $x = 0;
             if(empty($data)) {
                 $objSupplierAgingDetailAdvanceReportHeader = new SupplierAgingDetailAdvanceReport();
-                array_push($data,collect($objSupplierAgingDetailAdvanceReportHeader->getHeader())->toArray());
+                array_push($data,collect($objSupplierAgingDetailAdvanceReportHeader->getHeader($typeAging))->toArray());
             }
             $lineTotal = 0;
             foreach ($output['data'] as $val) {
@@ -135,12 +135,12 @@ class SupplierAgingReportService
         return $data;
     }
 
-    public function getSupplierAgingSummaryAdvanceExportToExcelData($output): Array {
+    public function getSupplierAgingSummaryAdvanceExportToExcelData($output, $typeAging): Array {
         $data = array();
         if ($output['data']) {
             if(empty($data)) {
                 $objSupplierAgingDetailHeader = new SupplierAgingSummaryAdvanceReport();
-                array_push($data,collect($objSupplierAgingDetailHeader->getHeader())->toArray());
+                array_push($data,collect($objSupplierAgingDetailHeader->getHeader($typeAging))->toArray());
             }
             foreach ($output['data'] as $val) {
                 $lineTotal = 0;

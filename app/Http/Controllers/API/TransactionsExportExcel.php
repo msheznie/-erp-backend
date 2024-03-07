@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Models\Company;
+use App\Repositories\RecurringVoucherSetupRepository;
 use Response;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -74,6 +75,7 @@ class TransactionsExportExcel extends AppBaseController
     private $fixedAssetMasterRepository;
     private $fixedAssetDepreciationMasterRepository;
     private $pdcLogRepository;
+    private $recurringVoucherSetupRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -107,7 +109,8 @@ class TransactionsExportExcel extends AppBaseController
         PaymentBankTransferRepository $paymentBankTransferRepo,
         FixedAssetMasterRepository $fixedAssetMasterRepo,
         FixedAssetDepreciationMasterRepository $fixedAssetDepreciationMasterRepo,
-        PdcLogRepository $pdcLogRepository
+        PdcLogRepository $pdcLogRepository,
+        RecurringVoucherSetupRepository $recurringVoucherSetupRepository
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -142,6 +145,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->fixedAssetMasterRepository = $fixedAssetMasterRepo;
         $this->fixedAssetDepreciationMasterRepository = $fixedAssetDepreciationMasterRepo;
         $this->pdcLogRepository = $pdcLogRepository;
+        $this->recurringVoucherSetupRepository = $recurringVoucherSetupRepository;
     }
 
     public function exportRecord(Request $request) { 
@@ -498,6 +502,11 @@ class TransactionsExportExcel extends AppBaseController
 
                 $dataQry = $this->pdcLogRepository->pdcIssuedListQuery($request, $input, $search, $bankmasterAutoID);
                 $data = $this->pdcLogRepository->setExportExcelData($dataQry,$input);
+                break;
+            case '119':
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'documentType'));
+                $dataQry = $this->recurringVoucherSetupRepository->rrvMasterListQuery($request, $input, $search);
+                $data = $this->recurringVoucherSetupRepository->setExportExcelData($dataQry);
                 break;
             default:
                 return $this->sendResponse(array(), 'export failed');

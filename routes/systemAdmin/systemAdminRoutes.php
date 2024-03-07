@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::group([], function(){
 	Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData')->name('Supplier Form Data');
 	Route::get('getAdvanceAccount', 'CompanyAPIController@getAdvanceAccount')->name("Advance accounts for selected company");
+	Route::get('getChartOfAccountConfigs', 'CompanyAPIController@getChartOfAccountConfigs')->name("Chart of accounts configs for selected company");
 	Route::get('getApprovedCustomers', 'CustomerMasterAPIController@getApprovedCustomers')->name("Approved customer list");
 	Route::get('supplier/currencies', 'CurrencyMasterAPIController@getCurrenciesBySupplier')->name('Currencies by supplier');
 	Route::get('supplier/assignedCompanies', 'SupplierMasterAPIController@getAssignedCompaniesBySupplier')->name("Companies assigned by supplier");
@@ -26,6 +27,7 @@ Route::group([], function(){
 	Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit')->name("Get supplier master audit");
 	Route::get('getSupplierMaster', 'SupplierMasterAPIController@getSupplierMaster')->name("Get supplier master");
 
+	Route::post('supplierUsage', 'SupplierMasterAPIController@supplierUsage')->name("Check supplier usage");
 	Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany')->name('Company wise suppliers list');
 	Route::post('getInterCompaniesForCustomerSupplier', 'CustomerMasterAPIController@getInterCompaniesForCustomerSupplier')->name("Inter companies for customer/supplier");
 	Route::post('supplier/masters/update', 'SupplierMasterAPIController@updateSupplierMaster')->name("Update supplier master");
@@ -56,6 +58,11 @@ Route::group([], function(){
 	Route::resource('supplier/contactDetails', 'SupplierContactDetailsAPIController', ['names' => 'Supplier contact details']);
 	Route::resource('supplier/assigned', 'SupplierAssignedAPIController', ['names' => 'Supplier assigned']);
 	Route::resource('supplier_refer_back', 'SupplierMasterRefferedBackAPIController');
+	Route::post('updateSupplierBlocker', 'SupplierMasterAPIController@updateSupplierBlocker')->name("Update supplier blocker");
+	Route::post('validateSupplier', 'SupplierMasterAPIController@validateSupplier')->name('Validate supplier blocker');
+	Route::get('supplier/getSupplierBlock', 'SupplierMasterAPIController@getSupplierBlock')->name("Block assigned by supplier");
+
+
 });
 
 
@@ -95,6 +102,8 @@ Route::group([], function(){
 	Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack')->name("Chart of account refer back");
 	Route::post('chartOfAccountReopen', 'ChartOfAccountAPIController@chartOfAccountReopen')->name("Chart of account reopen");
 	Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount')->name("Chart of account refer back history");
+    Route::post('getChartOfAccountsForDropwdownData', 'CompanyAPIController@getChartOfAccountsForDropwdown')->name("Get All chart of account for dropdown");
+
 
 	Route::resource('gl-config-scenario-details', 'SystemGlCodeScenarioDetailAPIController');
 	Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
@@ -417,4 +426,21 @@ Route::group([],function (){
     Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval')->name("Get all registered supplier approval");
     Route::post('approveRegisteredSupplier', 'SupplierMasterAPIController@approveRegisteredSupplier')->name("Approve registered supplier");
     Route::post('rejectRegisteredSupplier', 'SupplierMasterAPIController@rejectRegisteredSupplier')->name("Reject registered supplier");
+});
+
+//Segment
+Route::group([],function (){
+	Route::post('getAffectedDocuments', 'SegmentMasterAPIController@getAffectedDocuments')->name('Get segment affected documents');
+	Route::post('getAssignedEmployees', 'SegmentMasterAPIController@getAssignedEmployees')->name('Get segment assigned employees');
+	Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees')->name('Get segment right employees');
+	Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster')->name('Update segment master');
+	
+	Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany')->name('Get serviceline by company');
+	Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData')->name('Get segment master form data');
+	Route::get('getOrganizationStructure', 'SegmentMasterAPIController@getOrganizationStructure')->name('Get organization structure');
+
+	Route::resource('segment_rights', 'SegmentRightsAPIController');
+	Route::resource('segment/masters', 'SegmentMasterAPIController', ['names' => 'Segment masters']);
+
+
 });

@@ -36,23 +36,42 @@ class SupplierAgingSummaryAdvanceReport
         ];
     }
 
-    public function getHeader() :Array {
-        return [
-            'Company ID',
-            'Company Name',
-            'Account',
-            'Supplier Code',
-            'Supplier Name',
-            'Credit Period',
-            'Currency',
-            'Aging Days',
-            '0-30',
-            '31-60',
-            '61-90',
-            '91-100',
-            '> 100',
-            'Total'
-        ];
+    public function getHeader($typeAging) :Array {
+        if($typeAging == 1) {
+            return [
+                'Company ID',
+                'Company Name',
+                'Account',
+                'Supplier Code',
+                'Supplier Name',
+                'Credit Period',
+                'Currency',
+                'Aging Days',
+                '0-30',
+                '31-60',
+                '61-90',
+                '91-100',
+                '> 100',
+                'Total'
+            ];
+        } else {
+            return [
+                'Company ID',
+                'Company Name',
+                'Account',
+                'Employee Code',
+                'Employee Name',
+                'Credit Period',
+                'Currency',
+                'Aging Days',
+                '0-30',
+                '31-60',
+                '61-90',
+                '91-100',
+                '> 100',
+                'Total'
+            ];
+        }
     }
     /**
      * @param mixed $companyID

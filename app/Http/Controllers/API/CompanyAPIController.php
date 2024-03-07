@@ -34,6 +34,7 @@ use App\Models\SupplierImportance;
 use App\Models\SupplierMaster;
 use App\Models\suppliernature;
 use App\Models\SupplierContactType;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\YesNoSelection;
 use App\Models\SupplierCritical;
 use App\Models\SupplierType;
@@ -41,6 +42,7 @@ use App\Repositories\CompanyRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\CompanyDigitalStamp;
+use App\Models\SystemGlCodeScenario;
 use App\Repositories\CompanyPolicyCategoryRepository;
 use App\Repositories\CompanyPolicyMasterRepository;
 use App\Repositories\CompanyDigitalStampRepository;
@@ -137,9 +139,16 @@ class CompanyAPIController extends AppBaseController
             $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
         })
         ->orderBy('AccountDescription', 'asc')
-        ->get();    
+        ->get();
 
-
+        $assetAndLiabilityAccountCOA = ChartOfAccount::where('isBank',0)
+            ->where('isApproved',1)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
+            })
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
 
 
         /**Country Drop Down */
@@ -198,7 +207,14 @@ class CompanyAPIController extends AppBaseController
                                                                 ->where('isYesNO',1)
                                                                 ->exists();
 
-        $hasSupplierGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 76);  
+        $hasSupplierGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 76);
+
+        $discountsChartOfAccounts = ChartOfAccount::where('isApproved',1)
+            ->where('isActive',1)
+            ->where('catogaryBLorPL', '=', 'PL')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
 
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,
@@ -219,7 +235,9 @@ class CompanyAPIController extends AppBaseController
             'supplierCategories' => $supplierCategories,
             'supplierGroups' => $supplierGroups,
             'isGroup' => $isGroup,
-            'hasSupplierGeneratePolicy'=> $hasSupplierGeneratePolicy
+            'hasSupplierGeneratePolicy'=> $hasSupplierGeneratePolicy,
+            'discountsChartOfAccounts' => $discountsChartOfAccounts,
+            'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccountCOA
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 
@@ -265,6 +283,45 @@ class CompanyAPIController extends AppBaseController
 
     }
 
+    public function getChartOfAccountConfigs(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+
+        $liabilityAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-liability-account')
+                        ->with(['detail'=>function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        }])
+                        ->whereHas('detail',function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        })
+                        ->first();
+
+        $unbilledAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-unbilled-account')
+                        ->with(['detail'=>function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        }])                        
+                        ->whereHas('detail',function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        })
+                        ->first();
+
+        $advanceAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-advance-account')
+                        ->with(['detail'=>function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        }])                        
+                        ->whereHas('detail',function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        })
+                        ->first();
+
+        $output = array('advanceAccountConfigs' => $advanceAccountConfigs,
+                        'unbilledAccountConfigs' => $unbilledAccountConfigs,
+                        'liabilityAccountConfigs' => $liabilityAccountConfigs
+                    );
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+    }
+    
     /**
      * Get all companies
      * Created by Fayas
@@ -849,6 +906,78 @@ class CompanyAPIController extends AppBaseController
         $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     
         return substr(str_shuffle(str_repeat($pool, 2)), 0, $length);
+    }
+
+    public function getChartOfAccountsForDropwdown(Request $request) {
+        $selectedCompanyId = $request['selectedCompanyId'];
+
+        $liabilityAccount = ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->where('controlAccountsSystemID', 4)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+        $assetAndLiabilityAccount = ChartOfAccount::
+        where(function ($query)  {
+            $query->where('controlAccountsSystemID', 3)
+                ->orWhere('controlAccountsSystemID', 4);
+        })
+            ->where('isBank',0)
+            ->where('isApproved',1)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
+            })
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+        $discountsChartOfAccounts = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+            $query->where('companySystemID', $selectedCompanyId)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        })->where('isApproved',1)
+            ->where('isActive',1)
+            ->where('catogaryBLorPL', '=', 'PL')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+
+        $chartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+                $query->where('companySystemID', $selectedCompanyId)
+                    ->where('isAssigned', -1)
+                    ->where('isActive', 1);
+            })
+            ->where('controlAccountsSystemID',3)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+
+        $liabilityAccountsCOA =  ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+                $query->where('companySystemID', $selectedCompanyId)
+                    ->where('isAssigned', -1)
+                    ->where('isActive', 1);
+            })
+            ->where('controlAccountsSystemID',4)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
+
+
+        $output = array(
+            'liabilityAccountsCOA' => $liabilityAccountsCOA,
+            'chartOfAccounts' => $chartOfAccounts,
+            'discountsChartOfAccounts' => $discountsChartOfAccounts,
+            'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccount,
+            'liabilityAccount' => $liabilityAccount,
+            'assetAndLiabilityAccount' => $assetAndLiabilityAccount
+
+        );
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+
     }
 
 }

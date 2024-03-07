@@ -7,10 +7,16 @@ class AuditRoutesTenantService
     public static function getTenantRoutes(){
         $lokiTenantRoutes = [
             'api/v1/auditLogs',
+            'api/v1/addItemAttributes',
+            'api/v1/erp_attributes/{erp_attribute}',
             'api/v1/financeItemCategorySubsExpiryUpdate',
             'api/v1/finance_item_category_subs/{finance_item_category_sub}',
             'api/v1/finance_item_category_subs_update',
-            'api/v1/financeItemCategorySubsAttributesUpdate'
+            'api/v1/itemcategory_sub_assigneds',
+            'api/v1/financeItemCategorySubsAttributesUpdate',
+            'api/v1/itemAttributesIsMandotaryUpdate',
+            'api/v1/customer_masters',
+            'api/v1/supplier/masters/update'
         ];
 
         return $lokiTenantRoutes;

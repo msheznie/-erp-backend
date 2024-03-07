@@ -6,6 +6,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\Tenant;
 use App\Models\TenantConfiguration;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class ConfigurationAPIController extends AppBaseController
 {
@@ -21,7 +22,7 @@ class ConfigurationAPIController extends AppBaseController
 
         $isLang = 0;
         $environment = 'Local';
-        $version = null;
+        $version = $this->getVersion();
         if (env('IS_MULTI_TENANCY', false)) {
 
 
@@ -51,20 +52,29 @@ class ConfigurationAPIController extends AppBaseController
                 if($environment){
                     $environment = $environment->value;
                 }
-
-                $version = TenantConfiguration::orderBy('id', 'desc')->where('application_id', 0)->where('configuration_id', 2)->first();
-                if($version){
-                    $version = $version->value;
-                }
-
             }
         }
-
-
 
         $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version);
 
         return $this->sendResponse($configuration, 'Configurations retrieved successfully');
 
+    }
+
+    public function getVersion()
+    {
+        $packageJsonPath = base_path('package.json');
+
+        if (File::exists($packageJsonPath)) {
+            $packageJsonContent = File::get($packageJsonPath);
+
+            $packageJsonData = json_decode($packageJsonContent, true);
+
+            $versionNumber = $packageJsonData['version'];
+
+            return $versionNumber;
+        } else {
+            return null;
+        }
     }
 }

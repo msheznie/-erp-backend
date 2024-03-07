@@ -130,3 +130,20 @@ Route::group([], function() {
     Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType')->name('Get procument order by document type');
     Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData')->name('Get procument order from data');
 });
+
+//payment term template
+Route::group([], function() {
+    Route::resource('payment_term_templates', 'PaymentTermTemplateAPIController');
+    Route::post('getAllPaymentTerms', 'PaymentTermTemplateAPIController@getAllPaymentTerms')->name('Get all payment terms');
+    Route::put('paymentTermDefaultTemplateUpdate/{id}', 'PaymentTermTemplateAPIController@paymentTermDefaultTemplateUpdate')->name('Update default payment term');
+    Route::post('getAllPaymentTermConfigs', 'PaymentTermConfigAPIController@getAllPaymentTermConfigs')->name('Get all payment term configs');
+    Route::put('configDescriptionUpdate/{id}', 'PaymentTermConfigAPIController@configDescriptionUpdate')->name('Update configuration description');
+    Route::post('deleteConfigDescription', 'PaymentTermConfigAPIController@deleteConfigDescription')->name('Delete config description');
+    Route::post('updateConfigSelection', 'PaymentTermConfigAPIController@updateConfigSelection')->name('Update config selection for print');
+    Route::post('updateSortOrder', 'PaymentTermConfigAPIController@updateSortOrder')->name('Update sort order');
+    Route::post('getSupplierAssignFormData', 'PaymentTermTemplateAssignedAPIController@getSupplierAssignFormData')->name('Get supplier assign form data');
+    Route::post('getSupplierList', 'PaymentTermTemplateAssignedAPIController@getSupplierList')->name('Get supplier list');
+    Route::resource('template_assign_suppliers', 'PaymentTermTemplateAssignedAPIController');
+    Route::post('getAllAssignedSuppliers', 'PaymentTermTemplateAssignedAPIController@getAllAssignedSuppliers')->name('Get all assigned suppliers');
+    Route::post('changeActiveStatus', 'PaymentTermTemplateAPIController@changeActiveStatus')->name('Change template active status');
+});

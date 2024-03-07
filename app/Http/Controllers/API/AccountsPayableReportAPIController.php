@@ -40,15 +40,18 @@ use App\Models\AccountsPayableLedger;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
+use App\Models\Employee;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\GeneralLedger;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierContactDetails;
 use App\Models\SupplierMaster;
+use App\Models\SystemGlCodeScenario;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
@@ -57,6 +60,7 @@ use App\Services\AccountPayableLedger\Report\UnbilledGrvReportService;
 use App\Services\Excel\ExportReportToExcelService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class AccountsPayableReportAPIController extends AppBaseController
@@ -75,6 +79,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
             $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
             $supplierMaster = array();
+            $employeeMaster = array();
             $departments = array();
         } else if ($request['reportID'] == 'APUGRV') {
 
@@ -86,6 +91,8 @@ class AccountsPayableReportAPIController extends AppBaseController
             $unbilledGrvSup = collect(UnbilledGrvGroupBy::select('supplierID')->groupBy('supplierID')->get())->pluck('supplierID')->toArray();
             $erp_bookinvsuppmaster = collect(BookInvSuppMaster::select('supplierID')->groupBy('supplierID')->get())->pluck('supplierID')->toArray();
             $filterSuppliers = array_merge($unbilledGrvSup,$erp_bookinvsuppmaster);
+
+            $employeeMaster = array();
 
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)
                 ->whereIN('supplierCodeSytem', $filterSuppliers)
@@ -112,6 +119,23 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ->pluck('supplierCodeSystem');
 
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
+
+            $employeeMaster = DB::table('employees')
+                ->select('employees.*')
+                ->leftJoin('erp_bookinvsuppmaster', 'erp_bookinvsuppmaster.employeeID', '=', 'employees.employeeSystemID')
+                ->leftJoin('erp_paysupplierinvoicemaster', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID', '=', 'employees.employeeSystemID')
+                ->leftJoin('erp_debitnote', 'erp_debitnote.empID', '=', 'employees.employeeSystemID')
+                ->whereIn('employees.empCompanySystemID', $companiesByGroup)
+                ->groupBy('employees.employeeSystemID')
+                ->where(function($query) {
+                    $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
+                        ->where('erp_bookinvsuppmaster.approved', -1)
+                        ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
+                        ->where('erp_paysupplierinvoicemaster.approved', -1)
+                        ->orWhereNotNull('erp_debitnote.empID')
+                        ->where('erp_debitnote.approved', -1);
+                })
+                ->get();
         }
 
 
@@ -121,10 +145,36 @@ class AccountsPayableReportAPIController extends AppBaseController
         $countries = CountryMaster::all();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
 
+        $isConfigured = SystemGlCodeScenario::find(12);
+        $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 12)->where('companySystemID', $companiesByGroup)->first();
+        if($isConfigured && $isDetailConfigured) {
+            if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
+                return $this->sendError('Chart of account is not configured for employee control account', 500);
+            }
+            $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->first();
+            if($isChartOfAccountConfigured){
+                if ($isChartOfAccountConfigured->isActive != 1 || $isChartOfAccountConfigured->chartOfAccountSystemID == null || $isChartOfAccountConfigured->isAssigned != -1 || $isChartOfAccountConfigured->chartOfAccountSystemID == 0 || $isChartOfAccountConfigured->companySystemID == 0 || $isChartOfAccountConfigured->companySystemID == null) {
+                    return $this->sendError('Chart of account is not configured for employee control account', 500);
+                }
+            }
+            else{
+                return $this->sendError('Chart of account is not configured for employee control account', 500);
+            }
+        }
+        else{
+            return $this->sendError('Chart of account is not configured for employee control account', 500);
+        }
+
+        $controlAccountEmployeeID = $isDetailConfigured->chartOfAccountSystemID;
+        $controlAccountEmployee = ChartOfAccount::where('chartOfAccountSystemID', $controlAccountEmployeeID)->get();
+
+
         $categories = FinanceItemCategoryMaster::all();
         $output = array(
             'controlAccount' => $controlAccount,
+            'controlAccountEmployee' => $controlAccountEmployee,
             'suppliers' => $supplierMaster,
+            'employees' => $employeeMaster,
             'departments' => $departments,
             'years' => $years,
             'countries' => $countries,
@@ -135,9 +185,11 @@ class AccountsPayableReportAPIController extends AppBaseController
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
+
     public function validateAPReport(Request $request)
     {
         $reportID = $request->reportID;
+
         switch ($reportID) {
             case 'APSL':
                 $validator = \Validator::make($request->all(), [
@@ -244,15 +296,19 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             case 'APSA':
+
                 $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'suppliers' => 'required',
-                    'controlAccountsSystemID' => 'required',
-                    'currencyID' => 'required',
-                    'interval' => 'required',
-                    'through' => 'required'
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'suppliers' => 'required',
+                        'controlAccountsSystemID' => 'required',
+                        'currencyID' => 'required',
+                        'interval' => 'required',
+                        'through' => 'required'
+                ], [
+                    'suppliers.required' => 'The supplier/employee field is required.'
                 ]);
+
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
@@ -1285,46 +1341,66 @@ class AccountsPayableReportAPIController extends AppBaseController
                 case 'APSA':// Supplier Aging
                     $reportTypeID = $request->reportTypeID;
                     $type = $request->type;
+                    $typeAging = isset($request->supEmpId[0]) ? $request->supEmpId[0]: $request->supEmpId;
 
                     $from_date = $request->fromDate;
                     $to_date = $request->toDate;
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
-                    $from_date = ((new Carbon($from_date))->format('d/m/Y'));
 
                     if ($reportTypeID == 'SAD') { //supplier aging detail
-                        $fileName = 'Supplier Aging Detail Report';
-                        $title = 'Supplier Aging Detail Report';
+                        if($typeAging == 1){
+                            $fileName = 'Supplier Aging Detail Report';
+                            $title = 'Supplier Aging Detail Report';
+                        } else {
+                            $fileName = 'Employee Aging Detail Report';
+                            $title = 'Employee Aging Detail Report';
+                        }
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingDetailQRY($request);
-                        $data = $supplierAgingReportService->getSupplierAgingExportToExcelData($output);
+                        $data = $supplierAgingReportService->getSupplierAgingExportToExcelData($output, $typeAging);
                         $objSupplierAgingDetail = new SupplierAgingDetailReport();
                         $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
                     }
                     else if ($reportTypeID == 'SAS') { //supplier aging summary
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingSummaryQRY($request);
-                        $fileName = 'Supplier Aging Summary Report';
-                        $title = 'Supplier Aging Summary Report';
-                        $data = $supplierAgingReportService->getSupplierAgingSummaryExportToExcelData($output);
+                        if($typeAging == 1){
+                            $fileName = 'Supplier Aging Summary Report';
+                            $title = 'Supplier Aging Summary Report';
+                        } else {
+                            $fileName = 'Employee Aging Summary Report';
+                            $title = 'Employee Aging Summary Report';
+                        }
+                        $data = $supplierAgingReportService->getSupplierAgingSummaryExportToExcelData($output, $typeAging);
                         $objSupplierAgingDetail = new SupplierAgingSummaryReport();
                         $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
                     }
                     else if ($reportTypeID == 'SADA') { //supplier aging detail advance
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingDetailAdvanceQRY($request);
-                        $fileName = 'Supplier Aging Detail Advance';
-                        $title = 'Supplier Aging Detail Advance Report';
-                        $data = $supplierAgingReportService->getSupplierAgingDetailAdvanceExportToExcelData($output);
+                        if($typeAging == 1){
+                            $fileName = 'Supplier Aging Detail Advance';
+                            $title = 'Supplier Aging Detail Advance Report';
+                        } else {
+                            $fileName = 'Employee Aging Detail Advance';
+                            $title = 'Employee Aging Detail Advance Report';
+                        }
+                        $data = $supplierAgingReportService->getSupplierAgingDetailAdvanceExportToExcelData($output, $typeAging);
                         $objSupplierAgingDetail = new SupplierAgingDetailAdvanceReport();
                         $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
                     }
                     else if ($reportTypeID == 'SASA') { //supplier aging summary
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
-                        $fileName = 'Supplier Aging Summary Advance';
-                        $title = 'Supplier Aging Summary Advance Report';
-                        $data = $supplierAgingReportService->getSupplierAgingSummaryAdvanceExportToExcelData($output);
+                        if($typeAging == 1) {
+                            $fileName = 'Supplier Aging Summary Advance';
+                            $title = 'Supplier Aging Summary Advance Report';
+                        } else {
+                            $fileName = 'Employee Aging Summary Advance';
+                            $title = 'Employee Aging Summary Advance Report';
+                        }
+                        $data = $supplierAgingReportService->getSupplierAgingSummaryAdvanceExportToExcelData($output, $typeAging);
                         $objSupplierAgingDetail = new SupplierAgingSummaryAdvanceReport();
                         $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
                     }
@@ -3102,10 +3178,18 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $suppliers = (array)$request->suppliers;
-        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+
+        $type = isset($request->supEmpId[0]) ? $request->supEmpId[0]: $request->supEmpId;
+
+        if($type == 1) {
+            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+        } else {
+            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
+        }
 
         $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
+
 
         $currency = $request->currencyID;
 
@@ -3175,8 +3259,31 @@ class AccountsPayableReportAPIController extends AppBaseController
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces)";
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt>0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
         }
+        if($type == 1) {
+            $typeSupplierQry = "erp_paysupplierinvoicedetail.supplierCodeSystem";
+            $typeGeneralQry = "erp_generalledger.supplierCodeSystem";
+            $typeQry = "LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem";
+            $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
+            $typeSupEmpQry2 = "finalAgingDetail.SupplierCode";
+            $typeSupEmpQry3 = "finalAgingDetail.suppliername";
+            $typeSupEmpQry4 = "CONCAT(finalAgingDetail.SupplierCode,' - ',finalAgingDetail.suppliername) as concatSupplierName";
+            $typeSupEmpQryMain1 = "MAINQUERY.supplierCodeSystem";
+            $typeSupEmpQryMain2 = "suppliermaster.primarySupplierCode";
+            $typeSupEmpQryMain3 = "suppliermaster.suppliername";
+        } else {
+            $typeSupplierQry = "erp_paysupplierinvoicedetail.employeeSystemID";
+            $typeGeneralQry = "erp_generalledger.employeeSystemID";
+            $typeQry = "LEFT JOIN employees ON employees.employeeSystemID = MAINQUERY.employeeSystemID";
+            $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
+            $typeSupEmpQry2 = "finalAgingDetail.SupplierCode";
+            $typeSupEmpQry3 = "finalAgingDetail.suppliername";
+            $typeSupEmpQry4 = "CONCAT(finalAgingDetail.SupplierCode,' - ',finalAgingDetail.suppliername) as concatSupplierName";
+            $typeSupEmpQryMain1 = "MAINQUERY.employeeSystemID as supplierCodeSystem";
+            $typeSupEmpQryMain2 = "employees.empID";
+            $typeSupEmpQryMain3 = "employees.empName as suppliername";
+        }
 
-        $output = \DB::select('SELECT *,' . $agingField . ' FROM (SELECT
+        $output =  \DB::select('SELECT *,' . $agingField . ' FROM (SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
                                 finalAgingDetail.CompanyName,
@@ -3186,9 +3293,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentDate,
                                 finalAgingDetail.documentNarration,
-                                finalAgingDetail.supplierCodeSystem,
-                                finalAgingDetail.SupplierCode,
-                                finalAgingDetail.suppliername,
+                                '.$typeSupEmpQry1.',
+                                '.$typeSupEmpQry2.',
+                                '.$typeSupEmpQry3.',
                                 finalAgingDetail.invoiceNumber,
                                 finalAgingDetail.invoiceDate,
                                 CURDATE() as runDate,
@@ -3198,7 +3305,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ' . $unAllocatedAmountQry . ',
                                 ' . $currencyQry . ',
                                 ' . $decimalPlaceQry . ',
-                                CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
+                                ' . $typeSupEmpQry4 . ',
                                 finalAgingDetail.glCode,
                                 finalAgingDetail.AccountDescription
                             FROM
@@ -3213,9 +3320,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentDate,
                                 MAINQUERY.documentNarration,
-                                MAINQUERY.supplierCodeSystem,
-                                suppliermaster.primarySupplierCode AS SupplierCode,
-                                suppliermaster.suppliername,
+                                '.$typeSupEmpQryMain1.',
+                                '.$typeSupEmpQryMain2.' AS SupplierCode,
+                                '.$typeSupEmpQryMain3.',
                                 MAINQUERY.invoiceNumber,
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
@@ -3261,6 +3368,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceNumber,
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
+                                erp_generalledger.employeeSystemID,
                                 erp_generalledger.documentTransCurrencyID,
                                 sum(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
@@ -3306,14 +3414,14 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS PaidPaymentVoucherRptAmount
                             FROM
                                 erp_paysupplierinvoicedetail
-                                INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+                                INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId 
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                             GROUP BY
                                 companySystemID,
                                 documentSystemID,
@@ -3340,7 +3448,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -3368,7 +3476,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -3396,7 +3504,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -3409,16 +3517,18 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
-                                AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeGeneralQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
-                            LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
+                            '.$typeQry.'
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal;');
+
+
 
         $output = $this->exchangeGainLoss($output, $currency);
 
@@ -3440,12 +3550,19 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $suppliers = (array)$request->suppliers;
-        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+
+        $type = isset($request->supEmpId[0]) ? $request->supEmpId[0]: $request->supEmpId;
+        if($type == 1) {
+            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+        } else {
+            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
+        }
 
         $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
 
         $currency = $request->currencyID;
+
 
         $z = 1;
         $aging = array();
@@ -3514,6 +3631,34 @@ class AccountsPayableReportAPIController extends AppBaseController
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt>0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
         }
 
+        if($type == 1) {
+            $typeSupplierQry = "erp_paysupplierinvoicedetail.supplierCodeSystem";
+            $typeGeneralQry = "erp_generalledger.supplierCodeSystem";
+            $typeQry = "LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem";
+            $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
+            $typeSupEmpQry2 = "finalAgingDetail.SupplierCode";
+            $typeSupEmpQry3 = "finalAgingDetail.suppliername";
+            $typeSupEmpQry4 = "CONCAT(finalAgingDetail.SupplierCode,' - ',finalAgingDetail.suppliername) as concatSupplierName";
+            $typeSupEmpQryMain1 = "MAINQUERY.supplierCodeSystem";
+            $typeSupEmpQryMain2 = "suppliermaster.primarySupplierCode";
+            $typeSupEmpQryMain3 = "suppliermaster.suppliername";
+            $typeCreditPeriod = "suppliermaster.creditPeriod";
+            $typeAgeCreditPeriod = "finalAgingDetail.creditPeriod";
+        } else {
+            $typeSupplierQry = "erp_paysupplierinvoicedetail.employeeSystemID";
+            $typeGeneralQry = "erp_generalledger.employeeSystemID";
+            $typeQry = "LEFT JOIN employees ON employees.employeeSystemID = MAINQUERY.employeeSystemID";
+            $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
+            $typeSupEmpQry2 = "finalAgingDetail.SupplierCode";
+            $typeSupEmpQry3 = "finalAgingDetail.suppliername";
+            $typeSupEmpQry4 = "CONCAT(finalAgingDetail.SupplierCode,' - ',finalAgingDetail.suppliername) as concatSupplierName";
+            $typeSupEmpQryMain1 = "MAINQUERY.employeeSystemID as supplierCodeSystem";
+            $typeSupEmpQryMain2 = "employees.empID";
+            $typeSupEmpQryMain3 = "employees.empName as suppliername";
+            $typeCreditPeriod = "'0' as creditPeriod";
+            $typeAgeCreditPeriod = "'0' as creditPeriod";
+        }
+
         $output = \DB::select('SELECT *,SUM(grandFinal.unAllocatedAmount) as unAllocatedAmount,' . $agingField . ' FROM (SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
@@ -3524,10 +3669,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.documentSystemCode,
                                 finalAgingDetail.documentDate,
                                 finalAgingDetail.documentNarration,
-                                finalAgingDetail.supplierCodeSystem,
-                                finalAgingDetail.SupplierCode,
-                                finalAgingDetail.suppliername,
-                                finalAgingDetail.creditPeriod,
+                                '.$typeSupEmpQry1.',
+                                '.$typeSupEmpQry2.',
+                                '.$typeSupEmpQry3.',
+                                '.$typeAgeCreditPeriod.',
                                 finalAgingDetail.invoiceNumber,
                                 finalAgingDetail.invoiceDate,
                                 CURDATE() as runDate,
@@ -3537,7 +3682,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ' . $unAllocatedAmountQry . ',
                                 ' . $currencyQry . ',
                                 ' . $decimalPlaceQry . ',
-                                CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
+                                ' . $typeSupEmpQry4 . ',
                                 CONCAT(finalAgingDetail.companyID," - ",finalAgingDetail.CompanyName) as concatCompanyName,
                                 finalAgingDetail.glCode,
                                 finalAgingDetail.AccountDescription,
@@ -3554,10 +3699,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentSystemCode,
                                 MAINQUERY.documentDate,
                                 MAINQUERY.documentNarration,
-                                MAINQUERY.supplierCodeSystem,
-                                suppliermaster.primarySupplierCode AS SupplierCode,
-                                suppliermaster.suppliername,
-                                suppliermaster.creditPeriod,
+                                '.$typeSupEmpQryMain1.',
+                                '.$typeSupEmpQryMain2.' AS SupplierCode,
+                                '.$typeSupEmpQryMain3.',
+                                '.$typeCreditPeriod.',
                                 MAINQUERY.invoiceNumber,
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
@@ -3604,6 +3749,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceNumber,
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
+                                erp_generalledger.employeeSystemID,
                                 erp_generalledger.documentTransCurrencyID,
                                 SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
@@ -3655,7 +3801,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -3683,7 +3829,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -3711,7 +3857,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -3739,7 +3885,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -3752,11 +3898,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
-                                AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeGeneralQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
-                            LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
+                            '.$typeQry.'
                             LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
@@ -3773,6 +3919,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->format('Y-m-d');
 
+
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
@@ -3782,7 +3929,12 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $suppliers = (array)$request->suppliers;
-        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+        $type = isset($request->supEmpId[0]) ? $request->supEmpId[0]: $request->supEmpId;
+        if($type == 1) {
+            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+        } else {
+            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
+        }
 
         $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
@@ -3852,6 +4004,30 @@ class AccountsPayableReportAPIController extends AppBaseController
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
         }
 
+        if($type == 1) {
+            $typeSupplierQry = "erp_paysupplierinvoicedetail.supplierCodeSystem";
+            $typeGeneralQry = "erp_generalledger.supplierCodeSystem";
+            $typeQry = "LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem";
+            $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
+            $typeSupEmpQry2 = "finalAgingDetail.SupplierCode";
+            $typeSupEmpQry3 = "finalAgingDetail.suppliername";
+            $typeSupEmpQry4 = "CONCAT(finalAgingDetail.SupplierCode,' - ',finalAgingDetail.suppliername) as concatSupplierName";
+            $typeSupEmpQryMain1 = "MAINQUERY.supplierCodeSystem";
+            $typeSupEmpQryMain2 = "suppliermaster.primarySupplierCode";
+            $typeSupEmpQryMain3 = "suppliermaster.suppliername";
+        } else {
+            $typeSupplierQry = "erp_paysupplierinvoicedetail.employeeSystemID";
+            $typeGeneralQry = "erp_generalledger.employeeSystemID";
+            $typeQry = "LEFT JOIN employees ON employees.employeeSystemID = MAINQUERY.employeeSystemID";
+            $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
+            $typeSupEmpQry2 = "finalAgingDetail.SupplierCode";
+            $typeSupEmpQry3 = "finalAgingDetail.suppliername";
+            $typeSupEmpQry4 = "CONCAT(finalAgingDetail.SupplierCode,' - ',finalAgingDetail.suppliername) as concatSupplierName";
+            $typeSupEmpQryMain1 = "MAINQUERY.employeeSystemID as supplierCodeSystem";
+            $typeSupEmpQryMain2 = "employees.empID";
+            $typeSupEmpQryMain3 = "employees.empName as suppliername";
+        }
+
         $output = \DB::select('SELECT *,' . $agingField . ' FROM (SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
@@ -3862,9 +4038,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentDate,
                                 finalAgingDetail.documentNarration,
-                                finalAgingDetail.supplierCodeSystem,
-                                finalAgingDetail.SupplierCode,
-                                finalAgingDetail.suppliername,
+                                '.$typeSupEmpQry1.',
+                                '.$typeSupEmpQry2.',
+                                '.$typeSupEmpQry3.',
                                 finalAgingDetail.invoiceNumber,
                                 finalAgingDetail.invoiceDate,
                                 CURDATE() as runDate,
@@ -3873,7 +4049,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ' . $balanceAmountQry . ',
                                 ' . $currencyQry . ',
                                 ' . $decimalPlaceQry . ',
-                                CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
+                                ' . $typeSupEmpQry4 . ',
                                 finalAgingDetail.glCode,
                                 finalAgingDetail.AccountDescription,
                                 finalAgingDetail.chartOfAccountSystemID
@@ -3889,9 +4065,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentDate,
                                 MAINQUERY.documentNarration,
-                                MAINQUERY.supplierCodeSystem,
-                                suppliermaster.primarySupplierCode AS SupplierCode,
-                                suppliermaster.suppliername,
+                                '.$typeSupEmpQryMain1.',
+                                '.$typeSupEmpQryMain2.' AS SupplierCode,
+                                '.$typeSupEmpQryMain3.',
                                 MAINQUERY.invoiceNumber,
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
@@ -3938,6 +4114,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceNumber,
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
+                                erp_generalledger.employeeSystemID,
                                 erp_generalledger.documentTransCurrencyID,
                                 SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
@@ -3989,7 +4166,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -4017,7 +4194,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -4045,7 +4222,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -4073,7 +4250,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -4086,11 +4263,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
-                                AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeGeneralQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
-                            LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
+                            '.$typeQry.'
                             LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
@@ -4116,8 +4293,12 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $suppliers = (array)$request->suppliers;
-        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
-
+        $type = isset($request->supEmpId[0]) ? $request->supEmpId[0]: $request->supEmpId;
+        if($type == 1) {
+            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+        } else {
+            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
+        }
         $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
 
@@ -4186,6 +4367,34 @@ class AccountsPayableReportAPIController extends AppBaseController
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
         }
 
+        if($type == 1) {
+            $typeSupplierQry = "erp_paysupplierinvoicedetail.supplierCodeSystem";
+            $typeGeneralQry = "erp_generalledger.supplierCodeSystem";
+            $typeQry = "LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem";
+            $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
+            $typeSupEmpQry2 = "finalAgingDetail.SupplierCode";
+            $typeSupEmpQry3 = "finalAgingDetail.suppliername";
+            $typeSupEmpQry4 = "CONCAT(finalAgingDetail.SupplierCode,' - ',finalAgingDetail.suppliername) as concatSupplierName";
+            $typeSupEmpQryMain1 = "MAINQUERY.supplierCodeSystem";
+            $typeSupEmpQryMain2 = "suppliermaster.primarySupplierCode";
+            $typeSupEmpQryMain3 = "suppliermaster.suppliername";
+            $typeCreditPeriod = "suppliermaster.creditPeriod";
+            $typeAgeCreditPeriod = "finalAgingDetail.creditPeriod";
+        } else {
+            $typeSupplierQry = "erp_paysupplierinvoicedetail.employeeSystemID";
+            $typeGeneralQry = "erp_generalledger.employeeSystemID";
+            $typeQry = "LEFT JOIN employees ON employees.employeeSystemID = MAINQUERY.employeeSystemID";
+            $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
+            $typeSupEmpQry2 = "finalAgingDetail.SupplierCode";
+            $typeSupEmpQry3 = "finalAgingDetail.suppliername";
+            $typeSupEmpQry4 = "CONCAT(finalAgingDetail.SupplierCode,' - ',finalAgingDetail.suppliername) as concatSupplierName";
+            $typeSupEmpQryMain1 = "MAINQUERY.employeeSystemID as supplierCodeSystem";
+            $typeSupEmpQryMain2 = "employees.empID";
+            $typeSupEmpQryMain3 = "employees.empName as suppliername";
+            $typeCreditPeriod = "'0' as creditPeriod";
+            $typeAgeCreditPeriod = "'0' as creditPeriod";
+        }
+
         $output = \DB::select('SELECT *, ' . $agingField . ' FROM (SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
@@ -4196,10 +4405,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.documentSystemCode,
                                 finalAgingDetail.documentDate,
                                 finalAgingDetail.documentNarration,
-                                finalAgingDetail.supplierCodeSystem,
-                                finalAgingDetail.SupplierCode,
-                                finalAgingDetail.suppliername,
-                                finalAgingDetail.creditPeriod,
+                                '.$typeSupEmpQry1.',
+                                '.$typeSupEmpQry2.',
+                                '.$typeSupEmpQry3.',
+                                '.$typeAgeCreditPeriod.',
                                 finalAgingDetail.invoiceNumber,
                                 finalAgingDetail.invoiceDate,
                                 CURDATE() as runDate,
@@ -4208,7 +4417,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ' . $balanceAmountQry . ',
                                 ' . $currencyQry . ',
                                 ' . $decimalPlaceQry . ',
-                                CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
+                                ' . $typeSupEmpQry4 . ',
                                 CONCAT(finalAgingDetail.companyID," - ",finalAgingDetail.CompanyName) as concatCompanyName,
                                 finalAgingDetail.glCode,
                                 finalAgingDetail.AccountDescription,
@@ -4225,10 +4434,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentSystemCode,
                                 MAINQUERY.documentDate,
                                 MAINQUERY.documentNarration,
-                                MAINQUERY.supplierCodeSystem,
-                                suppliermaster.primarySupplierCode AS SupplierCode,
-                                suppliermaster.suppliername,
-                                suppliermaster.creditPeriod,
+                                '.$typeSupEmpQryMain1.',
+                                '.$typeSupEmpQryMain2.' AS SupplierCode,
+                                '.$typeSupEmpQryMain3.',
+                                '.$typeCreditPeriod.',
                                 MAINQUERY.invoiceNumber,
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
@@ -4275,6 +4484,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceNumber,
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
+                                erp_generalledger.employeeSystemID,
                                 erp_generalledger.documentTransCurrencyID,
                                 SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
@@ -4326,7 +4536,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -4354,7 +4564,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -4382,7 +4592,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -4410,7 +4620,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeSupplierQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
@@ -4423,11 +4633,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
-                                AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND '.$typeGeneralQry.' IN (' . join(',', $supplierSystemID) . ')
                                 AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
-                            LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
+                            '.$typeQry.'
                             LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID

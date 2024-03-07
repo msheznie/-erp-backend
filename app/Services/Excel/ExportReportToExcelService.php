@@ -3,6 +3,7 @@
 namespace App\Services\Excel;
 
 use App\helper\CreateExcel;
+use App\helper\GenerateExcel;
 use App\helper\Helper;
 use App\Models\CurrencyMaster;
 
@@ -23,7 +24,17 @@ class ExportReportToExcelService implements ExportToExcelInterface
     public $details;
     public $reportType;
     public $excelFormat;
-    public $dataType;
+    public $dataType = 1;
+    public $excelType;
+
+    /**
+     * @param mixed $excelType
+     */
+    public function setExcelType($excelType = 1): ExportReportToExcelService
+    {
+        $this->excelType = $excelType;
+        return $this;
+    }
 
     /**
      * @param mixed $excelFormat
@@ -50,6 +61,7 @@ class ExportReportToExcelService implements ExportToExcelInterface
     public function setType($type): ExportReportToExcelService
     {
         $this->type = $type;
+
         return $this;
     }
 
@@ -116,7 +128,7 @@ class ExportReportToExcelService implements ExportToExcelInterface
      */
     public function setToDate($toDate): ExportReportToExcelService
     {
-        $this->toDate = Helper::dateFormat($toDate);
+        $this->toDate = ($toDate) ? Helper::dateFormat($toDate) : null;
         return $this;
     }
 
@@ -125,7 +137,7 @@ class ExportReportToExcelService implements ExportToExcelInterface
      */
     public function setFromDate($fromDate): ExportReportToExcelService
     {
-        $this->fromDate = Helper::dateFormat($fromDate);
+        $this->fromDate = ($fromDate) ? Helper::dateFormat($fromDate) : null;
         return $this;
     }
 
@@ -137,6 +149,7 @@ class ExportReportToExcelService implements ExportToExcelInterface
     public function setDateType($dataType=1):ExportReportToExcelService
     {
         $this->dataType = $dataType;
+
         return $this;
     }
 
@@ -158,13 +171,14 @@ class ExportReportToExcelService implements ExportToExcelInterface
             'dataType' => $this->dataType
         );
 
+
         $this->details = $detail_array;
         return $this;
     }
 
 
     public function generateExcel(): Array {
-        $generate = CreateExcel::process($this->data,$this->type,$this->fileName,$this->path,$this->details);
+        $generate = (!isset($this->excelType) || $this->excelType == 1) ? CreateExcel::process($this->data,$this->type,$this->fileName,$this->path,$this->details) : GenerateExcel::process($this->data,$this->type,$this->fileName,$this->path,$this->details);
 
         if($generate == '')
             return ['success' => false , 'message' => 'Unable to export excel'];

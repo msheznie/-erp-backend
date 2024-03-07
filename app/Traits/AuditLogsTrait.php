@@ -3,24 +3,13 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Log;
+use App\Jobs\AuditLog\AuditLogJob;
 
 trait AuditLogsTrait
 {
-    public function createAuditLogs($transactionID, $amendedField, $previousValue, $newValue, $table, $uuid){
-        Log::useFiles(storage_path() . '/logs/audit.log');
-
+    public function auditLog($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue = [], $previosValue = [], $parentID = null, $parentTable = null)
+    {
         $user = \Helper::getEmployeeName();
-        Log::info('data:',[
-            'transaction_id' => $transactionID,
-            'user_name' => $user,
-            'date_time' => date('Y-m-d H:i:s'),
-            'amended_field' => $amendedField,
-            'previous_value' => $previousValue,
-            'new_value' => $newValue,
-            'table' => $table,
-            'channel' => 'audit',
-            'tenant_uuid' => $uuid
-        ]);
+        AuditLogJob::dispatch($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue, $previosValue, $parentID, $parentTable, $user);
     }
-
 }

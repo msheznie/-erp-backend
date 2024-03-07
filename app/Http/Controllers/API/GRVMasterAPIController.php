@@ -86,6 +86,7 @@ use App\helper\CancelDocument;
 use Response;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
+use App\Models\SupplierBlock;
 
 /**
  * Class GRVMasterController
@@ -351,7 +352,6 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        
 
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
@@ -370,6 +370,10 @@ class GRVMasterAPIController extends AppBaseController
         if ($gRVMaster->grvCancelledYN == -1) {
             return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
         }
+
+
+        $supplier_id = $input['supplierID'];
+        $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
 
 
         $currentDate = Carbon::parse(now())->format('Y-m-d');
@@ -511,6 +515,18 @@ class GRVMasterAPIController extends AppBaseController
 
 
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
+
+
+
+            if(($input['isSupplierBlocked']) && ($gRVMaster->grvTypeID == 2))
+            {
+
+                $validatorResult = \Helper::checkBlockSuppliers($input['grvDate'],$supplier_id);
+                if (!$validatorResult['success']) {              
+                    return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+    
+                }
+            }
 
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {

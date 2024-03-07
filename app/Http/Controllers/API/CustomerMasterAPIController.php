@@ -27,6 +27,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerMaster;
 use App\Models\Company;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\CountryMaster;
 use App\Models\CustomerMasterCategory;
 use App\Models\CustomerMasterRefferedBack;
@@ -72,6 +73,7 @@ use App\Models\CreditNote;
 use App\Models\CustomerReceivePayment;
 use App\Models\QuotationMaster;
 use App\Models\MatchDocumentMaster;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class CustomerMasterController
@@ -84,6 +86,9 @@ class CustomerMasterAPIController extends AppBaseController
     private $userRepository;
     private $supplierMasterRepository;
     private $itemMasterRepository;
+
+    use AuditLogsTrait;
+
     public function __construct(ItemMasterRepository $itemMasterRepo,SupplierMasterRepository $supplierMasterRepo,CustomerMasterRepository $customerMasterRepo, UserRepository $userRepo)
     {
         $this->customerMasterRepository = $customerMasterRepo;
@@ -331,6 +336,8 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $selectedCompanyId = $input['companySystemID'];
+
         $data['chartOfAccounts'] = ChartOfAccount::where('controllAccountYN', '=', 1)
                                          ->whereHas('chartofaccount_assigned', function($query) use ($input) {
                                             $query->where('companySystemID', $input['companySystemID'])
@@ -352,6 +359,24 @@ class CustomerMasterAPIController extends AppBaseController
                                         ->where('catogaryBLorPL', '=', 'BS')
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
+        $data['liabilityAccountsCOA'] = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                            $query->where('companySystemID', $input['companySystemID'])
+                                                ->where('isAssigned', -1)
+                                                ->where('isActive', 1);
+                                        })
+                                        ->where('catogaryBLorPL', '=', 'BS')
+                                        ->orderBy('AccountDescription', 'asc')
+                                        ->get();
+
+        $data['gl_secanrio'] = SystemGlCodeScenarioDetail::select('systemGlScenarioID','chartOfAccountSystemID')->with('master')->whereHas('master', function ($q) {
+                                        $q->where('department_master_id', 4)->where(function ($q) {
+                                            $q->where('slug', 'account-receivable-receivable-account')
+                                                ->orWhere('slug', 'account-receivable-advance-account')
+                                                ->orWhere('slug', 'account-receivable-unbilled-account');
+                                        });
+                                    })
+                                    ->where('companySystemID', $selectedCompanyId)
+                                    ->get();
 
         return $this->sendResponse($data, 'Record retrieved successfully');
 
@@ -553,6 +578,16 @@ class CustomerMasterAPIController extends AppBaseController
             $input['companyLinkedToSystemID'] = null;
         }
 
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
         
         if (array_key_exists('customerCodeSystem', $input)) {
 
@@ -580,6 +615,9 @@ class CustomerMasterAPIController extends AppBaseController
                         return $this->sendError($validator->messages(), 422);
                     }
 
+                    $previosValue = $customerMasters->toArray();
+                    $newValue = $input;
+
                     $customerMasters = $this->customerMasterRepository->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']), $customerId);
                     CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
                     // user activity log table
@@ -596,6 +634,9 @@ class CustomerMasterAPIController extends AppBaseController
                             }
                         }
                     }
+
+                    $this->auditLog($db, $input['customerCodeSystem'],$uuid, "customermaster", $input['CutomerCode']." has updated", "U", $newValue, $previosValue);
+
                     
                     return $this->sendResponse($customerMasters, 'Customer Master updated successfully');
                 }

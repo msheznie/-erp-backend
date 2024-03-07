@@ -32,6 +32,7 @@ class PaySupplierInvoiceDetailRepository extends BaseRepository
         'bookingInvoiceDate',
         'addedDocumentType',
         'supplierCodeSystem',
+        'employeeSystemID',
         'supplierInvoiceNo',
         'supplierInvoiceDate',
         'supplierTransCurrencyID',

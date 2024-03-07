@@ -83,5 +83,10 @@ class ErpAttributesFieldType extends Model
         
     ];
 
-    
+    public static function fieldName($id)
+    {
+        $data = ErpAttributesFieldType::find($id);
+
+        return $data ? $data->description : "";
+    }   
 }
