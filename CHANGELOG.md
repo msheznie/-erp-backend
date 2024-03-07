@@ -1,5 +1,63 @@
 # Changelog
 
+## [10.35.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.34.1...v10.35.0) (2024-03-07)
+
+
+### Features
+
+* **accounts payable:** added employee inv, adv payment and debit note for aging report [GCP-2923] ([#5670](https://github.com/pbsgears/Gears_BackEnd/issues/5670)) ([182f889](https://github.com/pbsgears/Gears_BackEnd/commit/182f889224aae7db79450472536e3ac2b02fa82f))
+* **accounts payable:** implemented employee for supplier aging reports based on filter [GCP-2646] ([#5607](https://github.com/pbsgears/Gears_BackEnd/issues/5607)) ([e68992f](https://github.com/pbsgears/Gears_BackEnd/commit/e68992f5e241f1939c47d35ec5046395270c6e27))
+* **accounts receivable:** unable to Export to PDF for larger amount  data [GCP-2816] ([#5631](https://github.com/pbsgears/Gears_BackEnd/issues/5631)) ([4dbe3cc](https://github.com/pbsgears/Gears_BackEnd/commit/4dbe3ccf947f2adb253be88aeeffd1cedf4ea6fe))
+* **asset management:** implemented asset tracking report [GCP-2578] ([#5628](https://github.com/pbsgears/Gears_BackEnd/issues/5628)) ([d1ed889](https://github.com/pbsgears/Gears_BackEnd/commit/d1ed889b3dfcde8a4fd0925733d2febdaa71acb5))
+* **common:** general ledger entries have been validated before inserting [GCP-2737] ([#5580](https://github.com/pbsgears/Gears_BackEnd/issues/5580)) ([260eb31](https://github.com/pbsgears/Gears_BackEnd/commit/260eb3193ae952f5fa6b4d66ebbb9bcc7058134d))
+* **common:** report formating on inventroy and asset management [GCP-2720] ([#5648](https://github.com/pbsgears/Gears_BackEnd/issues/5648)) ([159f917](https://github.com/pbsgears/Gears_BackEnd/commit/159f917e66d2881c055b79f87c29cbc8f8b9bb95))
+* **common:** show version no from git tag [GCP-2956] ([81ae006](https://github.com/pbsgears/Gears_BackEnd/commit/81ae006680e08e4060607e7f5fc8f7c86fdb6722))
+* **configuration:** payment term template configuration [GCP-1708] ([#5638](https://github.com/pbsgears/Gears_BackEnd/issues/5638)) ([5defce6](https://github.com/pbsgears/Gears_BackEnd/commit/5defce6aa96488a8a29e6bd62a836bd1058f5f62))
+* **configuration:** template remove conditions [GCP-2970] ([#5713](https://github.com/pbsgears/Gears_BackEnd/issues/5713)) ([05c5afe](https://github.com/pbsgears/Gears_BackEnd/commit/05c5afe8e180ecde1c3a0bc2afddd11e829f95f8))
+* **configuration:** validate template assigned suppliers when deleting [GCP-2963] ([#5701](https://github.com/pbsgears/Gears_BackEnd/issues/5701)) ([c6ddbd7](https://github.com/pbsgears/Gears_BackEnd/commit/c6ddbd70299f1f6c889e958367ecdb39fa0a1628))
+* **general ledger:** Create Project Utilization Report on posted date [GCP-2745] ([#5581](https://github.com/pbsgears/Gears_BackEnd/issues/5581)) ([86283a1](https://github.com/pbsgears/Gears_BackEnd/commit/86283a1f3c1961062660f3d98405f45a064caa18))
+* **general ledger:** Recurring JV Configuration [GCP-2757] ([#5613](https://github.com/pbsgears/Gears_BackEnd/issues/5613)) ([98cc35a](https://github.com/pbsgears/Gears_BackEnd/commit/98cc35a2fca3d5c208b8f5118e4ef6f3b4431e25))
+* **general ledger:** recurring voucher approval setup [GCP-2875] ([#5627](https://github.com/pbsgears/Gears_BackEnd/issues/5627)) ([0a10440](https://github.com/pbsgears/Gears_BackEnd/commit/0a10440827a6bb13378c2ab35c92271c5264f9cd))
+* **general ledger:** recurring voucher reopen,attachment & line delete setup [GCP-2886] ([#5633](https://github.com/pbsgears/Gears_BackEnd/issues/5633)) ([cfb1c4b](https://github.com/pbsgears/Gears_BackEnd/commit/cfb1c4b77db3d57dd2acbb48551a0b3c8bfe6a8f))
+* **general ledger:** recurring voucher reschedule option [GCP-2874] ([#5658](https://github.com/pbsgears/Gears_BackEnd/issues/5658)) ([83fd879](https://github.com/pbsgears/Gears_BackEnd/commit/83fd87928003427f1071d1af7c60cc0ad2ef2b16))
+* **general ledger:** rrv details segment validation [GCP-2965] ([#5705](https://github.com/pbsgears/Gears_BackEnd/issues/5705)) ([32fb20f](https://github.com/pbsgears/Gears_BackEnd/commit/32fb20fcdddd21e8e4b631db9ba17dd61204fa76))
+* **general ledger:** rrv stop all schedule status configuration [GCP-2987] ([#5717](https://github.com/pbsgears/Gears_BackEnd/issues/5717)) ([b509ab5](https://github.com/pbsgears/Gears_BackEnd/commit/b509ab55cdba252de69e56de2394598595d11f29))
+* **inventory:** validate Document Rejection Based on Approval Access [GCP-2736] ([#5575](https://github.com/pbsgears/Gears_BackEnd/issues/5575)) ([15d9abc](https://github.com/pbsgears/Gears_BackEnd/commit/15d9abc8e75e8ebd652e0f95f842697a4567324c))
+* **POS:** implemented credit note for exchange items in pos [GCP-2766] ([#5663](https://github.com/pbsgears/Gears_BackEnd/issues/5663)) ([f416efb](https://github.com/pbsgears/Gears_BackEnd/commit/f416efbc83cb36cbf6e86c1de2d90b0507a8050e))
+* **procurement:** default template changes in payment term templates [GCP-2930] ([#5674](https://github.com/pbsgears/Gears_BackEnd/issues/5674)) ([09b838f](https://github.com/pbsgears/Gears_BackEnd/commit/09b838f75ac63025651eb595abf3377887521f2e))
+* **procurement:** print view has updated with the payment terms [GCP-2824] ([#5647](https://github.com/pbsgears/Gears_BackEnd/issues/5647)) ([5dd0961](https://github.com/pbsgears/Gears_BackEnd/commit/5dd096149348f2a6a06d5b005ebaa8aa515c73d6))
+* **procurement:** selected configs from the purchase order taken for the print view [GCP-2824] ([#5652](https://github.com/pbsgears/Gears_BackEnd/issues/5652)) ([9020b08](https://github.com/pbsgears/Gears_BackEnd/commit/9020b0846b4b5f740a10b3a6fe216ed706b34dbb))
+* **system admin:** Added default ChartOfAccount Configs to supplier master [GCP-2782] ([#5694](https://github.com/pbsgears/Gears_BackEnd/issues/5694)) ([7416391](https://github.com/pbsgears/Gears_BackEnd/commit/74163912aac28e0101adb88f1a09ab4ebe8c17fc))
+* **system admin:** Added Log View to Supplier Master [GCP-2728] ([#5666](https://github.com/pbsgears/Gears_BackEnd/issues/5666)) ([55c35ba](https://github.com/pbsgears/Gears_BackEnd/commit/55c35ba8971bac4e12c6e41f584c8c58bb9cbd95))
+* **system admin:** allow the selection of BSA or BSL accounts for consumption and COGS [GCP-2924] ([#5669](https://github.com/pbsgears/Gears_BackEnd/issues/5669)) ([9cf55ed](https://github.com/pbsgears/Gears_BackEnd/commit/9cf55ed4a2b0b971b3412656cfddd8a0d1c28f5d))
+* **system admin:** amendment option to the COA configuration and view changes [GCP-2722] ([#5679](https://github.com/pbsgears/Gears_BackEnd/issues/5679)) ([ae08331](https://github.com/pbsgears/Gears_BackEnd/commit/ae08331523a6b4bff27ea6e0eb5c744b3fe2ec6b))
+* **system admin:** block supplier to specific period [GCP-2523] ([#5587](https://github.com/pbsgears/Gears_BackEnd/issues/5587)) ([460311e](https://github.com/pbsgears/Gears_BackEnd/commit/460311e0c7d05c728b02ebcd468d3fae94543d4f))
+* **system admin:** Changed CA fields to mandatory in supplier master [GCP-3030] ([#5755](https://github.com/pbsgears/Gears_BackEnd/issues/5755)) ([89e11f3](https://github.com/pbsgears/Gears_BackEnd/commit/89e11f3d3ff5c445b04b101e988b9e99c891bd61))
+* **system admin:** chart of Account Configuration Updates for customer creation [GCP-2783] ([#5693](https://github.com/pbsgears/Gears_BackEnd/issues/5693)) ([2f46fc0](https://github.com/pbsgears/Gears_BackEnd/commit/2f46fc0c4422345646ba123561e421bf6939ae14))
+* **system admin:** email notifications have been updated with customer name [GCP-2725] ([#5579](https://github.com/pbsgears/Gears_BackEnd/issues/5579)) ([9441fbe](https://github.com/pbsgears/Gears_BackEnd/commit/9441fbe7e77e24896248974714804a6d574443c2))
+* **system admin:** Enabled Country Amendmend in Supplier Master [GCP-1478] ([#5617](https://github.com/pbsgears/Gears_BackEnd/issues/5617)) ([349b6a7](https://github.com/pbsgears/Gears_BackEnd/commit/349b6a71712468381e5b1c3999e54667ff4af43f))
+* **system admin:** enhanced to get audit log in Arabic for supplier master [GCP-2994] ([#5726](https://github.com/pbsgears/Gears_BackEnd/issues/5726)) ([e552091](https://github.com/pbsgears/Gears_BackEnd/commit/e5520918d26391e32e99d0425f6cab746b949b88))
+* **system admin:** implemented customer master and item finance category Arabic translations [GCP-2995] ([#5727](https://github.com/pbsgears/Gears_BackEnd/issues/5727)) ([a05613b](https://github.com/pbsgears/Gears_BackEnd/commit/a05613b121375d479161acd7e6aaed6e99a2ceb4))
+* **system admin:** not showing not approved CA in finance sub category creations [GCP-3067] ([#5767](https://github.com/pbsgears/Gears_BackEnd/issues/5767)) ([579059d](https://github.com/pbsgears/Gears_BackEnd/commit/579059dbd551ef9e3c8df1ba991c4fb387cd3752))
+* **system admin:** supplier registration link expiry validation enhanced [GCP-2931] ([#5699](https://github.com/pbsgears/Gears_BackEnd/issues/5699)) ([dbca149](https://github.com/pbsgears/Gears_BackEnd/commit/dbca1494b1ddf12588e61c1d3eec2641189251bc))
+* **system:** Create View log for Customer Master [GCP-2729] ([#5655](https://github.com/pbsgears/Gears_BackEnd/issues/5655)) ([f0188e6](https://github.com/pbsgears/Gears_BackEnd/commit/f0188e618139558c93a835d71d664e5228333044))
+
+
+### Bug Fixes
+
+* **accounts payable:** handled supplier statement balance amount not deducting issue  [GCP-2854] ([#5684](https://github.com/pbsgears/Gears_BackEnd/issues/5684)) ([d42e9be](https://github.com/pbsgears/Gears_BackEnd/commit/d42e9be42913a02999246f82ebda7cb594c197a8))
+* **general ledger:** employee Ledger does not load the Subsidiary company employees [GCP-2647] ([#5595](https://github.com/pbsgears/Gears_BackEnd/issues/5595)) ([7141ec1](https://github.com/pbsgears/Gears_BackEnd/commit/7141ec1c367341ada661e7b98bab990ed53c95d1))
+* **POS:** sales of invoice with same item inserted to item ledger [GCP-2958] ([#5703](https://github.com/pbsgears/Gears_BackEnd/issues/5703)) ([ae225da](https://github.com/pbsgears/Gears_BackEnd/commit/ae225da13c6fa174063ea9aef7d3d2dde0b456de))
+
+
+### Performance Improvements
+
+* **general ledger:** contingency budget access token [GCP-2741] ([#5502](https://github.com/pbsgears/Gears_BackEnd/issues/5502)) ([b97b4d0](https://github.com/pbsgears/Gears_BackEnd/commit/b97b4d00af69d77adbf440b5901e5e51041cb057))
+* **general ledger:** general ledger master recurring voucher setup access token [GCP-3022] ([#5748](https://github.com/pbsgears/Gears_BackEnd/issues/5748)) ([5fda9e3](https://github.com/pbsgears/Gears_BackEnd/commit/5fda9e3b99d73522acc47ad6060b75332a979935))
+* **general ledger:** general ledger report employee ledger broken access token [GCP-3015] ([#5730](https://github.com/pbsgears/Gears_BackEnd/issues/5730)) ([08a11ba](https://github.com/pbsgears/Gears_BackEnd/commit/08a11ba683627aa8f6ab3b557d664c17841a951f))
+* **general ledger:** general ledger report Project Utilization broken acces token added [GCP-2992] ([#5724](https://github.com/pbsgears/Gears_BackEnd/issues/5724)) ([559ab0b](https://github.com/pbsgears/Gears_BackEnd/commit/559ab0bd2fe60cf80b76e780b4ff6c03b5da98d8))
+* **general ledger:** general ledger reports segment wise gl report access token [GCP-3014] ([#5732](https://github.com/pbsgears/Gears_BackEnd/issues/5732)) ([97f5e43](https://github.com/pbsgears/Gears_BackEnd/commit/97f5e43c98863ab6d38180963f24783eda47f23d))
+
 ## [10.34.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.34.0...v10.34.1) (2024-03-05)
 
 
