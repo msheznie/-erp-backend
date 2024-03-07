@@ -9,3 +9,4 @@ Route::get('hr-document-notification', 'HRJobInvokeAPIController@sendHrDocNotifi
 Route::get('return-to-work-notification', 'HRJobInvokeAPIController@sendReturnToWorkNotifications');
 Route::get('employee-profile-creation-notification', 'HRJobInvokeAPIController@sendEmpProfileCreateNotifications');
 Route::get('hrNotificationDebug', 'HRJobInvokeAPIController@hrNotificationDebug');
+Route::get('clockOutJobCall', 'HRJobInvokeAPIController@clockOutJobCall');

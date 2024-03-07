@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\enums\modules\Modules;
+use App\Jobs\AttendanceDayEndPulling;
+use App\Jobs\AttendanceDayEndPullingInitiate;
 use App\Jobs\BirthdayWishInitiate;
 use App\Services\hrms\attendance\SMAttendancePullingService;
 use App\Services\hrms\modules\HrModuleAssignService;
@@ -164,6 +166,52 @@ class HRJobInvokeAPIController extends AppBaseController
         $obj = new AttendanceDataPullingService($companyId, $pullingDate, $isClockOutPulling);
         $obj->execute();
         return $this->sendResponse($data, 'clock out pulling job added to queue');
+    }
+
+    function clockOutJobCall(Request $request)
+    {
+        $tenantId = $request->input('tenantId');
+        $companyId = $request->input('companyId');
+        $attDate = $request->input('attendanceDate');
+        $dispatchDb = CommonJobService::get_tenant_db($tenantId);
+
+        $validateRep = $this->validateClockOutJob($attDate, $tenantId, $dispatchDb, $companyId);
+        if (!$validateRep['status']) {
+            Log::error($validateRep['msg'] . " \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
+        }
+
+        $msg = "{$dispatchDb} DB added to the queue for attendance day end pulling initiate ({$attDate}).";
+        Log::info("$msg \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
+
+        AttendanceDayEndPulling::dispatch($dispatchDb, $companyId, $attDate);
+        return $this->sendResponse(true, 'clock out pulling job added to queue');
+    }
+
+    function validateClockOutJob($attDate, $tenantId, $dispatchDb, $companyId){
+        if (empty($tenantId)) {
+            $msg = "Tenant details not found ({$attDate}).";
+
+            return ['status'=> false, 'msg' => $msg ];
+        }
+
+        if (empty($companyId)) {
+            $msg = "There is not a single company found for process the pull-attendance in {$dispatchDb} DB";
+
+            return ['status'=> false, 'msg' => $msg ];
+        }
+
+        if (empty($attDate)) {
+            $msg = "check the attendance date";
+
+            return ['status'=> false, 'msg' => $msg ];
+        }
+
+        if(empty($dispatchDb)){
+            $msg = "Cannot find database check the tenant id";
+            return ['status'=> false, 'msg' => $msg ];
+        }
+
+        return ['status'=> true, 'msg' => 'success' ];
     }
 
     function birthdayWishesEmailDebug(){
