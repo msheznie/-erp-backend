@@ -59,6 +59,7 @@ class GenerateARCAPdfReport implements ShouldQueue
      */
     public function handle()
     {
+        Log::info('gennerate job start');
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
         ini_set('memory_limit', -1);
         Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
@@ -71,6 +72,7 @@ class GenerateARCAPdfReport implements ShouldQueue
 
         $count = $this->reportCount;
         CommonJobService::db_switch($db);
+        Log::info('database switch success');
         $checkIsGroup = Company::find($request->companySystemID);
         $companyLogo = $checkIsGroup->logo_url;
 
