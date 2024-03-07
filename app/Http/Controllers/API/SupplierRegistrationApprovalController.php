@@ -484,12 +484,8 @@ class SupplierRegistrationApprovalController extends AppBaseController
                         $vatCertificationData['path'] = $value;
                         break;
                     case 68:
-                        if (strpos($value, 'T') !== false) {
-                            $docExpiryDate = Carbon::parse($value)->setTimezone('UTC')->format('Y-m-d');
-                        } else {
-                            $docExpiryDate = Carbon::createFromFormat('d-m-Y', $value)->setTimezone('UTC')->format('Y-m-d');
-                        }
-                        $vatCertificationData['docExpirtyDate'] = $docExpiryDate;
+
+                        $vatCertificationData['docExpirtyDate'] = $value;
                         break;
                 }
             }
