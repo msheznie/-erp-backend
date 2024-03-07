@@ -59,7 +59,6 @@ class GenerateARCAPdfReport implements ShouldQueue
      */
     public function handle()
     {
-        Log::info('gennerate job start');
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
         ini_set('memory_limit', -1);
         Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
@@ -72,15 +71,11 @@ class GenerateARCAPdfReport implements ShouldQueue
 
         $count = $this->reportCount;
         CommonJobService::db_switch($db);
-        Log::info('database switch success');
         $checkIsGroup = Company::find($request->companySystemID);
         $companyLogo = $checkIsGroup->logo_url;
-        Log::info('reportTypeID : '.$request->reportTypeID);
 
         try {
             if ($request->reportTypeID == 'CAS') {
-        Log::info('reportTypeID inside: '.$request->reportTypeID);
-
                 $name = 'customer_aging_summary';
                 $outputArr = array();
                 $grandTotalArr = array();
@@ -109,13 +104,11 @@ class GenerateARCAPdfReport implements ShouldQueue
         
                 $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate));
         
-        Log::info('$dataArr');
-        Log::info($dataArr);
                 $html = view('print.customer_aging_summary', $dataArr);
         
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
-        Log::info('$dataArr cd');
+                Log::info('pdf rendered');
             }
             elseif ($request->reportTypeID == 'CAD')
             {
@@ -158,55 +151,12 @@ class GenerateARCAPdfReport implements ShouldQueue
                 $pdf->loadHTML($html);
             }
 
-
-             Log::info('reportTypeIDcc inside: '.$request->reportTypeID);
-
-                $name = 'customer_aging_summary';
-                $outputArr = array();
-                $grandTotalArr = array();
-                if ($aging) {
-                    foreach ($aging as $val) {
-                        $total = collect($output)->pluck($val)->toArray();
-                        $grandTotalArr[$val] = array_sum($total);
-                    }
-                }
-        
-                if ($output) {
-                    foreach ($output as $val) {
-                        $outputArr[$val->concatCompanyName][$val->documentCurrency][] = $val;
-                    }
-                }
-        
-                $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                if ($companyCurrency) {
-                    if ($request->currencyID == 2) {
-                        $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
-                    } else if ($request->currencyID == 3) {
-                        $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
-                    }
-                }
-        
-                $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate));
-        
-        Log::info('$dataArrcc');
-        Log::info($dataArr);
-                $html = view('print.customer_aging_summary', $dataArr);
-        
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
-        Log::info('$dataArrcc cd');
-
-            
             $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
-            Log::info('pdf generated');
             $fileName = $name.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
             $path = $rootPaths.'/'.$fileName;
 
             $result = Storage::disk('local_public')->put($path, $pdf_content);
-            Log::info('saving to local public...');
             $files = File::files(public_path($rootPaths));
-            Log::info('zipping start...');
             if (count($files) == $outputChunkCount) {
                 $fromDate = new Carbon($request->fromDate);
                 $fromDate = $fromDate->format('Y-m-d');
@@ -246,7 +196,6 @@ class GenerateARCAPdfReport implements ShouldQueue
                     'url' => "",
                     'path' => $zipPath,
                 ];
-                Log::info('notification start...');
                 WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds);
 
                 Storage::disk('local_public')->deleteDirectory('account-recivable-pdf');
@@ -255,7 +204,7 @@ class GenerateARCAPdfReport implements ShouldQueue
             return true;
             
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e->getMessage()." Line : ".$e->getLine());
         }
     }
 }
