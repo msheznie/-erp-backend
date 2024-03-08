@@ -52,14 +52,23 @@ class ThirdPartySystemsController extends AppBaseController
                     return response()->json(['error' => 'Incomplete item received'], 400);
                 }
 
-                SrmBudgetItem::updateOrInsert(
-                    ['item_id' => $item['item_id']],
-                    [
+                $existingItem = SrmBudgetItem::where('item_id', $item['item_id'])->first();
+
+                if ($existingItem) {
+                    $existingItem->update([
                         'item_name' => $item['item_name'],
                         'budget_amount' => $item['budget_amount'],
-                        'is_active' => 1 // Set all received items as is_active = 1
-                    ]
-                );
+                        'is_active' => 1
+                    ]);
+                } else {
+                    SrmBudgetItem::create([
+                        'item_id' => $item['item_id'],
+                        'item_name' => $item['item_name'],
+                        'budget_amount' => $item['budget_amount'],
+                        'is_active' => 1,
+                        'created_at' => now(),
+                    ]);
+                }
             }
 
             // Set only existing items not in the item_list as is_active = 0

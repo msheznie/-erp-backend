@@ -14,7 +14,7 @@ class SrmTenderBudgetItem extends Model
        'created_at'
     ];
 
-    public $timestamps = false;
+    public $timestamps = true;
 
     public function budgetItem()
     {

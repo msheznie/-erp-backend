@@ -14,7 +14,7 @@ class SrmBudgetItem extends Model
        'is_active'
     ];
 
-    public $timestamps = false;
+    public $timestamps = true;
 
     public function tenderBudgetItems()
     {
