@@ -800,13 +800,13 @@ ORDER BY
         // Get the data from srm_tender_budget_items if it exists, otherwise from srm_budget_items
         $srmBudgetItem = DB::table('srm_tender_budget_items')
             ->select('srm_tender_budget_items.item_id as id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_tender_budget_items.budget_amount) AS item_name"))
-            ->leftJoin('srm_budget_items', 'srm_tender_budget_items.item_id', '=', 'srm_budget_items.item_id')
+            ->leftJoin('srm_budget_items', 'srm_tender_budget_items.item_id', '=', 'srm_budget_items.id')
             ->where('srm_tender_budget_items.tender_id', $tenderMasterId)
             ->where('srm_budget_items.is_active', 1)
             ->unionAll(DB::table('srm_budget_items')
                 ->select('srm_budget_items.id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_budget_items.budget_amount) AS item_name"))
                 ->where('srm_budget_items.is_active', 1)
-                ->whereNotIn('srm_budget_items.item_id', function ($query) use ($tenderMasterId) {
+                ->whereNotIn('srm_budget_items.id', function ($query) use ($tenderMasterId) {
                     $query->select('item_id')->from('srm_tender_budget_items')->where('tender_id', $tenderMasterId);
                 }))
             ->get();
@@ -1290,7 +1290,7 @@ ORDER BY
         if($result >100){
             return ['success' => false, 'message' => 'Total technical weightage cannot exceed 100 percent'];
         }
-        
+
         if($input['estimated_value'] > $input['allocated_budget'] ){
             return ['success' => false, 'message' => 'Estimated values cannot be more than Allocated Budget'];
         }
@@ -1631,7 +1631,7 @@ ORDER BY
                             $budget_amount = $existingBudgetItem->budget_amount;
                         } else {
                             $srmBudgetItem = SrmBudgetItem::select('budget_amount')
-                                ->where('item_id', $pr['id'])
+                                ->where('id', $pr['id'])
                                 ->first();
 
                             $budget_amount = $srmBudgetItem ? $srmBudgetItem->budget_amount : 0;

@@ -18,6 +18,6 @@ class SrmBudgetItem extends Model
 
     public function tenderBudgetItems()
     {
-        return $this->hasMany(SrmTenderBudgetItem::class, 'item_id', 'item_id');
+        return $this->hasMany(SrmTenderBudgetItem::class, 'item_id', 'id');
     }
 }
