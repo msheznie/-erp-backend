@@ -1290,8 +1290,8 @@ ORDER BY
         if($result >100){
             return ['success' => false, 'message' => 'Total technical weightage cannot exceed 100 percent'];
         }
-
-        if($input['allocated_budget'] > $input['estimated_value']){
+        
+        if($input['estimated_value'] > $input['allocated_budget'] ){
             return ['success' => false, 'message' => 'Estimated values cannot be more than Allocated Budget'];
         }
 
