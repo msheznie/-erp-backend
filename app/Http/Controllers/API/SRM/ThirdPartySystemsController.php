@@ -38,13 +38,11 @@ class ThirdPartySystemsController extends AppBaseController
             }
 
             $itemList = $request->input('item_list');
-
-            // Validate the item_list structure
+            
             if (!is_array($itemList)) {
                 return response()->json(['error' => 'Invalid item_list format'], 400);
             }
 
-            // Get the existing item IDs
             $existingItemIds = SrmBudgetItem::pluck('item_id')->toArray();
 
             foreach ($itemList as $item) {
@@ -54,24 +52,21 @@ class ThirdPartySystemsController extends AppBaseController
 
                 $existingItem = SrmBudgetItem::where('item_id', $item['item_id'])->first();
 
-                if ($existingItem) {
-                    $existingItem->update([
-                        'item_name' => $item['item_name'],
-                        'budget_amount' => $item['budget_amount'],
-                        'is_active' => 1
-                    ]);
-                } else {
-                    SrmBudgetItem::create([
-                        'item_id' => $item['item_id'],
-                        'item_name' => $item['item_name'],
-                        'budget_amount' => $item['budget_amount'],
-                        'is_active' => 1,
-                        'created_at' => now(),
-                    ]);
+                $data = [
+                    'item_id' => $item['item_id'],
+                    'item_name' => $item['item_name'],
+                    'budget_amount' => $item['budget_amount'],
+                    'is_active' => 1,
+                ];
+
+                if (!$existingItem) {
+                    $data['created_at'] = now();
+                    $data['updated_at'] = null;
                 }
+
+                SrmBudgetItem::updateOrInsert(['item_id' => $item['item_id']], $data);
             }
 
-            // Set only existing items not in the item_list as is_active = 0
             $receivedItemIds = array_column($itemList, 'item_id');
             $itemsToDeactivate = array_diff($existingItemIds, $receivedItemIds);
             if (!empty($itemsToDeactivate)) {
