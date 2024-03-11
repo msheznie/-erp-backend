@@ -145,28 +145,20 @@ class AccountsPayableReportAPIController extends AppBaseController
         $countries = CountryMaster::all();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
 
-        $isConfigured = SystemGlCodeScenario::find(12);
+        $isConfigured = SystemGlCodeScenario::where('isActive', 1)->where('id',12)->first();
         $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 12)->where('companySystemID', $companiesByGroup)->first();
-        if($isConfigured && $isDetailConfigured) {
-            if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
-                return $this->sendError('Chart of account is not configured for employee control account', 500);
-            }
-            $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->first();
-            if($isChartOfAccountConfigured){
-                if ($isChartOfAccountConfigured->isActive != 1 || $isChartOfAccountConfigured->chartOfAccountSystemID == null || $isChartOfAccountConfigured->isAssigned != -1 || $isChartOfAccountConfigured->chartOfAccountSystemID == 0 || $isChartOfAccountConfigured->companySystemID == 0 || $isChartOfAccountConfigured->companySystemID == null) {
-                    return $this->sendError('Chart of account is not configured for employee control account', 500);
-                }
-            }
-            else{
-                return $this->sendError('Chart of account is not configured for employee control account', 500);
-            }
-        }
-        else{
-            return $this->sendError('Chart of account is not configured for employee control account', 500);
-        }
 
-        $controlAccountEmployeeID = $isDetailConfigured->chartOfAccountSystemID;
-        $controlAccountEmployee = ChartOfAccount::where('chartOfAccountSystemID', $controlAccountEmployeeID)->get();
+        if(!empty($isConfigured) && !empty($isDetailConfigured)) {
+            $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->where('isActive', 1)->where('isAssigned', -1)->first();
+            if(!empty($isChartOfAccountConfigured)) {
+                $controlAccountEmployeeID = $isDetailConfigured->chartOfAccountSystemID;
+                $controlAccountEmployee = ChartOfAccount::where('chartOfAccountSystemID', $controlAccountEmployeeID)->get();
+            } else {
+                $controlAccountEmployee = [];
+            }
+        } else {
+            $controlAccountEmployee = [];
+        }
 
 
         $categories = FinanceItemCategoryMaster::all();
