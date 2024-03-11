@@ -1537,7 +1537,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
 
                     $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
-                
+                    $input['directPaymentPayeeEmpID'] = 0;
                     if ($supDetail) {
                         $input['supplierGLCode'] = $supDetail->liabilityAccount;
                         $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
@@ -1571,6 +1571,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     return $this->sendError('Please configure Employee control account for this company', 500);
                 }
 
+                $input['BPVsupplierID'] = 0;
                 $input['supplierGLCodeSystemID'] = $checkEmployeeControlAccount;
                 $input['supplierGLCode'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
                 $emp = Employee::find($input["directPaymentPayeeEmpID"]);
