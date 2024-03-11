@@ -214,7 +214,7 @@ class EmployeeAPIController extends AppBaseController
         $output = Employee::where(function($q) use($input){
             $q->where('empCompanySystemID', $input['selectedCompanyId'])->orWhere(function($q) use($input){
                     $q->whereHas('invoice',function($q) use($input){
-                        $q->where('documentType',4)->whereHas('employee',function($q) use($input){
+                        $q->where('documentType',4)->where('approved',-1)->where('companySystemID',$input['selectedCompanyId'])->whereHas('employee',function($q) use($input){
                             $q->where('empCompanySystemID','!=',$input['selectedCompanyId']);
                         });
                     });
