@@ -4557,6 +4557,22 @@ class Helper
 
                                     $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $purchaseOrderMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $purchaseOrderMaster->purchaseOrderCode, 'documentDate' => $purchaseOrderMaster->createdDateTime, 'documentNarration' => $purchaseOrderMaster->narration, 'supplierID' => $purchaseOrderMaster->supplierID, 'supplierCode' => $purchaseOrderMaster->supplierPrimaryCode, 'supplierName' => $purchaseOrderMaster->supplierName, 'confirmedDate' => $purchaseOrderMaster->poConfirmedDate, 'confirmedBy' => $purchaseOrderMaster->poConfirmedByEmpSystemID, 'approvedDate' => $purchaseOrderMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $purchaseOrderMaster->supplierTransactionCurrencyID, 'amount' => $purchaseOrderMaster->poTotalSupplierTransactionCurrency];
                                     CreateSupplierTransactions::dispatch($masterModel);
+
+                                    $poAssignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $purchaseOrderMaster->supplierID)->value('templateID');
+                                    $isActiveTemplate = PaymentTermTemplate::where('id', $poAssignedTemplateId)->value('isActive');
+
+                                    if ($poAssignedTemplateId != null && $isActiveTemplate) {
+                                        DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderMaster->purchaseOrderID)->where('templateID', $poAssignedTemplateId)->update(['isApproved' => true]);
+                                    } else {
+                                        $poDefaultConfigUpdate = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderMaster->purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
+                                        if ($poDefaultConfigUpdate) {
+                                            DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderMaster->purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
+                                                ->where('isDefaultAssign', true)->update(['isApproved' => true]);
+                                        } else {
+                                            $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
+                                            DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderMaster->purchaseOrderID)->where('templateID', $defaultTemplateID)->update(['isApproved' => true]);
+                                        }
+                                    }
                                 }
                             }
 
@@ -5418,21 +5434,6 @@ class Helper
 
                         if ($input['documentSystemID'] == 2) {
                              Log::info('approvedDocument function called in side general helper');
-                            $poAssignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $purchaseOrderMaster->supplierID)->value('templateID');
-                            $isActiveTemplate = PaymentTermTemplate::where('id', $poAssignedTemplateId)->value('isActive');
-
-                            if ($poAssignedTemplateId != null && $isActiveTemplate) {
-                                DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderMaster->purchaseOrderID)->where('templateID', $poAssignedTemplateId)->update(['isApproved' => true]);
-                            } else {
-                                $poDefaultConfigUpdate = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderMaster->purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
-                                if ($poDefaultConfigUpdate) {
-                                    DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderMaster->purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
-                                        ->where('isDefaultAssign', true)->update(['isApproved' => true]);
-                                } else {
-                                    $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
-                                    DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderMaster->purchaseOrderID)->where('templateID', $defaultTemplateID)->update(['isApproved' => true]);
-                                }
-                            }
                             SendEmailForDocument::approvedDocument($input);
                         }
 
