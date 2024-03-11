@@ -4068,6 +4068,7 @@ WHERE
 	LEFT JOIN (
 	SELECT
 		erp_customerreceivepayment.custReceivePaymentAutoID,
+        erp_accountsreceivableledger.serviceLineSystemID,
 		erp_customerreceivepayment.companySystemID,
 		erp_customerreceivepayment.documentSystemID,
 		erp_customerreceivepayment.custPaymentReceiveCode,
@@ -4076,7 +4077,8 @@ WHERE
 		sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS BRVRptAmount 
 	FROM
 		erp_customerreceivepayment
-		INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID 
+		INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID
+        LEFT JOIN erp_accountsreceivableledger ON erp_accountsreceivableledger.arAutoID = erp_custreceivepaymentdet.arAutoID 
 	WHERE
 		erp_custreceivepaymentdet.bookingInvCode <> "0" 
 		AND erp_custreceivepaymentdet.matchingDocID = 0 
@@ -4085,9 +4087,9 @@ WHERE
 		AND DATE(erp_customerreceivepayment.postedDate) <= "' . $asOfDate . '"
 		AND erp_customerreceivepayment.customerID IN (' . join(',', $customerSystemID) . ')
 	GROUP BY
-		custReceivePaymentAutoID 
+		custReceivePaymentAutoID, serviceLineSystemID 
 	) AS InvoicedBRV ON mainQuery.documentSystemID = InvoicedBRV.documentSystemID 
-	AND mainQuery.documentSystemCode = InvoicedBRV.custReceivePaymentAutoID
+	AND mainQuery.documentSystemCode = InvoicedBRV.custReceivePaymentAutoID AND mainQuery.serviceLineSystemID = InvoicedBRV.serviceLineSystemID
 	LEFT JOIN  (
 	SELECT
 		companySystemID,
@@ -4095,6 +4097,7 @@ WHERE
 		addedDocumentSystemID,
 		addedDocumentID,
 		bookingInvCodeSystem,
+        serviceLineSystemID,
 		bookingInvCode,
 		sum( receiveAmountTrans ) AS InvoiceTransAmount,
 		sum( receiveAmountLocal ) AS InvoiceLocalAmount,
@@ -4107,6 +4110,7 @@ WHERE
 			(
 			SELECT
 				erp_customerreceivepayment.custPaymentReceiveCode,
+                erp_accountsreceivableledger.serviceLineSystemID,
 				erp_custreceivepaymentdet.companySystemID,
 				erp_custreceivepaymentdet.companyID,
 				erp_custreceivepaymentdet.addedDocumentSystemID,
@@ -4118,7 +4122,8 @@ WHERE
 				erp_custreceivepaymentdet.receiveAmountRpt 
 			FROM
 				erp_customerreceivepayment
-				INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID 
+				INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID
+                LEFT JOIN erp_accountsreceivableledger ON erp_accountsreceivableledger.arAutoID = erp_custreceivepaymentdet.arAutoID 
 				AND erp_custreceivepaymentdet.matchingDocID = 0 
 				AND erp_customerreceivepayment.approved =- 1 
 			WHERE
@@ -4135,6 +4140,7 @@ WHERE
 			(
 			SELECT
 				erp_matchdocumentmaster.matchingDocCode,
+                erp_accountsreceivableledger.serviceLineSystemID,
 				erp_custreceivepaymentdet.companySystemID,
 				erp_custreceivepaymentdet.companyID,
 				erp_custreceivepaymentdet.addedDocumentSystemID,
@@ -4147,7 +4153,8 @@ WHERE
 			FROM
 				erp_custreceivepaymentdet
 				INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
-				AND erp_custreceivepaymentdet.companySystemID = erp_matchdocumentmaster.companySystemID 
+				AND erp_custreceivepaymentdet.companySystemID = erp_matchdocumentmaster.companySystemID
+                LEFT JOIN erp_accountsreceivableledger ON erp_accountsreceivableledger.arAutoID = erp_custreceivepaymentdet.arAutoID  
 			WHERE
 				erp_matchdocumentmaster.matchingConfirmedYN = 1 
 				AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
@@ -4156,9 +4163,9 @@ WHERE
 			) AS InvoiceFromMatching 
 		) AS InvoiceFromUNION 
 	GROUP BY
-		bookingInvCode 
+		bookingInvCode, serviceLineSystemID 
 	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
-	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
+	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem AND mainQuery.serviceLineSystemID = InvoiceFromBRVAndMatching.serviceLineSystemID
 	) AS final 
  ORDER BY PostedDate ASC;');
     }
