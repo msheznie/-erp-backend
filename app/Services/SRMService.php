@@ -1813,7 +1813,8 @@ class SRMService
             $data['post'] = $response;
             $data['user_id'] = $employeeId;
             $data['supplier_id'] = $supplierRegId;
-            $data['is_public'] = 1;
+            $data['is_public'] = $tenderParentPost['is_public'];
+            $data['is_checked'] = $tenderParentPost['is_checked'];
             $data['parent_id'] = $id;
             $data['created_by'] = $employeeId;
             $data['company_id'] = $company->companySystemID;
