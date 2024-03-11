@@ -1292,7 +1292,7 @@ ORDER BY
         }
 
         if($input['estimated_value'] > $input['allocated_budget'] ){
-            return ['success' => false, 'message' => 'Estimated values cannot be more than Allocated Budget'];
+            return ['success' => false, 'message' => 'Estimated value cannot exceed the Allocated Budget Amount.'];
         }
 
         DB::beginTransaction();
