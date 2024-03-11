@@ -65,6 +65,7 @@ use App\Models\ChartOfAccount;
 use App\Models\SalesReturn;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\SalesReturnDetail;
+use App\Models\UnbilledGrvGroupBy;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -79,14 +80,14 @@ use App\Services\GeneralLedger\GlPostedDateService;
 
 class SupplierInvoiceGlService
 {
-	public static function processEntry($masterModel)
+    public static function processEntry($masterModel)
     {
         $data = [];
         $taxLedgerData = [];
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
         $masterData = BookInvSuppMaster::with(['detail' => function ($query) {
-            $query->selectRaw("SUM(totLocalAmount) as localAmount, SUM(totRptAmount) as rptAmount,SUM(totTransactionAmount) as transAmount,SUM(VATAmount) as totalVATAmount,SUM(VATAmountLocal) as totalVATAmountLocal,SUM(VATAmountRpt) as totalVATAmountRpt,bookingSuppMasInvAutoID");
+            $query->selectRaw("SUM(totLocalAmount) as localAmount, SUM(totRptAmount) as rptAmount,SUM(totTransactionAmount) as transAmount,SUM(VATAmount) as totalVATAmount,SUM(VATAmountLocal) as totalVATAmountLocal,SUM(VATAmountRpt) as totalVATAmountRpt,bookingSuppMasInvAutoID, grvAutoID, unbilledgrvAutoID");
         }, 'item_details' => function ($query) {
             $query->selectRaw("SUM(netAmount) as netAmountTotal, SUM(VATAmount*noQty) as totalVATAmount,SUM(VATAmountLocal*noQty) as totalVATAmountLocal,SUM(VATAmountRpt*noQty) as totalVATAmountRpt, bookingSuppMasInvAutoID");
         }, 'directdetail' => function ($query) {
@@ -195,9 +196,31 @@ class SupplierInvoiceGlService
             $data['invoiceDate'] = $masterData->supplierInvoiceDate;
 
             if ($masterData->documentType == 0 || $masterData->documentType == 2) { // check if it is supplier invoice
-                $data['documentTransAmount'] = \Helper::roundValue($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) * -1;
-                $data['documentLocalAmount'] = \Helper::roundValue($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal) * -1;
-                $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
+
+                $unbilledGrvGroupBy = UnbilledGrvGroupBy::find($masterData->detail[0]->unbilledgrvAutoID);
+
+                $unbilledGRV = PoAdvancePayment::selectRaw("
+                            SUM(reqAmountTransCur_amount) as transAmount,
+                            SUM(reqAmountInPOLocalCur) as localAmount, 
+                            SUM(reqAmountInPORptCur) as rptAmount")
+                    ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                    ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
+                    ->where('erp_purchaseorderadvpayment.grvAutoID', $masterData->detail[0]->grvAutoID)
+                    ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID', 'erp_purchaseorderadvpayment.supplierID')
+                    ->get();
+
+                if(isset($unbilledGrvGroupBy->logisticYN) && $unbilledGrvGroupBy->logisticYN == 1) {
+                    $vatData = TaxService::poLogisticVATDistributionForGRV($masterData->detail[0]->grvAutoID,0,$unbilledGrvGroupBy->supplierID);
+                    if(isset($vatData) && isset($unbilledGRV[0])) {
+                        $data['documentTransAmount'] = \Helper::roundValue($unbilledGRV[0]->transAmount + $vatData['vatOnPOTotalAmountTrans'] + $poInvoiceDirectTransExtCharge + $taxTrans) * -1;
+                        $data['documentLocalAmount'] = \Helper::roundValue($unbilledGRV[0]->localAmount + $vatData['vatOnPOTotalAmountLocal'] + $poInvoiceDirectLocalExtCharge + $taxLocal) * -1;
+                        $data['documentRptAmount'] = \Helper::roundValue($unbilledGRV[0]->rptAmount + $vatData['vatOnPOTotalAmountRpt'] + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
+                    }
+                } else {
+                    $data['documentTransAmount'] = \Helper::roundValue($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) * -1;
+                    $data['documentLocalAmount'] = \Helper::roundValue($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal) * -1;
+                    $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
+                }
             } else if ($masterData->documentType == 3) { // check if it is supplier item invoice
                 $directItemCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->item_details[0]->netAmountTotal);
 
@@ -336,11 +359,22 @@ class SupplierInvoiceGlService
                 }
             }
             if ($masterData->documentType == 0 || $masterData->documentType == 2) {
+
                 $data['chartOfAccountSystemID'] = $masterData->UnbilledGRVAccountSystemID;
                 $data['glCode'] = $masterData->UnbilledGRVAccount;
-                $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount));
-                $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount));
-                $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount));
+
+
+                if(isset($unbilledGrvGroupBy->logisticYN) && $unbilledGrvGroupBy->logisticYN == 1) {
+                    if(isset($vatData) && isset($unbilledGRV[0])) {
+                        $data['documentTransAmount'] = \Helper::roundValue(ABS($unbilledGRV[0]->transAmount + $vatData['vatOnPOTotalAmountTrans']));
+                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($unbilledGRV[0]->localAmount + $vatData['vatOnPOTotalAmountLocal']));
+                        $data['documentRptAmount'] = \Helper::roundValue(ABS($unbilledGRV[0]->rptAmount + $vatData['vatOnPOTotalAmountRpt']));
+                    }
+                } else {
+                    $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount));
+                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount));
+                    $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount));
+                }
                 array_push($finalData, $data);
 
                 if ($bs) {
@@ -488,11 +522,18 @@ class SupplierInvoiceGlService
 
             //VAT entries
             $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
-            $totalVATAmount = $vatDetails['totalVAT'];
-            $totalExemptVAT = $vatDetails['exemptVAT'];
-            $totalVATAmountLocal = $vatDetails['totalVATLocal'];
-            $totalVATAmountRpt = $vatDetails['totalVATRpt'];
-
+            if(isset($unbilledGrvGroupBy->logisticYN) && $unbilledGrvGroupBy->logisticYN == 1) {
+                if(isset($vatData)) {
+                    $totalVATAmount = $vatData['vatOnPOTotalAmountTrans'];
+                    $totalVATAmountLocal = $vatData['vatOnPOTotalAmountLocal'];
+                    $totalVATAmountRpt = $vatData['vatOnPOTotalAmountRpt'];
+                }
+            } else {
+                $totalVATAmount = $vatDetails['totalVAT'];
+                $totalExemptVAT = $vatDetails['exemptVAT'];
+                $totalVATAmountLocal = $vatDetails['totalVATLocal'];
+                $totalVATAmountRpt = $vatDetails['totalVATRpt'];
+            }
             if (($masterData->documentType == 0 || $masterData->documentType == 2) && $masterData->detail && count($masterData->detail) > 0 && ($totalVATAmount > 0 || $vatDetails['exemptVAT'] > 0)) {
 
                 if ($totalVATAmount > 0) {
