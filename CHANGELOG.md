@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.35.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.35.0...v10.35.1) (2024-03-11)
+
+
+### Bug Fixes
+
+* **procurement:** purchase order approval issue with po terms issue fixed [GCP-3101] ([#5830](https://github.com/pbsgears/Gears_BackEnd/issues/5830)) ([2e721ff](https://github.com/pbsgears/Gears_BackEnd/commit/2e721ff240bfd6cb5ae740ac3b5a2ab0240abf9c))
+
 ## [10.35.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.34.1...v10.35.0) (2024-03-07)
 
 
