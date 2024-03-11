@@ -1410,6 +1410,17 @@ class PurchaseRequestAPIController extends AppBaseController
             $input['allocateItemToSegment'] = 1;
         }
 
+        if(isset($input['isFromMaterielRequest']) && $input['isFromMaterielRequest']){
+            $financeCategoryPolicyCheck = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                ->where('companySystemID', $input['companySystemID'])->first();
+
+            if ($financeCategoryPolicyCheck) {
+                if ($financeCategoryPolicyCheck->isYesNO == 0) {
+                    $input['financeCategory'] = 1;
+                }
+            }
+        }
+
         $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
         $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
 
