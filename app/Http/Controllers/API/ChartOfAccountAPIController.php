@@ -47,6 +47,9 @@ use App\helper\Helper;
 use App\helper\DocumentCodeGenerate;
 use Carbon\Carbon;
 use App\helper\CreateExcel;
+use App\Services\AuditLog\ChartOfAccountAuditService;
+use App\Traits\AuditLogsTrait;
+
 /**
  * Class ChartOfAccountController
  * @package App\Http\Controllers\API
@@ -56,6 +59,7 @@ class ChartOfAccountAPIController extends AppBaseController
     /** @var  ChartOfAccountRepository */
     private $chartOfAccountRepository;
     private $userRepository;
+    use AuditLogsTrait;
 
     public function __construct(ChartOfAccountRepository $chartOfAccountRepo, UserRepository $userRepo)
     {
@@ -229,6 +233,20 @@ class ChartOfAccountAPIController extends AppBaseController
                     }
                 }
 
+                $previosDataValue = $chartOfAccount->toArray();
+                $newDataValue = $input;
+
+                $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+                $db = isset($input['db']) ? $input['db'] : '';
+
+                if(isset($input['tenant_uuid']) ){
+                    unset($input['tenant_uuid']);
+                }
+
+                if(isset($input['db']) ){
+                    unset($input['db']);
+                }
+
                 if ($chartOfAccount->isApproved == 1) {
 
                     //check policy 8
@@ -304,6 +322,10 @@ class ChartOfAccountAPIController extends AppBaseController
 
 
                     if ($policyCAc || $policy) {
+                        $data = ChartOfAccountAuditService::validateFieldsByPolicy($newDataValue, $previosDataValue, $policy ,$policyCAc);
+                        $previosValue = $data['allowedpreviousValues'];
+                        $newValue = $data['allowednewValues'];
+                        $this->auditLog($db, $input['chartOfAccountSystemID'],$uuid, "chartofaccounts", $previosDataValue['AccountCode']." has updated", "U", $newValue, $previosValue);
                         return $this->sendResponse([], 'Chart Of Account updated successfully done');
                     }
 

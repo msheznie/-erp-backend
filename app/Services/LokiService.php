@@ -68,6 +68,9 @@ class LokiService
             case 'supplier':
                 $table = 'suppliermaster';
                 break;
+            case 'chartOfAccount':
+                $table = 'chartofaccounts';
+                break;
             default:
                 $table = null;
                 break;

@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\helper\CommonJobService;
+use App\Services\AuditLog\ChartOfAccountAuditService;
 use App\Services\AuditLog\ItemFinanceCategoryAuditService;
 use App\Services\AuditLog\ErpAttributeAuditService;
 use App\Services\AuditLog\CustomerMasterAuditService;
@@ -97,7 +98,9 @@ class AuditLogJob implements ShouldQueue
             case 'suppliermaster':
                 $data = SupplierMasterAuditService::process($auditData);
                 break;
-            
+            case 'chartofaccounts':
+                $data = ChartOfAccountAuditService::process($auditData);
+                break;
             default:
                 // code...
                 break;
