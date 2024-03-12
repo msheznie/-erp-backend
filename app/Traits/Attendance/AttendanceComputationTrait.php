@@ -398,7 +398,7 @@ trait AttendanceComputationTrait{
     }
 
     function generalOvertimeComputation($actW, $totW){
-        if ($totW->format('h:i') > $actW->format('h:i')) {
+        if ($totW->format('H:i') > $actW->format('H:i')) {
             $overTimeObj = $actW->diff($totW);
             $hours = ($overTimeObj->format('%h') != 0) ? $overTimeObj->format('%h') : 0;
             $minutes = ($overTimeObj->format('%i') != 0) ? $overTimeObj->format('%i') : 0;

@@ -367,7 +367,7 @@ class AttendanceComputationService
         $totW = new DateTime($workingHours_obj->format("{$currentDate} %h:%i:%s"));
         $actW = new DateTime($this->shiftHours_obj->format("{$currentDate} %h:%i:%s"));
 
-        if ($totW->format('h:i') > $actW->format('h:i')) {
+        if ($totW->format('H:i') > $actW->format('H:i')) {
             $overTime_obj = $actW->diff($totW);
             $hours = ($overTime_obj->format('%h') != 0) ? $overTime_obj->format('%h') : 0;
             $minutes = ($overTime_obj->format('%i') != 0) ? $overTime_obj->format('%i') : 0;
