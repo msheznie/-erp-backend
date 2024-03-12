@@ -4499,22 +4499,24 @@ class Helper
                 }
 
                 if($input["documentSystemID"] == 41){
-                    $month = explode('-',$input['FYPeriodDateFrom']);
-                    $financePeriodCheck = Models\CompanyFinancePeriod::where('departmentSystemID',4)->where('companyFinanceYearID',$input['companyFinanceYearID'])->whereMonth('dateFrom', $month[1])->first();
-                    if ($financePeriodCheck->isActive == 0) {
-                        return ['success' => false, 'message' => 'The finance period has not been activated for the Accounts Receivable department'];
-                    }
+                    if($input['disposalType'] == 1){
+                        $month = explode('-',$input['FYPeriodDateFrom']);
+                        $financePeriodCheck = Models\CompanyFinancePeriod::where('departmentSystemID',4)->where('companyFinanceYearID',$input['companyFinanceYearID'])->whereMonth('dateFrom', $month[1])->first();
+                        if ($financePeriodCheck->isActive == 0) {
+                            return ['success' => false, 'message' => 'The finance period has not been activated for the Accounts Receivable department'];
+                        }
 
-                    $checkApprovalAccess = Models\EmployeesDepartment::where('employeeSystemID', $empInfo->employeeSystemID)
-                        ->where('companySystemID', $docApproved->companySystemID)
-                        ->where('departmentSystemID', 4)
-                        ->where('documentSystemID', 20)
-                        ->where('isActive', 1)
-                        ->where('removedYN', 0)
-                        ->exists();
+                        $checkApprovalAccess = Models\EmployeesDepartment::where('employeeSystemID', $empInfo->employeeSystemID)
+                            ->where('companySystemID', $docApproved->companySystemID)
+                            ->where('departmentSystemID', 4)
+                            ->where('documentSystemID', 20)
+                            ->where('isActive', 1)
+                            ->where('removedYN', 0)
+                            ->exists();
 
-                    if(!$checkApprovalAccess){
-                        return ['success' => false, 'message' => 'The user does not have approval access to the customer invoice'];
+                        if(!$checkApprovalAccess){
+                            return ['success' => false, 'message' => 'The user does not have approval access to the customer invoice'];
+                        }
                     }
                 }
 
