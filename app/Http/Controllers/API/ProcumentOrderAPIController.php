@@ -6986,11 +6986,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         $poMasters = $poMasters->get();
-
+        $totalPo = 0;
         foreach ($poMasters as $po) {
+            if(isset($po->order))
+            {
+                $totalPo+=$po->order->poTotalSupplierTransactionCurrency;
+            }
             $po->grv = $this->getPOtoPaymentChainForTracing($po->order, $grvAutoID, $bookingSuppMasInvAutoID, $type, $debitNoteID);
         }
-
         $poData = $poMasters->toArray();
 
         $cancelStatus = ($purchaseRequest->cancelledYN == -1) ? " -- @Cancelled@" : "";
@@ -7004,8 +7007,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $tracingData['docAutoID'] = $purchaseRequest->purchaseRequestID;
         $tracingData['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by ? $purchaseRequest->currency_by->CurrencyCode : "" . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by ? $purchaseRequest->currency_by->DecimalPlaces : 2) . $cancelStatus;
 
-
+        
         foreach ($poData as $keyPo => $valuePo) {
+            // if($valuePo['purchaseOrderMasterID'] == 1165)
+            // {
+            //     continue;
+            // }
             $cancelStatus = ($valuePo['order']['poCancelledYN'] == -1) ? " -- @Cancelled@" : "";
             $tempPo = [];
             $tempPo['name'] = "Purchase Order";
@@ -7017,8 +7024,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $tempPo['documentSystemID'] = $valuePo['order']['documentSystemID'];
             $tempPo['docAutoID'] = $valuePo['order']['purchaseOrderID'];
-            $tempPo['title'] = "{Doc Code :} " . $valuePo['order']['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($valuePo['order']['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $valuePo['order']['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($valuePo['order']['poTotalSupplierTransactionCurrency'], $valuePo['order']['currency']['DecimalPlaces']) . $cancelStatus;
+            $tempPo['title'] = "{Doc Code :} " . $valuePo['order']['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($valuePo['order']['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $valuePo['order']['currency']['CurrencyCode'] . " -- {Document Amount :} " . number_format($valuePo['order']['poTotalSupplierTransactionCurrency'], $valuePo['order']['currency']['DecimalPlaces'])." -- {Total Amount :} " . number_format($totalPo, $valuePo['order']['currency']['DecimalPlaces']) . $cancelStatus;
 
+            $grvTototal = 0;        
+            
             foreach ($valuePo['grv'] as $key => $value) {
                 $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
 
@@ -7029,11 +7038,22 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 } else {
                     $temp['cssClass'] = "ngx-org-step-three";
                 }
+                $detailTotalAmount = 0;
+                foreach($value['grv_master']['details'] as $detail)
+                {
+                    if($valuePo['purchaseOrderMasterID'] == $detail['purchaseOrderMastertID'])
+                    {
+                           $detailTotalAmount+=$detail['netAmount'];   
+                    }
+
+                }
+                
                 $temp['documentSystemID'] = $value['grv_master']['documentSystemID'];
                 $temp['docAutoID'] = $value['grv_master']['grvAutoID'];
-                $temp['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Amount :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
+                $temp['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Document Amount :} " . number_format($detailTotalAmount, $value['grv_master']['currency_by']['DecimalPlaces']) ." -- {Total Amount  :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
 
                 foreach ($value['invoices'] as $key1 => $value1) {
+                    
                     $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                     $temp1 = [];
                     $temp1['name'] = "Supplier Invoice";
@@ -7042,10 +7062,20 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     } else {
                         $temp1['cssClass'] = "ngx-org-step-four";
                     }
+                    $detailInvoiceTotalAmount = 0;
+                    foreach($value1['suppinvmaster']['detail'] as $detail)
+                    {
+                        if($value['grvAutoID'] == $detail['grvAutoID'])
+                        {   
+                            $detailInvoiceTotalAmount+=$detail['totLocalAmount'];   
+                          
+                        }
+                    }
                     $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
                     $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
-                    $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+                    $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Document Amount :} " . number_format($detailInvoiceTotalAmount, $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . " -- {Total Amount  :} " . number_format($value1['suppinvmaster']['bookingAmountLocal'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']).$cancelStatus;
 
+                 
                     foreach ($value1['payments'] as $key2 => $value2) {
                         $temp2 = [];
                         if (isset($value2['payment_master'])) {
@@ -7238,18 +7268,28 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 if (sizeof($grvData) > 0) {
                     foreach ($grvData as $key => $value) {
                         $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
-    
-                        $temp = [];
+                       
+                        $temp = []; 
                         $temp['name'] = "Good Receipt Voucher";
                         if ($type == 'grv' && ($value['grv_master']['grvAutoID'] == $grvAutoID)) {
                             $temp['cssClass'] = "ngx-org-step-three root-tracing-node";
                         } else {
                             $temp['cssClass'] = "ngx-org-step-three";
                         }
+                        $detailTotalAmount = 0;
+                        foreach($value['grv_master']['details'] as $detail)
+                        {
+                            if($value['purchaseOrderMastertID'] == $detail['purchaseOrderMastertID'])
+                            {
+                                   $detailTotalAmount+=$detail['netAmount'];   
+                            }
+        
+                        }
+                        
                         $temp['documentSystemID'] = $value['grv_master']['documentSystemID'];
                         $temp['docAutoID'] = $value['grv_master']['grvAutoID'];
-                        $temp['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Amount :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
-    
+                        $temp['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Document Amount :} " . number_format($detailTotalAmount, $value['grv_master']['currency_by']['DecimalPlaces']) ." -- {Total Amount :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']). $cancelStatus;
+                  
                         foreach ($value['invoices'] as $key1 => $value1) {
                             $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                             $temp1 = [];
@@ -7258,10 +7298,20 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 $temp1['cssClass'] = "ngx-org-step-four root-tracing-node";
                             } else {
                                 $temp1['cssClass'] = "ngx-org-step-four";
+                            }     
+                            $detailInvoiceTotalAmount = 0;
+                            foreach($value1['suppinvmaster']['detail'] as $detail)
+                            {
+                                if($value['grvAutoID'] == $detail['grvAutoID'])
+                                {   
+                                    $detailInvoiceTotalAmount+=$detail['totLocalAmount'];   
+                                  
+                                }
                             }
+
                             $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
                             $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
-                            $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+                            $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($detailInvoiceTotalAmount, $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) ." -- {Total Amount :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']). $cancelStatus;
     
                             foreach ($value1['payments'] as $key2 => $value2) {
                                 $temp2 = [];
@@ -7441,7 +7491,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                         purchaseOrderMastertID,grvAutoID')
             ->where('purchaseOrderMastertID', $row->purchaseOrderID)
             ->with(['grv_master' => function ($query) {
-                $query->with(['currency_by']);
+                $query->with(['currency_by','details']);
             }])
             ->groupBy('grvAutoID');
 
@@ -7461,7 +7511,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 ->where('grvAutoID', $grv->grvAutoID)
                 ->where('purchaseOrderID', $row->purchaseOrderID)
                 ->with(['suppinvmaster' => function ($query) {
-                    $query->with(['transactioncurrency']);
+                    $query->with(['transactioncurrency','detail']);
                 }])
                 ->groupBy('bookingSuppMasInvAutoID');
 
