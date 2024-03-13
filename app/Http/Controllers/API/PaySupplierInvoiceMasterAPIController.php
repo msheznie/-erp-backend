@@ -89,6 +89,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\SupplierBlock;
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class PaySupplierInvoiceMasterController
@@ -4824,6 +4825,21 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             return $this->sendError('Payment Voucher Master not found');
         }
 
+        $documentAutoId = $PayMasterAutoId;
+        $documentSystemID = $paymentVoucherData->documentSystemID;
+        $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
+        if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+            if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
+                return $this->sendError($validateFinancePeriod['message']);
+            }
+        }
+
+        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                return $this->sendError($validatePendingGlPost['message']);
+            }
+        }
 
         if ($paymentVoucherData->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend, this payment voucher, it is not confirmed');
