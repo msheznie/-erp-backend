@@ -71,6 +71,9 @@ class LokiService
             case 'chartOfAccount':
                 $table = 'chartofaccounts';
                 break;
+            case 'item':
+                $table = 'itemmaster';
+                break;
             default:
                 $table = null;
                 break;

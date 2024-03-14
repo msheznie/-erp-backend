@@ -71,6 +71,7 @@ use App\Models\QuotationDetails;
 use App\Models\DeliveryOrderDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Repositories\UnitConversionRepository;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class ItemMasterController
@@ -82,6 +83,7 @@ class ItemMasterAPIController extends AppBaseController
     private $itemMasterRepository;
     private $userRepository;
     private $unitConversionRepository;
+    use AuditLogsTrait;
 
     public function __construct(ItemMasterRepository $itemMasterRepo, UserRepository $userRepo, UnitConversionRepository $unitConversionRepo)
     {
@@ -981,7 +983,19 @@ class ItemMasterAPIController extends AppBaseController
         }
 
 
-        
+        $previosValue = $itemMaster->toArray();
+        $newValue = $input;
+
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
 
 
         if($itemMaster->itemApprovedYN == 1){
@@ -1005,6 +1019,9 @@ class ItemMasterAPIController extends AppBaseController
 
 
                 $itemMaster->save();
+
+
+                $this->auditLog($db, $input['itemCodeSystem'],$uuid, "itemmaster", $newValue['primaryCode']." has updated", "U", $newValue, $previosValue);
            
                 $updateData = [
                     'itemUrl' => $input['itemUrl'],
