@@ -576,6 +576,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->join('erp_customerinvoiceitemdetails', 'salesreturndetails.deliveryOrderDetailID', '=', 'erp_customerinvoiceitemdetails.deliveryOrderDetailID')
             ->where('salesreturndetails.companySystemID', '=', $input["companySystemID"])
             ->where('salesreturn.approvedYN', '=', -1)
+            ->where('salesreturndetails.deliveryOrderDetailID', '!=', 0)
             ->where('erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', $input["bookingInvCodeSystem"])
             ->groupBy('salesreturndetails.deliveryOrderDetailID')
             ->first();
@@ -912,6 +913,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->join('erp_customerinvoiceitemdetails', 'salesreturndetails.deliveryOrderDetailID', '=', 'erp_customerinvoiceitemdetails.deliveryOrderDetailID')
             ->where('salesreturndetails.companySystemID', '=', $input["companySystemID"])
             ->where('salesreturn.approvedYN', '=', -1)
+            ->where('salesreturndetails.deliveryOrderDetailID', '!=', 0)
             ->where('erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', $input["bookingInvCodeSystem"])
             ->groupBy('salesreturndetails.deliveryOrderDetailID')
             ->first();

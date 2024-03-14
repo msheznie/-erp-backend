@@ -420,6 +420,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                     WHERE
                     salesreturndetails.companySystemID = $master->companySystemID
                     AND salesreturn.approvedYN = -1
+                    AND salesreturndetails.deliveryOrderDetailID <> 0
                     GROUP BY salesreturndetails.deliveryOrderDetailID
             ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem
                     LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 

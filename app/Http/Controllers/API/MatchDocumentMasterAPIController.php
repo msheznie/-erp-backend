@@ -3540,6 +3540,7 @@ LEFT JOIN (
         WHERE
         salesreturndetails.companySystemID = $matchDocumentMasterData->companySystemID
         AND salesreturn.approvedYN = -1
+        AND salesreturndetails.deliveryOrderDetailID <> 0
         GROUP BY salesreturndetails.deliveryOrderDetailID
 ) sr ON sr.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem
 LEFT JOIN currencymaster ON erp_accountsreceivableledger.custTransCurrencyID = currencymaster.currencyID
