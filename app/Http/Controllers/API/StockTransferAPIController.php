@@ -54,7 +54,9 @@ use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Response;
 use App\helper\ItemTracking;
-
+use App\Models\ItemMaster;
+use App\Models\UnitConversion;
+use App\Models\Unit;
 /**
  * Class StockTransferController
  * @package App\Http\Controllers\API
@@ -650,7 +652,7 @@ class StockTransferAPIController extends AppBaseController
                 'currentStockQty_more' => array(),
                 'currentWareHouseStockQty_more' => array());
             $error_count = 0;
-
+            
             foreach ($itemTransferDetails as $item) {
                 $updateItem = StockTransferDetails::find($item['stockTransferDetailsID']);
                 $data = array('companySystemID' => $stockTransfer->companySystemID,
@@ -659,8 +661,8 @@ class StockTransferAPIController extends AppBaseController
                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
                 $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                 $updateItem->warehouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                $updateItem->unitCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
-                $updateItem->unitCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                // $updateItem->unitCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                // $updateItem->unitCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
                 $updateItem->save();
 
                 if ($updateItem->unitCostLocal == 0 || $updateItem->unitCostRpt == 0) {
@@ -1311,6 +1313,20 @@ class StockTransferAPIController extends AppBaseController
         }
 
         return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer Amend successfully');
+    }
+
+    public function getallUomConvertion(Request $request)  {
+        $input = $request->all();
+        $id = $input['itemCode'];
+        $iemUnit = ItemMaster::where('itemCodeSystem',$id)->select('unit')->first();
+        $convertionUnit = UnitConversion::where('masterUnitID',$iemUnit->unit)->pluck('subUnitID')->toArray();
+
+        $defaulUnit = [$iemUnit->unit];
+        $mergedArray = isset($convertionUnit)?array_merge($convertionUnit, $defaulUnit):$defaulUnit;
+        $uniqueArray = array_unique($mergedArray);
+        $units = Unit::whereIn('UnitID',$uniqueArray)->select('UnitID as unitOfMeasure','UnitShortCode')->get();
+        return $this->sendResponse($units, 'COnvertion unit retrived successfully');
+
     }
 
 }

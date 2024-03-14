@@ -15,6 +15,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\Models\ItemMaster;
+use App\Models\UnitConversion;
+
 
 class ItemLedgerService
 {
@@ -534,10 +537,14 @@ class ItemLedgerService
                         Log::info($detail . date('H:i:s'));
 
                         foreach ($detailColumnArray as $column => $value) {
+
+                            $iemDefaultUnit = ItemMaster::where('itemCodeSystem',$detail['itemCodeSystem'])->select('unit')->first();
+                            $convertionUnit = UnitConversion::where('masterUnitID',$iemDefaultUnit->unit)->where('subUnitID',$detail['unitOfMeasure'])->first();
+
                             if ($column == 'inOutQty') {
-                                if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 || $masterModel["documentSystemID"] == 10 || $masterModel["documentSystemID"] == 87 || $masterModel["documentSystemID"] == 11) {
+                                if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 || $masterModel["documentSystemID"] == 87 || $masterModel["documentSystemID"] == 11) {
                                     $data[$i][$column] = ABS($detail[$value]); // make qty always plus
-                                } else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71) {
+                                } else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71) {
                                     $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
                                 } else if ($masterModel["documentSystemID"] == 7) {    // stock adjustment
                                     if ($masterRec['stockAdjustmentType'] == 2) {       // cost adjustment
@@ -559,7 +566,15 @@ class ItemLedgerService
                                     } else {
                                         $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
                                     }
-                                } else {
+                                }else if($masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 10) // stock transfer /recive
+                                {
+                                    $amounVal = $masterModel["documentSystemID"] == 13?ABS($detail[$value]) * -1:ABS($detail[$value]);
+                                    $convertionValue = $masterModel["documentSystemID"] == 13?ABS(($detail[$value]/$convertionUnit->conversion)) * -1:ABS(($detail[$value]/$convertionUnit->conversion));
+                                    $data[$i][$column] = $iemDefaultUnit->unit != $detail['unitOfMeasure'] && isset($convertionUnit) ?$convertionValue:$amounVal;
+                                    //$data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
+                                } 
+                                
+                                else {
                                     $data[$i][$column] = $detail[$value];
                                 }
                             } else if ($column == 'wacLocal') {
@@ -578,7 +593,13 @@ class ItemLedgerService
                                     $companyCurrencyConversion = \Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
 
                                     $data[$i][$column] = $companyCurrencyConversion['localAmount'];
-                                } else {
+                                }
+                                else if($masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 10)
+                                {
+                                    $data[$i][$column] = $iemDefaultUnit->unit != $detail['unitOfMeasure'] && isset($convertionUnit) ?($detail[$value]*$convertionUnit->conversion):($detail[$value]);
+
+                                } 
+                                else {
                                     $data[$i][$column] = $detail[$value];
                                 }
                             } else if ($column == 'wacRpt') {
@@ -595,10 +616,23 @@ class ItemLedgerService
                                     $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                     $data[$i][$column] = $itemCurrentCostAndQty['wacValueReporting'];
+                                } 
+                                else if($masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 10)
+                                {
+                                    $data[$i][$column] = $iemDefaultUnit->unit != $detail['unitOfMeasure'] && isset($convertionUnit) ?($detail[$value]*$convertionUnit->conversion):($detail[$value]);
+
                                 } else {
                                     $data[$i][$column] = $detail[$value];
                                 }
-                            } else {
+                            } 
+                            else if ($column == 'unitOfMeasure')
+                            {
+                                if($masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 10)
+                                {
+                                    $data[$i][$column] = $iemDefaultUnit->unit;
+                                }
+                            }
+                            else {
                                 $data[$i][$column] = $detail[$value];
                             }
 
