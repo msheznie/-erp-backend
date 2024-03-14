@@ -68,13 +68,20 @@ class ExportReportToExcelService implements ExportToExcelInterface
     /**
      * @param mixed $currency
      */
-    public function setCurrency($currency): ExportReportToExcelService
+    public function setCurrency($currency,$isString = false): ExportReportToExcelService
     {
-        if($currency) {
-            $currencyObj = CurrencyMaster::where('currencyID',$currency)->select(['CurrencyCode','DecimalPlaces'])->first();
-            $this->currencyObj = $currencyObj;
-            $this->currency = $this->currencyObj->CurrencyCode;
+        if($isString)
+        {
+            $this->currency = $currency;
+
+        }else {
+            if($currency) {
+                $currencyObj = CurrencyMaster::where('currencyID',$currency)->select(['CurrencyCode','DecimalPlaces'])->first();
+                $this->currencyObj = $currencyObj;
+                $this->currency = $this->currencyObj->CurrencyCode;
+            }
         }
+
 
         return $this;
     }

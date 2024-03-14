@@ -52,6 +52,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Exports\Procument\PoToPaymentReport;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
@@ -137,6 +138,8 @@ use App\Repositories\ProcumentOrderRepository;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\PoDetailExpectedDeliveryDateRepository;
 use App\Repositories\UserRepository;
+use App\Services\Currency\CurrencyService;
+use App\Services\Excel\ExportReportToExcelService;
 use App\Services\PrintTemplateService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -5730,7 +5733,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     }
 
 
-    public function exportPoToPaymentReport(Request $request)
+    public function exportPoToPaymentReport(Request $request,ExportReportToExcelService $exportReportToExcelService)
     {
         $input = $request->all();
         $data = array();
@@ -5746,204 +5749,199 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $row->logisticTotal = $this->getPoLogisticTotal($row);
         }
 
+        if(empty($data))
+        {
+            $poToPaymentReportHeader = new PoToPaymentReport();
+            array_push($data, collect($poToPaymentReportHeader->getHeader())->toArray());
+        }
+
         $type = $request->type;
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $data[$x]['Company ID'] = $value->companyID;
-                //$data[$x]['Company Name'] = $val->CompanyName;
-                $data[$x]['PO Number'] = $value->purchaseOrderCode;
-
-                if ($value->fcategory) {
-                    $data[$x]['Category'] = $value->fcategory->categoryDescription;
-                } else {
-                    $data[$x]['Category'] = '';
-                }
-
-                $data[$x]['PO Approved Date'] = \Helper::dateFormat($value->approvedDate);
-                $data[$x]['Narration'] = $value->narration;
-                if ($value->supplier) {
-                    $data[$x]['Supplier Code'] = $value->supplier->primarySupplierCode;
-                    $data[$x]['Supplier Name'] = $value->supplier->supplierName;
-                } else {
-                    $data[$x]['Supplier Code'] = '';
-                    $data[$x]['Supplier Name'] = '';
-                }
-                $data[$x]['PO Amount'] = number_format($value->poTotalComRptCurrency, 2);
-                $data[$x]['Logistic Amount'] = number_format($value->logisticTotal, 2);
+                $category = ($value->fcategor) ? $value->fcategory->categoryDescription : '';
+                $supplierCode = ($value->supplier) ? $value->supplier->primarySupplierCode : '';
+                $supplierName = ($value->supplier) ? $value->supplier->supplierName : '';
+                $poToPaymentReport = new PoToPaymentReport();
+                $poToPaymentReport->setCompanyID($value->companyID);
+                $poToPaymentReport->setPoNumber($value->purchaseOrderCode);
+                $poToPaymentReport->setCategory($category);
+                $poToPaymentReport->setPoApprovedDate($value->approvedDate);
+                $poToPaymentReport->setNarration($value->narration);
+                $poToPaymentReport->setSupplierCode($supplierCode);
+                $poToPaymentReport->setSupplierName($supplierName);
+                $poToPaymentReport->setPoAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->poTotalComRptCurrency, 2)));
+                $poToPaymentReport->setLogisticAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->logisticTotal, 2)));
 
                 if (count($value->grvMasters) > 0) {
                     $grvMasterCount = 0;
                     foreach ($value->grvMasters as $grv) {
                         if ($grvMasterCount != 0) {
                             $x++;
-                            $data[$x]['Company ID'] = '';
-                            //$data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['PO Number'] = '';
-                            $data[$x]['Category'] = '';
-                            $data[$x]['PO Approved Date'] = '';
-                            $data[$x]['Narration'] = '';
-                            $data[$x]['Supplier Code'] = '';
-                            $data[$x]['Supplier Name'] = '';
-                            $data[$x]['PO Amount'] = '';
-                            $data[$x]['Logistic Amount'] = '';
+                            $poToPaymentReport->setCompanyID("");
+                            $poToPaymentReport->setPoNumber("");
+                            $poToPaymentReport->setCategory("");
+                            $poToPaymentReport->setPoApprovedDate("");
+                            $poToPaymentReport->setNarration("");
+                            $poToPaymentReport->setSupplierCode("");
+                            $poToPaymentReport->setSupplierName("");
+                            $poToPaymentReport->setPoAmount("");
+                            $poToPaymentReport->setLogisticAmount("");
                         }
 
-                        if ($grv['grv_master']) {
-                            $data[$x]['GRV Code'] = $grv['grv_master']['grvPrimaryCode'];
-                            $data[$x]['GRV Date'] = \Helper::dateFormat($grv['grv_master']['grvDate']);
-                        } else {
-                            $data[$x]['GRV Code'] = '';
-                            $data[$x]['GRV Date'] = '';
-                        }
+                        ($grv['grv_master']) ? $poToPaymentReport->setGrvCode($grv['grv_master']['grvPrimaryCode']) : $poToPaymentReport->setGrvCode("");
+                        ($grv['grv_master']) ? $poToPaymentReport->setGrvDate($grv['grv_master']['grvDate']) : $poToPaymentReport->setGrvDate("");
 
-                        $data[$x]['GRV Amount'] = number_format($grv['rptAmount'], 2);
+                        $poToPaymentReport->setGrvAmount(CurrencyService::convertNumberFormatToNumber(number_format($grv['rptAmount'], 2)));
 
                         if (count($grv['invoices']) > 0) {
                             $invoicesCount = 0;
                             foreach ($grv['invoices'] as $invoice) {
                                 if ($invoicesCount != 0) {
                                     $x++;
-                                    $data[$x]['Company ID'] = '';
-                                    //$data[$x]['Company Name'] = $val->CompanyName;
-                                    $data[$x]['PO Number'] = '';
-                                    $data[$x]['Category'] = '';
-                                    $data[$x]['PO Approved Date'] = '';
-                                    $data[$x]['Narration'] = '';
-                                    $data[$x]['Supplier Code'] = '';
-                                    $data[$x]['Supplier Name'] = '';
-                                    $data[$x]['PO Amount'] = '';
-                                    $data[$x]['Logistic Amount'] = '';
-                                    $data[$x]['GRV Code'] = '';
-                                    $data[$x]['GRV Date'] = '';
-                                    $data[$x]['GRV Amount'] = '';
+                                    $poToPaymentReport->setCompanyID("");
+                                    $poToPaymentReport->setPoNumber("");
+                                    $poToPaymentReport->setCategory("");
+                                    $poToPaymentReport->setPoApprovedDate("");
+                                    $poToPaymentReport->setNarration("");
+                                    $poToPaymentReport->setSupplierCode("");
+                                    $poToPaymentReport->setSupplierName("");
+                                    $poToPaymentReport->setPoAmount("");
+                                    $poToPaymentReport->setLogisticAmount("");
+                                    $poToPaymentReport->setGrvCode("");
+                                    $poToPaymentReport->setGrvDate("");
+                                    $poToPaymentReport->setGrvAmount("");
                                 }
 
-                                if ($invoice['suppinvmaster']) {
-                                    $data[$x]['Invoice Code'] = $invoice['suppinvmaster']['bookingInvCode'];
-                                    $data[$x]['Invoice Date'] = \Helper::dateFormat($invoice['suppinvmaster']['supplierInvoiceDate']);
-                                } else {
-                                    $data[$x]['Invoice Code'] = '';
-                                    $data[$x]['Invoice Date'] = '';
-                                }
-                                $data[$x]['Invoice Amount'] = number_format($invoice['rptAmount'], 2);
+                                ($invoice['suppinvmaster']) ? $poToPaymentReport->setInvoiceCode($invoice['suppinvmaster']['bookingInvCode']) : $poToPaymentReport->setInvoiceCode(null);
+                                ($invoice['suppinvmaster']) ? $poToPaymentReport->setInvoiceDate($invoice['suppinvmaster']['supplierInvoiceDate']) : $poToPaymentReport->setInvoiceDate(null);
+                                $poToPaymentReport->setInvoiceAmount(CurrencyService::convertNumberFormatToNumber(number_format($invoice['rptAmount'], 2)));
 
                                 if (count($invoice['payments']) > 0) {
                                     $paymentsCount = 0;
                                     foreach ($invoice['payments'] as $payment) {
                                         if ($paymentsCount != 0) {
                                             $x++;
-                                            $data[$x]['Company ID'] = '';
-                                            //$data[$x]['Company Name'] = $val->CompanyName;
-                                            $data[$x]['PO Number'] = '';
-                                            $data[$x]['Category'] = '';
-                                            $data[$x]['PO Approved Date'] = '';
-                                            $data[$x]['Narration'] = '';
-                                            $data[$x]['Supplier Code'] = '';
-                                            $data[$x]['Supplier Name'] = '';
-                                            $data[$x]['PO Amount'] = '';
-                                            $data[$x]['Logistic Amount'] = '';
-                                            $data[$x]['GRV Code'] = '';
-                                            $data[$x]['GRV Date'] = '';
-                                            $data[$x]['GRV Amount'] = '';
-                                            $data[$x]['Invoice Code'] = '';
-                                            $data[$x]['Invoice Date'] = '';
-                                            $data[$x]['Invoice Amount'] = '';
+                                            $poToPaymentReport->setCompanyID("");
+                                            $poToPaymentReport->setPoNumber("");
+                                            $poToPaymentReport->setCategory("");
+                                            $poToPaymentReport->setPoApprovedDate("");
+                                            $poToPaymentReport->setNarration("");
+                                            $poToPaymentReport->setSupplierCode("");
+                                            $poToPaymentReport->setSupplierName("");
+                                            $poToPaymentReport->setPoAmount("");
+                                            $poToPaymentReport->setLogisticAmount("");
+                                            $poToPaymentReport->setGrvCode("");
+                                            $poToPaymentReport->setGrvDate("");
+                                            $poToPaymentReport->setGrvAmount("");
+                                            $poToPaymentReport->setInvoiceCode("");
+                                            $poToPaymentReport->setInvoiceDate("");
+                                            $poToPaymentReport->setInvoiceAmount("");
                                         }
 
                                         if ($payment['matchingDocID'] == 0) {
                                             if (!empty($payment['payment_master'])) {
-                                                $data[$x]['Payment Code'] = $payment['payment_master']['BPVcode'];
-                                                $data[$x]['Payment Date'] = \Helper::dateFormat($payment['payment_master']['BPVdate']);
-                                                $data[$x]['Payment Posted Date'] = \Helper::dateFormat($payment['payment_master']['postedDate']);
+                                                $poToPaymentReport->setPaymentCode( $payment['payment_master']['BPVcode']);
+                                                $poToPaymentReport->setPaymentDate($payment['payment_master']['BPVdate']);
+                                                $poToPaymentReport->setPaymentPostedDate($payment['payment_master']['postedDate']);
                                             } else {
-                                                $data[$x]['Payment Code'] = '';
-                                                $data[$x]['Payment Date'] = '';
-                                                $data[$x]['Payment Posted Date'] = '';
+
+                                                $poToPaymentReport->setPaymentCode("");
+                                                $poToPaymentReport->setPaymentDate("");
+                                                $poToPaymentReport->setPaymentPostedDate("");
+
                                             }
                                         } else if ($payment['matchingDocID'] > 0) {
                                             if (!empty($payment['matching_master'])) {
-                                                $data[$x]['Payment Code'] = $payment['matching_master']['matchingDocCode'];
-                                                $data[$x]['Payment Date'] = \Helper::dateFormat($payment['matching_master']['matchingDocdate']);
-                                                $data[$x]['Payment Posted Date'] = '';
+                                                $poToPaymentReport->setPaymentCode($payment['matching_master']['matchingDocCode']);
+                                                $poToPaymentReport->setPaymentDate($payment['matching_master']['matchingDocdate']);
+                                                $poToPaymentReport->setPaymentPostedDate("");
                                             } else {
-                                                $data[$x]['Payment Code'] = '';
-                                                $data[$x]['Payment Date'] = '';
-                                                $data[$x]['Payment Posted Date'] = '';
+                                                $poToPaymentReport->setPaymentCode("");
+                                                $poToPaymentReport->setPaymentDate("");
+                                                $poToPaymentReport->setPaymentPostedDate("");
                                             }
                                         } else {
-                                            $data[$x]['Payment Code'] = '';
-                                            $data[$x]['Payment Date'] = '';
-                                            $data[$x]['Payment Posted Date'] = '';
+                                            $poToPaymentReport->setPaymentCode("");
+                                            $poToPaymentReport->setPaymentDate("");
+                                            $poToPaymentReport->setPaymentPostedDate("");
                                         }
-                                        $data[$x]['Paid Amount'] = number_format($payment['rptAmount'], 2);
+                                        $poToPaymentReport->setPaidAmount(CurrencyService::convertNumberFormatToNumber(number_format($payment['rptAmount'], 2)));
                                         $paymentsCount++;
                                     }
                                 } else {
-                                    $data[$x]['Payment Code'] = '';
-                                    $data[$x]['Payment Date'] = '';
-                                    $data[$x]['Payment Posted Date'] = '';
-                                    $data[$x]['Paid Amount'] = '';
+                                    $poToPaymentReport->setPaymentCode("");
+                                    $poToPaymentReport->setPaymentDate("");
+                                    $poToPaymentReport->setPaymentPostedDate("");
+                                    $poToPaymentReport->setPaidAmount("");
+
                                 }
                                 $invoicesCount++;
                             }
                         } else {
-                            $data[$x]['Invoice Code'] = '';
-                            $data[$x]['Invoice Date'] = '';
-                            $data[$x]['Invoice Amount'] = '';
-                            $data[$x]['Payment Code'] = '';
-                            $data[$x]['Payment Date'] = '';
-                            $data[$x]['Payment Posted Date'] = '';
-                            $data[$x]['Paid Amount'] = '';
+                            $poToPaymentReport->setInvoiceCode("");
+                            $poToPaymentReport->setInvoiceDate("");
+                            $poToPaymentReport->setInvoiceAmount("");
+                            $poToPaymentReport->setPaymentCode("");
+                            $poToPaymentReport->setPaymentDate("");
+                            $poToPaymentReport->setPaymentPostedDate("");
+                            $poToPaymentReport->setPaidAmount("");
                         }
                         $grvMasterCount++;
                     }
                 } else {
-                    $data[$x]['GRV Code'] = '';
-                    $data[$x]['GRV Date'] = '';
-                    $data[$x]['GRV Amount'] = '';
-                    $data[$x]['Invoice Code'] = '';
-                    $data[$x]['Invoice Date'] = '';
-                    $data[$x]['Invoice Amount'] = '';
-                    $data[$x]['Payment Code'] = '';
-                    $data[$x]['Payment Date'] = '';
-                    $data[$x]['Payment Posted Date'] = '';
-                    $data[$x]['Paid Amount'] = '';
+
+                    $poToPaymentReport->setGrvCode("");
+                    $poToPaymentReport->setGrvDate("");
+                    $poToPaymentReport->setGrvAmount("");
+                    $poToPaymentReport->setInvoiceCode("");
+                    $poToPaymentReport->setInvoiceDate("");
+                    $poToPaymentReport->setInvoiceAmount("");
+                    $poToPaymentReport->setPaymentCode("");
+                    $poToPaymentReport->setPaymentDate("");
+                    $poToPaymentReport->setPaymentPostedDate("");
+                    $poToPaymentReport->setPaidAmount("");
                 }
+                array_push($data,collect($poToPaymentReport)->toArray());
                 $x++;
             }
         }
 
         $companyMaster = Company::find(isset($request->companyId)?$request->companyId:null);
         $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
-        $detail_array = array(
-            'company_code'=>$companyCode,
-        );
-        
-        $doc_name = 'po_to_payment';
+        $company_name = $companyMaster->CompanyName;
+        $cur = null;
+        $fileName = 'po_to_payment';
         $doc_name_path = 'po_to_payment/';
         $path = 'procurement/report/'.$doc_name_path.'excel/';
-        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
+        $report = new PoToPaymentReport();
+        $excelColumnFormat = $report->getColumnFormat();
+        $startDate = $request->fromDate;
+        $endDate = $request->toDate;
+        $title = "PO to Payment Report";
 
-        if($basePath == '')
-        {
-             return $this->sendError('Unable to export excel');
-        }
-        else
-        {
-             return $this->sendResponse($basePath, trans('custom.success_export'));
-        }
-        // \Excel::create('po_to_payment', function ($excel) use ($data) {
-        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
-        //         $sheet->fromArray($data, null, 'A1', true);
-        //         $sheet->setAutoSize(true);
-        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-        //     });
-        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
-        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        // })->download($type);
+        $exportToExcel = $exportReportToExcelService
+            ->setTitle($title)
+            ->setFileName($fileName)
+            ->setPath($path)
+            ->setCompanyCode($companyCode)
+            ->setCompanyName($company_name)
+            ->setFromDate($startDate)
+            ->setToDate($endDate)
+            ->setReportType(1)
+            ->setData($data)
+            ->setType('xls')
+            ->setDateType(2)
+            ->setExcelFormat($excelColumnFormat)
+            ->setCurrency($cur)
+            ->setDetails()
+            ->generateExcel();
 
-        // return $this->sendResponse(array(), 'successfully export');
+        if(!$exportToExcel['success'])
+            return $this->sendError('Unable to export excel');
+
+        return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
+
     }
 
     public function reportPoToPaymentFilterOptions(Request $request)

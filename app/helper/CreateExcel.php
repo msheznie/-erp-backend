@@ -415,11 +415,12 @@ class CreateExcel
 
     }
 
-    public static function loadView($data,$type,$fileName,$path_dir,$templateName)
+    public static function loadView($data,$type,$fileName,$path_dir,$templateName, $excelColumnFormat = [])
     {
 
-        $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName) {
-                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName) {
+        $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat) {
+                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat) {
+                           $sheet->setColumnFormat($excelColumnFormat);
                            $sheet->loadView($templateName, $data);
                        });
                    })->string($type);

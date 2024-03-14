@@ -37,6 +37,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Exports\AccountsReceivable\CustomerAgingDetailReport;
+use App\Exports\AccountsReceivable\CustomerBalanceSummaryReport;
+use App\Exports\AccountsReceivable\CustomerStatement\CustomerBalanceStatementReport;
+use App\Exports\AccountsReceivable\CustomerStatement\CustomerStatementOfAccountReport;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsReceivableLedger;
 use App\Models\ChartOfAccount;
@@ -938,25 +941,35 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $decimalPlace = array_unique($decimalPlace);
                     $decimalPlace = !empty($decimalPlace) ? $decimalPlace[0] : 2;
 
+                    if(empty($data))
+                    {
+                        $header = new CustomerBalanceStatementReport();
+                        array_push($data, collect($header->getHeader())->toArray());
+                    }
+
                     if ($output) {
                         foreach ($output as $val) {
-                            $data[] = array(
-                                'Company ID' => $val->companyID,
-                                'Company Name' => $val->CompanyName,
-                                'Customer Name' => $val->customerName,
-                                'Document Code' => $val->DocumentCode,
-                                'Posted Date' => $val->PostedDate,
-                                'Narration' => $val->DocumentNarration,
-                                'Contract' => $val->Contract,
-                                'PO Number' => $val->PONumber,
-                                'Invoice Number' => $val->invoiceNumber,
-                                'Invoice Date' => \Helper::dateFormat($val->InvoiceDate),
-                                'Currency' => $val->documentCurrency,
-                                'Balance Amount' => round($val->balanceAmount, $val->balanceDecimalPlaces)
-                            );
+                            $customerBalanceStatementReport = new CustomerBalanceStatementReport();
+                            $customerBalanceStatementReport->setCompanyID($val->companyID);
+                            $customerBalanceStatementReport->setCompanyName($val->CompanyName);
+                            $customerBalanceStatementReport->setCustomerName($val->customerName);
+                            $customerBalanceStatementReport->setDocumentCode($val->DocumentCode);
+                            $customerBalanceStatementReport->setPostedDate($val->PostedDate);
+                            $customerBalanceStatementReport->setNarration($val->DocumentNarration);
+                            $customerBalanceStatementReport->setContract($val->Contract);
+                            $customerBalanceStatementReport->setPoNumber($val->PONumber);
+                            $customerBalanceStatementReport->setInvoiceNumber($val->invoiceNumber);
+                            $customerBalanceStatementReport->setInvoiceDate(\Helper::dateFormat($val->InvoiceDate));
+                            $customerBalanceStatementReport->setCurrency($val->documentCurrency);
+                            $customerBalanceStatementReport->setBalanceAmount(round($val->balanceAmount, $val->balanceDecimalPlaces));
+                            array_push($data, collect($customerBalanceStatementReport)->toArray());
                         }
                     }
-                } else if ($request->reportTypeID == 'CSA') {
+
+                    $objCustomerBalanceStatementReport = new CustomerBalanceStatementReport();
+                    $excelColumnFormat = $objCustomerBalanceStatementReport->getColumnFormat();
+                }
+                else if ($request->reportTypeID == 'CSA') {
                     $typ_re = 2;
                     $from_date = $request->fromDate;
                     $toDate = $request->toDate;
@@ -972,55 +985,67 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $title = 'Customer Statement of Account';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerStatementAccountQRY($request);
+
+                    if(empty($data))
+                    {
+                        $header = new CustomerStatementOfAccountReport();
+                        array_push($data,collect($header->getHeader())->toArray());
+                    }
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
                             $x++;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Name'] = $val->customerName;
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Posted Date'] = $val->postedDate;
-                            $data[$x]['Contract'] = $val->clientContractID;
-                            $data[$x]['PO Number'] = $val->PONumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                            $data[$x]['Narration'] = $val->documentNarration;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Invoice Amount'] = round($val->invoiceAmount, $val->balanceDecimalPlaces);
-                            $data[$x]['Receipt/CN Code'] = $val->ReceiptCode;
-                            $data[$x]['Receipt/CN Date'] = \Helper::dateFormat($val->ReceiptDate);
-                            $data[$x]['Receipt Amount'] = round($val->receiptAmount, $val->balanceDecimalPlaces);
-                            $data[$x]['Balance Amount'] = round($val->balanceAmount, $val->balanceDecimalPlaces);
+                            $body = new CustomerStatementOfAccountReport();
+
+                            $body->setCompanyID($val->companyID);
+                            $body->setCompanyName($val->CompanyName);
+                            $body->setCustomerName($val->customerName);
+                            $body->setDocumentCode($val->documentCode);
+                            $body->setPostedDate($val->postedDate);
+                            $body->setContract($val->clientContractID);
+                            $body->setPoNumber($val->PONumber);
+                            $body->setInvoiceDate(\Helper::dateFormat($val->invoiceDate));
+                            $body->setNarration($val->documentNarration);
+                            $body->setCurrency($val->documentCurrency);
+                            $body->setInvoiceAmount(round($val->invoiceAmount, $val->balanceDecimalPlaces));
+                            $body->setReceiptCNCode($val->ReceiptCode);
+                            $body->setReceiptCNDate(\Helper::dateFormat($val->ReceiptDate));
+                            $body->setReceiptAmount(round($val->receiptAmount, $val->balanceDecimalPlaces));
+                            $body->setBalanceAmount(round($val->balanceAmount, $val->balanceDecimalPlaces));
+
+                            array_push($data,collect($body)->toArray());
                         }
                     }
+
+                    $objCustomerStatementOfAccountReport = new CustomerStatementOfAccountReport();
+                    $excelColumnFormat = $objCustomerStatementOfAccountReport->getColumnFormat();
                 }
 
 
                 $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
-
                 $path = 'accounts-receivable/report/customer_balance_statement/excel/';
-                if($typ_re == 1)
-                {
-                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name, 'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
+                $exportToExcel = $exportReportToExcelService
+                    ->setTitle($title)
+                    ->setFileName($fileName)
+                    ->setPath($path)
+                    ->setCompanyCode($companyCode)
+                    ->setCompanyName($company_name)
+                    ->setFromDate($from_date)
+                    ->setToDate($toDate)
+                    ->setData($data)
+                    ->setReportType(2)
+                    ->setType($type)
+                    ->setCurrency($requestCurrency,true)
+                    ->setDateType(2)
+                    ->setExcelFormat($excelColumnFormat)
+                    ->setDetails()
+                    ->generateExcel();
 
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-                }
-                else
-                {
-                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name, 'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
+                if(!$exportToExcel['success'])
+                    return $this->sendError('Unable to export excel');
 
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-                }
+                return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
-
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
 
                 break;
             case 'CA': //Customer Aging
@@ -1105,15 +1130,23 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
 
                     $outputData = array('reportData' => $outputArr,
-                             'companyName' => $checkIsGroup->CompanyName, 
-                             'balanceAmount' => $balanceAmount, 
+                             'companyName' => $checkIsGroup->CompanyName,
+                             'balanceAmount' => $balanceAmount,
                              'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 
                              'paidAmount' => $paidAmount, 
                              'invoiceAmount' => $invoiceAmount,
                              'fromDate' =>  $request->fromDate,);
-            
-                    return \Excel::create('create_customer_ledger', function ($excel) use ($outputData) {
-                        $excel->sheet('New sheet', function ($sheet) use ($outputData) {
+
+                    $excelColumnFormat = [
+                        'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'k' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    ];
+                    return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat) {
+                        $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
+                            $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->loadView('export_report.customer_ledger_template1', $outputData);
                         });
                     })->download('xlsx');
@@ -1141,9 +1174,14 @@ class AccountsReceivableReportAPIController extends AppBaseController
                                     'invoiceAmount' => $invoiceAmount,
                                     'fromDate' =>  $request->fromDate,
                                     'toDate' =>  $request->toDate);
-
-                    return \Excel::create('create_customer_ledger_report', function ($excel) use ($outputData) {
-                        $excel->sheet('New sheet', function ($sheet) use ($outputData) {
+                    $excelColumnFormat = [
+                        'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    ];
+                    return \Excel::create('create_customer_ledger_report', function ($excel) use ($outputData,$excelColumnFormat) {
+                        $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
+                            $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->loadView('export_report.customer_ledger_template2', $outputData);
                         });
                     })->download('xlsx');
@@ -1162,6 +1200,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 if ($reportTypeID == 'CBSUM') { //customer ledger template 1
 
+                    $data = array();
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerBalanceSummery($request);
@@ -1196,33 +1235,36 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $currencyID = $request->currencyID;
                     $type = $request->type;
 
+                    if(empty($data))
+                    {
+                        $customerBalanceSummaryReportHeader = new CustomerBalanceSummaryReport();
+                        array_push($data,collect($customerBalanceSummaryReportHeader->getHeader())->toArray());
+                    }
+
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Cust. Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-
+                            $customerBalanceSummaryReport = new CustomerBalanceSummaryReport();
+                            $customerBalanceSummaryReport->setCompanyId($val->companyID);
+                            $customerBalanceSummaryReport->setCompanyName($val->CompanyName);
+                            $customerBalanceSummaryReport->setCustomerCode($val->CutomerCode);
+                            $customerBalanceSummaryReport->setCustomerName($val->CustomerName);
                             $decimalPlace = 2;
                             if ($currencyID == '2') {
                                 $decimalPlace = !empty($localCurrency) ? $localCurrency->DecimalPlaces : 2;
-                                $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
+                                $customerBalanceSummaryReport->setCurrency($val->documentLocalCurrency);
+                                $customerBalanceSummaryReport->setAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->localAmount, $decimalPlace)));
                             } else if ($currencyID == '3') {
                                 $decimalPlace = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
-                                $data[$x]['Currency'] = $val->documentRptCurrency;
-                                $data[$x]['Amount'] = round($val->RptAmount, $decimalPlace);
+                                $customerBalanceSummaryReport->setCurrency($val->documentRptCurrency);
+                                $customerBalanceSummaryReport->setAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->RptAmount, $decimalPlace)));
                             } else {
-                                $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                $data[$x]['Amount'] = $val->localAmount;
-                                $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
+                                $customerBalanceSummaryReport->setCurrency( $val->documentLocalCurrency);
+                                $customerBalanceSummaryReport->setAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->localAmount, $decimalPlace)));
                             }
-                            $x++;
+
+                            array_push($data,collect($customerBalanceSummaryReport)->toArray());
                         }
-                    } else {
-                        $data = array();
                     }
 
                     $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
@@ -1231,18 +1273,31 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $title = 'Customer Balance Summary';
                     $path = 'accounts-receivable/report/customer_balance_summary/excel/';
                     $requestCurrency = NULL;
-                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode, 'cur'=>$requestCurrency, 'title'=>$title);
-    
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-    
-                    if($basePath == '')
-                    {
-                         return $this->sendError('Unable to export excel');
-                    }
-                    else
-                    {
-                         return $this->sendResponse($basePath, trans('custom.success_export'));
-                    }
+                    $excelColumnFormat = [
+                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    ];
+
+                    $exportToExcel = $exportReportToExcelService
+                        ->setTitle($title)
+                        ->setFileName($fileName)
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
+                        ->setCompanyName($company_name)
+                        ->setFromDate($from_date)
+                        ->setToDate($to_date)
+                        ->setReportType(2)
+                        ->setData($data)
+                        ->setType('xls')
+                        ->setDateType(2)
+                        ->setExcelFormat($excelColumnFormat)
+                        ->setCurrency($requestCurrency)
+                        ->setDetails()
+                        ->generateExcel();
+
+                    if(!$exportToExcel['success'])
+                        return $this->sendError('Unable to export excel');
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
                     break;
                 }
                 break;

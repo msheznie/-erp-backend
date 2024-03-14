@@ -51,28 +51,28 @@
     </thead>
     <tbody>
     @php
-        $total = 0;
+        $total = 0.00;
     @endphp
     @foreach($reportData[$name][$currencyKey] as $data)
         <tr>
         <td>{{ $data->documentCode }}</td>
-            @if($data->documentSystemCode != '1970-01-01')
-        <td>&nbsp;{{ date('d/m/Y', strtotime($data->documentDate)) }}</td>
+            @if($data->documentDate != null)
+                <td>{{ $data->documentDate }}</td>
             @else
                 <td>-</td>
             @endif
-        <td>{{ $data->glCode }} - {{ $data->AccountDescription }}</td>
+        <td>{{ $data->glCode }} - {{ $data->accountDescription }}</td>
         <td>{{ $data->invoiceNumber }}</td>
             @if($data->invoiceDate != null)
-        <td>&nbsp;{{ date('d/m/Y', strtotime($data->invoiceDate)) }}</td>
+        <td>{{ $data->invoiceDate }}</td>
             @else
                 <td>-</td>
             @endif
         <td>{{ $data->documentNarration }}</td>
         <td>{{ $data->documentCurrency }}</td>
-        <td style="text-align: right">{{ number_format($data->invoiceAmount,$data->balanceDecimalPlaces) }}</td>
+        <td style="text-align: right">{{ $data->invoiceAmount }}</td>
             @php
-                $total += $data->invoiceAmount;
+                $total += $data->documentAmount;
             @endphp
     </tr>
     @endforeach
@@ -82,7 +82,7 @@
         <td colspan="6"></td>
         <td><B>Total</B></td>
         @if(isset($reportData[$name][$currencyKey][0]) != null)
-            <td style="text-align: right"><B>{{ number_format($total,$reportData[$name][$currencyKey][0]->balanceDecimalPlaces) }}</B></td>
+            <td style="text-align: right; font-weight: bold;">{{ \App\Services\Currency\CurrencyService::convertNumberFormatToNumber(number_format(trim($total),$reportData[$name][$currencyKey][0]->balanceDecimalPlaces))}}</td>
         @endif
     </tr>
     </tfoot>
