@@ -31,13 +31,14 @@ class ItemMasterAuditService
                 }
 
                 if($auditData['previosValue']['mainItemID'] != $auditData['newValue']['mainItemID']) {  
-                    $previousMainItem = ItemMaster::where('itemCodeSystem',$auditData['newValue']['mainItemID'])->first();
-                    $newMainItem = ItemMaster::where('itemCodeSystem',$auditData['previosValue']['mainItemID'])->first();
+                    $previousMainItem = ItemMaster::where('itemCodeSystem',$auditData['previosValue']['mainItemID'])->first();
+                    $newMainItem = ItemMaster::where('itemCodeSystem',$auditData['newValue']['mainItemID'])->first();
                     $modifiedData[] = ['amended_field' => "main_item", 'previous_value' => ($previousMainItem) ? $previousMainItem->itemDescription: '', 'new_value' => ($newMainItem) ? $newMainItem->itemDescription : ''];
                 }
 
                 if($auditData['previosValue']['pos_type'] != $auditData['newValue']['pos_type']) {  
-
+                    $previousPosType = '';
+                    $newPosType = '';
                     if($auditData['previosValue']['pos_type'] == 1){
                         $previousPosType = 'General POS';
                     } elseif ($auditData['previosValue']['pos_type'] == 2){

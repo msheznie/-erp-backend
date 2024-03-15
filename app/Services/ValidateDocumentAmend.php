@@ -23,7 +23,7 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be current for this document to be reversed';
+                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -38,7 +38,7 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be current for this document to be reversed';
+                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
                                 return ['status' => false,'message'=>$message];
                             }
                         }
