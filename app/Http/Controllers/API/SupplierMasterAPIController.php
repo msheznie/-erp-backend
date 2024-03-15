@@ -85,8 +85,6 @@ use App\Models\RegisterSupplierSubcategoryAssign;
 use App\Repositories\SupplierBlockRepository;
 use App\Models\SupplierBlock;
 use App\Traits\AuditLogsTrait;
-
-
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
