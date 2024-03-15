@@ -667,4 +667,9 @@ class TenderMaster extends Model
         return $this->hasOne('App\Models\TenderMasterSupplier', 'tender_master_id', 'id');
     }
 
+    public function approvedRejectStatus()
+    {
+        return $this->hasOne('App\Models\DocumentApproved', 'documentSystemCode', 'id')->where('status',1);
+    }
+
 }

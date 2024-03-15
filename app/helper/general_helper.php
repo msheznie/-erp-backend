@@ -6140,6 +6140,12 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
+                        if(isset($input['rejectedStatus']) && $input['rejectedStatus'] == 1) {
+                            $docApprove->update([
+                                'status' => 1
+                            ]);
+                        }
+
                         if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117, 119])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -6195,13 +6201,22 @@ class Helper
                                 $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
                             }
 
-
-
                             $subject = $subjectName . " is rejected.";
-                            $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
 
-
-                   
+                            if(isset($input['rejectedStatus']) && $input['rejectedStatus'] == 1) {
+                                if(($input["document_system_id"] == 108 || $input["document_system_id"] == 113)){
+                                    $documentType = ($input["document_system_id"]) == 108 ? 'Tender' : 'RFX';
+                                    $body ="<p>We regret to inform you that the $documentType document has been rejected by the approver.</p>" .
+                                        "<p>$documentType Code: $sourceModel->tender_code</p>" .
+                                        "<p>$documentType Title: $sourceModel->title</p>" .
+                                        "<p>Reject Comment: " . $input["rejectedComments"] . "</p>" .
+                                        "<p>Thank You.</p>";
+                                }else {
+                                    $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
+                                }
+                            }else {
+                                $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
+                            }
 
                             // get previously approved person for send Emil
                             if ($input["rollLevelOrder"] > 1) {
@@ -6294,7 +6309,7 @@ class Helper
                                 {
                                     return ['success' => false, 'message' => "Unable to send the email"];
                                 }
-                            }else if($input["document_system_id"] == 108 || $input["document_system_id"] == 113){
+                            }else if((!isset($input['rejectedStatus']) || $input['rejectedStatus'] == 0)  && ($input["document_system_id"] == 108 || $input["document_system_id"] == 113)){
                                 $confirmedUserEmail = Employee::select('empName','empEmail')
                                     ->where('employeeSystemID',$sourceModel->confirmed_by_emp_system_id)
                                     ->first();

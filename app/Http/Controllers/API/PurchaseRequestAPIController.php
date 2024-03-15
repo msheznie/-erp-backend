@@ -46,6 +46,7 @@ use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\MaterielRequest;
 use App\Models\DocumentReferedHistory;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use App\Models\EmployeesDepartment;
 use App\Models\FinanceItemCategoryMaster;
@@ -2869,7 +2870,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 
-        
+        $DocumentApprovedArray = Arr::except($DocumentApprovedArray, ['status']);
         $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseRequestId)

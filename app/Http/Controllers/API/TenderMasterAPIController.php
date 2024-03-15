@@ -378,7 +378,11 @@ class TenderMasterAPIController extends AppBaseController
 
 
 
-        $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency'])->where('company_id', $companyId);
+        $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency','approvedRejectStatus'=>function($q) use ($companyId, $input){
+            $q->select('documentSystemCode','status')
+                ->where('companySystemID', $companyId)
+            ->where('documentSystemID', isset($input['rfx']) && $input['rfx'] ? 113 : 108);
+        }])->where('company_id', $companyId);
         
         $filters = $this->getFilterData($input); 
         
@@ -625,10 +629,15 @@ class TenderMasterAPIController extends AppBaseController
 
     public function getTenderMasterData(Request $request)
     {
+
         $input = $request->all();
         $tenderMasterId = $input['tenderMasterId'];
         $companySystemID = $input['companySystemID'];
-        $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by'])->where('id', $input['tenderMasterId'])->first();
+        $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by', 'approvedRejectStatus'=> function($q) use ($companySystemID , $input){
+            $q->select('documentSystemCode','status')
+                ->where('companySystemID', $companySystemID)
+                ->where('documentSystemID', isset($input['isTender']) && $input['isTender'] ? 108 : 113);
+        }])->where('id', $input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
         $act = array();
         if (!empty($activity)) {
