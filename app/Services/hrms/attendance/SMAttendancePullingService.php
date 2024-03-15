@@ -360,6 +360,7 @@ class SMAttendancePullingService{
 
             $shiftHours = ($row['shiftType'] == Shifts::OPEN)? $row['workingHour']: $obj->shiftHours;
             $shiftHours = (empty($shiftHours))? 0: $shiftHours;
+            $locationOut = $isCrossDay ? $obj->clockOutFloorId : $row['location_out'];
 
             $this->data[] = [
                 'empID' => $empId,
@@ -368,7 +369,7 @@ class SMAttendancePullingService{
                 'attendanceDate' => $attDate,
                 'shift_id' => !empty($row['shiftID']) ? $row['shiftID'] : 0,
                 'floorID' => $row['location_in'],
-                'clockoutFloorID' => $row['location_out'],
+                'clockoutFloorID' => $locationOut,
                 'gracePeriod' => $obj->gracePeriod,
                 'onDuty' => $row['onDutyTime'],
                 'offDuty' => $row['offDutyTime'],

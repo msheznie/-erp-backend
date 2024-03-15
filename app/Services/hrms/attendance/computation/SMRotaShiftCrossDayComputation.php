@@ -1,6 +1,7 @@
 <?php
 namespace App\Services\hrms\attendance\computation;
 
+use App\enums\attendance\AbsentType;
 use App\enums\attendance\AttDayType;
 use App\Traits\Attendance\AttComputationVariableTrait;
 use App\Traits\Attendance\AttendanceComputationTrait;
@@ -51,15 +52,15 @@ class SMRotaShiftCrossDayComputation{
         if ($this->isFlexibleHourBaseComputation) {
             $this->calculateFlexyIsCrossDayActualWorkingHour();
         }else{
-            $this->rotaShiftCalculateWorkedHours();
+            $this->rotaShiftCalculateActualWorkedHours();
         }
 
         $this->calculateRealTime();
-        $this->calculateOfficialWorkTime();
+        $this->calculateRotaShiftOfficialWorkHours();
 
         //late in, early out, overtime
         if($this->isFlexibleHourBaseComputation){
-            $this->flxGeneralComputation();
+            $this->flxRotaGeneralComputation();
         }else{
             $this->rotaGeneralComputation();
         }
@@ -106,7 +107,6 @@ class SMRotaShiftCrossDayComputation{
             ->where('t.emp_id', $this->data['emp_id'])
             ->whereBetween('t.attDate', [$currentDate, $nextDate])
             ->whereBetween('t.attDateTime', [$currentDateWithCutTime, $nextDateWithCutTime])
-            ->where('t.isUpdated', 0)
             ->orderBy('t.attDate', 'asc')
             ->orderBy('t.attTime', 'asc')
             ->get();
@@ -166,28 +166,28 @@ class SMRotaShiftCrossDayComputation{
         $this->actualWorkingHours = ($hours * 60) + $minutes;
     }
 
-    public function rotaShiftCalculateWorkedHours(){
+    public function rotaShiftCalculateActualWorkedHours(){
 
-        $out = ($this->isShiftHoursSet && ($this->offDutyDateTime <= $this->clockOutDtObj))
-            ? $this->offDutyDateTime
-            : $this->clockOutDtObj;
+        if ($this->presentAbsentType != AbsentType::ON_TIME || !$this->isClockInOutSet) {
+            return false;
+        }
 
-        $in = ($this->isShiftHoursSet && ($this->onDutyDateTime >= $this->clockInDtObj))
-            ? $this->onDutyDateTime
+        $t1 = $this->clockOutDtObj;
+        $t2 = ($this->isShiftHoursSet && $this->onDutyDtObj >= $this->clockInDtObj)
+            ? $this->onDutyDtObj
             : $this->clockInDtObj;
 
-
-        if(!empty($out) && !empty($in)){
-            $totWorkingHoursObj = $out->diff($in);
-            $hours = $totWorkingHoursObj->format('%h');
-            $minutes = $totWorkingHoursObj->format('%i');
-            $this->actualWorkingHours = ($hours * 60) + $minutes;
-            $this->calculateRotaShiftOfficialWorkHours();
-        }
+        $totWorkingHoursObj = $t1->diff($t2);
+        $hours = $totWorkingHoursObj->format('%h');
+        $minutes = $totWorkingHoursObj->format('%i');
+        $this->actualWorkingHours = ($hours * 60) + $minutes;
     }
 
     function calculateRotaShiftOfficialWorkHours(){
 
+        if(!$this->isShiftHoursSet || !$this->isClockInOutSet ){
+            return false;
+        }
 
         $out = ($this->isShiftHoursSet && ($this->offDutyDateTime <= $this->clockOutDtObj))
             ? $this->offDutyDateTime
@@ -224,5 +224,31 @@ class SMRotaShiftCrossDayComputation{
 
         $this->earlyHourComputation($clockInDtTemp, $this->clockOutDtObj);
         $this->overTimeComputation($clockInDtTemp2, $this->clockOutDtObj);
+    }
+
+    public function flxRotaGeneralComputation(){
+        if (!$this->isShiftHoursSet || $this->dayType != AttDayType::NORMAL_DAY) {
+            return false;
+        }
+
+        $this->flxValidations();
+        $this->flxLateHourComputation();
+
+        $flexibleHrFromDt = $this->clockInDate.' '.$this->flexibleHourFrom;
+        $flexibleHrFromDtObj = new DateTime($flexibleHrFromDt);
+
+        $this->gracePeriod = 0;
+        $clockInDt = $this->clockInDtObj;
+
+        if ($clockInDt < $flexibleHrFromDtObj) {
+            $clockInDt = $flexibleHrFromDtObj;
+            if($this->isClockInOutSet){
+                $this->clockIn = $this->flexibleHourFrom;
+            }
+
+        }
+
+        $this->earlyHourComputation($clockInDt, $this->clockOutDtObj);
+        $this->overTimeComputation($clockInDt, $this->clockOutDtObj);
     }
 }

@@ -539,7 +539,7 @@ class AttendanceComputationService
         }
     }
 
-    public function calculateOpenShiftActualWorkingHrs()
+    function calculateOpenShiftActualWorkingHrs()
     {
         $attTempRec = DB::table('srp_erp_pay_empattendancetemptable')
             ->select('autoID', 'emp_id', 'attDate', 'in_out', 'attTime')
@@ -559,43 +559,47 @@ class AttendanceComputationService
 
             foreach ($attTempRec as $key => $val) {
 
-                if ($key == 0 && $val['in_out'] == 2) {
-                    $previouseLastRecord = $this->previouseLastRecord($previousDate, $val['attTime']);
+                if ($key == 0 && $val->in_out == 2) {
+                    $previouseLastRecord = $this->previouseLastRecord($previousDate, $val->attTime);
                     $actualWorkingHrs += $previouseLastRecord;
                     continue;
                 }
 
-                if ($key ==  $lastIndex && $val['in_out'] == 1) {
-                    $nextDayFirstRecord = $this->nextDayFirstRecord($nextDate, $val['attTime']);
+
+                if ($key ==  $lastIndex && $val->in_out == 1) {
+                    $nextDayFirstRecord = $this->nextDayFirstRecord($nextDate, $val->attTime);
                     $actualWorkingHrs += $nextDayFirstRecord;
                     continue;
                 }
 
-                if ($val['in_out'] == 2) {
+                if ($val->in_out == 2) {
                     continue;
                 }
 
-                $nextKey = ($key + 1);
 
+                $nextKey = ($key + 1);
                 if (!array_key_exists($nextKey, $attTempRec)) {
                     return $actualWorkingHrs;
                 }
 
-                if ($attTempRec[$nextKey]['in_out'] == 1) {
+                if ($attTempRec[$nextKey]->in_out == 1) {
                     continue;
                 }
 
-                $t1 = new DateTime($attTempRec[$key]['attTime']);
-                $t2 = new DateTime($attTempRec[$nextKey]['attTime']);
+
+                $t1 = new DateTime($attTempRec[$key]->attTime);
+                $t2 = new DateTime($attTempRec[$nextKey]->attTime);
+
+
                 $difference = $t1->diff($t2);
                 $hours = $difference->format('%h');
                 $minutes = $difference->format('%i');
                 $actualWorkingHrs += $hours * 60 + $minutes;
             }
+
         }
         return $actualWorkingHrs;
     }
-
     public function openShiftCommonComputations()
     {
         if ($this->dayType != AttDayType::NORMAL_DAY) {
@@ -614,10 +618,8 @@ class AttendanceComputationService
     public function previouseLastRecord($previousDate, $attTime)
     {
         $previouseLastRecordTotal = 0;
-
         $previouseLastRecord = $this->getAttendancetempRecord($previousDate,'DESC');
-
-        if (!empty($previouseLastRecord) && $previouseLastRecord['in_out']==1) {
+        if (!empty($previouseLastRecord) && $previouseLastRecord->in_out==1) {
             $t1 = new DateTime($this->cutOfWorkHrsPrvious);
             $t2 = new DateTime($attTime);
             $difference = $t1->diff($t2);
@@ -631,9 +633,9 @@ class AttendanceComputationService
     public function nextDayFirstRecord($nextDate, $attTime)
     {
         $nextDayFirstRecordTotal = 0;
-        $nextDayFirstRecord =$this->getAttendancetempRecord($nextDate,'ASC');
 
-        if (!empty($nextDayFirstRecord) && $nextDayFirstRecord['in_out']==2) {
+        $nextDayFirstRecord =  $this->getAttendancetempRecord($nextDate,'ASC');
+        if (!empty($nextDayFirstRecord) && $nextDayFirstRecord->in_out==2) {
             $t1 = new DateTime($attTime);
             $t2 = new DateTime($this->cutOfWorkHrsNext);
             $difference = $t1->diff($t2);
@@ -646,12 +648,14 @@ class AttendanceComputationService
     }
 
     public function getAttendancetempRecord($date,$orderBy){
-        return DB::table('srp_erp_pay_empattendancetemptable')
+        $data = DB::table('srp_erp_pay_empattendancetemptable')
             ->select('autoID', 'emp_id', 'attDate', 'in_out', 'attTime')
             ->where('companyID', $this->data['company_id'])
             ->where('emp_id', $this->data['emp_id'])
             ->where('attDate', $date)
             ->orderBy("autoID", $orderBy)
             ->first();
+
+        return $data;
     }
 }
