@@ -537,10 +537,12 @@ class ItemLedgerService
                         Log::info($detail . date('H:i:s'));
 
                         foreach ($detailColumnArray as $column => $value) {
-
-                            $iemDefaultUnit = ItemMaster::where('itemCodeSystem',$detail['itemCodeSystem'])->select('unit')->first();
-                            $convertionUnit = UnitConversion::where('masterUnitID',$iemDefaultUnit->unit)->where('subUnitID',$detail['unitOfMeasure'])->first();
-
+                            if($masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 10)
+                            {
+                                $iemDefaultUnit = ItemMaster::where('itemCodeSystem',$detail['itemCodeSystem'])->select('unit')->first();
+                                $convertionUnit = UnitConversion::where('masterUnitID',$iemDefaultUnit->unit)->where('subUnitID',$detail['unitOfMeasure'])->first();
+                            }
+                    
                             if ($column == 'inOutQty') {
                                 if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 || $masterModel["documentSystemID"] == 87 || $masterModel["documentSystemID"] == 11) {
                                     $data[$i][$column] = ABS($detail[$value]); // make qty always plus
