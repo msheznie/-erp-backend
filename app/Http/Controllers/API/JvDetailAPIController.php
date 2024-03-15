@@ -25,8 +25,6 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateJvDetailAPIRequest;
-use App\Http\Requests\API\UpdateJvDetailAPIRequest;
 use App\Models\AccruavalFromOPMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
@@ -45,6 +43,7 @@ use App\Models\Company;
 use App\Models\ChartOfAccountAllocationDetail;
 use App\Repositories\JvDetailRepository;
 use App\Repositories\ChartOfAccountAllocationDetailHistoryRepository;
+use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -117,8 +116,8 @@ class JvDetailAPIController extends AppBaseController
     }
 
     /**
-     * @param CreateJvDetailAPIRequest $request
-     * @return Response
+     * @param Request $request
+     * @return array
      *
      * @SWG\Post(
      *      path="/jvDetails",
@@ -154,19 +153,25 @@ class JvDetailAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateJvDetailAPIRequest $request)
+    public function store(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
         $jvMaster = JvMaster::find($input['jvMasterAutoId']);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal Voucher not found');
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError('Journal Voucher not found');
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "Journal Voucher not found"
+                ];
+            }
         }
+
         $messages = [
             'currencyID' => 'Currency is required',
         ];
@@ -176,7 +181,15 @@ class JvDetailAPIController extends AppBaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError($messages, 422);
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError($messages, 422);
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => $messages['currencyID']
+                ];
+            }
         }
 
         $input['documentSystemID'] = $jvMaster->documentSystemID;
@@ -186,7 +199,15 @@ class JvDetailAPIController extends AppBaseController
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if (empty($chartOfAccount)) {
-            return $this->sendError('Chart of Account not found');
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError('Chart of Account not found');
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "Chart of Account not found"
+                ];
+            }
         }
 
         $input['glAccount'] = $chartOfAccount->AccountCode;
@@ -197,12 +218,31 @@ class JvDetailAPIController extends AppBaseController
         $input['comments'] = $jvMaster->JVNarration;
 
         $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+        if(!isset($input['isFromRecurringVoucher'])){
+            $id = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+            $input['createdUserID'] = $user->employee['empID'];
+            $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+        }
+        else{
+            $employee = UserTypeService::getSystemEmployee();
+            $input['createdUserID'] = $employee->empID;
+            $input['createdUserSystemID'] = $employee->employeeSystemID;
+        }
 
         $jvDetails = $this->jvDetailRepository->create($input);
 
-        return $this->sendResponse($jvDetails->toArray(), 'Jv Detail saved successfully');
+        if(!isset($input['isFromRecurringVoucher'])){
+            return $this->sendResponse($jvDetails->toArray(), 'Jv Detail saved successfully');
+        }
+        else{
+            return [
+                "success" => true,
+                "data" => $jvDetails->toArray()
+            ];
+        }
     }
 
     /**
@@ -257,8 +297,8 @@ class JvDetailAPIController extends AppBaseController
 
     /**
      * @param int $id
-     * @param UpdateJvDetailAPIRequest $request
-     * @return Response
+     * @param Request $request
+     * @return array
      *
      * @SWG\Put(
      *      path="/jvDetails/{id}",
@@ -301,7 +341,7 @@ class JvDetailAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateJvDetailAPIRequest $request)
+    public function update($id, Request $request)
     {
         $input = $request->all();
         $input = array_except($input, ['segment', 'currency_by', 'console_company','chartofaccount']);
@@ -312,13 +352,29 @@ class JvDetailAPIController extends AppBaseController
         $jvDetail = $this->jvDetailRepository->findWithoutFail($id);
 
         if (empty($jvDetail)) {
-            return $this->sendError('Jv Detail not found');
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError('Jv Detail not found');
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "Jv Detail not found"
+                ];
+            }
         }
 
         $jvMaster = JvMaster::find($input['jvMasterAutoId']);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal Voucher not found');
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError('Journal Voucher not found');
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "Journal Voucher not found"
+                ];
+            }
         }
 
         if ($input['creditAmount'] == '') {
@@ -333,12 +389,28 @@ class JvDetailAPIController extends AppBaseController
             if ($input['serviceLineSystemID'] > 0) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Department not found');
+                    if(!isset($input['isFromRecurringVoucher'])){
+                        return $this->sendError('Department not found');
+                    }
+                    else{
+                        return [
+                            "success" => false,
+                            "message" => "Department not found"
+                        ];
+                    }
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
                     $this->$jvDetail->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
-                    return $this->sendError('Please select an active department', 500, $serviceLineError);
+                    if(!isset($input['isFromRecurringVoucher'])){
+                        return $this->sendError('Please select an active department', 500, $serviceLineError);
+                    }
+                    else{
+                        return [
+                            "success" => false,
+                            "message" => "Please select an active department"
+                        ];
+                    }
                 }
 
                 $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -361,7 +433,15 @@ class JvDetailAPIController extends AppBaseController
 
         $jvDetail = $this->jvDetailRepository->update($input, $id);
 
-        return $this->sendResponse($jvDetail->toArray(), 'JvDetail updated successfully');
+        if(!isset($input['isFromRecurringVoucher'])){
+            return $this->sendResponse($jvDetail->toArray(), 'JvDetail updated successfully');
+        }
+        else{
+            return [
+                "success" => true,
+                "data" => $jvDetail->toArray()
+            ];
+        }
     }
 
     /**

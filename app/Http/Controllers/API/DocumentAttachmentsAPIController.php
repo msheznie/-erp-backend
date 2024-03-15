@@ -152,11 +152,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
      * Store a newly created DocumentAttachments in storage.
      * POST /documentAttachments
      *
-     * @param CreateDocumentAttachmentsAPIRequest $request
+     * @param Request $request
      *
-     * @return Response
+     * @return array
      */
-    public function store(CreateDocumentAttachmentsAPIRequest $request)
+    public function store(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -175,13 +175,29 @@ class DocumentAttachmentsAPIController extends AppBaseController
             ];
 
             if (in_array($extension, $blockExtensions)) {
-                return $this->sendError('This type of file not allow to upload.', 500);
+                if(isset($input['isFromRecurringVoucher'])){
+                    return [
+                        "success" => false,
+                        "message" => "This type of file not allow to upload."
+                    ];
+                }
+                else{
+                    return $this->sendError('This type of file not allow to upload.', 500);
+                }
             }
 
 
             if (isset($input['size'])) {
                 if ($input['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    if(isset($input['isFromRecurringVoucher'])){
+                        return [
+                            "success" => false,
+                            "message" => "Maximum allowed file size is exceeded"
+                        ];
+                    }
+                    else{
+                        return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    }
                 }
             }
 
@@ -213,15 +229,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
             $documentAttachments = $this->documentAttachmentsRepository->create($input);
 
-            $file = $request->request->get('file');
-            $decodeFile = base64_decode($file);
-
             $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
             if ($documentAttachments->documentID == 'PRN') {
                 $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
             }
-
 
             if (Helper::checkPolicy($input['companySystemID'], 50)) {
                 $path = $companyID . '/G_ERP/' . $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
@@ -229,19 +241,47 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
             }
 
-            Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
+            if(isset($input['isFromRecurringVoucher'])){
+                Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->copy($input['path'], $path);
 
-            $input['isUploaded'] = 1;
-            $input['path'] = $path;
+                $input['isUploaded'] = 1;
+                $input['path'] = $path;
 
-            $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
-            
+                $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
 
-            DB::commit();
-            return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
+                DB::commit();
+
+                return [
+                    "success" => true,
+                    "data" => $documentAttachments->toArray()
+                ];
+            }
+            else{
+                $file = $request->request->get('file');
+                $decodeFile = base64_decode($file);
+
+                Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
+
+                $input['isUploaded'] = 1;
+                $input['path'] = $path;
+
+                $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
+
+                DB::commit();
+
+                return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
+            }
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Unable to upload the attachment', 500);
+            if(isset($input['isFromRecurringVoucher'])){
+                return [
+                    "success" => false,
+                    "message" => "Unable to upload the attachment"
+                ];
+            }
+            else{
+                return $this->sendError('Unable to upload the attachment', 500);
+            }
         }
     }
 

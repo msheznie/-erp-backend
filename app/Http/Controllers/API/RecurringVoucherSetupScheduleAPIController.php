@@ -241,15 +241,21 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
             /** @var RecurringVoucherSetupSchedule $recurringVoucherSetupSchedule */
 
-            if(isset($input['state']) && $input['state'] == 'stop'){
+            if(isset($input['state']) && $input['state'] == 'toggleStop'){
                 $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->find($id);
 
                 if (empty($recurringVoucherSetupSchedule)) {
                     return $this->sendError('Recurring Voucher Setup Schedule not found');
                 }
 
-                $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->update(['stopYN' => 1], $id);
-                return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), 'RRV schedule stopped successfully');
+                $rrvCurrentState = $recurringVoucherSetupSchedule->stopYN;
+
+                $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository
+                    ->update(['stopYN' => !$rrvCurrentState], $id);
+                return $this->sendResponse(
+                    $recurringVoucherSetupSchedule->toArray(),
+                    $rrvCurrentState ? 'RRV schedule continue successfully' : 'RRV schedule stopped successfully'
+                );
             }
             else{
 
@@ -366,7 +372,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
     {
         $masterId = $request['recurringVoucherAutoId'];
 
-        $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->get();
+        $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->with('generateDocument')->get();
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }

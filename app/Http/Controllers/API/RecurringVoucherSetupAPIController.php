@@ -828,12 +828,24 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
     public function approveRecurringVoucher(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $endDate = Carbon::parse($request->endDate);
+        $financeYear = CompanyFinanceYear::whereYear('bigginingDate',$endDate->year)
+            ->whereYear('endingDate',$endDate->year)
+            ->where('companySystemID',$request->companySystemID)
+            ->where('isDeleted',0)
+            ->exists();
 
-        if (!$approve["success"]) {
-            return $this->sendError($approve["message"]);
-        } else {
-            return $this->sendResponse(array(), $approve["message"]);
+        if($financeYear){
+            $approve = \Helper::approveDocument($request);
+
+            if (!$approve["success"]) {
+                return $this->sendError($approve["message"]);
+            } else {
+                return $this->sendResponse(array(), $approve["message"]);
+            }
+        }
+        else{
+            return $this->sendError("The financial period for the year ({$endDate->year}) has not been created.");
         }
     }
 

@@ -22,7 +22,6 @@ class RecurringVoucherSetupScheduleRepository extends BaseRepository
     protected $fieldSearchable = [
         'recurringVoucherAutoId',
         'processDate',
-        'RRVcode',
         'currencyID',
         'amount',
         'jvGeneratedYN',

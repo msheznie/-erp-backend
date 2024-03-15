@@ -75,6 +75,7 @@ use App\Models\DebitNote;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Services\ChartOfAccountValidationService;
+use App\Services\UserTypeService;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -3177,18 +3178,22 @@ class Helper
                         if (!$isConfirm) {
                             // get current employee detail.
                             if (!in_array($params['document'], $empInfoSkip)) {
-
-                                if(!empty(isset($params["employee_id"]))) {
-                                    $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
-                                        $query->select('uuid', 'employee_id');
-                                    }])->find($params["employee_id"]);
-                                } else {
-                                    $empInfo = self::getEmployeeInfo();
+                                // check recurring document or not
+                                if(isset($params['isFromRecurringVoucher'])) {
+                                    $empInfo = UserTypeService::getSystemEmployee();
+                                }
+                                else{
+                                    if(!empty(isset($params["employee_id"]))) {
+                                        $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                                            $query->select('uuid', 'employee_id');
+                                        }])->find($params["employee_id"]);
+                                    } else {
+                                        $empInfo = self::getEmployeeInfo();
+                                    }
                                 }
                             } else {
                                 $empInfo  =  (object) ['empName' => null, 'empID' => null, 'employeeSystemID' => null];
                             }
-
 
                             $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
 
@@ -3335,203 +3340,204 @@ class Helper
                                     ->where("rollLevelOrder", 1)
                                     ->first();
                                 if ($documentApproved) {
-
-                                    if ($documentApproved->approvedYN == 0) {
-                                        $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $documentApproved->companySystemID)
-                                            ->where('documentSystemID', $reference_document_id)
-                                            ->first();
-
-                                        if (empty($companyDocument)) {
-                                            return ['success' => false, 'message' => 'Policy not found for this document'];
-                                        }
-
-                                        $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
-                                            ->whereHas('employee', function ($q) {
-                                                $q->where('discharegedYN', 0);
-                                            })
-                                            ->where('companySystemID', $documentApproved->companySystemID)
-                                            ->where('documentSystemID', $reference_document_id)
-                                            ->where('isActive', 1)
-                                            ->where('removedYN', 0);
-
-                                        if ($companyDocument['isServiceLineApproval'] == -1) {
-                                            $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproved->serviceLineSystemID);
-                                        }
-
-                                        $approvalList = $approvalList
-                                            ->with(['employee'])
-                                            ->groupBy('employeeSystemID')
-                                            ->get();
-
-                                        $emails = array();
-                                        $pushNotificationUserIds = [];
-                                        $pushNotificationArray = [];
-                                        $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
-                                        $file = []; 
-                                        
-                                        if($params["document"] == 117 )
-                                        {
-                                            $document->documentDescription = $sorceDocument->type == 1?'Edit request':'Amend request'; 
-                                        }
-
-                                        if($params["document"] == 118 )
-                                        { 
-                                            $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request'; 
-                                            $companySystemId = $documentApproved->companySystemID;
-                                            
-                                            $amendmentsList = DocumentModifyRequest::select('id','documentSystemCode','document_master_id')
-                                            ->with(['documentAttachments'=> function ($q) use ($companySystemId){ 
-                                                $q->select('documentSystemCode','attachmentID','originalFileName','path')
-                                                ->where('companySystemID',$companySystemId)
-                                                ->where('documentSystemID',108)
-                                                ->where('attachmentType',3);
-                                            }])
-                                            ->whereHas('documentAttachments', function($q2) use ($companySystemId) {
-                                                $q2->where('companySystemID',$companySystemId)
-                                                ->where('documentSystemID',108)
-                                                ->where('attachmentType',3);
-                                            })
-                                            ->where('id',$params['autoID'])
-                                            ->where('companySystemID',$companySystemId)
-                                            ->first();
-            
-                                            if(!empty($amendmentsList)){  
-                                                $documentAttachments = $amendmentsList->documentAttachments;
-                                                    foreach ($documentAttachments as $amendments){
-                                                        $file[$amendments->originalFileName] = Helper::getFileUrlFromS3($amendments->path);
-                                                    }     
-                                            }
-                                        }
-
-                                        $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
-
-                                        if($params["document"] == 56 )
-                                        {
-                                            $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->supplierName . '</b>';
-                                            $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->supplierName;
-                                        }
-                                        else if($params["document"] == 58 )
-                                        {
-                                            $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->CustomerName . '</b>';
-                                            $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->CustomerName;
-                                        }
-                                        else
-                                        {
-                                            $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
-                                            $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
-                                        }
-
-                                       
-
-                                        if($document->documentSystemID == 107){
-                                            $approvedDocNameBody = $document->documentDescription . ', <b> "' . $documentApproved->suppliername->name . '"</b>';
-                                        }
-
-                                        if($document->documentSystemID == 108 || $document->documentSystemID == 113){
-                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                            $approvedDocNameBody = $type[$params["document_type"]]. ' ' . ' <b>' . $documentApproved->documentCode . '</b>';
-                                        }
-
-                                        // if (in_array($params["document"], self::documentListForClickHere())) {
-                                        //     if (in_array($params["document"], [1, 50, 51])) {
-                                        //         $redirectUrl =  env("PR_APPROVE_URL");
-                                        //     } else {
-                                        //         $redirectUrl =  env("APPROVE_URL");
-                                        //     }
-                                        //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                        // } else {
-                                        //     $redirectUrl =  env("ERP_APPROVE_URL");
-                                        //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                        // }
-
-                                        $documentValues = [107,108,113,117,118]; // srm related documents.
-                                        $redirectUrl = (in_array($params["document"], $documentValues)) ? self::checkDomainErp($params["document"], $documentApproved->documentSystemCode) : self::checkDomai();
-
-                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br>';
-
-                                        if ($params["document"] == 117) {
-                                            $ammendComment = self::getDocumentModifyRequestDetails($params['autoID']);
-                                            $ammendText = '<b>Comment :</b> ' . $ammendComment['description'] . '<br>';
-                                            $body .= $ammendText;
-                                        }
-
-                                        if ($document->documentSystemID == 113 || $document->documentSystemID == 108) {
-                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                            $body .= '<p><b>'. $type[$params["document_type"]] .' Title :</b> ' . $params["tender_title"] . '</p>';
-                                            $body .= '<p><b>'. $type[$params["document_type"]] . ' Description :</b> ' . $params["tender_description"] . '</p>';
-                                        }
-
-                                        $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
-
-                                        if ($document->documentSystemID == 107){
-                                            $subject = "Pending " . $document->documentDescription . " approval " .'"' . $documentApproved->suppliername->name .'"';
-                                        }
-
-                                        if($document->documentSystemID == 108 || $document->documentSystemID == 113){
-                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                            $subject = "Pending " . $type[$params["document_type"]] . " approval " . $documentApproved->documentCode;
-                                        }
-
-                                        $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
-                                        foreach ($approvalList as $da) {
-                                            if ($da->employee) {
-                                                $emails[] = array(
-                                                    'empSystemID' => $da->employee->employeeSystemID,
-                                                    'companySystemID' => $documentApproved->companySystemID,
-                                                    'docSystemID' => $documentApproved->documentSystemID,
-                                                    'alertMessage' => $subject,
-                                                    'emailAlertMessage' => $body,
-                                                    'docSystemCode' => $documentApproved->documentSystemCode,
-                                                    'attachmentList'=> $file
-                                                );
-
-                                                $pushNotificationUserIds[] = $da->employee->employeeSystemID;
-                                            }
-                                        }
-
-                                        $pushNotificationArray['companySystemID'] = $documentApproved->companySystemID;
-                                        $pushNotificationArray['documentSystemID'] = $documentApproved->documentSystemID;
-                                        $pushNotificationArray['id'] = $documentApproved->documentSystemCode;
-                                        $pushNotificationArray['type'] = 1;
-                                        $pushNotificationArray['documentCode'] = $documentApproved->documentCode;
-                                        $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
-
-
-                                        if (in_array($params["document"], [71])) {
-                                            $ivmsPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 47)
-                                                ->where('companySystemID', $params['company'])
-                                                ->where('isYesNO', 1)
+                                    if(!isset($params['isFromRecurringVoucher'])){
+                                        if ($documentApproved->approvedYN == 0) {
+                                            $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $documentApproved->companySystemID)
+                                                ->where('documentSystemID', $reference_document_id)
                                                 ->first();
 
+                                            if (empty($companyDocument)) {
+                                                return ['success' => false, 'message' => 'Policy not found for this document'];
+                                            }
 
-                                            if ($ivmsPolicy) {
-                                                $ivmsResult = IvmsDeliveryOrderService::postIvmsDeliveryOrder($masterRec);
-                                                if (!$ivmsResult['status']) {
-                                                    DB::rollback();
-                                                    return ['success' => false, 'message' => $ivmsResult['message']];
+                                            $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
+                                                ->whereHas('employee', function ($q) {
+                                                    $q->where('discharegedYN', 0);
+                                                })
+                                                ->where('companySystemID', $documentApproved->companySystemID)
+                                                ->where('documentSystemID', $reference_document_id)
+                                                ->where('isActive', 1)
+                                                ->where('removedYN', 0);
+
+                                            if ($companyDocument['isServiceLineApproval'] == -1) {
+                                                $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproved->serviceLineSystemID);
+                                            }
+
+                                            $approvalList = $approvalList
+                                                ->with(['employee'])
+                                                ->groupBy('employeeSystemID')
+                                                ->get();
+
+                                            $emails = array();
+                                            $pushNotificationUserIds = [];
+                                            $pushNotificationArray = [];
+                                            $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
+                                            $file = [];
+
+                                            if($params["document"] == 117 )
+                                            {
+                                                $document->documentDescription = $sorceDocument->type == 1?'Edit request':'Amend request';
+                                            }
+
+                                            if($params["document"] == 118 )
+                                            {
+                                                $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
+                                                $companySystemId = $documentApproved->companySystemID;
+
+                                                $amendmentsList = DocumentModifyRequest::select('id','documentSystemCode','document_master_id')
+                                                    ->with(['documentAttachments'=> function ($q) use ($companySystemId){
+                                                        $q->select('documentSystemCode','attachmentID','originalFileName','path')
+                                                            ->where('companySystemID',$companySystemId)
+                                                            ->where('documentSystemID',108)
+                                                            ->where('attachmentType',3);
+                                                    }])
+                                                    ->whereHas('documentAttachments', function($q2) use ($companySystemId) {
+                                                        $q2->where('companySystemID',$companySystemId)
+                                                            ->where('documentSystemID',108)
+                                                            ->where('attachmentType',3);
+                                                    })
+                                                    ->where('id',$params['autoID'])
+                                                    ->where('companySystemID',$companySystemId)
+                                                    ->first();
+
+                                                if(!empty($amendmentsList)){
+                                                    $documentAttachments = $amendmentsList->documentAttachments;
+                                                    foreach ($documentAttachments as $amendments){
+                                                        $file[$amendments->originalFileName] = Helper::getFileUrlFromS3($amendments->path);
+                                                    }
                                                 }
                                             }
-                                        }
-                                        
-                                        $notifyConfirm = (isset($params['fromUpload']) && $params['fromUpload']) ? false : true;
 
-                                        if ($notifyConfirm) {
-                                            $sendEmail = \Email::sendEmail($emails);
-                                            if (!$sendEmail["success"]) {
-                                                return ['success' => false, 'message' => $sendEmail["message"]];
+                                            $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+
+                                            if($params["document"] == 56 )
+                                            {
+                                                $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->supplierName . '</b>';
+                                                $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->supplierName;
+                                            }
+                                            else if($params["document"] == 58 )
+                                            {
+                                                $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->CustomerName . '</b>';
+                                                $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->CustomerName;
+                                            }
+                                            else
+                                            {
+                                                $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
+                                                $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
                                             }
 
-                                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
-                                            $webPushData = [
-                                                'title' => $pushNotificationMessage,
-                                                'body' => '',
-                                                'url' => $redirectUrl,
-                                            ];
+
+                                            if($document->documentSystemID == 107){
+                                                $approvedDocNameBody = $document->documentDescription . ', <b> "' . $documentApproved->suppliername->name . '"</b>';
+                                            }
+
+                                            if($document->documentSystemID == 108 || $document->documentSystemID == 113){
+                                                $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                                $approvedDocNameBody = $type[$params["document_type"]]. ' ' . ' <b>' . $documentApproved->documentCode . '</b>';
+                                            }
+
+                                            // if (in_array($params["document"], self::documentListForClickHere())) {
+                                            //     if (in_array($params["document"], [1, 50, 51])) {
+                                            //         $redirectUrl =  env("PR_APPROVE_URL");
+                                            //     } else {
+                                            //         $redirectUrl =  env("APPROVE_URL");
+                                            //     }
+                                            //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                            // } else {
+                                            //     $redirectUrl =  env("ERP_APPROVE_URL");
+                                            //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                            // }
+
+                                            $documentValues = [107,108,113,117,118]; // srm related documents.
+                                            $redirectUrl = (in_array($params["document"], $documentValues)) ? self::checkDomainErp($params["document"], $documentApproved->documentSystemCode) : self::checkDomai();
+
+                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br>';
+
+                                            if ($params["document"] == 117) {
+                                                $ammendComment = self::getDocumentModifyRequestDetails($params['autoID']);
+                                                $ammendText = '<b>Comment :</b> ' . $ammendComment['description'] . '<br>';
+                                                $body .= $ammendText;
+                                            }
+
+                                            if ($document->documentSystemID == 113 || $document->documentSystemID == 108) {
+                                                $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                                $body .= '<p><b>'. $type[$params["document_type"]] .' Title :</b> ' . $params["tender_title"] . '</p>';
+                                                $body .= '<p><b>'. $type[$params["document_type"]] . ' Description :</b> ' . $params["tender_description"] . '</p>';
+                                            }
+
+                                            $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
+
+                                            if ($document->documentSystemID == 107){
+                                                $subject = "Pending " . $document->documentDescription . " approval " .'"' . $documentApproved->suppliername->name .'"';
+                                            }
+
+                                            if($document->documentSystemID == 108 || $document->documentSystemID == 113){
+                                                $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                                $subject = "Pending " . $type[$params["document_type"]] . " approval " . $documentApproved->documentCode;
+                                            }
+
+                                            $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
+                                            foreach ($approvalList as $da) {
+                                                if ($da->employee) {
+                                                    $emails[] = array(
+                                                        'empSystemID' => $da->employee->employeeSystemID,
+                                                        'companySystemID' => $documentApproved->companySystemID,
+                                                        'docSystemID' => $documentApproved->documentSystemID,
+                                                        'alertMessage' => $subject,
+                                                        'emailAlertMessage' => $body,
+                                                        'docSystemCode' => $documentApproved->documentSystemCode,
+                                                        'attachmentList'=> $file
+                                                    );
+
+                                                    $pushNotificationUserIds[] = $da->employee->employeeSystemID;
+                                                }
+                                            }
+
+                                            $pushNotificationArray['companySystemID'] = $documentApproved->companySystemID;
+                                            $pushNotificationArray['documentSystemID'] = $documentApproved->documentSystemID;
+                                            $pushNotificationArray['id'] = $documentApproved->documentSystemCode;
+                                            $pushNotificationArray['type'] = 1;
+                                            $pushNotificationArray['documentCode'] = $documentApproved->documentCode;
+                                            $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
+
+
+                                            if (in_array($params["document"], [71])) {
+                                                $ivmsPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 47)
+                                                    ->where('companySystemID', $params['company'])
+                                                    ->where('isYesNO', 1)
+                                                    ->first();
+
+
+                                                if ($ivmsPolicy) {
+                                                    $ivmsResult = IvmsDeliveryOrderService::postIvmsDeliveryOrder($masterRec);
+                                                    if (!$ivmsResult['status']) {
+                                                        DB::rollback();
+                                                        return ['success' => false, 'message' => $ivmsResult['message']];
+                                                    }
+                                                }
+                                            }
+
+                                            $notifyConfirm = (isset($params['fromUpload']) && $params['fromUpload']) ? false : true;
+
+                                            if ($notifyConfirm) {
+                                                $sendEmail = \Email::sendEmail($emails);
+                                                if (!$sendEmail["success"]) {
+                                                    return ['success' => false, 'message' => $sendEmail["message"]];
+                                                }
+
+                                                $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+
+                                                $webPushData = [
+                                                    'title' => $pushNotificationMessage,
+                                                    'body' => '',
+                                                    'url' => $redirectUrl,
+                                                ];
+                                            }
+
+                                            // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
+
                                         }
-
-                                        // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
-
                                     }
                                 }
 
@@ -4440,7 +4446,12 @@ class Helper
 
                     
                 // get current employee detail
-                $empInfo = (isset($input['fromUpload']) && $input['fromUpload']) ? self::getEmployeeInfoByEmployeeID($input['approvedBy']) : self::getEmployeeInfo();
+                if(isset($input['isFromRecurringVoucher'])){
+                    $empInfo = UserTypeService::getSystemEmployee();
+                }
+                else{
+                    $empInfo = (isset($input['fromUpload']) && $input['fromUpload']) ? self::getEmployeeInfoByEmployeeID($input['approvedBy']) : self::getEmployeeInfo();
+                }
 
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
@@ -4448,53 +4459,55 @@ class Helper
                     return ['success' => false, 'message' => 'Document is not confirmed'];
                 }
 
-                $policyConfirmedUserToApprove = '';
+                if(!isset($input['isFromRecurringVoucher'])){
+                    $policyConfirmedUserToApprove = '';
 
-                if (in_array($input["documentSystemID"], [56, 57, 58, 59])) {
-                    $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
-                        ->where('companySystemID', $isConfirmed['primaryCompanySystemID'])
+                    if (in_array($input["documentSystemID"], [56, 57, 58, 59])) {
+                        $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                            ->where('companySystemID', $isConfirmed['primaryCompanySystemID'])
+                            ->first();
+                    } else {
+                        $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                            ->where('companySystemID', $isConfirmed['companySystemID'])
+                            ->first();
+                    }
+
+
+                    $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApproved->companySystemID)
+                        ->where('documentSystemID', $reference_document_id)
                         ->first();
-                } else {
-                    $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
-                        ->where('companySystemID', $isConfirmed['companySystemID'])
-                        ->first();
-                }
+                    if (empty($companyDocument)) {
+                        return ['success' => false, 'message' => 'Policy not found.'];
+                    }
+
+                    $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
+                        ->where('companySystemID', $docApproved->companySystemID)
+                        ->where('employeeSystemID', $empInfo->employeeSystemID)
+                        ->where('documentSystemID', $reference_document_id)
+                        ->where('isActive', 1)
+                        ->where('removedYN', 0);
+
+                    if ($companyDocument['isServiceLineApproval'] == -1) {
+                        $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->where('ServiceLineSystemID', $docApproved->serviceLineSystemID);
+                    }
 
 
-                $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApproved->companySystemID)
-                    ->where('documentSystemID', $reference_document_id)
-                    ->first();
-                if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found.'];
-                }
+                    $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function ($q) {
+                        $q->where('discharegedYN', 0);
+                    })
+                        ->groupBy('employeeSystemID')
+                        ->exists();
 
-                $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
-                    ->where('companySystemID', $docApproved->companySystemID)
-                    ->where('employeeSystemID', $empInfo->employeeSystemID)
-                    ->where('documentSystemID', $reference_document_id)
-                    ->where('isActive', 1)
-                    ->where('removedYN', 0);
+                    if (!$checkUserHasApprovalAccess) {
+                        if (($input["documentSystemID"] == 9 && ($isConfirmed && $isConfirmed->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
+                            return ['success' => false, 'message' => 'You do not have access to approve this document.'];
+                        }
+                    }
 
-                if ($companyDocument['isServiceLineApproval'] == -1) {
-                    $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->where('ServiceLineSystemID', $docApproved->serviceLineSystemID);
-                }
-
-
-                $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function ($q) {
-                    $q->where('discharegedYN', 0);
-                })
-                    ->groupBy('employeeSystemID')
-                    ->exists();
-                
-                if (!$checkUserHasApprovalAccess) {
-                    if (($input["documentSystemID"] == 9 && ($isConfirmed && $isConfirmed->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
-                        return ['success' => false, 'message' => 'You do not have access to approve this document.'];
-                    } 
-                }
-
-                if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
-                    if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                        return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                    if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
+                        if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
+                            return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                        }
                     }
                 }
 
@@ -5277,180 +5290,182 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
-                        $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
-                        $emails = array();
-                        $pushNotificationUserIds = [];
-                        $pushNotificationArray = [];
-                        if (!empty($sourceModel)) {
-                            $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
-                           
-
-                            if($input["documentSystemID"] == 117 )
-                            {
-                                $document->documentDescription = $sourceModel->type == 1?'Edit Request':'Amend Request';
-                            }
-
-                            if($input["documentSystemID"] == 118)
-                            {
-                                $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
-                            }
-
-                            if($input["documentSystemID"] == 56)
-                            {
-                                $subjectName = $document->documentDescription . ' ' . $isConfirmed['supplierName'];
-                                $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['supplierName'] . '</b>';
-                            }
-                            else if($input["documentSystemID"] == 58 )
-                            {
-                                $subjectName = $document->documentDescription . ' ' . $isConfirmed['CustomerName'];
-                                $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['CustomerName'] . '</b>';
-                            }
-                            else
-                            {
-                                $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                                $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
-                            }
-
-                 
-
-                            if($input["documentSystemID"] == 107){
-                                $subjectName = $document->documentDescription . ' ' .'"' . $currentApproved->suppliername->name .'"';
-                                $bodyName = $document->documentDescription . ', ' . '<b>"' . $currentApproved->suppliername->name . '"</b>';
-                            }
-
-                            if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
-                                $tenderMaster = TenderMaster::find($input["id"]);
-                                $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                $subjectName = $type[$tenderMaster->document_type] . ' ' . $currentApproved->documentCode;
-                                $bodyName = $type[$tenderMaster->document_type] . ' ' .  '<b>' . $currentApproved->documentCode . '</b>';
-                            }
-
-                            if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
-
-                                if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
-                                    $subject = $subjectName . " is fully approved";
-                                    $body = "<p>". $bodyName . " is fully approved . ";
-                                    $pushNotificationMessage = $subject;
-                                    $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
-                                } else {
-
-                                    $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
-                                        ->where('documentSystemID', $reference_document_id)
-                                        ->first();
-
-                                    if (empty($companyDocument)) {
-                                        return ['success' => false, 'message' => 'Policy not found for this document'];
-                                    }
-
-                                    $nextLevel = $currentApproved->rollLevelOrder + 1;
-
-                                    $nextApproval = Models\DocumentApproved::where('companySystemID', $currentApproved->companySystemID)
-                                        ->where('documentSystemID', $currentApproved->documentSystemID)
-                                        ->where('documentSystemCode', $currentApproved->documentSystemCode)
-                                        ->where('rollLevelOrder', $nextLevel)
-                                        ->first();
-
-                                    $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $nextApproval->approvalGroupID)
-                                        ->whereHas('employee', function ($q) {
-                                            $q->where('discharegedYN', 0);
-                                        })
-                                        ->where('companySystemID', $currentApproved->companySystemID)
-                                        ->where('documentSystemID', $reference_document_id)
-                                        ->where('isActive', 1)
-                                        ->where('removedYN', 0);
+                        if(!isset($input['isFromRecurringVoucher'])){
+                            $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                            $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
+                            $emails = array();
+                            $pushNotificationUserIds = [];
+                            $pushNotificationArray = [];
+                            if (!empty($sourceModel)) {
+                                $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
 
 
-                                    if ($companyDocument['isServiceLineApproval'] == -1) {
-                                        $approvalList = $approvalList->where('ServiceLineSystemID', $currentApproved->serviceLineSystemID);
-                                    }
+                                if($input["documentSystemID"] == 117 )
+                                {
+                                    $document->documentDescription = $sourceModel->type == 1?'Edit Request':'Amend Request';
+                                }
 
-                                    $approvalList = $approvalList
-                                        ->with(['employee'])
-                                        ->groupBy('employeeSystemID')
-                                        ->get();
+                                if($input["documentSystemID"] == 118)
+                                {
+                                    $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
+                                }
 
-                                    $pushNotificationMessage = $subjectName . " is pending for your approval.";
+                                if($input["documentSystemID"] == 56)
+                                {
+                                    $subjectName = $document->documentDescription . ' ' . $isConfirmed['supplierName'];
+                                    $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['supplierName'] . '</b>';
+                                }
+                                else if($input["documentSystemID"] == 58 )
+                                {
+                                    $subjectName = $document->documentDescription . ' ' . $isConfirmed['CustomerName'];
+                                    $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['CustomerName'] . '</b>';
+                                }
+                                else
+                                {
+                                    $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                                    $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                                }
 
-                                    // if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
-                                    //     if (in_array($input["documentSystemID"], [1, 50, 51])) {
-                                    //         $redirectUrl =  env("PR_APPROVE_URL");
-                                    //     } else {
-                                    //         $redirectUrl =  env("APPROVE_URL");
-                                    //     }
-                                    //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                    // } else {
-                                    //     $redirectUrl =  env("ERP_APPROVE_URL");
-                                    //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                    // }
 
 
-                                    $documentValues = [107,108,113,117,118]; // srm related documents.
+                                if($input["documentSystemID"] == 107){
+                                    $subjectName = $document->documentDescription . ' ' .'"' . $currentApproved->suppliername->name .'"';
+                                    $bodyName = $document->documentDescription . ', ' . '<b>"' . $currentApproved->suppliername->name . '"</b>';
+                                }
 
-                                    $redirectUrl = (in_array($input["documentSystemID"], $documentValues)) ? self::checkDomainErp($input["documentSystemID"], $currentApproved->documentSystemCode) : self::checkDomai();
-                                    //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';   
-                                    $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br>';
+                                if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
+                                    $tenderMaster = TenderMaster::find($input["id"]);
+                                    $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                    $subjectName = $type[$tenderMaster->document_type] . ' ' . $currentApproved->documentCode;
+                                    $bodyName = $type[$tenderMaster->document_type] . ' ' .  '<b>' . $currentApproved->documentCode . '</b>';
+                                }
 
-                                    if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
-                                        $tenderMaster = TenderMaster::find($input["id"]);
-                                        $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                        $nextApprovalBody .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
-                                    }
+                                if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
 
-                                    if ($input["documentSystemID"] == 117)
-                                    {
-                                        $ammendComment = self::getDocumentModifyRequestDetails($input['documentSystemCode']);
-                                        $ammendText = '<b>Comment :</b> ' . $ammendComment['description'] . '<br>';
-                                        $nextApprovalBody .= $ammendText;
-                                    }
+                                    if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
+                                        $subject = $subjectName . " is fully approved";
+                                        $body = "<p>". $bodyName . " is fully approved . ";
+                                        $pushNotificationMessage = $subject;
+                                        $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
+                                    } else {
 
-                                    $nextApprovalBody .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
+                                            ->where('documentSystemID', $reference_document_id)
+                                            ->first();
 
-                                    $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
-                                    $nextApproveNameList = "";
-                                    foreach ($approvalList as $da) {
-                                        if ($da->employee) {
+                                        if (empty($companyDocument)) {
+                                            return ['success' => false, 'message' => 'Policy not found for this document'];
+                                        }
 
-                                            $nextApproveNameList = $nextApproveNameList . '<br>' . $da->employee->empName;
+                                        $nextLevel = $currentApproved->rollLevelOrder + 1;
 
-                                            $emails[] = array(
-                                                'empSystemID' => $da->employee->employeeSystemID,
-                                                'companySystemID' => $nextApproval->companySystemID,
-                                                'docSystemID' => $nextApproval->documentSystemID,
-                                                'alertMessage' => $nextApprovalSubject,
-                                                'emailAlertMessage' => $nextApprovalBody,
-                                                'docSystemCode' => $nextApproval->documentSystemCode
-                                            );
+                                        $nextApproval = Models\DocumentApproved::where('companySystemID', $currentApproved->companySystemID)
+                                            ->where('documentSystemID', $currentApproved->documentSystemID)
+                                            ->where('documentSystemCode', $currentApproved->documentSystemCode)
+                                            ->where('rollLevelOrder', $nextLevel)
+                                            ->first();
 
-                                            $pushNotificationUserIds[] = $da->employee->employeeSystemID;
+                                        $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $nextApproval->approvalGroupID)
+                                            ->whereHas('employee', function ($q) {
+                                                $q->where('discharegedYN', 0);
+                                            })
+                                            ->where('companySystemID', $currentApproved->companySystemID)
+                                            ->where('documentSystemID', $reference_document_id)
+                                            ->where('isActive', 1)
+                                            ->where('removedYN', 0);
+
+
+                                        if ($companyDocument['isServiceLineApproval'] == -1) {
+                                            $approvalList = $approvalList->where('ServiceLineSystemID', $currentApproved->serviceLineSystemID);
+                                        }
+
+                                        $approvalList = $approvalList
+                                            ->with(['employee'])
+                                            ->groupBy('employeeSystemID')
+                                            ->get();
+
+                                        $pushNotificationMessage = $subjectName . " is pending for your approval.";
+
+                                        // if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
+                                        //     if (in_array($input["documentSystemID"], [1, 50, 51])) {
+                                        //         $redirectUrl =  env("PR_APPROVE_URL");
+                                        //     } else {
+                                        //         $redirectUrl =  env("APPROVE_URL");
+                                        //     }
+                                        //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        // } else {
+                                        //     $redirectUrl =  env("ERP_APPROVE_URL");
+                                        //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        // }
+
+
+                                        $documentValues = [107,108,113,117,118]; // srm related documents.
+
+                                        $redirectUrl = (in_array($input["documentSystemID"], $documentValues)) ? self::checkDomainErp($input["documentSystemID"], $currentApproved->documentSystemCode) : self::checkDomai();
+                                        //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br>';
+
+                                        if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
+                                            $tenderMaster = TenderMaster::find($input["id"]);
+                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                            $nextApprovalBody .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
+                                        }
+
+                                        if ($input["documentSystemID"] == 117)
+                                        {
+                                            $ammendComment = self::getDocumentModifyRequestDetails($input['documentSystemCode']);
+                                            $ammendText = '<b>Comment :</b> ' . $ammendComment['description'] . '<br>';
+                                            $nextApprovalBody .= $ammendText;
+                                        }
+
+                                        $nextApprovalBody .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
+
+                                        $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
+                                        $nextApproveNameList = "";
+                                        foreach ($approvalList as $da) {
+                                            if ($da->employee) {
+
+                                                $nextApproveNameList = $nextApproveNameList . '<br>' . $da->employee->empName;
+
+                                                $emails[] = array(
+                                                    'empSystemID' => $da->employee->employeeSystemID,
+                                                    'companySystemID' => $nextApproval->companySystemID,
+                                                    'docSystemID' => $nextApproval->documentSystemID,
+                                                    'alertMessage' => $nextApprovalSubject,
+                                                    'emailAlertMessage' => $nextApprovalBody,
+                                                    'docSystemCode' => $nextApproval->documentSystemCode
+                                                );
+
+                                                $pushNotificationUserIds[] = $da->employee->employeeSystemID;
+                                            }
+                                        }
+
+                                        $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
+                                        $body = '<p>'.$bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
+
+                                        if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
+                                            $tenderMaster = TenderMaster::find($input["id"]);
+                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                            $body .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
                                         }
                                     }
 
-                                    $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
-                                    $body = '<p>'.$bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
+                                    $emails[] = array(
+                                        'empSystemID' => $sourceModel[$docInforArr["confirmedEmpSystemID"]],
+                                        'companySystemID' => $currentApproved->companySystemID,
+                                        'docSystemID' => $currentApproved->documentSystemID,
+                                        'alertMessage' => $subject,
+                                        'emailAlertMessage' => $body,
+                                        'docSystemCode' => $input["documentSystemCode"]
+                                    );
 
-                                    if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
-                                        $tenderMaster = TenderMaster::find($input["id"]);
-                                        $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                        $body .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
-                                    }
+                                    $pushNotificationArray['companySystemID'] = $currentApproved->companySystemID;
+                                    $pushNotificationArray['documentSystemID'] = $currentApproved->documentSystemID;
+                                    $pushNotificationArray['id'] = $currentApproved->documentSystemCode;
+                                    $pushNotificationArray['type'] = 1;
+                                    $pushNotificationArray['documentCode'] = $currentApproved->documentCode;
+                                    $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
                                 }
-
-                                $emails[] = array(
-                                    'empSystemID' => $sourceModel[$docInforArr["confirmedEmpSystemID"]],
-                                    'companySystemID' => $currentApproved->companySystemID,
-                                    'docSystemID' => $currentApproved->documentSystemID,
-                                    'alertMessage' => $subject,
-                                    'emailAlertMessage' => $body,
-                                    'docSystemCode' => $input["documentSystemCode"]
-                                );
-
-                                $pushNotificationArray['companySystemID'] = $currentApproved->companySystemID;
-                                $pushNotificationArray['documentSystemID'] = $currentApproved->documentSystemID;
-                                $pushNotificationArray['id'] = $currentApproved->documentSystemCode;
-                                $pushNotificationArray['type'] = 1;
-                                $pushNotificationArray['documentCode'] = $currentApproved->documentCode;
-                                $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
                             }
                         }
 
@@ -5459,27 +5474,29 @@ class Helper
                             SendEmailForDocument::approvedDocument($input);
                         }
 
-                        $notifyApprove = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
+                        if (!isset($input['isFromRecurringVoucher'])){
+                            $notifyApprove = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
 
-                        if ($notifyApprove) {
-                            $sendEmail = \Email::sendEmail($emails);
+                            if ($notifyApprove) {
+                                $sendEmail = \Email::sendEmail($emails);
 
-                          
-                            if (!$sendEmail["success"]) {
-                                return ['success' => false, 'message' => $sendEmail["message"]];
+
+                                if (!$sendEmail["success"]) {
+                                    return ['success' => false, 'message' => $sendEmail["message"]];
+                                }
+
+                                $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
+
                             }
 
-                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
+                            $webPushData = [
+                                'title' => $pushNotificationMessage,
+                                'body' => '',
+                                'url' => isset($redirectUrl) ? $redirectUrl : "",
+                            ];
 
+                            // WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds, $dataBase);
                         }
-                        
-                        $webPushData = [
-                            'title' => $pushNotificationMessage,
-                            'body' => '',
-                            'url' => isset($redirectUrl) ? $redirectUrl : "",
-                        ];
-
-                        // WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds, $dataBase);
 
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];

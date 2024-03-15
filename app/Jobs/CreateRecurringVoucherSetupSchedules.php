@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
 use App\Models\RecurringVoucherSetup;
 use App\Repositories\RecurringVoucherSetupDetailRepository;
 use App\Repositories\RecurringVoucherSetupScheduleRepository;
@@ -26,6 +28,11 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
      */
     public function __construct(RecurringVoucherSetup $recurringVoucherSetup)
     {
+        if(env('IS_MULTI_TENANCY',false)){
+            self::onConnection('database_main');
+        }else{
+            self::onConnection('database');
+        }
         $this->recurringVoucherSetupModel = $recurringVoucherSetup;
     }
 
@@ -46,17 +53,23 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
             $rrvDebitSum = $recurringVoucherSetupDetailRepository->where('recurringVoucherAutoId', $recurringVoucher->recurringVoucherAutoId)->sum('debitAmount');
 
             for($i = 0; $i < $noOfDayMonthYear; $i++){
+                $processDate = $i == 0 ? $processDate : $processDate->addMonth();
+                $financeYear = CompanyFinanceYear::whereYear('bigginingDate',$processDate->year)
+                    ->whereYear('endingDate',$processDate->year)
+                    ->where('companySystemID',$recurringVoucher->companySystemID)
+                    ->first();
+                $financePeriod = CompanyFinancePeriod::where('companySystemID',$recurringVoucher->companySystemID)
+                    ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
+                    ->whereMonth('dateFrom',$processDate->month)
+                    ->whereMonth('dateTo',$processDate->month)
+                    ->where('departmentSystemID',5)
+                    ->first();
                 $recurringVoucherSetupScheduleRepository->create([
                     'recurringVoucherAutoId' => $recurringVoucher->recurringVoucherAutoId,
-                    'processDate' => $i == 0 ? $processDate : $processDate->addMonth(),
-                    'RRVcode' => $recurringVoucher->RRVcode,
-                    'currencyID' => $recurringVoucher->currencyID,
+                    'processDate' => $processDate,
                     'amount' => $rrvDebitSum,
-                    'documentStatus' => $recurringVoucher->documentStatus,
-                    'documentSystemID' => $recurringVoucher->documentSystemID,
-                    'documentID' => $recurringVoucher->documentID,
-                    'companySystemID' => $recurringVoucher->companySystemID,
-                    'companyFinanceYearID' => $recurringVoucher->companyFinanceYearID,
+                    'companyFinanceYearID' => $financeYear->companyFinanceYearID,
+                    'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
                     'createdUserSystemID' => $recurringVoucher->createdUserSystemID,
                     'createdUserID' => $recurringVoucher->createdUserID,
                     'createdPcID' => $recurringVoucher->createdPcID

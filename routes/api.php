@@ -136,6 +136,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
 
+            Route::resource('user_types', 'UserTypeAPIController');
+
             Route::post('getCurrencyDetails', 'SupplierCurrencyAPIController@getCurrencyDetails');
 
             Route::resource('units', 'UnitAPIController');

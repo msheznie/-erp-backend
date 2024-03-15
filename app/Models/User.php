@@ -49,7 +49,8 @@ class User extends Authenticatable
         'password',
         'uuid',
         'remember_token',
-        'login_token'
+        'login_token',
+        'userType'
     ];
 
     /**
@@ -65,6 +66,7 @@ class User extends Authenticatable
         'email' => 'string',
         'uuid' => 'string',
         'password' => 'string',
+        'userType' => 'integer',
         'remember_token' => 'string',
         'login_token'=> 'string'
     ];
@@ -86,5 +88,10 @@ class User extends Authenticatable
     public function getUuidAttribute($value)
     {
         return env("WEB_PUSH_APP_NAME")."_".$value;
+    }
+
+    public function user_type()
+    {
+        return $this->hasOne('App\Models\UserType','id','userType');
     }
 }

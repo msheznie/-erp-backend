@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Eloquent as Model;
 
 /**
@@ -178,15 +179,11 @@ class RecurringVoucherSetupSchedule extends Model
     public $fillable = [
         'recurringVoucherAutoId',
         'processDate',
-        'RRVcode',
-        'currencyID',
         'amount',
         'rrvGeneratedYN',
         'stopYN',
-        'documentSystemID',
-        'documentID',
-        'companySystemID',
         'companyFinanceYearID',
+        'companyFinancePeriodID',
         'createdUserSystemID',
         'createdUserID',
         'createdPcID',
@@ -195,7 +192,7 @@ class RecurringVoucherSetupSchedule extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
-        'documentStatus'
+        'generateDocumentID'
     ];
 
     /**
@@ -206,16 +203,13 @@ class RecurringVoucherSetupSchedule extends Model
     protected $casts = [
         'rrvSetupScheduleAutoID' => 'integer',
         'recurringVoucherAutoId' => 'integer',
-        'processDate' => 'datetime',
-        'RRVcode' => 'string',
-        'currencyID' => 'integer',
+        'processDate' => 'date',
+        'generateDocumentID' => 'integer',
         'amount' => 'float',
         'rrvGeneratedYN' => 'integer',
         'stopYN' => 'integer',
-        'documentSystemID' => 'integer',
-        'documentID' => 'string',
-        'companySystemID' => 'integer',
         'companyFinanceYearID' => 'integer',
+        'companyFinancePeriodID' => 'integer',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'integer',
         'createdPcID' => 'string',
@@ -223,8 +217,11 @@ class RecurringVoucherSetupSchedule extends Model
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'createdDateTime' => 'datetime',
-        'timestamp' => 'datetime',
-        'documentStatus' => 'integer',
+        'timestamp' => 'datetime'
+    ];
+
+    protected $appends = [
+        'isReActiveState'
     ];
 
     /**
@@ -234,11 +231,6 @@ class RecurringVoucherSetupSchedule extends Model
      */
     public static $rules = [
     ];
-
-    public function transactioncurrency()
-    {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID', 'currencyID');
-    }
 
     public function created_by()
     {
@@ -253,6 +245,21 @@ class RecurringVoucherSetupSchedule extends Model
     public function master()
     {
         return $this->belongsTo('App\Models\RecurringVoucherSetup', 'recurringVoucherAutoId', 'recurringVoucherAutoId');
+    }
+
+    public function generateDocument()
+    {
+        $documentType = $this->master->documentType;
+        if($documentType == 0){
+            return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
+        }
+        else{ //remove else part with other document types
+            return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
+        }
+    }
+
+    public function getIsReActiveStateAttribute(){
+        return Carbon::today() < Carbon::parse($this->processDate) ? 1 : 0;
     }
     
 }
