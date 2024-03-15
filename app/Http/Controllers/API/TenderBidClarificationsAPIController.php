@@ -621,7 +621,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
         } else {
             foreach ($emailString as $email){
             $forwardEmail = email::emailAddressFormat($email);
-            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarifications"."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
+            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
             }
         }
         return ['success' => true, 'message' => 'Email/s sent successfully'];
