@@ -32,10 +32,16 @@ class CreateRecurringVoucherDocument implements ShouldQueue
      */
     public function __construct($tenantDb)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
+            if(env('IS_MULTI_TENANCY',false)){
+                self::onConnection('database_main');
+            }
+            else{
+                self::onConnection('database');
+            }
+        }
+        else{
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->tenantDb = $tenantDb;

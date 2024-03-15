@@ -4732,7 +4732,7 @@ class Helper
 
                             if($input["documentSystemID"] == 119){
                                 $recurringVoucherSetup = RecurringVoucherSetup::find($input['documentSystemCode']);
-                                CreateRecurringVoucherSetupSchedules::dispatch($recurringVoucherSetup);
+                                CreateRecurringVoucherSetupSchedules::dispatch($recurringVoucherSetup,$dataBase);
                             }
 
                                 // create monthly deduction

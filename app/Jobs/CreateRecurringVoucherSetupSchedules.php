@@ -2,9 +2,12 @@
 
 namespace App\Jobs;
 
+use App\helper\CommonJobService;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\RecurringVoucherSetup;
+use App\Models\RecurringVoucherSetupDetail;
+use App\Models\RecurringVoucherSetupSchedule;
 use App\Repositories\RecurringVoucherSetupDetailRepository;
 use App\Repositories\RecurringVoucherSetupScheduleRepository;
 use Carbon\Carbon;
@@ -14,6 +17,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CreateRecurringVoucherSetupSchedules implements ShouldQueue
 {
@@ -21,19 +25,29 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
 
     protected $recurringVoucherSetupModel;
 
+    protected $dataBase;
+
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(RecurringVoucherSetup $recurringVoucherSetup)
+    public function __construct($recurringVoucherSetup, $dataBase)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
+            if(env('IS_MULTI_TENANCY',false)){
+                self::onConnection('database_main');
+            }
+            else{
+                self::onConnection('database');
+            }
         }
+        else{
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
+        }
+
         $this->recurringVoucherSetupModel = $recurringVoucherSetup;
+        $this->dataBase = $dataBase;
     }
 
     /**
@@ -41,8 +55,12 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
      *
      * @return void
      */
-    public function handle(RecurringVoucherSetupDetailRepository $recurringVoucherSetupDetailRepository, RecurringVoucherSetupScheduleRepository $recurringVoucherSetupScheduleRepository)
+    public function handle()
     {
+        Log::useFiles(CommonJobService::get_specific_log_file('recurring-voucher'));
+
+        CommonJobService::db_switch($this->dataBase);
+
         try {
             DB::beginTransaction();
             $recurringVoucher = $this->recurringVoucherSetupModel;
@@ -50,7 +68,7 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
             $processDate = Carbon::parse($recurringVoucher->startDate);
             $noOfDayMonthYear = $recurringVoucher->noOfDayMonthYear;
 
-            $rrvDebitSum = $recurringVoucherSetupDetailRepository->where('recurringVoucherAutoId', $recurringVoucher->recurringVoucherAutoId)->sum('debitAmount');
+            $rrvDebitSum = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $recurringVoucher->recurringVoucherAutoId)->sum('debitAmount');
 
             for($i = 0; $i < $noOfDayMonthYear; $i++){
                 $processDate = $i == 0 ? $processDate : $processDate->addMonth();
@@ -64,7 +82,7 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
                     ->whereMonth('dateTo',$processDate->month)
                     ->where('departmentSystemID',5)
                     ->first();
-                $recurringVoucherSetupScheduleRepository->create([
+                RecurringVoucherSetupSchedule::create([
                     'recurringVoucherAutoId' => $recurringVoucher->recurringVoucherAutoId,
                     'processDate' => $processDate,
                     'amount' => $rrvDebitSum,
@@ -77,8 +95,9 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
             }
             DB::commit();
         }
-        catch (\Exception $e)
-        {
+        catch (\Exception $e) {
+            Log::info("Recurring Voucher Setup Schedule (Schedule create error) :- {$e->getMessage()}");
+
             DB::rollback();
         }
     }
