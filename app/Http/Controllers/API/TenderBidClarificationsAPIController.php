@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use Carbon\Carbon;
 
 /**
  * Class TenderBidClarificationsController
@@ -566,25 +567,24 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 $clarificationText = "<span style='font-weight: bold; font-size: 16px'>$supplierName</span><br />";
             }
 
-            $clarificationText .= "<span style='font-size: 12px;font-style: italic'>$bidClarification->created_at</span><br />";
+            $createdAt = Carbon::parse($bidClarification->created_at)->format('F j, Y, g:i A');
+            $clarificationText .= "<span style='font-size: 12px;font-style: italic'>$createdAt</span><br />";
 
             if($bidClarification->post){
                 $clarificationText .= "<span style='font-size: 14px'>$bidClarification->post</span><br />";
-            }else{
-                $clarificationText .= " <br />";
             }
 
             $attachments = $bidClarification->attachment;
             if($attachments) {
                 foreach ($attachments as $attachment) {
                 if ($attachment) {
-                    $clarificationText .= "<span style='font-size: 12px;font-weight: bold;'>$attachment->originalFileName</span><br /><br />";
-                } else {
-                    $clarificationText .= "<br /><br />";
+                    $clarificationText .= "<span style='font-size: 12px;font-weight: bold;'>$attachment->originalFileName</span><br />";
                 }
                     $file[$attachment->originalFileName] = Helper::getFileUrlFromS3($attachment->path);
                 }
             }
+
+            $clarificationText .= "<br />";
 
             $preBidClarificationsString .= $clarificationText;
         }
