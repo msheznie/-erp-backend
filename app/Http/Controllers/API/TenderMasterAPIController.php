@@ -691,25 +691,47 @@ ORDER BY
             $resultObj = $openingDate->gt($currentDate);
             $data['edit_valid'] = $resultObj;
 
-          
+
+            $data['edit_valid_closing_date'] = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_closing_date'])->gt(now());
+
+            /*$resultObjClosingDate = $closingDate->gt($currentDate);
+
+            if($resultObj){
+                $data['edit_valid_closing_date'] = false;
+            } else {
+                $data['edit_valid_closing_date'] = $resultObjClosingDate;
+
+            }*/
+
 
             $tendeEditLog = DocumentModifyRequest::where('documentSystemCode', $tenderMasterId)
                                                 ->select('id','type','modify_type','status','confirmation_approved','approved')
                                                 ->orderBy('id', 'desc')->first();
 
-            if (isset($tendeEditLog) && $resultObj) {
-
+            if (isset($tendeEditLog)) {
                 $data['request_type'] = ($tendeEditLog->type == 1) ? 'Edit' : 'Amend';
-               
-                if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
-                    $data['is_confirm_process'] = true;
-                    $data['edit_valid'] = false;
-                } else if($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1){
-                    $data['edit_valid'] = false;
-                    $data['is_request_process'] = $tendeEditLog->approved == 0?true:false;
-                    $data['is_request_process_complete'] = $tendeEditLog->approved == -1?true:false;
+
+                if ($resultObj) {
+                    if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
+                        $data['is_confirm_process'] = true;
+                        $data['edit_valid'] = false;
+                    } else if ($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1) {
+                        $data['edit_valid'] = false;
+                        $data['is_request_process'] = $tendeEditLog->approved == 0;
+                        $data['is_request_process_complete'] = $tendeEditLog->approved == -1;
+                    }
+                } else if ($data['edit_valid_closing_date']) {
+
+                    if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
+                        $data['is_confirm_process'] = true;
+                    } else if ($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1) {
+                        $data['is_request_process'] = $tendeEditLog->approved == 0;
+                        $data['isProcessCompleteBeforeClosing'] = $tendeEditLog->approved == -1;
+
+                    }
                 }
             }
+
         }
 
 
@@ -1501,7 +1523,7 @@ ORDER BY
                             }
                         }
 
-                        if (isset($input['isRequestProcessComplete']) && $input['isRequestProcessComplete']) {
+                        if (($input['isRequestProcessComplete'] ?? false) || ($input['isProcessCompleteBeforeClosing'] ?? false)) {
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode', $input['id'])->latest('id')->first();
 
@@ -1606,11 +1628,11 @@ ORDER BY
 
                 $tenderPurchaseRequestCount = TenderPurchaseRequest::where('tender_id', $input['id'])->count();
 
-                if( $tenderPurchaseRequestCount > 0){
+                if( $tenderPurchaseRequestCount > 0 && ($input['editAfterBidOpeningDate'] == false)){
                     TenderPurchaseRequest::where('tender_id', $input['id'])->delete();
                 }
 
-                if(isset($input['purchaseRequest']) && sizeof($input['purchaseRequest']) > 0){
+                if(isset($input['purchaseRequest']) && sizeof($input['purchaseRequest']) > 0 && ($input['editAfterBidOpeningDate'] == false)){
                     foreach ($input['purchaseRequest'] as $pr) {
 
                         $data = [
@@ -1628,9 +1650,12 @@ ORDER BY
                 $existingItems = SrmTenderBudgetItem::where('tender_id', $input['id'])->pluck('item_id')->toArray();
 
                 $itemsToDelete = array_diff($existingItems, array_column($input['srmBudgetItem'], 'id'));
-                SrmTenderBudgetItem::where('tender_id', $input['id'])->whereIn('item_id', $itemsToDelete)->delete();
 
-                if (isset($input['srmBudgetItem']) && is_array($input['srmBudgetItem']) && count($input['srmBudgetItem']) > 0) {
+                if($input['editAfterBidOpeningDate'] == false){
+                    SrmTenderBudgetItem::where('tender_id', $input['id'])->whereIn('item_id', $itemsToDelete)->delete();
+                }
+
+                if (!empty($input['srmBudgetItem']) && !$input['editAfterBidOpeningDate']) {
                     foreach ($input['srmBudgetItem'] as $pr) {
                         $existingBudgetItem = SrmTenderBudgetItem::where('item_id', $pr['id'])
                             ->where('tender_id', $input['id'])

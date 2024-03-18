@@ -372,13 +372,13 @@ class DocumentModifyRequestAPIController extends AppBaseController
         if(isset($input['reference_document_id']) && $input['reference_document_id'])
         {
             $currentDate = Carbon::now()->format('Y-m-d H:i:s');
-            $openingDate = Carbon::createFromFormat('Y-m-d H:i:s', $input['bid_submission_opening_date']);
+            $openingDate = Carbon::createFromFormat('Y-m-d H:i:s', $input['bid_submission_closing_date']);
 
             $result = $openingDate->gt($currentDate);
     
             if(!$result)
             {
-                return $this->sendError('Unable to approve this document. Bid submission opening date has already passed');
+                return $this->sendError('Unable to approve this document. Bid submission closing date has already passed');
             }
 
             $approve = \Helper::approveDocument($request);
