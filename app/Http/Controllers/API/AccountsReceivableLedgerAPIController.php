@@ -404,7 +404,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                     salesreturndetails.companySystemID = $master->companySystemID
                     AND salesreturn.approvedYN = -1
                     GROUP BY salesreturndetails.custInvoiceDirectAutoID
-                    ) sr ON sr.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem 
+                    ) sr ON sr.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem AND erp_accountsreceivableledger.documentSystemID = 20 
                     LEFT JOIN (
                 SELECT 
                     salesreturndetails.deliveryOrderDetailID,
@@ -422,7 +422,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                     AND salesreturn.approvedYN = -1
                     AND salesreturndetails.deliveryOrderDetailID <> 0
                     GROUP BY salesreturndetails.deliveryOrderDetailID
-            ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem
+            ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem AND erp_accountsreceivableledger.documentSystemID = 20 
                     LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
                 WHERE
                     date(erp_accountsreceivableledger.documentDate) <= '{$custPaymentReceiveDate}'

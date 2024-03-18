@@ -3542,7 +3542,7 @@ LEFT JOIN (
         AND salesreturn.approvedYN = -1
         AND salesreturndetails.deliveryOrderDetailID <> 0
         GROUP BY salesreturndetails.deliveryOrderDetailID
-) sr ON sr.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem
+) sr ON sr.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem AND erp_accountsreceivableledger.documentSystemID = 20
 LEFT JOIN currencymaster ON erp_accountsreceivableledger.custTransCurrencyID = currencymaster.currencyID
 WHERE
 	erp_accountsreceivableledger.documentType IN (11, 12)
