@@ -630,6 +630,7 @@ class SupplierMasterAPIController extends AppBaseController
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
+        $input['registrationExprity'] =  Carbon::parse($input['registrationExprity']);
 
         $input['uniqueTextcode'] = 'S';
 
