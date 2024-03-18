@@ -99,6 +99,7 @@ use App\Models\DeliveryTermsMaster;
 use App\Models\LogUploadCustomerInvoice;
 use App\Models\PortMaster;
 use App\Models\UploadCustomerInvoice;
+use App\Services\ValidateDocumentAmend;
 use PHPExcel_IOFactory;
 use Exception;
 /**
@@ -4699,6 +4700,22 @@ WHERE
 
         if ($masterData->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this Customer Invoice, it is not confirmed');
+        }
+
+        $documentAutoId = $id;
+        $documentSystemID = $masterData->documentSystemiD;
+        $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
+        if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+            if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
+                return $this->sendError($validateFinancePeriod['message']);
+            }
+        }
+
+        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                return $this->sendError($validatePendingGlPost['message']);
+            }
         }
 
         if($masterData->isPerforma == 2){

@@ -76,6 +76,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\PaymentType;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Services\ValidateDocumentAmend;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -3419,6 +3420,22 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if ($masterData->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend, this Receipt Voucher, it is not confirmed');
+        }
+
+        $documentAutoId = $id;
+        $documentSystemID = $masterData->documentSystemID;
+        $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
+        if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+            if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
+                return $this->sendError($validateFinancePeriod['message']);
+            }
+        }
+
+        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                return $this->sendError($validatePendingGlPost['message']);
+            }
         }
 
         // checking document matched in matchmaster
