@@ -2595,23 +2595,23 @@ class AccountsReceivableReportAPIController extends AppBaseController
         $invoiceAmountQry = '';
         $currencyQry = '';
         if ($currency == 1) {
-            $balanceAmountQry = "round(IFNULL(MainQuery.documentTransAmount,0),MainQuery.documentTransDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount,0),MainQuery.documentTransDecimalPlaces) AS balanceAmount";
-            $balanceAmountWhere = "round(IFNULL(MainQuery.documentTransAmount,0),MainQuery.documentTransDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount,0),MainQuery.documentTransDecimalPlaces)";
-            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount, 0 ),MainQuery.documentTransDecimalPlaces) AS receiptAmount";
+            $balanceAmountQry = "round(IFNULL(MainQuery.documentTransAmount,0),MainQuery.documentTransDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount,0),MainQuery.documentTransDecimalPlaces) - round(IFNULL(MainQuery.sumReturnTransactionAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(MainQuery.sumReturnDEOLocalAmount,0),MainQuery.documentLocalDecimalPlaces) AS balanceAmount";
+            $balanceAmountWhere = "round(IFNULL(MainQuery.documentTransAmount,0),MainQuery.documentTransDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount,0),MainQuery.documentTransDecimalPlaces) - round(IFNULL(MainQuery.sumReturnTransactionAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(MainQuery.sumReturnDEOLocalAmount,0),MainQuery.documentLocalDecimalPlaces)";
+            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount, 0 ),MainQuery.documentTransDecimalPlaces) + round(IFNULL(MainQuery.sumReturnTransactionAmount,0),MainQuery.documentLocalDecimalPlaces) + round(IFNULL(MainQuery.sumReturnDEOLocalAmount,0),MainQuery.documentLocalDecimalPlaces) AS receiptAmount";
             $invoiceAmountQry = "round(IFNULL(MainQuery.documentTransAmount, 0 ),MainQuery.documentTransDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentTransDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentTransCurrency AS documentCurrency";
         } else if ($currency == 2) {
-            $balanceAmountQry = "round(IFNULL(MainQuery.documentLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount,0),MainQuery.documentLocalDecimalPlaces) AS balanceAmount";
-            $balanceAmountWhere = "round(IFNULL(MainQuery.documentLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount,0),MainQuery.documentLocalDecimalPlaces)";
-            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount, 0 ),MainQuery.documentLocalDecimalPlaces) AS receiptAmount";
+            $balanceAmountQry = "round(IFNULL(MainQuery.documentLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(MainQuery.sumReturnLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(MainQuery.sumReturnDEOLocalAmount,0),MainQuery.documentLocalDecimalPlaces) AS balanceAmount";
+            $balanceAmountWhere = "round(IFNULL(MainQuery.documentLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(MainQuery.sumReturnLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(MainQuery.sumReturnDEOLocalAmount,0),MainQuery.documentLocalDecimalPlaces)";
+            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount, 0 ),MainQuery.documentLocalDecimalPlaces) + round(IFNULL(MainQuery.sumReturnLocalAmount,0),MainQuery.documentLocalDecimalPlaces) + round(IFNULL(MainQuery.sumReturnDEOLocalAmount,0),MainQuery.documentLocalDecimalPlaces) AS receiptAmount";
             $invoiceAmountQry = "round(IFNULL(MainQuery.documentLocalAmount, 0 ),MainQuery.documentLocalDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentLocalCurrency AS documentCurrency";
         } else {
-            $balanceAmountQry = "round(IFNULL(MainQuery.documentRptAmount,0),MainQuery.documentRptDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount,0),MainQuery.documentRptDecimalPlaces) AS balanceAmount";
-            $balanceAmountWhere = "round(IFNULL(MainQuery.documentRptAmount,0),MainQuery.documentRptDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount,0),MainQuery.documentRptDecimalPlaces)";
-            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount, 0 ),MainQuery.documentRptDecimalPlaces) AS receiptAmount";
+            $balanceAmountQry = "round(IFNULL(MainQuery.documentRptAmount,0),MainQuery.documentRptDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount,0),MainQuery.documentRptDecimalPlaces) - round(IFNULL(MainQuery.sumReturnRptAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(MainQuery.sumReturnDEORptAmount,0),MainQuery.documentLocalDecimalPlaces) AS balanceAmount";
+            $balanceAmountWhere = "round(IFNULL(MainQuery.documentRptAmount,0),MainQuery.documentRptDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount,0),MainQuery.documentRptDecimalPlaces) - round(IFNULL(MainQuery.sumReturnRptAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(MainQuery.sumReturnDEORptAmount,0),MainQuery.documentLocalDecimalPlaces)";
+            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount, 0 ),MainQuery.documentRptDecimalPlaces) + round(IFNULL(MainQuery.sumReturnRptAmount,0),MainQuery.documentLocalDecimalPlaces) + round(IFNULL(MainQuery.sumReturnDEORptAmount,0),MainQuery.documentLocalDecimalPlaces) AS receiptAmount";
             $invoiceAmountQry = "round(IFNULL(MainQuery.documentRptAmount, 0 ),MainQuery.documentRptDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentRptCurrency AS documentCurrency";
@@ -2669,7 +2669,13 @@ SELECT
 	currLocal.CurrencyCode AS documentLocalCurrency,
 	currTrans.CurrencyCode AS documentTransCurrency,
 	erp_custinvoicedirect.PONumber,
-	CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS customerName 
+	CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS customerName,
+	IFNULL(srInvoiced.sumReturnTransactionAmount, 0) AS sumReturnTransactionAmount,
+	IFNULL(srInvoiced.sumReturnLocalAmount, 0) AS sumReturnLocalAmount,
+	IFNULL(srInvoiced.sumReturnRptAmount, 0) AS sumReturnRptAmount,
+	IFNULL(srDEO.sumReturnDEOTransactionAmount, 0) AS sumReturnDEOTransactionAmount,
+	IFNULL(srDEO.sumReturnDEOLocalAmount, 0) AS sumReturnDEOLocalAmount,
+	IFNULL(srDEO.sumReturnDEORptAmount, 0) AS sumReturnDEORptAmount
 FROM
 	erp_generalledger
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
@@ -2678,6 +2684,41 @@ FROM
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
 	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
+	LEFT JOIN (
+    SELECT 
+        salesreturndetails.custInvoiceDirectAutoID,
+        salesreturndetails.salesReturnID,
+        salesreturndetails.companySystemID,
+        sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount,
+        sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnLocalAmount,
+        sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnRptAmount
+        FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+        WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            GROUP BY salesreturndetails.custInvoiceDirectAutoID
+    ) srInvoiced ON srInvoiced.custInvoiceDirectAutoID = erp_generalledger.documentSystemCode AND erp_generalledger.documentSystemID = 20
+    LEFT JOIN (
+    SELECT 
+       salesreturndetails.deliveryOrderDetailID,
+       erp_customerinvoiceitemdetails.custInvoiceDirectAutoID,
+       salesreturndetails.salesReturnID,
+       salesreturndetails.companySystemID,
+       sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOTransactionAmount,
+       sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOLocalAmount,
+       sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEORptAmount
+       FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+            INNER JOIN erp_customerinvoiceitemdetails ON salesreturndetails.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
+       WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            AND salesreturndetails.deliveryOrderDetailID <> 0
+            GROUP BY salesreturndetails.deliveryOrderDetailID
+    ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_generalledger.documentSystemCode AND erp_generalledger.documentSystemID = 20
 WHERE
 	erp_generalledger.documentSystemID = 20 
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
@@ -2861,13 +2902,13 @@ IF( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMa
 IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
 IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) )  + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
 	) AS balanceRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
+	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( srInvoiced.sumReturnLocalAmount  IS NULL, 0, srInvoiced.sumReturnLocalAmount  * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
 	) AS balanceLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
+	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
 	) AS balanceTrans,
 	mainQuery.customerName,   
 	mainQuery.PONumber 
@@ -2973,6 +3014,41 @@ WHERE
 		custReceivePaymentAutoID 
 	) AS InvoicedBRV ON mainQuery.documentSystemID = InvoicedBRV.documentSystemID 
 	AND mainQuery.documentSystemCode = InvoicedBRV.custReceivePaymentAutoID
+	LEFT JOIN (
+    SELECT 
+        salesreturndetails.custInvoiceDirectAutoID,
+        salesreturndetails.salesReturnID,
+        salesreturndetails.companySystemID,
+        sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount,
+        sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnLocalAmount,
+        sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnRptAmount
+        FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+        WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            GROUP BY salesreturndetails.custInvoiceDirectAutoID
+    ) srInvoiced ON srInvoiced.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20 
+     LEFT JOIN (
+    SELECT 
+       salesreturndetails.deliveryOrderDetailID,
+       erp_customerinvoiceitemdetails.custInvoiceDirectAutoID,
+       salesreturndetails.salesReturnID,
+       salesreturndetails.companySystemID,
+       sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOTransactionAmount,
+       sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOLocalAmount,
+       sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEORptAmount
+       FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+            INNER JOIN erp_customerinvoiceitemdetails ON salesreturndetails.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
+       WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            AND salesreturndetails.deliveryOrderDetailID <> 0
+            GROUP BY salesreturndetails.deliveryOrderDetailID
+    ) srDEO ON srDEO.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20     
 	LEFT JOIN (
 	SELECT
 		companySystemID,
@@ -3216,24 +3292,30 @@ IF( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) AS BRVRptAmo
 IF( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) AS InvoiceTransAmount,
 IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
 IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
+IF( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) AS sumReturnTransactionAmount,
+IF( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) AS sumReturnLocalAmount,
+IF( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) AS sumReturnRptAmount,
+IF( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) AS sumReturnDEOTransactionAmount,
+IF( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) AS sumReturnDEOLocalAmount,
+IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS sumReturnDEORptAmount,
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) )
+	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) )
 	) AS balanceRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )
+	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )
 	) AS balanceLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )
+	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )
 	) AS balanceTrans,
 
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0))
+	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0))
 	) AS balanceSubsequentCollectionRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0))
+	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0))
 	) AS balanceSubsequentCollectionLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0))
+	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )+ ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0))
 	) AS balanceSubsequentCollectionTrans,
 
 	mainQuery.customerName,
@@ -3316,6 +3398,41 @@ WHERE
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
 	) AS mainQuery
+		LEFT JOIN (
+    SELECT 
+        salesreturndetails.custInvoiceDirectAutoID,
+        salesreturndetails.salesReturnID,
+        salesreturndetails.companySystemID,
+        sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount,
+        sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnLocalAmount,
+        sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnRptAmount
+        FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+        WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            GROUP BY salesreturndetails.custInvoiceDirectAutoID
+    ) srInvoiced ON srInvoiced.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20
+     LEFT JOIN (
+    SELECT 
+       salesreturndetails.deliveryOrderDetailID,
+       erp_customerinvoiceitemdetails.custInvoiceDirectAutoID,
+       salesreturndetails.salesReturnID,
+       salesreturndetails.companySystemID,
+       sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOTransactionAmount,
+       sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOLocalAmount,
+       sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEORptAmount
+       FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+            INNER JOIN erp_customerinvoiceitemdetails ON salesreturndetails.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
+       WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            AND salesreturndetails.deliveryOrderDetailID <> 0
+            GROUP BY salesreturndetails.deliveryOrderDetailID
+    ) srDEO ON srDEO.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20       
 	LEFT JOIN (
 	SELECT
 		erp_matchdocumentmaster.companySystemID,
@@ -3610,13 +3727,13 @@ IF( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMa
 IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
 IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
 	) AS balanceRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
+	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
 	) AS balanceLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
+	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
 	) AS balanceTrans,
 	mainQuery.CustomerName,
     mainQuery.creditDays,
@@ -3676,6 +3793,41 @@ WHERE
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
 	) AS mainQuery
+			LEFT JOIN (
+    SELECT 
+        salesreturndetails.custInvoiceDirectAutoID,
+        salesreturndetails.salesReturnID,
+        salesreturndetails.companySystemID,
+        sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount,
+        sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnLocalAmount,
+        sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnRptAmount
+        FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+        WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            GROUP BY salesreturndetails.custInvoiceDirectAutoID
+    ) srInvoiced ON srInvoiced.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20
+     LEFT JOIN (
+    SELECT 
+       salesreturndetails.deliveryOrderDetailID,
+       erp_customerinvoiceitemdetails.custInvoiceDirectAutoID,
+       salesreturndetails.salesReturnID,
+       salesreturndetails.companySystemID,
+       sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOTransactionAmount,
+       sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOLocalAmount,
+       sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEORptAmount
+       FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+            INNER JOIN erp_customerinvoiceitemdetails ON salesreturndetails.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
+       WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            AND salesreturndetails.deliveryOrderDetailID <> 0
+            GROUP BY salesreturndetails.deliveryOrderDetailID
+    ) srDEO ON srDEO.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20     
 	LEFT JOIN (
 	SELECT
 		erp_matchdocumentmaster.companySystemID,
@@ -4024,18 +4176,27 @@ IF( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) AS BRVRptAmo
 IF( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) AS InvoiceTransAmount,
 IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
 IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
+IF( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) AS sumReturnTransactionAmount,
+IF( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) AS sumReturnLocalAmount,
+IF( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) AS sumReturnRptAmount,
+IF( srAmount.sumSRTransactionAmount IS NULL, 0, srAmount.sumSRTransactionAmount) AS sumSRTransactionAmount,
+IF( srAmount.sumSRLocalAmount IS NULL, 0, srAmount.sumSRLocalAmount) AS sumSRLocalAmount,
+IF( srAmount.sumSRRptAmount IS NULL, 0, srAmount.sumSRRptAmount) AS sumSRRptAmount,
+IF( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) AS sumReturnDEOTransactionAmount,
+IF( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) AS sumReturnDEOLocalAmount,
+IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS sumReturnDEORptAmount,
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srAmount.sumSRRptAmount IS NULL, 0, srAmount.sumSRRptAmount) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
 	) AS balanceRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
+	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) )  + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srAmount.sumSRLocalAmount IS NULL, 0, srAmount.sumSRLocalAmount) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
 	) AS balanceLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
+	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srAmount.sumSRTransactionAmount IS NULL, 0, srAmount.sumSRTransactionAmount) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
 	) AS balanceTrans,
-	(( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ))) as paidRptAmount,
-	(( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )) as paidLocalAmount,
-	(( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )) as paidTransAmount,
+	(( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srAmount.sumSRRptAmount IS NULL, 0, srAmount.sumSRRptAmount) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ))) as paidRptAmount,
+	(( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ))  + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srAmount.sumSRLocalAmount IS NULL, 0, srAmount.sumSRLocalAmount) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )) as paidLocalAmount,
+	(( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )  + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srAmount.sumSRTransactionAmount IS NULL, 0, srAmount.sumSRTransactionAmount) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )) as paidTransAmount,
 	mainQuery.concatCustomerName, 
 	mainQuery.CutomerCode,
 	mainQuery.CustomerName,  
@@ -4090,7 +4251,7 @@ FROM
 	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
 WHERE
-	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
+	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" OR erp_generalledger.documentSystemID = "87" ) 
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
 	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
@@ -4145,6 +4306,58 @@ WHERE
 		custReceivePaymentAutoID, serviceLineSystemID 
 	) AS InvoicedBRV ON mainQuery.documentSystemID = InvoicedBRV.documentSystemID 
 	AND mainQuery.documentSystemCode = InvoicedBRV.custReceivePaymentAutoID AND mainQuery.serviceLineSystemID = InvoicedBRV.serviceLineSystemID
+	LEFT JOIN (
+    SELECT 
+        salesreturndetails.custInvoiceDirectAutoID,
+        salesreturndetails.salesReturnID,
+        salesreturndetails.companySystemID,
+        sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount,
+        sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnLocalAmount,
+        sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnRptAmount
+        FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+        WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            GROUP BY salesreturndetails.custInvoiceDirectAutoID
+    ) srInvoiced ON srInvoiced.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20  
+    LEFT JOIN (
+    SELECT 
+        salesreturndetails.custInvoiceDirectAutoID,
+        salesreturndetails.salesReturnID,
+        salesreturndetails.companySystemID,
+        salesreturn.documentSystemID,
+        sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumSRTransactionAmount,
+        sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumSRLocalAmount,
+        sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumSRRptAmount
+        FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+        WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            GROUP BY salesreturndetails.salesReturnID
+    ) srAmount ON srAmount.salesReturnID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = srAmount.documentSystemID       
+    LEFT JOIN (
+    SELECT 
+       salesreturndetails.deliveryOrderDetailID,
+       erp_customerinvoiceitemdetails.custInvoiceDirectAutoID,
+       salesreturndetails.salesReturnID,
+       salesreturndetails.companySystemID,
+       sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOTransactionAmount,
+       sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOLocalAmount,
+       sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEORptAmount
+       FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+            INNER JOIN erp_customerinvoiceitemdetails ON salesreturndetails.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
+       WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            AND salesreturndetails.deliveryOrderDetailID <> 0
+            GROUP BY salesreturndetails.deliveryOrderDetailID
+    ) srDEO ON srDEO.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20                
 	LEFT JOIN  (
 	SELECT
 		companySystemID,
@@ -4254,15 +4467,15 @@ WHERE
         $decimalPlaceQry = '';
         if ($currencyID == 1) {
             $currencyQry = "CustomerBalanceSummary_Detail.documentTransCurrency AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( CustomerBalanceSummary_Detail.documentTransAmount, CustomerBalanceSummary_Detail.documentTransDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(round( CustomerBalanceSummary_Detail.documentTransAmount, CustomerBalanceSummary_Detail.documentTransDecimalPlaces ),0) - round(IFNULL(CustomerBalanceSummary_Detail.sumReturnTransactionAmount,0),CustomerBalanceSummary_Detail.documentLocalDecimalPlaces) - round(IFNULL(CustomerBalanceSummary_Detail.sumReturnDEOLocalAmount,0),CustomerBalanceSummary_Detail.documentLocalDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "CustomerBalanceSummary_Detail.documentTransDecimalPlaces AS balanceDecimalPlaces";
         } else if ($currencyID == 2) {
             $currencyQry = "CustomerBalanceSummary_Detail.documentLocalCurrency AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( CustomerBalanceSummary_Detail.documentLocalAmount, CustomerBalanceSummary_Detail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(round( CustomerBalanceSummary_Detail.documentLocalAmount, CustomerBalanceSummary_Detail.documentLocalDecimalPlaces ),0) - round(IFNULL(CustomerBalanceSummary_Detail.sumReturnLocalAmount,0),CustomerBalanceSummary_Detail.documentLocalDecimalPlaces) - round(IFNULL(CustomerBalanceSummary_Detail.sumReturnDEOLocalAmount,0),CustomerBalanceSummary_Detail.documentLocalDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "CustomerBalanceSummary_Detail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
         } else {
             $currencyQry = "CustomerBalanceSummary_Detail.documentRptCurrency AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( CustomerBalanceSummary_Detail.documentRptAmount, CustomerBalanceSummary_Detail.documentRptDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(round( CustomerBalanceSummary_Detail.documentRptAmount, CustomerBalanceSummary_Detail.documentRptDecimalPlaces ),0) - round(IFNULL(CustomerBalanceSummary_Detail.sumReturnRptAmount,0),CustomerBalanceSummary_Detail.documentLocalDecimalPlaces) - round(IFNULL(CustomerBalanceSummary_Detail.sumReturnDEORptAmount,0),CustomerBalanceSummary_Detail.documentLocalDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "CustomerBalanceSummary_Detail.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
 
@@ -4316,7 +4529,13 @@ SELECT
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
 	erp_generalledger.documentRptAmount,
 	erp_generalledger.documentType,
-	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as concatCustomerName
+	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as concatCustomerName,
+	IFNULL(srInvoiced.sumReturnTransactionAmount, 0) AS sumReturnTransactionAmount,
+	IFNULL(srInvoiced.sumReturnLocalAmount, 0) AS sumReturnLocalAmount,
+	IFNULL(srInvoiced.sumReturnRptAmount, 0) AS sumReturnRptAmount,
+	IFNULL(srDEO.sumReturnDEOTransactionAmount, 0) AS sumReturnDEOTransactionAmount,
+	IFNULL(srDEO.sumReturnDEOLocalAmount, 0) AS sumReturnDEOLocalAmount,
+	IFNULL(srDEO.sumReturnDEORptAmount, 0) AS sumReturnDEORptAmount
 FROM
 	erp_generalledger
 	INNER JOIN customermaster ON customermaster.customerCodeSystem=erp_generalledger.supplierCodeSystem
@@ -4324,6 +4543,41 @@ FROM
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+	LEFT JOIN (
+    SELECT 
+        salesreturndetails.custInvoiceDirectAutoID,
+        salesreturndetails.salesReturnID,
+        salesreturndetails.companySystemID,
+        sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount,
+        sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnLocalAmount,
+        sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnRptAmount
+        FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+        WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            GROUP BY salesreturndetails.custInvoiceDirectAutoID
+    ) srInvoiced ON srInvoiced.custInvoiceDirectAutoID = erp_generalledger.documentSystemCode AND erp_generalledger.documentSystemID = 20
+    LEFT JOIN (
+    SELECT 
+       salesreturndetails.deliveryOrderDetailID,
+       erp_customerinvoiceitemdetails.custInvoiceDirectAutoID,
+       salesreturndetails.salesReturnID,
+       salesreturndetails.companySystemID,
+       sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOTransactionAmount,
+       sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOLocalAmount,
+       sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEORptAmount
+       FROM 
+            salesreturndetails
+            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+            INNER JOIN erp_customerinvoiceitemdetails ON salesreturndetails.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
+       WHERE
+            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+            AND salesreturn.approvedYN = -1
+            AND salesreturndetails.deliveryOrderDetailID <> 0
+            GROUP BY salesreturndetails.deliveryOrderDetailID
+    ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_generalledger.documentSystemCode AND erp_generalledger.documentSystemID = 20
 WHERE
 	(erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
 	AND DATE( erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
@@ -4361,7 +4615,13 @@ WHERE
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
 	SUM(erp_generalledger.documentRptAmount) as documentRptAmount,
 	erp_generalledger.documentType,
-	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as concatCustomerName
+	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as concatCustomerName,
+	0 AS sumReturnTransactionAmount,
+	0 AS sumReturnLocalAmount,
+	0 AS sumReturnRptAmount,
+	0 AS sumReturnDEOTransactionAmount,
+	0 AS sumReturnDEOLocalAmount,
+	0 AS sumReturnDEORptAmount
 FROM
 	erp_generalledger
 	INNER JOIN customermaster ON customermaster.customerCodeSystem=erp_generalledger.supplierCodeSystem
@@ -4405,9 +4665,9 @@ WHERE
                     CustomerBalanceSummary_Detail.CutomerCode,
                     CustomerBalanceSummary_Detail.CustomerName,
                     CustomerBalanceSummary_Detail.documentLocalCurrencyID,
-                    sum(CustomerBalanceSummary_Detail.documentLocalAmount) as localAmount,
+                    sum(CustomerBalanceSummary_Detail.documentLocalAmount - CustomerBalanceSummary_Detail.sumReturnLocalAmount - CustomerBalanceSummary_Detail.sumReturnDEOLocalAmount) as localAmount,
                     CustomerBalanceSummary_Detail.documentRptCurrencyID,
-                    sum(CustomerBalanceSummary_Detail.documentRptAmount) as RptAmount,
+                    sum(CustomerBalanceSummary_Detail.documentRptAmount - CustomerBalanceSummary_Detail.sumReturnRptAmount - CustomerBalanceSummary_Detail.sumReturnDEORptAmount) as RptAmount,
                     CustomerBalanceSummary_Detail.documentLocalCurrency,
                     CustomerBalanceSummary_Detail.documentRptCurrency
                 FROM
@@ -4416,6 +4676,7 @@ WHERE
                     erp_generalledger.companySystemID,
                     erp_generalledger.companyID,
                     erp_generalledger.documentID,
+                    erp_generalledger.documentSystemID,
                     erp_generalledger.documentSystemCode,
                     erp_generalledger.documentCode,
                     erp_generalledger.documentDate,
@@ -4429,13 +4690,50 @@ WHERE
                     erp_generalledger.documentRptAmount,
                     currLocal.CurrencyCode as documentLocalCurrency,
                     currRpt.CurrencyCode as documentRptCurrency,
-                    companymaster.CompanyName
+                    companymaster.CompanyName,
+	                IFNULL(srInvoiced.sumReturnLocalAmount, 0) AS sumReturnLocalAmount,
+	                IFNULL(srInvoiced.sumReturnRptAmount, 0) AS sumReturnRptAmount,
+	                IFNULL(srDEO.sumReturnDEOLocalAmount, 0) AS sumReturnDEOLocalAmount,
+	                IFNULL(srDEO.sumReturnDEORptAmount, 0) AS sumReturnDEORptAmount
                 FROM
                     erp_generalledger
                     INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                     INNER JOIN customermaster ON customermaster.customerCodeSystem=erp_generalledger.supplierCodeSystem
                     LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
                     LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+                    LEFT JOIN (
+                    SELECT 
+                        salesreturndetails.custInvoiceDirectAutoID,
+                        salesreturndetails.salesReturnID,
+                        salesreturndetails.companySystemID,
+                        sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnLocalAmount,
+                        sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnRptAmount
+                        FROM 
+                            salesreturndetails
+                            LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+                        WHERE
+                            salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+                            AND salesreturn.approvedYN = -1
+                            GROUP BY salesreturndetails.custInvoiceDirectAutoID
+                    ) srInvoiced ON srInvoiced.custInvoiceDirectAutoID = erp_generalledger.documentSystemCode AND erp_generalledger.documentSystemID = 20
+                     LEFT JOIN (
+                SELECT 
+                   salesreturndetails.deliveryOrderDetailID,
+                   erp_customerinvoiceitemdetails.custInvoiceDirectAutoID,
+                   salesreturndetails.salesReturnID,
+                   salesreturndetails.companySystemID,
+                   sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOLocalAmount,
+                   sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEORptAmount
+                   FROM 
+                        salesreturndetails
+                        LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+                        INNER JOIN erp_customerinvoiceitemdetails ON salesreturndetails.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
+                   WHERE
+                        salesreturndetails.companySystemID IN (' . join(',', $companyID) . ')
+                        AND salesreturn.approvedYN = -1
+                        AND salesreturndetails.deliveryOrderDetailID <> 0
+                        GROUP BY salesreturndetails.deliveryOrderDetailID
+                ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_generalledger.documentSystemCode AND erp_generalledger.documentSystemID = 20
                 WHERE
                     (erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
                     AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
