@@ -569,6 +569,26 @@ class JvDetailAPIController extends AppBaseController
             return $this->sendError('Jv Master not found');
         }
 
+
+        $output = DB::select("SELECT
+        COALESCE(
+            (SELECT sep.documentCode FROM srp_erp_payrollmaster sep WHERE hrms_jvmaster.jvDoc = 'SP' AND hrms_jvmaster.salaryProcessMasterID = sep.payrollMasterID),
+            (SELECT f.documentCode FROM srp_erp_pay_finalsettlementmaster f WHERE hrms_jvmaster.jvDoc = 'FS' AND hrms_jvmaster.salaryProcessMasterID = f.masterID)
+        ) AS payrollCode
+    FROM
+        hrms_jvmaster
+    WHERE
+        hrms_jvmaster.accruvalMasterID = '" . $accruvalMasterID . "'
+        AND hrms_jvmaster.accConfirmedYN = 1
+        AND hrms_jvmaster.accJVSelectedYN = 0
+        AND hrms_jvmaster.accJVpostedYN = 0");
+
+
+        $payrollCode = null;
+
+        if(!empty($output) && isset($output[0]))
+            $payrollCode = $output[0]->payrollCode;
+
         foreach ($input['detailTable'] as $new) {
 
             $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;
@@ -586,7 +606,7 @@ class JvDetailAPIController extends AppBaseController
             $detail_arr['chartOfAccountSystemID'] = $new['chartOfAccountSystemID'];
             $detail_arr['glAccount'] = $new['GlCode'];
             $detail_arr['glAccountDescription'] = $new['AccountDescription'];
-            $detail_arr['comments'] = 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y', strtotime($jvMasterData->JVdate)) . '';
+            $detail_arr['comments'] = 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y', strtotime($jvMasterData->JVdate)) . ' / '.$payrollCode;
             $detail_arr['currencyID'] = $jvMasterData->currencyID;
             $detail_arr['currencyER'] = $jvMasterData->currencyER;
             $detail_arr['createdPcID'] = gethostname();
@@ -622,7 +642,7 @@ class JvDetailAPIController extends AppBaseController
         //updating JV master
         $updateJvMaster = JvMaster::find($jvMasterAutoId)
             ->update([
-                'JVNarration' => 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y', strtotime($jvMasterData->JVdate)) . ''
+                'JVNarration' => 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y', strtotime($jvMasterData->JVdate)) . ' / ' .$payrollCode
             ]);
 
         return $this->sendResponse('', 'JV Details saved successfully');
