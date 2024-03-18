@@ -571,7 +571,10 @@ class ItemLedgerService
                                 }else if($masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 10) // stock transfer /recive
                                 {
                                     $amounVal = $masterModel["documentSystemID"] == 13?ABS($detail[$value]) * -1:ABS($detail[$value]);
-                                    $convertionValue = $masterModel["documentSystemID"] == 13?ABS(($detail[$value]/$convertionUnit->conversion)) * -1:ABS(($detail[$value]/$convertionUnit->conversion));
+                                    if(isset($convertionUnit))
+                                    {
+                                        $convertionValue = $masterModel["documentSystemID"] == 13?ABS(($detail[$value]/$convertionUnit->conversion)) * -1:ABS(($detail[$value]/$convertionUnit->conversion));
+                                    }
                                     $data[$i][$column] = $iemDefaultUnit->unit != $detail['unitOfMeasure'] && isset($convertionUnit) ?$convertionValue:$amounVal;
                                     //$data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
                                 } 
