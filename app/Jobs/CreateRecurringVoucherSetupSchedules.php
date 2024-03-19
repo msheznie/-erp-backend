@@ -57,12 +57,12 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
      */
     public function handle()
     {
+
         Log::useFiles(CommonJobService::get_specific_log_file('recurring-voucher'));
 
         CommonJobService::db_switch($this->dataBase);
-
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
             $recurringVoucher = $this->recurringVoucherSetupModel;
 
             $processDate = Carbon::parse($recurringVoucher->startDate);
@@ -72,16 +72,16 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
 
             for($i = 0; $i < $noOfDayMonthYear; $i++){
                 $processDate = $i == 0 ? $processDate : $processDate->addMonth();
-                $financeYear = CompanyFinanceYear::whereYear('bigginingDate',$processDate->year)
-                    ->whereYear('endingDate',$processDate->year)
-                    ->where('companySystemID',$recurringVoucher->companySystemID)
-                    ->first();
+                $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$recurringVoucher->companyFinanceYearID)->first();
+
                 $financePeriod = CompanyFinancePeriod::where('companySystemID',$recurringVoucher->companySystemID)
                     ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
                     ->whereMonth('dateFrom',$processDate->month)
                     ->whereMonth('dateTo',$processDate->month)
                     ->where('departmentSystemID',5)
                     ->first();
+
+
                 RecurringVoucherSetupSchedule::create([
                     'recurringVoucherAutoId' => $recurringVoucher->recurringVoucherAutoId,
                     'processDate' => $processDate,

@@ -828,10 +828,10 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
     public function approveRecurringVoucher(Request $request)
     {
+
+        $recurringVoucher = RecurringVoucherSetup::find($request->recurringVoucherAutoId);
         $endDate = Carbon::parse($request->endDate);
-        $financeYear = CompanyFinanceYear::whereYear('bigginingDate',$endDate->year)
-            ->whereYear('endingDate',$endDate->year)
-            ->where('companySystemID',$request->companySystemID)
+        $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$recurringVoucher->companyFinanceYearID)
             ->where('isDeleted',0)
             ->exists();
 
