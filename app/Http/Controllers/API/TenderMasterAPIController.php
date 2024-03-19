@@ -1290,8 +1290,9 @@ ORDER BY
                     }
                 }
             }
-        }
 
+
+        }
 
         if ($rfq) {
             $existTndr = TenderMaster::where('title', $input['title'])->where('id', '!=', $input['id'])->where('company_id', $input['companySystemID'])->where('document_type', '!=', 0)->first();
@@ -1315,7 +1316,6 @@ ORDER BY
             $bankId = 0;
             $input['bank_account_id'] = null;
         }
-
         // Check Total Technical weightage
         $result = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('level',1)->sum('weightage');
         if($result >100){
@@ -1439,7 +1439,6 @@ ORDER BY
                         $tenderUpdated->update($att);
                     }
                 }
-
                 if (isset($input['confirmed_yn'])) {
                     if ($input['confirmed_yn'] == 1) {
 
@@ -1646,15 +1645,14 @@ ORDER BY
 
                 }
 
-                // Insert to srm_tender_budget_items
-                $existingItems = SrmTenderBudgetItem::where('tender_id', $input['id'])->pluck('item_id')->toArray();
-
-                $itemsToDelete = array_diff($existingItems, array_column($input['srmBudgetItem'], 'id'));
-
-                if($input['editAfterBidOpeningDate'] == false){
-                    SrmTenderBudgetItem::where('tender_id', $input['id'])->whereIn('item_id', $itemsToDelete)->delete();
+                if(isset($input['srmBudgetItem']) && !empty($input['srmBudgetItem'])){
+                    $existingItems = SrmTenderBudgetItem::where('tender_id', $input['id'])->pluck('item_id')->toArray();
+                    $itemsToDelete = array_diff($existingItems, array_column($input['srmBudgetItem'], 'id'));
+                    if($input['editAfterBidOpeningDate'] == false){
+                        SrmTenderBudgetItem::where('tender_id', $input['id'])->whereIn('item_id', $itemsToDelete)->delete();
+                    }
                 }
-
+                
                 if (!empty($input['srmBudgetItem']) && !$input['editAfterBidOpeningDate']) {
                     foreach ($input['srmBudgetItem'] as $pr) {
                         $existingBudgetItem = SrmTenderBudgetItem::where('item_id', $pr['id'])
