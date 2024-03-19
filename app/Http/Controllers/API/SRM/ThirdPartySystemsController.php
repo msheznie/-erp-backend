@@ -17,7 +17,7 @@ class ThirdPartySystemsController extends AppBaseController
     {
 
     }
-    public function fetchItemWithAmount(Request $request)
+    public function pushBudgetItems(Request $request)
     {
         DB::beginTransaction();
         try {
