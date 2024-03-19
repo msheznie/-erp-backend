@@ -1157,9 +1157,16 @@ WHERE
                 if($newValidation['noQty'] == 0){
                     return $this->sendError('Invoice Quantity should be greater than zero', 500);
                 }
+
+            }
+            
+            $balanceQty = floatval($newValidation['qtyIssuedDefaultMeasure']) - floatval($newValidation['invTakenQty']) - floatval($newValidation['returnQty']);
+
+            if ($newValidation['noQty'] > $balanceQty) {
+                return $this->sendError('Invoice Quantity cannot be greater than DO balance quantity', 500);
             }
         }
-        
+
 
         $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first(); 
         $is_pref = $customerInvoioce->isPerforma;
