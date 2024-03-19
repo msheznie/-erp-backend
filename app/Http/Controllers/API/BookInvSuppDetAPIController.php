@@ -866,7 +866,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $updateData['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
                 $updateData['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
 
-                $totalVATAmount = ($groupMaster->logisticYN) ? $grvDetail->VATAmount : TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
+                $totalVATAmount = ($groupMaster->logisticYN) ? TaxService::poLogisticVATDistributionForGRV($grvDetail->grvAutoID,0,$grvDetail->supplierID)['vatOnPOTotalAmountTrans'] : TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
 
                 if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                     $percentage =  (floatval($updateData['totTransactionAmount'])/$value['transactionAmount']);
@@ -968,7 +968,7 @@ class BookInvSuppDetAPIController extends AppBaseController
             $details['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
             $details['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
 
-            $totalVATAmount = ($unbilledData['logisticYN']) ? $grvDetail->VATAmount : TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
+            $totalVATAmount = ($unbilledData['logisticYN']) ? TaxService::poLogisticVATDistributionForGRV($grvDetail->grvAutoID,0,$grvDetail->supplierID)['vatOnPOTotalAmountTrans'] : TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
 
              if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                 $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);
