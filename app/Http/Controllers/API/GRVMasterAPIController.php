@@ -524,6 +524,7 @@ class GRVMasterAPIController extends AppBaseController
                 ->with(['po_master' => function($query) {
                     $query->select('purchaseOrderID','purchaseOrderCode','logisticsAvailable');
                 }])
+                ->groupBY('purchaseOrderMastertID')
                 ->get();
 
                 foreach($grvDetailsInfo as $details)
