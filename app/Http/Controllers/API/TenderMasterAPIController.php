@@ -694,6 +694,10 @@ ORDER BY
             $data['isBidSubmissionOpeningDatePast'] = $resultObj;
             $data['edit_valid_closing_date'] = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_closing_date'])->gt(now());
 
+            if($data['edit_valid_closing_date'] != 1){
+                $data['edit_valid_after_closed'] = false;
+            }
+
             $tendeEditLog = DocumentModifyRequest::where('documentSystemCode', $tenderMasterId)
                                                 ->select('id','type','modify_type','status','confirmation_approved','approved')
                                                 ->orderBy('id', 'desc')->first();
@@ -1707,11 +1711,11 @@ ORDER BY
                 }else{
                     $departmentMasterCount = SrmTenderDepartment::where('tender_id', $input['id'])->count();
 
-                    if( $departmentMasterCount > 0){
+                    if( $departmentMasterCount > 0 && !$input['editAfterBidOpeningDate']){
                         SrmTenderDepartment::where('tender_id', $input['id'])->delete();
                     }
 
-                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0){
+                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0 && !$input['editAfterBidOpeningDate']){
                         foreach ($input['departmentMaster'] as $dm) {
                             $data = [
                                 'tender_id' => $input['id'],
