@@ -79,6 +79,8 @@ use App\Services\GeneralLedger\StockCountGlService;
 use App\Services\GeneralLedger\GPOSSalesGlService;
 use App\Services\GeneralLedger\RPOSSalesGlService;
 use App\Services\GeneralLedger\GeneralLedgerPostingService;
+use Illuminate\Support\Facades\Log;
+
 /**
  * Class GeneralLedgerController
  * @package App\Http\Controllers\API
@@ -350,6 +352,7 @@ class GeneralLedgerAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        Log::useFiles(storage_path() . '/logs/update_missing_docs.log');
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
@@ -360,11 +363,13 @@ class GeneralLedgerAPIController extends AppBaseController
         foreach ($tenants as $tenant){
             $tenantDb = $tenant->database;
 
+            Log::info('checking the db : '.$tenantDb);
             CommonJobService::db_switch($tenantDb);
 
-            $data = DB::select("SELECT da.companyID, da.companySystemID, da.documentSystemID,da.employeeSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger GROUP BY documentCode) AND da.rollLevelOrder = (SELECT max(da_new.rollLevelOrder) FROM erp_documentapproved as da_new WHERE da_new.documentSystemID = da.documentSystemID AND da_new.documentSystemCode = da.documentSystemCode) AND da.`timeStamp` > '2022-09-01'");
+            $data = DB::select("SELECT da.companyID, da.companySystemID, da.documentSystemID,da.employeeSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger WHERE documentCode IS NOT NULL GROUP BY documentCode) AND da.rollLevelOrder = (SELECT max(da_new.rollLevelOrder) FROM erp_documentapproved as da_new WHERE da_new.documentSystemID = da.documentSystemID AND da_new.documentSystemCode = da.documentSystemCode) AND da.`timeStamp` > '2024-01-01'");
 
             foreach ($data as $dt){
+                Log::info($dt->documentCode);
                 $masterData = ['documentSystemID' => $dt->documentSystemID,
                                'autoID' => $dt->documentSystemCode,
                                'companySystemID' => $dt->companySystemID,
