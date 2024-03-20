@@ -1013,7 +1013,8 @@ Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDow
 Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
 Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
 
-Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');  
+// Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');  
+
 
 if (env("LOG_ENABLE", false)) {
     Route::get('runCronJob/{cron}', function ($cron) {
