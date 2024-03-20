@@ -511,9 +511,21 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
+        $customerReceivePayment = CustomerReceivePayment::with(['currency'])
+                                ->select('custReceivePaymentAutoID','custTransactionCurrencyID')
+                                ->find($input['custReceivePaymentAutoID']);
+
+
+        $decimalPlaces = 3;
+        if(isset($customerReceivePayment->currency))
+        {
+            $decimalPlaces = $customerReceivePayment->currency->DecimalPlaces;
+
+        }
+
         if(isset($input['tempType'])) {
             if ($input['tempType'] == 1) {
-                $input["receiveAmountTrans"] = $input['custbalanceAmount'];
+                $input["receiveAmountTrans"] = round($input['custbalanceAmount'],$decimalPlaces);
             }
         }
 
@@ -558,13 +570,13 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount'] + $sumReturnTransactionAmountPreCheck + $sumReturnDEOTransactionAmountPreCheck);
 
         $epsilon = 0.00001;
-
+        
         if ($input['addedDocumentSystemID'] == 20) {
-            if ($input["receiveAmountTrans"] - $totReceiveAmountDetail > $epsilon) {
+            if ($input["receiveAmountTrans"] - round($totReceiveAmountDetail,$decimalPlaces) > $epsilon) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {
-            if ($input["receiveAmountTrans"] < $totReceiveAmountDetail) {
+            if ($input["receiveAmountTrans"] < round($totReceiveAmountDetail,$decimalPlaces)) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500);
             }
         }
