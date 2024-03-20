@@ -9338,7 +9338,7 @@ GROUP BY
         erp_debitnote.debitNoteAutoID AS masterID,
         currencymaster.DecimalPlaces AS localCurrencyDecimals,
         rptCurrency.DecimalPlaces AS rptCurrencyDecimals,
-        erp_debitnote.type AS type
+        7 AS type
     FROM
     erp_debitnote
         LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID

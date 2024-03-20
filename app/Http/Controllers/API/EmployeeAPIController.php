@@ -218,8 +218,14 @@ class EmployeeAPIController extends AppBaseController
                             $q->where('empCompanySystemID','!=',$input['selectedCompanyId']);
                         });
                     });
-            });
-        })->where('discharegedYN', 0)->get();
+            }); });
+
+        if(isset($input['isFromEmployeeLedger']) && $input['isFromEmployeeLedger']==1){
+            $output = $output->get();
+        } else {
+            $output = $output->where('discharegedYN', 0)->get();
+        }
+        
 
         return $this->sendResponse($output->toArray(), 'Data retrieved successfully');
     }
