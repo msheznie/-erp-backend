@@ -716,7 +716,7 @@ ORDER BY
                     }
 
                 } else if ($data['edit_valid_closing_date']) {
-
+                    $data['request_type'] = 'Edit';
                     if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
                         $data['is_confirm_process'] = true;
                         $data['edit_valid_after_closed'] = false;
@@ -724,7 +724,6 @@ ORDER BY
                         $data['is_request_process'] = $tendeEditLog->approved == 0;
                         $data['edit_valid_after_closed'] = false;
                         $data['isProcessCompleteBeforeClosing'] = $tendeEditLog->approved == -1;
-
                     }
                 }
             }
