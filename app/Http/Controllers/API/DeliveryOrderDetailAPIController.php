@@ -926,7 +926,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->first();
                 if (!empty($QuoDetailExistDetails)) {
-                    if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                    if(isset($item->financeCategoryMaster) && $item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                     {
                         if($QuoDetailExistDetails->qtyIssued + (int) $inputDetails[0]['noQty'] <= $QuoDetailExistDetails->requestedQty) {
                             $QuoDetailExistDetails->qtyIssued += (int)$inputDetails[0]['noQty'];
@@ -936,7 +936,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }else {
                     if (!empty($QuoDetailExist)) 
                     {
-                        if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                        if(isset($item->financeCategoryMaster) && $item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                         {
                             foreach ($QuoDetailExist as $row) {
                                 $itemDrt = $row['itemPrimaryCode'] . " already exist";
