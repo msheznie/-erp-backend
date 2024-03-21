@@ -4829,6 +4829,13 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
         $documentAutoId = $PayMasterAutoId;
         $documentSystemID = $paymentVoucherData->documentSystemID;
+        $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
+        if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
+            if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
+                return $this->sendError($validateFinanceYear['message']);
+            }
+        }
+        
         $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
         if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
             if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
