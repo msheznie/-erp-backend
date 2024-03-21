@@ -1491,10 +1491,10 @@ class SalesReturnAPIController extends AppBaseController
                             // if (isset($new['discountPercentage']) && $new['discountPercentage'] != 0){
                             //     $invDetail_arr['unitTransactionAmount'] = ($new['unitTransactionAmount']) - ($new['unitTransactionAmount']*$new['discountPercentage']/100);
                             // }else{
-                                $invDetail_arr['unitTransactionAmount'] = $new['sellingCost'];
+                                $invDetail_arr['unitTransactionAmount'] = $new['sellingCostAfterMargin'];
                             // }
 
-                            $totalNetcost = $new['sellingCost'] * $new['noQty'];
+                            $totalNetcost = $new['sellingCostAfterMargin'] * $new['noQty'];
 
                             $invDetail_arr['transactionAmount'] = \Helper::roundValue($totalNetcost);
                             $invDetail_arr['unitTransactionAmount'] = \Helper::roundValue($invDetail_arr['unitTransactionAmount']);
