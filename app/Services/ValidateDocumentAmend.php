@@ -195,6 +195,22 @@ class ValidateDocumentAmend
                         }
                     }
                 break;
+            case 11: // SI - Supplier Invoice
+                    $bookInvSuppMasterData = BookInvSuppMaster::find($documentAutoId);
+
+                    if($bookInvSuppMasterData){
+                        $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$bookInvSuppMasterData->companyFinanceYearID)->first();
+                        if($financeYear){
+                            if($financeYear->isActive == 0 || $financeYear->isCurrent == 0){
+                                $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
+                                $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
+
+                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                return ['status' => false,'message'=>$message];
+                            }
+                        }
+                    }
+                break;
             default:
                 return ['status' => false,'message'=>'Document ID not found'];
 
