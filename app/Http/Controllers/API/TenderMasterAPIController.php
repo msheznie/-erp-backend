@@ -3029,8 +3029,8 @@ ORDER BY
         }
 
         if ($filters['technical']) {
-            $technical =  ($filters['technical'] == 1 ) ? 0 :1;
-            $query->where('technical_eval_status', $technical);
+            $ids = array_column($filters['technical'], 'id');
+            $query->whereIn('technical_eval_status', $ids);
         }
 
         if ($filters['stage']) { 
@@ -5020,7 +5020,7 @@ ORDER BY
 
         $filters = $this->getFilterData($input);  
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
+        $query = TenderMaster::with(['currency', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
                         ->where('is_negotiation_started',1)
                         ->where('negotiation_published',1)
                         ->withCount(['criteriaDetails', 
@@ -5029,6 +5029,14 @@ ORDER BY
                             },
                             'criteriaDetails AS technical_count' => function ($query) {
                                 $query->where('critera_type_id', 2);
+                            },
+                            'srm_bid_submission_master AS technical_eval_negotiation' => function ($query2) {
+                                $query2->with(['TenderBidNegotiation' => function ($q){
+                                    $q->where('technical_verify_status',0);
+                                }])
+                                    ->whereHas('TenderBidNegotiation',function ($q2){
+                                    $q2->where('technical_verify_status',0);
+                                });
                             }
                         ])
                         ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);

@@ -121,8 +121,8 @@ class TenderMasterRepository extends BaseRepository
         );  
 
         $technical = array(
-            array('value'=> 1 , 'label'=> 'Not Completed'),
-            array('value'=> 2 , 'label'=> 'Completed'),  
+            array('value'=> 0 , 'label'=> 'Not Completed'),
+            array('value'=> 1 , 'label'=> 'Completed'),
         );  
 
         $stage = array(
@@ -134,8 +134,7 @@ class TenderMasterRepository extends BaseRepository
             array('value'=> 1 , 'label'=> 'Not Completed'),
             array('value'=> 2 , 'label'=> 'Completed'),  
         );
-        
-        
+
         $data = array(
             'currency' => $currency,
             'selection' => $selection,
