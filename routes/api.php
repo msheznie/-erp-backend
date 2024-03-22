@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\MobileAccessVerify;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -15,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::group(['middleware' => 'mobileServer'], function () {
 Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTaxLedgerForSupplierInvoice');
 
-Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo')->middleware(MobileAccessVerify::class);
+Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
 
 Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getAppearance', 'CompanyAPIController@getAppearance')->middleware(MobileAccessVerify::class);
