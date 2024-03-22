@@ -239,6 +239,16 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         try{
             $input = $request->all();
 
+            if(isset($input[0]['id'])) {
+                $scheduleIdsInCroneJobProgress = RecurringVoucherSetupSchedule::where('rrvSetupScheduleAutoID',$input[0]['id'])->first();
+                $msg = "Reccurring voucher setup schedule process date is today, and it's  processing now";
+
+                if($scheduleIdsInCroneJobProgress  && $scheduleIdsInCroneJobProgress->isInProccess)
+                {
+                    return $this->sendError($msg);
+                }
+            }
+
             /** @var RecurringVoucherSetupSchedule $recurringVoucherSetupSchedule */
 
             if(isset($input['state']) && $input['state'] == 'toggleStop'){
@@ -246,6 +256,10 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
                 if (empty($recurringVoucherSetupSchedule)) {
                     return $this->sendError('Recurring Voucher Setup Schedule not found');
+                }
+
+                if($recurringVoucherSetupSchedule->isInProccess) {
+                    return $this->sendError("Reccurring voucher setup schedule process date is today, and it's  processing now");
                 }
 
                 $rrvCurrentState = $recurringVoucherSetupSchedule->stopYN;
@@ -269,12 +283,15 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                         foreach ($recurringVoucherSetupSchedule as $data){
                             $tempDate = $this->dateCalculate($data->processDate,$input[0]['date']);
 
-                            $data->update([
-                                'processDate' => new Carbon($tempDate),
-                                'modifiedPc' => gethostname(),
-                                'modifiedUser' => $employee->empID,
-                                'modifiedUserSystemID' => $employee->employeeSystemID
-                            ]);
+                            if(!$data->isInProccess) {
+                                $data->update([
+                                    'processDate' => new Carbon($tempDate),
+                                    'modifiedPc' => gethostname(),
+                                    'modifiedUser' => $employee->empID,
+                                    'modifiedUserSystemID' => $employee->employeeSystemID
+                                ]);
+                            }
+
                         }
                     }
                     else{
@@ -283,12 +300,15 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
                         $tempDate = $this->dateCalculate($recurringVoucherSetupSchedule->processDate,$input[0]['date']);
 
-                        $recurringVoucherSetupSchedule->update([
-                            'processDate' => new Carbon($tempDate),
-                            'modifiedPc' => gethostname(),
-                            'modifiedUser' => $employee->empID,
-                            'modifiedUserSystemID' => $employee->employeeSystemID
-                        ]);
+                        if(!$recurringVoucherSetupSchedule->isInProccess) {
+                            $recurringVoucherSetupSchedule->update([
+                                'processDate' => new Carbon($tempDate),
+                                'modifiedPc' => gethostname(),
+                                'modifiedUser' => $employee->empID,
+                                'modifiedUserSystemID' => $employee->employeeSystemID
+                            ]);
+                        }
+
                     }
                 }
                 else{
@@ -298,12 +318,15 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
                         $tempDate = $this->dateCalculate($recurringVoucherSetupSchedule->processDate,$schedule['date']);
 
-                        $recurringVoucherSetupSchedule->update([
-                            'processDate' => new Carbon($tempDate),
-                            'modifiedPc' => gethostname(),
-                            'modifiedUser' => $employee->empID,
-                            'modifiedUserSystemID' => $employee->employeeSystemID
-                        ]);
+                        if(!$recurringVoucherSetupSchedule->isInProccess) {
+                            $recurringVoucherSetupSchedule->update([
+                                'processDate' => new Carbon($tempDate),
+                                'modifiedPc' => gethostname(),
+                                'modifiedUser' => $employee->empID,
+                                'modifiedUserSystemID' => $employee->employeeSystemID
+                            ]);
+                        }
+
                     }
                 }
 

@@ -72,6 +72,12 @@ class CreateRecurringVoucherDocument implements ShouldQueue
             switch ($rrvSchedule->master->documentType){
                 case 0: // Recurring JV Type
                     try{
+                        DB::beginTransaction();
+                        // start the process for schedule
+                        $rrvSchedule->update([
+                            'isInProccess' => 1
+                        ]);
+                        DB::commit();
                         // Approve state documents
                         if($rrvSchedule->master->documentStatus == 2){
                             DB::beginTransaction();
@@ -208,7 +214,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
 
                                                 // Approve Document
                                                 if($jvApprovePreCheckReturnData['success']){
-                                                    $dataset['db'] = $this->tenantDb
+                                                    $dataset['db'] = $this->tenantDb;
                                                     $request = new Request();
                                                     $request->replace($dataset);
                                                     $request->merge(['approvedComments' => '']);
@@ -219,7 +225,8 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                                         // Update other table fields
                                                         $rrvSchedule->update([
                                                             'generateDocumentID' => $jvConfirmReturnData['data']['jvMasterAutoId'],
-                                                            'rrvGeneratedYN' => 1
+                                                            'rrvGeneratedYN' => 1,
+                                                            'isInProccess' => 0
                                                         ]);
                                                         JvMaster::find($jvConfirmReturnData['data']['jvMasterAutoId'])->update(['isAutoApprove' => 1]);
                                                         DB::commit();

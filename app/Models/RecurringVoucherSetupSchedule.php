@@ -192,7 +192,8 @@ class RecurringVoucherSetupSchedule extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
-        'generateDocumentID'
+        'generateDocumentID',
+        'isInProccess'
     ];
 
     /**
@@ -217,7 +218,8 @@ class RecurringVoucherSetupSchedule extends Model
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'createdDateTime' => 'datetime',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'isInProccess' => 'integer'
     ];
 
     protected $appends = [

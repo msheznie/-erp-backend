@@ -874,6 +874,9 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             return $this->sendError('Recurring voucher not found');
         }
 
+        if(count($rrvMaster->schedules()->where('isInProccess',1)->get()) > 0)
+            return $this->sendError('There is a schedule on proccess for this recurring voucher');
+
         if ($rrvMaster->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this recurring voucher, it is not confirmed');
         }
