@@ -407,7 +407,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
             $employee = \Helper::getEmployeeInfo();
 
-            $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)
+            $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->where('isInProccess',0)
                 ->where('rrvGeneratedYN', 0)
                 ->update([
                     'stopYN' => 1,

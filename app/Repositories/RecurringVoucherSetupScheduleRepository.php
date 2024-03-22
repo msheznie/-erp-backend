@@ -37,7 +37,8 @@ class RecurringVoucherSetupScheduleRepository extends BaseRepository
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'isInProccess'
     ];
 
     /**
