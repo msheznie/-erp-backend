@@ -101,7 +101,7 @@ use Carbon\Carbon;
 use Response;
 use App\Models\SupplierBlock;
 use App\Services\ValidateDocumentAmend;
-
+use DateTime;
 /**
  * Class BookInvSuppMasterController
  * @package App\Http\Controllers\API
@@ -201,6 +201,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *      )
      * )
      */
+
+     function validateDate($date, $format = 'd/m/Y')
+        {
+            $d = DateTime::createFromFormat($format, $date);
+            return $d && $d->format($format) === $date;
+        }
     public function store(CreateBookInvSuppMasterAPIRequest $request)
     {
         $input = $request->all();
@@ -250,6 +256,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             if ($input['bookingDate']) {
                 $input['bookingDate'] = new Carbon($input['bookingDate']);
             }
+        }
+
+        $checkDate = $this->validateDate($input['supplierInvoiceDate']);
+        if(!$checkDate)
+        {
+            return $this->sendError('Supplier Invoice date is not valid!');
+
         }
 
         if (isset($input['supplierInvoiceDate'])) {
