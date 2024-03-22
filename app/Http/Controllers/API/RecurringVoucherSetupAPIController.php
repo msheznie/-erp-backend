@@ -828,15 +828,15 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
     public function approveRecurringVoucher(Request $request)
     {
-
-        $recurringVoucher = RecurringVoucherSetup::find($request->recurringVoucherAutoId);
-        $endDate = Carbon::parse($request->endDate);
+        $input = $request->all();
+        $recurringVoucher = RecurringVoucherSetup::find($input['recurringVoucherAutoId']);
+        $endDate = Carbon::parse($input['endDate']);
         $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$recurringVoucher->companyFinanceYearID)
             ->where('isDeleted',0)
             ->exists();
 
         if($financeYear){
-            $approve = \Helper::approveDocument($request);
+            $approve = \Helper::approveDocument($input);
 
             if (!$approve["success"]) {
                 return $this->sendError($approve["message"]);

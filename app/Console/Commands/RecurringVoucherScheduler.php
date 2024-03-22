@@ -51,7 +51,7 @@ class RecurringVoucherScheduler extends Command
 
         foreach ($tenants as $tenant){
             $tenantDb = $tenant->database;
-            CreateRecurringVoucherDocument::dispatch($tenantDb);
+            $res = CreateRecurringVoucherDocument::dispatch($tenantDb);
         }
     }
 }

@@ -30,7 +30,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($tenantDb)
+    public function __construct($db)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -44,7 +44,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
-        $this->tenantDb = $tenantDb;
+        $this->tenantDb = $db;
     }
 
     /**
@@ -208,6 +208,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
 
                                                 // Approve Document
                                                 if($jvApprovePreCheckReturnData['success']){
+                                                    $dataset['db'] = $this->tenantDb
                                                     $request = new Request();
                                                     $request->replace($dataset);
                                                     $request->merge(['approvedComments' => '']);
