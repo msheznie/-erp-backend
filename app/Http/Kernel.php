@@ -71,6 +71,8 @@ class Kernel extends HttpKernel
         'access_token' => \App\Http\Middleware\AccessToken::class,
         'pos_api' => \App\Http\Middleware\PosApi::class,
         'print_lang' => \App\Http\Middleware\DetectPrintLang::class,
-        'hrms_employee' => \App\Http\Middleware\DetectHRMSEmployee::class
+        'hrms_employee' => \App\Http\Middleware\DetectHRMSEmployee::class,
+        'mobileAccess' => \App\Http\Middleware\MobileAccessVerify::class,
+        'mobileServer' => \App\Http\Middleware\MobileServer::class
     ];
 }

@@ -12,13 +12,13 @@
 */
 
 use Illuminate\Support\Facades\Route;
-
+Route::group(['middleware' => 'mobileServer'], function () {
 Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTaxLedgerForSupplierInvoice');
 
-Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
+Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo')->middleware(MobileAccessVerify::class);
 
 Route::group(['middleware' => ['tenant','locale']], function () {
-    Route::get('getAppearance', 'CompanyAPIController@getAppearance');
+    Route::get('getAppearance', 'CompanyAPIController@getAppearance')->middleware(MobileAccessVerify::class);
     Route::post('postEmployeeFromPortal', 'HelpDesk\HelpDeskAPIController@postEmployee');
 
     Route::group(['middleware' => ['pos_api']], function (){
@@ -53,7 +53,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
-        Route::group(['middleware' => 'authorization:api'], function () {
+        Route::group(['middleware' => ['authorization:api','mobileAccess']], function () {
 
             require __DIR__.'/../routes/systemAdmin/systemAdminRoutes.php';
             require __DIR__.'/../routes/general/generalRoutes.php';
@@ -931,7 +931,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('getSubCategoriesByMultipleMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMultipleMasterCategory');
     
     Route::get('loginwithToken', 'UserAPIController@loginwithToken');
-    Route::post('login', 'AuthAPIController@auth');
+    Route::post('login', 'AuthAPIController@auth')->middleware(MobileAccessVerify::class);
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
     
     Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
@@ -1023,7 +1023,7 @@ if (env("LOG_ENABLE", false)) {
     });
 }       
 
-
+});
 
 /*
  * End external related routes
