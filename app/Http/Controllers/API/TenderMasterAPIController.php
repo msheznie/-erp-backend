@@ -3571,11 +3571,23 @@ ORDER BY
 
         if($isNegotiation == 1){
             $query = $query->where('negotiation_code', '!=', null);
+            if ($filters['combinedRankingStatus'] && count($filters['combinedRankingStatus']) > 0) {
+                $query->whereIn('negotiation_is_awarded', $filters['combinedRankingStatus']);
+            } else {
+                $query->whereIn('negotiation_is_awarded', [0 , 1]);
+            }
+        } else {
+            if ($filters['combinedRankingStatus'] && count($filters['combinedRankingStatus']) > 0) {
+                $query->whereIn('is_awarded', $filters['combinedRankingStatus']);
+            } else {
+                $query->whereIn('is_awarded', [0 , 1]);
+            }
         }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
                 $query->whereIn('currency_id', $filters['currencyId']);
         }
+
 
         if ($filters['selection']) {
             $query->where('tender_type_id', $filters['selection']);
@@ -4922,6 +4934,10 @@ ORDER BY
         $currencyId = (array)$currencyId;
         $currencyId = collect($currencyId)->pluck('id');
 
+        $combinedRankingStatus = !empty($input['filters']['combined_ranking_status']) ? $input['filters']['combined_ranking_status'] : null;
+        $combinedRankingStatus = (array)$combinedRankingStatus;
+        $combinedRankingStatus = collect($combinedRankingStatus)->pluck('id');
+
         $selection = !empty($input['filters']['selection']) ? $input['filters']['selection'] : null;
         $envelope = !empty($input['filters']['envelope']) ? $input['filters']['envelope'] : null;
         $published = !empty($input['filters']['publish']) ? $input['filters']['publish']: null;
@@ -4944,7 +4960,8 @@ ORDER BY
             'technical' => $technical,
             'stage' => $stage,
             'commercial' => $commercial,
-            'tenderNegotiationStatus' => $tenderNegotiationStatus
+            'tenderNegotiationStatus' => $tenderNegotiationStatus,
+            'combinedRankingStatus' => $combinedRankingStatus
         ];
 
         return $filters;
