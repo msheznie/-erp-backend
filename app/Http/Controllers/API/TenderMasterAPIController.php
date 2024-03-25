@@ -3463,8 +3463,8 @@ ORDER BY
         }
 
         if ($filters['commercial']) {
-            $commercial =  ($filters['commercial'] == 1 ) ? 0 :1;
-            $query->where('commercial_verify_status', $commercial);
+            $ids = array_column($filters['commercial'], 'id');
+            $query->whereIn('commercial_verify_status', $ids);
         }
 
         // return $this->sendResponse($query, 'Tender Masters retrieved successfully');

@@ -131,8 +131,8 @@ class TenderMasterRepository extends BaseRepository
         );  
 
         $commercial = array(
-            array('value'=> 1 , 'label'=> 'Not Completed'),
-            array('value'=> 2 , 'label'=> 'Completed'),  
+            array('value'=> 0 , 'label'=> 'Not Completed'),
+            array('value'=> 1 , 'label'=> 'Completed'),
         );
 
         $data = array(
