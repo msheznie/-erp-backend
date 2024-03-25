@@ -399,40 +399,61 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         if ($filters['published']) {
-            $publish =  ($filters['published'] == 1 ) ? 0 :1;
-            $tenderMaster->where('published_yn', $publish);
+            $ids = array_column($filters['published'], 'id');
+            $tenderMaster->whereIn('published_yn', $ids);
         }
 
         if ($filters['rfxType']) { 
             $tenderMaster->where('document_type', $filters['rfxType']); 
         }
 
-        if ($filters['status']) { 
-            switch ($filters['status']) {
-                case 1:
-                    $tenderMaster->where('confirmed_yn', 0)
-                                ->where('approved', 0)
-                                ->where('refferedBackYN', 0);
-                    break;
-        
-                case 2:
-                    $tenderMaster->where('confirmed_yn', 1)
-                                ->where('approved', 0)
-                                ->where('refferedBackYN', 0);
-                    break;
-        
-                case 3:
-                    $tenderMaster->where('confirmed_yn', 1)
-                                ->where('approved', -1)
-                                ->where('refferedBackYN', 0);
-                    break;
-                    
-                case 4:
-                        $tenderMaster->where('confirmed_yn', 1)
-                                    ->where('approved', 0)
-                                    ->where('refferedBackYN', -1);
-                    break;
-                } 
+        if ($filters['status']) {
+            $ids = array_column($filters['status'], 'id');
+            $tenderMaster->where(function ($query) use ($ids) {
+                if (in_array(1, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 0)
+                            ->where('approved', 0)
+                            ->where('refferedBackYN', 0);
+                    });
+                }
+
+                if (in_array(2, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 1)
+                            ->where('approved', 0)
+                            ->where('refferedBackYN', 0);
+                    });
+                }
+
+                if (in_array(3, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 1)
+                            ->where('approved', -1)
+                            ->where('refferedBackYN', 0);
+                    });
+                }
+
+                if (in_array(4, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 1)
+                            ->where('approved', 0)
+                            ->where('refferedBackYN', -1);
+                    });
+
+                    $query->WhereDoesntHave('approvedRejectStatus');
+                }
+
+                if (in_array(5, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 1)
+                            ->where('approved', 0)
+                            ->where('refferedBackYN', -1);
+                    });
+
+                    $query->whereHas('approvedRejectStatus');
+                }
+            });
         }
 
         if (isset($input['rfx']) && $input['rfx']) {
