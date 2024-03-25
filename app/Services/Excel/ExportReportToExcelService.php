@@ -27,6 +27,8 @@ class ExportReportToExcelService implements ExportToExcelInterface
     public $dataType = 1;
     public $excelType;
 
+    public $setColumnAutoSize;
+
     /**
      * @param mixed $excelType
      */
@@ -160,6 +162,12 @@ class ExportReportToExcelService implements ExportToExcelInterface
         return $this;
     }
 
+    public function setColumnAutoSize($setColumnAutoSize = true):ExportReportToExcelService
+    {
+        $this->setColumnAutoSize = $setColumnAutoSize;
+
+        return $this;
+    }
 
     /**
      * @param mixed $details
@@ -175,7 +183,8 @@ class ExportReportToExcelService implements ExportToExcelInterface
             'cur'=>$this->currency,
             'title'=>$this->title,
             'excelFormat' => $this->excelFormat,
-            'dataType' => $this->dataType
+            'dataType' => $this->dataType,
+            'setColumnAutoSize' => $this->setColumnAutoSize
         );
 
 
