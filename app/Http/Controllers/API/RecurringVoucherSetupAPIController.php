@@ -177,6 +177,14 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
+        if(!$company)
+            return $this->sendError('Company Details not found');
+
+
+        if(!isset($input['companyFinanceYearID']))
+            return $this->sendError('Company Finance Year not found');
+
+
         $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->where('companySystemID', $input['companySystemID'])->first();
 
         if ($companyfinanceyear) {

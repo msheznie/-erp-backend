@@ -393,8 +393,9 @@ class RecurringVoucherSetup extends Model
     }
 
     public function getIsStopAllScheduleAttribute(){
-        $result = $this->schedules()->selectRaw('MIN(stopYN) as stopAll')->groupBy('recurringVoucherAutoId')->first();
-        return $result ? $result->stopAll : 0;
+        $result = $this->schedules()->count();
+        $stoppedProcess = $this->schedules()->where('isInProccess',0)->where('stopYN',1)->count();
+        return (($result > 0 && $stoppedProcess > 0) && ($result == $stoppedProcess)) ? 1 : 0;
     }
     
 }
