@@ -99,10 +99,10 @@ class PoAnalysisService
                 $reportData->setAccountCode($val->AccountCode);
                 $reportData->setAccountDescription($val->finance_gl_code_pl);
                 $reportData->setPoQty($val->noQty);
-                $reportData->setUnitCostWithoutDiscount(number_format($val->unitCostWithOutDiscount, 2));
-                $reportData->setUnitCostWithDiscount(number_format($val->unitCostWithDiscount, 2));
+                $reportData->setUnitCostWithoutDiscount(CurrencyService::convertNumberFormatToNumber(number_format($val->unitCostWithOutDiscount, 2)));
+                $reportData->setUnitCostWithDiscount(CurrencyService::convertNumberFormatToNumber(number_format($val->unitCostWithDiscount, 2)));
                 $reportData->setDiscountPercentage($val->discountPercentage);
-                $reportData->setDiscountAmount(number_format($val->discountAmount, 2));
+                $reportData->setDiscountAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->discountAmount, 2)));
                 $reportData->setTotal(CurrencyService::convertNumberFormatToNumber(number_format($val->total, 2)));
                 $reportData->setQtyReceived($val->qtyReceived);
                 $reportData->setQtyToReceive($val->qtyToReceive);

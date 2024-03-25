@@ -11,7 +11,6 @@ class ExcelColumnFormat
 
     public  static function getExcelColumnFormat($reportData,$reportID)
     {
-
        $excelColumnFormat = [];
        $totalAdditionalColumn = 0;
        foreach ($reportData as $rpt)
@@ -19,7 +18,13 @@ class ExcelColumnFormat
 
            if(isset($rpt->detail)) {
                //3 one column gap on excel + recurisve started after two index
-               $additonColumn = self::countDetailObjects($rpt->detail) + 3;
+               if($reportID == "FCT")
+               {
+                   $additonColumn = self::countDetailObjects($rpt->detail) + 3;
+               }else {
+                   $additonColumn = self::countDetailObjects($rpt->detail) + 2;
+               }
+
                if($additonColumn > $totalAdditionalColumn)
                    $totalAdditionalColumn = $additonColumn;
            }

@@ -2741,22 +2741,24 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $data[$x]['Account Description'] = "Grand Total";
                         $data[$x]['Type'] = "";
                         if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) { 
-                            $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round($totalOpeningBalanceLocal, $decimalPlaceLocal);
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($totaldocumentLocalAmountDebit, $decimalPlaceLocal);
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($totaldocumentLocalAmountCredit, $decimalPlaceLocal);
-                            $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round($totalClosingBalanceLocal, $decimalPlaceLocal);
+                            $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalOpeningBalanceLocal, $decimalPlaceLocal));
+                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentLocalAmountDebit, $decimalPlaceLocal));
+                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentLocalAmountCredit, $decimalPlaceLocal));
+                            $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceLocal, $decimalPlaceLocal));
                         }
                         if($currencyId == 2 || $currencyId == 3) { 
-                            $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round($totalOpeningBalanceRpt, $decimalPlaceRpt);
-                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($totaldocumentRptAmountDebit, $decimalPlaceRpt);
-                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($totaldocumentRptAmountCredit, $decimalPlaceRpt);
-                            $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round($totalClosingBalanceRpt, $decimalPlaceRpt);
+                            $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalOpeningBalanceRpt, $decimalPlaceRpt));
+                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentRptAmountDebit, $decimalPlaceRpt));
+                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentRptAmountCredit, $decimalPlaceRpt));
+                            $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceRpt, $decimalPlaceRpt));
                         }
                         $excelFormat = [
                             'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                             'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                             'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                             'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
                         ];
 
