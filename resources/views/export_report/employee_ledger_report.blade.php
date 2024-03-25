@@ -20,7 +20,7 @@
      function isPositive($num, $type){
         $modNum = 0;
 
-        if($type == 2|| $type == 5 || $type == 6 || $type == 3)
+        if($type == 7 || $type == 2 || $type == 5 || $type == 6 || $type == 3)
         {
           $modNum = $num * -1;
         }
@@ -33,7 +33,7 @@
      function isRefPositive($num, $type, $refType){
         $modNum = 0;
 
-        if($type == 2|| $type == 5 || $type == 6 || $type == 3)
+        if($type == 7 || $type == 2 || $type == 5 || $type == 6 || $type == 3)
         {
             if($refType == 1){
                 $modNum = $num;
