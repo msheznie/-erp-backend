@@ -3058,6 +3058,9 @@ ORDER BY
             });
         }
 
+        if ($filters['technical']) {
+            $query->having('technical_count', '>', 0);
+        }
 
         return \DataTables::eloquent($query)
             ->order(function ($query) use ($input) {
