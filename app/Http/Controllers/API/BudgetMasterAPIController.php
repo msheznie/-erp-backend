@@ -559,7 +559,7 @@ class BudgetMasterAPIController extends AppBaseController
                     ->orWhereHas('segment_by', function ($q1) use ($search) {
                         $q1->where('ServiceLineDes', 'like', "%{$search}%");
                     })->orWhereHas('template_master', function ($q2) use ($search) {
-                        $q2->where('templateDescription', 'like', "%{$search}%");
+                        $q2->where('description', 'like', "%{$search}%");
                     });
             });
         }
