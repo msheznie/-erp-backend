@@ -3147,7 +3147,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
             $payee = $payee->get();
 
-            $payeeAll = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN','<>', 2);
+            $payeeAll = Employee::where('discharegedYN','<>', 2);
             if(Helper::checkHrmsIntergrated($companyId)){
                 $payeeAll = $payeeAll->whereHas('hr_emp', function($q){
                     $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
