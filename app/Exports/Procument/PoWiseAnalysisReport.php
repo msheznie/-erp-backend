@@ -4,7 +4,7 @@ namespace App\Exports\Procument;
 
 use App\helper\Helper;
 
-class poWiseAnalysisReport
+class PoWiseAnalysisReport
 {
 
     public $companyId;

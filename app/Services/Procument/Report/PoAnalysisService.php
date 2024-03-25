@@ -4,7 +4,7 @@ namespace App\Services\Procument\Report;
 
 use App\Exports\Procument\CompanyWisePoAnalysisReport;
 use App\Exports\Procument\ItemwisePoAnalysisReport;
-use App\Exports\Procument\poWiseAnalysisReport;
+use App\Exports\Procument\PoWiseAnalysisReport;
 use App\Exports\Procument\SupplierWisePoAnalysisReport;
 use App\helper\CreateExcel;
 use App\Models\Company;
@@ -286,12 +286,12 @@ class PoAnalysisService
             $data = array();
 
             if(empty($data)) {
-                $poWiseAnalysisReportHeader = new poWiseAnalysisReport();
+                $poWiseAnalysisReportHeader = new PoWiseAnalysisReport();
                 array_push($data,collect($poWiseAnalysisReportHeader->getHeader())->toArray());
             }
 
             foreach ($output as $val) {
-                $poWiseAnalysisReport = new poWiseAnalysisReport();
+                $poWiseAnalysisReport = new PoWiseAnalysisReport();
                 $poWiseAnalysisReport->setCompanyId($val->companyID);
                 $poWiseAnalysisReport->setPoCode($val->purchaseOrderCode);
                 $poWiseAnalysisReport->setSegment($val->segment);
@@ -330,7 +330,7 @@ class PoAnalysisService
             $fileName = 'po_wise_analysis';
             $title = "PO Wise Analysis Report";
             $path = 'procurement/report/po_wise_analysis/excel/';
-            $poWiseAnalysisReport = new poWiseAnalysisReport();
+            $poWiseAnalysisReport = new PoWiseAnalysisReport();
             $excelColumnFormat = $poWiseAnalysisReport->getColumnFormat();
 
         }
