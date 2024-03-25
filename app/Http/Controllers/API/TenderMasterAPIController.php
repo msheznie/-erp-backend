@@ -3574,11 +3574,21 @@ ORDER BY
 
         if($isNegotiation == 1){
             $query = $query->where('negotiation_code', '!=', null);
-            if ($filters['combinedRankingStatus'] && count($filters['combinedRankingStatus']) > 0) {
-                $query->whereIn('negotiation_is_awarded', $filters['combinedRankingStatus']);
-            } else {
-                $query->whereIn('negotiation_is_awarded', [0 , 1]);
-            }
+            $type = gettype($filters['combinedRankingStatus']);
+            $combinedRankingStatusArray = json_decode(json_encode($filters['combinedRankingStatus']), true);
+            $query->where(function ($query) use ($combinedRankingStatusArray) {
+                if (!in_array(0, $combinedRankingStatusArray) && !in_array(1, $combinedRankingStatusArray)) {
+                    return;
+                }
+
+                if (in_array(0, $combinedRankingStatusArray)) {
+                    $query->whereNull('negotiation_is_awarded');
+                }
+
+                if (in_array(1, $combinedRankingStatusArray)) {
+                    $query->orWhere('negotiation_is_awarded', 1);
+                }
+            });
         } else {
             if ($filters['combinedRankingStatus'] && count($filters['combinedRankingStatus']) > 0) {
                 $query->whereIn('is_awarded', $filters['combinedRankingStatus']);
@@ -4388,6 +4398,7 @@ ORDER BY
         }
 
         $companyId = $request['companyId'];
+        $filters = $this->getFilterData($input);
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('is_awarded', 1)->where(function ($query) {
@@ -4395,6 +4406,26 @@ ORDER BY
                     ->orWhere('is_negotiation_closed', 1);
             });
 
+        if ($filters['tenderAwardingStatus'] && count($filters['tenderAwardingStatus']) > 0) {
+            $query->whereIn('final_tender_awarded', $filters['tenderAwardingStatus']);
+        }
+
+        if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
+            $query->whereIn('currency_id', $filters['currencyId']);
+        }
+
+
+        if ($filters['selection']) {
+            $query->where('tender_type_id', $filters['selection']);
+        }
+
+        if ($filters['envelope']) {
+            $query->where('envelop_type_id', $filters['envelope']);
+        }
+
+        if ($filters['stage']) {
+            $query->where('stage', $filters['stage']);
+        }
 
         $search = $request->input('search.value');
         if ($search) {
@@ -4941,6 +4972,10 @@ ORDER BY
         $combinedRankingStatus = (array)$combinedRankingStatus;
         $combinedRankingStatus = collect($combinedRankingStatus)->pluck('id');
 
+        $tenderAwardingStatus = !empty($input['filters']['final_tender_awarded']) ? $input['filters']['final_tender_awarded'] : null;
+        $tenderAwardingStatus = (array)$tenderAwardingStatus;
+        $tenderAwardingStatus = collect($tenderAwardingStatus)->pluck('id');
+
         $selection = !empty($input['filters']['selection']) ? $input['filters']['selection'] : null;
         $envelope = !empty($input['filters']['envelope']) ? $input['filters']['envelope'] : null;
         $published = !empty($input['filters']['publish']) ? $input['filters']['publish']: null;
@@ -4964,7 +4999,8 @@ ORDER BY
             'stage' => $stage,
             'commercial' => $commercial,
             'tenderNegotiationStatus' => $tenderNegotiationStatus,
-            'combinedRankingStatus' => $combinedRankingStatus
+            'combinedRankingStatus' => $combinedRankingStatus,
+            'tenderAwardingStatus' => $tenderAwardingStatus
         ];
 
         return $filters;
