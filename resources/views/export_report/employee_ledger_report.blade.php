@@ -235,7 +235,16 @@
                 </tbody>
 
                 <br>
-                <thead>
+          @php $isPV = 0 @endphp
+          @foreach($datas as $data)
+              @if($employee->employeeID == $data->employeeID)
+                  @if ($data->type == 2)
+                     @php $isPV = 1 @endphp
+                  @endif
+              @endif
+          @endforeach
+          @if ($isPV == 1)
+          <thead>
                     <tr><td><B>Direct Payment Voucher</B></td></tr>
                         <tr>
                              <th>Document Date</th>
@@ -355,6 +364,8 @@
                             @endif
                         @endforeach
                     </tbody>
+
+          @endif
 
       </table>
 @endforeach
