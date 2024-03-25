@@ -4353,7 +4353,8 @@ class BudgetMasterAPIController extends AppBaseController
     public function budgetReferBack(Request $request)
     {
         $input = $request->all();
-
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
         $budgetMasterID = $input['budgetMasterID'];
 
         $budgetMaster = BudgetMaster::find($budgetMasterID);
