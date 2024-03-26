@@ -3484,9 +3484,8 @@ ORDER BY
                     if (in_array(1, $ids)) {
                         $query->orWhere(function ($query) {
                             $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
-                                $q->where('commercial_verify_status', 0);
-
-                            })->whereHas('srm_bid_submission_master.TenderBidNegotiation');
+                                $q->where('commercial_verify_status', 0)->whereHas('TenderBidNegotiation');
+                            });
                         });
                     }
 
@@ -5173,8 +5172,8 @@ ORDER BY
                 if (in_array(1, $ids)) {
                     $query->orWhere(function ($query) {
                         $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
-                            $q->where('technical_verify_status', 0);
-                        })->whereHas('srm_bid_submission_master.TenderBidNegotiation');
+                            $q->where('technical_verify_status', 0)->whereHas('TenderBidNegotiation');
+                        });
                     });
                 }
 
