@@ -372,6 +372,7 @@ class AccountsPayableReportAPIController extends AppBaseController
     /*generate report according to each report id*/
     public function generateAPReport(Request $request)
     {
+        try {
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'APSL': //Supplier Ledger Report
@@ -804,6 +805,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                 break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
+        }
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage(), 500);
         }
     }
 
@@ -3257,14 +3261,13 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $suppliers = (array)$request->suppliers;
+
         $type = isset($request->supEmpId[0]) ? $request->supEmpId[0]: $request->supEmpId;
 
         if($type == 1) {
             $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
-        } else if($type == 2) {
-            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
         } else {
-            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
         }
 
         $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
@@ -3631,14 +3634,11 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $suppliers = (array)$request->suppliers;
 
-        $supplierSystemID = array();
         $type = isset($request->supEmpId[0]) ? $request->supEmpId[0]: $request->supEmpId;
         if($type == 1) {
             $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
-        } else if($type == 2) {
-            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
         } else {
-            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
         }
 
         $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
@@ -4010,14 +4010,13 @@ class AccountsPayableReportAPIController extends AppBaseController
         } else {
             $companyID = (array)$request->companySystemID;
         }
+
         $suppliers = (array)$request->suppliers;
         $type = isset($request->supEmpId[0]) ? $request->supEmpId[0]: $request->supEmpId;
         if($type == 1) {
             $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
-        } else if($type == 2) {
-            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
         } else {
-            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
         }
 
         $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
@@ -4375,14 +4374,13 @@ class AccountsPayableReportAPIController extends AppBaseController
         } else {
             $companyID = (array)$request->companySystemID;
         }
+
         $suppliers = (array)$request->suppliers;
         $type = isset($request->supEmpId[0]) ? $request->supEmpId[0]: $request->supEmpId;
         if($type == 1) {
             $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
-        } else if($type == 2) {
-            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
         } else {
-            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+            $supplierSystemID = collect($suppliers)->pluck('employeeSystemID')->toArray();
         }
         $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
