@@ -3485,14 +3485,15 @@ ORDER BY
                         $query->orWhere(function ($query) {
                             $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
                                 $q->where('commercial_verify_status', 0);
-                            });
+
+                            })->whereHas('srm_bid_submission_master.TenderBidNegotiation');
                         });
                     }
 
                     if (in_array(0, $ids)) {
                         $query->orWhere(function ($query) {
                             $query->whereHas('srm_bid_submission_master', function ($q) {
-                                $q->where('commercial_verify_status', 0);
+                                $q->where('commercial_verify_status', 0)->whereHas('TenderBidNegotiation');
                             });
                         });
                     }
@@ -5173,14 +5174,14 @@ ORDER BY
                     $query->orWhere(function ($query) {
                         $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
                             $q->where('technical_verify_status', 0);
-                        });
+                        })->whereHas('srm_bid_submission_master.TenderBidNegotiation');
                     });
                 }
 
                 if (in_array(0, $ids)) {
                     $query->orWhere(function ($query) {
                     $query->whereHas('srm_bid_submission_master', function ($q) {
-                        $q->where('technical_verify_status', 0);
+                        $q->where('technical_verify_status', 0)->whereHas('TenderBidNegotiation');
                         });
                     });
                 }
