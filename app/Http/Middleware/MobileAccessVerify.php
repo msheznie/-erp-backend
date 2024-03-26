@@ -38,15 +38,15 @@ class MobileAccessVerify
             return $next($request);
         }
         
-        if(!$request->hasHeader('Is-Mobile') ) {
+        if(!$request->hasHeader('is-mobile') ) {
             return $next($request);
         }
-        if($request->hasHeader('Is-Mobile') && $request->header('Is-Mobile') != 1) {
+        if($request->hasHeader('is-mobile') && $request->header('is-mobile') != 1) {
             return $next($request);
          }
 
          if(!$request->hasHeader('device_id')) {
-            return $this->errorMsgs("Access Denied: Mobile Device Restricted You dont have access to mobile devices",401); 
+            return $this->errorMsgs("Access Denied: Mobile Device Restricted ,Device Id not found",401); 
         }
          $serial_number = $request->header('device_id');
 
