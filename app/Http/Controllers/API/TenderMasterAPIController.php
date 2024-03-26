@@ -3480,18 +3480,23 @@ ORDER BY
             ]);
             if ($filters['commercial']) {
                 $ids = array_column($filters['commercial'], 'id');
+                $query->where(function ($query) use ($ids) {
+                    if (in_array(1, $ids)) {
+                        $query->orWhere(function ($query) {
+                            $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
+                                $q->where('commercial_verify_status', 0);
+                            });
+                        });
+                    }
 
-                if (in_array(1, $ids)) {
-                    $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
-                        $q->where('commercial_verify_status', 0);
-                    });
-                }
-
-                if (in_array(0, $ids)) {
-                    $query->whereHas('srm_bid_submission_master', function ($q) {
-                        $q->where('commercial_verify_status', 0);
-                    });
-                }
+                    if (in_array(0, $ids)) {
+                        $query->orWhere(function ($query) {
+                            $query->whereHas('srm_bid_submission_master', function ($q) {
+                                $q->where('commercial_verify_status', 0);
+                            });
+                        });
+                    }
+                });
             }
         }
 
@@ -5120,7 +5125,7 @@ ORDER BY
 
         $companyId = $request['companyId'];
 
-        $filters = $this->getFilterData($input);  
+        $filters = $this->getFilterData($input);
 
         $query = TenderMaster::with(['currency', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
                         ->where('is_negotiation_started',1)
@@ -5162,8 +5167,24 @@ ORDER BY
         }
 
         if ($filters['technical']) {
-            $technical =  ($filters['technical'] == 1 ) ? 0 :1;
-            $query->where('technical_eval_status', $technical);
+            $ids = array_column($filters['technical'], 'id');
+            $query->where(function ($query) use ($ids) {
+                if (in_array(1, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
+                            $q->where('technical_verify_status', 0);
+                        });
+                    });
+                }
+
+                if (in_array(0, $ids)) {
+                    $query->orWhere(function ($query) {
+                    $query->whereHas('srm_bid_submission_master', function ($q) {
+                        $q->where('technical_verify_status', 0);
+                        });
+                    });
+                }
+            });
         }
 
         if ($filters['stage']) { 
