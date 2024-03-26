@@ -46,7 +46,7 @@ class MobileAccessVerify
          }
 
          if(!$request->hasHeader('device_id')) {
-            return $this->errorMsgs("Access Denied: Mobile Device Restricted ,Device Id not found",401); 
+            return $this->errorMsgs("Access Denied. Mobile device restricted. You don’t have access to mobile application. Please contact administrator",401); 
         }
          $serial_number = $request->header('device_id');
 
@@ -62,7 +62,7 @@ class MobileAccessVerify
        
         if(!$mobileAccess)
         {
-            return $this->errorMsgs("Access Denied: Mobile Device Restricted You dont have access to mobile devices",401); 
+            return $this->errorMsgs("Access Denied. Mobile device restricted. You don’t have access to mobile application. Please contact administrator",401); 
 
         }
                 
