@@ -3468,6 +3468,31 @@ ORDER BY
         if($isNegotiation == 1){ 
             $query->where('is_negotiation_started',1)
             ->where('negotiation_published',1);
+            $query->withCount(['criteriaDetails',
+                'srm_bid_submission_master AS commercial_eval_negotiation' => function ($query2) {
+                    $query2->with(['TenderBidNegotiation' => function ($q){
+                        $q->where('commercial_verify_status',0);
+                    }])
+                        ->whereHas('TenderBidNegotiation',function ($q2){
+                            $q2->where('commercial_verify_status',0);
+                        });
+                }
+            ]);
+            if ($filters['commercial']) {
+                $ids = array_column($filters['commercial'], 'id');
+
+                if (in_array(1, $ids)) {
+                    $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
+                        $q->where('commercial_verify_status', 0);
+                    });
+                }
+
+                if (in_array(0, $ids)) {
+                    $query->whereHas('srm_bid_submission_master', function ($q) {
+                        $q->where('commercial_verify_status', 0);
+                    });
+                }
+            }
         }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
@@ -3486,7 +3511,7 @@ ORDER BY
             $query->where('stage', $filters['stage']);
         }
 
-        if ($filters['commercial']) {
+        if ($filters['commercial'] && $isNegotiation != 1) {
             $ids = array_column($filters['commercial'], 'id');
             $query->whereIn('commercial_verify_status', $ids);
         }
