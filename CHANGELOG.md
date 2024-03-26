@@ -1,5 +1,29 @@
 # Changelog
 
+## [10.36.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.35.1...v10.36.0) (2024-03-26)
+
+
+### Features
+
+* **sourcing management:** Inviting suppliers for the closed Tender and RFX | Enhancement [GSUP-1579] ([#5677](https://github.com/pbsgears/Gears_BackEnd/issues/5677)) ([ec1dc0e](https://github.com/pbsgears/Gears_BackEnd/commit/ec1dc0e8dad5eff8e30710fd9b2b3254f1c286eb))
+* **sourcing management:** prebid clarification forward email enhance… ([#5729](https://github.com/pbsgears/Gears_BackEnd/issues/5729)) ([b5476b9](https://github.com/pbsgears/Gears_BackEnd/commit/b5476b98ebaf7d500ead60a99d0bee4ff2f93cab))
+* **sourcing management:** raising pre-bid clarification as private [GSUP-1608] ([#5719](https://github.com/pbsgears/Gears_BackEnd/issues/5719)) ([003d966](https://github.com/pbsgears/Gears_BackEnd/commit/003d966526afa7c483041e7418bbab913fb603ca))
+* **SRM Supplier:** Give Supplier portal access to the existing suppliers [GSUP-1571] ([#5681](https://github.com/pbsgears/Gears_BackEnd/issues/5681)) ([b382b45](https://github.com/pbsgears/Gears_BackEnd/commit/b382b450af289afee5ea2087745e21cbe2ffb367))
+* **SRM Tender:** Budget Integration [GSUP-1528] ([#5741](https://github.com/pbsgears/Gears_BackEnd/issues/5741)) ([7a73e94](https://github.com/pbsgears/Gears_BackEnd/commit/7a73e942791468d98d853d58c96d9f4ec3b66015))
+* **SRM Tender:** Budget Integration [GSUP-1528] ([#5871](https://github.com/pbsgears/Gears_BackEnd/issues/5871)) ([04f1c44](https://github.com/pbsgears/Gears_BackEnd/commit/04f1c44e3b1a3c7005a98014d27a2f139553892e))
+* **Tender & RFX :** Tender & RFX | Reject Option [GSUP-1635] ([#5858](https://github.com/pbsgears/Gears_BackEnd/issues/5858)) ([8210424](https://github.com/pbsgears/Gears_BackEnd/commit/82104243637abb665fc8517b8929ce1815d8ab4f))
+* **Tender:** Tender & RFX | Amend option enhancement [GSUP-1641] ([#5842](https://github.com/pbsgears/Gears_BackEnd/issues/5842)) ([c176004](https://github.com/pbsgears/Gears_BackEnd/commit/c176004c71b125e943cdb30d45dd2b347506c305))
+* **Tender:** Tender & RFX | Amend option enhancement [GSUP-1641] ([#5880](https://github.com/pbsgears/Gears_BackEnd/issues/5880)) ([9aa6ff7](https://github.com/pbsgears/Gears_BackEnd/commit/9aa6ff7ecce4f8715dc74985d309af037ecec7bf))
+
+
+### Bug Fixes
+
+* **KYC:** ERP VAT Certificate Expiry date is mismatched with the given expiry date during KYC submission [GSUP-1671] ([#5813](https://github.com/pbsgears/Gears_BackEnd/issues/5813)) ([ba27762](https://github.com/pbsgears/Gears_BackEnd/commit/ba27762063d1d9ecd2d571ef4b7977219c871f72))
+* **sourcing management:** code enhancement in TenderBidClarificationAPIController [GSUP-1697] ([#5854](https://github.com/pbsgears/Gears_BackEnd/issues/5854)) ([4ff9a8f](https://github.com/pbsgears/Gears_BackEnd/commit/4ff9a8fe6decafd50f42af50cf624bb9290b4558))
+* **Tender:** Tender /RFX supplier list is not available in the 'Assign Suppliers' tab [GSUP-1697] ([#5845](https://github.com/pbsgears/Gears_BackEnd/issues/5845)) ([262d90f](https://github.com/pbsgears/Gears_BackEnd/commit/262d90f63225fcda82c792ff6ce59cf814f009e3))
+* **Tender:** Tender /RFX supplier list is not available in the 'Assign Suppliers' tab [GSUP-1697] ([#5852](https://github.com/pbsgears/Gears_BackEnd/issues/5852)) ([5b20fde](https://github.com/pbsgears/Gears_BackEnd/commit/5b20fde2c22894539ed5c444681ddd743b127073))
+* **Tender:** Unable to Save 'General Information' tab in Tender/RFX [GSUP-1710] ([#5875](https://github.com/pbsgears/Gears_BackEnd/issues/5875)) ([31525c2](https://github.com/pbsgears/Gears_BackEnd/commit/31525c2e06e75848244a1385260c7bafdb79675f))
+
 ## [10.35.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.35.0...v10.35.1) (2024-03-11)
 
 
