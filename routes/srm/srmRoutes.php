@@ -92,6 +92,7 @@ Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsU
 Route::post('getPreBidClarifications', 'TenderBidClarificationsAPIController@getPreBidClarifications')->name("Get pre bid clarifications");
 Route::post('getPreBidClarificationsResponse', 'TenderBidClarificationsAPIController@getPreBidClarificationsResponse')->name("Get pre bid clarifications response");
 Route::post('forwardPreBidClarification', 'TenderBidClarificationsAPIController@forwardPreBidClarification')->name("Forward pre bid clarifications");
+Route::post('getPreBidClarificationsPolicyData', 'TenderBidClarificationsAPIController@getPreBidClarificationsPolicyData')->name("Get pre bid clarifications policy data");
 Route::post('createResponse', 'TenderBidClarificationsAPIController@createResponse')->name("Create response");
 Route::post('getTenderMasterApproval', 'TenderMasterAPIController@getTenderMasterApproval')->name("Get tender master approval");
 Route::post('getTenderMasterFullApproved', 'TenderMasterAPIController@getTenderMasterFullApproved')->name("Get tender master full approved");
@@ -104,7 +105,7 @@ Route::post('closeThread', 'TenderBidClarificationsAPIController@closeThread')->
 Route::post('reOpenTender', 'TenderMasterAPIController@reOpenTender')->name("Reopen tender");
 Route::post('tenderMasterPublish', 'TenderMasterAPIController@tenderMasterPublish')->name("Tender master publish");
 
-Route::post('getSupplierList', 'TenderMasterAPIController@getSupplierList')->name("Get supplier list");
+Route::post('getSourcingManagementSupplierList', 'TenderMasterAPIController@getSupplierList')->name("Get supplier list");
 Route::post('saveSupplierAssigned', 'TenderMasterAPIController@saveSupplierAssigned')->name("Save supplier assigned");
 Route::post('getSupplierAssignedList', 'TenderMasterAPIController@getSupplierAssignedList')->name("Get supplier assigned list");
 Route::post('deleteSupplierAssign', 'TenderSupplierAssigneeAPIController@deleteSupplierAssign')->name("Delete supplier assign");
@@ -282,4 +283,5 @@ Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController
 Route::post('getTenderNegotiationList', 'TenderMasterAPIController@getTenderNegotiationList')->name("Get tender negotiation list");
 Route::post('getIsExistCommonAttachment', 'BidSubmissionMasterAPIController@getIsExistCommonAttachment');
 Route::post('getTenderPurchaseList', 'TenderMasterAPIController@getTenderPurchaseList');
+Route::post('getBudgetItemTotalAmount', 'TenderMasterAPIController@getBudgetItemTotalAmount');
 

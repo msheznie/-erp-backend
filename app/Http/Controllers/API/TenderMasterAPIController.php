@@ -19,7 +19,9 @@ use App\Models\Employee;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
+use App\Models\SrmBudgetItem;
 use App\Models\SrmDepartmentMaster;
+use App\Models\SrmTenderBudgetItem;
 use App\Models\SrmTenderDepartment;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
@@ -376,7 +378,11 @@ class TenderMasterAPIController extends AppBaseController
 
 
 
-        $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency'])->where('company_id', $companyId);
+        $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency','approvedRejectStatus'=>function($q) use ($companyId, $input){
+            $q->select('documentSystemCode','status')
+                ->where('companySystemID', $companyId)
+            ->where('documentSystemID', isset($input['rfx']) && $input['rfx'] ? 113 : 108);
+        }])->where('company_id', $companyId);
         
         $filters = $this->getFilterData($input); 
         
@@ -623,10 +629,15 @@ class TenderMasterAPIController extends AppBaseController
 
     public function getTenderMasterData(Request $request)
     {
+
         $input = $request->all();
         $tenderMasterId = $input['tenderMasterId'];
         $companySystemID = $input['companySystemID'];
-        $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by'])->where('id', $input['tenderMasterId'])->first();
+        $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by', 'approvedRejectStatus'=> function($q) use ($companySystemID , $input){
+            $q->select('documentSystemCode','status')
+                ->where('companySystemID', $companySystemID)
+                ->where('documentSystemID', isset($input['isTender']) && $input['isTender'] ? 108 : 113);
+        }])->where('id', $input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
         $act = array();
         if (!empty($activity)) {
@@ -671,7 +682,7 @@ ORDER BY
         $data['request_type'] = '';
         $data['is_request_process_complete'] = false;
         $data['is_confirm_process'] = false;
-
+        $data['isBidSubmissionOpeningDatePast'] = true;
         if ($data['master']['published_yn'] == 1) {
 
             $currentDate = Carbon::now()->format('Y-m-d H:i:s');
@@ -679,26 +690,44 @@ ORDER BY
 
             $resultObj = $openingDate->gt($currentDate);
             $data['edit_valid'] = $resultObj;
+            $data['edit_valid_after_closed'] = ($resultObj) ? false : true;
+            $data['isBidSubmissionOpeningDatePast'] = $resultObj;
+            $data['edit_valid_closing_date'] = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_closing_date'])->gt(now());
 
-          
+            if($data['edit_valid_closing_date'] != 1){
+                $data['edit_valid_after_closed'] = false;
+            }
 
             $tendeEditLog = DocumentModifyRequest::where('documentSystemCode', $tenderMasterId)
                                                 ->select('id','type','modify_type','status','confirmation_approved','approved')
                                                 ->orderBy('id', 'desc')->first();
 
-            if (isset($tendeEditLog) && $resultObj) {
-
+            if (isset($tendeEditLog)) {
                 $data['request_type'] = ($tendeEditLog->type == 1) ? 'Edit' : 'Amend';
-               
-                if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
-                    $data['is_confirm_process'] = true;
-                    $data['edit_valid'] = false;
-                } else if($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1){
-                    $data['edit_valid'] = false;
-                    $data['is_request_process'] = $tendeEditLog->approved == 0?true:false;
-                    $data['is_request_process_complete'] = $tendeEditLog->approved == -1?true:false;
+
+                if ($resultObj) {
+                    if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
+                        $data['is_confirm_process'] = true;
+                        $data['edit_valid'] = false;
+                    } else if ($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1) {
+                        $data['edit_valid'] = false;
+                        $data['is_request_process'] = $tendeEditLog->approved == 0;
+                        $data['is_request_process_complete'] = $tendeEditLog->approved == -1;
+                    }
+
+                } else if ($data['edit_valid_closing_date']) {
+                    $data['request_type'] = 'Edit';
+                    if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
+                        $data['is_confirm_process'] = true;
+                        $data['edit_valid_after_closed'] = false;
+                    } else if ($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1) {
+                        $data['is_request_process'] = $tendeEditLog->approved == 0;
+                        $data['edit_valid_after_closed'] = false;
+                        $data['isProcessCompleteBeforeClosing'] = $tendeEditLog->approved == -1;
+                    }
                 }
             }
+
         }
 
 
@@ -794,6 +823,29 @@ ORDER BY
             ->where('tender_id', $tenderMasterId)
             ->get();
         $data['tenderPurchaseRequestList'] = $tenderPurchaseRequestList;
+
+        // Get the data from srm_tender_budget_items if it exists, otherwise from srm_budget_items
+        $srmBudgetItem = DB::table('srm_tender_budget_items')
+            ->select('srm_tender_budget_items.item_id as id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_tender_budget_items.budget_amount) AS item_name"))
+            ->leftJoin('srm_budget_items', 'srm_tender_budget_items.item_id', '=', 'srm_budget_items.id')
+            ->where('srm_tender_budget_items.tender_id', $tenderMasterId)
+            ->where('srm_budget_items.is_active', 1)
+            ->unionAll(DB::table('srm_budget_items')
+                ->select('srm_budget_items.id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_budget_items.budget_amount) AS item_name"))
+                ->where('srm_budget_items.is_active', 1)
+                ->whereNotIn('srm_budget_items.id', function ($query) use ($tenderMasterId) {
+                    $query->select('item_id')->from('srm_tender_budget_items')->where('tender_id', $tenderMasterId);
+                }))
+            ->get();
+
+        $data['srmBudgetItem'] = $srmBudgetItem;
+
+        $srmBudgetItemList = SrmBudgetItem::select('srm_budget_items.id as id', 'item_name AS itemName')
+            ->whereHas('tenderBudgetItems', function ($query) use ($tenderMasterId) {
+                $query->where('tender_id', $tenderMasterId);
+            })->get();
+
+        $data['srmBudgetItemList'] = $srmBudgetItemList;
 
         // Get Department Master Data
         $departmentMaster = SrmDepartmentMaster::where('company_id', $companySystemID)->where('is_active', 1)->get();
@@ -1037,8 +1089,10 @@ ORDER BY
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
         }
 
-        if (isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate || isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate || isset($site_visit_date) && $site_visit_date < $currenctDate) {
-            return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
+        if((isset($input['isProcessCompleteBeforeClosing']) && $input['isProcessCompleteBeforeClosing'] != 1)){
+            if (isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate || isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate || isset($site_visit_date) && $site_visit_date < $currenctDate) {
+                return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
+            }
         }
 
         if (is_null($bid_submission_closing_date)) {
@@ -1234,8 +1288,9 @@ ORDER BY
                     }
                 }
             }
-        }
 
+
+        }
 
         if ($rfq) {
             $existTndr = TenderMaster::where('title', $input['title'])->where('id', '!=', $input['id'])->where('company_id', $input['companySystemID'])->where('document_type', '!=', 0)->first();
@@ -1259,11 +1314,14 @@ ORDER BY
             $bankId = 0;
             $input['bank_account_id'] = null;
         }
-
         // Check Total Technical weightage
         $result = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('level',1)->sum('weightage');
         if($result >100){
             return ['success' => false, 'message' => 'Total technical weightage cannot exceed 100 percent'];
+        }
+
+        if($input['estimated_value'] > $input['allocated_budget'] ){
+            return ['success' => false, 'message' => 'Estimated value cannot exceed the Allocated Budget Amount.'];
         }
 
         DB::beginTransaction();
@@ -1379,7 +1437,6 @@ ORDER BY
                         $tenderUpdated->update($att);
                     }
                 }
-
                 if (isset($input['confirmed_yn'])) {
                     if ($input['confirmed_yn'] == 1) {
 
@@ -1419,6 +1476,14 @@ ORDER BY
                         if (empty($technical) && !$rfq) {
                             return ['success' => false, 'message' => 'At least one technical criteria should be added'];
                         }
+                        if($input['tender_type_id'] == 2 || $input['tender_type_id'] == 3){
+                            $assignSupplier = TenderSupplierAssignee::with(['supplierAssigned'])
+                                ->where('company_id', $input['company_id'])
+                                ->where('tender_master_id', $input['id'])->first();
+                            if (empty($assignSupplier)) {
+                                return ['success' => false, 'message' => 'At least one supplier should be added'];
+                            }
+                        }
 
                         if (($input['is_active_go_no_go'] == 1) || $input['is_active_go_no_go'] == true) {
                             $goNoGo = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 1)->first();
@@ -1454,8 +1519,8 @@ ORDER BY
                                 }
                             }
                         }
-
-                        if (isset($input['isRequestProcessComplete']) && $input['isRequestProcessComplete']) {
+                        
+                        if (isset($input['isRequestProcessComplete']) && ($input['isRequestProcessComplete'] ?? false) || ($input['isProcessCompleteBeforeClosing'] ?? false)) {
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode', $input['id'])->latest('id')->first();
 
@@ -1560,11 +1625,11 @@ ORDER BY
 
                 $tenderPurchaseRequestCount = TenderPurchaseRequest::where('tender_id', $input['id'])->count();
 
-                if( $tenderPurchaseRequestCount > 0){
+                if( $tenderPurchaseRequestCount > 0 && ($input['editAfterBidOpeningDate'] == false)){
                     TenderPurchaseRequest::where('tender_id', $input['id'])->delete();
                 }
 
-                if(isset($input['purchaseRequest']) && sizeof($input['purchaseRequest']) > 0){
+                if(isset($input['purchaseRequest']) && sizeof($input['purchaseRequest']) > 0 && ($input['editAfterBidOpeningDate'] == false)){
                     foreach ($input['purchaseRequest'] as $pr) {
 
                         $data = [
@@ -1577,6 +1642,43 @@ ORDER BY
                     }
 
                 }
+
+
+                if(isset($input['srmBudgetItem']) && !empty($input['srmBudgetItem'])){
+                    $existingItems = SrmTenderBudgetItem::where('tender_id', $input['id'])->pluck('item_id')->toArray();
+                    $itemsToDelete = array_diff($existingItems, array_column($input['srmBudgetItem'], 'id'));
+                    if($input['editAfterBidOpeningDate'] == false){
+                        SrmTenderBudgetItem::where('tender_id', $input['id'])->whereIn('item_id', $itemsToDelete)->delete();
+                    }
+                }
+
+                if (!empty($input['srmBudgetItem']) && !$input['editAfterBidOpeningDate']) {
+                    foreach ($input['srmBudgetItem'] as $pr) {
+                        $existingBudgetItem = SrmTenderBudgetItem::where('item_id', $pr['id'])
+                            ->where('tender_id', $input['id'])
+                            ->first();
+
+                        if ($existingBudgetItem) {
+                            $budget_amount = $existingBudgetItem->budget_amount;
+                        } else {
+                            $srmBudgetItem = SrmBudgetItem::select('budget_amount')
+                                ->where('id', $pr['id'])
+                                ->first();
+
+                            $budget_amount = $srmBudgetItem ? $srmBudgetItem->budget_amount : 0;
+                        }
+
+                        $data = [
+                            'item_id' => $pr['id'],
+                            'tender_id' => $input['id'],
+                            'budget_amount' => $budget_amount,
+                            'created_at' => now()
+                        ];
+
+                        SrmTenderBudgetItem::updateOrCreate(['item_id' => $pr['id'], 'tender_id' => $input['id']], $data);
+                    }
+                }
+
 
                 $getinactivedepartments = SrmDepartmentMaster::select('id','description')
                     ->where('company_id', $input['company_id'])
@@ -1608,11 +1710,11 @@ ORDER BY
                 }else{
                     $departmentMasterCount = SrmTenderDepartment::where('tender_id', $input['id'])->count();
 
-                    if( $departmentMasterCount > 0){
+                    if( $departmentMasterCount > 0 && !$input['editAfterBidOpeningDate']){
                         SrmTenderDepartment::where('tender_id', $input['id'])->delete();
                     }
 
-                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0){
+                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0 && !$input['editAfterBidOpeningDate']){
                         foreach ($input['departmentMaster'] as $dm) {
                             $data = [
                                 'tender_id' => $input['id'],
@@ -5309,4 +5411,22 @@ ORDER BY
 
         return $tenderData;
     }
+
+    public function getBudgetItemTotalAmount(Request $request){
+        $input = $request->all();
+        $tenderMasterId = $input['tenderMasterId'];
+        // Get the budget amount for each item in the idList
+        $totalBudgetAmount = collect($input['idList'])->map(function($itemId) use ($tenderMasterId) {
+            $existingItem = SrmTenderBudgetItem::where('item_id', $itemId)->where('tender_id', $tenderMasterId)->first();
+            if ($existingItem) {
+                return $existingItem->budget_amount;
+            } else {
+                $budgetItem = SrmBudgetItem::find($itemId);
+                return $budgetItem ? $budgetItem->budget_amount : 0;
+            }
+        })->sum();
+
+        return $totalBudgetAmount;
+    }
+
 } 

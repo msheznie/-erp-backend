@@ -406,41 +406,38 @@ class SupplierRegistrationApprovalController extends AppBaseController
         }
 
         // upload attachments
-        $attachmentData = [];
-        foreach ($supplierFormValues['getAttachments'] as $index => $item) {
-            $formFieldId = $item['form_field_id'];
-            $value = $item['value'];
-            switch ($formFieldId) {
-                case 11:
-                    $attachmentData['attachmentDescription'] = $value;
-                    break;
-                case 12:
-                    $attachmentData['path'] = $value;
-                    $attachmentData['myFileName'] = $attachmentData['attachmentDescription'];
-                    break;
-                case 14:
-                    if($value != '-'){
-                        $attachmentData['docExpirtyDate'] = Carbon::parse($value);
-                    }
-
-                    if ($index % 3 === 2) {
-                        $attachmentData['companySystemID'] = $supplierMasterData['company_id'];
-                        $attachmentData['companyID'] = $company->CompanyID;
-                        $attachmentData['documentSystemID'] = 56;
-                        $attachmentData['documentID'] = 'SUPM';
-                        $attachmentData['documentSystemCode'] = $supplierID;
-                        $attachmentData['originalFileName'] = $attachmentData['attachmentDescription'];
-                        $attachmentData['attachmentType'] = 11;
-                        $attachmentData['sizeInKbs'] = 0;
-                        $attachmentData['isUploaded'] = 1;
-                        if($value != '-'){
-                            DocumentAttachments::create($attachmentData);
-                        }
-                        $attachmentData = [];
-                    }
-                    break;
+        foreach ($supplierFormValues['getAttachments'] as $item) {
+            // Skip if no attachment path provided
+            if ($item['form_field_id_12'] == '-') {
+                continue;
             }
+
+            $attachmentDescription = $item['form_field_id_11'];
+            $path = $item['form_field_id_12'];
+            $docExpiryDate = $item['form_field_id_14'];
+
+            // Handle special characters in the description
+            $attachmentDescription = str_replace(['&quot;', '&#039;'], ['"', "'"], $attachmentDescription);
+
+            $attachmentData = [
+                'attachmentDescription' => $attachmentDescription,
+                'path' => $path,
+                'myFileName' => $attachmentDescription,
+                'docExpirtyDate' => $docExpiryDate != '-' ? $docExpiryDate : null,
+                'companySystemID' => $supplierMasterData['company_id'],
+                'companyID' => $company->CompanyID,
+                'documentSystemID' => 56,
+                'documentID' => 'SUPM',
+                'documentSystemCode' => $supplierID,
+                'originalFileName' => $attachmentDescription,
+                'attachmentType' => 11,
+                'sizeInKbs' => 0,
+                'isUploaded' => 1,
+            ];
+            DocumentAttachments::create($attachmentData);
         }
+
+
 
         if (isset($supplierFormValues['supplierCertification']) && sizeof($supplierFormValues['supplierCertification']) > 0) {
             $supplierCertificationData = [];
@@ -481,13 +478,14 @@ class SupplierRegistrationApprovalController extends AppBaseController
             foreach ($supplierFormValues['vatCertification'] as $index => $item) {
                 $formFieldId = $item['form_field_id'];
                 $value = $item['value'];
-
+                
                 switch ($formFieldId) {
                     case 67:
                         $vatCertificationData['path'] = $value;
                         break;
                     case 68:
-                        $vatCertificationData['docExpirtyDate'] = Carbon::parse($value);
+
+                        $vatCertificationData['docExpirtyDate'] = $value;
                         break;
                 }
             }
@@ -551,7 +549,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             BankMemoSupplier::where('supplierCodeSystem', $supplierMasterData['supplierMasterId'])
             ->update([
                 'supplierCurrencyID' => $supplierCurrency->supplierCurrencyID
-            ]); 
+            ]);
 
             $dataPrimary['primarySupplierCode'] = $supplierMasterData['primarySupplierCode'];
         }

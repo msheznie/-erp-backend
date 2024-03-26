@@ -37,7 +37,8 @@ class SupplierRegistrationLink extends Model
         'refferedBackYN',
         'is_bid_tender',
         'created_via',
-        'sub_domain'
+        'sub_domain',
+        'is_existing_erp_supplier'
     ];
 
     protected $appends = ['appointment_date_expired','uuid_notification'];
@@ -46,6 +47,7 @@ class SupplierRegistrationLink extends Model
         'id' => 'integer',
         'supplier_master_id' => 'integer',
         'uuid' => 'string',
+        'is_existing_erp_supplier' => 'integer',
         ];
 
     public function supplier(){

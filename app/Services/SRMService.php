@@ -1723,9 +1723,14 @@ class SRMService
 
             $getDates = TenderMaster::select('pre_bid_clarification_start_date', 'pre_bid_clarification_end_date')->where('id', $extra['tenderId'])->get();
 
+            $companyId = TenderMaster::select('company_id')->where('id', $extra['tenderId'])->first();
+
+            $raiseAsPrivate = \Helper::checkPolicy($companyId->company_id,87);
+
             $data = [
                 'data' => $data,
                 'dates' => $getDates,
+                'raiseAsPrivate' => $raiseAsPrivate,
                 'supplier_id' => self::getSupplierRegIdByUUID($request->input('supplier_uuid')),
             ];
 
@@ -1808,7 +1813,8 @@ class SRMService
             $data['post'] = $response;
             $data['user_id'] = $employeeId;
             $data['supplier_id'] = $supplierRegId;
-            $data['is_public'] = 1;
+            $data['is_public'] = $tenderParentPost['is_public'];
+            $data['is_checked'] = $tenderParentPost['is_checked'];
             $data['parent_id'] = $id;
             $data['created_by'] = $employeeId;
             $data['company_id'] = $company->companySystemID;
@@ -4954,6 +4960,18 @@ class SRMService
             'success' => true,
             'message' => 'Current Server DateTime Retrieved',
             'data' => $currentdate
+        ];
+    }
+
+    public function getPreBidClarificationPolicy($request){
+
+        $companyId = $request->input('extra.companySystemId');
+        $raiseAsPrivate = \Helper::checkPolicy($companyId,87);
+
+        return [
+            'success' => true,
+            'message' => 'Pre Bid Clarification Policy Data Retrieved',
+            'data' => $raiseAsPrivate
         ];
     }
 }

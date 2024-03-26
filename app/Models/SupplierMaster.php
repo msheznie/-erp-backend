@@ -385,4 +385,7 @@ class SupplierMaster extends Model
     public function type(){
         return $this->belongsTo('App\Models\SupplierType','supplierTypeID','supplierTypeID');
     }
+    public function Supplier_registration_link(){
+        return $this->belongsTo('App\Models\SupplierRegistrationLink','supplierCodeSystem','supplier_master_id');
+    }
 }

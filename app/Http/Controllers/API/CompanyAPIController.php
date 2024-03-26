@@ -202,10 +202,9 @@ class CompanyAPIController extends AppBaseController
             }
         }
 
-        $hasExternalSupplierGeneratePolicy = CompanyPolicyMaster::where('companySystemID', $selectedCompanyId)
-                                                                ->where('companyPolicyCategoryID', 48)
-                                                                ->where('isYesNO',1)
-                                                                ->exists();
+        $hasExternalSupplierGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 48);
+
+        $hasExistingSupplierSRMLinkPolicy = Helper::checkPolicy($selectedCompanyId, 86);
 
         $hasSupplierGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 76);
 
@@ -231,6 +230,7 @@ class CompanyAPIController extends AppBaseController
             'icvCategories' => $icvCategories,
             'isSupplierCatalogPolicy' => $hasPolicy,
             'hasExternalSupplierGeneratePolicy' => $hasExternalSupplierGeneratePolicy,
+            'hasExistingSupplierSRMLinkPolicy' => $hasExistingSupplierSRMLinkPolicy,
             'isEEOSSPolicy' => $hasEEOSSPolicy,
             'supplierCategories' => $supplierCategories,
             'supplierGroups' => $supplierGroups,

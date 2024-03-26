@@ -6,6 +6,7 @@ use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -36,6 +37,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
 
     public function save(Request $request, $token)
     {
+        $supplierCodeSystem = $request->input('supplierCodeSystem');
         $supplierRegistrationLink = new SupplierRegistrationLink();
         $supplierRegistrationLink->name = $request->input('name');
         $supplierRegistrationLink->email = $request->input('email');
@@ -47,6 +49,11 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->updated_by = '';
         $supplierRegistrationLink->is_bid_tender =  ($request->input('is_bid_tender') == true ? 1:0);
         $supplierRegistrationLink->created_via =  1;
+        $supplierRegistrationLink->is_existing_erp_supplier = 0;
+        if (isset($supplierCodeSystem) && $supplierCodeSystem != null) {
+            $supplierRegistrationLink->supplier_master_id = $request->input('supplierCodeSystem');
+            $supplierRegistrationLink->is_existing_erp_supplier = 1;
+        }
         $supplierRegistrationLink->sub_domain = $request->input('domain');
         $result = $supplierRegistrationLink->save();
         if($result){ 

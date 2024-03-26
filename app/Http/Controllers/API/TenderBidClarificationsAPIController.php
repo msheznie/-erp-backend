@@ -7,6 +7,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderBidClarificationsAPIRequest;
 use App\Http\Requests\API\UpdateTenderBidClarificationsAPIRequest;
 use App\Mail\EmailForQueuing;
+use App\Models\CompanyPolicyMaster;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderBidClarifications;
 use App\Repositories\TenderBidClarificationsRepository;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use Carbon\Carbon;
 
 /**
  * Class TenderBidClarificationsController
@@ -359,6 +361,9 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $company = Company::where('companySystemID', $companySystemID)->first();
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
 
+
+
+
         DB::beginTransaction();
         try {
             $data['tender_master_id'] = $tenderParentPost['tender_master_id'];
@@ -371,6 +376,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $data['company_id'] = $companySystemID;
             $data['document_system_id'] = $documentCode->documentSystemID;
             $data['document_id'] = $documentCode->documentID;
+            $data['is_checked'] = $input['is_checked'];
             $result = TenderBidClarifications::create($data);
             if (isset($input['Attachment']) && !empty($input['Attachment'])) {
                 $attachment = $input['Attachment'];
@@ -379,6 +385,9 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
             if ($result) {
                 $updateRec['is_answered'] = 1;
+                if($input['is_checked'] == 1){
+                    $updateRec['is_checked'] = 1;
+                }
                 $result =  TenderBidClarifications::where('id', $id)
                     ->update($updateRec);
                 DB::commit();
@@ -533,14 +542,51 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $input = $request->all();
         $bidId = $input['bid_id'];
 
-        $bidClarifications = TenderBidClarifications::with(['attachment','tender'])->where('id', '=', $bidId)->get();
+        $bidClarifications = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
+            $q->with(['profilepic']);
+        }, 'attachment','tender'])
+            ->where('id', '=', $bidId)
+            ->orWhere('parent_id', '=', $bidId)
+            ->orderBy('parent_id', 'asc')
+            ->get();
+
         $tenderCode = $bidClarifications[0]->tender->tender_code;
         $tenderTitle = $bidClarifications[0]->tender->title;
-        $preBidClarifications = $bidClarifications[0]->post;
-        $attachments = $bidClarifications[0]->attachment;
+
+        $preBidClarificationsString = "";
         $file = array();
-        foreach ($attachments as $attachment){
-            $file[$attachment->originalFileName] = Helper::getFileUrlFromS3($attachment->path);
+
+        foreach ($bidClarifications as $bidClarification){
+
+            if($bidClarification->supplier){
+                $supplierName = isset($bidClarification->supplier) ? $bidClarification->supplier->name : "Supplier";
+                $clarificationText = "<span style='font-weight: bold; font-size: 16px'>$supplierName</span><br />";
+            }
+            if($bidClarification->employee){
+                $supplierName = isset($bidClarification->employee) ? $bidClarification->employee->empName : "Admin";
+                $clarificationText = "<span style='font-weight: bold; font-size: 16px'>$supplierName</span><br />";
+            }
+
+            $createdAt = Carbon::parse($bidClarification->created_at)->format('F j, Y, g:i A');
+            $clarificationText .= "<span style='font-size: 12px;font-style: italic'>$createdAt</span><br />";
+
+            if($bidClarification->post){
+                $clarificationText .= "<span style='font-size: 14px'>$bidClarification->post</span><br />";
+            }
+
+            $attachments = $bidClarification->attachment;
+            if($attachments) {
+                foreach ($attachments as $attachment) {
+                if ($attachment) {
+                    $clarificationText .= "<span style='font-size: 12px;font-weight: bold;'>$attachment->originalFileName</span><br />";
+                }
+                    $file[$attachment->originalFileName] = Helper::getFileUrlFromS3($attachment->path);
+                }
+            }
+
+            $clarificationText .= "<br />";
+
+            $preBidClarificationsString .= $clarificationText;
         }
 
         $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
@@ -575,10 +621,19 @@ class TenderBidClarificationsAPIController extends AppBaseController
         } else {
             foreach ($emailString as $email){
             $forwardEmail = email::emailAddressFormat($email);
-            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To Whom It May Concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarifications"."</b><br /><br />"." Thank You."."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
+            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
             }
         }
         return ['success' => true, 'message' => 'Email/s sent successfully'];
 
+    }
+
+    public function getPreBidClarificationsPolicyData(Request $request){
+
+        $input = $request->all();
+        $companySystemID = $input['companySystemID'];
+        $raiseAsPrivate = \Helper::checkPolicy($companySystemID,87);
+
+        return $this->sendResponse($raiseAsPrivate, 'PreBid Clarifications Policy retrieved successfully');
     }
 }
