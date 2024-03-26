@@ -956,7 +956,7 @@ class ProcumentOrderAPIController extends AppBaseController
         }
         if (($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) || $isAmendAccess == 1) {
 
-            if(($isSupplierBlocked) && ($procumentOrderUpdate->poTypeID == 1))
+            if((isset($isSupplierBlocked) && $isSupplierBlocked) && ($procumentOrderUpdate->poTypeID == 1))
             {
 
                 $block_date = Carbon::parse(now())->format('Y-m-d');
