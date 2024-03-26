@@ -107,7 +107,7 @@ class TenderMasterRepository extends BaseRepository
             array('value'=> 2 , 'label'=> 'Pending Approval'), 
             array('value'=> 3 , 'label'=> 'Fully Approved'),  
             array('value'=> 4 , 'label'=> 'Referred Back'), 
-            array('value'=> 5 , 'label'=> 'Reject'),
+            array('value'=> 5 , 'label'=> 'Rejected'),
         );
 
         $rfxTypes = array(
