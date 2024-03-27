@@ -758,6 +758,7 @@ class SalesReturnAPIController extends AppBaseController
                                     ->leftJoin('erp_custreceivepaymentdet', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custreceivepaymentdet.bookingInvCodeSystem')
                                     ->whereNull('erp_custreceivepaymentdet.bookingInvCodeSystem')
                                     ->orderBy('erp_delivery_order.deliveryOrderID','DESC')
+                                    ->groupBy('erp_delivery_order.deliveryOrderID')
                                     ->select('erp_delivery_order.*')
                                     ->get();
         } elseif ($input['type']==2){ ////sales Invoice
