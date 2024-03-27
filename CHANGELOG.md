@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.37.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.36.0...v10.37.0) (2024-03-27)
+
+
+### Features
+
+* **Attendance:** Attendance Pulling process performance enhancement (Crone Job)[GHR-1162] ([#5723](https://github.com/pbsgears/Gears_BackEnd/issues/5723)) ([190c60e](https://github.com/pbsgears/Gears_BackEnd/commit/190c60e5ab17bd5fb9cc6ae8c0d0ba71373f9710))
+* **system admin:** error message sent from backend [GCP-2931] ([712b74f](https://github.com/pbsgears/Gears_BackEnd/commit/712b74f338d9b993bfe61f903685af23f6fedaf2))
+
 ## [10.36.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.35.1...v10.36.0) (2024-03-26)
 
 
