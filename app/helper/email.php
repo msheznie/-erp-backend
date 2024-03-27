@@ -552,7 +552,7 @@ class email
                     ->where('isYesNO', 1)
                     ->exists();
 
-                    if ($hasPolicy) {
+                if ($hasPolicy) {
                         Log::info('Email send start');
                         $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
                         $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];

@@ -277,6 +277,7 @@ Route::group([], function(){
     Route::resource('recurring_voucher_setup_details', 'RecurringVoucherSetupDetailAPIController');
     Route::resource('recurring_voucher_setup_schedules', 'RecurringVoucherSetupScheduleAPIController');
 
+
     Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData')->name('Get allocation configuration assign form data');
     Route::resource('coa_allocation_details', 'ChartOfAccountAllocationDetailAPIController');
     Route::resource('coa_allocation_masters', 'ChartOfAccountAllocationMasterAPIController');
@@ -295,6 +296,7 @@ Route::group([], function(){
     Route::get('getRecurringVoucherContracts', 'RecurringVoucherSetupDetailAPIController@getRecurringVoucherContracts')->name('Get RRV contracts');
     Route::get('getGLForRecurringVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForRecurringVoucherDirect')->name("Get gl for RRV direct");
     Route::get('getRecurringVoucherMasterRecord', 'RecurringVoucherSetupAPIController@getRecurringVoucherMasterRecord')->name('Get rrv master record');
+
     Route::post('amendRecurringVoucherReview', 'RecurringVoucherSetupAPIController@amendRecurringVoucherReview')->name('RRV Review');
     Route::post('recurringVoucherReopen', 'RecurringVoucherSetupAPIController@recurringVoucherReopen')->name('RRV Reopen');
     Route::post('recurringVoucherDeleteAllDetails', 'RecurringVoucherSetupDetailAPIController@recurringVoucherDeleteAllDetails')->name('RRV details delete all');

@@ -1,19 +1,18 @@
 <?php
 namespace App\Services\hrms\attendance;
 
-use App\enums\modules\Modules;
 use App\enums\shift\Shifts;
-use App\Models\SrpEmployeeDetails;
-use App\Services\hrms\modules\HrModuleAssignService;
-use Collator;
-use Exception;
-use Carbon\Carbon;
 use App\helper\CommonJobService;
+use App\Models\SrpEmployeeDetails;
+use App\Services\hrms\attendance\computation\SMFixedShiftComputation;
+use App\Services\hrms\attendance\computation\SMRotaShiftCrossDayComputation;
+use App\Services\hrms\attendance\computation\SMRotaShiftDayComputation;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Services\hrms\attendance\AttendanceComputationService;
 
-class AttendanceDataPullingService{
+class SMAttendancePullingService{
+
     private $companyId;
     private $pullingDate;
     private $uniqueKey;
@@ -27,6 +26,7 @@ class AttendanceDataPullingService{
     private $dateTime;
     private $pulledVia;
     private $chunkSize;
+
     public function __construct($companyId, $pullingDate, $isClockOutPulling)
     {
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
@@ -118,7 +118,6 @@ class AttendanceDataPullingService{
     function step1ChukInsert($empIdList){
 
         $isUpdateWhere = (!$this->isClockOutPulling)? ' AND t.isUpdated = 0 ': '';
-
         $q = "SELECT t.autoID, l.empID, t.device_id, t.empMachineID, l.floorID, t.attDate, t.attTime, t.uploadType
         FROM srp_erp_pay_empattendancetemptable AS t
         JOIN srp_erp_empattendancelocation AS l ON l.deviceID = t.device_id AND t.empMachineID = l.empMachineID               
@@ -131,7 +130,7 @@ class AttendanceDataPullingService{
         $chunks = array_chunk($empIdList, $this->chunkSize);
 
         foreach ($chunks as $chunk) {
-            $qWithEmpIds = $q . " AND t.emp_id IN (" . implode(",", $chunk) . ")";
+            $qWithEmpIds = $q . " AND l.empID IN (" . implode(",", $chunk) . ")";
             $tempAttData = DB::table(DB::raw("($qWithEmpIds) as tempTable"))
                 ->orderBy('empID')
                 ->orderBy('attTime')
@@ -146,6 +145,7 @@ class AttendanceDataPullingService{
 
             $this->insertToTempTb();
         }
+
         return true;
     }
 
@@ -190,9 +190,9 @@ class AttendanceDataPullingService{
 
     function insertToTempTb(){
         $temp = collect($this->tempData);
-
         unset($this->tempData);
         $temp = $temp->groupBy('empID')->toArray();
+
         $data = []; $autoIdArr = [];
         foreach ($temp as $empId=> $row) {
             $firstRow = get_object_vars($row[0]); //convert object to array
@@ -257,7 +257,7 @@ class AttendanceDataPullingService{
     function step2(){
         $q = "SELECT EIdNo, ECode, Ename2
         FROM srp_employeesdetails AS e         
-        WHERE e.Erp_companyID = {$this->companyId} AND isSystemAdmin = 0 AND isDischarged = 0 AND empConfirmedYN = 1   
+        WHERE e.Erp_companyID = {$this->companyId} AND isSystemAdmin = 0 AND isDischarged = 0 AND empConfirmedYN = 1 
         AND NOT EXISTS (
             SELECT * FROM srp_erp_pay_empattendancereview AS r
             WHERE r.companyID = {$this->companyId} AND r.attendanceDate = '{$this->pullingDate}' AND r.empID = e.EIdNo 
@@ -280,46 +280,43 @@ class AttendanceDataPullingService{
         }
     }
 
-    function step2InsertChunkData($chunk){
+    function step2InsertChunkData($chunkedTempData){
+        if(empty($chunkedTempData)){
+            return true;
+        }
+
         $data = [];
-        foreach ($chunk as $key) {
-            $thisData = [
-                'emp_id' => $key->EIdNo,
-                'att_date' => $this->pullingDate,
-                'company_id' => $this->companyId,
-                'uniqueID' => $this->uniqueKey,
-            ];
+
+        foreach ($chunkedTempData as $chunkedRow) {
+            $thisData = [];
+
+            $thisData['emp_id'] = $chunkedRow->EIdNo;
+            $thisData['att_date'] = $this->pullingDate;
+            $thisData['company_id'] = $this->companyId;
+            $thisData['uniqueID'] = $this->uniqueKey;
 
             $data[] = $thisData;
         }
 
         DB::table('attendance_temporary_tbl')->insert($data);
+
     }
 
     function step3(){
+        $shiftQuery = $this->getShiftSubQuery();
+
         $q = "SELECT t.emp_id, e.ECode, e.Ename2, t.att_date, t.clock_in, t.clock_out, t.location_in, t.location_out, 
         t.upload_type, t.device_id_in, t.machine_id_in, t.machine_id_out, lm.leaveMasterID, lm.leaveHalfDay, 
         shd.onDutyTime, shd.offDutyTime, shd.weekDayNo, IF (IFNULL(shd.isHalfDay, 0), 1, 0) AS isHalfDay, 
         IF(IFNULL(calenders.holiday_flag, 0), 1, 0) AS isHoliday, shd.isWeekend, shd.gracePeriod, shd.isFlexyHour, 
         shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour,
-        t.company_id
+        t.company_id, shd.is_cross_day, '12:00:00' as crossDayCutOffTime
         FROM attendance_temporary_tbl AS t
         JOIN (
             SELECT EIdNo, ECode, Ename2, isCheckin AS isCheckInMust
             FROM srp_employeesdetails WHERE Erp_companyID = {$this->companyId}
         ) AS e ON e.EIdNo = t.emp_id        
-        LEFT JOIN (
-        	SELECT * FROM srp_erp_pay_shiftemployees
-        	WHERE companyID = {$this->companyId} AND ('{$this->pullingDate}' BETWEEN startDate and endDate )
-            AND srp_erp_pay_shiftemployees.isActive = 1
-        ) AS she ON she.empID = e.EIdNo
-        LEFT JOIN (
-            SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
-            sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour 
-            FROM srp_erp_pay_shiftdetails AS sd 
-            JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = sd.shiftID 
-            WHERE sm.companyID = {$this->companyId}
-        ) AS shd ON shd.shiftID = she.shiftID AND shd.weekDayNo = WEEKDAY(t.att_date) 
+        {$shiftQuery}
         LEFT JOIN ( 
             SELECT leaveMasterID, empID, startDate, endDate, ishalfDay as leaveHalfDay
             FROM srp_erp_leavemaster WHERE companyID = {$this->companyId} AND approvedYN = 1
@@ -349,13 +346,21 @@ class AttendanceDataPullingService{
             $attDate = $row['att_date'];
             $empId = $row['emp_id'];
             $this->allEmpArr[] = $empId;
+            $isCrossDay = $row['is_cross_day'];
 
+            if ($row['shiftType'] == Shifts::FIXED || empty($row['shiftType'])) {
+                $obj = new SMFixedShiftComputation($row, $this->companyId);
+            } elseif ($isCrossDay) {
+                $obj = new SMRotaShiftCrossDayComputation($row, $this->companyId);
+            } else {
+                $obj = new SMRotaShiftDayComputation($row, $this->companyId);
+            }
 
-            $obj = new AttendanceComputationService($row, $this->companyId);
-            $obj->execute();
+            $obj->calculate();
 
             $shiftHours = ($row['shiftType'] == Shifts::OPEN)? $row['workingHour']: $obj->shiftHours;
             $shiftHours = (empty($shiftHours))? 0: $shiftHours;
+            $locationOut = $isCrossDay ? $obj->clockOutFloorId : $row['location_out'];
 
             $this->data[] = [
                 'empID' => $empId,
@@ -364,7 +369,7 @@ class AttendanceDataPullingService{
                 'attendanceDate' => $attDate,
                 'shift_id' => !empty($row['shiftID']) ? $row['shiftID'] : 0,
                 'floorID' => $row['location_in'],
-                'clockoutFloorID' => $row['location_out'],
+                'clockoutFloorID' => $locationOut,
                 'gracePeriod' => $obj->gracePeriod,
                 'onDuty' => $row['onDutyTime'],
                 'offDuty' => $row['offDutyTime'],
@@ -481,7 +486,8 @@ class AttendanceDataPullingService{
             ->where('confirmedYN', 0)
             ->delete();
 
-        $msg = "Number of rows deleted on 'srp_erp_pay_empattendancereview' table : {$noOfRows} (date : {$this->pullingDate})";
+        $msg = "Number of rows deleted on 'srp_erp_pay_empattendancereview' table : {$noOfRows} 
+                (date : {$this->pullingDate})";
         Log::info($msg.$this->log_suffix(__LINE__));
     }
 
@@ -510,5 +516,47 @@ class AttendanceDataPullingService{
         ];
 
         DB::table('job_logs')->insert($data);
+    }
+
+    function getShiftSubQuery()
+    {
+        $shFixed = Shifts::FIXED;
+        $shRota = Shifts::ROTA;
+
+        $fixedJoin = "SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
+                sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour, 
+                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id
+                FROM hr_shift_schedule_details AS she 
+                JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
+                JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
+                AND sd.weekDayNo = WEEKDAY(she.schedule_date)
+                WHERE sm.companyID = {$this->companyId}
+                AND sm.shiftType = {$shFixed} ";
+
+        $rotaUnion = " UNION ALL 
+                SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
+                sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour, 
+                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id 
+                FROM hr_shift_schedule_details AS she 
+                JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
+                JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
+                WHERE sm.companyID = {$this->companyId}
+                AND sm.shiftType = {$shRota} ";
+
+        $OffDayUnion = " UNION ALL 
+                SELECT shift_id AS shiftID, '' AS onDutyTime, '' AS offDutyTime, 0 AS isHalfDay,
+                WEEKDAY(she.schedule_date) AS weekDayNo, 1 AS isWeekend, 
+                '' AS gracePeriod, 1 AS isFlexyHour, '' AS flexyHrFrom, '' AS flexyHrTo, -1 AS shiftType, 
+                0 AS workingHour, 0 AS is_cross_day,
+                she.schedule_date, 1 AS leave_deduction_rate, she.emp_id 
+                FROM hr_shift_schedule_details AS she
+                WHERE she.company_id = {$this->companyId} 
+                AND she.shift_id = 0 
+                GROUP BY schedule_date, shift_id, emp_id ";
+
+
+        return "LEFT JOIN({$fixedJoin} {$rotaUnion} {$OffDayUnion}) AS shd ON shd.emp_id = e.EIdNo 
+                    AND t.att_date = shd.schedule_date";
+
     }
 }
