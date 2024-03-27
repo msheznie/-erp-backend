@@ -3627,12 +3627,12 @@ ORDER BY
             $query = $query->where('negotiation_code', '!=', null);
             $type = gettype($filters['combinedRankingStatus']);
             $combinedRankingStatusArray = json_decode(json_encode($filters['combinedRankingStatus']), true);
+
             $query->where(function ($query) use ($combinedRankingStatusArray) {
                 if (!in_array(0, $combinedRankingStatusArray) && !in_array(1, $combinedRankingStatusArray)) {
                     return;
                 }
-
-                if (in_array(0, $combinedRankingStatusArray)) {
+              if (in_array(0, $combinedRankingStatusArray)) {
                     $query->whereNull('negotiation_is_awarded');
                 }
 
@@ -3640,7 +3640,8 @@ ORDER BY
                     $query->orWhere('negotiation_is_awarded', 1);
                 }
             });
-        } else {
+
+            } else {
             if ($filters['combinedRankingStatus'] && count($filters['combinedRankingStatus']) > 0) {
                 $query->whereIn('is_awarded', $filters['combinedRankingStatus']);
             } else {
@@ -4459,23 +4460,25 @@ ORDER BY
 
         if ($filters['tenderAwardingStatus'] && count($filters['tenderAwardingStatus']) > 0) {
             $query->whereIn('final_tender_awarded', $filters['tenderAwardingStatus']);
-        }
+       }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
             $query->whereIn('currency_id', $filters['currencyId']);
         }
 
-
         if ($filters['selection']) {
-            $query->where('tender_type_id', $filters['selection']);
+            $ids = array_column($filters['selection'], 'id');
+            $query->whereIn('tender_type_id', $ids);
         }
 
         if ($filters['envelope']) {
-            $query->where('envelop_type_id', $filters['envelope']);
+            $ids = array_column($filters['envelope'], 'id');
+            $query->whereIn('envelop_type_id', $ids);
         }
 
         if ($filters['stage']) {
-            $query->where('stage', $filters['stage']);
+            $ids = array_column($filters['stage'], 'id');
+            $query->whereIn('stage', $ids);
         }
 
         $search = $request->input('search.value');

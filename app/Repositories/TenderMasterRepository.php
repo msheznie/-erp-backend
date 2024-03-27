@@ -85,11 +85,23 @@ class TenderMasterRepository extends BaseRepository
         $currency = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
         ->get();
 
-        $selection = TenderType::select('id','name')
-        ->get();
+        $selection = TenderType::select('id', 'name')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'value' => $item->id,
+                    'label' => $item->name,
+                ];
+            });
 
         $envelope = EnvelopType::select('id','name')
-        ->get();
+        ->get()
+        ->map(function ($item) {
+            return [
+                'value' => $item->id,
+                'label' => $item->name,
+            ];
+        });
 
         $published =  array(
             array('value'=> 0 , 'label'=> 'Not Published'),
@@ -148,7 +160,7 @@ class TenderMasterRepository extends BaseRepository
             'stage' => $stage,
             'commercial' => $commercial,
             'tenderNegotiationStatus' => $tenderNegotiationStatus
-        ); 
+        );
  
         return $data;
     }
