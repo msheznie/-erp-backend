@@ -8274,8 +8274,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }])
                 ->groupBy('directReceiptAutoID')
                 ->where('directReceiptAutoID', $custReceivePaymentAutoID)
-                ->first()
-                ->toArray();
+                ->first();
+                
+                if ($recieptVouchers) {
+                    $recieptVouchers = $recieptVouchers->toArray();
+                } else {
+                    $recieptVouchers = [];
+                }
 
 
             $tracingData[][] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
@@ -8301,9 +8306,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }])
                 ->groupBy('directReceiptAutoID')
                 ->where('directReceiptAutoID', $custReceivePaymentAutoID)
-                ->first()
-                ->toArray();
+                ->first();
                 
+                if ($recieptVouchers) {
+                    $recieptVouchers = $recieptVouchers->toArray();
+                } else {
+                    $recieptVouchers = [];
+                }
+
                 $tracingData[][] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
             }
         }
