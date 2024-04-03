@@ -1148,7 +1148,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 }
                 if ($input['rollMasterDetailData']['serviceLineSystemID']) {
                     $ServiceLineID = SegmentMaster::find($input['rollMasterDetailData']['serviceLineSystemID']);
-                    $inpsaveDataut[$key]['ServiceLineID'] = $ServiceLineID->ServiceLineCode;
+                            $inpsaveDataut[$key]['ServiceLineID'] = ($ServiceLineID) ? $ServiceLineID->ServiceLineCode : null;
                 }
                
                 $saveData[$key]['employeeID'] = $val['empID'];

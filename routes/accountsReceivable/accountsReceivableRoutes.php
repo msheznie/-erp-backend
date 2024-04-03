@@ -111,7 +111,6 @@ Route::group([], function () {
     Route::get('getADVPReceiptDetails', 'AdvanceReceiptDetailsAPIController@getADVPReceiptDetails')->name("Get adv receipt details");
     Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails')->name("Customer direct voucher details");
     Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher')->name("Update direct receipt voucher");
-    Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept')->name("Update customer receipt");
     Route::put('customerReceivePaymentsUpdateCurrency/{id}','CustomerReceivePaymentAPIController@UpdateCurrency')->name("Update currency");
     Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown')->name("Direct receipt contract dropdown");
     Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords')->name("Direct receipt details record");
@@ -158,6 +157,7 @@ Route::group([],function(){
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
             Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport')->name("Export account receivable report");
+            Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept')->name("Update customer receipt");
         });
     });
     Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger')->name("Sent customer ledger");

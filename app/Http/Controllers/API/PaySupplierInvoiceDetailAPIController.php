@@ -41,6 +41,8 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\CurrencyMaster;
+
 
 /**
  * Class PaySupplierInvoiceDetailController
@@ -1454,7 +1456,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             ->sum('supplierPaymentAmount');
         $input['supplierPaymentAmount'] = isset($input['supplierPaymentAmount']) ?  \Helper::stringToFloat($input['supplierPaymentAmount']) : 0;
         $existTotal = $detailAmountTot + $input['supplierPaymentAmount'];
-        if (($existTotal - $matchDocumentMasterData->matchBalanceAmount) > 0.00001) {
+        $currencyDecimal = CurrencyMaster::where('currencyID',$matchDocumentMasterData->supplierTransCurrencyID)->select('DecimalPlaces')->first();
+        $matchAmount = round($matchDocumentMasterData->matchBalanceAmount,$currencyDecimal->DecimalPlaces);
+        if (($existTotal - $matchAmount) > 0.00001) {
             return $this->sendError('Matching amount total cannot be greater than balance amount to match', 500, ['type' => 'amountmismatch']);
         }
 

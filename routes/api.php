@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\MobileAccessVerify;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -12,13 +14,13 @@
 */
 
 use Illuminate\Support\Facades\Route;
-
+Route::group(['middleware' => 'mobileServer'], function () {
 Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTaxLedgerForSupplierInvoice');
 
 Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
 
 Route::group(['middleware' => ['tenant','locale']], function () {
-    Route::get('getAppearance', 'CompanyAPIController@getAppearance');
+    Route::get('getAppearance', 'CompanyAPIController@getAppearance')->middleware(MobileAccessVerify::class);
     Route::post('postEmployeeFromPortal', 'HelpDesk\HelpDeskAPIController@postEmployee');
 
     Route::group(['middleware' => ['pos_api']], function (){
@@ -53,7 +55,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
-        Route::group(['middleware' => 'authorization:api'], function () {
+        Route::group(['middleware' => ['authorization:api','mobileAccess']], function () {
 
             require __DIR__.'/../routes/systemAdmin/systemAdminRoutes.php';
             require __DIR__.'/../routes/general/generalRoutes.php';
@@ -135,6 +137,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('supplier_contact_types', 'SupplierContactTypeAPIController');
 
             Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
+
+            Route::resource('user_types', 'UserTypeAPIController');
 
             Route::post('getCurrencyDetails', 'SupplierCurrencyAPIController@getCurrencyDetails');
 
@@ -929,7 +933,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('getSubCategoriesByMultipleMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMultipleMasterCategory');
     
     Route::get('loginwithToken', 'UserAPIController@loginwithToken');
-    Route::post('login', 'AuthAPIController@auth');
+    Route::post('login', 'AuthAPIController@auth')->middleware(MobileAccessVerify::class);
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
     
     Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
@@ -1011,7 +1015,8 @@ Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDow
 Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
 Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
 
-Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');  
+// Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');  
+
 
 if (env("LOG_ENABLE", false)) {
     Route::get('runCronJob/{cron}', function ($cron) {
@@ -1020,7 +1025,7 @@ if (env("LOG_ENABLE", false)) {
     });
 }       
 
-
+});
 
 /*
  * End external related routes

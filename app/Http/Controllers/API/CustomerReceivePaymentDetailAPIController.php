@@ -511,9 +511,21 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
+        $customerReceivePayment = CustomerReceivePayment::with(['currency'])
+                                ->select('custReceivePaymentAutoID','custTransactionCurrencyID')
+                                ->find($input['custReceivePaymentAutoID']);
+
+
+        $decimalPlaces = 3;
+        if(isset($customerReceivePayment->currency))
+        {
+            $decimalPlaces = $customerReceivePayment->currency->DecimalPlaces;
+
+        }
+
         if(isset($input['tempType'])) {
             if ($input['tempType'] == 1) {
-                $input["receiveAmountTrans"] = $input['custbalanceAmount'];
+                $input["receiveAmountTrans"] = round($input['custbalanceAmount'],$decimalPlaces);
             }
         }
 
@@ -521,15 +533,50 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $matchedAmountPreCheck['SumOfmatchedAmount'] = 0;
         }
 
-        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount']);
+        $salesReturnPreCheck = DB::table('salesreturndetails')->select(
+            DB::raw('SUM(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount')
+        )
+            ->leftJoin('salesreturn', 'salesreturndetails.salesReturnID', '=', 'salesreturn.id')
+            ->where('salesreturndetails.companySystemID', '=', $input["companySystemID"])
+            ->where('salesreturn.approvedYN', '=', -1)
+            ->where('salesreturndetails.custInvoiceDirectAutoID', $input["bookingInvCodeSystem"])
+            ->groupBy('salesreturndetails.custInvoiceDirectAutoID')
+            ->first();
 
+        if(!empty($salesReturnPreCheck)){
+            $sumReturnTransactionAmountPreCheck = $salesReturnPreCheck->sumReturnTransactionAmount;
+        } else {
+            $sumReturnTransactionAmountPreCheck = 0;
+        }
 
+        $salesReturnDEOPreCheck = DB::table('salesreturndetails')->select(
+            DB::raw('SUM(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount')
+        )
+            ->leftJoin('salesreturn', 'salesreturndetails.salesReturnID', '=', 'salesreturn.id')
+            ->join('erp_customerinvoiceitemdetails', 'salesreturndetails.deliveryOrderDetailID', '=', 'erp_customerinvoiceitemdetails.deliveryOrderDetailID')
+            ->where('salesreturndetails.companySystemID', '=', $input["companySystemID"])
+            ->where('salesreturn.approvedYN', '=', -1)
+            ->where('salesreturndetails.deliveryOrderDetailID', '!=', 0)
+            ->where('erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', $input["bookingInvCodeSystem"])
+            ->groupBy('salesreturndetails.deliveryOrderDetailID')
+            ->first();
+
+        if(!empty($salesReturnDEOPreCheck)){
+            $sumReturnDEOTransactionAmountPreCheck = $salesReturnDEOPreCheck->sumReturnTransactionAmount;
+        } else {
+            $sumReturnDEOTransactionAmountPreCheck = 0;
+        }
+
+        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount'] + $sumReturnTransactionAmountPreCheck + $sumReturnDEOTransactionAmountPreCheck);
+
+        $epsilon = 0.00001;
+        
         if ($input['addedDocumentSystemID'] == 20) {
-            if ($input["receiveAmountTrans"] > $totReceiveAmountDetail) {
+            if ($input["receiveAmountTrans"] - round($totReceiveAmountDetail,$decimalPlaces) > $epsilon) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {
-            if ($input["receiveAmountTrans"] < $totReceiveAmountDetail) {
+            if ($input["receiveAmountTrans"] < round($totReceiveAmountDetail,$decimalPlaces)) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500);
             }
         }
@@ -553,7 +600,42 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
-        $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
+        $salesReturn = DB::table('salesreturndetails')->select(
+            DB::raw('SUM(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount')
+        )
+            ->leftJoin('salesreturn', 'salesreturndetails.salesReturnID', '=', 'salesreturn.id')
+            ->where('salesreturndetails.companySystemID', '=', $input["companySystemID"])
+            ->where('salesreturn.approvedYN', '=', -1)
+            ->where('salesreturndetails.custInvoiceDirectAutoID', $input["bookingInvCodeSystem"])
+            ->groupBy('salesreturndetails.custInvoiceDirectAutoID')
+            ->first();
+
+        if(!empty($salesReturn)){
+            $sumReturnTransactionAmount = $salesReturn->sumReturnTransactionAmount;
+        } else {
+            $sumReturnTransactionAmount = 0;
+        }
+
+        $salesReturnDEO = DB::table('salesreturndetails')->select(
+            DB::raw('SUM(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount')
+        )
+            ->leftJoin('salesreturn', 'salesreturndetails.salesReturnID', '=', 'salesreturn.id')
+            ->join('erp_customerinvoiceitemdetails', 'salesreturndetails.deliveryOrderDetailID', '=', 'erp_customerinvoiceitemdetails.deliveryOrderDetailID')
+            ->where('salesreturndetails.companySystemID', '=', $input["companySystemID"])
+            ->where('salesreturn.approvedYN', '=', -1)
+            ->where('salesreturndetails.deliveryOrderDetailID', '!=', 0)
+            ->where('erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', $input["bookingInvCodeSystem"])
+            ->groupBy('salesreturndetails.deliveryOrderDetailID')
+            ->first();
+
+        if(!empty($salesReturnDEO)){
+            $sumReturnDEOTransactionAmount = $salesReturnDEO->sumReturnTransactionAmount;
+        } else {
+            $sumReturnDEOTransactionAmount = 0;
+        }
+
+
+        $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'] + $sumReturnTransactionAmount + $sumReturnDEOTransactionAmount;
 
         $custbalanceAmount = $detailUpdateBalance->bookingAmountTrans - $totReceiveAmount;
 
@@ -834,7 +916,25 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $input['receiveAmountTrans'] = $input['custbalanceAmount'];
         }
 
-        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $machAmount);
+        $salesReturnPreCheck = DB::table('salesreturndetails')->select(
+            DB::raw('SUM(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount')
+        )
+            ->leftJoin('salesreturn', 'salesreturndetails.salesReturnID', '=', 'salesreturn.id')
+            ->join('erp_customerinvoiceitemdetails', 'salesreturndetails.deliveryOrderDetailID', '=', 'erp_customerinvoiceitemdetails.deliveryOrderDetailID')
+            ->where('salesreturndetails.companySystemID', '=', $input["companySystemID"])
+            ->where('salesreturn.approvedYN', '=', -1)
+            ->where('salesreturndetails.deliveryOrderDetailID', '!=', 0)
+            ->where('erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', $input["bookingInvCodeSystem"])
+            ->groupBy('salesreturndetails.deliveryOrderDetailID')
+            ->first();
+
+        if(!empty($salesReturnPreCheck)){
+            $sumReturnTransactionAmountPreCheck = $salesReturnPreCheck->sumReturnTransactionAmount;
+        } else {
+            $sumReturnTransactionAmountPreCheck = 0;
+        }
+
+        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $machAmount + $sumReturnTransactionAmountPreCheck);
 
         if ($input['addedDocumentSystemID'] == 20) {
             $compareValue = $input["receiveAmountTrans"] - $totReceiveAmountDetail;
@@ -870,8 +970,27 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         if(!$matchedAmount){
             $matchedAmount['SumOfmatchedAmount'] = 0;
         }
-        
-        $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
+
+        $salesReturn = DB::table('salesreturndetails')->select(
+            DB::raw('SUM(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount')
+        )
+            ->leftJoin('salesreturn', 'salesreturndetails.salesReturnID', '=', 'salesreturn.id')
+            ->join('erp_customerinvoiceitemdetails', 'salesreturndetails.deliveryOrderDetailID', '=', 'erp_customerinvoiceitemdetails.deliveryOrderDetailID')
+            ->where('salesreturndetails.companySystemID', '=', $input["companySystemID"])
+            ->where('salesreturn.approvedYN', '=', -1)
+            ->where('salesreturndetails.deliveryOrderDetailID', '!=', 0)
+            ->where('erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', $input["bookingInvCodeSystem"])
+            ->groupBy('salesreturndetails.deliveryOrderDetailID')
+            ->first();
+
+        if(!empty($salesReturn)){
+            $sumReturnTransactionAmount = $salesReturn->sumReturnTransactionAmount;
+        } else {
+            $sumReturnTransactionAmount = 0;
+        }
+
+
+        $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'] + $sumReturnTransactionAmount;
 
         $custbalanceAmount = $detailUpdateBalance->bookingAmountTrans - $totReceiveAmount;
 

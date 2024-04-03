@@ -426,7 +426,7 @@ HAVING ROUND(
                                         ->selectRaw("(SUM(logisticAmountTrans) + SUM(logisticVATAmount)) as prLogisticAmount, poAdvPaymentID")
                                         ->groupBy('poAdvPaymentID');
 
-                $grvDetails = PoAdvancePayment::selectRaw("0 as grvDetailsID, erp_purchaseorderadvpayment.poAdvPaymentID as logisticID, itemmaster.primaryCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, erp_tax_vat_sub_categories.mainCategory as vatMasterCategoryID, erp_purchaseorderadvpayment.vatSubCategoryID, 0 as exempt_vat_portion, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount)),7) as transactionAmount, ROUND(((reqAmountInPORptCur) + (erp_purchaseorderadvpayment.VATAmountRpt)),7) as rptAmount, ROUND(((reqAmountInPOLocalCur) + (erp_purchaseorderadvpayment.VATAmountLocal)),7) as localAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0) - IFNULL(returnedLogistic.prLogisticAmount,0)),7) as balanceAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0) - IFNULL(returnedLogistic.prLogisticAmount,0)),7) as balanceAmountCheck, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount")
+                $grvDetails = PoAdvancePayment::selectRaw("0 as grvDetailsID, erp_purchaseorderadvpayment.poAdvPaymentID as logisticID, itemmaster.primaryCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, erp_tax_vat_sub_categories.mainCategory as vatMasterCategoryID, erp_purchaseorderadvpayment.vatSubCategoryID, 0 as exempt_vat_portion, ROUND(((reqAmountTransCur_amount)),7) as transactionAmount, ROUND(((reqAmountInPORptCur)),7) as rptAmount, ROUND(((reqAmountInPOLocalCur)),7) as localAmount, ROUND(((reqAmountTransCur_amount) - IFNULL(pulledQry.SumOftotTransactionAmount,0) - IFNULL(returnedLogistic.prLogisticAmount,0)),7) as balanceAmount, ROUND(((reqAmountTransCur_amount) - IFNULL(pulledQry.SumOftotTransactionAmount,0) - IFNULL(returnedLogistic.prLogisticAmount,0)),7) as balanceAmountCheck, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount")
                                                     ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
                                                     ->leftJoin('erp_tax_vat_sub_categories', 'erp_purchaseorderadvpayment.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                                                     ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
@@ -448,6 +448,17 @@ HAVING ROUND(
                                                     ->groupBy('erp_purchaseorderadvpayment.poAdvPaymentID');
 
                 $grv_details = $grvDetails->get();
+
+                foreach ($grv_details as $key => $valueGrv) {
+                    $vatData = TaxService::poLogisticVATDistributionForGRV($value->grvAutoID,0,$value->supplierID);
+
+                    $valueGrv->transactionAmount = $valueGrv->transactionAmount + $vatData['vatOnPOTotalAmountTrans'];
+                    $valueGrv->rptAmount = $valueGrv->rptAmount + $vatData['vatOnPOTotalAmountRpt'];
+                    $valueGrv->localAmount = $valueGrv->localAmount + $vatData['vatOnPOTotalAmountLocal'];
+                    
+                    $valueGrv->balanceAmount = $valueGrv->balanceAmount + $vatData['vatOnPOTotalAmountTrans'];
+                    $valueGrv->balanceAmountCheck = $valueGrv->balanceAmountCheck + $vatData['vatOnPOTotalAmountTrans'];
+                }
 
                 $value->balanceAmount = collect($grv_details)->sum('balanceAmount');
                 $value->balanceAmountCheck = collect($grv_details)->sum('balanceAmount');

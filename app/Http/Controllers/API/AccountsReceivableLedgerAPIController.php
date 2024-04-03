@@ -332,7 +332,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                         erp_accountsreceivableledger.comRptAmount as SumOfreceiveAmountRpt,
                     CurrencyCode,
                     DecimalPlaces,
-                      erp_accountsreceivableledger.custInvoiceAmount-IFNULL( SumOfreceiveAmountTrans, 0 )-IFNULL( matchedAmount*-1, 0 ) as balanceAmount,
+                      erp_accountsreceivableledger.custInvoiceAmount-IFNULL( SumOfreceiveAmountTrans, 0 )-IFNULL( matchedAmount*-1, 0 ) - IFNULL( sumReturnTransactionAmount, 0) - IFNULL(sumReturnDEOTransactionAmount, 0) as balanceAmount,
                     IFNULL( matchedAmount, 0 ) AS matchedAmount,
                     FALSE AS isChecked 
                 FROM
@@ -390,6 +390,39 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                     AND md.BPVsupplierID = erp_accountsreceivableledger.customerID 
                     AND md.serviceLineSystemID = erp_accountsreceivableledger.serviceLineSystemID 
                     AND md.supplierTransCurrencyID = custTransCurrencyID
+                    LEFT JOIN (
+                SELECT 
+                    salesreturndetails.custInvoiceDirectAutoID,
+                    salesreturndetails.salesReturnID,
+                    salesreturndetails.companySystemID,
+                    sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount,
+                    sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnLocalAmount,
+                    sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnRptAmount
+                    FROM salesreturndetails
+                    LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+                WHERE
+                    salesreturndetails.companySystemID = $master->companySystemID
+                    AND salesreturn.approvedYN = -1
+                    GROUP BY salesreturndetails.custInvoiceDirectAutoID
+                    ) sr ON sr.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem AND erp_accountsreceivableledger.documentSystemID = 20 
+                    LEFT JOIN (
+                SELECT 
+                    salesreturndetails.deliveryOrderDetailID,
+                    erp_customerinvoiceitemdetails.custInvoiceDirectAutoID,
+                    salesreturndetails.salesReturnID,
+                    salesreturndetails.companySystemID,
+                    sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOTransactionAmount,
+                    sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEOLocalAmount,
+                    sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnDEORptAmount
+                    FROM salesreturndetails
+                    LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+                    INNER JOIN erp_customerinvoiceitemdetails ON salesreturndetails.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
+                    WHERE
+                    salesreturndetails.companySystemID = $master->companySystemID
+                    AND salesreturn.approvedYN = -1
+                    AND salesreturndetails.deliveryOrderDetailID <> 0
+                    GROUP BY salesreturndetails.deliveryOrderDetailID
+            ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem AND erp_accountsreceivableledger.documentSystemID = 20 
                     LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
                 WHERE
                     date(erp_accountsreceivableledger.documentDate) <= '{$custPaymentReceiveDate}'

@@ -64,6 +64,7 @@ class UnbilledGRVService
                         $value->totalVATAmountRpt = $res['totalRptVATAmount'];
                         $value->grvDate = $postedDateGl;
                 }
+
             } else {
                 $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM(GRVcostPerUnitSupTransCur*noQty),7) as totTransactionAmount,ROUND(SUM(GRVcostPerUnitLocalCur*noQty),7) as totLocalAmount, ROUND(SUM(GRVcostPerUnitComRptCur*noQty),7) as totRptAmount,ROUND(SUM(VATAmount*noQty),7) as totalVATAmount,ROUND(SUM(VATAmountLocal*noQty),7) as totalVATAmountLocal,ROUND(SUM(VATAmountRpt*noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp")
                     ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
@@ -89,7 +90,7 @@ class UnbilledGRVService
                 $unbillRes = UnbilledGrvGroupBy::insert($output->toArray());
 
                 $lastUnbilledGrvGroupBy = UnbilledGrvGroupBy::orderBy('unbilledgrvAutoID', 'DESC')->first();
-                $output = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,NOW() as grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionCurrencyER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,ROUND(SUM(reqAmountTransCur_amount + erp_purchaseorderadvpayment.VATAmount),7) as totTransactionAmount,ROUND(SUM(reqAmountInPOLocalCur + erp_purchaseorderadvpayment.VATAmountLocal),7) as totLocalAmount, ROUND(SUM(reqAmountInPORptCur + erp_purchaseorderadvpayment.VATAmountRpt),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp, ROUND(SUM(erp_purchaseorderadvpayment.VATAmount),7) as totalVATAmount, ROUND(SUM(erp_purchaseorderadvpayment.VATAmountLocal),7) as totalVATAmountLocal, ROUND(SUM(erp_purchaseorderadvpayment.VATAmountRpt),7) as totalVATAmountRpt, 1 as logisticYN")
+                $output = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,NOW() as grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionCurrencyER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,ROUND(SUM(reqAmountTransCur_amount),7) as totTransactionAmount,ROUND(SUM(reqAmountInPOLocalCur),7) as totLocalAmount, ROUND(SUM(reqAmountInPORptCur),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp, ROUND(SUM(erp_purchaseorderadvpayment.VATAmount),7) as totalVATAmount, ROUND(SUM(erp_purchaseorderadvpayment.VATAmountLocal),7) as totalVATAmountLocal, ROUND(SUM(erp_purchaseorderadvpayment.VATAmountRpt),7) as totalVATAmountRpt, 1 as logisticYN")
                                             ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
                                             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
                                             ->where('erp_purchaseorderadvpayment.grvAutoID',$masterModel["autoID"])
@@ -97,7 +98,17 @@ class UnbilledGRVService
                                             ->get();
                 if($output){
                     foreach ($output as $key => $value) {
+                        $vatData = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"],0,$value->supplierID);
+
                         $value->grvDate = $postedDateGl;
+
+                        $value->totTransactionAmount = $value->totTransactionAmount + $vatData['vatOnPOTotalAmountTrans'];
+                        $value->totRptAmount = $value->totRptAmount + $vatData['vatOnPOTotalAmountRpt'];
+                        $value->totLocalAmount = $value->totLocalAmount + $vatData['vatOnPOTotalAmountLocal'];
+
+                        $value->totalVATAmount = $vatData['vatOnPOTotalAmountTrans'];
+                        $value->totalVATAmountLocal = $vatData['vatOnPOTotalAmountLocal'];
+                        $value->totalVATAmountRpt = $vatData['vatOnPOTotalAmountRpt'];
                     }
 
                     $unbillRes1 = UnbilledGrvGroupBy::insert($output->toArray());

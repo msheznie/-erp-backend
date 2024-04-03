@@ -745,29 +745,37 @@ class SalesReturnAPIController extends AppBaseController
         $documentSystemID = 0;
         $salesReturn = SalesReturn::find($input['salesReturnID']);
         if($input['type'] == 1){ //Delivery Order
-            $master = DeliveryOrder::where('companySystemID',$input['companySystemID'])
-                                    ->where('approvedYN', -1)
-                                    ->where('selectedForSalesReturn', 0)
+            $master = DeliveryOrder::where('erp_delivery_order.companySystemID',$input['companySystemID'])
+                                    ->where('erp_delivery_order.approvedYN', -1)
+                                    ->where('erp_delivery_order.selectedForSalesReturn', 0)
                                     // ->where('closedYN',0)
-                                    ->where('serviceLineSystemID', $salesReturn->serviceLineSystemID)
-                                    ->where('wareHouseSystemCode', $salesReturn->wareHouseSystemCode)
-                                    ->where('customerID', $salesReturn->customerID)
-                                    ->where('transactionCurrencyID', $salesReturn->transactionCurrencyID)
-                                    ->whereDate("postedDate", '<=', $salesReturn->salesReturnDate)
-                                    ->orderBy('deliveryOrderID','DESC')
+                                    ->where('erp_delivery_order.serviceLineSystemID', $salesReturn->serviceLineSystemID)
+                                    ->where('erp_delivery_order.wareHouseSystemCode', $salesReturn->wareHouseSystemCode)
+                                    ->where('erp_delivery_order.customerID', $salesReturn->customerID)
+                                    ->where('erp_delivery_order.transactionCurrencyID', $salesReturn->transactionCurrencyID)
+                                    ->whereDate("erp_delivery_order.postedDate", '<=', $salesReturn->salesReturnDate)
+                                    ->leftJoin('erp_customerinvoiceitemdetails', 'erp_delivery_order.deliveryOrderID', '=', 'erp_customerinvoiceitemdetails.deliveryOrderID')
+                                    ->leftJoin('erp_custreceivepaymentdet', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custreceivepaymentdet.bookingInvCodeSystem')
+                                    ->whereNull('erp_custreceivepaymentdet.bookingInvCodeSystem')
+                                    ->orderBy('erp_delivery_order.deliveryOrderID','DESC')
+                                    ->groupBy('erp_delivery_order.deliveryOrderID')
+                                    ->select('erp_delivery_order.*')
                                     ->get();
         } elseif ($input['type']==2){ ////sales Invoice
-            $master = CustomerInvoiceDirect::where('companySystemID',$input['companySystemID'])
-                                    ->where('approved', -1)
-                                    ->where('selectedForSalesReturn', 0)
-                                    ->whereIn('isPerforma', [2,4,5])
+            $master = CustomerInvoiceDirect::where('erp_custinvoicedirect.companySystemID',$input['companySystemID'])
+                                    ->where('erp_custinvoicedirect.approved', -1)
+                                    ->where('erp_custinvoicedirect.selectedForSalesReturn', 0)
+                                    ->whereIn('erp_custinvoicedirect.isPerforma', [2,4,5])
                                     // ->where('closedYN',0)
-                                    ->where('serviceLineSystemID', $salesReturn->serviceLineSystemID)
-                                    ->where('wareHouseSystemCode', $salesReturn->wareHouseSystemCode)
-                                    ->where('customerID', $salesReturn->customerID)
-                                    ->where('custTransactionCurrencyID', $salesReturn->transactionCurrencyID)
-                                    ->whereDate("postedDate", '<=', $salesReturn->salesReturnDate)
-                                    ->orderBy('custInvoiceDirectAutoID','DESC')
+                                    ->where('erp_custinvoicedirect.serviceLineSystemID', $salesReturn->serviceLineSystemID)
+                                    ->where('erp_custinvoicedirect.wareHouseSystemCode', $salesReturn->wareHouseSystemCode)
+                                    ->where('erp_custinvoicedirect.customerID', $salesReturn->customerID)
+                                    ->where('erp_custinvoicedirect.custTransactionCurrencyID', $salesReturn->transactionCurrencyID)
+                                    ->whereDate("erp_custinvoicedirect.postedDate", '<=', $salesReturn->salesReturnDate)
+                                    ->leftJoin('erp_custreceivepaymentdet', 'erp_custinvoicedirect.custInvoiceDirectAutoID', '=', 'erp_custreceivepaymentdet.bookingInvCodeSystem')
+                                    ->whereNull('erp_custreceivepaymentdet.bookingInvCodeSystem')
+                                    ->orderBy('erp_custinvoicedirect.custInvoiceDirectAutoID','DESC')
+                                    ->select('erp_custinvoicedirect.*')
                                     ->get();
         }
 
@@ -1484,10 +1492,10 @@ class SalesReturnAPIController extends AppBaseController
                             // if (isset($new['discountPercentage']) && $new['discountPercentage'] != 0){
                             //     $invDetail_arr['unitTransactionAmount'] = ($new['unitTransactionAmount']) - ($new['unitTransactionAmount']*$new['discountPercentage']/100);
                             // }else{
-                                $invDetail_arr['unitTransactionAmount'] = $new['sellingCost'];
+                                $invDetail_arr['unitTransactionAmount'] = $new['sellingCostAfterMargin'];
                             // }
 
-                            $totalNetcost = $new['sellingCost'] * $new['noQty'];
+                            $totalNetcost = $new['sellingCostAfterMargin'] * $new['noQty'];
 
                             $invDetail_arr['transactionAmount'] = \Helper::roundValue($totalNetcost);
                             $invDetail_arr['unitTransactionAmount'] = \Helper::roundValue($invDetail_arr['unitTransactionAmount']);

@@ -27,6 +27,8 @@ class ExportReportToExcelService implements ExportToExcelInterface
     public $dataType = 1;
     public $excelType;
 
+    public $setColumnAutoSize;
+
     /**
      * @param mixed $excelType
      */
@@ -68,13 +70,20 @@ class ExportReportToExcelService implements ExportToExcelInterface
     /**
      * @param mixed $currency
      */
-    public function setCurrency($currency): ExportReportToExcelService
+    public function setCurrency($currency,$isString = false): ExportReportToExcelService
     {
-        if($currency) {
-            $currencyObj = CurrencyMaster::where('currencyID',$currency)->select(['CurrencyCode','DecimalPlaces'])->first();
-            $this->currencyObj = $currencyObj;
-            $this->currency = $this->currencyObj->CurrencyCode;
+        if($isString)
+        {
+            $this->currency = $currency;
+
+        }else {
+            if($currency) {
+                $currencyObj = CurrencyMaster::where('currencyID',$currency)->select(['CurrencyCode','DecimalPlaces'])->first();
+                $this->currencyObj = $currencyObj;
+                $this->currency = $this->currencyObj->CurrencyCode;
+            }
         }
+
 
         return $this;
     }
@@ -153,6 +162,12 @@ class ExportReportToExcelService implements ExportToExcelInterface
         return $this;
     }
 
+    public function setColumnAutoSize($setColumnAutoSize = true):ExportReportToExcelService
+    {
+        $this->setColumnAutoSize = $setColumnAutoSize;
+
+        return $this;
+    }
 
     /**
      * @param mixed $details
@@ -168,7 +183,8 @@ class ExportReportToExcelService implements ExportToExcelInterface
             'cur'=>$this->currency,
             'title'=>$this->title,
             'excelFormat' => $this->excelFormat,
-            'dataType' => $this->dataType
+            'dataType' => $this->dataType,
+            'setColumnAutoSize' => $this->setColumnAutoSize
         );
 
 

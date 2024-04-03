@@ -29,6 +29,8 @@ interface ExportToExcelInterface {
     // create excel and download to local - 2
     public function setExcelType($type);
 
+    public function setColumnAutoSize($setColumnAutoSize);
+
     public function generateExcel():Array;
 
 

@@ -26,8 +26,6 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
-use App\Http\Requests\API\CreateJvMasterAPIRequest;
-use App\Http\Requests\API\UpdateJvMasterAPIRequest;
 use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
@@ -54,6 +52,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetConsumedDataRepository;
 use App\Repositories\JvMasterRepository;
 use App\Repositories\UserRepository;
+use App\Services\UserTypeService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -127,8 +126,8 @@ class JvMasterAPIController extends AppBaseController
     }
 
     /**
-     * @param CreateJvMasterAPIRequest $request
-     * @return Response
+     * @param Request $request
+     * @return array
      *
      * @SWG\Post(
      *      path="/jvMasters",
@@ -164,26 +163,40 @@ class JvMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateJvMasterAPIRequest $request)
+    public function store(Request $request)
     {
         $input = $request->all();
 
         $input = $this->convertArrayToValue($input);
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "Selected financial year is not active"
+                ];
+            }
         }
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 5;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
-        } else {
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "Selected financial period is not active"
+                ];
+            }
+        }
+        else {
             $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
@@ -201,7 +214,15 @@ class JvMasterAPIController extends AppBaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError($validator->messages(), 422);
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "Error"
+                ];
+            }
         }
 
         if (isset($input['jvType']) && $input['jvType'] == 4) {
@@ -228,7 +249,15 @@ class JvMasterAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('JV date is not within the financial period!');
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError('JV date is not within the financial period!');
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "JV date is not within the financial period"
+                ];
+            }
         }
 
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
@@ -239,8 +268,20 @@ class JvMasterAPIController extends AppBaseController
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
 
         $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+        if(!isset($input['isFromRecurringVoucher'])){
+            $id = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+            $input['createdUserID'] = $user->employee['empID'];
+            $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+        }
+        else{
+            $employee = UserTypeService::getSystemEmployee();
+            $input['createdUserID'] = $employee->empID;
+            $input['createdUserSystemID'] = $employee->employeeSystemID;
+        }
+
         $input['documentSystemID'] = '17';
         $input['documentID'] = 'JV';
 
@@ -285,9 +326,17 @@ class JvMasterAPIController extends AppBaseController
             $input['JVcode'] = $jvCode;
         }
 
-        $jvMasters = $this->jvMasterRepository->create($input);
+        $jvMaster = $this->jvMasterRepository->create($input);
 
-        return $this->sendResponse($jvMasters->toArray(), 'JV created successfully');
+        if(!isset($input['isFromRecurringVoucher'])){
+            return $this->sendResponse($jvMaster->toArray(), 'JV created successfully');
+        }
+        else{
+            return [
+                "success" => true,
+                "data" => $jvMaster->toArray()
+            ];
+        }
     }
 
     /**
@@ -346,8 +395,8 @@ class JvMasterAPIController extends AppBaseController
 
     /**
      * @param int $id
-     * @param UpdateJvMasterAPIRequest $request
-     * @return Response
+     * @param Request $request
+     * @return array
      *
      * @SWG\Put(
      *      path="/jvMasters/{id}",
@@ -390,7 +439,7 @@ class JvMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateJvMasterAPIRequest $request)
+    public function update($id, Request $request)
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
@@ -401,59 +450,68 @@ class JvMasterAPIController extends AppBaseController
         $jvMaster = $this->jvMasterRepository->findWithoutFail($id);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Jv Master not found');
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError('Jv Master not found');
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "Jv Master not found"
+                ];
+            }
         }
 
         $jvConfirmedYN = $input['confirmedYN'];
         $prevJvConfirmedYN = $jvMaster->confirmedYN;
 
-
-        if (isset($input['JVdate'])) {
-            if ($input['JVdate']) {
-                $input['JVdate'] = Carbon::parse($input['JVdate']);
-            }
-        }
-
-        if (isset($input['jvType']) && $input['jvType'] == 4) {
-            $checkPendingJv = JvMaster::where('jvType', $input['jvType'])
-                                      ->where('companySystemID', $input['companySystemID'])
-                                      ->where('refferedBackYN', 0)
-                                      ->where('approved', 0)
-                                      ->first();
-
-            if ($checkPendingJv) {
-                return $this->sendError('There is a pending allocation JV, please approve those allocation JVs');
-            }
-        }
-
         $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
-        } else {
-            $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-            $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
-        }
+        if(!isset($input['isFromRecurringVoucher'])){
+            if (isset($input['JVdate'])) {
+                if ($input['JVdate']) {
+                    $input['JVdate'] = Carbon::parse($input['JVdate']);
+                }
+            }
 
-        $inputParam = $input;
-        $inputParam["departmentSystemID"] = 5;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
-        } else {
-            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
-        }
-        unset($inputParam);
+            if (isset($input['jvType']) && $input['jvType'] == 4) {
+                $checkPendingJv = JvMaster::where('jvType', $input['jvType'])
+                    ->where('companySystemID', $input['companySystemID'])
+                    ->where('refferedBackYN', 0)
+                    ->where('approved', 0)
+                    ->first();
 
-        $documentDate = $input['JVdate'];
-        $monthBegin = $input['FYPeriodDateFrom'];
-        $monthEnd = $input['FYPeriodDateTo'];
+                if ($checkPendingJv) {
+                    return $this->sendError('There is a pending allocation JV, please approve those allocation JVs');
+                }
+            }
 
-        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-        } else {
-            return $this->sendError('Document date is not within the selected financial period !', 500);
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 5;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+            }
+            unset($inputParam);
+
+            $documentDate = $input['JVdate'];
+            $monthBegin = $input['FYPeriodDateFrom'];
+            $monthEnd = $input['FYPeriodDateTo'];
+
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Document date is not within the selected financial period !', 500);
+            }
         }
 
         if ($jvMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -468,7 +526,15 @@ class JvMasterAPIController extends AppBaseController
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
+                if(!isset($input['isFromRecurringVoucher'])){
+                    return $this->sendError($validator->messages(), 422);
+                }
+                else{
+                    return [
+                        "success" => false,
+                        "message" => "Validation failed"
+                    ];
+                }
             }
 
 
@@ -497,9 +563,15 @@ class JvMasterAPIController extends AppBaseController
                    
                 }
 
-
-                return $this->sendError("The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
-
+                if(!isset($input['isFromRecurringVoucher'])) {
+                    return $this->sendError("The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
+                }
+                else{
+                    return [
+                        "success" => false,
+                        "message" => "The Chart of Account/s are Inactive"
+                    ];
+                }
             }
 
             $documentDate = $input['JVdate'];
@@ -507,13 +579,29 @@ class JvMasterAPIController extends AppBaseController
             $monthEnd = $input['FYPeriodDateTo'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Document date is not within the selected financial period !', 500);
+                if(!isset($input['isFromRecurringVoucher'])){
+                    return $this->sendError('Document date is not within the selected financial period !', 500);
+                }
+                else{
+                    return [
+                        "success" => false,
+                        "message" => "Document date is not within the selected financial period !"
+                    ];
+                }
             }
 
             $checkItems = JvDetail::where('jvMasterAutoId', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Journal Voucher should have at least one item', 500);
+                if(!isset($input['isFromRecurringVoucher'])){
+                    return $this->sendError('Journal Voucher should have at least one item', 500);
+                }
+                else{
+                    return [
+                        "success" => false,
+                        "message" => "Journal Voucher should have at least one item"
+                    ];
+                }
             }
 
             if ($jvMaster->jvType != 4) {
@@ -522,7 +610,15 @@ class JvMasterAPIController extends AppBaseController
                     ->where('creditAmount', '<=', 0)
                     ->count();
                 if ($checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
+                    if(!isset($input['isFromRecurringVoucher'])){
+                        return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
+                    }
+                    else{
+                        return [
+                            "success" => false,
+                            "message" => "Amount should be greater than 0 for debit amount or credit amount"
+                        ];
+                    }
                 }
             }
 
@@ -581,7 +677,15 @@ class JvMasterAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                if(!isset($input['isFromRecurringVoucher'])){
+                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                }
+                else{
+                    return [
+                        "success" => false,
+                        "message" => "You cannot confirm this document."
+                    ];
+                }
             }
 
             $JvDetailDebitSum = JvDetail::where('jvMasterAutoId', $id)
@@ -591,7 +695,15 @@ class JvMasterAPIController extends AppBaseController
                 ->sum('creditAmount');
 
             if (round($JvDetailDebitSum, $currencyDecimalPlace) != round($JvDetailCreditSum, $currencyDecimalPlace)) {
-                return $this->sendError('Debit amount total and credit amount total is not matching', 500);
+                if(!isset($input['isFromRecurringVoucher'])){
+                    return $this->sendError('Debit amount total and credit amount total is not matching', 500);
+                }
+                else{
+                    return [
+                        "success" => false,
+                        "message" => "Debit amount total and credit amount total is not matching"
+                    ];
+                }
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -609,17 +721,26 @@ class JvMasterAPIController extends AppBaseController
                 'document' => $input["documentSystemID"],
                 'segment' => 0,
                 'category' => 0,
-                'amount' => $JvDetailDebitSum
+                'amount' => $JvDetailDebitSum,
+                'isFromRecurringVoucher' => isset($input['isFromRecurringVoucher'])
             );
 
             $confirm = \Helper::confirmDocument($params);
 
             if (!$confirm["success"]) {
-                return $this->sendError($confirm["message"], 500);
+                if(!isset($input['isFromRecurringVoucher'])) {
+                    return $this->sendError($confirm["message"], 500);
+                }
+                else{
+                    return [
+                        "success" => false,
+                        "message" => $confirm["message"]
+                    ];
+                }
             }
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = !isset($input['isFromRecurringVoucher']) ? Helper::getEmployeeInfo() : UserTypeService::getSystemEmployee();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -628,10 +749,26 @@ class JvMasterAPIController extends AppBaseController
         $jvMaster = $this->jvMasterRepository->update($input, $id);
 
         if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
-            return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher confirmed successfully');
+            if(!isset($input['isFromRecurringVoucher'])) {
+                return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher confirmed successfully');
+            }
+            else{
+                return [
+                    "success" => true,
+                    "data" => $jvMaster->toArray()
+                ];
+            }
         }
 
-        return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher updated successfully');
+        if(!isset($input['isFromRecurringVoucher'])) {
+            return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher updated successfully');
+        }
+        else{
+            return [
+                "success" => true,
+                "data" => $jvMaster->toArray()
+            ];
+        }
     }
 
     /**
@@ -1016,7 +1153,14 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+
+        if(isset($input['isFromRecurringVoucher'])){
+            $employee = UserTypeService::getSystemEmployee();
+            $empID = $employee->employeeSystemID;
+        }
+        else{
+            $empID = \Helper::getEmployeeSystemID();
+        }
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
             ->where('documentSystemID', 17)
@@ -1040,19 +1184,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             'approvalLevelID',
             'documentSystemCode',
             'employees.empName As created_user'
-        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
-            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
-                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
-                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
-                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
-            }
-            $query->where('employeesdepartments.documentSystemID', 17)
-                ->where('employeesdepartments.companySystemID', $companyID)
-                ->where('employeesdepartments.employeeSystemID', $empID)
-                ->where('employeesdepartments.isActive', 1)
-                ->where('employeesdepartments.removedYN', 0);
-        })->join('erp_jvmaster', function ($query) use ($companyID, $empID) {
+        )->join('erp_jvmaster', function ($query) use ($companyID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'jvMasterAutoId')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_jvmaster.companySystemID', $companyID)
@@ -1066,14 +1198,30 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             ->where('erp_documentapproved.documentSystemID', 17)
             ->where('erp_documentapproved.companySystemID', $companyID);
 
-        $search = $request->input('search.value');
-
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $grvMasters = $grvMasters->where(function ($query) use ($search) {
-                $query->where('JVcode', 'LIKE', "%{$search}%")
-                    ->orWhere('JVNarration', 'LIKE', "%{$search}%");
+        if(!isset($input['isFromRecurringVoucher'])){
+            $grvMasters->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
+                $query->where('employeesdepartments.documentSystemID', 17)
+                    ->where('employeesdepartments.companySystemID', $companyID)
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             });
+
+            $search = $request->input('search.value');
+
+            if ($search) {
+                $search = str_replace("\\", "\\\\", $search);
+                $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                    $query->where('JVcode', 'LIKE', "%{$search}%")
+                        ->orWhere('JVNarration', 'LIKE', "%{$search}%");
+                });
+            }
         }
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
@@ -1082,19 +1230,36 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             $grvMasters = [];
         }
 
-        return \DataTables::of($grvMasters)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+        if(isset($input['isFromRecurringVoucher'])){
+            if(!empty($grvMasters)){
+                $grvMasters = $grvMasters->where('erp_jvmaster.jvMasterAutoId',$input['jvMasterAutoId'])->first();
+                return [
+                    "success" => true,
+                    "data" => $grvMasters
+                ];
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => "Employee discharged"
+                ];
+            }
+        }
+        else{
+            return \DataTables::of($grvMasters)
+                ->order(function ($query) use ($input) {
+                    if (request()->has('order')) {
+                        if ($input['order'][0]['column'] == 0) {
+                            $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                        }
                     }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
-            //->addColumn('Index', 'Index', "Index")
-            ->make(true);
+                })
+                ->addIndexColumn()
+                ->with('orderCondition', $sort)
+                ->addColumn('Actions', 'Actions', "Actions")
+                //->addColumn('Index', 'Index', "Index")
+                ->make(true);
+        }
     }
 
     public function getApprovedJournalVoucherForCurrentUser(Request $request)
@@ -1168,6 +1333,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     public function approveJournalVoucher(Request $request)
     {
+        $input = $request->all();
         $jvMasterData = JvMaster::find($request->jvMasterAutoId);
 
         if (($jvMasterData->jvType == 1 || $jvMasterData->jvType == 5) && $jvMasterData->isReverseAccYN == 0) {
@@ -1189,11 +1355,27 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
         }
 
-        $approve = \Helper::approveDocument($request);
+        $approve = \Helper::approveDocument($input);
         if (!$approve["success"]) {
-            return $this->sendError($approve["message"]);
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendError($approve["message"]);
+            }
+            else{
+                return [
+                    "success" => false,
+                    "message" => $approve["message"]
+                ];
+            }
         } else {
-            return $this->sendResponse(array(), $approve["message"]);
+            if(!isset($input['isFromRecurringVoucher'])){
+                return $this->sendResponse(array(), $approve["message"]);
+            }
+            else{
+                return [
+                    "success" => true,
+                    "data" => null
+                ];
+            }
         }
 
     }
@@ -1847,11 +2029,28 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     public function approvalPreCheckJV(Request $request)
     {
+        $input = $request->all();
         $approve = \Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
-            return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
+            if(isset($input['isFromRecurringVoucher'])){
+                return [
+                    "success" => false,
+                    "message" => $approve["message"]
+                ];
+            }
+            else{
+                return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
+            }
         } else {
-            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+            if(isset($input['isFromRecurringVoucher'])){
+                return [
+                    "success" => true,
+                    "data" => $approve["type"],
+                ];
+            }
+            else{
+                return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+            }
         }
 
     }

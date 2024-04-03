@@ -237,7 +237,7 @@
 
     </div>
     <div class="row">
-        <table  style="width: 100%; margin-top: -15px; margin-bottom: -15px!important;">
+        <table  style="width: 100%; margin-bottom: -15px!important;">
             <tr>
                 <td width="100%" style="text-align: center;white-space: nowrap">
                         <h4 class="text-center">

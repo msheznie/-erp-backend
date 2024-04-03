@@ -476,12 +476,18 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
         $markupArray = $this->setMarkupPercentage($input['unitCost'], $purchaseOrder);
+        if(!$markupArray['success']) {
+            return $this->sendError($markupArray['data'],500);
+        }else {
+            $markupArray = $markupArray['data'];
+        }
         $input['markupPercentage'] = $markupArray['markupPercentage'];
         $input['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
         $input['markupLocalAmount'] = $markupArray['markupLocalAmount'];
         $input['markupReportingAmount'] = $markupArray['markupReportingAmount'];
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->create($input);
+
 
 
         //calculate tax amount according to the percantage for tax update
@@ -691,6 +697,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['unitCost'] = $new['poUnitAmount'];
                             $prDetail_arr['netAmount'] = ($new['poUnitAmount'] * $new['poQty']);
                             // Get VAT percentage for item
+
                             if ($purchaseOrder->isVatEligible) {
                                 $vatDetails = TaxService::getVATDetailsByItem($purchaseOrder->companySystemID, $new['itemCode'], $purchaseOrder->supplierID);
                                 $prDetail_arr['VATPercentage'] = $vatDetails['percentage'];
@@ -745,6 +752,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             }
 
                             $markupArray = $this->setMarkupPercentage($prDetail_arr['unitCost'], $purchaseOrder);
+
+                            if(!$markupArray['success']) {
+                                return $this->sendError($markupArray['data'],500);
+                            }else {
+                                $markupArray = $markupArray['data'];
+                            }
+
                             $prDetail_arr['markupPercentage'] = $markupArray['markupPercentage'];
                             $prDetail_arr['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
                             $prDetail_arr['markupLocalAmount'] = $markupArray['markupLocalAmount'];
@@ -1017,6 +1031,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $updateMarkupBy = isset($input['updateMarkupBy']) ? $input['updateMarkupBy'] : '';
 
             $markupArray = $this->setMarkupPercentage($discountedUnitPrice, $purchaseOrder, $input['markupPercentage'], $input['markupTransactionAmount'], $updateMarkupBy);
+            if(!$markupArray['success']) {
+                return $this->sendError($markupArray['data'],500);
+            }else {
+                $markupArray = $markupArray['data'];
+            }
+
             $input['markupPercentage'] = $markupArray['markupPercentage'];
             $input['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
             $input['markupLocalAmount'] = $markupArray['markupLocalAmount'];
@@ -1527,11 +1547,19 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if (isset($poData->supplierID) && $poData->supplierID) {
 
+            $supplierMaster = SupplierMaster::where('supplierCodeSystem', $poData->supplierID)->first();
             $supplier = SupplierAssigned::where('supplierCodeSytem', $poData->supplierID)
                 ->where('companySystemID', $poData->companySystemID)
                 ->where('isActive', 1)
                 ->where('isAssigned', -1)
                 ->first();
+
+
+            if(!$supplierMaster->isActive)
+                return ["success" => false , 'data' => "Supplier is not active"];
+
+            if(!isset($supplier))
+                return ["success" => false , 'data' => "Supplier is not assigned to the company"];
 
             if ($supplier->companySystemID && $supplier->isMarkupPercentage) {
                 $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->companySystemID)
@@ -1589,7 +1617,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         }
 
-        return $output;
+        return ["success" => true , 'data' => $output];
     }
 
 

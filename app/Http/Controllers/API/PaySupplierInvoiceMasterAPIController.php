@@ -89,6 +89,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\SupplierBlock;
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class PaySupplierInvoiceMasterController
@@ -1537,7 +1538,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
 
                     $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
-                
+                    $input['directPaymentPayeeEmpID'] = 0;
                     if ($supDetail) {
                         $input['supplierGLCode'] = $supDetail->liabilityAccount;
                         $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
@@ -1571,6 +1572,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     return $this->sendError('Please configure Employee control account for this company', 500);
                 }
 
+                $input['BPVsupplierID'] = 0;
                 $input['supplierGLCodeSystemID'] = $checkEmployeeControlAccount;
                 $input['supplierGLCode'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
                 $emp = Employee::find($input["directPaymentPayeeEmpID"]);
@@ -3134,15 +3136,24 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 ->orderby('year', 'desc')
                 ->get();
 
-            $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2);
 
+            $payee = Employee::whereHas('invoice' , function($q) use ($companyId) {
+                $q->where('companySystemID',$companyId);
+            })->where('discharegedYN','<>', 2);
             if(Helper::checkHrmsIntergrated($companyId)){
                 $payee = $payee->whereHas('hr_emp', function($q){
                     $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
                 });
             }
-
             $payee = $payee->get();
+
+            $payeeAll = Employee::where('discharegedYN','<>', 2);
+            if(Helper::checkHrmsIntergrated($companyId)){
+                $payeeAll = $payeeAll->whereHas('hr_emp', function($q){
+                    $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+                });
+            }
+            $payeeAll = $payeeAll->get();
 
             $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
 
@@ -3221,7 +3232,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'paymentMode' => $paymentMode,
                 'isProjectBase' => $isProject_base,
                 'isVATEligible' => $isVATEligible,
-                'projects' => $projects
+                'projects' => $projects,
+                'payeeAll' => $payeeAll
             );
         }
 
@@ -4823,6 +4835,28 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             return $this->sendError('Payment Voucher Master not found');
         }
 
+        $documentAutoId = $PayMasterAutoId;
+        $documentSystemID = $paymentVoucherData->documentSystemID;
+        $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
+        if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
+            if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
+                return $this->sendError($validateFinanceYear['message']);
+            }
+        }
+        
+        $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
+        if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+            if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
+                return $this->sendError($validateFinancePeriod['message']);
+            }
+        }
+
+        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                return $this->sendError($validatePendingGlPost['message']);
+            }
+        }
 
         if ($paymentVoucherData->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend, this payment voucher, it is not confirmed');

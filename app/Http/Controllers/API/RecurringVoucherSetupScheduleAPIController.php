@@ -239,17 +239,37 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         try{
             $input = $request->all();
 
+            if(isset($input[0]['id'])) {
+                $scheduleIdsInCroneJobProgress = RecurringVoucherSetupSchedule::where('rrvSetupScheduleAutoID',$input[0]['id'])->first();
+                $msg = "Reccurring voucher setup schedule process date is today, and it's  processing now";
+
+                if($scheduleIdsInCroneJobProgress  && $scheduleIdsInCroneJobProgress->isInProccess)
+                {
+                    return $this->sendError($msg);
+                }
+            }
+
             /** @var RecurringVoucherSetupSchedule $recurringVoucherSetupSchedule */
 
-            if(isset($input['state']) && $input['state'] == 'stop'){
+            if(isset($input['state']) && $input['state'] == 'toggleStop'){
                 $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->find($id);
 
                 if (empty($recurringVoucherSetupSchedule)) {
                     return $this->sendError('Recurring Voucher Setup Schedule not found');
                 }
 
-                $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->update(['stopYN' => 1], $id);
-                return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), 'RRV schedule stopped successfully');
+                if($recurringVoucherSetupSchedule->isInProccess) {
+                    return $this->sendError("Reccurring voucher setup schedule process date is today, and it's  processing now");
+                }
+
+                $rrvCurrentState = $recurringVoucherSetupSchedule->stopYN;
+
+                $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository
+                    ->update(['stopYN' => !$rrvCurrentState], $id);
+                return $this->sendResponse(
+                    $recurringVoucherSetupSchedule->toArray(),
+                    $rrvCurrentState ? 'RRV schedule continue successfully' : 'RRV schedule stopped successfully'
+                );
             }
             else{
 
@@ -263,12 +283,15 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                         foreach ($recurringVoucherSetupSchedule as $data){
                             $tempDate = $this->dateCalculate($data->processDate,$input[0]['date']);
 
-                            $data->update([
-                                'processDate' => new Carbon($tempDate),
-                                'modifiedPc' => gethostname(),
-                                'modifiedUser' => $employee->empID,
-                                'modifiedUserSystemID' => $employee->employeeSystemID
-                            ]);
+                            if(!$data->isInProccess) {
+                                $data->update([
+                                    'processDate' => new Carbon($tempDate),
+                                    'modifiedPc' => gethostname(),
+                                    'modifiedUser' => $employee->empID,
+                                    'modifiedUserSystemID' => $employee->employeeSystemID
+                                ]);
+                            }
+
                         }
                     }
                     else{
@@ -277,12 +300,15 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
                         $tempDate = $this->dateCalculate($recurringVoucherSetupSchedule->processDate,$input[0]['date']);
 
-                        $recurringVoucherSetupSchedule->update([
-                            'processDate' => new Carbon($tempDate),
-                            'modifiedPc' => gethostname(),
-                            'modifiedUser' => $employee->empID,
-                            'modifiedUserSystemID' => $employee->employeeSystemID
-                        ]);
+                        if(!$recurringVoucherSetupSchedule->isInProccess) {
+                            $recurringVoucherSetupSchedule->update([
+                                'processDate' => new Carbon($tempDate),
+                                'modifiedPc' => gethostname(),
+                                'modifiedUser' => $employee->empID,
+                                'modifiedUserSystemID' => $employee->employeeSystemID
+                            ]);
+                        }
+
                     }
                 }
                 else{
@@ -292,12 +318,15 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
                         $tempDate = $this->dateCalculate($recurringVoucherSetupSchedule->processDate,$schedule['date']);
 
-                        $recurringVoucherSetupSchedule->update([
-                            'processDate' => new Carbon($tempDate),
-                            'modifiedPc' => gethostname(),
-                            'modifiedUser' => $employee->empID,
-                            'modifiedUserSystemID' => $employee->employeeSystemID
-                        ]);
+                        if(!$recurringVoucherSetupSchedule->isInProccess) {
+                            $recurringVoucherSetupSchedule->update([
+                                'processDate' => new Carbon($tempDate),
+                                'modifiedPc' => gethostname(),
+                                'modifiedUser' => $employee->empID,
+                                'modifiedUserSystemID' => $employee->employeeSystemID
+                            ]);
+                        }
+
                     }
                 }
 
@@ -366,7 +395,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
     {
         $masterId = $request['recurringVoucherAutoId'];
 
-        $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->get();
+        $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->with('generateDocument')->get();
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -378,7 +407,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
             $employee = \Helper::getEmployeeInfo();
 
-            $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)
+            $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->where('isInProccess',0)
                 ->where('rrvGeneratedYN', 0)
                 ->update([
                     'stopYN' => 1,

@@ -358,6 +358,10 @@ class ErpItemLedgerAPIController extends AppBaseController
         }
 
         $company = Company::find($subCompanies[0]);
+
+        if(!isset($company)){
+            return $this->sendError('Company Details not found');
+        }
         $company_name = $company->CompanyName;
 
 
@@ -897,6 +901,9 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
         }
 
         $company = Company::find($subCompanies[0]);
+        if(!isset($company)){
+            return $this->sendError('Company Details not found');
+        }
         $company_name = $company->CompanyName;
 
         $startDate = new Carbon($request->fromDate);
@@ -1205,6 +1212,9 @@ WHERE
         }
 
         $company = Company::find($subCompanies[0]);
+        if(!isset($company)){
+            return $this->sendError('Company Details not found');
+        }
         $company_name = $company->CompanyName;
 
         $input = $request->all();
@@ -1351,6 +1361,9 @@ WHERE
         }
 
         $company = Company::find($subCompanies[0]);
+        if(!isset($company)){
+            return $this->sendError('Company Details not found');
+        }
         $company_name = $company->CompanyName;
 
 
@@ -1511,6 +1524,9 @@ WHERE
         }
         
         $company = Company::find($subCompanies[0]);
+        if(!isset($company)){
+            return $this->sendError('Company Details not found');
+        }
         $company_name = $company->CompanyName;
 
 //        $input = $request->all();
@@ -1717,6 +1733,9 @@ GROUP BY
         }
 
         $company = Company::find($subCompanies[0]);
+        if(!isset($company)){
+            return $this->sendError('Company Details not found');
+        }
         $company_name = $company->CompanyName;
 
         

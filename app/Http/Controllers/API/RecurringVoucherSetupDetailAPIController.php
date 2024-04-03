@@ -150,7 +150,6 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
         $input['documentSystemID'] = $rrvMaster->documentSystemID;
         $input['documentID'] = $rrvMaster->documentID;
         $input['companySystemID'] = $rrvMaster->companySystemID;
-        $input['companyID'] = $rrvMaster->companyID;
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if (empty($chartOfAccount)) {

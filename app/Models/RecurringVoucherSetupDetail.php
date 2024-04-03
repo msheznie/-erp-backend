@@ -195,7 +195,6 @@ class RecurringVoucherSetupDetail extends Model
         'companySystemID',
         'chartOfAccountSystemID',
         'currencyID',
-        'companyID',
         'glAccount',
         'glAccountDescription',
         'comments',
@@ -209,7 +208,7 @@ class RecurringVoucherSetupDetail extends Model
         'createdUserID',
         'createdPcID',
         'createdDateTime',
-        'detailProjectID',
+        'detail_project_id',
         'timestamp'
     ];
 
@@ -226,7 +225,6 @@ class RecurringVoucherSetupDetail extends Model
         'companySystemID' => 'integer',
         'chartOfAccountSystemID' => 'integer',
         'currencyID' => 'integer',
-        'companyID' => 'string',
         'glAccount' => 'string',
         'glAccountDescription' => 'string',
         'comments' => 'string',
@@ -238,7 +236,7 @@ class RecurringVoucherSetupDetail extends Model
         'clientContractID' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'integer',
-        'detailProjectID' => 'integer',
+        'detail_project_id' => 'integer',
         'createdPcID' => 'string',
         'createdDateTime' => 'datetime',
         'timestamp' => 'datetime'
@@ -279,7 +277,7 @@ class RecurringVoucherSetupDetail extends Model
 
     public function project()
     {
-        return $this->belongsTo('App\Models\ErpProjectMaster', 'detailProjectID', 'id');
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'detail_project_id', 'id');
     }
     
 }

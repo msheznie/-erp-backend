@@ -47,7 +47,7 @@
                             @endif
 
                             @if ($value->PostedDate && $value->PostedDate != '1970-01-01')
-                                <td>{{\App\helper\Helper::dateFormat($value->PostedDate)}}</td>
+                                <td>{{ \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\App\helper\Helper::dateFormat($value->PostedDate))}}</td>
                             @else
                                 <td>-</td>
                             @endif
@@ -59,7 +59,7 @@
                             @endif
 
                             @if ($value->InvoiceDate)
-                                <td>{{\App\helper\Helper::dateFormat($value->InvoiceDate)}}</td>
+                                <td>{{ \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\App\helper\Helper::dateFormat($value->InvoiceDate))}}</td>
                             @else
                                 <td>-</td>
                             @endif
@@ -77,15 +77,15 @@
                             @endif
 
                             @if ($value->invoiceAmount)
-                                <td>{{$value->invoiceAmount}}</td>
+                                <td>{{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber($value->invoiceAmount)}}</td>
                             @else
                                 <td>-</td>
                             @endif
                         </tr>
                     @endforeach
                     <tr>
-                        <td colspan="7" style="text-align: right"><b>Total:</b></td>
-                        <td style="text-align: left"><b>{{\App\helper\Helper::customerLedgerReportSum($reportData[$name][$currencyKey], 'invoice')}}</b></td>
+                        <td colspan="7" style="text-align: right;"><b>Total:</b></td>
+                        <td style="text-align: left;  font-weight: bold">{{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber(\App\helper\Helper::customerLedgerReportSum($reportData[$name][$currencyKey], 'invoice'))}}</td>
                         <td></td>
                     </tr>
                 </tbody>
@@ -94,14 +94,12 @@
         <tbody>
             <tr>
                 <td colspan="7" style="text-align: right"><b>Grand Total:</b></td>
-                <td style="text-align: left">
-                    <b>                
+                <td style="text-align: left; font-weight: bold;">
                         @if(isset($invoiceAmount))
-                        {{round($invoiceAmount, $currencyDecimalPlace)}}
+                        {{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber(round($invoiceAmount, $currencyDecimalPlace))}}
                         @else
                         0
                         @endif
-                    </b>
                 </td>
                 <td></td>
             </tr>

@@ -39,7 +39,8 @@ use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Response;
 use App\helper\ItemTracking;
-
+use App\Models\ItemMaster;
+use App\Models\UnitConversion;
 /**
  * Class StockTransferDetailsController
  * @package App\Http\Controllers\API
@@ -562,6 +563,19 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $user->employee['empID'];
+
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
+        ->where('companySystemID', $stockTransfer->companySystemID)
+        ->first();
+
+        $iemDefaultUnit = ItemMaster::where('itemCodeSystem',$input['itemCodeSystem'])->select('unit')->first();
+
+    
+        $convertionUnit = UnitConversion::where('masterUnitID',$iemDefaultUnit->unit)->where('subUnitID',$input['unitOfMeasure'])->first();
+
+        $input['unitCostLocal'] = $iemDefaultUnit->unit != $input['unitOfMeasure'] && isset($convertionUnit)?$item->wacValueLocal/$convertionUnit->conversion:$item->wacValueLocal;
+        $input['unitCostRpt'] = $iemDefaultUnit->unit != $input['unitOfMeasure'] && isset($convertionUnit)?$item->wacValueReporting/$convertionUnit->conversion:$item->wacValueReporting;
+ 
 
         $stockTransferDetails = $this->stockTransferDetailsRepository->update($input, $id);
 

@@ -193,7 +193,8 @@ Route::group([], function () {
     Route::post('stockTransferReopen', 'StockTransferAPIController@stockTransferReopen')->name("Stock Transfer Reopen");
     Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView')->name("Get All Stock Transfer By Company");
     Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer')->name("Get ReferBack History By Stock Transfer");
-
+    Route::get('get-all-uom-convertion', 'StockTransferAPIController@getallUomConvertion')->name("Get all Uom Convertion");
+    
 });
 
 //Stock Receive

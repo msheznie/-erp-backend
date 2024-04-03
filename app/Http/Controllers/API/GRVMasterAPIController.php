@@ -516,7 +516,39 @@ class GRVMasterAPIController extends AppBaseController
 
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
 
+            if($gRVMaster->grvTypeID == 2)
+            {          
+                $poInfo = [];
+                $grvDetailsInfo = GRVDetails::select('grvDetailsID','purchaseOrderMastertID')->
+                where('grvAutoID', $input['grvAutoID'])
+                ->with(['po_master' => function($query) {
+                    $query->select('purchaseOrderID','purchaseOrderCode','logisticsAvailable');
+                }])
+                ->groupBY('purchaseOrderMastertID')
+                ->get();
 
+                foreach($grvDetailsInfo as $details)
+                {
+
+                    $poLogistics = PoAdvancePayment::where('grvAutoID', $input['grvAutoID'])->where('poID', $details->purchaseOrderMastertID)
+                    ->where('confirmedYN', 1)
+                    ->where('approvedYN', -1)->first();
+
+                    if($details->po_master->logisticsAvailable == -1 && !isset($poLogistics))
+                    {
+                            array_push($poInfo,$details->po_master->purchaseOrderCode);
+                    }
+
+                }
+
+                if(count($poInfo) > 0)
+                {
+                    return $this->sendError('You cannot confirm this GRV, as the following Purchase Orders have been marked as logistics available, however no logistics has been added to the GRV',500,['type' => 'logistics','data' =>$poInfo]);
+    
+                }
+            }
+
+      
 
             if(($input['isSupplierBlocked']) && ($gRVMaster->grvTypeID == 2))
             {
@@ -633,7 +665,7 @@ class GRVMasterAPIController extends AppBaseController
                                 $grvCheck = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN', 1)
                                     ->where('grvAutoID', $id)->get();
                                 if (count($grvCheck) == 0) {
-                                    return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
+                                    //return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
                                 }
                             }
                         }

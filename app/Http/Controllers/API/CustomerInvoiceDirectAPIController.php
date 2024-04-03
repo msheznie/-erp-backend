@@ -99,6 +99,7 @@ use App\Models\DeliveryTermsMaster;
 use App\Models\LogUploadCustomerInvoice;
 use App\Models\PortMaster;
 use App\Models\UploadCustomerInvoice;
+use App\Services\ValidateDocumentAmend;
 use PHPExcel_IOFactory;
 use Exception;
 /**
@@ -3792,20 +3793,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if($type == 1)
             {
                 $html = view('print.rihal_customer_invoice', $array);
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
-    
-                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \Excel::create($fileName_xls, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.rihal_customer_invoice', $array)->with('no_asset', true);
                     });
-                })->download('csv');
+                    
+                })->download('xls');
             }
-
+        
         } else if ($printTemplate['printTemplateID'] == 6) {
 
             if($type == 1)
@@ -4697,6 +4700,29 @@ WHERE
 
         if ($masterData->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this Customer Invoice, it is not confirmed');
+        }
+
+        $documentAutoId = $id;
+        $documentSystemID = $masterData->documentSystemiD;
+        $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
+        if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
+            if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
+                return $this->sendError($validateFinanceYear['message']);
+            }
+        }
+        
+        $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
+        if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+            if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
+                return $this->sendError($validateFinancePeriod['message']);
+            }
+        }
+
+        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                return $this->sendError($validatePendingGlPost['message']);
+            }
         }
 
         if($masterData->isPerforma == 2){

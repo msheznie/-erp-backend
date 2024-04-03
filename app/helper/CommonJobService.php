@@ -53,7 +53,8 @@ class CommonJobService
                 return storage_path() . '/logs/emp_create_profile_service.log';
             case 'item-wac-amount':
                 return storage_path() . '/logs/item_wac_amount_service.log';
-
+            case 'recurring-voucher':
+                return storage_path() . '/logs/recurring_voucher_service.log';
         }
     }
 

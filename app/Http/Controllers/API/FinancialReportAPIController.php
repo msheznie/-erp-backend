@@ -16,6 +16,7 @@
  */
 
 namespace App\Http\Controllers\API;
+use App\Exports\GeneralLedger\Financials\ExcelColumnFormat;
 use App\Exports\GeneralLedger\GeneralLedger\GeneralLedgerReport;
 use App\Services\Currency\CurrencyService;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -1230,7 +1231,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $consolidationStatus = isset($request->type) && $request->type ? $request->type : 1;
                 
                 $response = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus);
-
                 if ($request->type == 2) {
                     $reportData = $response['reportData'];
 
@@ -2657,12 +2657,20 @@ srp_erp_ioubookingmaster.approvedYN = 1
                                 $data[$x]['Type'] = $val->glAccountType;
                                 foreach ($subCompanies as $company) {
                                     $comCode = $company['CompanyID'];
-                                    $data[$x][$comCode] = round($val->$comCode, 2);
+                                    $data[$x][$comCode] = CurrencyService::convertNumberFormatToNumber(number_format($val->$comCode, 2));
                                 }
                                 $x++;
                             }
                         }
-                    } else {
+                        $excelFormat = [
+                            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+
+                        ];
+                    }
+                    else {
                         $output = $this->getTrialBalance($request);
                         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                         if($companyCurrency) {
@@ -2703,10 +2711,10 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
                                     $totalClosingBalanceLocal = $totalClosingBalanceLocal + $val->openingBalLocal + ($val->documentLocalAmountDebit - $val->documentLocalAmountCredit);
 
-                                    $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal);
-                                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
-                                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
-                                    $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
+                                    $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal));
+                                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmountDebit, $decimalPlaceLocal));
+                                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmountCredit, $decimalPlaceLocal));
+                                    $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal));
                                 }
                                 if($currencyId == 2 || $currencyId == 3) {
                                     $totalOpeningBalanceRpt = $totalOpeningBalanceRpt + $val->openingBalRpt;
@@ -2715,10 +2723,10 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
                                     $totaldocumentRptAmountCredit = $totaldocumentRptAmountCredit + $val->documentRptAmountCredit;
 
-                                    $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
-                                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
-                                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
-                                    $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round((isset($val->openingBalRpt) ? $val->openingBalRpt : 0) + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt);
+                                    $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt));
+                                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentRptAmountDebit, $decimalPlaceRpt));
+                                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentRptAmountCredit, $decimalPlaceRpt));
+                                    $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format((isset($val->openingBalRpt) ? $val->openingBalRpt : 0) + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt));
     
                                 }
                                 $x++;
@@ -2733,21 +2741,31 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $data[$x]['Account Description'] = "Grand Total";
                         $data[$x]['Type'] = "";
                         if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) { 
-                            $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round($totalOpeningBalanceLocal, $decimalPlaceLocal);
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($totaldocumentLocalAmountDebit, $decimalPlaceLocal);
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($totaldocumentLocalAmountCredit, $decimalPlaceLocal);
-                            $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round($totalClosingBalanceLocal, $decimalPlaceLocal);
+                            $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalOpeningBalanceLocal, $decimalPlaceLocal));
+                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentLocalAmountDebit, $decimalPlaceLocal));
+                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentLocalAmountCredit, $decimalPlaceLocal));
+                            $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceLocal, $decimalPlaceLocal));
                         }
                         if($currencyId == 2 || $currencyId == 3) { 
-                            $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round($totalOpeningBalanceRpt, $decimalPlaceRpt);
-                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($totaldocumentRptAmountDebit, $decimalPlaceRpt);
-                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($totaldocumentRptAmountCredit, $decimalPlaceRpt);
-                            $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round($totalClosingBalanceRpt, $decimalPlaceRpt);
+                            $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalOpeningBalanceRpt, $decimalPlaceRpt));
+                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentRptAmountDebit, $decimalPlaceRpt));
+                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentRptAmountCredit, $decimalPlaceRpt));
+                            $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceRpt, $decimalPlaceRpt));
                         }
+                        $excelFormat = [
+                            'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
+                        ];
 
                     }
-                } else if ($reportTypeID == 'FTBM') {
+
+                }
+                else if ($reportTypeID == 'FTBM') {
                     $result = $this->getTrialBalanceMonthWise($request);
                     $output = $result['data'];
                     $headers = $result['headers'];
@@ -2880,7 +2898,34 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     $data[$x]['DeceClosing'] = '';
     
                     array_push($data,$totalArray);
+                    $excelFormat = [
+                        'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'W' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Y' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'AA' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'AB' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
+                    ];
                 }
 
                
@@ -2897,34 +2942,40 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     } else if ($request->currencyID == 2) {
                         $cur = $currencyRpt;
                     }
+                    $isString = true;
                 } else {
                     $title = 'Financial Trial Balance';
                     $cur = null;
+                    $isString = false;
                 }
 
                 $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
-
-                $detail_array = array(  'type' => 4,
-                                        'from_date'=>$from_date,
-                                        'to_date'=>$to_date,
-                                        'company_name'=>$company_name,
-                                        'company_code'=>$companyCode,
-                                        'cur'=>$cur,
-                                        'title'=>$title);
-               
                 $fileName = 'financial_trial_balance';
                 $path = 'general-ledger/report/trial_balance/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
+                $exportToExcel = $exportGlToExcelService
+                    ->setTitle($title)
+                    ->setFileName($fileName)
+                    ->setCurrency($cur,$isString)
+                    ->setPath($path)
+                    ->setCompanyCode($companyCode)
+                    ->setCompanyName($company_name)
+                    ->setFromDate($from_date)
+                    ->setToDate($to_date)
+                    ->setReportType(4)
+                    ->setData($data)
+                    ->setType('xls')
+                    ->setDateType()
+                    ->setExcelFormat($excelFormat)
+                    ->setDetails()
+                    ->generateExcel();
+
+
+                if(!$exportToExcel['success'])
+                    return $this->sendError('Unable to export excel');
+
+                return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
                 break;
 
@@ -9114,8 +9165,10 @@ GROUP BY
             $reportData['from_date'] = Carbon::parse($period->dateFrom)->format('d/m/Y');
         }
 
-        return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+        $excelColumnFormat = ExcelColumnFormat::getExcelColumnFormat($reportData['reportData'],$request['reportID']);
+        return \Excel::create('finance', function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
+            $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
+                $sheet->setColumnFormat($excelColumnFormat);
                 $sheet->loadView($templateName, $reportData);
             });
         })->download('xlsx');
@@ -9287,7 +9340,7 @@ GROUP BY
         erp_debitnote.debitNoteAutoID AS masterID,
         currencymaster.DecimalPlaces AS localCurrencyDecimals,
         rptCurrency.DecimalPlaces AS rptCurrencyDecimals,
-        erp_debitnote.type AS type
+        7 AS type
     FROM
     erp_debitnote
         LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID

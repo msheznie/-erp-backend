@@ -28,6 +28,11 @@ use App\Exports\AccountsPayable\SupplierAging\SupplierAgingDetailAdvanceReport;
 use App\Exports\AccountsPayable\SupplierAging\SupplierAgingDetailReport;
 use App\Exports\AccountsPayable\SupplierAging\SupplierAgingSummaryAdvanceReport;
 use App\Exports\AccountsPayable\SupplierAging\SupplierAgingSummaryReport;
+use App\Exports\AccountsPayable\SupplierBalanceSummary;
+use App\Exports\AccountsPayable\SupplierLedgerReport;
+use App\Exports\AccountsPayable\SupplierStatement\SupplierBalanceStatement;
+use App\Exports\AccountsPayable\SupplierStatement\SupplierStatementDetails;
+use App\Exports\AccountsPayable\SupplierStatement\SupplierStatementReport;
 use App\Exports\AccountsPayable\UnbilledGRV\UnbilledGrvAgingSummaryReport;
 use App\Exports\AccountsPayable\UnbilledGRV\UnbilledGrvDetailsReport;
 use App\Exports\AccountsPayable\UnbilledGRV\UnbilledGrvDetailsSummaryReport;
@@ -57,6 +62,7 @@ use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
 use App\Services\AccountPayableLedger\Report\SupplierAgingReportService;
 use App\Services\AccountPayableLedger\Report\UnbilledGrvReportService;
+use App\Services\Currency\CurrencyService;
 use App\Services\Excel\ExportReportToExcelService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -145,28 +151,20 @@ class AccountsPayableReportAPIController extends AppBaseController
         $countries = CountryMaster::all();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
 
-        $isConfigured = SystemGlCodeScenario::find(12);
+        $isConfigured = SystemGlCodeScenario::where('isActive', 1)->where('id',12)->first();
         $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 12)->where('companySystemID', $companiesByGroup)->first();
-        if($isConfigured && $isDetailConfigured) {
-            if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
-                return $this->sendError('Chart of account is not configured for employee control account', 500);
-            }
-            $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->first();
-            if($isChartOfAccountConfigured){
-                if ($isChartOfAccountConfigured->isActive != 1 || $isChartOfAccountConfigured->chartOfAccountSystemID == null || $isChartOfAccountConfigured->isAssigned != -1 || $isChartOfAccountConfigured->chartOfAccountSystemID == 0 || $isChartOfAccountConfigured->companySystemID == 0 || $isChartOfAccountConfigured->companySystemID == null) {
-                    return $this->sendError('Chart of account is not configured for employee control account', 500);
-                }
-            }
-            else{
-                return $this->sendError('Chart of account is not configured for employee control account', 500);
-            }
-        }
-        else{
-            return $this->sendError('Chart of account is not configured for employee control account', 500);
-        }
 
-        $controlAccountEmployeeID = $isDetailConfigured->chartOfAccountSystemID;
-        $controlAccountEmployee = ChartOfAccount::where('chartOfAccountSystemID', $controlAccountEmployeeID)->get();
+        if(!empty($isConfigured) && !empty($isDetailConfigured)) {
+            $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->where('isActive', 1)->where('isAssigned', -1)->first();
+            if(!empty($isChartOfAccountConfigured)) {
+                $controlAccountEmployeeID = $isDetailConfigured->chartOfAccountSystemID;
+                $controlAccountEmployee = ChartOfAccount::where('chartOfAccountSystemID', $controlAccountEmployeeID)->get();
+            } else {
+                $controlAccountEmployee = [];
+            }
+        } else {
+            $controlAccountEmployee = [];
+        }
 
 
         $categories = FinanceItemCategoryMaster::all();
@@ -374,6 +372,7 @@ class AccountsPayableReportAPIController extends AppBaseController
     /*generate report according to each report id*/
     public function generateAPReport(Request $request)
     {
+        try {
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'APSL': //Supplier Ledger Report
@@ -807,6 +806,9 @@ class AccountsPayableReportAPIController extends AppBaseController
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage(), 500);
+        }
     }
 
     public function getSupplierStatementDetails($request){
@@ -1102,137 +1104,146 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $to_date = $request->fromDate;
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
-
+                    $data = array();
                     $from_date = ((new Carbon($from_date))->format('d/m/Y'));
 
 
-                    if ($reportTypeID == 'SS') {
+                    if ($reportTypeID == 'SS')
+                    {
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $request->fromPath = 'view';
                         $output = $this->getSupplierStatementQRY($request);
 
+                        if(empty($data))
+                        {
+                            $supplierStatementReportHeader = new SupplierStatementReport();
+                            array_push($data,collect($supplierStatementReportHeader->getHeader())->toArray());
+                        }
+
                         if ($output) {
-                            $x = 0;
                             foreach ($output as $val) {
 
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Supplier Code'] = $val->SupplierCode;
-                                $data[$x]['Supplier Name'] = $val->suppliername;
-                                $data[$x]['Document ID'] = $val->documentID;
-                                $data[$x]['Document Code'] = $val->documentCode;
-                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Account'] = $val->glCode . " - " . $val->AccountDescription;
-                                $data[$x]['Narration'] = $val->documentNarration;
-                                $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                                $data[$x]['Currency'] = $val->documentCurrency;
-                                $data[$x]['Age Days'] = $val->ageDays;
-                                $data[$x]['Doc Amount'] = $val->invoiceAmount;
-                                $data[$x]['Balance Amount'] = $val->balanceAmount;
+                                $supplierStatementReport = new SupplierStatementReport();
+                                $supplierStatementReport->setCompanyId($val->companyID);
+                                $supplierStatementReport->setCompanyName($val->CompanyName);
+                                $supplierStatementReport->setSupplierCode($val->SupplierCode);
+                                $supplierStatementReport->setSupplierName($val->suppliername);
+                                $supplierStatementReport->setDocumentId($val->documentID);
+                                $supplierStatementReport->setDocumentCode($val->documentCode);
+                                $supplierStatementReport->setDocumentDate($val->documentDate);
+                                $supplierStatementReport->setAccount($val->glCode . " - " . $val->AccountDescription);
+                                $supplierStatementReport->setNarration($val->documentNarration);
+                                $supplierStatementReport->setInvoiceNumber($val->invoiceNumber);
+                                $supplierStatementReport->setInvoiceDate($val->invoiceDate);
+                                $supplierStatementReport->setCurrency($val->documentCurrency);
+                                $supplierStatementReport->setAgeDays($val->ageDays);
+                                $supplierStatementReport->setDocAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->invoiceAmount,2)));
+                                $supplierStatementReport->setBalanceAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->balanceAmount,2)));
 
-                                $x++;
+                                array_push($data,collect($supplierStatementReport)->toArray());
                             }
-                        } else {
-                            $data = array();
                         }
 
                         $fileName = 'Supplier Statement';
                         $title = 'Supplier Statement';
+                        $excelColumnFormat = $supplierStatementReportHeader->getCloumnFormat();
 
 
-                    } else if ($reportTypeID == 'SSD') {
+                    }
+                    else if ($reportTypeID == 'SSD')
+                    {
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $request->fromPath = 'view';
                         [$outputArr, $decimalPlace, $selectedCurrency] = $this->getSupplierStatementDetails($request);
 
-                        $x = 0;
-                        $data[$x]['Payable Account'] = '';
-                        $data[$x]['Prepayment Account'] = '';
-                        $data[$x]['Currency'] = '';
-                        $data[$x]['Supplier Name'] = '';
-                        $data[$x]['Open Supplier Invoices'] = '';
-                        $data[$x]['Open Advance to Suppliers'] = '';
-                        $data[$x]['Open Debit Notes'] = '';
-                        $data[$x]['Total Payable'] = '';
-                        $data[$x]['Total Prepayment'] = '';
-                        $data[$x]['Net Outstanding'] = '';
-                        $x++;
+                        if(empty($data))
+                        {
+                            $supplierStatementDetailsHeader = new SupplierStatementDetails();
+                            array_push($data,collect($supplierStatementDetailsHeader->getHeader())->toArray());
+
+                        }
 
                         if ($outputArr) {
                             foreach ($outputArr as $key => $val) {
-                                $data[$x]['Payable Account'] = $val['payable_account'];
-                                $data[$x]['Prepayment Account'] = $val['prePayment_account'];
-                                $data[$x]['Currency'] = $val['supplier_currency'];
-                                $data[$x]['Supplier Name'] = $key;
-                                $data[$x]['Open Supplier Invoices'] = $val['open_invoices'];
-                                $data[$x]['Open Advance to Suppliers'] = $val['open_advances'];
-                                $data[$x]['Open Debit Notes'] = $val['open_debit_notes'];
-                                $data[$x]['Total Payable'] = $val['open_invoices'];
-                                $data[$x]['Total Prepayment'] = ($val['open_advances'] + $val['open_debit_notes']);
-                                $data[$x]['Net Outstanding'] = $val['open_invoices'] + $val['open_advances'] + $val['open_debit_notes'];
-
-                                $x++;
+                                $supplierStatementDetails = new SupplierStatementDetails();
+                                $supplierStatementDetails->setPayableAccount($val['payable_account']);
+                                $supplierStatementDetails->setPrepaymentAccount($val['prePayment_account']);
+                                $supplierStatementDetails->setCurrency($val['supplier_currency']);
+                                $supplierStatementDetails->setSupplierName($key);
+                                $supplierStatementDetails->setOpenSupplierInvoices(CurrencyService::convertNumberFormatToNumber(number_format($val['open_invoices'],2)));
+                                $supplierStatementDetails->setOpenAdvanceToSuppliers(CurrencyService::convertNumberFormatToNumber(number_format($val['open_advances'],2)));
+                                $supplierStatementDetails->setOpenDebitNotes(CurrencyService::convertNumberFormatToNumber(number_format($val['open_debit_notes'],2)));
+                                $supplierStatementDetails->setTotalPayable(CurrencyService::convertNumberFormatToNumber(number_format($val['open_invoices'],2)));
+                                $supplierStatementDetails->setTotalPrepayment(CurrencyService::convertNumberFormatToNumber(number_format(($val['open_advances'] + $val['open_debit_notes']),2)));
+                                $supplierStatementDetails->setNetOutstanding(CurrencyService::convertNumberFormatToNumber(number_format(($val['open_invoices'] + $val['open_advances'] + $val['open_debit_notes']),2)));
+                                array_push($data,collect($supplierStatementDetails)->toArray());
                             }
 
-                            $totalInvoices = array_sum(array_column($data, 'Open Supplier Invoices'));
-                            $totalAdvances = array_sum(array_column($data, 'Open Advance to Suppliers'));
-                            $totalDebitNotes = array_sum(array_column($data, 'Open Debit Notes'));
-                            $totalPrepayment = array_sum(array_column($data, 'Total Prepayment'));
-                            $totalNetOutstanding = array_sum(array_column($data, 'Net Outstanding'));
+                            $totalInvoices = array_sum(array_column($data, 'openSupplierInvoices'));
+                            $totalAdvances = array_sum(array_column($data, 'openAdvanceToSuppliers'));
+                            $totalDebitNotes = array_sum(array_column($data, 'openDebitNotes'));
+                            $totalPayable = array_sum(array_column($data, 'totalPayable'));
+                            $totalPrepayment = array_sum(array_column($data, 'totalPrepayment'));
+                            $totalNetOutstanding = array_sum(array_column($data, 'netOutstanding'));
 
-                            $totalRow = [
-                                'Payable Account' => '',
-                                'Prepayment Account' => '',
-                                'Currency' => '',
-                                'Supplier Name' => 'Total',
-                                'Open Supplier Invoices' => $totalInvoices,
-                                'Open Advance to Suppliers' => $totalAdvances,
-                                'Open Debit Notes' => $totalDebitNotes,
-                                'Total Payable' => $totalInvoices,
-                                'Total Prepayment' => $totalPrepayment,
-                                'Net Outstanding' => $totalNetOutstanding,
-                            ];
 
-                            $data[] = $totalRow;
+                            $supplierStatementDetailsFooter = new SupplierStatementDetails();
+
+                            $supplierStatementDetailsFooter->setSupplierName("Total");
+                            $supplierStatementDetailsFooter->setOpenSupplierInvoices(CurrencyService::convertNumberFormatToNumber(number_format($totalInvoices,2)));
+                            $supplierStatementDetailsFooter->setOpenAdvanceToSuppliers(CurrencyService::convertNumberFormatToNumber(number_format($totalAdvances,2)));
+                            $supplierStatementDetailsFooter->setOpenDebitNotes(CurrencyService::convertNumberFormatToNumber(number_format($totalDebitNotes,2)));
+                            $supplierStatementDetailsFooter->setTotalPayable(CurrencyService::convertNumberFormatToNumber(number_format($totalPayable,2)));
+                            $supplierStatementDetailsFooter->setTotalPrepayment(CurrencyService::convertNumberFormatToNumber(number_format($totalPrepayment,2)));
+                            $supplierStatementDetailsFooter->setNetOutstanding(CurrencyService::convertNumberFormatToNumber(number_format($totalNetOutstanding,2)));
+
+                            array_push($data,collect($supplierStatementDetailsFooter)->toArray());
                         }
 
 
+                        $excelColumnFormat = $supplierStatementDetailsFooter->getCloumnFormat();
                         $fileName = 'Supplier Statement Details';
                         $title = 'Supplier Statement Details';
 
-                    } else if ($reportTypeID == 'SBSR') {
+                    }
+                    else if ($reportTypeID == 'SBSR') {
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                         $output = $this->getSupplierBalanceStatementReconcileQRY($request);
 
+                        if(empty($data))
+                        {
+                            $supplierBalanceStatementHeader = new SupplierBalanceStatement();
+                            array_push($data,collect($supplierBalanceStatementHeader)->toArray());
+                        }
+
                         if ($output) {
-                            $x = 0;
                             foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Document Code'] = $val->documentCode;
-                                $data[$x]['Supplier Code'] = $val->SupplierCode;
-                                $data[$x]['Supplier Name'] = $val->suppliername;
-                                $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                                $data[$x]['Currency'] = $val->documentCurrency;
-                                $data[$x]['Amount'] = $val->invoiceAmountDoc;
-                                $data[$x]['Balance Amount'] = $val->balanceAmountDoc;
-                                $data[$x]['Local Currency'] = $val->documentCurrencyLoc;
-                                $data[$x]['Local Amount'] = $val->invoiceAmountLoc;
-                                $data[$x]['Local Balance Amount'] = $val->balanceAmountLoc;
-                                $data[$x]['Reporting Currency'] = $val->documentCurrencyRpt;
-                                $data[$x]['Reporting Amount'] = $val->invoiceAmountRpt;
-                                $data[$x]['Reporting Balance Amount'] = $val->balanceAmountRpt;
-                                $x++;
+                                $supplierBalanceStatement = new SupplierBalanceStatement();
+                                $supplierBalanceStatement->setCompanyId($val->companyID);
+                                $supplierBalanceStatement->setCompanyName($val->CompanyName);
+                                $supplierBalanceStatement->setDocumentDate($val->documentDate);
+                                $supplierBalanceStatement->setDocumentCode($val->documentCode);
+                                $supplierBalanceStatement->setSupplierCode($val->SupplierCode);
+                                $supplierBalanceStatement->setSupplierName($val->suppliername);
+                                $supplierBalanceStatement->setInvoiceNumber($val->invoiceNumber);
+                                $supplierBalanceStatement->setInvoiceDate($val->invoiceDate);
+                                $supplierBalanceStatement->setCurrency($val->documentCurrency);
+                                $supplierBalanceStatement->setAmount($val->invoiceAmountDoc);
+                                $supplierBalanceStatement->setBalanceAmount($val->balanceAmountDoc);
+                                $supplierBalanceStatement->setLocalCurrency($val->documentCurrencyLoc);
+                                $supplierBalanceStatement->setLocalAmount($val->invoiceAmountLoc);
+                                $supplierBalanceStatement->setLocalBalanceAmount($val->balanceAmountLoc);
+                                $supplierBalanceStatement->setReportingCurrency($val->documentCurrencyRpt);
+                                $supplierBalanceStatement->setReportingAmount($val->invoiceAmountRpt);
+                                $supplierBalanceStatement->setReportingBalanceAmount($val->balanceAmountRpt);
+
+                                array_push($data,collect($supplierBalanceStatement)->toArray());
                             }
-                        } else {
-                            $data = array();
                         }
 
                         $fileName = 'Supplier Balance Statement';
                         $title = 'Supplier Balance Statement - Reconcile';
+                        $excelColumnFormat = [];
 
 
                     }
@@ -1241,17 +1252,29 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $cur = NULL;
 
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
+//                    $cur = isset($selectedCurrency) ? $selectedCurrency : null;
 
+                    $exportToExcel = $exportReportToExcelService
+                        ->setTitle($title)
+                        ->setFileName($fileName)
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
+                        ->setCompanyName($company_name)
+                        ->setFromDate($from_date)
+                        ->setToDate($to_date)
+                        ->setData($data)
+                        ->setReportType(2)
+                        ->setType('xls')
+                        ->setCurrency($cur)
+                        ->setDateType(2)
+                        ->setExcelFormat($excelColumnFormat)
+                        ->setDetails()
+                        ->generateExcel();
 
-                    $detail_array = array('type' => 2, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $cur, 'title' => $title, 'company_code' => $companyCode, 'report_type' => $reportTypeID, 'currencyName' => isset($selectedCurrency) ? $selectedCurrency : null);
-
-                    $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
-
-                    if ($basePath == '') {
+                    if(!$exportToExcel['success'])
                         return $this->sendError('Unable to export excel');
-                    } else {
-                        return $this->sendResponse($basePath, trans('custom.success_export'));
-                    }
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
                     break;
 
                 case 'APSL':
@@ -1275,9 +1298,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
                     $decimalPlace = array_unique($decimalPlace);
 
-                    if ($output) {
-                        foreach ($output as $val) {
-                            $outputArr[$val->SupplierCode . " - " . $val->suppliername][$val->documentCurrency][] = $val;
+                    $data = $this->mapOutputWithSupplierLedgerReportObj($output);
+                    if ($data) {
+                        foreach ($data as $val) {
+                            $outputArr[$val->supplierCode . " - " . $val->supplierName][$val->currency][] = $val;
                         }
                     }
 
@@ -1289,7 +1313,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $fileName = 'Supplier Ledger';
                     $path = 'accounts-payable/report/supplier_ledger/excel/';
 
-                    $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName);
+                    $excelColumnFormat = [
+                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'B' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    ];
+
+                    $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName, $excelColumnFormat);
 
                     if ($basePath == '') {
                         return $this->sendError('Unable to export excel');
@@ -1305,36 +1335,58 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
                     $from_date = ((new Carbon($from_date))->format('d/m/Y'));
-
+                    $data = array();
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getSupplierBalanceSummeryQRY($request);
+
+                    if(empty($data))
+                    {
+                        $supplierBalanceSummaryHeader = new SupplierBalanceSummary();
+                        array_push($data,collect($supplierBalanceSummaryHeader->getHeader())->toArray());
+
+                    }
                     if ($output) {
-                        $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Account'] = $val->AccountCode . "-" . $val->AccountDescription;
-                            $data[$x]['Supplier Code'] = $val->SupplierCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Amount'] = $val->documentAmount;
-                            $x++;
+                            $supplierBalanceSummary = new SupplierBalanceSummary();
+                            $supplierBalanceSummary->setCompanyID($val->companyID);
+                            $supplierBalanceSummary->setCompanyName($val->CompanyName);
+                            $supplierBalanceSummary->setAccount($val->AccountCode . "-" . $val->AccountDescription);
+                            $supplierBalanceSummary->setSupplierCode($val->SupplierCode);
+                            $supplierBalanceSummary->setSupplierName($val->supplierName);
+                            $supplierBalanceSummary->setCurrency( $val->documentCurrency);
+                            $supplierBalanceSummary->setAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->documentAmount,$val->balanceDecimalPlaces)));
+                            array_push($data,collect($supplierBalanceSummary)->toArray());
                         }
-                    } else {
-                        $data = array();
                     }
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
                     $cur = NULL;
                     $fileName = 'Supplier Balance Summary';
                     $title = 'Supplier Balance Summary';
                     $path = 'accounts-payable/report/supplier_balance_summary/excel/';
-                    $detail_array = array('type' => 2, 'from_date' => $from_date, 'to_date' => $to_date, 'company_name' => $company_name, 'cur' => $cur, 'title' => $title, 'company_code' => $companyCode);
-                    $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
-                    if ($basePath == '') {
+                    $excelColumnFormat = [
+                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    ];
+                    $exportToExcel = $exportReportToExcelService
+                        ->setTitle($title)
+                        ->setFileName($fileName)
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
+                        ->setCompanyName($company_name)
+                        ->setFromDate($from_date)
+                        ->setToDate($to_date)
+                        ->setData($data)
+                        ->setReportType(2)
+                        ->setType('xls')
+                        ->setCurrency($cur)
+                        ->setDateType(2)
+                        ->setExcelFormat($excelColumnFormat)
+                        ->setDetails()
+                        ->generateExcel();
+
+                    if(!$exportToExcel['success'])
                         return $this->sendError('Unable to export excel');
-                    } else {
-                        return $this->sendResponse($basePath, trans('custom.success_export'));
-                    }
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
 
                     break;
@@ -1617,6 +1669,37 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
     }
 
+    private function mapOutputWithSupplierLedgerReportObj($output)
+    {
+        $outputConverted = collect($output)->map(function($dt) {
+            $supplierLedgerReport = new SupplierLedgerReport();
+            $supplierLedgerReport->setDocumentCode($dt->documentCode);
+            $supplierLedgerReport->setAccount($dt->AccountDescription);
+            $supplierLedgerReport->setPostedDate($dt->documentSystemCode);
+            $supplierLedgerReport->setDocumentSystemCode($dt->documentSystemCode);
+            $supplierLedgerReport->setInvoiceDate($dt->invoiceDate);
+            $supplierLedgerReport->setInvoiceNumber($dt->invoiceNumber);
+            $supplierLedgerReport->setCurrency($dt->documentCurrency);
+            $supplierLedgerReport->setSupplierName($dt->suppliername);
+            $supplierLedgerReport->setSupplierCode($dt->SupplierCode);
+            $supplierLedgerReport->setDocumentAmount((float) $dt->invoiceAmount);
+            $supplierLedgerReport->setGlCode($dt->glCode);
+            $supplierLedgerReport->setAccountDescription($dt->AccountDescription);
+            $supplierLedgerReport->setDocumentCurrency($dt->documentCurrency);
+            $supplierLedgerReport->setInvoiceAmount(CurrencyService::convertNumberFormatToNumber(number_format($dt->invoiceAmount,$dt->balanceDecimalPlaces)));
+            $supplierLedgerReport->setInvoiceAmountOrg($dt->invoiceAmount);
+            $supplierLedgerReport->setBalanceDecimalPlaces($dt->balanceDecimalPlaces);
+            if($dt->documentSystemCode != "1970-01-01") {
+                $supplierLedgerReport->setDocumentDate($dt->documentDate);
+            }else {
+                $supplierLedgerReport->setDocumentDate(null);
+            }
+            $supplierLedgerReport->setDocumentNarration($dt->documentNarration);
+            return $supplierLedgerReport;
+        });
+
+        return $outputConverted;
+    }
 
     function getSupplierLedgerQRY($request)
     {

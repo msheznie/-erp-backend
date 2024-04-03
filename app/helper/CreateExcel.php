@@ -20,7 +20,7 @@ class CreateExcel
                 $excel->sheet($faqFile, function ($sheet) use ($dataNew,$faqFile,$array) {
                     $i = 2;
                     $sheet->fromArray($dataNew, null, 'A1', true);
-                    $sheet->setAutoSize(true);
+                    (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
 
                     $sheet->row(1, function($row) {
                         $row->setBackground('#827e7e');
@@ -46,7 +46,7 @@ class CreateExcel
 
                 $excel->sheet($prebidFile, function ($sheet) use ($dataNewPrebid,$prebidFile,$array) {
                     $sheet->fromArray($dataNewPrebid, null, 'A1', true);
-                    $sheet->setAutoSize(true);
+                    (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
                     $sheet->row(1, function($row) {
                         $row->setBackground('#827e7e');
                         $row->setFont(array(
@@ -237,7 +237,7 @@ class CreateExcel
                     }else {
                         $sheet->fromArray($data, null, 'A'.$i, false,true);
                     }
-                    $sheet->setAutoSize(true);
+                    (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
                     //$sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
 
                     $sheet->row($i, function($row) {
@@ -415,11 +415,12 @@ class CreateExcel
 
     }
 
-    public static function loadView($data,$type,$fileName,$path_dir,$templateName)
+    public static function loadView($data,$type,$fileName,$path_dir,$templateName, $excelColumnFormat = [])
     {
 
-        $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName) {
-                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName) {
+        $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat) {
+                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat) {
+                           $sheet->setColumnFormat($excelColumnFormat);
                            $sheet->loadView($templateName, $data);
                        });
                    })->string($type);

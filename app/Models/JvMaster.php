@@ -270,7 +270,8 @@ class JvMaster extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'isAutoApprove'
     ];
 
     /**
@@ -315,6 +316,7 @@ class JvMaster extends Model
         'createdUserID' => 'string',
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
+        'isAutoApprove' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string'
     ];

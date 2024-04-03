@@ -79,7 +79,7 @@ use App\Services\GeneralLedger\GlPostedDateService;
 
 class SupplierInvoiceGlService
 {
-	public static function processEntry($masterModel)
+    public static function processEntry($masterModel)
     {
         $data = [];
         $taxLedgerData = [];

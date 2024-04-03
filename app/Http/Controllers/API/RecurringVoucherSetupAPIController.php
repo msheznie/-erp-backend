@@ -177,6 +177,14 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
+        if(!$company)
+            return $this->sendError('Company Details not found');
+
+
+        if(!isset($input['companyFinanceYearID']))
+            return $this->sendError('Company Finance Year not found');
+
+
         $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->where('companySystemID', $input['companySystemID'])->first();
 
         if ($companyfinanceyear) {
@@ -828,12 +836,24 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
     public function approveRecurringVoucher(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $input = $request->all();
+        $recurringVoucher = RecurringVoucherSetup::find($input['recurringVoucherAutoId']);
+        $endDate = Carbon::parse($input['endDate']);
+        $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$recurringVoucher->companyFinanceYearID)
+            ->where('isDeleted',0)
+            ->exists();
 
-        if (!$approve["success"]) {
-            return $this->sendError($approve["message"]);
-        } else {
-            return $this->sendResponse(array(), $approve["message"]);
+        if($financeYear){
+            $approve = \Helper::approveDocument($input);
+
+            if (!$approve["success"]) {
+                return $this->sendError($approve["message"]);
+            } else {
+                return $this->sendResponse(array(), $approve["message"]);
+            }
+        }
+        else{
+            return $this->sendError("The financial period for the year ({$endDate->year}) has not been created.");
         }
     }
 
@@ -861,6 +881,9 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         if (empty($rrvMaster)) {
             return $this->sendError('Recurring voucher not found');
         }
+
+        if(count($rrvMaster->schedules()->where('isInProccess',1)->get()) > 0)
+            return $this->sendError('There is a schedule on proccess for this recurring voucher');
 
         if ($rrvMaster->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this recurring voucher, it is not confirmed');

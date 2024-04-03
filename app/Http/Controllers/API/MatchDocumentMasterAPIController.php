@@ -3461,8 +3461,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
 	CurrencyCode,
 	DecimalPlaces,
 	IFNULL(custInvoiceAmount, 0) AS custInvoiceAmount,
-	Round((IFNULL(custInvoiceAmount, 0) - IFNULL(sid.SumOfreceiveAmountTrans, 0) - (IFNULL(md.matchedAmount, 0)) * -1),3) as balanceMemAmount,
-	(IFNULL(custInvoiceAmount, 0) - IFNULL(sid.SumOfreceiveAmountTrans, 0) - (IFNULL(md.matchedAmount, 0)) * -1) as balanceMemAmountNotRounded,
+	IFNULL(sumReturnTransactionAmount, 0) AS sumReturnTransactionAmount,
+	IFNULL(sid.SumOfreceiveAmountTrans, 0) AS SumOfreceiveAmountTrans,
+	IFNULL(md.matchedAmount, 0) AS matchedAmount,
+	Round((IFNULL(custInvoiceAmount, 0) - IFNULL(sid.SumOfreceiveAmountTrans, 0) - IFNULL( sumReturnTransactionAmount, 0) - (IFNULL(md.matchedAmount, 0)) * -1),3) as balanceMemAmount,
+	(IFNULL(custInvoiceAmount, 0) - IFNULL(sid.SumOfreceiveAmountTrans, 0) - IFNULL( sumReturnTransactionAmount, 0) - (IFNULL(md.matchedAmount, 0)) * -1) as balanceMemAmountNotRounded,
 	false as isChecked
 FROM
 	erp_accountsreceivableledger
@@ -3522,6 +3525,24 @@ AND md.PayMasterAutoId = erp_accountsreceivableledger.documentCodeSystem
 AND md.BPVsupplierID = erp_accountsreceivableledger.customerID
 AND md.supplierTransCurrencyID = erp_accountsreceivableledger.custTransCurrencyID
 AND md.companySystemID = erp_accountsreceivableledger.companySystemID
+LEFT JOIN (
+    SELECT 
+        salesreturndetails.deliveryOrderDetailID,
+        erp_customerinvoiceitemdetails.custInvoiceDirectAutoID,
+        salesreturndetails.salesReturnID,
+        salesreturndetails.companySystemID,
+        sum(salesreturndetails.transactionAmount + (salesreturndetails.transactionAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnTransactionAmount,
+        sum(salesreturndetails.companyLocalAmount + (salesreturndetails.companyLocalAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnLocalAmount,
+        sum(salesreturndetails.companyReportingAmount + (salesreturndetails.companyReportingAmount * salesreturndetails.VATPercentage / 100)) AS sumReturnRptAmount
+        FROM salesreturndetails
+        LEFT JOIN salesreturn ON salesReturnID = salesreturn.id
+        INNER JOIN erp_customerinvoiceitemdetails ON salesreturndetails.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
+        WHERE
+        salesreturndetails.companySystemID = $matchDocumentMasterData->companySystemID
+        AND salesreturn.approvedYN = -1
+        AND salesreturndetails.deliveryOrderDetailID <> 0
+        GROUP BY salesreturndetails.deliveryOrderDetailID
+) sr ON sr.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem AND erp_accountsreceivableledger.documentSystemID = 20
 LEFT JOIN currencymaster ON erp_accountsreceivableledger.custTransCurrencyID = currencymaster.currencyID
 WHERE
 	erp_accountsreceivableledger.documentType IN (11, 12)
