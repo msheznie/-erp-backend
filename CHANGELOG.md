@@ -1,5 +1,63 @@
 # Changelog
 
+## [10.38.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.37.0...v10.38.0) (2024-04-03)
+
+
+### Features
+
+* **accounts payable:** Added validations to PV Amendment [GCP-3063] ([#5839](https://github.com/pbsgears/Gears_BackEnd/issues/5839)) ([21ec7a9](https://github.com/pbsgears/Gears_BackEnd/commit/21ec7a9d1dd24f9ebe567d814472323d0bd45074))
+* **accounts payable:** direct payment and employee adv remove validations [GCP-3223] ([#5912](https://github.com/pbsgears/Gears_BackEnd/issues/5912)) ([6798f28](https://github.com/pbsgears/Gears_BackEnd/commit/6798f28be635b636528fe2cb5da3ad184287272f))
+* **accounts payable:** Finance Year validation for Amend [GCP-3171] ([#5888](https://github.com/pbsgears/Gears_BackEnd/issues/5888)) ([f6a575a](https://github.com/pbsgears/Gears_BackEnd/commit/f6a575a6dfc2df559c6b51206e00076f00610eb7))
+* **accounts payable:** Supplier Invoice - Amend Validation [GCP-1477] ([#5820](https://github.com/pbsgears/Gears_BackEnd/issues/5820)) ([f32386d](https://github.com/pbsgears/Gears_BackEnd/commit/f32386d0ca57f322d2633d46fed859e046b01078))
+* **accounts receivable:** Amend validation in CI & RV [GCP-3172] ([#5886](https://github.com/pbsgears/Gears_BackEnd/issues/5886)) ([6f1968b](https://github.com/pbsgears/Gears_BackEnd/commit/6f1968b699248305680fa62dd5816e5e2f6ed960))
+* **accounts receivable:** Amendmentvalidation on customer invoice and receipt voucher [GCP-3074] ([#5869](https://github.com/pbsgears/Gears_BackEnd/issues/5869)) ([69b1788](https://github.com/pbsgears/Gears_BackEnd/commit/69b1788c81568c69dcad9dc4b356f6d7f24339f0))
+* **accounts receivable:** handled customer related reports for sale return transactions reports [GCP-2868] ([#5862](https://github.com/pbsgears/Gears_BackEnd/issues/5862)) ([950ca46](https://github.com/pbsgears/Gears_BackEnd/commit/950ca4616fc3fb3f08ea0a9bb1bc86fe7fa6afcc))
+* **accounts receivable:** handled sales return transactions for scenarios impacted with return values and quantities [GCP-3027] ([#5843](https://github.com/pbsgears/Gears_BackEnd/issues/5843)) ([b72ef90](https://github.com/pbsgears/Gears_BackEnd/commit/b72ef905ff207ec8c46f28f3d295659b8c02650a))
+* **approval setup:** serviceLineID isset condition checked before access servieLineCode [GCP-3115] ([#5861](https://github.com/pbsgears/Gears_BackEnd/issues/5861)) ([33bcab8](https://github.com/pbsgears/Gears_BackEnd/commit/33bcab865e2fcee43c2d7210c88e30578d171816))
+* **common:** report formattting on po,Accont receivable,Account payable and GL report [GCP-3064] ([#5841](https://github.com/pbsgears/Gears_BackEnd/issues/5841)) ([1d56bef](https://github.com/pbsgears/Gears_BackEnd/commit/1d56bef9cf461534cc702d04420ee95dd51d66df))
+* **configuration:** whitelisting Mobile App Devices [GCP-2981] ([#5895](https://github.com/pbsgears/Gears_BackEnd/issues/5895)) ([17d9776](https://github.com/pbsgears/Gears_BackEnd/commit/17d9776e546773ad0109b5b1aee5f11adbaaf2db))
+* **general ledger:** Fixed employee ledger balance matching issue [GCP-2942] ([#5879](https://github.com/pbsgears/Gears_BackEnd/issues/5879)) ([4a3e7c4](https://github.com/pbsgears/Gears_BackEnd/commit/4a3e7c42e84f0b3b3cb8d733309cc8507ff0882a))
+* **general ledger:** fully stopped logic changed, count retervied without job in process [GCP-3213] ([#5904](https://github.com/pbsgears/Gears_BackEnd/issues/5904)) ([c73dc63](https://github.com/pbsgears/Gears_BackEnd/commit/c73dc63f7d88610e817a8c2dc4dc1fd11374f7e7))
+* **general ledger:** payroll code added to narration of salary jv and details  comments [GCP-2739] ([#5868](https://github.com/pbsgears/Gears_BackEnd/issues/5868)) ([bb98578](https://github.com/pbsgears/Gears_BackEnd/commit/bb98578e48937828cf4d2bd8816ce98acb1dbc64))
+* **general ledger:** recurring voucher posting process [GCP-2768] ([#5848](https://github.com/pbsgears/Gears_BackEnd/issues/5848)) ([1a3c988](https://github.com/pbsgears/Gears_BackEnd/commit/1a3c98898d58a6664bdd889385113c8101ae126d))
+* **general ledger:** rrv schedulr process on run validations added [GCP-3186] ([#5900](https://github.com/pbsgears/Gears_BackEnd/issues/5900)) ([7804966](https://github.com/pbsgears/Gears_BackEnd/commit/78049669e0c5d94e0602444bfad071fe7dd91a61))
+* **inventory:** in Stock Transfer,Allow the options of transferring in alternative UOM [GCP-3062] ([#5840](https://github.com/pbsgears/Gears_BackEnd/issues/5840)) ([868b2bd](https://github.com/pbsgears/Gears_BackEnd/commit/868b2bd58b29d14495304ada3522a98e9ce0fb53))
+* **inventory:** isset condition added to check to company exists and returned error msg [GCP-3216] ([#5907](https://github.com/pbsgears/Gears_BackEnd/issues/5907)) ([c960a46](https://github.com/pbsgears/Gears_BackEnd/commit/c960a469cfd4abd2da655657a07c580faaf09a0b))
+* **procurement:** GRV is mandatory when adding Logistics Details [GCP-3169] ([#5877](https://github.com/pbsgears/Gears_BackEnd/issues/5877)) ([85e3bd2](https://github.com/pbsgears/Gears_BackEnd/commit/85e3bd2dff8f8bf03b45aa83b234d276911e98b4))
+* **procurement:** po to payment excel calculation exception fixed [GCP-3219] ([#5914](https://github.com/pbsgears/Gears_BackEnd/issues/5914)) ([a167bd8](https://github.com/pbsgears/Gears_BackEnd/commit/a167bd827cf8f7679b4e82bff84509f3a5322fb4))
+* **procurement:** update Logistics Configuration in GRV [GCP-3087] ([#5850](https://github.com/pbsgears/Gears_BackEnd/issues/5850)) ([d50312a](https://github.com/pbsgears/Gears_BackEnd/commit/d50312a77f75cf65fb7124d506e8590266d9aa8f))
+* **system admin:** Audit log for Item Master [GCP-2532] ([#5847](https://github.com/pbsgears/Gears_BackEnd/issues/5847)) ([c3963ec](https://github.com/pbsgears/Gears_BackEnd/commit/c3963ec86f1a2376899d80bd25474def95685d4d))
+* **system admin:** Audit logs for COA [GCP-2535] ([#5837](https://github.com/pbsgears/Gears_BackEnd/issues/5837)) ([e996906](https://github.com/pbsgears/Gears_BackEnd/commit/e9969065660632802c78761bdf146e7323d77dc9))
+
+
+### Bug Fixes
+
+* **accounts payable:** employee and supplier both showing in same payment voucher handled [GCP-2919] ([f76d6a3](https://github.com/pbsgears/Gears_BackEnd/commit/f76d6a372bd13e905350a8d4311af736a4752362))
+* **accounts payable:** maximum memory issue in generate AP report [GCP-3200] ([#5923](https://github.com/pbsgears/Gears_BackEnd/issues/5923)) ([abeb63d](https://github.com/pbsgears/Gears_BackEnd/commit/abeb63d0989c58ae3eb528fd1365121a6f748c20))
+* **accounts payable:** payment matching confirm balancing match amount round off issue [GCP-2957]  ([#5821](https://github.com/pbsgears/Gears_BackEnd/issues/5821)) ([e7cd470](https://github.com/pbsgears/Gears_BackEnd/commit/e7cd470bfd0efb4884e2a43e04df7bc5bb0eb96b))
+* **accounts payable:** payment voucher load only employees who has supplier invoices [GCP-3038] ([#5849](https://github.com/pbsgears/Gears_BackEnd/issues/5849)) ([c5c23db](https://github.com/pbsgears/Gears_BackEnd/commit/c5c23db45a5dc0f0cfc910fbc22f2cd6c99416c1))
+* **accounts payable:** supplier invoice for logistic supplier not getting proportionate for general ledger entries fixed [GCP-3088] ([65366c1](https://github.com/pbsgears/Gears_BackEnd/commit/65366c15570771f5e26200d9d78a273401883730))
+* **accounts payable:** validated the supplier invoice Date [GCP-3113] ([#5896](https://github.com/pbsgears/Gears_BackEnd/issues/5896)) ([663bdf8](https://github.com/pbsgears/Gears_BackEnd/commit/663bdf84e24555d8e77f4efa3f7e317aa436f635))
+* **accounts payable:** validation method changed for the supplier aging report [GCP-3099] ([#5822](https://github.com/pbsgears/Gears_BackEnd/issues/5822)) ([a6653d5](https://github.com/pbsgears/Gears_BackEnd/commit/a6653d58c7bbb0fe72d4c44f1d72286b1ef69d67))
+* **accounts receivable:** customer ledger balance computation issue fixed [GCP-2802] ([cbd2f40](https://github.com/pbsgears/Gears_BackEnd/commit/cbd2f40090d86d74d91e7cae13e8f38ec3ae8551))
+* **accounts receivable:** Fixed rihal template arabic issue [GCP-2945] ([d7ce908](https://github.com/pbsgears/Gears_BackEnd/commit/d7ce908406608402e15f4b65c7f0d6d2221373ee))
+* **accounts receivable:** Fixed Rihal template title issue [GCP-3133] ([#5882](https://github.com/pbsgears/Gears_BackEnd/issues/5882)) ([fac4ff7](https://github.com/pbsgears/Gears_BackEnd/commit/fac4ff70bcc5fd4d2defc47d2af4915088a3008e))
+* **accounts receivable:** receipt voucher can not be created for the full invoice amoun [GCP-3175] ([#5878](https://github.com/pbsgears/Gears_BackEnd/issues/5878)) ([ff9f4e6](https://github.com/pbsgears/Gears_BackEnd/commit/ff9f4e612f82c51d02e19b232dbd76346b88f2c2))
+* **accounts receivable:** Timed out issue in Receipt voucher update [GCP-3185] ([#5897](https://github.com/pbsgears/Gears_BackEnd/issues/5897)) ([e387cf4](https://github.com/pbsgears/Gears_BackEnd/commit/e387cf450e9c06149560ba05d6f2b2b8e70ca1d2))
+* **asset management:** asset disposal approval validation fixed [GCP-2723] ([0164a94](https://github.com/pbsgears/Gears_BackEnd/commit/0164a94f4f90090b46c71dd2690cc89802173241))
+* **general ledger:** budget upload search by description added [GCP-3202] ([#5908](https://github.com/pbsgears/Gears_BackEnd/issues/5908)) ([5a0c2fd](https://github.com/pbsgears/Gears_BackEnd/commit/5a0c2fde5ad78c1e25c10e21bdd3979980fa853f))
+* **general ledger:** max memeory issue in budget referback[GCP-3116] ([#5906](https://github.com/pbsgears/Gears_BackEnd/issues/5906)) ([b8f098a](https://github.com/pbsgears/Gears_BackEnd/commit/b8f098acff60bf7e39f9da7ea7f28d4b650b7d57))
+* **general ledger:** subsidiary company employes are load even there's no employee invoice[GCP-3039] ([7d9e052](https://github.com/pbsgears/Gears_BackEnd/commit/7d9e052c2a6f3dfa4c4c9858088671b2b2fafb35))
+* **general ledger:** time out issue in generate financial report [GCP-3188] ([#5925](https://github.com/pbsgears/Gears_BackEnd/issues/5925)) ([b4b187b](https://github.com/pbsgears/Gears_BackEnd/commit/b4b187b703301e7e744ea7e47a022d157eb2db82))
+* **inventory:** creating Purchase Requests from Material Request fixed [GCP-2913] ([86deb45](https://github.com/pbsgears/Gears_BackEnd/commit/86deb4593e21398d97e81cfd0584f088012cf2af))
+* **procument:** po showing undefined varabile when supplier is not active issue fixed [GCP-3100] ([#5867](https://github.com/pbsgears/Gears_BackEnd/issues/5867)) ([4c7e7c0](https://github.com/pbsgears/Gears_BackEnd/commit/4c7e7c0ced8a90d51431ac7cdd334342239052e3))
+* **procurement:** pO Error while confirming the document [GCP-2912] ([298d68d](https://github.com/pbsgears/Gears_BackEnd/commit/298d68db1a0b9e9c6787cb17d34a6c96cffcd50b))
+* **procurement:** Sentry issue in PO confirmation [GCP-3214] ([#5924](https://github.com/pbsgears/Gears_BackEnd/issues/5924)) ([671fbbb](https://github.com/pbsgears/Gears_BackEnd/commit/671fbbb60538dfa59d2caab37f44f9c02464fa46))
+* **procurement:** showing wrong amount in PO tracing Documents is fixed [GCP-2740]([#5836](https://github.com/pbsgears/Gears_BackEnd/issues/5836)) ([bb0171d](https://github.com/pbsgears/Gears_BackEnd/commit/bb0171d3a0e854747862c42241c93d2c061b870e))
+* **sales & marketing:** Fixed issue in Delivery Order-&gt; Edit Delivery Order [GCP-3112]  ([#5881](https://github.com/pbsgears/Gears_BackEnd/issues/5881)) ([0116305](https://github.com/pbsgears/Gears_BackEnd/commit/0116305dc82ce9f802b82cd2584fd954412cc55c))
+* **sales & marketing:** unit price of sales return is wrong [GCP-3181] ([#5892](https://github.com/pbsgears/Gears_BackEnd/issues/5892)) ([84eadda](https://github.com/pbsgears/Gears_BackEnd/commit/84eaddadf0e14ab89c66d7c4d3d66eb42469d737))
+* **system admin:** Fixed date issue in supplier creation [GCP-3047] ([#5866](https://github.com/pbsgears/Gears_BackEnd/issues/5866)) ([617e361](https://github.com/pbsgears/Gears_BackEnd/commit/617e361ce7c593604e952eace7c3721a6df663f2))
+
 ## [10.37.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.36.0...v10.37.0) (2024-03-27)
 
 
