@@ -21,6 +21,7 @@ use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentApproved;
 use App\Models\Employee;
+use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
 use Carbon\Carbon;
 
@@ -127,14 +128,18 @@ class ReceiptAPIService
             $receipt = self::setConfirmedDetails($dt,$receipt);
             $receipt = self::setApprovedDetails($dt,$receipt);
 
+
             if($receipt->documentType == 13) {
                 $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
             }
 
-
             foreach ($receipt['details'] as $details) {
 
                 self::checkDecimalPlaces($details,$receipt);
+               if($receipt->documentType == 15)
+               {
+                   self::validateSegmentCode($details,$receipt);
+               }
 
                 if($receipt->documentType == 13) {
                     self::validateInvoiceDetails($details,$receipt);
@@ -149,6 +154,7 @@ class ReceiptAPIService
                 if($receipt->documentType == 14 || $receipt->documentType == 15) {
                     self::validateVatAmount($details,$receipt);
                 }
+
 
             }
 
@@ -433,6 +439,33 @@ class ReceiptAPIService
         }
 
 
+    }
+
+    private function  validateSegmentCode($details,$receipt) {
+        $segmentMaster = SegmentMaster::where('ServiceLineCode',$details["segmentCode"])->first();
+
+        if(!isset($segmentMaster))
+        {
+            $this->isError = true;
+            $error[$receipt->narration][$details['comments']] = ['Segment Code not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }else {
+
+
+            if($segmentMaster->companySystemID != $receipt->companySystemID)
+            {
+                $this->isError = true;
+                $error[$receipt->narration][$details['comments']] = ['Segment is not assigned to the company'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
+            if(!$segmentMaster->isActive)
+            {
+                $this->isError = true;
+                $error[$receipt->narration][$details['comments']] = ['Segment is not active'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
     }
     private function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = Employee::where('empID',$detail['confirmedBy'])->first();
