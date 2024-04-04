@@ -85,6 +85,7 @@ class ErpAttributes extends Model
         'document_id',
         'document_master_id',
         'is_mendatory',
+        'is_active',
         'created_by',
         'updated_by'
     ];
@@ -101,6 +102,7 @@ class ErpAttributes extends Model
         'document_id' => 'string',
         'document_master_id' => 'integer',
         'is_mendatory' => 'boolean',
+        'is_active' => 'boolean',
         'created_by' => 'integer',
         'updated_by' => 'integer'
     ];

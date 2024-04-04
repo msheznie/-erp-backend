@@ -80,6 +80,11 @@ Route::group([], function(){
     Route::resource('asset_warranties', 'AssetWarrantyAPIController');
     Route::post('getWarranty', 'AssetWarrantyAPIController@getWarranty')->name("Get asset warranty");
 
+    Route::post('assetCostAttributesUpdate', 'ErpAttributesAPIController@assetCostAttributesUpdate')->name('Asset cost attributes update');
+    Route::get('getAttributesDataFormData', 'FinanceItemCategoryMasterAPIController@getAttributesDataFormData')->name('Get attributes data form data');
+    Route::post('getAssetCostAttributesData', 'FinanceItemCategoryMasterAPIController@getAssetCostAttributesData')->name('Get asset cost attributes data');
+
+
 });
 
 

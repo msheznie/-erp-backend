@@ -322,6 +322,21 @@ class ErpAttributesAPIController extends AppBaseController
 
     }
 
+    public function assetCostAttributesUpdate(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+
+        $updateData = [
+            'is_mendatory' => $input['is_mendatory'],
+            'is_active' => $input['is_active']
+        ];
+        $attributesUpdate = ErpAttributes::where('id', $id)
+        ->update($updateData);
+
+        return $this->sendResponse($attributesUpdate, 'Erp Attributes updated successfully');
+
+    }
+
     public function itemAttributesDelete(Request $request){
         $input = $request->all();
         $id = $input['id'];

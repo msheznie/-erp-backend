@@ -65,6 +65,7 @@ class ErpAttributesDropdown extends Model
     public $fillable = [
         'description',
         'attributes_id',
+        'color',
         'created_by',
         'updated_by'
     ];
@@ -77,6 +78,7 @@ class ErpAttributesDropdown extends Model
     protected $casts = [
         'id' => 'integer',
         'description' => 'string',
+        'color' => 'string',
         'attributes_id' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer'
