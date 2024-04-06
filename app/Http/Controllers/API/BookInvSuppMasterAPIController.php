@@ -441,6 +441,28 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice retrieved successfully');
     }
 
+    public function unitCostValidation(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['bookingSuppMasInvAutoID'];
+        $isUnitCostZeroValidate = false;
+
+        if ($input['documentType'][0] == 3) {
+
+            $checkUnitCostValidation = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
+                                                ->where(function ($q) {
+                                                    $q->where('unitCost', '=', 0);
+                                                })
+                                                ->count();
+            if ($checkUnitCostValidation > 0) {
+                $isUnitCostZeroValidate = true;
+            }
+        }
+
+        return $this->sendResponse($isUnitCostZeroValidate, 'Record retrieved successfully');
+    }
+
+
     /**
      * @param int $id
      * @param UpdateBookInvSuppMasterAPIRequest $request
