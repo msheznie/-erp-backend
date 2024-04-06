@@ -1789,21 +1789,26 @@ class Helper
                 }
 
 
-                $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function ($q) {
-                    $q->where('discharegedYN', 0);
-                })
-                    ->groupBy('employeeSystemID')
-                    ->exists();
+                if(!isset($input['isCheckPrivilages']) || (isset($input['isCheckPrivilages']) && $input['isCheckPrivilages']))
+                {
 
-                if (!$checkUserHasApprovalAccess) {
-                    return ['success' => false, 'message' => 'You do not have access to approve this document.'];
-                }
+                    $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function ($q) {
+                        $q->where('discharegedYN', 0);
+                    })
+                        ->groupBy('employeeSystemID')
+                        ->exists();
 
-                if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
-                    if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                        return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                    if (!$checkUserHasApprovalAccess) {
+                        return ['success' => false, 'message' => 'You do not have access to approve this document.'];
+                    }
+
+                    if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
+                        if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
+                            return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                        }
                     }
                 }
+
 
                 if (["documentSystemID"] == 46) {
                     if ($isConfirmed['year'] != date("Y")) {
