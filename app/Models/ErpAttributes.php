@@ -86,6 +86,8 @@ class ErpAttributes extends Model
         'document_master_id',
         'is_mendatory',
         'is_active',
+        'value',
+        'color',
         'created_by',
         'updated_by'
     ];
@@ -100,6 +102,7 @@ class ErpAttributes extends Model
         'description' => 'string',
         'field_type_id' => 'integer',
         'document_id' => 'string',
+        'value' => 'string',
         'document_master_id' => 'integer',
         'is_mendatory' => 'boolean',
         'is_active' => 'boolean',
@@ -121,5 +124,11 @@ class ErpAttributes extends Model
         return $this->belongsTo('App\Models\ErpAttributesFieldType', 'field_type_id', 'id');
     }
 
-    
+    public function fieldOptions()
+    {
+        return $this->hasMany('App\Models\ErpAttributesDropdown', 'attributes_id');
+    }
+
+
+
 }

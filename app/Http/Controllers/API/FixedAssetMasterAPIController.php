@@ -31,6 +31,8 @@ use App\Models\BudgetConsumedData;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\ErpAttributes;
+use App\Models\ErpAttributesDropdown;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetCost;
@@ -848,6 +850,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
+
      
         if(isset($input['accumulated_depreciation_amount_rpt']))
         {
@@ -876,8 +879,16 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
         }
 
+        if(isset($input['confirmedYN']) && $input['confirmedYN'] == 1) {
+            $isAttributeMandatory = ErpAttributes::where('document_master_id', $id)->where('is_mendatory', 1)->where('value', null)->count();
+            if($isAttributeMandatory > 0)
+            {
+                return $this->sendError('Please enter a value for all mandatory fields in the attributes', 500);
+            }
+        }
 
-        if(isset($input['salvage_value_rpt']))
+
+            if(isset($input['salvage_value_rpt']))
         {
             if(doubleval($input['salvage_value_rpt']) >  (doubleval($fixedAssetMaster->costUnitRpt))) {
                 return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
@@ -1457,6 +1468,63 @@ class FixedAssetMasterAPIController extends AppBaseController
         $output = ['isAuditEnabled' => $financeCat->enableEditing,'fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
 
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+    }
+
+    public function assetAttributes(Request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $code = $input['documentSystemCode'];
+        $erpAttributes = ErpAttributes::with(['fieldOptions'])->where('document_id', "ASSETCOST")->where('document_master_id', $code)->orWhere('document_master_id', null);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $erpAttributes = $erpAttributes->where(function ($query) use ($search) {
+                $query->orWhere('value', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($erpAttributes)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function updateAttribute(Request $request){
+
+        $input = $request->all();
+        if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
+            $attributes = ErpAttributes::where('id', $input['attributeID'])->update(['value' => $input['value']]);
+        } else {
+            $dropDownValues = ErpAttributesDropdown::find($input['value']);
+
+            $attributes = ErpAttributes::where('id', $input['attributeID'])->update(['value' => $input['value'], 'color' => $dropDownValues->color]);
+        }
+
+        return $this->sendResponse($attributes, 'Fixed Asset Attributes updated successfully');
+
+    }
+
+    public function updateActionAttribute(Request $request){
+
+        $input = $request->all();
+        $attributes = ErpAttributes::where('id', $input['attributeID'])->update(['is_active' => $input['value']]);
+
+        return $this->sendResponse($attributes, 'Fixed Asset Attributes updated successfully');
+
     }
 
      public function assetCostingForPrint(Request $request)

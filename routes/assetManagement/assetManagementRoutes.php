@@ -79,6 +79,10 @@ Route::group([], function(){
     Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster')->name("Get Asset Costing Master");
     Route::resource('asset_warranties', 'AssetWarrantyAPIController');
     Route::post('getWarranty', 'AssetWarrantyAPIController@getWarranty')->name("Get asset warranty");
+    Route::post('getAssetAttributes', 'FixedAssetMasterAPIController@assetAttributes')->name("Get asset attributes");
+    Route::post('updateAttribute', 'FixedAssetMasterAPIController@updateAttribute')->name("Update asset attribute");
+    Route::post('updateActionAttribute', 'FixedAssetMasterAPIController@updateActionAttribute')->name("Update asset attribute");
+
 
     Route::post('assetCostAttributesUpdate', 'ErpAttributesAPIController@assetCostAttributesUpdate')->name('Asset cost attributes update');
     Route::get('getAttributesDataFormData', 'FinanceItemCategoryMasterAPIController@getAttributesDataFormData')->name('Get attributes data form data');
