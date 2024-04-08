@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @SWG\Definition(
@@ -70,6 +71,7 @@ use Eloquent as Model;
  */
 class ErpAttributes extends Model
 {
+    use SoftDeletes;
 
     public $table = 'erp_attributes';
     
@@ -129,6 +131,8 @@ class ErpAttributes extends Model
         return $this->hasMany('App\Models\ErpAttributesDropdown', 'attributes_id');
     }
 
-
+    public function attributeValues(){
+        return $this->hasMany('App\Models\ErpAttributeValues', 'attribute_id');
+    }
 
 }

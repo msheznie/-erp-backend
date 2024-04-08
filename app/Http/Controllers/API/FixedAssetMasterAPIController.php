@@ -33,6 +33,7 @@ use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ErpAttributes;
 use App\Models\ErpAttributesDropdown;
+use App\Models\ErpAttributeValues;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetCost;
@@ -1480,7 +1481,9 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $code = $input['documentSystemCode'];
-        $erpAttributes = ErpAttributes::with(['fieldOptions'])->where('document_id', "ASSETCOST")->where('document_master_id', $code)->orWhere('document_master_id', null);
+        $erpAttributes = ErpAttributes::with(['fieldOptions', 'attributeValues'  => function($query) use ($code){
+            $query->where('document_master_id', $code);
+        }])->where('document_id', "ASSETCOST")->where('document_master_id', $code)->orWhere('document_master_id', null);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -1506,12 +1509,23 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function updateAttribute(Request $request){
 
         $input = $request->all();
+
         if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
-            $attributes = ErpAttributes::where('id', $input['attributeID'])->update(['value' => $input['value']]);
+            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            if(!empty($isAttributeValues)){
+                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['value' => $input['value']]);
+            } else {
+                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID']]);
+            }
         } else {
             $dropDownValues = ErpAttributesDropdown::find($input['value']);
 
-            $attributes = ErpAttributes::where('id', $input['attributeID'])->update(['value' => $input['value'], 'color' => $dropDownValues->color]);
+            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            if(!empty($isAttributeValues)){
+                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['value' => $input['value'], 'color' => $dropDownValues->color]);
+            } else {
+                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'color' => $dropDownValues->color]);
+            }
         }
 
         return $this->sendResponse($attributes, 'Fixed Asset Attributes updated successfully');
@@ -1521,8 +1535,24 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function updateActionAttribute(Request $request){
 
         $input = $request->all();
-        $attributes = ErpAttributes::where('id', $input['attributeID'])->update(['is_active' => $input['value']]);
 
+        if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
+            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            if(!empty($isAttributeValues)){
+                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['is_active' => $input['action']]);
+            } else {
+                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'is_active' => $input['action']]);
+            }
+        } else {
+            $dropDownValues = ErpAttributesDropdown::find($input['value']);
+
+            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            if(!empty($isAttributeValues)){
+                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['is_active' => $input['action']]);
+            } else {
+                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'color' => $dropDownValues->color, 'is_active' => $input['action']]);
+            }
+        }
         return $this->sendResponse($attributes, 'Fixed Asset Attributes updated successfully');
 
     }
