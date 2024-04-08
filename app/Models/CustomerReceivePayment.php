@@ -601,6 +601,8 @@ class CustomerReceivePayment extends Model
         'payment_type_id' => 'integer'
     ];
 
+    protected $appends = ['isFromApi'];
+
     /**
      * Validation rules
      *
@@ -762,6 +764,18 @@ class CustomerReceivePayment extends Model
     {
         return $q->leftJoin('erp_bankmaster as '.$as,$as.'.bankmasterAutoID','erp_customerreceivepayment.'.$column)
         ->addSelect($as.".bankName as ".$columnAs);
+    }
+
+    public function getIsFromApiAttribute()
+    {
+        $master = DocumentSystemMapping::where('documentSystemId',$this->documentSystemID)->where('documentId',$this->custReceivePaymentAutoID)->first();
+
+        if($master)
+        {
+            return true;
+        }
+
+        return false;
     }
 
 }

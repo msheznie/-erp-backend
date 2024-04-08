@@ -99,7 +99,8 @@ class CustomerReceivePaymentRepository extends BaseRepository
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'isFromApi'
     ];
 
     /**
