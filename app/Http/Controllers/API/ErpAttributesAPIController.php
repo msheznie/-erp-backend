@@ -324,9 +324,35 @@ class ErpAttributesAPIController extends AppBaseController
 
     public function assetCostAttributesUpdate(Request $request){
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('field_type_id'));
+
         $id = $input['id'];
 
+        $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+
+        if($erpAttributes->field_type_id != $input['field_type_id']){
+            if($erpAttributes->field_type_id == 3){
+                $dropdownValues = ErpAttributesDropdown::where('attributes_id',$erpAttributes->id)->count();
+                 if($dropdownValues > 0){
+                     return $this->sendError('Unable to update. Dropdown value is added for the attribute', 500);
+                 }
+             }
+        }
+
+        if($erpAttributes->description != $input['description']){
+            if(empty($input['description'])){
+                return $this->sendError('Unable to update. Description is empty', 500);
+            }
+            $attributesValidateDescription = ErpAttributes::where('description', $input['description'])->count();
+            if($attributesValidateDescription > 0){
+                return $this->sendError('Unable to update. Description already exist', 500);
+            }
+             
+        }
+
         $updateData = [
+            'description' => $input['description'],
+            'field_type_id' => $input['field_type_id'],
             'is_mendatory' => $input['is_mendatory'],
             'is_active' => $input['is_active']
         ];
@@ -334,6 +360,35 @@ class ErpAttributesAPIController extends AppBaseController
         ->update($updateData);
 
         return $this->sendResponse($attributesUpdate, 'Erp Attributes updated successfully');
+
+    }
+
+    public function dropdownValuesUpdate(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+
+        $dropdownValues = ErpAttributesDropdown::where('id',$id)->first();        
+
+
+        if($dropdownValues->description != $input['description']){
+            if(empty($input['description'])){
+                return $this->sendError('Unable to update. Description is empty', 500);
+            }
+            $dropdownValidateDescription = ErpAttributesDropdown::where('description', $input['description'])->count();
+            if($dropdownValidateDescription > 0){
+                return $this->sendError('Unable to update. Description already exist', 500);
+            }
+             
+        }
+
+        $updateData = [
+            'description' => $input['description'],
+            'color' => $input['color']
+        ];
+        $dropdownValuesUpdate = ErpAttributesDropdown::where('id', $id)
+        ->update($updateData);
+
+        return $this->sendResponse($dropdownValuesUpdate, 'Erp Attributes updated successfully');
 
     }
 

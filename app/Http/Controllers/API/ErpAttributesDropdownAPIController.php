@@ -101,6 +101,40 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         return $this->sendResponse($dropdownData, 'Record retrieved successfully');
     }
 
+    public function getAttributesDropdownData(Request $request){
+        $input = $request->all();
+        $attributes_id = $input['attributes_id'];
+        $attributesDropdown = ErpAttributesDropdown::where('attributes_id',$attributes_id);
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $attributesDropdown = $attributesDropdown->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($attributesDropdown)
+                ->order(function ($query) use ($input) {
+                    if (request()->has('order')) {
+                        if ($input['order'][0]['column'] == 0) {
+                            $query->orderBy('id', $input['order'][0]['dir']);
+                        }
+                    }
+                })
+                ->addIndexColumn()
+                ->with('orderCondition', $sort)
+                ->addColumn('Actions', 'Actions', "Actions")
+                ->make(true);
+    }
+
     /**
      * @param CreateErpAttributesDropdownAPIRequest $request
      * @return Response
