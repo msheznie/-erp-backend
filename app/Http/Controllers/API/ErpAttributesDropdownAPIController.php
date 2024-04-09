@@ -78,7 +78,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
             $descriptionValidate = ErpAttributesDropdown::where('description', $input['description'])
                                                             ->where('attributes_id', $input['attributes_id'])->get();
             if (count($descriptionValidate) > 0){
-                return $this->sendError('Dropdown Value Already Exists');
+                return $this->sendError('Description Already Exists');
             }
 
            
