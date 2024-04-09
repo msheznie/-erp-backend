@@ -139,7 +139,7 @@ class ReceiptAPIService
             foreach ($receipt['details'] as $details) {
 
                 self::checkDecimalPlaces($details,$receipt);
-               if($receipt->documentType == 15)
+               if($receipt->documentType == 15 || $receipt->documentType == 14)
                {
                    self::validateSegmentCode($details,$receipt);
                }
