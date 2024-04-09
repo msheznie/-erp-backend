@@ -3,6 +3,7 @@
 namespace App\Services\API;
 
 use App\Models\ChartOfAccount;
+use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerMaster;
@@ -54,13 +55,13 @@ class DirectReceiptDetailAPIService
 
     private static function setCommonDetails($directReceipt,$objDirectReceipt,$receiptVoucher):DirectReceiptDetail {
 
-        $customerDetails = CustomerMaster::where('customerCodeSystem',$receiptVoucher->customerID)->first();
+        $companyMaster = Company::where('companySystemID',$receiptVoucher->companySystemID)->first();
         $currencyDetails = CurrencyMaster::where('currencyID',$receiptVoucher->custTransactionCurrencyID)->first();
         $objDirectReceipt->localCurrency = $receiptVoucher->localCurrency->currencyID;
         $objDirectReceipt->localCurrencyER = $receiptVoucher->localCurrencyER;
         $objDirectReceipt->comRptCurrency = $receiptVoucher->companyRptCurrencyID;
         $objDirectReceipt->comRptCurrencyER = $receiptVoucher->companyRptCurrencyER;
-        $vatAmount = ($receiptVoucher->isVATApplicable && $customerDetails->vatEligible) ? $directReceipt['vatAmount'] : 0;
+        $vatAmount = ($receiptVoucher->isVATApplicable && $companyMaster->vatRegisteredYN) ? $directReceipt['vatAmount'] : 0;
         $objDirectReceipt->VATAmount = $vatAmount;
         $objDirectReceipt->VATPercentage = ($vatAmount/100);
         $currency = \Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $objDirectReceipt->directReceiptAutoID, $directReceipt['amount']);
