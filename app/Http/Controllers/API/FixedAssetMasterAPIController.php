@@ -1377,7 +1377,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category','asset_type'])->ofCompany($subCompanies);
+        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category','asset_type', 'attributeMaster' => function($query) {
+            $query->withTrashed()->limit(4)->with(['attributeValues' => function($query){
+                $query->with(['dropdownValues']);
+            }]);
+        }])->ofCompany($subCompanies);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {

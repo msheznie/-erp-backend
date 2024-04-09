@@ -49,4 +49,9 @@ class ErpAttributeValues extends Model
     public static $rules = [
 
     ];
+
+    public function dropdownValues()
+    {
+        return $this->belongsTo('App\Models\ErpAttributesDropdown', 'attribute_id', 'attributes_id');
+    }
 }
