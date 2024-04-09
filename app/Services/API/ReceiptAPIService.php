@@ -139,12 +139,13 @@ class ReceiptAPIService
             foreach ($receipt['details'] as $details) {
 
                 self::checkDecimalPlaces($details,$receipt);
-               if($receipt->documentType == 15 || $receipt->documentType == 14)
-               {
-                   self::validateSegmentCode($details,$receipt);
-               }
+                if($receipt->documentType == 15 || $receipt->documentType == 14)
+                {
+                    self::validateSegmentCode($details,$receipt);
+                }
 
                 if($receipt->documentType == 13) {
+                    self::validateSegmentCodeCustomerInvoice($details,$receipt);
                     self::validateInvoiceDetails($details,$receipt);
                     self::validateTotalAmount($details,$receipt);
                     self::validateDocumentDate($details,$receipt,$dt);
@@ -424,6 +425,32 @@ class ReceiptAPIService
         return $receipt;
     }
 
+    private function validateSegmentCodeCustomerInvoice($details,$receipt) {
+        $segmentMaster = SegmentMaster::where('ServiceLineCode',$details["segmentCode"])->first();
+
+        if(!isset($segmentMaster))
+        {
+            $this->isError = true;
+            $error[$receipt->narration][$details['invoiceCode']] = ['Segment Code not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }else {
+
+
+            if($segmentMaster->companySystemID != $receipt->companySystemID)
+            {
+                $this->isError = true;
+                $error[$receipt->narration][$details['invoiceCode']] = ['Segment is not assigned to the company'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
+            if(!$segmentMaster->isActive)
+            {
+                $this->isError = true;
+                $error[$receipt->narration][$details['invoiceCode']] = ['Segment is not active'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
+    }
     private function validateInvoiceDetails($details,$receipt) {
         if($receipt->documentType == 13) {
             $invoice = CustomerInvoice::where('bookingInvCode',$details['invoiceCode'])->first();
@@ -845,9 +872,9 @@ class ReceiptAPIService
 
         if($receipt->isVATApplicable && !$receipt->vatRegisteredYN)
         {
-                $this->isError = true;
-                $error[$receipt->narration] = ['Company is not vat registred'];
-                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            $this->isError = true;
+            $error[$receipt->narration] = ['Company is not vat registred'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
         }
 
         return $receipt;
