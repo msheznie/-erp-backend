@@ -851,9 +851,11 @@ ORDER BY
             ->leftJoin('srm_budget_items', 'srm_tender_budget_items.item_id', '=', 'srm_budget_items.id')
             ->where('srm_tender_budget_items.tender_id', $tenderMasterId)
             ->where('srm_budget_items.is_active', 1)
+            ->where('srm_budget_items.company_id', $companySystemID)
             ->unionAll(DB::table('srm_budget_items')
                 ->select('srm_budget_items.id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_budget_items.budget_amount) AS item_name"))
                 ->where('srm_budget_items.is_active', 1)
+                ->where('srm_budget_items.company_id', $companySystemID)
                 ->whereNotIn('srm_budget_items.id', function ($query) use ($tenderMasterId) {
                     $query->select('item_id')->from('srm_tender_budget_items')->where('tender_id', $tenderMasterId);
                 }))
@@ -862,6 +864,7 @@ ORDER BY
         $data['srmBudgetItem'] = $srmBudgetItem;
 
         $srmBudgetItemList = SrmBudgetItem::select('srm_budget_items.id as id', 'item_name AS itemName')
+            ->where('company_id', $companySystemID)
             ->whereHas('tenderBudgetItems', function ($query) use ($tenderMasterId) {
                 $query->where('tender_id', $tenderMasterId);
             })->get();
@@ -1684,6 +1687,7 @@ ORDER BY
                         } else {
                             $srmBudgetItem = SrmBudgetItem::select('budget_amount')
                                 ->where('id', $pr['id'])
+                                ->where('company_id', $input['company_id'])
                                 ->first();
 
                             $budget_amount = $srmBudgetItem ? $srmBudgetItem->budget_amount : 0;
@@ -5549,18 +5553,19 @@ ORDER BY
     public function getBudgetItemTotalAmount(Request $request){
         $input = $request->all();
         $tenderMasterId = $input['tenderMasterId'];
+        $companySystemID = $input['companySystemID'];
         // Get the budget amount for each item in the idList
-        $totalBudgetAmount = collect($input['idList'])->map(function($itemId) use ($tenderMasterId) {
+        return collect($input['idList'])->map(function($itemId) use ($tenderMasterId, $companySystemID) {
             $existingItem = SrmTenderBudgetItem::where('item_id', $itemId)->where('tender_id', $tenderMasterId)->first();
             if ($existingItem) {
                 return $existingItem->budget_amount;
             } else {
-                $budgetItem = SrmBudgetItem::find($itemId);
+                $budgetItem = SrmBudgetItem::where('id', $itemId)
+                    ->where('company_id', $companySystemID)
+                    ->first();
                 return $budgetItem ? $budgetItem->budget_amount : 0;
             }
         })->sum();
-
-        return $totalBudgetAmount;
     }
 
 } 
