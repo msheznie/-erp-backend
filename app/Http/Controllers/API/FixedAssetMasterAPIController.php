@@ -881,7 +881,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         if(isset($input['confirmedYN']) && $input['confirmedYN'] == 1) {
-            $isAttributeMandatory = ErpAttributes::where('erp_attributes.document_master_id', $id)->where('erp_attributes.is_mendatory', 1)->join('erp_attribute_values', 'erp_attribute_values.attribute_id', '=', 'erp_attributes.id')->where('erp_attribute_values.value'. null)->where('erp_attribute_values.is_active', 1)->count();
+            $isAttributeMandatory = ErpAttributes::where('erp_attributes.is_mendatory', 1)->join('erp_attribute_values', 'erp_attribute_values.attribute_id', '=', 'erp_attributes.id')->where('erp_attribute_values.document_master_id', $id)->where('erp_attribute_values.value'. null)->where('erp_attribute_values.is_active', 1)->count();
             if($isAttributeMandatory > 0)
             {
                 return $this->sendError('Please enter a value for all mandatory fields in the attributes', 500);
@@ -1377,9 +1377,9 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category','asset_type', 'attributeMaster' => function($query) {
-            $query->withTrashed()->limit(4)->with(['attributeValues' => function($query){
-                $query->with(['dropdownValues']);
+        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category','asset_type', 'attributeValues' => function($query) {
+            $query->with(['dropdownValues','attributeMaster' => function($query){
+                $query->withTrashed();
             }]);
         }])->ofCompany($subCompanies);
 
@@ -1486,7 +1486,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $code = $input['documentSystemCode'];
         $erpAttributes = ErpAttributes::with(['fieldOptions', 'attributeValues'  => function($query) use ($code){
-            $query->where('document_master_id', $code);
+            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
         }])->where('document_id', "ASSETCOST")->where('is_active', 1);
 
         $search = $request->input('search.value');
@@ -1496,10 +1496,6 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $query->where('description', 'LIKE', "%{$search}%");
             });
         }
-
-        $erpAttributes = $erpAttributes->where(function ($query) use ($code) {
-            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
-        });
 
         return \DataTables::eloquent($erpAttributes)
             ->order(function ($query) use ($input) {
@@ -1543,6 +1539,12 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function updateActionAttribute(Request $request){
 
         $input = $request->all();
+
+        $attributeValueCount = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('is_active', 1)->count();
+
+        if($attributeValueCount > 3 && $input['action'] == 1){
+            return $this->sendError('Maximum number of selections exceeded');
+        }
 
         if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
             $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();

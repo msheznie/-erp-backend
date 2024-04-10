@@ -54,4 +54,10 @@ class ErpAttributeValues extends Model
     {
         return $this->belongsTo('App\Models\ErpAttributesDropdown', 'attribute_id', 'attributes_id');
     }
+
+    public function attributeMaster()
+    {
+        return $this->belongsTo('App\Models\ErpAttributes', 'attribute_id', 'id');
+    }
+
 }
