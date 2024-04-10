@@ -211,7 +211,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
     public function getAssetCostAttributesData(Request $request){
         $input = $request->all();
 
-        $attributes = ErpAttributes::with('field_type')->where('document_id','ASSETCOST');
+        $attributes = ErpAttributes::with('field_type')->where('document_id','ASSETCOST')->where('document_master_id', $input['document_master_id']);
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
