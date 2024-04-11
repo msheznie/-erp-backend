@@ -881,7 +881,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         if(isset($input['confirmedYN']) && $input['confirmedYN'] == 1) {
-            $isAttributeMandatory = ErpAttributes::where('erp_attributes.is_mendatory', 1)->join('erp_attribute_values', 'erp_attribute_values.attribute_id', '=', 'erp_attributes.id')->where('erp_attribute_values.document_master_id', $id)->where('erp_attribute_values.value'. null)->where('erp_attribute_values.is_active', 1)->count();
+            $isAttributeMandatory = ErpAttributes::where('erp_attributes.is_mendatory', 1)->join('erp_attribute_values', 'erp_attribute_values.attribute_id', '=', 'erp_attributes.id')->where('erp_attribute_values.document_master_id', $id)->where('erp_attribute_values.value'. null)->count();
             if($isAttributeMandatory > 0)
             {
                 return $this->sendError('Please enter a value for all mandatory fields in the attributes', 500);
@@ -1489,6 +1489,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $query->where('document_master_id', $code)->orWhere('document_master_id', null);
         }])->where('document_id', "ASSETCOST")->where('is_active', 1);
 
+
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -1496,6 +1497,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $query->where('description', 'LIKE', "%{$search}%");
             });
         }
+
+
+        $erpAttributes = $erpAttributes->where(function ($query) use ($code) {
+            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
+        });
 
         return \DataTables::eloquent($erpAttributes)
             ->order(function ($query) use ($input) {
