@@ -3606,8 +3606,9 @@ srp_erp_ioubookingmaster.approvedYN = 1
     }
     private function getGLAllRecordsToExport($output,$request,$extraColumns,$checkIsGroup,$currencyLocal,$currencyRpt,$decimalPlaceLocal,$decimalPlaceRpt): Array {
         $data = array();
+        $x = 0;
+
         if ($output) {
-            $x = 0;
             $subTotalDebitRpt = 0;
             $subTotalCreditRpt = 0;
             $subTotalDebitLocal = 0;
