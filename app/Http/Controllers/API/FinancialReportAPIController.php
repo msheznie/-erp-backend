@@ -3357,6 +3357,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
             $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
 
+            $data = array();
 
             foreach ($outputArr as $key => $values) {
                 $data[$x][''] = $key;
