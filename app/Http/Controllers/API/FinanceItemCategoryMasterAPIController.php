@@ -122,11 +122,8 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
         $input = $request->all();
 
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
+        $sortColumn = $input['order'][0]['column'] ?? null;
+        $sortDirection = $input['order'][0]['dir'] ?? 'desc';
 
         $financeItemCategorySub = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
                                                          ->with(['finance_item_category_master','finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue','cogs_gl_code_pl'])
@@ -151,17 +148,20 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
             });
         }
 
-        return \DataTables::eloquent($financeItemCategorySub)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
-                        $query->orderBy('itemCategorySubID', $input['order'][0]['dir']);
-                    }
-                }
-            })
+        if ($sortColumn !== null) {
+            $orderByField = $sortColumn == 0 ? 'itemCategorySubID' : 'itemCategorySubID';
+            $financeItemCategorySub->orderBy($orderByField, $sortDirection);
+        }
+
+        $financeItemCategorySub = $financeItemCategorySub->get();
+
+        foreach ($financeItemCategorySub as $item){
+            $item->categoryType = json_decode($item->categoryType);
+        }
+
+        return \DataTables::of($financeItemCategorySub)
             ->addIndexColumn()
-            ->with('orderCondition', $sort)
+            ->with('orderCondition', $sortDirection)
             ->addColumn('Actions', 'Actions', "Actions")
             //->addColumn('Index', 'Index', "Index")
             ->make(true);

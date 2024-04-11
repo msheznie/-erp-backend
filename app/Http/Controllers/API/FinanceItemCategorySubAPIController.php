@@ -17,6 +17,7 @@ use App\Http\Requests\API\UpdateFinanceItemCategorySubAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\FinanceItemCategorySub;
 use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\ItemMaster;
 use App\Models\User;
 use App\Repositories\FinanceItemcategorySubAssignedRepository;
 use App\Repositories\FinanceItemCategorySubRepository;
@@ -447,7 +448,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         }
 
-        
+
         $input['financeGLcodebBS'] = isset($financeGLcodebBS->AccountCode) ? $financeGLcodebBS->AccountCode : null;
         $input['financeGLcodePL'] = isset($financeGLcodePL->AccountCode) ? $financeGLcodePL->AccountCode : null;
         $input['financeCogsGLcodePL'] = isset($financeCogsGLcodePL->AccountCode) ? $financeCogsGLcodePL->AccountCode : null;
@@ -456,8 +457,26 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
+
+        $categoryTypeNew = $input['categoryType'];
+
+        $financeItemSubCategory = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+            ->first();
+
+        $categoryTypeOld = json_decode($financeItemSubCategory->categoryType);
+
+        if(count($categoryTypeOld) > count($categoryTypeNew)){
+            $isItemMaster = ItemMaster::where('financeCategorySub', $input['itemCategorySubID'])->first();
+            if(!empty($isItemMaster)){
+                return $this->sendError("Cannot change the Category Type. This Item Finance Sub Category is already selected for Item/Items.'",500);
+            }
+        }
+
+
+
         $masterData = [
             'categoryDescription' => $input['categoryDescription'],
+            'categoryType' => json_encode($input['categoryType']),
             'enableSpecification' => isset($input['enableSpecification']) ? $input['enableSpecification'] : null,
             'itemCategoryID' => $input['itemCategoryID'],
             'financeGLcodebBSSystemID' => isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null,

@@ -52,6 +52,7 @@ class FinanceItemcategorySubAssigned extends Model
         'mainItemCategoryID',
         'itemCategorySubID',
         'categoryDescription',
+        'categoryType',
         'financeGLcodebBSSystemID',
         'financeGLcodebBS',
         'financeGLcodePLSystemID',

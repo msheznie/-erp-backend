@@ -50,6 +50,7 @@ class FinanceItemCategorySub extends Model
 
     public $fillable = [
         'categoryDescription',
+        'categoryType',
         'itemCategoryID',
         'financeGLcodebBSSystemID',
         'financeGLcodebBS',
