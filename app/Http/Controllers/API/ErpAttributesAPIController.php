@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateErpAttributesAPIRequest;
 use App\Http\Requests\API\UpdateErpAttributesAPIRequest;
 use App\Models\ErpAttributes;
+use App\Models\ErpAttributeValues;
 use App\Repositories\ErpAttributesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -367,7 +368,9 @@ class ErpAttributesAPIController extends AppBaseController
         $input = $request->all();
         $id = $input['id'];
 
-        $dropdownValues = ErpAttributesDropdown::where('id',$id)->first();        
+        $dropdownValues = ErpAttributesDropdown::where('id',$id)->first();
+
+        ErpAttributeValues::where('attribute_id',$dropdownValues->attributes_id)->where('value', $id)->update(['color' => $input['color']]);
 
 
         if($dropdownValues->description != $input['description']){
