@@ -7595,7 +7595,7 @@ GROUP BY
             $fromDate = $fromDate->format('Y-m-d');
         } else {
             $period = CompanyFinancePeriod::find($request->month);
-            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+            $toDate = ($period) ? Carbon::parse($period->dateTo)->format('Y-m-d') : null;
             $month = Carbon::parse($toDate)->format('Y-m-d');
             $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
         }
