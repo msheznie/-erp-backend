@@ -1552,6 +1552,10 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError('Maximum number of selections exceeded');
         }
 
+        if($input['value'] == null && $input['action'] == 1){
+            return $this->sendError('Please select/insert a value to field');
+        }
+
         if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
             $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
             if(!empty($isAttributeValues)){
