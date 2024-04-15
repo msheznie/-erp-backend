@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.38.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.38.0...v10.38.1) (2024-04-15)
+
+
+### Bug Fixes
+
+* **general ledger:** fix the issue in jv confirm user [GCP-3355] ([#5977](https://github.com/pbsgears/Gears_BackEnd/issues/5977)) ([1d294d1](https://github.com/pbsgears/Gears_BackEnd/commit/1d294d18cc10f1748378eb3853abf38f2d99b79d))
+
 ## [10.38.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.37.0...v10.38.0) (2024-04-03)
 
 
