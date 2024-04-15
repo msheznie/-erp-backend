@@ -3179,7 +3179,7 @@ class Helper
                             // get current employee detail.
                             if (!in_array($params['document'], $empInfoSkip)) {
                                 // check recurring document or not
-                                if(isset($params['isFromRecurringVoucher'])) {
+                                if(isset($params['isFromRecurringVoucher']) && $params['isFromRecurringVoucher']) {
                                     $empInfo = UserTypeService::getSystemEmployee();
                                 }
                                 else{
@@ -4446,7 +4446,7 @@ class Helper
 
                     
                 // get current employee detail
-                if(isset($input['isFromRecurringVoucher'])){
+                if(isset($input['isFromRecurringVoucher']) && $input['isFromRecurringVoucher']){
                     $empInfo = UserTypeService::getSystemEmployee();
                 }
                 else{
