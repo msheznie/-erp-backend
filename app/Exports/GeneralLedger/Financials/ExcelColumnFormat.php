@@ -98,7 +98,13 @@ class ExcelColumnFormat
                             $count = $count++;
                         }
                     }else {
-                        $count = 0;
+                        if($collect->isFinalLevel)
+                        {
+                            $count++;
+                        }else {
+                            $count = 0;
+
+                        }
                     }
 
                 }
