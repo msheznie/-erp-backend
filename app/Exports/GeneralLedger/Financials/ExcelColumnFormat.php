@@ -93,7 +93,7 @@ class ExcelColumnFormat
                     // item type 3 means the total
                     if(isset($collect->itemType) && ($collect->itemType == 3))
                     {
-                        if($collect->isFinalLevel && isset($collection[$key-1]))
+                        if($collect->isFinalLevel  && isset($collection[$key-1]))
                         {
                             $count = $count++;
                         }
@@ -157,7 +157,11 @@ class ExcelColumnFormat
         $data = (isset($data['columnData'])) ? $data['columnData'][0] : $data;
         $count = 0;
 
-        foreach (collect($data) as $key=>$value) {
+        $collection_data = collect($data)->prepend(0,'CYM1-005');
+        $collection_data = collect($data)->prepend(0,'CYM1-008');
+        $collection_data = collect($data)->prepend(0,'CYM1-006');
+
+        foreach ($collection_data as $key=>$value) {
             if(str_contains($key,'-'))
             {
                 $count++;
@@ -168,9 +172,11 @@ class ExcelColumnFormat
                 });
 
 
-                if($columnName == 'CM') {
+                if($columnName == 'CM')
+                {
                 }
-                if($columnDetails->first()) {
+                if($columnDetails->first())
+                {
                     $columnDetail = $columnDetails->first();
                     /*
                         1 - GL Code
