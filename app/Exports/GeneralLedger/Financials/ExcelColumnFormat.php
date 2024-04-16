@@ -163,9 +163,10 @@ class ExcelColumnFormat
         $data = (isset($data['columnData'])) ? $data['columnData'][0] : $data;
         $count = 0;
 
-        $collection_data = collect($data)->prepend(0,'CYM1-005');
-        $collection_data = collect($data)->prepend(0,'CYM1-008');
-        $collection_data = collect($data)->prepend(0,'CYM1-006');
+        $collection_data = collect($data);
+        $collection_data->put('CYM1-005',0);
+        $collection_data->put('CYM1-007',0);
+        $collection_data->put('CYM1-008',0);
 
         foreach ($collection_data as $key=>$value) {
             if(str_contains($key,'-'))
