@@ -2484,7 +2484,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $id = $request->get('id');
         /** @var PurchaseRequest $purchaseRequest */
         
-        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','segment',
             'priority_pdf', 'location', 'details.uom','details.altUom', 'company','currency_by','buyer', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)

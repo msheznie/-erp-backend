@@ -10,7 +10,7 @@
         </tr>
         <tr>
             <td>
-                <span style="font-weight:bold;">{{ __('custom.approved_by') }} : </span>
+                <span style="font-weight:bold;">{{ __('custom.electronically_approved_by') }} : </span>
 
             <td>
                 

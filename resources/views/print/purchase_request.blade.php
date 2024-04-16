@@ -273,7 +273,7 @@
                             <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
-                            {{ $request->serviceLineCode?$request->serviceLineCode:'-' }}
+                            {{ $request->segment?$request->segment->ServiceLineDes:'-' }}
                         </td>
                     </tr>
 

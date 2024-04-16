@@ -27,6 +27,8 @@ use App\Models\SegmentMaster;
 use App\Repositories\DirectInvoiceDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\ServiceLine;
+use App\Models\SrpEmployeeDetails;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -155,6 +157,16 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         }*/
 
 
+        if($BookInvSuppMaster->employeeID > 0){
+            $employeeSegment = SrpEmployeeDetails::where('EIdNo',$BookInvSuppMaster->employeeID)->first();
+            if($employeeSegment && $employeeSegment->segmentID > 0){
+                $segment = SegmentMaster::where('serviceLineSystemID',$employeeSegment->segmentID)->where('isActive',1)->first();
+                if($segment){
+                    $input['serviceLineSystemID'] = $segment->serviceLineSystemID;
+                    $input['serviceLineCode'] = $segment->ServiceLineCode;
+                }
+            }
+        }
 
         $input['comments'] = $BookInvSuppMaster->comments;
         $input['companySystemID'] = $BookInvSuppMaster->companySystemID;
