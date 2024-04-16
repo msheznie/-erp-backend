@@ -305,6 +305,8 @@ class ErpAttributesAPIController extends AppBaseController
 
         $erpAttributes->delete();
 
+        ErpAttributeValues::where('erp_attribute_values.attribute_id', $id)->update(['is_active' => 0]);
+
         return $this->sendResponse([],'Erp Attributes deleted successfully');
     }
 
