@@ -459,17 +459,24 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
 
         $categoryTypeNew = $input['categoryType'];
+        $itemCategorySubID = isset($input['itemCategorySubID']) ? $input['itemCategorySubID'] : null;
 
-        $financeItemSubCategory = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+        $financeItemSubCategory = FinanceItemCategorySub::where('itemCategorySubID', $itemCategorySubID)
             ->first();
 
-        $categoryTypeOld = json_decode($financeItemSubCategory->categoryType);
+        $categoryType = isset($financeItemSubCategory->categoryType) ? $financeItemSubCategory->categoryType : null;
 
-        if(count($categoryTypeOld) > count($categoryTypeNew)){
-            $isItemMaster = ItemMaster::where('financeCategorySub', $input['itemCategorySubID'])->first();
-            if(!empty($isItemMaster)){
-                return $this->sendError("Cannot change the Category Type. This Item Finance Sub Category is already selected for Item/Items.'",500);
+        $categoryTypeOld = json_decode($categoryType);
+
+        if (is_array($categoryTypeNew) && is_array($categoryTypeOld)) {
+
+            if (count($categoryTypeOld) > count($categoryTypeNew)) {
+                $isItemMaster = ItemMaster::where('financeCategorySub', $input['itemCategorySubID'])->first();
+                if (!empty($isItemMaster)) {
+                    return $this->sendError("Cannot change the Category Type. This Item Finance Sub Category is already selected for Item/Items.'", 500);
+                }
             }
+
         }
 
 
