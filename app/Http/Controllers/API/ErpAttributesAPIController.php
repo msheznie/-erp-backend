@@ -284,6 +284,17 @@ class ErpAttributesAPIController extends AppBaseController
             return $this->sendError('Erp Attributes not found');
         }
 
+        $attributeActiveValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+            ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+            ->where('erp_attribute_values.attribute_id', $id)
+            ->where('erp_fa_asset_master.confirmedYN', 1)
+            ->where('erp_fa_asset_master.approved', 0)
+            ->count();
+
+        if($attributeActiveValidation > 0){
+            return $this->sendError('There are some pending assets awaiting approval', 500);
+        }
+
         if ($erpAttributes->document_id == "SUBCAT") {
 
             $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
@@ -330,6 +341,19 @@ class ErpAttributesAPIController extends AppBaseController
         $id = $input['id'];
 
         $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+
+        if($erpAttributes->is_active != $input['is_active'] && $input['is_active'] == 0){
+            $attributeActiveValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+                ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+                ->where('erp_attribute_values.attribute_id', $id)
+                ->where('erp_fa_asset_master.confirmedYN', 1)
+                ->where('erp_fa_asset_master.approved', 0)
+                ->count();
+
+            if($attributeActiveValidation > 0){
+                return $this->sendError('There are some pending assets awaiting approval', 500);
+            }
+        }
 
         if($erpAttributes->field_type_id != $input['field_type_id']){
             if($erpAttributes->field_type_id == 3){

@@ -1487,7 +1487,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $code = $input['documentSystemCode'];
         $erpAttributes = ErpAttributes::with(['fieldOptions', 'attributeValues'  => function($query) use ($code){
             $query->where('document_master_id', $code)->orWhere('document_master_id', null);
-        }])->where('document_id', "ASSETCOST")->where('is_active', 1);
+        }])->where('document_id', "ASSETCOST");
 
 
         $search = $request->input('search.value');
