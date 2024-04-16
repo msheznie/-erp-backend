@@ -2485,7 +2485,7 @@ class PurchaseRequestAPIController extends AppBaseController
         /** @var PurchaseRequest $purchaseRequest */
         
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
-            'priority_pdf', 'location', 'details.uom','details.altUom', 'company', 'approved_by' => function ($query) {
+            'priority_pdf', 'location', 'details.uom','details.altUom', 'company','currency_by','buyer', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
                     ->whereIn('documentSystemID', [1, 50, 51]);
@@ -2509,8 +2509,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $html = view('print.purchase_request', $array);
         $htmlFooter = view('print.purchase_request_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
-        $mpdf->AddPage('L');
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);
         $mpdf->WriteHTML($html);

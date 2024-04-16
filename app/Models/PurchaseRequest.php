@@ -316,6 +316,10 @@ class PurchaseRequest extends Model
         return $this->belongsTo('App\Models\Employee','createdUserSystemID','employeeSystemID');
     }
 
+    public function buyer(){
+        return $this->belongsTo('App\Models\Employee','buyerEmpSystemID','employeeSystemID');
+    }
+
     public function cancelled_by(){
         return $this->belongsTo('App\Models\Employee','cancelledByEmpSystemID','employeeSystemID');
     }

@@ -145,109 +145,65 @@
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
 
-    <table>
+    <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-            <td colspan="3">
+            <td valign="top" style="width: 20%">
                 @if($request->company)
-                    <h6> {{$request->company->CompanyName}}</h6>
+                    <img src="{{$request->company->logo_url}}" width="100" class="container">
                 @endif
             </td>
+            <td valign="top" style="width: 80%">
+                
+                <span style="font-size: 24px;font-weight: 400"> {{ $request->company?$request->company->CompanyName:'' }}</span>
+                <br>
+                <span style="font-weight: bold"> {{ $request->company?$request->company->CompanyAddress:'' }}</span>
+                <br>
+            </td>
         </tr>
+    </table>
+    <hr style="color: #d3d9df border-top: 2px solid black; height: 2px; color: black">
+    
+    <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-            <td colspan="3">
-                @if($request->company)
-                    <h6>{{$request->company->CompanyAddress}}</h6>
-                @endif
+            <td style="text-align: center; font-weight: bold">
+                <div>
+                    <span style="font-size: 18px">
+                        @if($request->documentSystemID == 1)
+                        {{ __('custom.purchase') }}
+                        @endif
+                        @if($request->documentSystemID == 50)
+                            {{ __('custom.work') }} 
+                        @endif
+                        @if($request->documentSystemID == 51)
+                        {{ __('custom.direct') }}  
+                        @endif
+                        {{ __('custom.request') }}  
+                    </span>
+                </div>
             </td>
         </tr>
     </table>
 
     <table style="width: 100%">
         <tr style="width:100%">
-            <td style="width: 30%">
+            <td style="width: 50%">
                 <table>
+
                     <tr>
-                        <td width="50px">
-                            <span style="font-weight:bold;">{{ __('custom.priority') }} </span>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.request_code') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
-                            @if($request->priority_pdf)
-                                {{$request->priority_pdf->priorityDescription}}
-                            @endif
+                            {{ $request->purchaseRequestCode?$request->purchaseRequestCode:'-' }}
                         </td>
                     </tr>
+
                     <tr>
-                        <td width="50px">
-                            <span style="font-weight:bold;">{{ __('custom.requisitioner') }}</span>
-                        </td>
-                        <td width="10px">
-                            <span style="font-weight:bold;">:</span>
-                        </td>
-                        <td>
-                            @if($request->created_by)
-                                {{$request->created_by->empName}}
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="50px">
-                            <span style="font-weight:bold;">{{ __('custom.location') }}</span>
-                        </td>
-                        <td width="10px">
-                            <span style="font-weight:bold;">:</span>
-                        </td>
-                        <td>
-                            @if($request->location_pdf)
-                                {{$request->location_pdf->locationName}}
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="70px">
-                            <span style="font-weight:bold;">{{ __('custom.comments') }} </span>
-                        </td>
-                        <td width="10px">
-                            <span style="font-weight:bold;">:</span>
-                        </td>
-                        <td>
-                            <span>{{$request->comments}}</span>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            <td style="width: 40%;text-align: center">
-                <h3>
-                    @if($request->documentSystemID == 1)
-                        {{ __('custom.purchase') }}
-                    @endif
-                    @if($request->documentSystemID == 50)
-                        {{ __('custom.work') }} 
-                    @endif
-                    @if($request->documentSystemID == 51)
-                    {{ __('custom.direct') }}  
-                    @endif
-                    {{ __('custom.requisition') }}  
-                </h3>
-            </td>
-            <td style="width: 30%">
-                <table valign="top">
-                    <tr>
-                        <td width="90px">
-                            <span style="font-weight:bold;">{{ __('custom.document_no') }}</span>
-                        </td>
-                        <td width="10px">
-                            <span style="font-weight:bold;">:</span>
-                        </td>
-                        <td>
-                            <span>{{$request->purchaseRequestCode}}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="90px">
-                            <span style="font-weight:bold;">{{ __('custom.date') }} </span>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.request_date') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -259,22 +215,100 @@
                         </td>
                     </tr>
                     <tr>
-                        <td rowspan="3" colspan="3" style="bottom: 0;position: absolute;">
-                                <span style="font-weight:bold;">
-                                    <h3 class="text-muted">
-                                        @if($request->cancelledYN == -1)
-                                        {{ __('custom.cancelled') }}
-                                        @elseif($request->PRConfirmedYN == 0 && $request->approved == 0)
-                                        {{ __('custom.not_confirmed') }}
-                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0  && $request->timesReferred == 0)
-                                        {{ __('custom.pending_approval') }} 
-                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred > 0)
-                                        {{ __('custom.referred_back') }}
-                                        @elseif($request->PRConfirmedYN == 1 && ($request->approved == 1 || $request->approved == -1))
-                                        {{ __('custom.fully_approved') }}
-                                        @endif
-                                        </h3>
-                                </span>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.request_name') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->created_by?$request->created_by->empName:'-' }}
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.reference_no') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->docRefNo?$request->docRefNo:'-' }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.location_required') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->location_pdf?$request->location_pdf->locationName:'-' }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 50%">
+                <table>
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.priority') }} </span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->priority_pdf?$request->priority_pdf->priorityDescription:'-' }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.segment') }} </span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->serviceLineCode?$request->serviceLineCode:'-' }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.comments') }} </span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->comments?$request->comments:'-' }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.currency') }} </span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->currency_by?$request->currency_by->CurrencyCode:'-' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.buyer') }} </span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->buyer?$request->buyer->empName:'-' }}
                         </td>
                     </tr>
                 </table>
@@ -289,6 +323,7 @@
                 <th></th>
                 <th class="text-left">{{ __('custom.item_code') }}</th>
                 <th class="text-left">{{ __('custom.item_description') }}</th>
+                <th class="text-left">{{ __('custom.comments') }}</th>
                 <th class="text-left">{{ __('custom.part_number') }}</th>
                 <th class="text-left">{{ __('custom.uom') }}</th>
                 <th class="text-left">{{ __('custom.qty_requested') }}</th>
@@ -309,6 +344,7 @@
                     <td style="padding-left: 5px;">{{$loop->iteration}}</td>
                     <td style="padding-left: 5px;">{{$item->itemPrimaryCode}}</td>
                     <td style="padding-left: 5px;">{{$item->itemDescription}}</td>
+                    <td style="padding-left: 5px;">{{$item->comments}}</td>
                     <td style="padding-left: 5px;"> {{$item->partNumber}}</td>
                     <td style="padding-left: 5px;">
                         @if($item->uom)
@@ -335,62 +371,6 @@
                 </tr>
             @endforeach
             </tbody>
-        </table>
-    </div>
-    {{--<hr>--}}
-    <div class="row" style="margin-top: 60px;margin-left: -8px">
-        <table>
-            <tr width="100%">
-                <td width="60%">
-                    <table width="100%">
-                        <tr>
-                            <td width="110px">
-                                <span style="font-weight:bold;">{{ __('custom.confirmed_by') }} :</span>
-                            </td>
-                            <td width="400px">
-                                @if($request->confirmed_by)
-                                    {{$request->confirmed_by->empName}}
-                                @endif
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-                <td width="10%">
-
-                </td>
-                <td width="30%">
-                    <table>
-                        <tr>
-                            <td width="200px">
-                                <span style="font-weight:bold;">{{ __('custom.reviewed_by') }} :</span>
-                            </td>
-                            <td>
-                                <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-    </div>
-    <div class="row" style="margin-top: 10px">
-        <span style="font-weight:bold;">{{ __('custom.electronically_approved_by') }} :</span>
-    </div>
-    <div style="margin-top: 10px">
-        <table>
-            <tr>
-                @foreach ($request->approved_by as $det)
-                    <td style="padding-right: 25px" class="text-center">
-                        @if($det->employee)
-                            {{$det->employee->empFullName }}
-                        @endif
-                        <br><br>
-                        @if($det->employee)
-                          {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                        @endif
-                    </td>
-                @endforeach
-            </tr>
         </table>
     </div>
 </div>
