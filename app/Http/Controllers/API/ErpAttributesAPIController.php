@@ -274,11 +274,6 @@ class ErpAttributesAPIController extends AppBaseController
     {
         /** @var ErpAttributes $erpAttributes */
         $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
-        
-        if($erpAttributes->field_type_id == 3){
-           $dropdownValues = ErpAttributesDropdown::where('attributes_id',$erpAttributes->id)->delete();
-        }
-
 
         if (empty($erpAttributes)) {
             return $this->sendError('Erp Attributes not found');
