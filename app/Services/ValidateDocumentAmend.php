@@ -8,6 +8,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\GeneralLedger;
+use App\Models\JvMaster;
 use App\Models\PaySupplierInvoiceMaster;
 use Carbon\Carbon;
 
@@ -66,6 +67,21 @@ class ValidateDocumentAmend
                     $receiptVoucherMaster = CustomerReceivePayment::find($documentAutoId);
                     if($receiptVoucherMaster){
                         $financePeriod = CompanyFinancePeriod::where('companyFinancePeriodID',$receiptVoucherMaster->companyFinancePeriodID)->first();
+                        if($financePeriod){
+                            if($financePeriod->isActive == 0 || $financePeriod->isCurrent == 0){
+                                $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
+                                $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
+
+                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                return ['status' => false,'message'=>$message];
+                            }
+                        }
+                    }
+                break;
+            case 17: // JV - Journal Voucher
+                    $jvMaster = JvMaster::find($documentAutoId);
+                    if($jvMaster){
+                        $financePeriod = CompanyFinancePeriod::where('companyFinancePeriodID',$jvMaster->companyFinancePeriodID)->first();
                         if($financePeriod){
                             if($financePeriod->isActive == 0 || $financePeriod->isCurrent == 0){
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
@@ -140,6 +156,19 @@ class ValidateDocumentAmend
                     }
                 }
                 break;
+            case 17: // JV - Journal Voucher
+                    $jvMaster = JvMaster::find($documentAutoId);
+                    if($jvMaster){
+                        $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
+                                                ->where('documentCode',$jvMaster->JVcode)
+                                                ->where('documentSystemID',$documentSystemID)
+                                                ->count();
+                        if($glPost == 0){
+                            $message = 'GL posting in progress. Cannot return back to amend now';
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                    break;
             default:
                 return ['status' => false,'message'=>'Document ID not found'];
 
@@ -200,6 +229,21 @@ class ValidateDocumentAmend
 
                     if($bookInvSuppMasterData){
                         $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$bookInvSuppMasterData->companyFinanceYearID)->first();
+                        if($financeYear){
+                            if($financeYear->isActive == 0 || $financeYear->isCurrent == 0){
+                                $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
+                                $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
+
+                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                return ['status' => false,'message'=>$message];
+                            }
+                        }
+                    }
+                break;
+            case 17: // JV - Journal Voucher
+                    $jvMaster = JvMaster::find($documentAutoId);
+                    if($jvMaster){
+                        $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$jvMaster->companyFinanceYearID)->first();
                         if($financeYear){
                             if($financeYear->isActive == 0 || $financeYear->isCurrent == 0){
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
