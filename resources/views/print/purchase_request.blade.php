@@ -169,7 +169,7 @@
                 <div>
                     <span style="font-size: 18px">
                         @if($request->documentSystemID == 1)
-                        {{ __('custom.purchase') }}
+                        {{ __('custom.purchase_request') }}
                         @endif
                         @if($request->documentSystemID == 50)
                             {{ __('custom.work') }} 
@@ -177,7 +177,9 @@
                         @if($request->documentSystemID == 51)
                         {{ __('custom.direct') }}  
                         @endif
+                        @if($request->documentSystemID != 1)
                         {{ __('custom.request') }}  
+                        @endif
                     </span>
                 </div>
             </td>

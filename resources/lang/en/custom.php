@@ -557,6 +557,7 @@ return [
     "qty_on_order" => "Qty On Order",
     "po_qty" => "PO Qty",
     'purchase' => 'Purchase',
+    "purchase_request" => "Purchase Request",
     "work" => "Work",
     "direct" => "Direct",
     "requisition" => "Requisition",
