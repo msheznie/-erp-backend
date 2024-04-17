@@ -138,6 +138,9 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             unset($input['finance_gl_code_revenue']);
         }
 
+        if (array_key_exists('categoryType', $input)) {
+            unset($input['categoryType']);
+        }
 
         foreach ($input as $key => $value) {
             if (is_array($input[$key])) {
