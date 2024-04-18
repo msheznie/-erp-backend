@@ -15,9 +15,19 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateFinanceItemCategorySubAPIRequest;
 use App\Http\Requests\API\UpdateFinanceItemCategorySubAPIRequest;
 use App\Models\ChartOfAccount;
+use App\Models\CustomerInvoiceItemDetails;
+use App\Models\DeliveryOrderDetail;
 use App\Models\FinanceItemCategorySub;
 use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\GRVDetails;
+use App\Models\ItemIssueDetails;
 use App\Models\ItemMaster;
+use App\Models\PurchaseOrderDetails;
+use App\Models\PurchaseReturnDetails;
+use App\Models\QuotationDetails;
+use App\Models\SalesReturnDetail;
+use App\Models\SupplierInvoiceDirectItem;
+use App\Models\SupplierInvoiceItemDetail;
 use App\Models\User;
 use App\Repositories\FinanceItemcategorySubAssignedRepository;
 use App\Repositories\FinanceItemCategorySubRepository;
@@ -78,9 +88,9 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
     public function getSubcategoriesBymainCategory(Request $request){
 
-        if($request->get('itemCategoryID')) {
-            if($request->get('primaryCompanySystemID')){
-                $companyId = $request->get('primaryCompanySystemID');
+        if($request->itemCategoryID) {
+            if($request->primaryCompanySystemID){
+                $companyId = $request->primaryCompanySystemID;
 
                 $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
@@ -90,18 +100,112 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                     $companyID = [$companyId];
                 }
 
-                 $subCategories = FinanceItemcategorySubAssigned::where('mainItemCategoryID',$request->get('itemCategoryID'))
-                                                    ->where('isActive',1)
-                                                    ->whereHas('finance_item_category_sub', function ($query){
-                                                        $query->where('isActive',1);
-                                                    })
-                                                    ->whereIn('companySystemID',$companyID)
-                                                    ->where('isAssigned',-1)
-                                                    ->with(['finance_gl_code_bs','finance_gl_code_pl'])
-                                                    ->groupBy('itemCategorySubID')
-                                                    ->get();
+                $itemType = $request->itemType;
+                $isChangeItemType = $request->isChangeItemType;
+                $itemCodeSystem = $request->itemCodeSystem;
+
+                $transactions = [];
+
+
+
+                if($isChangeItemType == 1){
+
+                    $itemMaster = ItemMaster::where('itemCodeSystem', $itemCodeSystem)->first();
+                    $categoryType = isset($itemMaster->categoryType) ? $itemMaster->categoryType : null;
+                    $categoryTypeOld = json_decode($categoryType);
+
+                    if (is_array($itemType) && is_array($categoryTypeOld)) {
+
+                        if (count($categoryTypeOld) > count($itemType)) {
+                            $poDetails = PurchaseOrderDetails::where('itemCode', $itemCodeSystem) ->join('erp_purchaseordermaster', 'erp_purchaseorderdetails.purchaseOrderMasterID', '=', 'erp_purchaseordermaster.purchaseOrderID')->get();
+                            foreach ($poDetails as $poDetail){
+                                $transactions[] = $poDetail->purchaseOrderCode;
+                            }
+
+                            $issueDetails = ItemIssueDetails::where('itemCodeSystem', $itemCodeSystem)->get();
+                            foreach ($issueDetails as $issueDetail){
+                                $transactions[] = $issueDetail->itemIssueCode;
+                            }
+
+                            $grvDetails = GRVDetails::where('itemCode', $itemCodeSystem) ->join('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->where('grvTypeID', 1)->get();
+                            foreach ($grvDetails as $grvDetail){
+                                $transactions[] = $grvDetail->grvPrimaryCode;
+                            }
+
+                            $sis = SupplierInvoiceDirectItem::where('itemCode', $itemCodeSystem) ->join('erp_bookinvsuppmaster', 'supplier_invoice_items.bookingSuppMasInvAutoID', '=', 'erp_bookinvsuppmaster.bookingSuppMasInvAutoID')->get();
+                            foreach ($sis as $si){
+                                $transactions[] = $si->bookingInvCode;
+                            }
+
+                            $prs = PurchaseReturnDetails::where('itemCode', $itemCodeSystem) ->join('erp_purchasereturnmaster', 'erp_purchasereturndetails.purhaseReturnAutoID', '=', 'erp_purchasereturnmaster.purhaseReturnAutoID')->get();
+                            foreach ($prs as $pr){
+                                $transactions[] = $pr->purchaseReturnCode;
+                            }
+
+                            $qus = QuotationDetails::where('itemAutoID', $itemCodeSystem) ->join('erp_quotationmaster', 'erp_quotationdetails.quotationMasterID', '=', 'erp_quotationmaster.quotationMasterID')->get();
+                            foreach ($qus as $qu){
+                                $transactions[] = $qu->quotationCode;
+                            }
+
+                            $deos = DeliveryOrderDetail::where('itemCodeSystem', $itemCodeSystem) ->join('erp_delivery_order', 'erp_delivery_order_detail.deliveryOrderID', '=', 'erp_delivery_order.deliveryOrderID')->get();
+                            foreach ($deos as $deo){
+                                $transactions[] = $deo->deliveryOrderCode;
+                            }
+
+                            $cus = CustomerInvoiceItemDetails::where('itemCodeSystem', $itemCodeSystem) ->join('erp_custinvoicedirect', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')->get();
+                            foreach ($cus as $cu){
+                                $transactions[] = $cu->bookingInvCode;
+                            }
+
+                            $srs = SalesReturnDetail::where('itemCodeSystem', $itemCodeSystem) ->join('salesreturn', 'salesreturndetails.salesReturnID', '=', 'salesreturn.id')->get();
+                            foreach ($srs as $sr){
+                                $transactions[] = $sr->salesReturnCode;
+                            }
+
+
+                            if(count($transactions) > 0){
+                                return $this->sendError($transactions, 422);
+                            }
+                        }
+
+                    }
+
+
+                }
+                if (is_array($itemType)) {
+                    if (count($itemType) > 1) {
+                        $subCategories = FinanceItemcategorySubAssigned::where('mainItemCategoryID', $request->itemCategoryID)
+                            ->where('isActive', 1)
+                            ->whereHas('finance_item_category_sub', function ($query) {
+                                $query->where('isActive', 1);
+                            })
+                            ->whereIn('companySystemID', $companyID)
+                            ->where('isAssigned', -1)
+                            ->with(['finance_gl_code_bs', 'finance_gl_code_pl'])
+                            ->groupBy('itemCategorySubID')
+                            ->get();
+                    } else {
+                        $subCategories = FinanceItemcategorySubAssigned::where('mainItemCategoryID', $request->itemCategoryID)
+                            ->where('isActive', 1)
+                            ->whereHas('finance_item_category_sub', function ($query) {
+                                $query->where('isActive', 1);
+                            })
+                            ->whereIn('companySystemID', $companyID)
+                            ->where('isAssigned', -1)
+                            ->with(['finance_gl_code_bs', 'finance_gl_code_pl'])
+                            ->groupBy('itemCategorySubID');
+
+                        if (isset($itemType[0]['id']) && $itemType[0]['id'] == 2) {
+                            $subCategories = $subCategories->whereIn('categoryType', ['[{"id":2,"itemName":"Sale"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->get();
+                        }
+
+                        if (isset($itemType[0]['id']) && $itemType[0]['id'] == 1) {
+                            $subCategories = $subCategories->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->get();
+                        }
+                    }
+                }
             }else{
-                return $subCategories = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
+                return $subCategories = FinanceItemCategorySub::where('itemCategoryID',$request->itemCategoryID)
                     ->with(['finance_gl_code_bs','finance_gl_code_pl'])
                     ->where('isActive',1)
                     ->get();
@@ -458,32 +562,29 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
 
-        $categoryTypeNew = $input['categoryType'];
-        $itemCategorySubID = isset($input['itemCategorySubID']) ? $input['itemCategorySubID'] : null;
+
+        $categoryTypeNew = $input['categoryTypeDecode'];
+        $itemCategorySubID = isset($input['itemCategorySubID']) ? $input['itemCategorySubID']: null;
 
         $financeItemSubCategory = FinanceItemCategorySub::where('itemCategorySubID', $itemCategorySubID)
             ->first();
-
-        $categoryType = isset($financeItemSubCategory->categoryType) ? $financeItemSubCategory->categoryType : null;
-
-        $categoryTypeOld = json_decode($categoryType);
-
-        if (is_array($categoryTypeNew) && is_array($categoryTypeOld)) {
-
-            if (count($categoryTypeOld) > count($categoryTypeNew)) {
-                $isItemMaster = ItemMaster::where('financeCategorySub', $input['itemCategorySubID'])->first();
-                if (!empty($isItemMaster)) {
-                    return $this->sendError("Cannot change the Category Type. This Item Finance Sub Category is already selected for Item/Items.'", 500);
+        if(!empty($financeItemSubCategory)) {
+            $categoryTypeOld = json_decode($financeItemSubCategory->categoryType);
+            if (is_array($categoryTypeOld) && is_array($categoryTypeNew)) {
+                if (count($categoryTypeOld) > count($categoryTypeNew)) {
+                    $isItemMaster = ItemMaster::where('financeCategorySub', $input['itemCategorySubID'])->first();
+                    if (!empty($isItemMaster)) {
+                        return $this->sendError("Cannot change the Category Type. This Item Finance Sub Category is already selected for Item/Items.'", 500);
+                    }
                 }
             }
 
         }
 
 
-
         $masterData = [
             'categoryDescription' => $input['categoryDescription'],
-            'categoryType' => json_encode($input['categoryType']),
+            'categoryType' => json_encode($input['categoryTypeDecode']),
             'enableSpecification' => isset($input['enableSpecification']) ? $input['enableSpecification'] : null,
             'itemCategoryID' => $input['itemCategoryID'],
             'financeGLcodebBSSystemID' => isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null,

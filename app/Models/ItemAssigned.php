@@ -75,6 +75,7 @@ class ItemAssigned extends Model
         'itemUrl',
         'companySystemID',
         'companyID',
+        'categoryType',
         'maximunQty',
         'minimumQty',
         'rolQuantity',

@@ -203,6 +203,7 @@ Route::group([], function() {
     Route::get('getAllMainItemsByCompany', 'ItemMasterAPIController@getAllMainItemsByCompany')->name('All main items by company');
     Route::get('checkUnitConversions', 'ItemMasterAPIController@checkUnitConversions')->name('Check unit conversions');
     Route::post('updateUnitConversion', 'ItemMasterAPIController@updateUnitConversion')->name('Update unit conversion');
+    Route::post('getCategoryType', 'ItemMasterAPIController@categoryType')->name('Get category type');
 });
 
 
