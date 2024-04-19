@@ -396,11 +396,11 @@ class ItemMasterAPIController extends AppBaseController
         if (is_array($itemType)){
             if (count($itemType) < 2) {
                 if (isset($itemType[0]['id']) && $itemType[0]['id'] == 2) {
-                    $itemMasters = $itemMasters->whereIn('categoryType', ['[{"id":2,"itemName":"Sale"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+                    $itemMasters = $itemMasters->whereIn('categoryType', ['[{"id":2,"itemName":"Sale"}]']);
                 }
 
                 if (isset($itemType[0]['id']) && $itemType[0]['id'] == 1) {
-                    $itemMasters = $itemMasters->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+                    $itemMasters = $itemMasters->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]']);
                 }
             }
         }
