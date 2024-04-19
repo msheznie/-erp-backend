@@ -172,14 +172,14 @@ class JvMasterAPIController extends AppBaseController
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError($companyFinanceYear["message"], 500);
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "Selected financial year is not active"
                 ];
+            }
+            else{
+                return $this->sendError($companyFinanceYear["message"], 500);
             }
         }
 
@@ -187,14 +187,14 @@ class JvMasterAPIController extends AppBaseController
         $inputParam["departmentSystemID"] = 5;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError($companyFinancePeriod["message"], 500);
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "Selected financial period is not active"
                 ];
+            }
+            else{
+                return $this->sendError($companyFinancePeriod["message"], 500);
             }
         }
         else {
@@ -215,14 +215,14 @@ class JvMasterAPIController extends AppBaseController
         ]);
 
         if ($validator->fails()) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError($validator->messages(), 422);
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "Error"
                 ];
+            }
+            else{
+                return $this->sendError($validator->messages(), 422);
             }
         }
 
@@ -250,14 +250,14 @@ class JvMasterAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError('JV date is not within the financial period!');
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "JV date is not within the financial period"
                 ];
+            }
+            else{
+                return $this->sendError('JV date is not within the financial period!');
             }
         }
 
@@ -270,17 +270,17 @@ class JvMasterAPIController extends AppBaseController
 
         $input['createdPcID'] = gethostname();
 
-        if(!isset($input['isFromRecurringVoucher'])){
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            $employee = UserTypeService::getSystemEmployee();
+            $input['createdUserID'] = $employee->empID;
+            $input['createdUserSystemID'] = $employee->employeeSystemID;
+        }
+        else{
             $id = Auth::id();
             $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
             $input['createdUserID'] = $user->employee['empID'];
             $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
-        }
-        else{
-            $employee = UserTypeService::getSystemEmployee();
-            $input['createdUserID'] = $employee->empID;
-            $input['createdUserSystemID'] = $employee->employeeSystemID;
         }
 
         $input['documentSystemID'] = '17';
@@ -329,14 +329,14 @@ class JvMasterAPIController extends AppBaseController
 
         $jvMaster = $this->jvMasterRepository->create($input);
 
-        if(!isset($input['isFromRecurringVoucher'])){
-            return $this->sendResponse($jvMaster->toArray(), 'JV created successfully');
-        }
-        else{
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             return [
                 "success" => true,
                 "data" => $jvMaster->toArray()
             ];
+        }
+        else{
+            return $this->sendResponse($jvMaster->toArray(), 'JV created successfully');
         }
     }
 
@@ -451,14 +451,14 @@ class JvMasterAPIController extends AppBaseController
         $jvMaster = $this->jvMasterRepository->findWithoutFail($id);
 
         if (empty($jvMaster)) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError('Jv Master not found');
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "Jv Master not found"
                 ];
+            }
+            else{
+                return $this->sendError('Jv Master not found');
             }
         }
 
@@ -467,7 +467,9 @@ class JvMasterAPIController extends AppBaseController
 
         $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
 
-        if(!isset($input['isFromRecurringVoucher'])){
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+        }
+        else{
             if (isset($input['JVdate'])) {
                 if ($input['JVdate']) {
                     $input['JVdate'] = Carbon::parse($input['JVdate']);
@@ -527,14 +529,14 @@ class JvMasterAPIController extends AppBaseController
             ]);
 
             if ($validator->fails()) {
-                if(!isset($input['isFromRecurringVoucher'])){
-                    return $this->sendError($validator->messages(), 422);
-                }
-                else{
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "success" => false,
                         "message" => "Validation failed"
                     ];
+                }
+                else{
+                    return $this->sendError($validator->messages(), 422);
                 }
             }
 
@@ -564,14 +566,14 @@ class JvMasterAPIController extends AppBaseController
                    
                 }
 
-                if(!isset($input['isFromRecurringVoucher'])) {
-                    return $this->sendError("The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
-                }
-                else{
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
                     return [
                         "success" => false,
                         "message" => "The Chart of Account/s are Inactive"
                     ];
+                }
+                else{
+                    return $this->sendError("The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
                 }
             }
 
@@ -580,28 +582,28 @@ class JvMasterAPIController extends AppBaseController
             $monthEnd = $input['FYPeriodDateTo'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                if(!isset($input['isFromRecurringVoucher'])){
-                    return $this->sendError('Document date is not within the selected financial period !', 500);
-                }
-                else{
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "success" => false,
                         "message" => "Document date is not within the selected financial period !"
                     ];
+                }
+                else{
+                    return $this->sendError('Document date is not within the selected financial period !', 500);
                 }
             }
 
             $checkItems = JvDetail::where('jvMasterAutoId', $id)
                 ->count();
             if ($checkItems == 0) {
-                if(!isset($input['isFromRecurringVoucher'])){
-                    return $this->sendError('Journal Voucher should have at least one item', 500);
-                }
-                else{
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "success" => false,
                         "message" => "Journal Voucher should have at least one item"
                     ];
+                }
+                else{
+                    return $this->sendError('Journal Voucher should have at least one item', 500);
                 }
             }
 
@@ -611,14 +613,14 @@ class JvMasterAPIController extends AppBaseController
                     ->where('creditAmount', '<=', 0)
                     ->count();
                 if ($checkQuantity > 0) {
-                    if(!isset($input['isFromRecurringVoucher'])){
-                        return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
-                    }
-                    else{
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                         return [
                             "success" => false,
                             "message" => "Amount should be greater than 0 for debit amount or credit amount"
                         ];
+                    }
+                    else{
+                        return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
                     }
                 }
             }
@@ -678,14 +680,14 @@ class JvMasterAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                if(!isset($input['isFromRecurringVoucher'])){
-                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
-                }
-                else{
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "success" => false,
                         "message" => "You cannot confirm this document."
                     ];
+                }
+                else{
+                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
                 }
             }
 
@@ -696,14 +698,14 @@ class JvMasterAPIController extends AppBaseController
                 ->sum('creditAmount');
 
             if (round($JvDetailDebitSum, $currencyDecimalPlace) != round($JvDetailCreditSum, $currencyDecimalPlace)) {
-                if(!isset($input['isFromRecurringVoucher'])){
-                    return $this->sendError('Debit amount total and credit amount total is not matching', 500);
-                }
-                else{
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "success" => false,
                         "message" => "Debit amount total and credit amount total is not matching"
                     ];
+                }
+                else{
+                    return $this->sendError('Debit amount total and credit amount total is not matching', 500);
                 }
             }
 
@@ -723,25 +725,25 @@ class JvMasterAPIController extends AppBaseController
                 'segment' => 0,
                 'category' => 0,
                 'amount' => $JvDetailDebitSum,
-                'isFromRecurringVoucher' => isset($input['isFromRecurringVoucher'])
+                'isAutoCreateDocument' => isset($input['isAutoCreateDocument'])
             );
 
             $confirm = \Helper::confirmDocument($params);
 
             if (!$confirm["success"]) {
-                if(!isset($input['isFromRecurringVoucher'])) {
-                    return $this->sendError($confirm["message"], 500);
-                }
-                else{
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
                     return [
                         "success" => false,
                         "message" => $confirm["message"]
                     ];
                 }
+                else{
+                    return $this->sendError($confirm["message"], 500);
+                }
             }
         }
 
-        $employee = !isset($input['isFromRecurringVoucher']) ? Helper::getEmployeeInfo() : UserTypeService::getSystemEmployee();
+        $employee = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? UserTypeService::getSystemEmployee() : Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -750,25 +752,25 @@ class JvMasterAPIController extends AppBaseController
         $jvMaster = $this->jvMasterRepository->update($input, $id);
 
         if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
-            if(!isset($input['isFromRecurringVoucher'])) {
-                return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher confirmed successfully');
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
                 return [
                     "success" => true,
                     "data" => $jvMaster->toArray()
                 ];
             }
+            else{
+                return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher confirmed successfully');
+            }
         }
 
-        if(!isset($input['isFromRecurringVoucher'])) {
-            return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher updated successfully');
-        }
-        else{
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
             return [
                 "success" => true,
                 "data" => $jvMaster->toArray()
             ];
+        }
+        else{
+            return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher updated successfully');
         }
     }
 
@@ -1155,7 +1157,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
         $companyID = $request->companyId;
 
-        if(isset($input['isFromRecurringVoucher'])){
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             $employee = UserTypeService::getSystemEmployee();
             $empID = $employee->employeeSystemID;
         }
@@ -1199,7 +1201,9 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             ->where('erp_documentapproved.documentSystemID', 17)
             ->where('erp_documentapproved.companySystemID', $companyID);
 
-        if(!isset($input['isFromRecurringVoucher'])){
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+        }
+        else{
             $grvMasters->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -1231,7 +1235,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             $grvMasters = [];
         }
 
-        if(isset($input['isFromRecurringVoucher'])){
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             if(!empty($grvMasters)){
                 $grvMasters = $grvMasters->where('erp_jvmaster.jvMasterAutoId',$input['jvMasterAutoId'])->first();
                 return [
@@ -1358,24 +1362,24 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
         $approve = \Helper::approveDocument($input);
         if (!$approve["success"]) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError($approve["message"]);
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => $approve["message"]
                 ];
             }
-        } else {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendResponse(array(), $approve["message"]);
-            }
             else{
+                return $this->sendError($approve["message"]);
+            }
+        } else {
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => true,
                     "data" => null
                 ];
+            }
+            else{
+                return $this->sendResponse(array(), $approve["message"]);
             }
         }
 
@@ -2033,7 +2037,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $input = $request->all();
         $approve = \Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
-            if(isset($input['isFromRecurringVoucher'])){
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => $approve["message"]
@@ -2043,7 +2047,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
             }
         } else {
-            if(isset($input['isFromRecurringVoucher'])){
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => true,
                     "data" => $approve["type"],

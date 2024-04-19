@@ -161,14 +161,14 @@ class JvDetailAPIController extends AppBaseController
         $jvMaster = JvMaster::find($input['jvMasterAutoId']);
 
         if (empty($jvMaster)) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError('Journal Voucher not found');
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "Journal Voucher not found"
                 ];
+            }
+            else{
+                return $this->sendError('Journal Voucher not found');
             }
         }
 
@@ -181,14 +181,14 @@ class JvDetailAPIController extends AppBaseController
         ]);
 
         if ($validator->fails()) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError($messages, 422);
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => $messages['currencyID']
                 ];
+            }
+            else{
+                return $this->sendError($messages, 422);
             }
         }
 
@@ -199,14 +199,14 @@ class JvDetailAPIController extends AppBaseController
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if (empty($chartOfAccount)) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError('Chart of Account not found');
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "Chart of Account not found"
                 ];
+            }
+            else{
+                return $this->sendError('Chart of Account not found');
             }
         }
 
@@ -219,29 +219,29 @@ class JvDetailAPIController extends AppBaseController
 
         $input['createdPcID'] = gethostname();
 
-        if(!isset($input['isFromRecurringVoucher'])){
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            $employee = UserTypeService::getSystemEmployee();
+            $input['createdUserID'] = $employee->empID;
+            $input['createdUserSystemID'] = $employee->employeeSystemID;
+        }
+        else{
             $id = Auth::id();
             $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
             $input['createdUserID'] = $user->employee['empID'];
             $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
         }
-        else{
-            $employee = UserTypeService::getSystemEmployee();
-            $input['createdUserID'] = $employee->empID;
-            $input['createdUserSystemID'] = $employee->employeeSystemID;
-        }
 
         $jvDetails = $this->jvDetailRepository->create($input);
 
-        if(!isset($input['isFromRecurringVoucher'])){
-            return $this->sendResponse($jvDetails->toArray(), 'Jv Detail saved successfully');
-        }
-        else{
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             return [
                 "success" => true,
                 "data" => $jvDetails->toArray()
             ];
+        }
+        else{
+            return $this->sendResponse($jvDetails->toArray(), 'Jv Detail saved successfully');
         }
     }
 
@@ -352,28 +352,28 @@ class JvDetailAPIController extends AppBaseController
         $jvDetail = $this->jvDetailRepository->findWithoutFail($id);
 
         if (empty($jvDetail)) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError('Jv Detail not found');
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "Jv Detail not found"
                 ];
+            }
+            else{
+                return $this->sendError('Jv Detail not found');
             }
         }
 
         $jvMaster = JvMaster::find($input['jvMasterAutoId']);
 
         if (empty($jvMaster)) {
-            if(!isset($input['isFromRecurringVoucher'])){
-                return $this->sendError('Journal Voucher not found');
-            }
-            else{
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "Journal Voucher not found"
                 ];
+            }
+            else{
+                return $this->sendError('Journal Voucher not found');
             }
         }
 
@@ -389,27 +389,27 @@ class JvDetailAPIController extends AppBaseController
             if ($input['serviceLineSystemID'] > 0) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    if(!isset($input['isFromRecurringVoucher'])){
-                        return $this->sendError('Department not found');
-                    }
-                    else{
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                         return [
                             "success" => false,
                             "message" => "Department not found"
                         ];
                     }
+                    else{
+                        return $this->sendError('Department not found');
+                    }
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
                     $this->$jvDetail->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
-                    if(!isset($input['isFromRecurringVoucher'])){
-                        return $this->sendError('Please select an active department', 500, $serviceLineError);
-                    }
-                    else{
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                         return [
                             "success" => false,
                             "message" => "Please select an active department"
                         ];
+                    }
+                    else{
+                        return $this->sendError('Please select an active department', 500, $serviceLineError);
                     }
                 }
 
@@ -433,14 +433,14 @@ class JvDetailAPIController extends AppBaseController
 
         $jvDetail = $this->jvDetailRepository->update($input, $id);
 
-        if(!isset($input['isFromRecurringVoucher'])){
-            return $this->sendResponse($jvDetail->toArray(), 'JvDetail updated successfully');
-        }
-        else{
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             return [
                 "success" => true,
                 "data" => $jvDetail->toArray()
             ];
+        }
+        else{
+            return $this->sendResponse($jvDetail->toArray(), 'JvDetail updated successfully');
         }
     }
 
