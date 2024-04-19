@@ -110,66 +110,92 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
                 if($isChangeItemType == 1){
 
-                    $itemMaster = ItemMaster::where('itemCodeSystem', $itemCodeSystem)->first();
-                    $categoryType = isset($itemMaster->categoryType) ? $itemMaster->categoryType : null;
-                    $categoryTypeOld = json_decode($categoryType);
+                    $transactions = [];
 
-                    if (is_array($itemType) && is_array($categoryTypeOld)) {
+                    if ($isChangeItemType == 1) {
 
-                        if (count($categoryTypeOld) > count($itemType)) {
-                            $poDetails = PurchaseOrderDetails::where('itemCode', $itemCodeSystem) ->join('erp_purchaseordermaster', 'erp_purchaseorderdetails.purchaseOrderMasterID', '=', 'erp_purchaseordermaster.purchaseOrderID')->get();
-                            foreach ($poDetails as $poDetail){
-                                $transactions[] = $poDetail->purchaseOrderCode;
-                            }
+                        $itemMaster = ItemMaster::where('itemCodeSystem', $itemCodeSystem)->first();
+                        $categoryType = isset($itemMaster->categoryType) ? $itemMaster->categoryType : null;
+                        $categoryTypeOld = json_decode($categoryType);
 
-                            $issueDetails = ItemIssueDetails::where('itemCodeSystem', $itemCodeSystem)->get();
-                            foreach ($issueDetails as $issueDetail){
-                                $transactions[] = $issueDetail->itemIssueCode;
-                            }
+                        if (is_array($itemType) && is_array($categoryTypeOld)) {
+                            if (count($categoryTypeOld) > count($itemType)) {
+                                $poDetails = PurchaseOrderDetails::where('itemCode', $itemCodeSystem)->join('erp_purchaseordermaster', 'erp_purchaseorderdetails.purchaseOrderMasterID', '=', 'erp_purchaseordermaster.purchaseOrderID')->get();
+                                foreach ($poDetails as $poDetail) {
+                                    $transactions[] = $poDetail->purchaseOrderCode;
+                                    if (count($transactions) === 10) break;
+                                }
 
-                            $grvDetails = GRVDetails::where('itemCode', $itemCodeSystem) ->join('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->where('grvTypeID', 1)->get();
-                            foreach ($grvDetails as $grvDetail){
-                                $transactions[] = $grvDetail->grvPrimaryCode;
-                            }
+                                if (count($transactions) < 10) {
+                                    $issueDetails = ItemIssueDetails::where('itemCodeSystem', $itemCodeSystem)->get();
+                                    foreach ($issueDetails as $issueDetail) {
+                                        $transactions[] = $issueDetail->itemIssueCode;
+                                        if (count($transactions) === 10) break;
+                                    }
+                                }
 
-                            $sis = SupplierInvoiceDirectItem::where('itemCode', $itemCodeSystem) ->join('erp_bookinvsuppmaster', 'supplier_invoice_items.bookingSuppMasInvAutoID', '=', 'erp_bookinvsuppmaster.bookingSuppMasInvAutoID')->get();
-                            foreach ($sis as $si){
-                                $transactions[] = $si->bookingInvCode;
-                            }
+                                if (count($transactions) < 10) {
+                                    $grvDetails = GRVDetails::where('itemCode', $itemCodeSystem)->join('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->where('grvTypeID', 1)->get();
+                                    foreach ($grvDetails as $grvDetail) {
+                                        $transactions[] = $grvDetail->grvPrimaryCode;
+                                        if (count($transactions) === 10) break;
+                                    }
+                                }
 
-                            $prs = PurchaseReturnDetails::where('itemCode', $itemCodeSystem) ->join('erp_purchasereturnmaster', 'erp_purchasereturndetails.purhaseReturnAutoID', '=', 'erp_purchasereturnmaster.purhaseReturnAutoID')->get();
-                            foreach ($prs as $pr){
-                                $transactions[] = $pr->purchaseReturnCode;
-                            }
+                                if (count($transactions) < 10) {
+                                    $sis = SupplierInvoiceDirectItem::where('itemCode', $itemCodeSystem)->join('erp_bookinvsuppmaster', 'supplier_invoice_items.bookingSuppMasInvAutoID', '=', 'erp_bookinvsuppmaster.bookingSuppMasInvAutoID')->get();
+                                    foreach ($sis as $si) {
+                                        $transactions[] = $si->bookingInvCode;
+                                        if (count($transactions) === 10) break;
+                                    }
+                                }
 
-                            $qus = QuotationDetails::where('itemAutoID', $itemCodeSystem) ->join('erp_quotationmaster', 'erp_quotationdetails.quotationMasterID', '=', 'erp_quotationmaster.quotationMasterID')->get();
-                            foreach ($qus as $qu){
-                                $transactions[] = $qu->quotationCode;
-                            }
+                                if (count($transactions) < 10) {
+                                    $prs = PurchaseReturnDetails::where('itemCode', $itemCodeSystem)->join('erp_purchasereturnmaster', 'erp_purchasereturndetails.purhaseReturnAutoID', '=', 'erp_purchasereturnmaster.purhaseReturnAutoID')->get();
+                                    foreach ($prs as $pr) {
+                                        $transactions[] = $pr->purchaseReturnCode;
+                                        if (count($transactions) === 10) break;
+                                    }
+                                }
 
-                            $deos = DeliveryOrderDetail::where('itemCodeSystem', $itemCodeSystem) ->join('erp_delivery_order', 'erp_delivery_order_detail.deliveryOrderID', '=', 'erp_delivery_order.deliveryOrderID')->get();
-                            foreach ($deos as $deo){
-                                $transactions[] = $deo->deliveryOrderCode;
-                            }
+                                if (count($transactions) < 10) {
+                                    $qus = QuotationDetails::where('itemAutoID', $itemCodeSystem)->join('erp_quotationmaster', 'erp_quotationdetails.quotationMasterID', '=', 'erp_quotationmaster.quotationMasterID')->get();
+                                    foreach ($qus as $qu) {
+                                        $transactions[] = $qu->quotationCode;
+                                        if (count($transactions) === 10) break;
+                                    }
+                                }
 
-                            $cus = CustomerInvoiceItemDetails::where('itemCodeSystem', $itemCodeSystem) ->join('erp_custinvoicedirect', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')->get();
-                            foreach ($cus as $cu){
-                                $transactions[] = $cu->bookingInvCode;
-                            }
+                                if (count($transactions) < 10) {
+                                    $deos = DeliveryOrderDetail::where('itemCodeSystem', $itemCodeSystem)->join('erp_delivery_order', 'erp_delivery_order_detail.deliveryOrderID', '=', 'erp_delivery_order.deliveryOrderID')->get();
+                                    foreach ($deos as $deo) {
+                                        $transactions[] = $deo->deliveryOrderCode;
+                                        if (count($transactions) === 10) break;
+                                    }
+                                }
 
-                            $srs = SalesReturnDetail::where('itemCodeSystem', $itemCodeSystem) ->join('salesreturn', 'salesreturndetails.salesReturnID', '=', 'salesreturn.id')->get();
-                            foreach ($srs as $sr){
-                                $transactions[] = $sr->salesReturnCode;
-                            }
+                                if (count($transactions) < 10) {
+                                    $cus = CustomerInvoiceItemDetails::where('itemCodeSystem', $itemCodeSystem)->join('erp_custinvoicedirect', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')->get();
+                                    foreach ($cus as $cu) {
+                                        $transactions[] = $cu->bookingInvCode;
+                                        if (count($transactions) === 10) break;
+                                    }
+                                }
 
+                                if (count($transactions) < 10) {
+                                    $srs = SalesReturnDetail::where('itemCodeSystem', $itemCodeSystem)->join('salesreturn', 'salesreturndetails.salesReturnID', '=', 'salesreturn.id')->get();
+                                    foreach ($srs as $sr) {
+                                        $transactions[] = $sr->salesReturnCode;
+                                        if (count($transactions) === 10) break;
+                                    }
+                                }
 
-                            if(count($transactions) > 0){
-                                return $this->sendError($transactions, 422);
+                                if (count($transactions) > 0) {
+                                    return $this->sendError($transactions, 422);
+                                }
                             }
                         }
-
                     }
-
 
                 }
                 if (is_array($itemType)) {
