@@ -27,7 +27,8 @@ class CreateCustomerInvoiceAPIRequest extends APIRequest
     {
         return [
             'company_id' => ['bail','required','integer'],
-            'invoices.*.invoice_type' => ['bail','required','integer',Rule::in([0,2])],
+            'invoices' => ['bail','required','array'],
+            'invoices.*.invoice_type' => ['bail','required','integer',Rule::in([1,2])],
             'invoices.*.segment_code' => ['bail','required_if:invoices.*.invoice_type,2'],
             'invoices.*.warehouse_code' => ['bail','required_if:invoices.*.invoice_type,2'],
             'invoices.*.customer_code' => ['bail','required'],
@@ -37,9 +38,9 @@ class CreateCustomerInvoiceAPIRequest extends APIRequest
             'invoices.*.bank_code' => ['bail','required'],
             'invoices.*.account_number' => ['bail','required'],
             'invoices.*.details' => ['bail','required','array'],
-            'invoices.*.details.*.gl_code' => ['bail','required_if:invoices.*.invoice_type,0'],
+            'invoices.*.details.*.gl_code' => ['bail','required_if:invoices.*.invoice_type,1'],
             'invoices.*.details.*.service_code' => ['bail','required_if:invoices.*.invoice_type,2'],
-            'invoices.*.details.*.segment_code' => ['bail','required_if:invoices.*.invoice_type,0'],
+            'invoices.*.details.*.segment_code' => ['bail','required_if:invoices.*.invoice_type,1'],
             'invoices.*.details.*.uom' => ['bail','required'],
             'invoices.*.details.*.quantity' => ['bail','required','integer'],
             'invoices.*.details.*.sales_price' => ['bail','required','numeric'],

@@ -47,6 +47,9 @@ class CustomerInvoiceAPIService extends AppBaseController
 {
 
     private static function setInvoiceMasterDataForAPI($request): array {
+
+        $invoiceType = ($request['invoice_type'] == 1) ? 0 : 2;
+
         // Validate Customer
         $customer = CustomerAssigned::join('customermaster', 'customerassigned.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
             ->where('customermaster.customer_registration_no', $request['customer_code'])
@@ -148,7 +151,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             ];
         }
 
-        if($request['invoice_type'] == 2){
+        if($invoiceType == 2){
             // Validate Segment Code
             $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
                 ->where('isActive', 1)
@@ -188,7 +191,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 'customerID' => $customer->customerCodeSystem,
                 'date_of_supply' => Carbon::today()->toDateString(),
                 'invoiceDueDate' => $invoiceDueDate->toDateString(),
-                'isPerforma' => $request['invoice_type'],
+                'isPerforma' => $invoiceType,
                 'bankID' => $bank->bankmasterAutoID,
                 'bankAccountID' => $bankAccount->bankAccountAutoID,
                 'customerInvoiceNo' => $request['customer_invoice_number'],
@@ -196,7 +199,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             ]
         ];
 
-        if($request['invoice_type'] == 2){
+        if($invoiceType == 2){
             $returnDataset['data']['wareHouseSystemCode'] = $warehouse->wareHouseSystemCode;
             $returnDataset['data']['serviceLineSystemID'] = $segment->serviceLineSystemID;
         }
