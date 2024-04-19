@@ -99,7 +99,9 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
     public function store(CreateFinanceItemcategorySubAssignedAPIRequest $request)
     {
 
+
         $input = $request->all();
+        $categoryType = json_encode(isset($input['categoryTypeDecode']) ? $input['categoryTypeDecode']: null);
         $companies = $input['companySystemID'];
 
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
@@ -181,6 +183,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             }
             $financeItemCategorySubAssigned->save();
 
+
             $masterData = $financeItemCategorySubAssigned->toArray();
 
             $this->auditLog($db, $input['itemCategoryAssignedID'],$uuid, "financeitemcategorysubassigned", "Company Assign ".$input['categoryDescription']." has been updated", "U", $masterData, $previousValue, $input['itemCategorySubID'], 'financeitemcategorysub');
@@ -188,8 +191,10 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 
             foreach($companies as $companie)
             {
+
                 $company = Company::where('companySystemID', $companie['id'])->first();
                 $input['companyID'] = $company->CompanyID;
+                $input['categoryType'] = $categoryType;
                 $input['companySystemID'] = $companie['id'];
                 $input['isAssigned'] = -1;
                 $input['mainItemCategoryID'] = $input['itemCategoryID'];
