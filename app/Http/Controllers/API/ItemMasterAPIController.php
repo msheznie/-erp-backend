@@ -394,6 +394,9 @@ class ItemMasterAPIController extends AppBaseController
         $itemType = isset($input['categoryType']) ? $input['categoryType']: null;
 
         if (is_array($itemType)){
+            if (count($itemType) > 1) {
+                    $itemMasters = $itemMasters->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]']);
+            }
             if (count($itemType) < 2) {
                 if (isset($itemType[0]['id']) && $itemType[0]['id'] == 2) {
                     $itemMasters = $itemMasters->whereIn('categoryType', ['[{"id":2,"itemName":"Sale"}]']);
