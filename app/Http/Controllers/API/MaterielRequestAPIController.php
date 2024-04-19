@@ -55,6 +55,7 @@ use Response;
 use App\Repositories\MaterielRequestDetailsRepository;
 use Auth;
 use App\Models\ItemIssueMaster;
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class MaterielRequestController
@@ -1440,6 +1441,17 @@ class MaterielRequestAPIController extends AppBaseController
             return $this->sendError('Cannot return back to amend. Itemissue is created for this request');
         }
 
+        $documentAutoId = $input['RequestID'];
+        $documentSystemID = $materialRequest->documentSystemID;
+
+        if($materialRequest->approved == -1){
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
+        }
 
         $employee = \Helper::getEmployeeInfo();
 

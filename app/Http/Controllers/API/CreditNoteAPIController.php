@@ -56,6 +56,7 @@ use App\Models\CustomerCurrency;
 use App\Repositories\CreditNoteRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Services\ValidateDocumentAmend;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
@@ -1750,6 +1751,18 @@ WHERE
         if ($checkDetailExistMatch) {
             return $this->sendError('Cannot return back to amend. credit note is added to matching');
         }
+
+        $documentAutoId = $id;
+        $documentSystemID = $masterData->documentSystemiD;
+        if($masterData->approved == -1){
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
+        }
+
 
         $emailBody = '<p>' . $masterData->creditNoteCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $emailSubject = $masterData->creditNoteCode . ' has been return back to amend';

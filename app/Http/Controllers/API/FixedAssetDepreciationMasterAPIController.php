@@ -43,6 +43,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\AssetDisposalMaster;
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class FixedAssetDepreciationMasterController
@@ -933,6 +934,17 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             if ($fixedAssetDep->refferedBackYN != -1) {
                 return $this->sendError('You cannot amend this document');
+            }
+
+            $documentAutoId = $depMasterAutoID;
+            $documentSystemID = $fixedAssetDep->documentSystemID;
+            if($fixedAssetDep->approved == -1){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
+                }
             }
 
             $fixedAssetDepArray = $fixedAssetDep->toArray();

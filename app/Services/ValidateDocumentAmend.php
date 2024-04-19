@@ -2,13 +2,20 @@
 
 namespace App\Services;
 
+use App\Models\AssetDisposalMaster;
 use App\Models\BookInvSuppMaster;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CreditNote;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
+use App\Models\DebitNote;
+use App\Models\FixedAssetDepreciationMaster;
+use App\Models\FixedAssetMaster;
 use App\Models\GeneralLedger;
+use App\Models\GRVMaster;
 use App\Models\JvMaster;
+use App\Models\MaterielRequest;
 use App\Models\PaySupplierInvoiceMaster;
 use Carbon\Carbon;
 
@@ -101,18 +108,100 @@ class ValidateDocumentAmend
         return ['status' => true];
 	}
 
-    public static function validatePendingGlPost($documentAutoId,$documentSystemID)
+    public static function validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID = null)
 	{
+        $message = 'You cannot amend this document now. The General Ledger posting is In-Progress';
         switch ($documentSystemID) {
+            case 41: // FADS - Asset Disposal
+                    $assetDisposalData = AssetDisposalMaster::find($documentAutoId);
+                    if($assetDisposalData){
+                        $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
+                                                ->where('documentSystemID',$documentSystemID)                                                
+                                                ->count();
+                        if($glPost == 0){
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                break;
+            case 23: // FAD - Asset Depreciation
+                    $assetDepreciatioData = FixedAssetDepreciationMaster::find($documentAutoId);
+                    if($assetDepreciatioData){
+                        $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
+                                                ->where('documentSystemID',$documentSystemID)                                                
+                                                ->count();
+                        if($glPost == 0){
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                break;
+            case 22: // FA - Asset Costing
+                    $assetCostingData = FixedAssetMaster::find($documentAutoId);
+                    if($assetCostingData){
+                        $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
+                                                ->where('documentSystemID',$documentSystemID)                                               
+                                                ->count();
+                        if($glPost == 0){
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                break;
+            case 19: // CN - Credit Note
+                    $creditNoteMasterData = CreditNote::find($documentAutoId);
+                    if($creditNoteMasterData){
+                        $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
+                                                ->where('documentSystemID',$documentSystemID)
+                                                ->when($matchingMasterID !== null, function ($query) use ($matchingMasterID) {
+                                                    return $query->where('matchDocumentMasterAutoID', $matchingMasterID);
+                                                })                                                
+                                                ->count();
+                        if($glPost == 0){
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                break;
+            case 15: // DN - Debit Note
+                    $debitNoteMasterData = DebitNote::find($documentAutoId);
+                    if($debitNoteMasterData){
+                        $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
+                                                ->where('documentSystemID',$documentSystemID)
+                                                ->when($matchingMasterID !== null, function ($query) use ($matchingMasterID) {
+                                                    return $query->where('matchDocumentMasterAutoID', $matchingMasterID);
+                                                })                                                
+                                                ->count();
+                        if($glPost == 0){
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                break;
+            case 9: // MR - Material Request
+                    $materialRequest = MaterielRequest::find($documentAutoId);
+                    if($materialRequest){
+                        $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
+                                                ->where('documentSystemID',$documentSystemID)
+                                                ->count();
+                        if($glPost == 0){
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                break;
+            case 3: // GRV - Good Reciept Voucher
+                    $grvMasterData = GRVMaster::find($documentAutoId);
+                    if($grvMasterData){
+                        $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
+                                                ->where('documentSystemID',$documentSystemID)
+                                                ->count();
+                        if($glPost == 0){
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                break;
             case 11: // SI - Supplier Invoice
                     $bookInvSuppMasterData = BookInvSuppMaster::find($documentAutoId);
                     if($bookInvSuppMasterData){
                         $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
-                                                ->where('documentCode',$bookInvSuppMasterData->bookingInvCode)
                                                 ->where('documentSystemID',$documentSystemID)
                                                 ->count();
                         if($glPost == 0){
-                            $message = 'GL posting in progress. Cannot return back to amend now';
                             return ['status' => false,'message'=>$message];
                         }
                     }
@@ -121,11 +210,12 @@ class ValidateDocumentAmend
                     $PaySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($documentAutoId);
                     if($PaySupplierInvoiceMaster){
                         $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
-                                                ->where('documentCode',$PaySupplierInvoiceMaster->BPVcode)
                                                 ->where('documentSystemID',$documentSystemID)
+                                                ->when($matchingMasterID !== null, function ($query) use ($matchingMasterID) {
+                                                    return $query->where('matchDocumentMasterAutoID', $matchingMasterID);
+                                                })                                                
                                                 ->count();
                         if($glPost == 0){
-                            $message = 'GL posting in progress. Cannot return back to amend now';
                             return ['status' => false,'message'=>$message];
                         }
                     }
@@ -134,11 +224,9 @@ class ValidateDocumentAmend
                 $customerInvoiceMaster = CustomerInvoiceDirect::find($documentAutoId);
                 if($customerInvoiceMaster){
                     $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
-                                            ->where('documentCode',$customerInvoiceMaster->bookingInvCode)
                                             ->where('documentSystemID',$documentSystemID)
                                             ->count();
                     if($glPost == 0){
-                        $message = 'GL posting in progress. Cannot return back to amend now';
                         return ['status' => false,'message'=>$message];
                     }
                 }
@@ -147,11 +235,12 @@ class ValidateDocumentAmend
                 $receiptVoucherMaster = CustomerReceivePayment::find($documentAutoId);
                 if($receiptVoucherMaster){
                     $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
-                                            ->where('documentCode',$receiptVoucherMaster->custPaymentReceiveCode)
                                             ->where('documentSystemID',$documentSystemID)
+                                            ->when($matchingMasterID !== null, function ($query) use ($matchingMasterID) {
+                                                    return $query->where('matchDocumentMasterAutoID', $matchingMasterID);
+                                                })
                                             ->count();
                     if($glPost == 0){
-                        $message = 'GL posting in progress. Cannot return back to amend now';
                         return ['status' => false,'message'=>$message];
                     }
                 }
@@ -160,11 +249,9 @@ class ValidateDocumentAmend
                     $jvMaster = JvMaster::find($documentAutoId);
                     if($jvMaster){
                         $glPost = GeneralLedger::where('documentSystemCode',$documentAutoId)
-                                                ->where('documentCode',$jvMaster->JVcode)
                                                 ->where('documentSystemID',$documentSystemID)
                                                 ->count();
                         if($glPost == 0){
-                            $message = 'GL posting in progress. Cannot return back to amend now';
                             return ['status' => false,'message'=>$message];
                         }
                     }

@@ -45,6 +45,7 @@ use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -1140,6 +1141,16 @@ class AssetDisposalMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_asset_disposal_it_is_not_confirmed'));
         }
 
+        $documentAutoId = $id;
+        $documentSystemID = $masterData->documentSystemID;
+        if($masterData->approvedYN == -1){
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
+        }
 
         $emailBody = '<p>' . $masterData->disposalDocumentCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $emailSubject = $masterData->disposalDocumentCode . ' has been return back to amend';

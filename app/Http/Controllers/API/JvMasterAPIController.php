@@ -2215,25 +2215,27 @@ HAVING
         $documentAutoId = $id;
         $documentSystemID = $jvMaster->documentSystemID;
 
-        $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
-        if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
-            if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
-                return $this->sendError($validateFinanceYear['message']);
+        if($jvMaster->approved == -1){
+            $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
+            if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
+                if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
+                    return $this->sendError($validateFinanceYear['message']);
+                }
             }
-        }
-
-        $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
-        if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
-            if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
-                return $this->sendError($validateFinancePeriod['message']);
+    
+            $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
+            if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+                if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
+                    return $this->sendError($validateFinancePeriod['message']);
+                }
             }
-        }
-
-        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
-        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                return $this->sendError($validatePendingGlPost['message']);
-            }
+    
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }    
         }
 
         $emailBody = '<p>' . $jvMaster->JVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';

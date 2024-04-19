@@ -65,6 +65,8 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\FixedAssetDepreciationMaster;
 use App\helper\CreateAccumulatedDepreciation;
 use App\helper\CreateExcel;
+use App\Services\ValidateDocumentAmend;
+
 /**
  * Class FixedAssetMasterController
  * @package App\Http\Controllers\API
@@ -2425,7 +2427,17 @@ class FixedAssetMasterAPIController extends AppBaseController
                 return $this->sendError('This asset cannot be returned back to amend. An approved accumulated depreciation document is linked with this asset. Refer-back the Acc. depreciation and try again'); 
             }
 
-     
+            $documentAutoId = $id;
+            $documentSystemID = $masterData->documentSystemID;
+            if($masterData->approved == -1){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
+                }
+            }
+            
 
 
             $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';

@@ -87,6 +87,7 @@ use Response;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\SupplierBlock;
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class GRVMasterController
@@ -2121,6 +2122,17 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
             $grvMasterDataArray = $grvMasterData->toArray();
 
+            $documentAutoId = $grvAutoID;
+            $documentSystemID = $grvMasterData->documentSystemID;
+    
+            if($grvMasterData->approved == -1){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
+                }
+            }
 
             $storeGoodReceiptHistory = GrvMasterRefferedback::create($grvMasterDataArray);
 

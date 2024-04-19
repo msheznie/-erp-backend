@@ -77,7 +77,7 @@ use App\helper\TaxService;
 use App\Services\GeneralLedger\GlPostedDateService;
 use App\Models\Taxdetail;
 use App\Services\TaxLedger\RecieptVoucherTaxLedgerService;
-
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class MatchDocumentMasterController
@@ -3741,6 +3741,21 @@ ORDER BY
         if ($masterData->matchingConfirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this '.$documentName.' Document, it is not confirmed');
         }
+
+        
+        $matchingMasterID = $id;
+        $documentAutoId = $masterData->PayMasterAutoId;
+        $documentSystemID = $masterData->documentSystemID;
+
+        if($masterData->approved == -1){
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
+        }
+
 
         $emailBody = '<p>' . $masterData->matchingDocCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $emailSubject = $masterData->matchingDocCode . ' has been return back to amend';
