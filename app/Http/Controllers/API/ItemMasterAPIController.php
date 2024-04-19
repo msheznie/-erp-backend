@@ -902,6 +902,10 @@ class ItemMasterAPIController extends AppBaseController
         unset($input['specification']);
         unset($input['remove_items']);
         unset($input['categoryType']);
+
+        if(isset($input['categoryTypeDecode']) && empty($input['categoryTypeDecode'])){
+            return $this->sendError('Please select Item Type');
+        }
         unset($input['categoryTypeDecode']);
 
         $input = array_except($input,['finance_sub_category','company','specification','final_approved_by']);
@@ -936,6 +940,11 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
+
+
+        if(isset($input['financeCategorySub']) && empty($input['financeCategorySub'])){
+            return $this->sendError('Please select Finance Sub Category');
+        }
 
         if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] == 3 && (!isset($input['faFinanceCatID']) || (isset($input['faFinanceCatID']) && is_null($input['faFinanceCatID'])))) {
             return $this->sendError('Finance Audit category is required.');
