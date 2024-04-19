@@ -2072,7 +2072,18 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             return $this->sendError("You cannot reverse the GRV. The GRV is already added to Purchase Return", 500);
         }
 
+        $MasterData = GRVMaster::find($input['grvAutoID']);
+        $documentAutoId = $input['grvAutoID'];
+        $documentSystemID = $MasterData->documentSystemID;
 
+        if($MasterData->approved == -1){
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
+        }
 
         ReversalDocument::sendEmail($input);
 
@@ -2122,17 +2133,6 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
             $grvMasterDataArray = $grvMasterData->toArray();
 
-            $documentAutoId = $grvAutoID;
-            $documentSystemID = $grvMasterData->documentSystemID;
-    
-            if($grvMasterData->approved == -1){
-                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
-                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                        return $this->sendError($validatePendingGlPost['message']);
-                    }
-                }
-            }
 
             $storeGoodReceiptHistory = GrvMasterRefferedback::create($grvMasterDataArray);
 
