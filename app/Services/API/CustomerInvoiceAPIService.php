@@ -88,8 +88,16 @@ class CustomerInvoiceAPIService extends AppBaseController
             ];
         }
 
-        // Validate Financial Period
         $documentDate = Carbon::parse($request['document_date']);
+        $currentDate = Carbon::today();
+        if($documentDate < $currentDate){
+            return [
+                'status' => false,
+                'message' => "Document date cannot be lesser than current date"
+            ];
+        }
+
+        // Validate Financial Period
         $financeYear = CompanyFinanceYear::where('companySystemID',$request['company_id'])
             ->where('isDeleted',0)
             ->whereYear('bigginingDate',$documentDate->year)
@@ -143,6 +151,8 @@ class CustomerInvoiceAPIService extends AppBaseController
             ->where('bankmasterAutoID', $bank->bankmasterAutoID)
             ->where('accountCurrencyID', $currency->currencyID)
             ->where('AccountNo', $request['account_number'])
+            ->where('approvedYN', 1)
+            ->where('isAccountActive', 1)
             ->first();
         if(!$bankAccount){
             return [
@@ -178,7 +188,6 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
         }
 
-
         $returnDataset = [
             'status' => true,
             'data' => [
@@ -189,7 +198,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 'companyID' => $request['company_id'],
                 'custTransactionCurrencyID' => $currency->currencyID,
                 'customerID' => $customer->customerCodeSystem,
-                'date_of_supply' => Carbon::today()->toDateString(),
+                'date_of_supply' => $currentDate->toDateString(),
                 'invoiceDueDate' => $invoiceDueDate->toDateString(),
                 'isPerforma' => $invoiceType,
                 'bankID' => $bank->bankmasterAutoID,
