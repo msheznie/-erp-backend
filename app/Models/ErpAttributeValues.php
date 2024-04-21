@@ -12,6 +12,7 @@ class ErpAttributeValues extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $primaryKey = 'id';
+    protected $dates = ['deleted_at'];
 
 
     public $fillable = [

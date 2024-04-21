@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateErpAttributesAPIRequest;
 use App\Http\Requests\API\UpdateErpAttributesAPIRequest;
 use App\Models\ErpAttributes;
 use App\Models\ErpAttributeValues;
+use App\Models\FixedAssetMaster;
 use App\Repositories\ErpAttributesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -298,9 +299,37 @@ class ErpAttributesAPIController extends AppBaseController
             $this->auditLog($db, $id,$uuid, "erp_attributes", "Attribute ".$erpAttributes->description." has deleted", "D", [], $erpAttributes->toArray(), $erpAttributes->document_master_id, 'financeitemcategorysub');
         }
 
+
+
         $erpAttributes->delete();
 
-        ErpAttributeValues::where('erp_attribute_values.attribute_id', $id)->update(['is_active' => 0]);
+        $erpAttributes = ErpAttributes::where('document_master_id',$erpAttributes->document_master_id)->where('id', $id)->withTrashed()->first();
+
+        $documentMasterID = isset($erpAttributes->document_master_id) ? $erpAttributes->document_master_id: null;
+
+        if($documentMasterID != null){
+            if ($erpAttributes->deleted_at != null) {
+                    ErpAttributeValues::where('erp_attribute_values.attribute_id', $id)->where('erp_attribute_values.document_master_id', $erpAttributes->document_master_id)->update(['is_active' => 0]);
+            }
+        } else {
+            $attributes= ErpAttributeValues::selectRaw('erp_attribute_values.attribute_id, erp_attribute_values.document_master_id, erp_attribute_values.id')->where('erp_attribute_values.attribute_id', $id)->get();
+
+            foreach ($attributes as $attribute){
+                $erpAttributes = ErpAttributes::withTrashed()->find($attribute->attribute_id);
+                $asset = FixedAssetMaster::find($attribute->document_master_id);
+
+                if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
+                    if ($erpAttributes->deleted_at != null && $asset->createdDateAndTime > $erpAttributes->deleted_at) {
+                        ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                    }
+                }
+                if ($asset->approved == -1) {
+                    if ($erpAttributes->deleted_at != null && $asset->approvedDate > $erpAttributes->deleted_at) {
+                        ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                    }
+                }
+            }
+        }
 
         return $this->sendResponse([],'Erp Attributes deleted successfully');
     }
@@ -353,6 +382,20 @@ class ErpAttributesAPIController extends AppBaseController
         }
 
         if($erpAttributes->field_type_id != $input['field_type_id']){
+            $attribute = ErpAttributes::find($id);
+            if($attribute->document_master_id == null) {
+                $attributeFieldValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+                    ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+                    ->where('erp_attribute_values.attribute_id', $id)
+                    ->where('erp_attribute_values.is_active', 1)
+                    ->where('erp_fa_asset_master.confirmedYN', 1)
+                    ->count();
+
+                if ($attributeFieldValidation > 0) {
+                    return $this->sendError('Selected attributes have already been used for an asset', 500);
+                }
+            }
+
             if($erpAttributes->field_type_id == 3){
                 $dropdownValues = ErpAttributesDropdown::where('attributes_id',$erpAttributes->id)->count();
                  if($dropdownValues > 0){
@@ -372,14 +415,56 @@ class ErpAttributesAPIController extends AppBaseController
              
         }
 
+        if(isset($input['is_active']) && $input['is_active'] == false)
+        {
+            $inactivatedAt = \Helper::currentDateTime();
+        } else {
+            $inactivatedAt = null;
+        }
+
+
         $updateData = [
             'description' => $input['description'],
             'field_type_id' => $input['field_type_id'],
             'is_mendatory' => $input['is_mendatory'],
-            'is_active' => $input['is_active']
+            'is_active' => $input['is_active'],
+            'inactivated_at' => $inactivatedAt
         ];
         $attributesUpdate = ErpAttributes::where('id', $id)
         ->update($updateData);
+
+        $documentMasterID = isset($input['document_master_id']) ? $input['document_master_id']: null;
+        $isActive = isset($input['is_active']) ? $input['is_active']: null;
+
+        $erpAttributes = ErpAttributes::where('document_master_id', $documentMasterID)->where('id', $id)->withTrashed()->first();
+        $documentMasterID = isset($erpAttributes->document_master_id) ? $erpAttributes->document_master_id: null;
+
+        if($isActive == 0) {
+            if ($documentMasterID != null) {
+
+                if ($erpAttributes->is_active == 0) {
+                    ErpAttributeValues::where('erp_attribute_values.attribute_id', $id)->where('erp_attribute_values.document_master_id', $documentMasterID)->update(['is_active' => 0]);
+                }
+            } else {
+                $attributes = ErpAttributeValues::selectRaw('erp_attribute_values.attribute_id, erp_attribute_values.document_master_id, erp_attribute_values.id')
+                    ->where('erp_attribute_values.attribute_id', $id)->get();
+                foreach ($attributes as $attribute) {
+                    $erpAttributes = ErpAttributes::withTrashed()->find($attribute->attribute_id);
+                    $asset = FixedAssetMaster::find($attribute->document_master_id);
+
+                    if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
+                        if ($erpAttributes->is_active == 0 && $asset->createdDateAndTime > $erpAttributes->inactivated_at) {
+                            ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                        }
+                    }
+                    if ($asset->approved == -1) {
+                        if ($erpAttributes->is_active == 0 && $asset->createdDateAndTime > $erpAttributes->inactivated_at) {
+                            ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                        }
+                    }
+                }
+            }
+        }
 
         return $this->sendResponse($attributesUpdate, 'Erp Attributes updated successfully');
 

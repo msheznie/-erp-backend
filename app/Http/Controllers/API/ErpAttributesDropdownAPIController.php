@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateErpAttributesDropdownAPIRequest;
 use App\Http\Requests\API\UpdateErpAttributesDropdownAPIRequest;
+use App\Models\ErpAttributes;
 use App\Models\ErpAttributesDropdown;
+use App\Models\ErpAttributeValues;
 use App\Repositories\ErpAttributesDropdownRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -340,7 +342,21 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         if (empty($erpAttributesDropdown)) {
             return $this->sendError('Erp Attributes Dropdown not found');
         }
+        $attribute = ErpAttributes::find($id);
 
+            $attributeFieldValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+                ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+                ->join('erp_attributes', 'erp_attribute_values.attribute_id', '=', 'erp_attributes.id')
+                ->where('erp_attribute_values.value', $id)
+                ->where('erp_attribute_values.is_active', 1)
+                ->where('erp_attribute_values.color', '!=', null)
+                ->where('erp_attributes.document_master_id', null)
+                ->where('erp_fa_asset_master.confirmedYN', 1)
+                ->count();
+
+            if ($attributeFieldValidation > 0) {
+                return $this->sendError('Selected attribute drop down value have already been used for an asset', 500);
+            }
         $erpAttributesDropdown->delete();
 
         return $this->sendResponse([],'Erp Attributes Dropdown deleted successfully');

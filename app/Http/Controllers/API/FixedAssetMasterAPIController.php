@@ -1380,7 +1380,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category','asset_type', 'attributeValues' => function($query) {
-            $query->with(['dropdownValues','attributeMaster' => function($query){
+            $query->where('is_active', 1)->with(['dropdownValues','attributeMaster' => function($query){
                 $query->withTrashed();
             }]);
         }])->ofCompany($subCompanies);
@@ -1442,11 +1442,11 @@ class FixedAssetMasterAPIController extends AppBaseController
         return \DataTables::eloquent($assetCositng)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('faID', $input['order'][0]['dir']);
-                    }
-                }
+               if (request()->has('order')) {
+                   if ($input['order'][0]['column'] == 0) {
+                       $query->orderBy('faID', $input['order'][0]['dir']);
+                   }
+               }
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
@@ -1480,14 +1480,11 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function assetAttributes(Request $request){
         $input = $request->all();
 
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
 
         $code = $input['documentSystemCode'];
-        $erpAttributes = ErpAttributes::with(['fieldOptions', 'attributeValues'  => function($query) use ($code){
+        $asset = FixedAssetMaster::find($code);
+
+        $erpAttributes = ErpAttributes::withTrashed()->with(['fieldOptions', 'attributeValues'  => function($query) use ($code){
             $query->where('document_master_id', $code)->orWhere('document_master_id', null);
         }])->where('document_id', "ASSETCOST");
 
@@ -1500,21 +1497,31 @@ class FixedAssetMasterAPIController extends AppBaseController
             });
         }
 
+        $erpAttributes = $erpAttributes->get();
 
-        $erpAttributes = $erpAttributes->where(function ($query) use ($code) {
-            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
-        });
-
-        return \DataTables::eloquent($erpAttributes)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
+            foreach ($erpAttributes as $index => $erpAttribute) {
+                if($erpAttribute->document_master_id == null) {
+                    if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
+                        if (($erpAttribute->is_active == 0 && $asset->createdDateAndTime > $erpAttribute->inactivated_at) || ($erpAttribute->deleted_at != null && $asset->createdDateAndTime > $erpAttribute->deleted_at)) {
+                            unset($erpAttributes[$index]);
+                        }
+                    }
+                    if ($asset->approved == -1) {
+                        if (($erpAttribute->is_active == 0 && $asset->approvedDate > $erpAttribute->inactivated_at) || ($erpAttribute->deleted_at != null && $asset->approvedDate > $erpAttribute->deleted_at)) {
+                            unset($erpAttributes[$index]);
+                        }
+                    }
+                } else {
+                    if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null){
+                        unset($erpAttributes[$index]);
                     }
                 }
-            })
+            }
+
+
+
+        return \DataTables::of($erpAttributes)
             ->addIndexColumn()
-            ->with('orderCondition', $sort)
             ->make(true);
     }
 

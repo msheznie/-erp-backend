@@ -90,6 +90,7 @@ class ErpAttributes extends Model
         'is_active',
         'value',
         'color',
+        'inactivated_at',
         'created_by',
         'updated_by'
     ];
