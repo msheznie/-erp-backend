@@ -674,8 +674,6 @@ class ItemLedgerService
                                     $data[$i][$column] = 0;
                                 } elseif ($column == 'wacRpt') {
                                     $data[$i][$column] = 0;
-                                } elseif ($column == 'unitOfMeasure') {
-                                    $data[$i][$column] = 0;
                                 } else {
                                     $data[$i][$column] = $detail[$value];
                                 }
@@ -698,7 +696,7 @@ class ItemLedgerService
 
                 }
                 if($data){
-                    //Log::info($data);
+                    Log::info($data);
                     $items = collect($data)->pluck("itemSystemCode")->toArray();
                     $itemLedgerInsert = ErpItemLedger::insert($data);
                     if($items) {
