@@ -773,7 +773,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
     }
 
-    public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $companyWiseTemplate = false)
+    public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained, $companyWiseTemplate = false)
     {
         if ($request->accountType == 1) { // if account type is BS and if any new chart of account created automatically link the gl account
             $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType', 4)->whereNotNull('masterID')->first();
@@ -915,6 +915,9 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     foreach ($details as $key2 => $val2) {
                         if ($val2->isFinalLevel == 1) {
                             $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                            if($val2->detDescription == "Retained Earning" && $showRetained == false) {
+                                $val2->glCodes = null;
+                            }
                         } else {
                             $detailLevelTwo = $outputCollect->where('masterID', $val2->detID)->sortBy('sortOrder')->values();
                             $val2->detail = $detailLevelTwo;
@@ -1228,15 +1231,16 @@ srp_erp_ioubookingmaster.approvedYN = 1
             case 'FCT': // Finance Customize reports (Income statement, P&L, Cash flow)
                 $request = (object)$request->all();
                 $showZeroGL = isset($request->showZeroGL) ? $request->showZeroGL : false;
+                $showRetained = isset($request->showRetained) ? $request->showRetained : false;
                 $consolidationStatus = isset($request->type) && $request->type ? $request->type : 1;
                 
-                $response = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus);
+                $response = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained);
                 if ($request->type == 2) {
                     $reportData = $response['reportData'];
 
 
                     //company wise cyttd
-                    $companyWiseDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true);
+                    $companyWiseDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true, true);
                     $companyWiseNetProfiData = collect($companyWiseDataArray['reportData'])->where('netProfitStatus', 1)->first();
 
                     $netProfitColumnData = $companyWiseNetProfiData['columnData'];
@@ -1258,7 +1262,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $request->companySystemID = $this->getAssociateJvCompanies($request->groupCompanySystemID);
                     }
 
-                    $shareOfAccosicateDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true);
+                    $shareOfAccosicateDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true, true);
                 
                     $shareOfAccosicateData = collect($shareOfAccosicateDataArray['reportData'])->where('netProfitStatus', 1)->first();
 
