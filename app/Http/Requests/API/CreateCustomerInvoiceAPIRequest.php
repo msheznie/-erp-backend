@@ -37,6 +37,7 @@ class CreateCustomerInvoiceAPIRequest extends APIRequest
             'invoices.*.customer_invoice_number' => ['bail','required'],
             'invoices.*.bank_code' => ['bail','required'],
             'invoices.*.account_number' => ['bail','required'],
+            'invoices.*.comment' => ['bail','required'],
             'invoices.*.details' => ['bail','required','array'],
             'invoices.*.details.*.gl_code' => ['bail','required_if:invoices.*.invoice_type,1'],
             'invoices.*.details.*.service_code' => ['bail','required_if:invoices.*.invoice_type,2'],

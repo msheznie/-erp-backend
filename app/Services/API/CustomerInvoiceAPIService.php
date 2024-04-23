@@ -88,16 +88,8 @@ class CustomerInvoiceAPIService extends AppBaseController
             ];
         }
 
+        // Validate Financial Year & Period
         $documentDate = Carbon::parse($request['document_date']);
-        $currentDate = Carbon::today();
-        if($documentDate < $currentDate){
-            return [
-                'status' => false,
-                'message' => "Document date cannot be lesser than current date"
-            ];
-        }
-
-        // Validate Financial Period
         $financeYear = CompanyFinanceYear::where('companySystemID',$request['company_id'])
             ->where('isDeleted',0)
             ->whereYear('bigginingDate',$documentDate->year)
@@ -192,13 +184,13 @@ class CustomerInvoiceAPIService extends AppBaseController
             'status' => true,
             'data' => [
                 'bookingDate' => $documentDate->toDateString(),
-                'comments' => '',
+                'comments' => $request['comment'],
                 'companyFinanceYearID' => $financeYear->companyFinanceYearID,
                 'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
                 'companyID' => $request['company_id'],
                 'custTransactionCurrencyID' => $currency->currencyID,
                 'customerID' => $customer->customerCodeSystem,
-                'date_of_supply' => $currentDate->toDateString(),
+                'date_of_supply' => Carbon::today()->toDateString(),
                 'invoiceDueDate' => $invoiceDueDate->toDateString(),
                 'isPerforma' => $invoiceType,
                 'bankID' => $bank->bankmasterAutoID,
