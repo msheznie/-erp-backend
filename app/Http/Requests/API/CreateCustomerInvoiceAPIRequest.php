@@ -52,4 +52,22 @@ class CreateCustomerInvoiceAPIRequest extends APIRequest
             'invoices.*.details.*.vat_amount' => ['bail','sometimes','required','numeric','min:0']
         ];
     }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'invoices.*.details.*.quantity.min' => 'The quantity must be at least :min.',
+            'invoices.*.details.*.sales_price.min' => 'The sales price must be at least :min.',
+            'invoices.*.details.*.discount_percentage.min' => 'The discount percentage must be at least :min.',
+            'invoices.*.details.*.discount_amount.min' => 'The discount amount must be at least :min.',
+            'invoices.*.details.*.margin_percentage.min' => 'The margin percentage must be at least :min.',
+            'invoices.*.details.*.vat_percentage.min' => 'The vat percentage must be at least :min.',
+            'invoices.*.details.*.vat_amount.min' => 'The vat amount must be at least :min.'
+        ];
+    }
 }
