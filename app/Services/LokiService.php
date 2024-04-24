@@ -74,6 +74,9 @@ class LokiService
             case 'item':
                 $table = 'itemmaster';
                 break;
+            case 'asset_finance_category':
+                $table = 'erp_fa_financecategory';
+                break;
             default:
                 $table = null;
                 break;

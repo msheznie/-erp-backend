@@ -51,6 +51,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\helper\CancelDocument;
+use App\Models\GeneralLedger;
 use Response;
 use App\Repositories\MaterielRequestDetailsRepository;
 use Auth;

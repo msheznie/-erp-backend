@@ -18,7 +18,8 @@ class AuditRoutesTenantService
             'api/v1/customer_masters',
             'api/v1/supplier/masters/update',
             'api/v1/chart_of_account',
-            'api/v1/updateItemMaster'
+            'api/v1/updateItemMaster',
+            'api/v1/asset_finance_categories'
         ];
 
         return $lokiTenantRoutes;

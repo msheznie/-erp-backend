@@ -16,6 +16,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class AssetFinanceCategoryController
@@ -26,6 +27,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
 {
     /** @var  AssetFinanceCategoryRepository */
     private $assetFinanceCategoryRepository;
+    use AuditLogsTrait;
 
     public function __construct(AssetFinanceCategoryRepository $assetFinanceCategoryRepo)
     {
@@ -467,7 +469,23 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             unset($input['DT_Row_Index']);
         }
 
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
+
+        $previosValue = $assetFinanceCategory->toArray();
+        $newValue = $input;
+        $transactionID = $input['faFinanceCatID'];
         $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->where('faFinanceCatID', $input['faFinanceCatID'])->update($input);
+        
+        $this->auditLog($db, $transactionID, $uuid, "erp_fa_financecategory", "Asset Finance Category has updated", "U", $newValue, $previosValue);
         
         return $this->sendResponse($assetFinanceCategory, trans('custom.update', ['attribute' => trans('custom.asset_finance_categories')]));
     }
