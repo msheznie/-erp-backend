@@ -43,13 +43,13 @@ class CreateCustomerInvoiceAPIRequest extends APIRequest
             'invoices.*.details.*.service_code' => ['bail','required_if:invoices.*.invoice_type,2'],
             'invoices.*.details.*.segment_code' => ['bail','required_if:invoices.*.invoice_type,1'],
             'invoices.*.details.*.uom' => ['bail','required'],
-            'invoices.*.details.*.quantity' => ['bail','required','integer'],
-            'invoices.*.details.*.sales_price' => ['bail','required','numeric'],
-            'invoices.*.details.*.discount_percentage' => ['bail','sometimes','required','numeric'],
-            'invoices.*.details.*.discount_amount' => ['bail','sometimes','required','numeric'],
-            'invoices.*.details.*.margin_percentage' => ['bail','sometimes','required_if:invoices.*.invoice_type,2','numeric'],
-            'invoices.*.details.*.vat_percentage' => ['bail','sometimes','required','numeric'],
-            'invoices.*.details.*.vat_amount' => ['bail','sometimes','required','numeric']
+            'invoices.*.details.*.quantity' => ['bail','required','integer','min:1'],
+            'invoices.*.details.*.sales_price' => ['bail','required','numeric','min:1'],
+            'invoices.*.details.*.discount_percentage' => ['bail','sometimes','required','numeric','min:0'],
+            'invoices.*.details.*.discount_amount' => ['bail','sometimes','required','numeric','min:0'],
+            'invoices.*.details.*.margin_percentage' => ['bail','sometimes','required_if:invoices.*.invoice_type,2','numeric','min:0'],
+            'invoices.*.details.*.vat_percentage' => ['bail','sometimes','required','numeric','min:0'],
+            'invoices.*.details.*.vat_amount' => ['bail','sometimes','required','numeric','min:0']
         ];
     }
 }
