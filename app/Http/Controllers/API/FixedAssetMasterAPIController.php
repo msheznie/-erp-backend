@@ -845,6 +845,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = $request->all();
         $itemImgaeArr = isset($input['itemImage']) ? $input['itemImage'] : array();
         $itemPicture  = isset($input['itemPicture']) ? $input['itemPicture'] : '';
+        $attributes  = isset($input['attributes']) ? $input['attributes'] : null;
+
         $input = array_except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
@@ -883,10 +885,13 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         if(isset($input['confirmedYN']) && $input['confirmedYN'] == 1) {
-            $isAttributeMandatory = ErpAttributes::where('erp_attributes.is_mendatory', 1)->join('erp_attribute_values', 'erp_attribute_values.attribute_id', '=', 'erp_attributes.id')->where('erp_attribute_values.document_master_id', $id)->where('erp_attribute_values.value'. null)->count();
-            if($isAttributeMandatory > 0)
+            foreach($attributes as $attribute)
             {
-                return $this->sendError('Please enter a value for all mandatory fields in the attributes', 500);
+                if(isset($attribute['is_mendatory']) && $attribute['is_mendatory'] == 1) {
+                    if(isset($attribute['attribute_values'][0]) && $attribute['attribute_values'][0]['value'] == null) {
+                        return $this->sendError('Please enter a value for all mandatory fields in the attributes', 500);
+                    }
+                }
             }
         }
 
@@ -1496,6 +1501,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $query->where('description', 'LIKE', "%{$search}%");
             });
         }
+
+        $erpAttributes = $erpAttributes->where(function ($query) use ($code) {
+            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
+        });
 
         $erpAttributes = $erpAttributes->get();
 
