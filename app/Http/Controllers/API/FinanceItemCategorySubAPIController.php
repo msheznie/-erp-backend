@@ -594,17 +594,26 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $financeItemSubCategory = FinanceItemCategorySub::where('itemCategorySubID', $itemCategorySubID)
             ->first();
-        if(!empty($financeItemSubCategory)) {
-            $categoryTypeOld = json_decode($financeItemSubCategory->categoryType);
+        if (!empty($financeItemSubCategory)) {
+            $categoryTypeOld = json_decode($financeItemSubCategory->categoryType, true);
             if (is_array($categoryTypeOld) && is_array($categoryTypeNew)) {
-                if (count($categoryTypeOld) > count($categoryTypeNew)) {
+                $oldJson = array_map('json_encode', $categoryTypeOld);
+                $newJson = array_map('json_encode', $categoryTypeNew);
+                $diff = array_diff($oldJson, $newJson);
+                if (!empty($diff)) {
                     $isItemMaster = ItemMaster::where('financeCategorySub', $input['itemCategorySubID'])->first();
                     if (!empty($isItemMaster)) {
-                        return $this->sendError("Cannot change the Category Type. This Item Finance Sub Category is already selected for Item/Items.'", 500);
+                        $categoryTypeItem = json_decode($isItemMaster->categoryType, true);
+                        $itemJson = array_map('json_encode', $categoryTypeItem);
+                        $newJsonSubset = array_map('json_encode', $categoryTypeNew);
+                        foreach ($itemJson as $item) {
+                            if (!in_array($item, $newJsonSubset)) {
+                                return $this->sendError("Cannot change the Category Type. This Item Finance Sub Category is already selected for Item/Items.'", 500);
+                            }
+                        }
                     }
                 }
             }
-
         }
 
 
