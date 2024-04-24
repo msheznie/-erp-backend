@@ -936,16 +936,6 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 return $this->sendError('You cannot amend this document');
             }
 
-            $documentAutoId = $depMasterAutoID;
-            $documentSystemID = $fixedAssetDep->documentSystemID;
-            if($fixedAssetDep->approved == -1){
-                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
-                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                        return $this->sendError($validatePendingGlPost['message']);
-                    }
-                }
-            }
 
             $fixedAssetDepArray = $fixedAssetDep->toArray();
 
@@ -1009,6 +999,16 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             return $this->sendError('You cannot return back to amend this asset depreciation, it is not confirmed');
         }
 
+        $documentAutoId = $id;
+        $documentSystemID = $masterData->documentSystemID;
+        if($masterData->approved == -1){
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
+        }
 
         // checking document matched in depreciation
         
