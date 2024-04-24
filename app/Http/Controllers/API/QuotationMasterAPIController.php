@@ -893,6 +893,7 @@ class QuotationMasterAPIController extends AppBaseController
         $empID = \Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_quotationmaster.quotationMasterID',
             'erp_quotationmaster.quotationCode',
             'erp_quotationmaster.documentSystemID',

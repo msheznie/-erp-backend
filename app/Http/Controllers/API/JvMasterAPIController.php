@@ -1170,6 +1170,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_jvmaster.jvMasterAutoId',
             'erp_jvmaster.JVcode',
             'erp_jvmaster.documentSystemID',

@@ -633,6 +633,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $contingency = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_budget_contingency.*',
                 'erp_companyreporttemplate.description As templateDescription',
                 'serviceline.ServiceLineDes As ServiceLineDes',

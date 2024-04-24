@@ -752,6 +752,7 @@ class BankAccountAPIController extends AppBaseController
         $search = $request->input('search.value');
         $bankAccount = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_bankaccount.*',
                 'currencymaster.CurrencyCode As CurrencyCode',
                 'erp_documentapproved.documentApprovedID',

@@ -790,6 +790,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         $itemReturnMaster = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_itemreturnmaster.*',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As MRServiceLineDes',

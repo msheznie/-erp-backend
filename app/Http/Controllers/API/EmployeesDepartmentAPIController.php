@@ -1003,6 +1003,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         }
 
         $employeesDepartment = EmployeesDepartment::with(['company', 'department', 'serviceline', 'document', 'approvalgroup', 'employee'])
+                                                   ->where('approvalDeligated',0)
                                                   ->selectRaw('*,false as selected');
 
         $search = $request->input('search.value');

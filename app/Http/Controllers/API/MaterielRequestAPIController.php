@@ -181,6 +181,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $materielRequests = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_request.*',
                 'serviceline.ServiceLineDes As MRServiceLineDes',
                 'warehousemaster.wareHouseDescription As MRWareHouseDescription',

@@ -454,6 +454,7 @@ class AssetVerificationAPIController extends AppBaseController
 
         $assetVerification = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_fa_asset_verification.*',
                 'employees.empName As created_emp',
                 'erp_documentapproved.documentApprovedID',

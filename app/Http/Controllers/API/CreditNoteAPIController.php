@@ -1487,6 +1487,7 @@ class CreditNoteAPIController extends AppBaseController
         $search = $request->input('search.value');
         $creditNote = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_creditnote.*',
                 'employees.empName As created_emp',
                 'currencymaster.DecimalPlaces As DecimalPlaces',

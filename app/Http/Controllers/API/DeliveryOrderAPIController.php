@@ -929,6 +929,7 @@ WHERE
         $empID = Helper::getEmployeeSystemID();
 
         $doMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_delivery_order.deliveryOrderID',
             'erp_delivery_order.orderType',
             'erp_delivery_order.deliveryOrderCode',

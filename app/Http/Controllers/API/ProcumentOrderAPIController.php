@@ -1970,6 +1970,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->first();
 
         $poMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_purchaseordermaster.purchaseOrderID',
             'erp_purchaseordermaster.purchaseOrderCode',
             'erp_purchaseordermaster.documentSystemID',

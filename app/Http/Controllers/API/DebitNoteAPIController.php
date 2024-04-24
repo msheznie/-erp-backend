@@ -1790,6 +1790,7 @@ class DebitNoteAPIController extends AppBaseController
         $search = $request->input('search.value');
         $debitNotes = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_debitnote.*',
                 'employees.empName As created_emp',
                 'doc_employees.empName As empFullName',

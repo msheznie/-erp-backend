@@ -4537,6 +4537,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
         $paymentVoucher = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_paysupplierinvoicemaster.*',
                 'employees.empName As created_emp',
                 'suppliermaster.supplierName',

@@ -735,6 +735,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         $budgets = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'vat_return_filling_master.*',
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',

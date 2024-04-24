@@ -690,6 +690,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)->where('documentSystemID', 119)->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'recurring_voucher_setup.recurringVoucherAutoId',
             'recurring_voucher_setup.RRVcode',
             'recurring_voucher_setup.documentSystemID',

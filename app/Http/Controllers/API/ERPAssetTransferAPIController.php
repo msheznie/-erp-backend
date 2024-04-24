@@ -536,6 +536,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $documentSystemID = 103;
         $assetTransfer = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_fa_fa_asset_transfer.*',
                 'employees.empName As created_emp',
                 'erp_documentapproved.documentApprovedID',

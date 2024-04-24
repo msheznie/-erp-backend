@@ -2489,6 +2489,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_bookinvsuppmaster.bookingSuppMasInvAutoID',
             'erp_bookinvsuppmaster.bookingInvCode',
             'erp_bookinvsuppmaster.documentSystemID',

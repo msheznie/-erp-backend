@@ -579,6 +579,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $search = $request->input('search.value');
         $bankTransfer = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_paymentbanktransfer.*',
                 'employees.empName As created_emp',
                 'erp_bankaccount.AccountNo As AccountNo',

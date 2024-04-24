@@ -921,13 +921,13 @@ class AssetDisposalMasterAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-
         $companyId = $input['companyId'];
         $empID = \Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $capitalization = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_fa_asset_disposalmaster.*',
                 'employees.empName As created_emp',
                 'erp_documentapproved.documentApprovedID',

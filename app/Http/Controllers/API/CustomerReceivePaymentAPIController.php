@@ -3091,6 +3091,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_customerreceivepayment.custReceivePaymentAutoID',
             'erp_customerreceivepayment.custPaymentReceiveCode',
             'erp_customerreceivepayment.documentSystemID',

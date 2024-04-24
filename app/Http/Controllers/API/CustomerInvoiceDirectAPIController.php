@@ -3540,6 +3540,7 @@ WHERE
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_custinvoicedirect.custInvoiceDirectAutoID',
             'erp_custinvoicedirect.bookingInvCode',
             'erp_custinvoicedirect.documentSystemiD as documentSystemID',

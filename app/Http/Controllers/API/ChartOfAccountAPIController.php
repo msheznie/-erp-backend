@@ -690,7 +690,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $chartOfAccount = DB::table('erp_documentapproved')->select('chartofaccounts.*', 'controlaccounts.description as controlaccountdescription', 'accountstype.description as accountstypedescription', 'erp_documentapproved.documentApprovedID', 'rollLevelOrder', 'approvalLevelID', 'documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+        $chartOfAccount = DB::table('erp_documentapproved')->select('employeesdepartments.approvalDeligated','chartofaccounts.*', 'controlaccounts.description as controlaccountdescription', 'accountstype.description as accountstypedescription', 'erp_documentapproved.documentApprovedID', 'rollLevelOrder', 'approvalLevelID', 'documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')

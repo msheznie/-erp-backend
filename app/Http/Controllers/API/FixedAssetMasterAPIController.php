@@ -1728,6 +1728,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         $assetCost = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_fa_asset_master.*',
                 'employees.empName As created_emp',
                 'erp_documentapproved.documentApprovedID',

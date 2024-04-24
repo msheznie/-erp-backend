@@ -600,6 +600,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_consolejvmaster.consoleJvMasterAutoId',
             'erp_consolejvmaster.consoleJVcode',
             'erp_consolejvmaster.documentSystemID',
