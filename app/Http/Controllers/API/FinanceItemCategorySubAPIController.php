@@ -104,7 +104,6 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                 $isChangeItemType = $request->isChangeItemType;
                 $itemCodeSystem = $request->itemCodeSystem;
 
-                $transactions = [];
 
 
 
@@ -112,51 +111,69 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
                     $transactions = [];
 
-                    if ($isChangeItemType == 1) {
-
                         $itemMaster = ItemMaster::where('itemCodeSystem', $itemCodeSystem)->first();
                         $categoryType = isset($itemMaster->categoryType) ? $itemMaster->categoryType : null;
                         $categoryTypeOld = json_decode($categoryType);
 
                         if (is_array($itemType) && is_array($categoryTypeOld)) {
-                            if (count($categoryTypeOld) > count($itemType)) {
-                                $poDetails = PurchaseOrderDetails::where('itemCode', $itemCodeSystem)->join('erp_purchaseordermaster', 'erp_purchaseorderdetails.purchaseOrderMasterID', '=', 'erp_purchaseordermaster.purchaseOrderID')->get();
-                                foreach ($poDetails as $poDetail) {
-                                    $transactions[] = $poDetail->purchaseOrderCode;
+                            $oldJson = array_map('json_encode', $categoryTypeOld);
+                            $newJson = array_map('json_encode', $itemType);
+
+                            $diffOldToNew = array_diff($oldJson, $newJson);
+
+                            $diffOldToNewDecoded = array_map('json_decode', $diffOldToNew);
+
+                            $itemsJson = array_map('json_encode', $diffOldToNewDecoded);
+
+                            $itemPurchase = ['id' => 1, 'itemName' => 'Purchase'];
+                            $purchaseJson = json_encode($itemPurchase);
+                            $purchasePresent = in_array($purchaseJson, $itemsJson);
+
+                            $itemSales = ['id' => 2, 'itemName' => 'Sale'];
+                            $salesJson = json_encode($itemSales);
+                            $salesPresent = in_array($salesJson, $itemsJson);
+
+
+                        if($purchasePresent){
+                            $poDetails = PurchaseOrderDetails::where('itemCode', $itemCodeSystem)->join('erp_purchaseordermaster', 'erp_purchaseorderdetails.purchaseOrderMasterID', '=', 'erp_purchaseordermaster.purchaseOrderID')->get();
+                            foreach ($poDetails as $poDetail) {
+                                $transactions[] = $poDetail->purchaseOrderCode;
+                                if (count($transactions) === 10) break;
+                            }
+
+                            if (count($transactions) < 10) {
+                                $issueDetails = ItemIssueDetails::where('itemCodeSystem', $itemCodeSystem)->get();
+                                foreach ($issueDetails as $issueDetail) {
+                                    $transactions[] = $issueDetail->itemIssueCode;
                                     if (count($transactions) === 10) break;
                                 }
+                            }
 
-                                if (count($transactions) < 10) {
-                                    $issueDetails = ItemIssueDetails::where('itemCodeSystem', $itemCodeSystem)->get();
-                                    foreach ($issueDetails as $issueDetail) {
-                                        $transactions[] = $issueDetail->itemIssueCode;
-                                        if (count($transactions) === 10) break;
-                                    }
+                            if (count($transactions) < 10) {
+                                $grvDetails = GRVDetails::where('itemCode', $itemCodeSystem)->join('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->where('grvTypeID', 1)->get();
+                                foreach ($grvDetails as $grvDetail) {
+                                    $transactions[] = $grvDetail->grvPrimaryCode;
+                                    if (count($transactions) === 10) break;
                                 }
+                            }
 
-                                if (count($transactions) < 10) {
-                                    $grvDetails = GRVDetails::where('itemCode', $itemCodeSystem)->join('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->where('grvTypeID', 1)->get();
-                                    foreach ($grvDetails as $grvDetail) {
-                                        $transactions[] = $grvDetail->grvPrimaryCode;
-                                        if (count($transactions) === 10) break;
-                                    }
+                            if (count($transactions) < 10) {
+                                $sis = SupplierInvoiceDirectItem::where('itemCode', $itemCodeSystem)->join('erp_bookinvsuppmaster', 'supplier_invoice_items.bookingSuppMasInvAutoID', '=', 'erp_bookinvsuppmaster.bookingSuppMasInvAutoID')->get();
+                                foreach ($sis as $si) {
+                                    $transactions[] = $si->bookingInvCode;
+                                    if (count($transactions) === 10) break;
                                 }
+                            }
 
-                                if (count($transactions) < 10) {
-                                    $sis = SupplierInvoiceDirectItem::where('itemCode', $itemCodeSystem)->join('erp_bookinvsuppmaster', 'supplier_invoice_items.bookingSuppMasInvAutoID', '=', 'erp_bookinvsuppmaster.bookingSuppMasInvAutoID')->get();
-                                    foreach ($sis as $si) {
-                                        $transactions[] = $si->bookingInvCode;
-                                        if (count($transactions) === 10) break;
-                                    }
+                            if (count($transactions) < 10) {
+                                $prs = PurchaseReturnDetails::where('itemCode', $itemCodeSystem)->join('erp_purchasereturnmaster', 'erp_purchasereturndetails.purhaseReturnAutoID', '=', 'erp_purchasereturnmaster.purhaseReturnAutoID')->get();
+                                foreach ($prs as $pr) {
+                                    $transactions[] = $pr->purchaseReturnCode;
+                                    if (count($transactions) === 10) break;
                                 }
-
-                                if (count($transactions) < 10) {
-                                    $prs = PurchaseReturnDetails::where('itemCode', $itemCodeSystem)->join('erp_purchasereturnmaster', 'erp_purchasereturndetails.purhaseReturnAutoID', '=', 'erp_purchasereturnmaster.purhaseReturnAutoID')->get();
-                                    foreach ($prs as $pr) {
-                                        $transactions[] = $pr->purchaseReturnCode;
-                                        if (count($transactions) === 10) break;
-                                    }
-                                }
+                            }
+                        }
+                        if($salesPresent) {
 
                                 if (count($transactions) < 10) {
                                     $qus = QuotationDetails::where('itemAutoID', $itemCodeSystem)->join('erp_quotationmaster', 'erp_quotationdetails.quotationMasterID', '=', 'erp_quotationmaster.quotationMasterID')->get();
@@ -189,13 +206,13 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                                         if (count($transactions) === 10) break;
                                     }
                                 }
+                            }
 
-                                if (count($transactions) > 0) {
+                        if (count($transactions) > 0) {
                                     return $this->sendError($transactions, 422);
                                 }
-                            }
                         }
-                    }
+
 
                 }
                 if (is_array($itemType)) {
