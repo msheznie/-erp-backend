@@ -317,8 +317,10 @@ class ErpAttributesAPIController extends AppBaseController
             foreach ($attributes as $attribute){
                 $erpAttributes = ErpAttributes::withTrashed()->find($attribute->attribute_id);
                 $asset = FixedAssetMaster::find($attribute->document_master_id);
-
-                if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
+                if ($asset->confirmedYN == 0){
+                    ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                }
+                if ($asset->confirmedYN == 1 && $asset->approved == 0) {
                     if ($erpAttributes->deleted_at != null && $asset->createdDateAndTime > $erpAttributes->deleted_at) {
                         ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
                     }
@@ -387,7 +389,7 @@ class ErpAttributesAPIController extends AppBaseController
                 $attributeFieldValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
                     ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
                     ->where('erp_attribute_values.attribute_id', $id)
-                    ->where('erp_attribute_values.is_active', 1)
+                    ->where('erp_attribute_values.value', '!=', null)
                     ->where('erp_fa_asset_master.confirmedYN', 1)
                     ->count();
 
