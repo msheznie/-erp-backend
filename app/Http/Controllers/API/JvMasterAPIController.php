@@ -485,6 +485,14 @@ class JvMasterAPIController extends AppBaseController
                 }
             }
 
+            if (isset($input['jvType']) && $input['jvType'] == 5) {
+                if(Carbon::parse($input['reversalDate']) <= Carbon::parse($input['JVdate']))
+                {
+                    return $this->sendError("Reversal date should greater the JV date", 500);
+                }else {
+                    $input['reversalDate'] = Carbon::parse($input['reversalDate']);
+                }
+            }
             if (isset($input['jvType']) && $input['jvType'] == 4) {
                 $checkPendingJv = JvMaster::where('jvType', $input['jvType'])
                     ->where('companySystemID', $input['companySystemID'])
