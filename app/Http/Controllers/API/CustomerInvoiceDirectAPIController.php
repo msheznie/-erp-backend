@@ -3540,7 +3540,6 @@ WHERE
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
-            'employeesdepartments.approvalDeligated',
             'erp_custinvoicedirect.custInvoiceDirectAutoID',
             'erp_custinvoicedirect.bookingInvCode',
             'erp_custinvoicedirect.documentSystemiD as documentSystemID',
@@ -3560,7 +3559,15 @@ WHERE
             'approvalLevelID',
             'documentSystemCode',
             'employees.empName As created_user'
-        )->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID, $fromPms) {
+        );
+
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+        }
+        else{
+            $grvMasters->addSelect('employeesdepartments.approvalDeligated');
+        }
+
+        $grvMasters->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID, $fromPms) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'custInvoiceDirectAutoID')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_custinvoicedirect.companySystemID', $companyID)
