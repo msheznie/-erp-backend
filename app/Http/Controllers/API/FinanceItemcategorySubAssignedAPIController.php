@@ -101,7 +101,15 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 
 
         $input = $request->all();
-        $categoryType = json_encode(isset($input['categoryTypeDecode']) ? $input['categoryTypeDecode']: null);
+        if (isset($input['categoryTypeDecode'])) {
+            $categoryTypeDecode = array_map(function($item) {
+                $item['id'] = (int) $item['id'];
+                return $item;
+            }, $input['categoryTypeDecode']);
+        } else {
+            $categoryTypeDecode = null;
+        }
+        $categoryType = json_encode($categoryTypeDecode);
         $companies = $input['companySystemID'];
 
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
