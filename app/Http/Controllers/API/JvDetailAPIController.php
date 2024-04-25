@@ -41,6 +41,8 @@ use App\Models\Employee;
 use App\Models\ServiceLine;
 use App\Models\Company;
 use App\Models\ChartOfAccountAllocationDetail;
+use App\Models\SystemGlCodeScenario;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Repositories\JvDetailRepository;
 use App\Repositories\ChartOfAccountAllocationDetailHistoryRepository;
 use App\Services\UserTypeService;
@@ -1011,6 +1013,24 @@ GROUP BY
         }
 
         if ($testAmount == 1) {
+
+            $systemGlCodeScenario = SystemGlCodeScenario::where('slug',"po-accrual-liability")->first();
+            $systemGlCodeScenarioDetail = SystemGlCodeScenarioDetail::where('systemGlScenarioID',$systemGlCodeScenario->id)->where('companySystemID',$jvMasterData->companySystemID)->first();
+            $chartOfAccountDetails = ChartOfAccount::where('chartOfAccountSystemID',$systemGlCodeScenarioDetail->chartOfAccountSystemID)->first();
+
+
+            if($chartOfAccountDetails)
+            {
+                $detail_debitArr['chartOfAccountSystemID'] = $chartOfAccountDetails->chartOfAccountSystemID;
+                $detail_debitArr['glAccount'] = $chartOfAccountDetails->AccountCode;
+                $detail_debitArr['glAccountDescription'] = $chartOfAccountDetails->AccountDescription;
+            }
+            else
+            {
+                $detail_debitArr['chartOfAccountSystemID'] = 722;
+                $detail_debitArr['glAccount'] = 46019;
+                $detail_debitArr['glAccountDescription'] = 'Accrued Liability - PO accrual';
+            }
             // updating hardcoded value
             $detail_debitArr['jvMasterAutoId'] = $jvMasterAutoId;
             $detail_debitArr['documentSystemID'] = $jvMasterData->documentSystemID;
@@ -1023,9 +1043,6 @@ GROUP BY
             $detail_debitArr['serviceLineCode'] = $temp_serviceLineCode;
             $detail_debitArr['companySystemID'] = $jvMasterData->companySystemID;
             $detail_debitArr['companyID'] = $jvMasterData->companyID;
-            $detail_debitArr['chartOfAccountSystemID'] = 722;
-            $detail_debitArr['glAccount'] = 46019;
-            $detail_debitArr['glAccountDescription'] = 'Accrued Liability - PO accrual';
             $detail_debitArr['comments'] = $temp_serviceLineCode;
             $detail_debitArr['currencyID'] = $jvMasterData->currencyID;
             $detail_debitArr['currencyER'] = $jvMasterData->currencyER;

@@ -352,8 +352,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                ->where('companySystemID', $purchaseOrder->companySystemID)
-                ->first();
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->first();
         if ($allowFinanceCategory) {
             $policy = $allowFinanceCategory->isYesNO;
             if ($policy == 0) {
@@ -576,12 +576,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                ->where('companySystemID', $purchaseOrder->companySystemID)
-                ->first();
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->first();
 
         if ($allowFinanceCategory) {
             $policy = $allowFinanceCategory->isYesNO;
-           
+
 
             if ($policy == 0) {
                 if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
@@ -1528,6 +1528,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->where('GRVSelectedYN', 0)
             ->where('goodsRecievedYN', '<>', 2)
             ->where('manuallyClosed', 0)
+            ->whereIn('itemFinanceCategoryID',[1,2,4])
             ->get();
 
 
@@ -1683,7 +1684,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             if (empty($purchaseOrder)) {
                 return $this->sendError('Purchase Order not found', 500);
             }
-
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                 ->where('companySystemID', $purchaseOrder->companySystemID)
                 ->first();
@@ -1706,6 +1706,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     }
                 }
             }
+
 
             $data['isBulkItemJobRun'] = 1;
 

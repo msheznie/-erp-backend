@@ -973,6 +973,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('companySystemID', $procumentOrder->companySystemID)
                 ->first();
 
+
             if ($allowFinanceCategory) {
                 $policy = $allowFinanceCategory->isYesNO;
                 //checking if item category is same or not
@@ -1693,11 +1694,9 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
         }
-
         if ($allowFinanceCategory) {
             $conditions['allowFinanceCategory'] = $allowFinanceCategory->isYesNO;
         }
-
         if ($allowPRinPO) {
             $conditions['pullPRPolicy'] = $allowPRinPO->isYesNO;
         }

@@ -226,6 +226,15 @@ class JvMasterAPIController extends AppBaseController
             }
         }
 
+
+        if (isset($input['jvType']) && $input['jvType'] == 5) {
+            if(Carbon::parse($input['reversalDate']) <= Carbon::parse($input['JVdate']))
+            {
+                return $this->sendError("Reversal date should greater the JV date", 500);
+            }else {
+                $input['reversalDate'] = Carbon::parse($input['reversalDate']);
+            }
+        }
         if (isset($input['jvType']) && $input['jvType'] == 4) {
             $checkPendingJv = JvMaster::where('jvType', $input['jvType'])
                                       ->where('companySystemID', $input['companySystemID'])
@@ -607,6 +616,8 @@ class JvMasterAPIController extends AppBaseController
                 }
             }
 
+
+
             if ($jvMaster->jvType != 4) {
                 $checkQuantity = JvDetail::where('jvMasterAutoId', $id)
                     ->where('debitAmount', '<=', 0)
@@ -748,7 +759,10 @@ class JvMasterAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
-
+        if($jvMaster->jvType == 5)
+        {
+            $input['reversalDate'] = Carbon::parse($input['reversalDate']);
+        }
         $jvMaster = $this->jvMasterRepository->update($input, $id);
 
         if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
@@ -1362,6 +1376,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         }
 
         $approve = \Helper::approveDocument($input);
+
         if (!$approve["success"]) {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
@@ -1524,7 +1539,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                     financeGLcodebBSSystemID
                 FROM
                     erp_purchaseorderdetails
-                    WHERE erp_purchaseorderdetails.itemFinanceCategoryID IN (2, 4)
+                    WHERE erp_purchaseorderdetails.itemFinanceCategoryID IN (2, 4, 1)
             ) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
             LEFT JOIN (
                 SELECT
@@ -1547,7 +1562,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             AND pomaster.approved = - 1
             AND pomaster.poType_N <> 5
             AND pomaster.manuallyClosed = 0
-            AND pomaster.financeCategory IN (2, 4)
+            AND pomaster.rcmActivated = 0
+            AND pomaster.financeCategory IN (2, 4, 1)
             AND date(pomaster.approvedDate) >= '2016-05-01'
             AND date(
                 pomaster.expectedDeliveryDate
@@ -2451,7 +2467,7 @@ HAVING
 
         if (($documentDate < $monthBegin) || ($documentDate > $monthEnd)) {
             return $this->sendError('Current date is not within the financial period!, you cannot copy JV');
-        } 
+        }
 
         $jvInsertData['createdPcID'] = gethostname();
         $jvInsertData['modifiedPc'] = gethostname();

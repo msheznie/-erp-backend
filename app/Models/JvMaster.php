@@ -271,7 +271,8 @@ class JvMaster extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
-        'isAutoApprove'
+        'isAutoApprove',
+        'reversalDate'
     ];
 
     /**

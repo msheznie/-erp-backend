@@ -3173,6 +3173,7 @@ class Helper
                 
                 //checking whether document approved table has a data for the same document
                 $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+
                 if (!$docExist) {
                     // check document is available in document master table
                     $document = Models\DocumentMaster::where('documentSystemID', $params["document"])->first();
@@ -4438,7 +4439,7 @@ class Helper
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
-            
+
             $userMessage = 'Successfully approved the document';
             $more_data = [];
             $userMessageE = '';
@@ -4938,7 +4939,7 @@ class Helper
                                 if ($jvMasterData->jvType == 1 && $jvMasterData->isReverseAccYN == 0) {
                                     $accrualJournalVoucher = self::generateAccrualJournalVoucher($input["documentSystemCode"]);
                                 } else if ($jvMasterData->jvType == 5 && $jvMasterData->isReverseAccYN == 0) {
-                                    $POAccrualJournalVoucher = self::generatePOAccrualJournalVoucher($input["documentSystemCode"]);
+//                                    //$POAccrualJournalVoucher = self::generatePOAccrualJournalVoucher($input["documentSystemCode"]);
                                 }
                             }
 
