@@ -483,14 +483,17 @@ class ItemMasterAPIController extends AppBaseController
         $data['search']['value'] = '';
         $request->merge($data);
 
+        if(isset($input['order'][0]['dir'])) {
+            $itemMasters = $itemMasters->orderBy('documentApprovedID', $input['order'][0]['dir']);
+        }
+
+        $itemMasters = $itemMasters->get();
+
+        foreach ($itemMasters as $itemMaster){
+            $itemMaster->categoryTypeDecode = json_decode($itemMaster->categoryType);
+        }
+
         return \DataTables::of($itemMasters)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
-                    }
-                }
-            })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -1148,8 +1151,7 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
         
-        $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
-                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type','isSubItem','mainItemID');
+        $afterConfirm = array('secondaryItemCode', 'categoryType', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit', 'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type','isSubItem','mainItemID');
                        
         foreach ($input as $key => $value) {
             if ($itemMaster->itemConfirmedYN == 1) {
