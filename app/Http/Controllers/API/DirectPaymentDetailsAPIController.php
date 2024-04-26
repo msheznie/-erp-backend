@@ -409,7 +409,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $input['detail_project_id'] = null;
         }
 
-        $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
+        $payMaster = null;
+        
+        if(isset($input['directPaymentAutoID'])){
+            $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
+        }
 
         if (empty($payMaster)) {
             return $this->sendError('Direct Payment Supp Master not found');
