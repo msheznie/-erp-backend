@@ -3747,11 +3747,34 @@ ORDER BY
         $documentAutoId = $masterData->PayMasterAutoId;
         $documentSystemID = $masterData->documentSystemID;
 
-        if($masterData->approved == -1){
-            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
-            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                    return $this->sendError($validatePendingGlPost['message']);
+        if($masterData->approved == -1 && $masterData->documentSystemID != 19){
+            if($masterData->documentSystemID == 15){
+                $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
+                ->where('PayMasterAutoId', $masterData->PayMasterAutoId)
+                ->where('documentSystemID', 15)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->first();
+                $DebitNoteMasterExData = DebitNote::find($masterData->PayMasterAutoId);
+
+				   
+				
+                if (round($DebitNoteMasterExData->debitAmountTrans - $totalAmountPayEx->supplierPaymentAmount, 2) == 0) {
+
+                     if ((round($DebitNoteMasterExData->debitAmountLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($DebitNoteMasterExData->debitAmountRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
+                        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
+                        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                                return $this->sendError($validatePendingGlPost['message']);
+                            }
+                        }
+                     }
+                }
+            } else {
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
                 }
             }
         }
