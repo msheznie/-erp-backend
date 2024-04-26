@@ -313,6 +313,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->where('isActive', 1);
 
+        // There is a casting issue in this two conditions. (confirmed by Nazeem)
         if (isset($input['controllAccountYN'])) {
             $items = $items->where('controllAccountYN', $input['controllAccountYN']);
         }

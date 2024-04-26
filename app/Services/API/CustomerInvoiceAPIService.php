@@ -217,6 +217,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 ->where('controllAccountYN', 0)
                 ->where('isAssigned', -1)
                 ->where('isActive', 1)
+                ->where('isBank', 0)
                 ->first();
             if(!$chartOfAccountAssign){
                 return [
@@ -1854,6 +1855,11 @@ class CustomerInvoiceAPIService extends AppBaseController
     }
 
     public static function customerInvoiceItemDetailsStore($input): array {
+
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            $updateData = $input;
+        }
+
         $companySystemID = $input['companySystemID'];
 
         if(isset($input['isInDOorCI'])) {
@@ -2276,13 +2282,14 @@ class CustomerInvoiceAPIService extends AppBaseController
         if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             $inputData = $customerInvoiceItemDetails->refresh()->toArray();
 
-            $inputData['itemUnitOfMeasure'] = $input['itemUnitOfMeasure'];
-            $inputData['qtyIssued'] = $input['qtyIssued'];
-            $inputData['salesPrice'] = $input['salesPrice'];
-            $inputData['discountPercentage'] = $input['discountPercentage'];
-            $inputData['discountAmount'] = $input['discountAmount'];
-            $inputData['VATAmount'] = $input['VATAmount'];
-            $inputData['VATPercentage'] = $input['VATPercentage'];
+            $inputData['itemUnitOfMeasure'] = $updateData['itemUnitOfMeasure'];
+            $inputData['qtyIssued'] = $updateData['qtyIssued'];
+            $inputData['salesPrice'] = $updateData['salesPrice'];
+            $inputData['marginPercentage'] = $updateData['marginPercentage'];
+            $inputData['discountPercentage'] = $updateData['discountPercentage'];
+            $inputData['discountAmount'] = $updateData['discountAmount'];
+            $inputData['VATAmount'] = $updateData['VATAmount'];
+            $inputData['VATPercentage'] = $updateData['VATPercentage'];
             $inputData['isAutoCreateDocument'] = true;
 
             $returnData = self::customerInvoiceItemDetailsUpdate($inputData);
@@ -2398,6 +2405,9 @@ class CustomerInvoiceAPIService extends AppBaseController
                         'message' => "Sales Price and Margin% is not matching"
                     ];
                 }
+            }
+            else {
+                $input['marginPercentage'] = ($input['salesPrice'] - $input['sellingCost'])/$input['sellingCost']*100;
             }
         }
         else{
