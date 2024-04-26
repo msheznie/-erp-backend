@@ -72,7 +72,8 @@ class TenantEnforce
             'api/v1/uploadCustomerInvoice',
             'api/v1/create_receipts_voucher',
             'api/v1/generateARCAReportPDF',
-            'api/v1/approveRecurringVoucher'
+            'api/v1/approveRecurringVoucher',
+            'api/v1/create_customer_invoices'
         ];
 
         

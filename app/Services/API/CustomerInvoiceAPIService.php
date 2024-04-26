@@ -3085,6 +3085,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                     $approvePreCheck = \Helper::postedDatePromptInFinalApproval($dataset);
                                     if ($approvePreCheck["success"]) {
 
+                                        $dataset['db'] = $data['db'];
                                         $approveDocument = \Helper::approveDocument($dataset);
                                         if ($approveDocument["success"]) {
                                             $returnData['status'] = true;
