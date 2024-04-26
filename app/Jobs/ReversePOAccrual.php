@@ -55,9 +55,8 @@ class ReversePOAccrual implements ShouldQueue
 
         CommonJobService::db_switch($this->tenantDb);
 
-        $currentDateAndTime = Carbon::now();
-        $jvMasters = JvMaster::where('reversalDate',$currentDateAndTime)->where('isReverseAccYN',0)->where('confirmedYN',1)->where('approved',-1)->get();
-
+        $currentDateAndTime = Carbon::today()->toDateString();
+        $jvMasters = JvMaster::whereDate('reversalDate',$currentDateAndTime)->where('isReverseAccYN',0)->where('confirmedYN',1)->where('approved',-1)->get();
 
         if($jvMasters)
         {
