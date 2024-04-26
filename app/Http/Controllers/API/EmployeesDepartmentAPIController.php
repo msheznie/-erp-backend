@@ -36,6 +36,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CreateExcel;
+use Carbon\Carbon;
 /**
  * Class EmployeesDepartmentController
  * @package App\Http\Controllers\API
@@ -1108,6 +1109,44 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $saveData = [];
         foreach ($input['selectedEmpIds']['employeeSystemID'] as $key => $val) {
             $employeeGroupID = (is_array($input['rollMasterDetailData']['approvalGroupID'])) ? $input['rollMasterDetailData']['approvalGroupID'][0] : $input['rollMasterDetailData']['approvalGroupID'];
+
+            
+            $current_date = Carbon::parse(now())->format('Y-m-d');
+
+
+            $department = EmployeesDepartments::
+                 where('approvalDeligated','!=',0)
+                 ->where('employeeSystemID', $val['employeeSystemID'])
+                ->where('employeeGroupID', $employeeGroupID)
+                ->where('companySystemID', $input['rollMasterDetailData']['companySystemID'])
+                ->where('documentSystemID', $input['rollMasterDetailData']['documentSystemID'])
+                ->where('removedYN', 0)
+                 ->with(['deligation'=>function($q) use($current_date){
+                     $q->where('approved',0)->where('confirmedYN',1)
+                     ->orWhere(function($q)use($current_date){
+                         $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
+                     })
+                     ->orWhere(function($q)use($current_date){
+                         $q->where('approved',1)->where('end_date','>',$current_date); 
+                     });
+         
+                 }])
+                 ->whereHas('deligation',function($q)use($current_date){
+                     $q->where('approved',0)->where('confirmedYN',1)
+                     ->orWhere(function($q)use($current_date){
+                         $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
+                     })
+                     ->orWhere(function($q)use($current_date){
+                         $q->where('approved',1)->where('end_date','>',$current_date); 
+                     });
+         
+                 })
+                 ->exists();
+
+                 if($department)
+                 {
+                     return $this->sendError('Unable to assign,The employee included in deligation process ',422, ['type' => 'validation']);
+                 }
 
             $checkEmployeeDepartment = EmployeesDepartment::where('employeeSystemID', $val['employeeSystemID'])
                                                           ->where('employeeGroupID', $employeeGroupID)
