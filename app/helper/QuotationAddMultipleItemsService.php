@@ -56,14 +56,17 @@ class QuotationAddMultipleItemsService
         $items = $records;
         $itemsToUpload = array();
         // $employee = \Helper::getEmployeeInfo();
+        Log::useFiles(storage_path() . '/logs/sales_order_jobs.log');
 
         foreach($items as $item) {
             $data = array();
+            Log::info($item['item_code']);
 
             $orgItem  = ItemMaster::where('primaryCode', $item['item_code'])->first();
             $itemAssigned = ItemAssigned::where('itemCodeSystem', $orgItem->itemCodeSystem)
             ->where('companySystemID', $quotation['companySystemID'])
             ->first();
+            $company = Company::find($quotation['companySystemID']);
             if((is_numeric($item['qty']) && $item['qty'] != 0)  &&  (is_numeric($item['sales_price']) && $item['sales_price'] != 0)  &&  is_numeric($item['discount'])) {
 
                 if($orgItem) {
@@ -79,6 +82,8 @@ class QuotationAddMultipleItemsService
                         'unitOfMeasure' => ($unit) ? $unit->UnitShortCode : null,
                         'itemReferenceNo' => $orgItem->secondaryItemCode,
                         'comment' => (isset($item['comments'])) ? $item['comments'] :  '',
+                        'companySystemID' => $company->companySystemID,
+                        'companyID' => $company->CompanyID
                     ];
 
                     $currencyConversion = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $quotation['transactionAmount']);
