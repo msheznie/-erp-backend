@@ -1,4 +1,6 @@
 <?php
+
+
 /**
  * =============================================
  * -- File Name : CustomerMasterAPIController.php
@@ -1132,6 +1134,8 @@ class CustomerMasterAPIController extends AppBaseController
 
     public function masterBulkUpload(request $request)
     {
+        ini_set('max_execution_time', 1800);
+
         try {
 
             
