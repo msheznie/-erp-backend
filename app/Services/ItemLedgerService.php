@@ -636,6 +636,10 @@ class ItemLedgerService
                                 {
                                     $data[$i][$column] = $iemDefaultUnit->unit;
                                 }
+                                else
+                                {
+                                    $data[$i][$column] = $detail[$value];
+                                }
                             }
                             else {
                                 $data[$i][$column] = $detail[$value];
