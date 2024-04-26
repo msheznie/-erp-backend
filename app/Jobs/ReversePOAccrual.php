@@ -56,117 +56,117 @@ class ReversePOAccrual implements ShouldQueue
         CommonJobService::db_switch($this->tenantDb);
 
         $currentDateAndTime = Carbon::now();
-        $currentDateAndTime = "";
-
-        $jvMaster = JvMaster::where('reversalDate',$currentDateAndTime)->where('confirmedYN',1)->where('approved',-1)->first();
+        $jvMasters = JvMaster::where('reversalDate',$currentDateAndTime)->where('isReverseAccYN',0)->where('confirmedYN',1)->where('approved',-1)->get();
 
 
-        if($jvMaster)
+        if($jvMasters)
         {
-            if (($jvMaster->isReverseAccYN == 0) && isset($jvMaster->reversalDate))
+            foreach ($jvMasters as $jvMaster)
             {
-                $companyFinanceYear = CompanyFinanceYear::where('companySystemID', $jvMaster->companySystemID)
-                    ->where('isActive', -1)
-                    ->where('isCurrent', -1)
-                    ->first();
-
-                if (!$companyFinanceYear) {
-                    Log::error("Financial year not created or not active -".$currentDateAndTime);
-                }
-
-                if(!($companyFinanceYear->bigginingDate <= $jvMaster->reversalDate) && ($jvMaster->reversalDate <= $companyFinanceYear->endingDate))
+                if (($jvMaster->isReverseAccYN == 0) && isset($jvMaster->reversalDate))
                 {
-                    Log::error("reversal date is not within finanical year -".$currentDateAndTime);
-                }
+                    $companyFinanceYear = CompanyFinanceYear::where('companySystemID', $jvMaster->companySystemID)
+                        ->where('isActive', -1)
+                        ->where('isCurrent', -1)
+                        ->first();
+
+                    if (!$companyFinanceYear) {
+                        Log::error("Financial year not created or not active -".$currentDateAndTime);
+                    }
+
+                    if(!($companyFinanceYear->bigginingDate <= $jvMaster->reversalDate) && ($jvMaster->reversalDate <= $companyFinanceYear->endingDate))
+                    {
+                        Log::error("reversal date is not within finanical year -".$currentDateAndTime);
+                    }
 
 
-                $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $jvMaster->companySystemID)
-                    ->where('isActive', -1)
-                    ->where('isCurrent', -1)
-                    ->where('departmentSystemID', 5)
-                    ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
-                    ->first();
+                    $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $jvMaster->companySystemID)
+                        ->where('isActive', -1)
+                        ->where('isCurrent', -1)
+                        ->where('departmentSystemID', 5)
+                        ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
+                        ->first();
 
-                if (!$companyFinancePeriod) {
-                    Log::error("Financial period not created or not active -".$currentDateAndTime);
-                }
+                    if (!$companyFinancePeriod) {
+                        Log::error("Financial period not created or not active -".$currentDateAndTime);
+                    }
 
-                $jvInsertData = $jvMaster->toArray();
+                    $jvInsertData = $jvMaster->toArray();
 
-                $jvInsertData['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
-                $jvInsertData['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
-                $jvInsertData['FYBiggin'] = $companyFinanceYear->bigginingDate;
-                $jvInsertData['FYEnd'] = $companyFinanceYear->endingDate;
-                $jvInsertData['JVdate'] =$jvMaster->reversalDate;
-                $jvInsertData['reversalDate'] = $jvInsertData['JVdate'];
+                    $jvInsertData['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+                    $jvInsertData['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
+                    $jvInsertData['FYBiggin'] = $companyFinanceYear->bigginingDate;
+                    $jvInsertData['FYEnd'] = $companyFinanceYear->endingDate;
+                    $jvInsertData['JVdate'] =$jvMaster->reversalDate;
+                    $jvInsertData['reversalDate'] = $jvInsertData['JVdate'];
 
-                $jvInsertData['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                $jvInsertData['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                    $jvInsertData['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                    $jvInsertData['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
 
-                $documentDate = $jvInsertData['JVdate'];
-                $monthBegin = $jvInsertData['FYPeriodDateFrom'];
-                $monthEnd = $jvInsertData['FYPeriodDateTo'];
+                    $documentDate = $jvInsertData['JVdate'];
+                    $monthBegin = $jvInsertData['FYPeriodDateFrom'];
+                    $monthEnd = $jvInsertData['FYPeriodDateTo'];
 
-                if (($documentDate < $monthBegin) || ($documentDate > $monthEnd)) {
-                    Log::error('reversal date is not within the financial period!, you cannot copy JV');
-                }
+                    if (($documentDate < $monthBegin) || ($documentDate > $monthEnd)) {
+                        Log::error('reversal date is not within the financial period!, you cannot copy JV');
+                    }
 
-                $jvInsertData['createdPcID'] = gethostname();
-                $jvInsertData['modifiedPc'] = gethostname();
-                $jvInsertData['timestamp'] = Carbon::now();
-                $jvInsertData['createdDateTime'] = Carbon::now();
-                $jvInsertData['postedDate'] = null;
-                $jvInsertData['createdUserID'] = $jvMaster->createdUserID;
-                $jvInsertData['modifiedUser'] = $jvMaster->modifiedUser;
-                $jvInsertData['createdUserSystemID'] = $jvMaster->createdUserSystemID;
-                $jvInsertData['modifiedUserSystemID'] = $jvMaster->modifiedUserSystemID;
+                    $jvInsertData['createdPcID'] = gethostname();
+                    $jvInsertData['modifiedPc'] = gethostname();
+                    $jvInsertData['timestamp'] = Carbon::now();
+                    $jvInsertData['createdDateTime'] = Carbon::now();
+                    $jvInsertData['postedDate'] = null;
+                    $jvInsertData['createdUserID'] = $jvMaster->createdUserID;
+                    $jvInsertData['modifiedUser'] = $jvMaster->modifiedUser;
+                    $jvInsertData['createdUserSystemID'] = $jvMaster->createdUserSystemID;
+                    $jvInsertData['modifiedUserSystemID'] = $jvMaster->modifiedUserSystemID;
 
-                $lastSerial = JvMaster::where('companySystemID', $jvMaster->companySystemID)
-                    ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
-                    ->orderBy('serialNo', 'desc')
-                    ->first();
+                    $lastSerial = JvMaster::where('companySystemID', $jvMaster->companySystemID)
+                        ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
+                        ->orderBy('serialNo', 'desc')
+                        ->first();
 
-                $lastSerialNumber = 1;
-                if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-                }
+                    $lastSerialNumber = 1;
+                    if ($lastSerial) {
+                        $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                    }
 
 
-                $jvInsertData['serialNo'] = $lastSerialNumber;
+                    $jvInsertData['serialNo'] = $lastSerialNumber;
 
-                $documentMaster = DocumentMaster::where('documentSystemID', $jvInsertData['documentSystemID'])->first();
+                    $documentMaster = DocumentMaster::where('documentSystemID', $jvInsertData['documentSystemID'])->first();
 
-                if ($companyFinanceYear) {
-                    $startYear = $companyFinanceYear->bigginingDate;
-                    $finYearExp = explode('-', $startYear);
-                    $finYear = $finYearExp[0];
-                } else {
-                    $finYear = date("Y");
-                }
+                    if ($companyFinanceYear) {
+                        $startYear = $companyFinanceYear->bigginingDate;
+                        $finYearExp = explode('-', $startYear);
+                        $finYear = $finYearExp[0];
+                    } else {
+                        $finYear = date("Y");
+                    }
 
-                $company = Company::where('companySystemID', $jvMaster->companySystemID)->first();
+                    $company = Company::where('companySystemID', $jvMaster->companySystemID)->first();
 
-                $oldCode = $jvInsertData['JVcode'];
+                    $oldCode = $jvInsertData['JVcode'];
 
-                if ($documentMaster) {
-                    $jvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-                    $jvInsertData['JVcode'] = $jvCode;
-                }
+                    if ($documentMaster) {
+                        $jvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                        $jvInsertData['JVcode'] = $jvCode;
+                    }
 
-                $empInfo = UserTypeService::getSystemEmployee();
-                $jvInsertData['isReverseAccYN'] = -1;
-                $jvInsertData['approvedYN'] = 0;
-                $jvInsertData['confirmedYN'] = 0;
-                $jvInsertData['confirmedByEmpID'] = null;
-                $jvInsertData['confirmedByEmpSystemID'] = null;
-                $jvInsertData['confirmedByName'] = null;
-                $jvInsertData['confirmedDate'] = null;
-                $jvInsertData['approvedByUserID'] = null;
-                $jvInsertData['approvedByUserSystemID'] = null;
-                $jvInsertData['approvedDate'] = null;
-                $jvInsertData['RollLevForApp_curr'] = 1;
+                    $empInfo = UserTypeService::getSystemEmployee();
+                    $jvInsertData['isReverseAccYN'] = -1;
+                    $jvInsertData['approvedYN'] = 0;
+                    $jvInsertData['confirmedYN'] = 0;
+                    $jvInsertData['confirmedByEmpID'] = null;
+                    $jvInsertData['confirmedByEmpSystemID'] = null;
+                    $jvInsertData['confirmedByName'] = null;
+                    $jvInsertData['confirmedDate'] = null;
+                    $jvInsertData['approvedByUserID'] = null;
+                    $jvInsertData['approvedByUserSystemID'] = null;
+                    $jvInsertData['approvedDate'] = null;
+                    $jvInsertData['RollLevForApp_curr'] = 1;
 
-                $jvInsertData['JVNarration'] = ($jvInsertData['JVNarration'] == " " || $jvInsertData['JVNarration'] == null) ? "Reversal JV for ". $oldCode : $jvInsertData['JVNarration']. " - Reversal JV for ". $oldCode;
+                    $jvInsertData['JVNarration'] = ($jvInsertData['JVNarration'] == " " || $jvInsertData['JVNarration'] == null) ? "Reversal JV for ". $oldCode : $jvInsertData['JVNarration']. " - Reversal JV for ". $oldCode;
 
                     $jvMasterRes = JvMaster::create($jvInsertData);
                     $fetchJVDetail = JvDetail::where('jvMasterAutoId', $jvMaster->jvMasterAutoId)
@@ -226,6 +226,8 @@ class ReversePOAccrual implements ShouldQueue
                     ];
 
                     $approval = \Helper::approveDocument($data);
+
+                }
 
             }
 
