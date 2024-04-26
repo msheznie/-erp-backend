@@ -2998,10 +2998,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $q->where('documentSystemID', 4);
                 } ])->first();
 
-        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-        ->where('companySystemID', $output->companySystemID)
-        ->where('isYesNO', 1)
-        ->exists();
+        if ($output) {
+            $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $output->companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();    
+        }
 
         $output['isProjectBase'] = $isProjectBase;
 
