@@ -356,18 +356,20 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     {
         $data['assetMaster'] = ERPAssetTransfer::where('id', $id)->first();
 
-        if ($data['assetMaster']->type == 1) {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
-        } elseif( $data['assetMaster']->type == 4) {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail','department' => function ($d) {
-                $d->select(['departmentSystemID','DepartmentDescription','DepartmentID']);
-            }])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+        if ($data['assetMaster']) {
+            if ($data['assetMaster']->type == 1) {
+                $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+            } elseif( $data['assetMaster']->type == 4) {
+                $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail','department' => function ($d) {
+                    $d->select(['departmentSystemID','DepartmentDescription','DepartmentID']);
+                }])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+            } 
         } else {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster','fromEmployee' => function($query) {
-                $query->select(['employeeSystemID','empFullName']);
-            },'toEmployee' => function($query) {
-                $query->select(['employeeSystemID','empFullName']);
-            }])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+                $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster','fromEmployee' => function($query) {
+                    $query->select(['employeeSystemID','empFullName']);
+                },'toEmployee' => function($query) {
+                    $query->select(['employeeSystemID','empFullName']);
+                }])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         }
         return $this->sendResponse($data, 'Asset Request Detail');
     }
