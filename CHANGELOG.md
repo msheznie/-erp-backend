@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.38.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.38.1...v10.38.2) (2024-04-26)
+
+
+### Bug Fixes
+
+* **inventory:** wAC adjustment -item ledger not updated [GCP-3392] ([#6035](https://github.com/pbsgears/Gears_BackEnd/issues/6035)) ([18f8b47](https://github.com/pbsgears/Gears_BackEnd/commit/18f8b47e41ffc8484fe7cff110cd58c12daa9af5))
+* **sales & marketing:** sales order not pulled to the delivery order fixed [GCP-3103] ([#6034](https://github.com/pbsgears/Gears_BackEnd/issues/6034)) ([a048000](https://github.com/pbsgears/Gears_BackEnd/commit/a048000c89f05d51c74d1b2c5561347a3d44607b))
+
 ## [10.38.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.38.0...v10.38.1) (2024-04-15)
 
 
