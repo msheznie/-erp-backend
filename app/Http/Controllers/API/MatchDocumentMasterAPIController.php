@@ -3747,7 +3747,7 @@ ORDER BY
         $documentAutoId = $masterData->PayMasterAutoId;
         $documentSystemID = $masterData->documentSystemID;
 
-        if($masterData->approved == -1 && $masterData->documentSystemID != 19){
+        if($masterData->approved == -1 && $masterData->documentSystemID != 19 && $masterData->matchingOption != 1){
             if($masterData->documentSystemID == 15){
                 $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
                 ->where('PayMasterAutoId', $masterData->PayMasterAutoId)
