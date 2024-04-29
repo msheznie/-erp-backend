@@ -2309,7 +2309,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             $inputData = $customerInvoiceItemDetails->refresh()->toArray();
 
-            $inputData['itemUnitOfMeasure'] = $updateData['itemUnitOfMeasure'];
+            $inputData['unitOfMeasureIssued'] = $updateData['itemUnitOfMeasure'];
             $inputData['qtyIssued'] = $updateData['qtyIssued'];
             $inputData['salesPrice'] = $updateData['salesPrice'];
             $inputData['marginPercentage'] = $updateData['marginPercentage'];
