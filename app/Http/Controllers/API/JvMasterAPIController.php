@@ -1557,7 +1557,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 podetail.financeGLcodePLSystemID
             ) AS glCodeSystemID,
                 pomaster.supplierName,
-                podetail.poSum AS poCost,
+                pomaster.poTotalSupplierTransactionCurrency AS poCost,
                 IFNULL(grvdetail.grvSum, 0) AS grvCost,
                 (
                     podetail.poSum - IFNULL(grvdetail.grvSum, 0)
