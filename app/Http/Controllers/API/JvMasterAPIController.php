@@ -47,6 +47,8 @@ use App\Models\JvMaster;
 use App\Models\JvMasterReferredback;
 use App\Models\Months;
 use App\Models\SegmentMaster;
+use App\Models\SystemGlCodeScenario;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetConsumedDataRepository;
@@ -228,6 +230,21 @@ class JvMasterAPIController extends AppBaseController
 
 
         if (isset($input['jvType']) && $input['jvType'] == 5) {
+
+            $systemGlCodeScenario = SystemGlCodeScenario::where('slug','po-accrual-liability')->first();
+
+            if($systemGlCodeScenario)
+            {
+                $glCodeScenarioDetails = SystemGlCodeScenarioDetail::where('systemGlScenarioID',$systemGlCodeScenario->id)->where('companySystemID',$input["companySystemID"])->first();
+
+                if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)))
+                {
+                    return $this->sendError("Please configure PO accrual account for this company.", 500);
+                }
+            }else {
+                return $this->sendError("Gl Code scenario not found for PO Accrual", 500);
+            }
+
             if(Carbon::parse($input['reversalDate']) <= Carbon::parse($input['JVdate']))
             {
                 return $this->sendError("Reversal date should greater the JV date", 500);
@@ -486,9 +503,23 @@ class JvMasterAPIController extends AppBaseController
             }
 
             if (isset($input['jvType']) && $input['jvType'] == 5) {
+                $systemGlCodeScenario = SystemGlCodeScenario::where('slug','po-accrual-liability')->first();
+
+                if($systemGlCodeScenario)
+                {
+                    $glCodeScenarioDetails = SystemGlCodeScenarioDetail::where('systemGlScenarioID',$systemGlCodeScenario->id)->where('companySystemID',$input["companySystemID"])->first();
+
+                    if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)))
+                    {
+                        return $this->sendError("Please configure PO accrual account for this company.");
+                    }
+                }else {
+                    return $this->sendError("Gl Code scenario not found for PO Accrual");
+                }
+
                 if(Carbon::parse($input['reversalDate']) <= Carbon::parse($input['JVdate']))
                 {
-                    return $this->sendError("Reversal date should greater the JV date", 500);
+                    return $this->sendError("Reversal date should greater the JV date");
                 }else {
                     $input['reversalDate'] = Carbon::parse($input['reversalDate']);
                 }

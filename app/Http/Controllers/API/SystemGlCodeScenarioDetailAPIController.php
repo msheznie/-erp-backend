@@ -8,6 +8,8 @@ use App\Http\Requests\API\CreateSystemGlCodeScenarioDetailAPIRequest;
 use App\Http\Requests\API\UpdateSystemGlCodeScenarioDetailAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
+use App\Models\JvMaster;
+use App\Models\SystemGlCodeScenario;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Repositories\SystemGlCodeScenarioDetailRepository;
 use Carbon\Carbon;
@@ -238,6 +240,16 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
             return $this->sendError('System Gl Code Scenario Detail not found');
         }
 
+        $systemGlCodeScenario = SystemGlCodeScenario::find($systemGlCodeScenarioDetail->systemGlScenarioID);
+
+        if($systemGlCodeScenario->slug == "po-accrual-liability" && !is_null($systemGlCodeScenarioDetail->chartOfAccountSystemID))
+        {
+            $jvMasters = JvMaster::where('jvType',5)->where('isReverseAccYN',0)->where('approved',0)->get();
+            if(count($jvMasters) > 0)
+            {
+                return $this->sendError('There is Pending PO Accrual JV documents');
+            }
+        }
 
         $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
         DB::beginTransaction();
