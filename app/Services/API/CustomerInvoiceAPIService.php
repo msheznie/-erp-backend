@@ -256,17 +256,6 @@ class CustomerInvoiceAPIService extends AppBaseController
                     'message' => "Service Code Not Found"
                 ];
             }
-
-            // Validate UOM related to item
-            $item = ItemMaster::where('primaryCode',$request['service_code'])->first();
-            if($item){
-                if($item->unit != $unit->UnitID){
-                    return [
-                        'status' => false,
-                        'message' => "Invalid Unit Code"
-                    ];
-                }
-            }
         }
 
         $returnData = [
