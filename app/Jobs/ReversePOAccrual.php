@@ -110,15 +110,17 @@ class ReversePOAccrual implements ShouldQueue
                         Log::error('reversal date is not within the financial period!, you cannot copy JV');
                     }
 
+                    $empInfo = UserTypeService::getSystemEmployee();
+
                     $jvInsertData['createdPcID'] = gethostname();
                     $jvInsertData['modifiedPc'] = gethostname();
                     $jvInsertData['timestamp'] = Carbon::now();
                     $jvInsertData['createdDateTime'] = Carbon::now();
                     $jvInsertData['postedDate'] = null;
-                    $jvInsertData['createdUserID'] = $jvMaster->createdUserID;
-                    $jvInsertData['modifiedUser'] = $jvMaster->modifiedUser;
-                    $jvInsertData['createdUserSystemID'] = $jvMaster->createdUserSystemID;
-                    $jvInsertData['modifiedUserSystemID'] = $jvMaster->modifiedUserSystemID;
+                    $jvInsertData['createdUserID'] = $empInfo->empID;
+                    $jvInsertData['modifiedUser'] = $empInfo->empID;
+                    $jvInsertData['createdUserSystemID'] = $empInfo->employeeSystemID;
+                    $jvInsertData['modifiedUserSystemID'] = $empInfo->employeeSystemID;
 
                     $lastSerial = JvMaster::where('companySystemID', $jvMaster->companySystemID)
                         ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
@@ -152,7 +154,6 @@ class ReversePOAccrual implements ShouldQueue
                         $jvInsertData['JVcode'] = $jvCode;
                     }
 
-                    $empInfo = UserTypeService::getSystemEmployee();
                     $jvInsertData['isReverseAccYN'] = -1;
                     $jvInsertData['approvedYN'] = 0;
                     $jvInsertData['confirmedYN'] = 0;
