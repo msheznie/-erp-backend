@@ -1532,7 +1532,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         }
 
         $formattedJVdate = Carbon::parse($jvMasterData->JVdate)->format('Y-m-d');
-
+        $currency = $jvMasterData->currencyID;
         $qry = "SELECT
                 podetail.purchaseOrderDetailsID,
                 pomaster.purchaseOrderID,
@@ -1602,6 +1602,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             AND pomaster.poType_N <> 5
             AND pomaster.manuallyClosed = 0
             AND pomaster.rcmActivated = 0
+            AND pomaster.supplierDefaultCurrencyID = $currency
             AND pomaster.financeCategory IN (2, 4, 1)
             AND date(pomaster.approvedDate) >= '2016-05-01'
             AND date(
