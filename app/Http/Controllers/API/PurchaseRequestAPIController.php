@@ -1007,11 +1007,11 @@ class PurchaseRequestAPIController extends AppBaseController
                 $approved_date = Carbon::parse($approved_date)->format('Y-m-d');
                 $deparment = EmployeesDepartment::where('employeeSystemID',$approved_id)
                                     ->where('approvalDeligated','!=',0)
-                                    ->where('isActive','=',1)
+                                    //->where('isActive','=',1)
                                     ->where('companySystemID', $companySystemID)
                                     ->where('documentSystemID', $documentSystemID)
                                     ->where('employeeGroupID', $value->approvalGroupID)
-                                    ->where('approvalDeligatedFrom', '<=', $approved_date)->where('approvalDeligatedTo', '>=', $approved_date)
+                                    //->where('approvalDeligatedFrom', '<=', $approved_date)->where('approvalDeligatedTo', '>=', $approved_date)
                                     ->with(['delegator_employee'=>function($q){
                                         $q->Select('employeeSystemID','empUserName');
                                     }])->select('employeesDepartmentsID','approvalDeligatedFromEmpID')
@@ -1021,7 +1021,6 @@ class PurchaseRequestAPIController extends AppBaseController
                     $value['delegation'] = true;
                     $value['deparmtnet'] = $deparment;
                 }
-                return $this->sendResponse($value->deparmtnet->delegator_employee->empUserName, 'Record retrieved successfully');
        
 
             }
