@@ -1758,6 +1758,13 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
             elseif ($input["VATPercentage"] != 0){
                 $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
+
+                if($input["VATPercentage"] > 100){
+                    return [
+                        'status' => false,
+                        'message' => 'VAT% cannot exceed 100%'
+                    ];
+                }
             }
             else{
                 $input["VATAmount"] = 0;
@@ -2544,6 +2551,12 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
             elseif ($input["VATPercentage"] != 0){
                 $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
+                if($input["VATPercentage"] > 100){
+                    return [
+                        'status' => false,
+                        'message' => 'VAT% cannot exceed 100%'
+                    ];
+                }
             }
             else{
                 $input["VATPercentage"] = 0;
