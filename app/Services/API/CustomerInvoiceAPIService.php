@@ -28,6 +28,7 @@ use App\Models\DeliveryOrder;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
 use App\Models\ItemIssueMaster;
+use App\Models\ItemMaster;
 use App\Models\PurchaseReturn;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
@@ -68,20 +69,12 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         // Validate Currency
         $request['currency_code'] = strtoupper($request['currency_code']);
-        if($request['currency_code'] == "OMR"){
-            $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
-                ->where('currencymaster.CurrencyCode', $request['currency_code'])
-                ->where('customerCodeSystem', $customer->customerCodeSystem)
-                ->where('isAssigned', -1)
-                ->first();
-            if(!$currency){
-                return [
-                    'status' => false,
-                    'message' => "Invalid Currency"
-                ];
-            }
-        }
-        else{
+        $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
+            ->where('currencymaster.CurrencyCode', $request['currency_code'])
+            ->where('customerCodeSystem', $customer->customerCodeSystem)
+            ->where('isAssigned', -1)
+            ->first();
+        if(!$currency){
             return [
                 'status' => false,
                 'message' => "Invalid Currency"
@@ -262,6 +255,17 @@ class CustomerInvoiceAPIService extends AppBaseController
                     'status' => false,
                     'message' => "Service Code Not Found"
                 ];
+            }
+
+            // Validate UOM related to item
+            $item = ItemMaster::where('primaryCode',$request['service_code'])->first();
+            if($item){
+                if($item->unit != $unit->UnitID){
+                    return [
+                        'status' => false,
+                        'message' => "Invalid Unit Code"
+                    ];
+                }
             }
         }
 
@@ -1459,14 +1463,23 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
         }
 
-        if ($master->isVatEligible && $master->isPerforma != 2) {
+        $checkIsVatEligible = false;
+
+        if(isset($request['isAutoCreateDocument']) && $request['isAutoCreateDocument']){
+            if ($master->vatRegisteredYN && $master->isPerforma != 2){
+                $checkIsVatEligible = true;
+            }
+        }
+        elseif ($master->isVatEligible && $master->isPerforma != 2) {
+            $checkIsVatEligible = true;
+        }
+
+        if ($checkIsVatEligible){
             $vatDetails = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
             $addToCusInvDetails['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
             $addToCusInvDetails['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
             $addToCusInvDetails['VATPercentage'] = $vatDetails['percentage'];
         }
-
-        /**/
 
         DB::beginTransaction();
 
@@ -1749,6 +1762,13 @@ class CustomerInvoiceAPIService extends AppBaseController
             else{
                 $input["VATAmount"] = 0;
                 $input["VATPercentage"] = 0;
+            }
+
+            if($input['VATAmount'] > $input['salesPrice']){
+                return [
+                    'status' => false,
+                    'message' => 'Vat amount cannot be greater than sales price'
+                ];
             }
         }
         else{
@@ -2261,7 +2281,18 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
         }
 
-        if ($customerInvoiceDirect->isVatEligible) {
+        $checkIsVatEligible = false;
+
+        if(isset($request['isAutoCreateDocument']) && $request['isAutoCreateDocument']){
+            if ($customerInvoiceDirect->vatRegisteredYN){
+                $checkIsVatEligible = true;
+            }
+        }
+        elseif ($customerInvoiceDirect->isVatEligible) {
+            $checkIsVatEligible = true;
+        }
+
+        if ($checkIsVatEligible){
             $vatDetails = TaxService::getVATDetailsByItem($customerInvoiceDirect->companySystemID, $input['itemCodeSystem'], $customerInvoiceDirect->customerID,0);
             $input['VATPercentage'] = $vatDetails['percentage'];
             $input['VATApplicableOn'] = $vatDetails['applicableOn'];
@@ -2517,6 +2548,13 @@ class CustomerInvoiceAPIService extends AppBaseController
             else{
                 $input["VATPercentage"] = 0;
                 $input["VATAmount"] = 0;
+            }
+
+            if($input['VATAmount'] > $input['salesPrice']){
+                return [
+                    'status' => false,
+                    'message' => 'Vat amount cannot be greater than sales price'
+                ];
             }
         }
         else{
