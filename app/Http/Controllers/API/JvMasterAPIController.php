@@ -1560,7 +1560,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 pomaster.poTotalSupplierTransactionCurrency AS poCost,
                 IFNULL(grvdetail.grvSum, 0) AS grvCost,
                 (
-                    podetail.poSum - IFNULL(grvdetail.grvSum, 0)
+                    pomaster.poTotalSupplierTransactionCurrency - IFNULL(grvdetail.grvSum, 0)
                 ) AS balanceCost
             FROM
                 erp_purchaseordermaster AS pomaster
