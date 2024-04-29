@@ -237,7 +237,7 @@ class JvMasterAPIController extends AppBaseController
             {
                 $glCodeScenarioDetails = SystemGlCodeScenarioDetail::where('systemGlScenarioID',$systemGlCodeScenario->id)->where('companySystemID',$input["companySystemID"])->first();
 
-                if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)))
+                if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)) || ($glCodeScenarioDetails && $glCodeScenarioDetails->chartOfAccountSystemID == 0))
                 {
                     return $this->sendError("Please configure PO accrual account for this company.", 500);
                 }
@@ -509,7 +509,7 @@ class JvMasterAPIController extends AppBaseController
                 {
                     $glCodeScenarioDetails = SystemGlCodeScenarioDetail::where('systemGlScenarioID',$systemGlCodeScenario->id)->where('companySystemID',$input["companySystemID"])->first();
 
-                    if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)))
+                    if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)) || ($glCodeScenarioDetails && $glCodeScenarioDetails->chartOfAccountSystemID == 0))
                     {
                         return $this->sendError("Please configure PO accrual account for this company.");
                     }

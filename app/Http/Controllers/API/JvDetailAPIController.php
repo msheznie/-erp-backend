@@ -974,6 +974,20 @@ GROUP BY
             return $this->sendError('Jv Master not found');
         }
 
+        $systemGlCodeScenario = SystemGlCodeScenario::where('slug','po-accrual-liability')->first();
+
+        if($systemGlCodeScenario)
+        {
+            $glCodeScenarioDetails = SystemGlCodeScenarioDetail::where('systemGlScenarioID',$systemGlCodeScenario->id)->where('companySystemID',$jvMasterData->companySystemID)->first();
+
+            if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)) || ($glCodeScenarioDetails && $glCodeScenarioDetails->chartOfAccountSystemID == 0))
+            {
+                return $this->sendError("Please configure PO accrual account for this company.");
+            }
+        }else {
+            return $this->sendError("Gl Code scenario not found for PO Accrual");
+        }
+
         foreach ($input['detailTable'] as $new) {
 
             if (isset($new['isChecked']) && $new['isChecked']) {
@@ -1025,12 +1039,7 @@ GROUP BY
                 $detail_debitArr['glAccount'] = $chartOfAccountDetails->AccountCode;
                 $detail_debitArr['glAccountDescription'] = $chartOfAccountDetails->AccountDescription;
             }
-            else
-            {
-                $detail_debitArr['chartOfAccountSystemID'] = 722;
-                $detail_debitArr['glAccount'] = 46019;
-                $detail_debitArr['glAccountDescription'] = 'Accrued Liability - PO accrual';
-            }
+
             // updating hardcoded value
             $detail_debitArr['jvMasterAutoId'] = $jvMasterAutoId;
             $detail_debitArr['documentSystemID'] = $jvMasterData->documentSystemID;
