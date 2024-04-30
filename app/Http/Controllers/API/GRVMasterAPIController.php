@@ -895,7 +895,6 @@ class GRVMasterAPIController extends AppBaseController
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
             $confirm = \Helper::confirmDocument($params);
-            return $this->sendResponse($confirm, 'GRV updated successfully');
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
