@@ -1462,7 +1462,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if(($request['VATAmount'] > 0) || ($request['VATPercentage'] > 0)){
                     return [
                         'status' => false,
-                        'message' => 'The company not registered for vat'
+                        'message' => 'The company is not registered for vat'
                     ];
                 }
             }
@@ -2295,7 +2295,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if(($updateData['VATAmount'] > 0) || ($updateData['VATPercentage'] > 0)){
                     return [
                         'status' => false,
-                        'message' => 'The company not registered for vat'
+                        'message' => 'The company is not registered for vat'
                     ];
                 }
             }
