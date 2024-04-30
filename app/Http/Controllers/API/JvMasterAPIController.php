@@ -2170,7 +2170,7 @@ FROM
 	erp_purchaseordermaster AS pomaster
 INNER JOIN (
 	SELECT
-        GRVcostPerUnitComRptCur * noQty AS poSum,
+        GRVcostPerUnitSupTransCur * noQty AS poSum,
         purchaseOrderDetailsID,
 		purchaseOrderMasterID,
 		itemCode,
