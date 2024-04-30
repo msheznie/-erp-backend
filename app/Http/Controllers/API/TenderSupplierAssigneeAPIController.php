@@ -524,13 +524,17 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
         $file = array();
 
+        $alertMessage = 'Registration Link';
+        $body = '';
+
         if ($type == 1) {
             if($rfx){
-                Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
+                $body = "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
-            Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>",null, $file,"#C23C32","GEARS","$fromName"));
+            Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
             }else{
-            Mail::to($emailFormatted)->send(new EmailForQueuing(" ".$docType." Invitation link", "Dear Supplier," . "<br /><br />" . "
+                $alertMessage = " ".$docType." Invitation link";
+                $body = "Dear Supplier," . "<br /><br />" . "
             I trust this message finds you well." . "<br /><br />" . "
             We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
             If your company is interested in participating in the ".$docType." process, please click on the link below." . "<br /><br />" . "
@@ -538,13 +542,24 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             " . "<b>" . " ".$docType." Description :" . "</b> " . $tenderMaster['description'] . "<br /><br />" . "
             " . "<b>" . "Link :" . "</b> " . "<a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . "
             If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
-            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />",null, $file,"#C23C32","GEARS","$fromName"));
+            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />";
+
             }
         } else {
-            Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
+            $body = "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
-            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 96 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>",null, $file,"#C23C32","GEARS","$fromName"));
+            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 96 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>;";
         }
+
+
+        $dataEmail['companySystemID'] = $companySystemId;
+        $dataEmail['alertMessage'] = $alertMessage;
+        $dataEmail['empEmail'] = $emailFormatted;
+        $dataEmail['emailAlertMessage'] = $body;
+        $sendEmail = \Email::sendEmailErp($dataEmail);
+
+
+
     }
     public function getNotSentEmail(Request $request){ 
         $input = $request->all();

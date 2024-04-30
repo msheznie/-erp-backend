@@ -575,8 +575,14 @@ class TenderCircularsAPIController extends AppBaseController
                     }
 
                     $email = email::emailAddressFormat($supplier->supplier_registration_link->email);
-
-                    Mail::to($email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
+                    
+                    $dataEmail['companySystemID'] = $request->input('company_id');
+                    $dataEmail['alertMessage'] = "Tender Circular";
+                    $dataEmail['empEmail'] = $email;
+                    $body = "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
+                    $dataEmail['emailAlertMessage'] = $body;
+                    $dataEmail['attachmentList'] = $file;
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];

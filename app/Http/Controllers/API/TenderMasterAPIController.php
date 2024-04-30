@@ -2475,7 +2475,10 @@ ORDER BY
             $docType = 'Tender';
             $emailFormatted = email::emailAddressFormat($SupplierList['email']);
 
-            Mail::to($emailFormatted)->send(new EmailForQueuing(" ".$docType." Invitation link", "Dear Supplier," . "<br /><br />" . "
+            $dataEmail['companySystemID'] = $companyId;
+            $dataEmail['alertMessage'] = " ".$docType." Invitation link";
+            $dataEmail['empEmail'] = $emailFormatted;
+            $body = "Dear Supplier," . "<br /><br />" . "
             I trust this message finds you well." . "<br /><br />" . "
             We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
             If your company is interested in participating in the ".$docType." process, please click on the link below." . "<br /><br />" . "
@@ -2483,7 +2486,9 @@ ORDER BY
             " . "<b>" . " ".$docType." Description :" . "</b> " . $tenderDescription . "<br /><br />" . "
             " . "<b>" . "Link :" . "</b> " . "<a href='" . $urlString . "'>" . $urlString . "</a><br /><br />" . "
             If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
-            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />",null, $file,"#C23C32","GEARS","$fromName"));
+            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />";
+            $dataEmail['emailAlertMessage'] = $body;
+            $sendEmail = \Email::sendEmailErp($dataEmail);
         }
     }
 
@@ -2535,7 +2540,14 @@ ORDER BY
         $isCreated = $this->registrationLinkRepository->save($request, $token);
         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
         if ($isCreated['status'] == true) {
-            Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>",null, $file,"#C23C32","GEARS","$fromName"));
+
+            $dataEmail['companySystemID'] = $request->input('company_id');
+            $dataEmail['alertMessage'] = "Registration Link";
+            $dataEmail['empEmail'] = $email;
+            $body = "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
+            $dataEmail['emailAlertMessage'] = $body;
+            $sendEmail = \Email::sendEmailErp($dataEmail);
+
             return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         } else {
             return $this->sendError('Supplier Registration Link Generation Failed', 500);
