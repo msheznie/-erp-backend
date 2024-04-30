@@ -29,10 +29,12 @@ use App\Models\AccruavalFromOPMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Contract;
+use App\Models\FinanceItemCategorySub;
 use App\Models\HRMSJvDetails;
 use App\Models\HRMSJvMaster;
 use App\Models\JvDetail;
 use App\Models\JvMaster;
+use App\Models\ProcumentOrderDetail;
 use App\Models\SegmentMaster;
 use App\Models\ChartOfAccountAllocationMaster;
 use App\Models\ChartOfAccountAllocationDetailHistory;
@@ -990,9 +992,26 @@ GROUP BY
 
         foreach ($input['detailTable'] as $new) {
 
-            if (isset($new['isChecked']) && $new['isChecked']) {
-                $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $new['glCodeSystemID'])->first();
 
+            if (isset($new['isChecked']) && $new['isChecked']) {
+                if(isset($new['purchaseOrderDetailsID']))
+                {
+                    $puchaseOrderDetails = ProcumentOrderDetail::where('purchaseOrderDetailsID',$new['purchaseOrderDetailsID'])->first();
+                    if($puchaseOrderDetails && $puchaseOrderDetails->itemFinanceCategorySubID)
+                    {
+                        $itemFianceCategorySub = FinanceItemCategorySub::with(['cogs_gl_code_pl'])->where('itemCategorySubID',$puchaseOrderDetails->itemFinanceCategorySubID)->first();
+                        if($itemFianceCategorySub)
+                        {
+                            $chartOfAccount = ($itemFianceCategorySub->cogs_gl_code_pl) ? $itemFianceCategorySub->cogs_gl_code_pl : null;
+                        }else {
+                            $chartOfAccount = null;
+                        }
+                    }else {
+                        $chartOfAccount = null;
+                    }
+                }else {
+                    $chartOfAccount = null;
+                }
                 $testAmount = 1;
                 $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;
                 $detail_arr['documentSystemID'] = $jvMasterData->documentSystemID;
@@ -1003,9 +1022,9 @@ GROUP BY
                 $detail_arr['serviceLineCode'] = $new['serviceLine'];
                 $detail_arr['companySystemID'] = $jvMasterData->companySystemID;
                 $detail_arr['companyID'] = $jvMasterData->companyID;
-                $detail_arr['chartOfAccountSystemID'] = $new['glCodeSystemID'];
-                $detail_arr['glAccount'] = $chartOfAccount['AccountCode'];
-                $detail_arr['glAccountDescription'] = $chartOfAccount['AccountDescription'];
+                $detail_arr['chartOfAccountSystemID'] = ($itemFianceCategorySub) ? $itemFianceCategorySub->financeCogsGLcodePLSystemID : null;
+                $detail_arr['glAccount'] = ($chartOfAccount) ? $chartOfAccount->AccountCode : null;
+                $detail_arr['glAccountDescription'] = ($chartOfAccount) ? $chartOfAccount->AccountDescription : null;
                 $detail_arr['comments'] = $new['purchaseOrderCode'] . ' - ' . $new['itemPrimaryCode'] . ' - ' . $new['itemDescription'];
                 $detail_arr['currencyID'] = $jvMasterData->currencyID;
                 $detail_arr['currencyER'] = $jvMasterData->currencyER;
