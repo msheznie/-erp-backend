@@ -1557,16 +1557,16 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 podetail.financeGLcodePLSystemID
             ) AS glCodeSystemID,
                 pomaster.supplierName,
-                pomaster.poTotalSupplierTransactionCurrency AS poCost,
+                podetail.poSum AS poCost,
                 IFNULL(grvdetail.grvSum, 0) AS grvCost,
                 (
-                    pomaster.poTotalSupplierTransactionCurrency - IFNULL(grvdetail.grvSum, 0)
+                    podetail.poSum - IFNULL(grvdetail.grvSum, 0)
                 ) AS balanceCost
             FROM
                 erp_purchaseordermaster AS pomaster
             INNER JOIN (
                 SELECT
-                    GRVcostPerUnitComRptCur * noQty AS poSum,
+                    GRVcostPerUnitSupTransCur * noQty AS poSum,
                     purchaseOrderDetailsID,
                     purchaseOrderMasterID,
                     itemCode,
