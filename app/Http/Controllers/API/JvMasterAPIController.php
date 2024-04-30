@@ -1566,7 +1566,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 erp_purchaseordermaster AS pomaster
             INNER JOIN (
                 SELECT
-                    GRVcostPerUnitSupTransCur * noQty AS poSum,
+                    GRVcostPerUnitSupDefaultCur * noQty AS poSum,
                     purchaseOrderDetailsID,
                     purchaseOrderMasterID,
                     itemCode,
@@ -1584,7 +1584,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 SELECT
                     purchaseOrderMastertID,
                     purchaseOrderDetailsID,
-                    sum(GRVcostPerUnitComRptCur * noQty) as GRVSum
+                    sum(unitCost * noQty) as GRVSum
                 FROM
                     erp_grvdetails
                 INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
@@ -2170,7 +2170,7 @@ FROM
 	erp_purchaseordermaster AS pomaster
 INNER JOIN (
 	SELECT
-        GRVcostPerUnitSupTransCur * noQty AS poSum,
+        GRVcostPerUnitSupDefaultCur * noQty AS poSum,
         purchaseOrderDetailsID,
 		purchaseOrderMasterID,
 		itemCode,
@@ -2187,7 +2187,7 @@ LEFT JOIN (
 	SELECT
 		purchaseOrderMastertID,
 		purchaseOrderDetailsID,
-		sum(GRVcostPerUnitComRptCur * noQty) as GRVSum
+		sum(unitCost * noQty) as GRVSum
 	FROM
 		erp_grvdetails
 	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
