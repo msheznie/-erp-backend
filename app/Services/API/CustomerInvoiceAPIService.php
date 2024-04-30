@@ -1458,6 +1458,14 @@ class CustomerInvoiceAPIService extends AppBaseController
             if ($master->vatRegisteredYN && $master->isPerforma != 2){
                 $checkIsVatEligible = true;
             }
+            elseif (!$master->vatRegisteredYN){
+                if(($request['VATAmount'] > 0) || ($request['VATPercentage'] > 0)){
+                    return [
+                        'status' => false,
+                        'message' => 'The company not registered for vat'
+                    ];
+                }
+            }
         }
         elseif ($master->isVatEligible && $master->isPerforma != 2) {
             $checkIsVatEligible = true;
@@ -1747,17 +1755,17 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
             elseif ($input["VATPercentage"] != 0){
                 $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
-
-                if($input["VATPercentage"] > 100){
-                    return [
-                        'status' => false,
-                        'message' => 'VAT% cannot exceed 100%'
-                    ];
-                }
             }
             else{
                 $input["VATAmount"] = 0;
                 $input["VATPercentage"] = 0;
+            }
+
+            if($input["VATPercentage"] > 100){
+                return [
+                    'status' => false,
+                    'message' => 'VAT% cannot exceed 100%'
+                ];
             }
 
             if($input['VATAmount'] > $input['salesPrice']){
@@ -1933,7 +1941,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
         }
-        else if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+        else if(isset($updateData['isAutoCreateDocument']) && $updateData['isAutoCreateDocument']){
             $input['qtyIssuedDefaultMeasure'] = 0;
         }
 
@@ -1999,7 +2007,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         $input['reportingCurrencyER'] = $customerInvoiceDirect->companyReportingER;
 
         $input['issueCostRptTotal'] = $input['issueCostRpt'] * $input['qtyIssuedDefaultMeasure'];
-        $input['marginPercentage'] = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? $input['marginPercentage'] : 0;
+        $input['marginPercentage'] = (isset($updateData['isAutoCreateDocument']) && $updateData['isAutoCreateDocument']) ? $input['marginPercentage'] : 0;
 
         $companyCurrencyConversion = Helper::currencyConversion($companySystemID,$customerInvoiceDirect->companyReportingCurrencyID,$customerInvoiceDirect->custTransactionCurrencyID,$input['issueCostRpt']);
         $input['sellingCurrencyID'] = $customerInvoiceDirect->custTransactionCurrencyID;
@@ -2279,9 +2287,17 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         $checkIsVatEligible = false;
 
-        if(isset($request['isAutoCreateDocument']) && $request['isAutoCreateDocument']){
+        if(isset($updateData['isAutoCreateDocument']) && $updateData['isAutoCreateDocument']){
             if ($customerInvoiceDirect->vatRegisteredYN){
                 $checkIsVatEligible = true;
+            }
+            else {
+                if(($updateData['VATAmount'] > 0) || ($updateData['VATPercentage'] > 0)){
+                    return [
+                        'status' => false,
+                        'message' => 'The company not registered for vat'
+                    ];
+                }
             }
         }
         elseif ($customerInvoiceDirect->isVatEligible) {
@@ -2306,7 +2322,7 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         $customerInvoiceItemDetails = CustomerInvoiceItemDetails::create($input);
 
-        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+        if(isset($updateData['isAutoCreateDocument']) && $updateData['isAutoCreateDocument']){
             $inputData = $customerInvoiceItemDetails->refresh()->toArray();
 
             $inputData['unitOfMeasureIssued'] = $updateData['itemUnitOfMeasure'];
@@ -2540,16 +2556,17 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
             elseif ($input["VATPercentage"] != 0){
                 $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
-                if($input["VATPercentage"] > 100){
-                    return [
-                        'status' => false,
-                        'message' => 'VAT% cannot exceed 100%'
-                    ];
-                }
             }
             else{
                 $input["VATPercentage"] = 0;
                 $input["VATAmount"] = 0;
+            }
+
+            if($input["VATPercentage"] > 100){
+                return [
+                    'status' => false,
+                    'message' => 'VAT% cannot exceed 100%'
+                ];
             }
 
             if($input['VATAmount'] > $input['salesPrice']){
