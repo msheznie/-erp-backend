@@ -1114,7 +1114,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $current_date = Carbon::parse(now())->format('Y-m-d');
 
 
-            $department = EmployeesDepartments::
+            $department = EmployeesDepartment::
                  where('approvalDeligated','!=',0)
                  ->where('employeeSystemID', $val['employeeSystemID'])
                 ->where('employeeGroupID', $employeeGroupID)
