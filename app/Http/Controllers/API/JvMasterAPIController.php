@@ -1223,7 +1223,6 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
-            'employeesdepartments.approvalDeligated',
             'erp_jvmaster.jvMasterAutoId',
             'erp_jvmaster.JVcode',
             'erp_jvmaster.documentSystemID',
@@ -1241,7 +1240,13 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             'approvalLevelID',
             'documentSystemCode',
             'employees.empName As created_user'
-        )->join('erp_jvmaster', function ($query) use ($companyID) {
+        );
+
+        if(!isset($input['isAutoCreateDocument']) || !$input['isAutoCreateDocument']){
+            $grvMasters->addSelect('employeesdepartments.approvalDeligated');
+        }
+
+        $grvMasters->join('erp_jvmaster', function ($query) use ($companyID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'jvMasterAutoId')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_jvmaster.companySystemID', $companyID)
