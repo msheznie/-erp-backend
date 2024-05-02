@@ -1510,13 +1510,8 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             foreach ($erpAttributes as $index => $erpAttribute) {
                 if($erpAttribute->document_master_id == null) {
-                    if($asset->confirmedYN == 0){
+                    if($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)){
                         if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null) {
-                            unset($erpAttributes[$index]);
-                        }
-                    }
-                    if ($asset->confirmedYN == 1 && $asset->approved == 0) {
-                        if (($erpAttribute->is_active == 0 && $asset->createdDateAndTime > $erpAttribute->inactivated_at) || ($erpAttribute->deleted_at != null && $asset->createdDateAndTime > $erpAttribute->deleted_at)) {
                             unset($erpAttributes[$index]);
                         }
                     }
