@@ -548,7 +548,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         } else {
             $body = "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
-            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 96 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>;";
+            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 96 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
         }
 
 
