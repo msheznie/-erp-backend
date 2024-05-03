@@ -185,6 +185,35 @@ class EmployeesDepartmentAPIController extends AppBaseController
             return $this->sendError('Employees Department not found');
         }
 
+        $emp_id = $employeesDepartment->employeeSystemID;
+        $current_date = Carbon::parse(now())->format('Y-m-d');
+        $department = EmployeesDepartment::where('approvalDeligatedFromEmpID',$emp_id)->where('documentSystemID',$employeesDepartment->documentSystemID)
+        ->with(['deligation'=>function($q) use($current_date){
+            $q->where('approved',0)->where('confirmedYN',1)
+            ->orWhere(function($q)use($current_date){
+                $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
+            })
+            ->orWhere(function($q)use($current_date){
+                $q->where('approved',1)->where('end_date','>',$current_date); 
+            });
+
+        }])
+        ->whereHas('deligation',function($q)use($current_date){
+            $q->where('approved',0)->where('confirmedYN',1)
+            ->orWhere(function($q)use($current_date){
+                $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
+            })
+            ->orWhere(function($q)use($current_date){
+                $q->where('approved',1)->where('end_date','>',$current_date); 
+            });
+
+        })
+        ->exists();
+        if($department)
+        {
+            return $this->sendError('Unable to delete,since the deligator has delegation documents',422, ['type' => 'validation']);
+        }
+
         $employeeData = \Helper::getEmployeeInfo();
 
         $employeesDepartment->removedYN = 1;
@@ -214,7 +243,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $employeesDepartment = EmployeesDepartment::with(['company', 'department', 'serviceline', 'document', 'approvalgroup'])->where('employeeSystemID', $request->employeeSystemID)->selectRaw('*,false as selected');
+        $employeesDepartment = EmployeesDepartment::with(['company', 'department', 'serviceline', 'document', 'approvalgroup'])->where('approvalDeligated',0)->where('employeeSystemID', $request->employeeSystemID)->selectRaw('*,false as selected');
         $search = $request->input('search.value');
 
         if (array_key_exists('companySystemID', $input)) {
@@ -566,6 +595,35 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($input['employeesDepartmentsID']);
         if (empty($employeesDepartment)) {
             return $this->sendError('Employees Department not found');
+        }
+
+        $emp_id = $employeesDepartment->employeeSystemID;
+        $current_date = Carbon::parse(now())->format('Y-m-d');
+        $department = EmployeesDepartment::where('approvalDeligatedFromEmpID',$emp_id)->where('documentSystemID',$employeesDepartment->documentSystemID)
+        ->with(['deligation'=>function($q) use($current_date){
+            $q->where('approved',0)->where('confirmedYN',1)
+            ->orWhere(function($q)use($current_date){
+                $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
+            })
+            ->orWhere(function($q)use($current_date){
+                $q->where('approved',1)->where('end_date','>',$current_date); 
+            });
+
+        }])
+        ->whereHas('deligation',function($q)use($current_date){
+            $q->where('approved',0)->where('confirmedYN',1)
+            ->orWhere(function($q)use($current_date){
+                $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
+            })
+            ->orWhere(function($q)use($current_date){
+                $q->where('approved',1)->where('end_date','>',$current_date); 
+            });
+
+        })
+        ->exists();
+        if($department)
+        {
+            return $this->sendError('Unable to perform,since the deligator has delegation documents',422, ['type' => 'validation']);
         }
 
         $employeeData = \Helper::getEmployeeInfo();
@@ -1123,6 +1181,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 ->where('removedYN', 0)
                  ->with(['deligation'=>function($q) use($current_date){
                      $q->where('approved',0)->where('confirmedYN',1)
+                     ->orWhere('confirmedYN',0)
                      ->orWhere(function($q)use($current_date){
                          $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
                      })
@@ -1133,6 +1192,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                  }])
                  ->whereHas('deligation',function($q)use($current_date){
                      $q->where('approved',0)->where('confirmedYN',1)
+                     ->orWhere('confirmedYN',0)
                      ->orWhere(function($q)use($current_date){
                          $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
                      })
@@ -1145,7 +1205,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
                  if($department)
                  {
-                     return $this->sendError('Unable to assign,The employee included in deligation process ',422, ['type' => 'validation']);
+                     return $this->sendError('Unable to assign,The employee included in delegation process ',422, ['type' => 'validation']);
                  }
 
             $checkEmployeeDepartment = EmployeesDepartment::where('employeeSystemID', $val['employeeSystemID'])
