@@ -85,8 +85,8 @@ class CustomerInvoiceAPIService extends AppBaseController
         $documentDate = Carbon::parse($request['document_date']);
         $financeYear = CompanyFinanceYear::where('companySystemID',$request['company_id'])
             ->where('isDeleted',0)
-            ->whereYear('bigginingDate',$documentDate->year)
-            ->whereYear('endingDate',$documentDate->year)
+            ->where('bigginingDate','<=',$documentDate)
+            ->where('endingDate','>=',$documentDate)
             ->first();
 
         if($financeYear){
