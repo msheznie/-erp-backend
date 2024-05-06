@@ -4192,12 +4192,10 @@ class BudgetMasterAPIController extends AppBaseController
 
         $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
 
-        $segments = SegmentMaster::where('isActive', 1)->where('companySystemID', $templateData['companySystemID'])->get();
-
         $glCOdes = ReportTemplateDetails::with(['gllink'])
             ->where('companySystemID', $templateData['companySystemID'])
             ->where('companyReportTemplateID', $templateMasterID)
-            ->orderBy('sortOrder')
+            ->orderBy('detID')
             ->get();
 
 
@@ -4217,6 +4215,14 @@ class BudgetMasterAPIController extends AppBaseController
 
         $endDate = $financeYearMaster->endingDate;
         $endDate = date('d/m/Y', strtotime($endDate));
+
+        $budgetMasterSegments = BudgetMaster::where('companySystemID', $templateData['companySystemID'])->where('companyFinanceYearID', $companyFinanceYearID)->where('templateMasterID', $templateMasterID)->pluck('serviceLineSystemID');
+
+        $segments = SegmentMaster::where('isActive', 1)->where('companySystemID', $templateData['companySystemID'])->whereNotIn('serviceLineSystemID', $budgetMasterSegments)->get();
+
+        if($segments->isEmpty()){
+            return $this->sendError('The budget for all segments has already been uploaded');
+        }
 
         $output = array(
             'segments' => $segments,
