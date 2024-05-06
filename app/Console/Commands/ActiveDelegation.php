@@ -47,6 +47,7 @@ class ActiveDelegation extends Command
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
+            Log::info('Tenant id not found');
             return;
         }
 
