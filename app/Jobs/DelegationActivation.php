@@ -56,6 +56,5 @@ class DelegationActivation implements ShouldQueue
         $dlegationPeriod->update(['is_active' => 1]);
         $dlegations_ids = $dlegationPeriod->pluck('id');
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 1]);
-        Log::info('ended');
     }
 }
