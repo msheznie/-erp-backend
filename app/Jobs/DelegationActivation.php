@@ -52,7 +52,7 @@ class DelegationActivation implements ShouldQueue
 
         Log::info('pass date updated');
 
-        $dlegationPeriod = Deligation::where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date);
+        $dlegationPeriod = Deligation::where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date)->where('approved',-1);
         $dlegationPeriod->update(['is_active' => 1]);
         $dlegations_ids = $dlegationPeriod->pluck('id');
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 1]);
