@@ -41,7 +41,7 @@ class DelegationActivation implements ShouldQueue
      */
     public function handle()
     {
-        $tenantDb = $this->db;
+        $tenantDb = $this->tenantDb;
         CommonJobService::db_switch( $this->tenantDb );
         Log::info('started');
         $current_date = Carbon::parse(now())->format('Y-m-d');
@@ -50,7 +50,7 @@ class DelegationActivation implements ShouldQueue
         $deligate->update(['is_active' => 0]);
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_expire_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 0]);
 
-
+        Log::info('pass date updated');
 
         $dlegationPeriod = Deligation::where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date);
         $dlegationPeriod->update(['is_active' => 1]);
