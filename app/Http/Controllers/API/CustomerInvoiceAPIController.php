@@ -296,7 +296,7 @@ class CustomerInvoiceAPIController extends AppBaseController
 
         $header = $request->header('Authorization');
 
-        $createCustomerInvoice = CustomerInvoiceAPIService::storeCustomerInvoicesFromAPI($input, $header);
+        $createCustomerInvoice = CustomerInvoiceAPIService::storeCustomerInvoicesFromAPI($input);
 
         if($createCustomerInvoice['status']){
             if (count($createCustomerInvoice['data']) > 0) {
