@@ -47,7 +47,7 @@ use App\Traits\DocumentSystemMappingTrait;
 
 class CustomerInvoiceAPIService extends AppBaseController
 {
-
+    use DocumentSystemMappingTrait;
     private static function setInvoiceMasterDataForAPI($request): array {
 
         $invoiceType = ($request['invoice_type'] == 1) ? 0 : 2;
