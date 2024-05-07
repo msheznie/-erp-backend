@@ -307,7 +307,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
            return $this->addMasterEvaluationCriteriaDetail($request);
         } else if(isset($input['level']) && $input['level'] === 0) {
             return $this->addMasterEvaluationCriteria($request);
-        }else if(isset($input['pullFromMaster']) && $input['pullFromMaster'] == true){
+        } else if(isset($input['pullFromMaster']) && $input['pullFromMaster'] == true){
             $idArray = array_map(function ($item) {
                 return $item['id'];
             }, $input['selectedData']);
@@ -466,8 +466,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             return ['success' => true, 'message' => 'Successfully created'];
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
@@ -489,6 +488,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             'level' => $level,
             'critera_type_id' => $result->critera_type_id,
             'max_value' => $result->max_value,
+            'sort_order' => $result->sort_order,
             'evaluation_criteria_master_id' => $evaluationCriteriaMasterId,
         ];
 
@@ -666,8 +666,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 }
         }catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
@@ -695,8 +694,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             return ['success' => true, 'message' => 'Successfully created'];
         }catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
@@ -822,8 +820,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
@@ -861,8 +858,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
@@ -974,8 +970,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         }catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
@@ -1001,8 +996,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
 
     }
@@ -1099,8 +1093,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         }catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 

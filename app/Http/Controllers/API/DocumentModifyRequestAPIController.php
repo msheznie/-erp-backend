@@ -367,8 +367,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
 
     public function approveEditDocument(Request $request)
     {
-        $input = $request->all(); 
-
+        $input = $request->all();
         if(isset($input['reference_document_id']) && $input['reference_document_id'])
         {
             $currentDate = Carbon::now()->format('Y-m-d H:i:s');
@@ -382,6 +381,14 @@ class DocumentModifyRequestAPIController extends AppBaseController
             }
 
             $approve = \Helper::approveDocument($request);
+
+            if ($input['document_system_id'] == 117 && $approve['success']) {
+                TenderMaster::where('id', $input['id'])->update([
+                    'confirmed_by_emp_system_id' => null,
+                    'confirmed_by_name' => null,
+                    'confirmed_date' => null,
+                ]);
+            }
 
             if (!$approve["success"]) {
                 return $this->sendError($approve["message"]);

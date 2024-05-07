@@ -85,15 +85,27 @@ class TenderMasterRepository extends BaseRepository
         $currency = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
         ->get();
 
-        $selection = TenderType::select('id','name')
-        ->get();
+        $selection = TenderType::select('id', 'name')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'value' => $item->id,
+                    'label' => $item->name,
+                ];
+            });
 
         $envelope = EnvelopType::select('id','name')
-        ->get();
+        ->get()
+        ->map(function ($item) {
+            return [
+                'value' => $item->id,
+                'label' => $item->name,
+            ];
+        });
 
         $published =  array(
-            array('value'=> 1 , 'label'=> 'Not Published'),
-            array('value'=> 2 , 'label'=> 'Published'), 
+            array('value'=> 0 , 'label'=> 'Not Published'),
+            array('value'=> 1 , 'label'=> 'Published'),
         );
 
         $tenderNegotiationStatus =  array(
@@ -107,6 +119,7 @@ class TenderMasterRepository extends BaseRepository
             array('value'=> 2 , 'label'=> 'Pending Approval'), 
             array('value'=> 3 , 'label'=> 'Fully Approved'),  
             array('value'=> 4 , 'label'=> 'Referred Back'), 
+            array('value'=> 5 , 'label'=> 'Rejected'),
         );
 
         $rfxTypes = array(
@@ -121,8 +134,8 @@ class TenderMasterRepository extends BaseRepository
         );  
 
         $technical = array(
-            array('value'=> 1 , 'label'=> 'Not Completed'),
-            array('value'=> 2 , 'label'=> 'Completed'),  
+            array('value'=> 0 , 'label'=> 'Not Completed'),
+            array('value'=> 1 , 'label'=> 'Completed'),
         );  
 
         $stage = array(
@@ -131,11 +144,10 @@ class TenderMasterRepository extends BaseRepository
         );  
 
         $commercial = array(
-            array('value'=> 1 , 'label'=> 'Not Completed'),
-            array('value'=> 2 , 'label'=> 'Completed'),  
+            array('value'=> 0 , 'label'=> 'Not Completed'),
+            array('value'=> 1 , 'label'=> 'Completed'),
         );
-        
-        
+
         $data = array(
             'currency' => $currency,
             'selection' => $selection,
@@ -148,7 +160,7 @@ class TenderMasterRepository extends BaseRepository
             'stage' => $stage,
             'commercial' => $commercial,
             'tenderNegotiationStatus' => $tenderNegotiationStatus
-        ); 
+        );
  
         return $data;
     }

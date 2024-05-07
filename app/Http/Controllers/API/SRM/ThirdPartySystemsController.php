@@ -12,11 +12,6 @@ use Illuminate\Support\Facades\Validator;
 
 class ThirdPartySystemsController extends AppBaseController
 {
-
-    public function __construct()
-    {
-
-    }
     public function pushBudgetItems(Request $request)
     {
         DB::beginTransaction();
@@ -38,7 +33,8 @@ class ThirdPartySystemsController extends AppBaseController
             }
 
             $itemList = $request->input('item_list');
-            
+            $company_id = $request->input('company_id');
+
             if (!is_array($itemList)) {
                 return response()->json(['error' => 'Invalid item_list format'], 400);
             }
@@ -50,13 +46,16 @@ class ThirdPartySystemsController extends AppBaseController
                     return response()->json(['error' => 'Incomplete item received'], 400);
                 }
 
-                $existingItem = SrmBudgetItem::where('item_id', $item['item_id'])->first();
+                $existingItem = SrmBudgetItem::where('item_id', $item['item_id'])
+                    ->where('company_id', $company_id)
+                    ->first();
 
                 $data = [
                     'item_id' => $item['item_id'],
                     'item_name' => $item['item_name'],
                     'budget_amount' => $item['budget_amount'],
                     'is_active' => 1,
+                    'company_id' => $company_id,
                 ];
 
                 if (!$existingItem) {
@@ -64,13 +63,13 @@ class ThirdPartySystemsController extends AppBaseController
                     $data['updated_at'] = null;
                 }
 
-                SrmBudgetItem::updateOrInsert(['item_id' => $item['item_id']], $data);
+                SrmBudgetItem::updateOrInsert(['item_id' => $item['item_id'], 'company_id' => $company_id], $data);
             }
 
             $receivedItemIds = array_column($itemList, 'item_id');
             $itemsToDeactivate = array_diff($existingItemIds, $receivedItemIds);
             if (!empty($itemsToDeactivate)) {
-                SrmBudgetItem::whereIn('item_id', $itemsToDeactivate)->update(['is_active' => 0]);
+                SrmBudgetItem::whereIn('item_id', $itemsToDeactivate)->where('company_id', $company_id)->update(['is_active' => 0]);
             }
 
             DB::commit();

@@ -399,40 +399,61 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         if ($filters['published']) {
-            $publish =  ($filters['published'] == 1 ) ? 0 :1;
-            $tenderMaster->where('published_yn', $publish);
+            $ids = array_column($filters['published'], 'id');
+            $tenderMaster->whereIn('published_yn', $ids);
         }
 
         if ($filters['rfxType']) { 
             $tenderMaster->where('document_type', $filters['rfxType']); 
         }
 
-        if ($filters['status']) { 
-            switch ($filters['status']) {
-                case 1:
-                    $tenderMaster->where('confirmed_yn', 0)
-                                ->where('approved', 0)
-                                ->where('refferedBackYN', 0);
-                    break;
-        
-                case 2:
-                    $tenderMaster->where('confirmed_yn', 1)
-                                ->where('approved', 0)
-                                ->where('refferedBackYN', 0);
-                    break;
-        
-                case 3:
-                    $tenderMaster->where('confirmed_yn', 1)
-                                ->where('approved', -1)
-                                ->where('refferedBackYN', 0);
-                    break;
-                    
-                case 4:
-                        $tenderMaster->where('confirmed_yn', 1)
-                                    ->where('approved', 0)
-                                    ->where('refferedBackYN', -1);
-                    break;
-                } 
+        if ($filters['status']) {
+            $ids = array_column($filters['status'], 'id');
+            $tenderMaster->where(function ($query) use ($ids) {
+                if (in_array(1, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 0)
+                            ->where('approved', 0)
+                            ->where('refferedBackYN', 0);
+                    });
+                }
+
+                if (in_array(2, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 1)
+                            ->where('approved', 0)
+                            ->where('refferedBackYN', 0);
+                    });
+                }
+
+                if (in_array(3, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 1)
+                            ->where('approved', -1)
+                            ->where('refferedBackYN', 0);
+                    });
+                }
+
+                if (in_array(4, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 1)
+                            ->where('approved', 0)
+                            ->where('refferedBackYN', -1);
+                    });
+
+                    $query->WhereDoesntHave('approvedRejectStatus');
+                }
+
+                if (in_array(5, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->where('confirmed_yn', 1)
+                            ->where('approved', 0)
+                            ->where('refferedBackYN', -1);
+                    });
+
+                    $query->whereHas('approvedRejectStatus');
+                }
+            });
         }
 
         if (isset($input['rfx']) && $input['rfx']) {
@@ -830,9 +851,11 @@ ORDER BY
             ->leftJoin('srm_budget_items', 'srm_tender_budget_items.item_id', '=', 'srm_budget_items.id')
             ->where('srm_tender_budget_items.tender_id', $tenderMasterId)
             ->where('srm_budget_items.is_active', 1)
+            ->where('srm_budget_items.company_id', $companySystemID)
             ->unionAll(DB::table('srm_budget_items')
                 ->select('srm_budget_items.id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_budget_items.budget_amount) AS item_name"))
                 ->where('srm_budget_items.is_active', 1)
+                ->where('srm_budget_items.company_id', $companySystemID)
                 ->whereNotIn('srm_budget_items.id', function ($query) use ($tenderMasterId) {
                     $query->select('item_id')->from('srm_tender_budget_items')->where('tender_id', $tenderMasterId);
                 }))
@@ -841,6 +864,7 @@ ORDER BY
         $data['srmBudgetItem'] = $srmBudgetItem;
 
         $srmBudgetItemList = SrmBudgetItem::select('srm_budget_items.id as id', 'item_name AS itemName')
+            ->where('company_id', $companySystemID)
             ->whereHas('tenderBudgetItems', function ($query) use ($tenderMasterId) {
                 $query->where('tender_id', $tenderMasterId);
             })->get();
@@ -1663,6 +1687,7 @@ ORDER BY
                         } else {
                             $srmBudgetItem = SrmBudgetItem::select('budget_amount')
                                 ->where('id', $pr['id'])
+                                ->where('company_id', $input['company_id'])
                                 ->first();
 
                             $budget_amount = $srmBudgetItem ? $srmBudgetItem->budget_amount : 0;
@@ -3029,8 +3054,8 @@ ORDER BY
         }
 
         if ($filters['technical']) {
-            $technical =  ($filters['technical'] == 1 ) ? 0 :1;
-            $query->where('technical_eval_status', $technical);
+            $ids = array_column($filters['technical'], 'id');
+            $query->whereIn('technical_eval_status', $ids);
         }
 
         if ($filters['stage']) { 
@@ -3058,6 +3083,9 @@ ORDER BY
             });
         }
 
+        if ($filters['technical']) {
+            $query->having('technical_count', '>', 0);
+        }
 
         return \DataTables::eloquent($query)
             ->order(function ($query) use ($input) {
@@ -3444,6 +3472,36 @@ ORDER BY
         if($isNegotiation == 1){ 
             $query->where('is_negotiation_started',1)
             ->where('negotiation_published',1);
+            $query->withCount(['criteriaDetails',
+                'srm_bid_submission_master AS commercial_eval_negotiation' => function ($query2) {
+                    $query2->with(['TenderBidNegotiation' => function ($q){
+                        $q->where('commercial_verify_status',0);
+                    }])
+                        ->whereHas('TenderBidNegotiation',function ($q2){
+                            $q2->where('commercial_verify_status',0);
+                        });
+                }
+            ]);
+            if ($filters['commercial']) {
+                $ids = array_column($filters['commercial'], 'id');
+                $query->where(function ($query) use ($ids) {
+                    if (in_array(1, $ids)) {
+                        $query->orWhere(function ($query) {
+                            $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
+                                $q->where('commercial_verify_status', 0)->whereHas('TenderBidNegotiation');
+                            });
+                        });
+                    }
+
+                    if (in_array(0, $ids)) {
+                        $query->orWhere(function ($query) {
+                            $query->whereHas('srm_bid_submission_master', function ($q) {
+                                $q->where('commercial_verify_status', 0)->whereHas('TenderBidNegotiation');
+                            });
+                        });
+                    }
+                });
+            }
         }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
@@ -3462,9 +3520,9 @@ ORDER BY
             $query->where('stage', $filters['stage']);
         }
 
-        if ($filters['commercial']) {
-            $commercial =  ($filters['commercial'] == 1 ) ? 0 :1;
-            $query->where('commercial_verify_status', $commercial);
+        if ($filters['commercial'] && $isNegotiation != 1) {
+            $ids = array_column($filters['commercial'], 'id');
+            $query->whereIn('commercial_verify_status', $ids);
         }
 
         // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
@@ -3571,11 +3629,34 @@ ORDER BY
 
         if($isNegotiation == 1){
             $query = $query->where('negotiation_code', '!=', null);
+            $type = gettype($filters['combinedRankingStatus']);
+            $combinedRankingStatusArray = json_decode(json_encode($filters['combinedRankingStatus']), true);
+
+            $query->where(function ($query) use ($combinedRankingStatusArray) {
+                if (!in_array(0, $combinedRankingStatusArray) && !in_array(1, $combinedRankingStatusArray)) {
+                    return;
+                }
+              if (in_array(0, $combinedRankingStatusArray)) {
+                    $query->whereNull('negotiation_is_awarded');
+                }
+
+                if (in_array(1, $combinedRankingStatusArray)) {
+                    $query->orWhere('negotiation_is_awarded', 1);
+                }
+            });
+
+            } else {
+            if ($filters['combinedRankingStatus'] && count($filters['combinedRankingStatus']) > 0) {
+                $query->whereIn('is_awarded', $filters['combinedRankingStatus']);
+            } else {
+                $query->whereIn('is_awarded', [0 , 1]);
+            }
         }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
                 $query->whereIn('currency_id', $filters['currencyId']);
         }
+
 
         if ($filters['selection']) {
             $query->where('tender_type_id', $filters['selection']);
@@ -4373,6 +4454,7 @@ ORDER BY
         }
 
         $companyId = $request['companyId'];
+        $filters = $this->getFilterData($input);
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('is_awarded', 1)->where(function ($query) {
@@ -4380,6 +4462,28 @@ ORDER BY
                     ->orWhere('is_negotiation_closed', 1);
             });
 
+        if ($filters['tenderAwardingStatus'] && count($filters['tenderAwardingStatus']) > 0) {
+            $query->whereIn('final_tender_awarded', $filters['tenderAwardingStatus']);
+       }
+
+        if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
+            $query->whereIn('currency_id', $filters['currencyId']);
+        }
+
+        if ($filters['selection']) {
+            $ids = array_column($filters['selection'], 'id');
+            $query->whereIn('tender_type_id', $ids);
+        }
+
+        if ($filters['envelope']) {
+            $ids = array_column($filters['envelope'], 'id');
+            $query->whereIn('envelop_type_id', $ids);
+        }
+
+        if ($filters['stage']) {
+            $ids = array_column($filters['stage'], 'id');
+            $query->whereIn('stage', $ids);
+        }
 
         $search = $request->input('search.value');
         if ($search) {
@@ -4922,6 +5026,14 @@ ORDER BY
         $currencyId = (array)$currencyId;
         $currencyId = collect($currencyId)->pluck('id');
 
+        $combinedRankingStatus = !empty($input['filters']['combined_ranking_status']) ? $input['filters']['combined_ranking_status'] : null;
+        $combinedRankingStatus = (array)$combinedRankingStatus;
+        $combinedRankingStatus = collect($combinedRankingStatus)->pluck('id');
+
+        $tenderAwardingStatus = !empty($input['filters']['final_tender_awarded']) ? $input['filters']['final_tender_awarded'] : null;
+        $tenderAwardingStatus = (array)$tenderAwardingStatus;
+        $tenderAwardingStatus = collect($tenderAwardingStatus)->pluck('id');
+
         $selection = !empty($input['filters']['selection']) ? $input['filters']['selection'] : null;
         $envelope = !empty($input['filters']['envelope']) ? $input['filters']['envelope'] : null;
         $published = !empty($input['filters']['publish']) ? $input['filters']['publish']: null;
@@ -4944,7 +5056,9 @@ ORDER BY
             'technical' => $technical,
             'stage' => $stage,
             'commercial' => $commercial,
-            'tenderNegotiationStatus' => $tenderNegotiationStatus
+            'tenderNegotiationStatus' => $tenderNegotiationStatus,
+            'combinedRankingStatus' => $combinedRankingStatus,
+            'tenderAwardingStatus' => $tenderAwardingStatus
         ];
 
         return $filters;
@@ -5018,9 +5132,9 @@ ORDER BY
 
         $companyId = $request['companyId'];
 
-        $filters = $this->getFilterData($input);  
+        $filters = $this->getFilterData($input);
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
+        $query = TenderMaster::with(['currency', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
                         ->where('is_negotiation_started',1)
                         ->where('negotiation_published',1)
                         ->withCount(['criteriaDetails', 
@@ -5029,6 +5143,14 @@ ORDER BY
                             },
                             'criteriaDetails AS technical_count' => function ($query) {
                                 $query->where('critera_type_id', 2);
+                            },
+                            'srm_bid_submission_master AS technical_eval_negotiation' => function ($query2) {
+                                $query2->with(['TenderBidNegotiation' => function ($q){
+                                    $q->where('technical_verify_status',0);
+                                }])
+                                    ->whereHas('TenderBidNegotiation',function ($q2){
+                                    $q2->where('technical_verify_status',0);
+                                });
                             }
                         ])
                         ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
@@ -5052,8 +5174,24 @@ ORDER BY
         }
 
         if ($filters['technical']) {
-            $technical =  ($filters['technical'] == 1 ) ? 0 :1;
-            $query->where('technical_eval_status', $technical);
+            $ids = array_column($filters['technical'], 'id');
+            $query->where(function ($query) use ($ids) {
+                if (in_array(1, $ids)) {
+                    $query->orWhere(function ($query) {
+                        $query->whereDoesntHave('srm_bid_submission_master', function ($q) {
+                            $q->where('technical_verify_status', 0)->whereHas('TenderBidNegotiation');
+                        });
+                    });
+                }
+
+                if (in_array(0, $ids)) {
+                    $query->orWhere(function ($query) {
+                    $query->whereHas('srm_bid_submission_master', function ($q) {
+                        $q->where('technical_verify_status', 0)->whereHas('TenderBidNegotiation');
+                        });
+                    });
+                }
+            });
         }
 
         if ($filters['stage']) { 
@@ -5415,18 +5553,19 @@ ORDER BY
     public function getBudgetItemTotalAmount(Request $request){
         $input = $request->all();
         $tenderMasterId = $input['tenderMasterId'];
+        $companySystemID = $input['companySystemID'];
         // Get the budget amount for each item in the idList
-        $totalBudgetAmount = collect($input['idList'])->map(function($itemId) use ($tenderMasterId) {
+        return collect($input['idList'])->map(function($itemId) use ($tenderMasterId, $companySystemID) {
             $existingItem = SrmTenderBudgetItem::where('item_id', $itemId)->where('tender_id', $tenderMasterId)->first();
             if ($existingItem) {
                 return $existingItem->budget_amount;
             } else {
-                $budgetItem = SrmBudgetItem::find($itemId);
+                $budgetItem = SrmBudgetItem::where('id', $itemId)
+                    ->where('company_id', $companySystemID)
+                    ->first();
                 return $budgetItem ? $budgetItem->budget_amount : 0;
             }
         })->sum();
-
-        return $totalBudgetAmount;
     }
 
 } 

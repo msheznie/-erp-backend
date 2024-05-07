@@ -11,7 +11,8 @@ class SrmBudgetItem extends Model
        'item_id',
        'item_name',
        'budget_amount',
-       'is_active'
+       'is_active',
+       'company_id'
     ];
 
     public $timestamps = true;

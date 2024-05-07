@@ -5742,6 +5742,7 @@ class Helper
      */
     public static function rejectDocument($input)
     {
+        $bodyName = '';
         DB::beginTransaction();
         try {
             switch ($input["documentSystemID"]) {
@@ -6241,7 +6242,6 @@ class Helper
                             }
 
                             $subject = $subjectName . " is rejected.";
-
                             if(isset($input['rejectedStatus']) && $input['rejectedStatus'] == 1) {
                                 if(($input["document_system_id"] == 108 || $input["document_system_id"] == 113)){
                                     $documentType = ($input["document_system_id"]) == 108 ? 'Tender' : 'RFX';
