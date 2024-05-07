@@ -888,7 +888,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $companyWiseGrandTotal = [];
                 $uncategorizeData = [];
             }
-            $res = $this->processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID);
+            $res = $this->processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID, $showRetained);
             $headers = $res['headers'];
             $companyHeaderColumns = $res['companyHeaderColumns'];
             $uncategorizeDetailArr = $res['uncategorizeDetailArr'];
@@ -2054,7 +2054,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
         return $output;
     }
 
-    public function processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID)
+    public function processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID, $showRetained)
     {
         $companyCodes = [];
         $serviceLineDescriptions = [];
@@ -2215,6 +2215,9 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $firstLevel = true;
                 if ($val2['isFinalLevel'] == 1) {
                     $temp2['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val2['detID'])->sortBy('sortOrder')->values();
+                    if($val2['detDescription'] == "Retained Earning" && $showRetained == false) {
+                        $temp2['glCodes'] = null;
+                    }
                 } else {
                     $detailsTwo = collect($newOutputCollect)->where('masterID', $val2['detID'])->sortBy('sortOrder')->values();
                     $secondLevel = true;

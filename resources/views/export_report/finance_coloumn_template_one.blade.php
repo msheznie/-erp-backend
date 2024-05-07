@@ -224,7 +224,8 @@
 			            @endif
 			        </tr>
 			        @if($data['isFinalLevel'] == 1)
-			        @foreach ($data['glCodes'] as $data2)
+					@if($data['glCodes'] != null)
+					@foreach ($data['glCodes'] as $data2)
 			        @if($data['expanded'])
 			        <tr>
 			            <td></td>
@@ -257,6 +258,7 @@
 			        </tr>
 			        @endif
 			        @endforeach
+			        @endif
 			        @endif
 			        @if(isset($data['detail']))
 			        @foreach ($data['detail'] as $dataSubTwo)
