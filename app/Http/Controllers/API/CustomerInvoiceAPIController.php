@@ -293,7 +293,9 @@ class CustomerInvoiceAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $createCustomerInvoice = CustomerInvoiceAPIService::storeCustomerInvoicesFromAPI($input);
+        $header = $request->header('Authorization');
+
+        $createCustomerInvoice = CustomerInvoiceAPIService::storeCustomerInvoicesFromAPI($input, $header);
 
         if($createCustomerInvoice['status']){
             return $this->sendResponse(null,"Customer Invoices Store Successfully");

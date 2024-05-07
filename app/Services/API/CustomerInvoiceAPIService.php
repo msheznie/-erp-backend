@@ -43,6 +43,7 @@ use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\DocumentSystemMappingTrait;
 
 class CustomerInvoiceAPIService extends AppBaseController
 {
@@ -3050,7 +3051,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         return ['status' => true];
     }
 
-    public static function storeCustomerInvoicesFromAPI($data): array {
+    public static function storeCustomerInvoicesFromAPI($data, $header): array {
 
         DB::beginTransaction();
 
@@ -3060,7 +3061,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         ];
 
         $invoices = $data['invoices'];
-
+        $createdCustomerInvoiceIds = [];
         foreach ($invoices as $invoice){
 
             try{
@@ -3146,6 +3147,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                         $approveDocument = \Helper::approveDocument($dataset);
                                         if ($approveDocument["success"]) {
                                             $returnData['status'] = true;
+                                            $createdCustomerInvoiceIds[] = $confirmDataSet['custInvoiceDirectAutoID'];
                                         }
                                         else {
                                             DB::rollBack();
@@ -3199,6 +3201,9 @@ class CustomerInvoiceAPIService extends AppBaseController
         }
 
         if($returnData['status']){
+            if (count($createdCustomerInvoiceIds) > 0) {
+                $this->storeToDocumentSystemMapping(20,$createdCustomerInvoiceIds,$header);
+            }
             DB::commit();
         }
 
