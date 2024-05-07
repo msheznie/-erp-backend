@@ -5492,6 +5492,22 @@ ORDER BY
             }])
             ->findWithoutFail($id);
 
+        $data['docModifiyMaster'] = DocumentModifyRequest::select('id','description','refferedBackYN','approved')
+            ->where('documentSystemCode',$id)
+            ->where('requested_document_master_id',$documentId)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $data['docModifyApprovedData'] = DocumentApproved::select('documentApprovedID','companySystemID','documentSystemID','documentSystemCode','approvedComments',
+        'employeeSystemID','approvedDate','rejectedYN','approvedYN','rejectedDate','rejectedComments')
+        ->with(['employee' => function ($q){
+            $q->select('employeeSystemID','empFullName');
+        }])
+        ->where('documentSystemCode',$data['docModifiyMaster']['id'])
+        ->whereIn('documentSystemID',[117,118])
+        ->get();
+
+
         $data['rejectedHistory'] = DocumentReferedHistory::select('documentReferedID','documentApprovedID','companySystemID','documentSystemID','documentSystemCode',
         'employeeSystemID','rejectedYN','rejectedDate','rejectedComments')
             ->with(['employee' => function ($q){
