@@ -1180,8 +1180,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 ->where('documentSystemID', $input['rollMasterDetailData']['documentSystemID'])
                 ->where('removedYN', 0)
                  ->with(['deligation'=>function($q) use($current_date){
-                     $q->where('approved',0)->where('confirmedYN',1)
-                     ->orWhere('confirmedYN',0)
+                     $q->where('approved',0)
                      ->orWhere(function($q)use($current_date){
                          $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
                      })
@@ -1191,8 +1190,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
          
                  }])
                  ->whereHas('deligation',function($q)use($current_date){
-                     $q->where('approved',0)->where('confirmedYN',1)
-                     ->orWhere('confirmedYN',0)
+                     $q->where('approved',0)
                      ->orWhere(function($q)use($current_date){
                          $q->where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date); 
                      })
