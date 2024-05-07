@@ -6349,10 +6349,10 @@ class Helper
 
                                         $sub = "
                                         <p>Dear Supplier,</p>
-                                        <p>Please be informed that your KYC form has been referred back by the ".$empInfo->empName.". for the following reason.</p>
+                                        <p>Please be informed that your KYC form has been referred back by ".$empInfo->empName.", for the following reason.</p>
                                         <p>Reason : <b>" .$input["rejectedComments"]."</b></p>
                                         <p>Please click on the \"Amend\" button to do the changes into KYC and resubmit for approval.</p>
-                                        <p>Link <a href='$loginLink'>$loginLink</a></p>
+                                        <p>Link <a href='$loginLink'>Supplier Portal Login</a></p>
                                         <p>Click the above link to login to system. Thank You.</p>";
 
                                         $msg = " Registration Referred Back";
