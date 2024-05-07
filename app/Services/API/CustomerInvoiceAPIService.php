@@ -43,11 +43,9 @@ use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Traits\DocumentSystemMappingTrait;
 
 class CustomerInvoiceAPIService extends AppBaseController
 {
-    use DocumentSystemMappingTrait;
     private static function setInvoiceMasterDataForAPI($request): array {
 
         $invoiceType = ($request['invoice_type'] == 1) ? 0 : 2;
@@ -3051,7 +3049,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         return ['status' => true];
     }
 
-    public static function storeCustomerInvoicesFromAPI($data, $header): array {
+    public static function storeCustomerInvoicesFromAPI($data): array {
 
         DB::beginTransaction();
 
@@ -3201,14 +3199,12 @@ class CustomerInvoiceAPIService extends AppBaseController
         }
 
         if($returnData['status']){
-            if (count($createdCustomerInvoiceIds) > 0) {
-                $this->storeToDocumentSystemMapping(20,$createdCustomerInvoiceIds,$header);
-            }
             DB::commit();
         }
 
         return [
             'status' => $returnData['status'],
+            'data' => $createdCustomerInvoiceIds,
             'message' => $returnData['message']
         ];
     }

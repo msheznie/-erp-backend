@@ -21,6 +21,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Traits\DocumentSystemMappingTrait;
 
 /**
  * Class CustomerInvoiceController
@@ -31,7 +32,7 @@ class CustomerInvoiceAPIController extends AppBaseController
 {
     /** @var  CustomerInvoiceRepository */
     private $customerInvoiceRepository;
-
+    use DocumentSystemMappingTrait;
     public function __construct(CustomerInvoiceRepository $customerInvoiceRepo)
     {
         $this->customerInvoiceRepository = $customerInvoiceRepo;
@@ -298,6 +299,9 @@ class CustomerInvoiceAPIController extends AppBaseController
         $createCustomerInvoice = CustomerInvoiceAPIService::storeCustomerInvoicesFromAPI($input, $header);
 
         if($createCustomerInvoice['status']){
+            if (count($createCustomerInvoice['data']) > 0) {
+                $this->storeToDocumentSystemMapping(20,$createCustomerInvoice['data'],$header);
+            }
             return $this->sendResponse(null,"Customer Invoices Store Successfully");
         }
         else{
