@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 trait DocumentSystemMappingTrait
 {
-    public function storeToDocumentSystemMapping($documentSystemID, $documentAutoIds,$header)
+    public static function storeToDocumentSystemMapping($documentSystemID, $documentAutoIds,$header)
     {
 
         $thirdPartySystemId = 0;
