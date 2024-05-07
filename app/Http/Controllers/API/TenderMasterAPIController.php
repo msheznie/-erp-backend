@@ -4724,7 +4724,8 @@ ORDER BY
             'approvalLevelID',
             'erp_documentapproved.documentSystemCode',
             'employees.empName As created_user',
-            'document_modify_request.type'
+            'document_modify_request.type',
+            'document_modify_request.description as modifyRequestDescription'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
