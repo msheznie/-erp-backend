@@ -1,5 +1,28 @@
 # Changelog
 
+## [10.39.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.38.2...v10.39.0) (2024-05-07)
+
+
+### Features
+
+* **Bid Opening:** Bid Opening Enhancement | Show only the Not completed bid by default [GSUP-1681] ([#5898](https://github.com/pbsgears/Gears_BackEnd/issues/5898)) ([11fd627](https://github.com/pbsgears/Gears_BackEnd/commit/11fd6275ee050ea8efc0e4a6e5e5dc6d96a46f23))
+* **Bid Opening:** Bid Opening Enhancement | Show only the Not completed bid by default [GSUP-1681] ([#5909](https://github.com/pbsgears/Gears_BackEnd/issues/5909)) ([23b9130](https://github.com/pbsgears/Gears_BackEnd/commit/23b9130c45826a9a36c9fafbffe5eed74da533ef))
+* **Commercial Bid:** Commercial Bid Opening Enhancement | Show only the Not completed bid by default [GSUP-1682] ([#5901](https://github.com/pbsgears/Gears_BackEnd/issues/5901)) ([7ef9a23](https://github.com/pbsgears/Gears_BackEnd/commit/7ef9a238e16a2956989edd076ee0b5572766ea64))
+* **SRM:** Company ID to be maintained in the budget items loaded from external ERP [GSUP-1675] ([#5956](https://github.com/pbsgears/Gears_BackEnd/issues/5956)) ([1420447](https://github.com/pbsgears/Gears_BackEnd/commit/14204475b3be8a0bd567de97425651d98a47bdfa))
+* **Tender:** Supplier Ranking page enhancement | by default show supplier ranking not completed Tenders, but user should be able to select supplier ranking completed Tenders as well [GSUP-1684] ([#5899](https://github.com/pbsgears/Gears_BackEnd/issues/5899)) ([30cb26b](https://github.com/pbsgears/Gears_BackEnd/commit/30cb26b0595fffbfdc575a2fedc25301f06b644a))
+* **Tender:** Tender Awarding page enhancement | by default show Not Awarded Tenders, but user should be able to select Awarded Tenders as well [GSUP-1683] ([#5910](https://github.com/pbsgears/Gears_BackEnd/issues/5910)) ([16a7edd](https://github.com/pbsgears/Gears_BackEnd/commit/16a7eddde15befab7d3a490d20e8aa4b42d98cfb))
+* **Tender:** Tender Awarding page enhancement | by default show Not Awarded Tenders, but user should be able to select Awarded Tenders as well [GSUP-1683] ([#5933](https://github.com/pbsgears/Gears_BackEnd/issues/5933)) ([b035074](https://github.com/pbsgears/Gears_BackEnd/commit/b035074accfd47bfa2bfd421369352e04182060f))
+* **Tender:** Tender view page enhancement [GSUP-1721] ([#5915](https://github.com/pbsgears/Gears_BackEnd/issues/5915)) ([1978916](https://github.com/pbsgears/Gears_BackEnd/commit/1978916b81fcd86f523992e5b5e74899cfe60471))
+
+
+### Bug Fixes
+
+* **SRM:** 'Confirmed By' and 'Confirmed Date' fields display previous values even if the tender is approved for edit /amend [GSUP-1735] ([#5943](https://github.com/pbsgears/Gears_BackEnd/issues/5943)) ([547c7a7](https://github.com/pbsgears/Gears_BackEnd/commit/547c7a719212bbe7b93a8445763e279275b9ab0d))
+* **SRM:** Unable to pull the technical evaluation from masters during tender Edit/ Amend [GSUP-1733] ([#5940](https://github.com/pbsgears/Gears_BackEnd/issues/5940)) ([2f3eefe](https://github.com/pbsgears/Gears_BackEnd/commit/2f3eefee887946acf53be551d45911ec3d22842b))
+* **SRM:** Unable to Refer Back the Tender / RFX after receiving the 1st level approval [GSUP-1736] ([#5941](https://github.com/pbsgears/Gears_BackEnd/issues/5941)) ([2819dcb](https://github.com/pbsgears/Gears_BackEnd/commit/2819dcbcd702e419b9b56b6848a1d5eba4443538))
+* **Tender:** Commercial bid opening status not functioning correctly for negotiation tenders [GSUP-1720] ([#5919](https://github.com/pbsgears/Gears_BackEnd/issues/5919)) ([222513d](https://github.com/pbsgears/Gears_BackEnd/commit/222513d162831d3d747e725ffb85f0e29b771ca0))
+* **Tender:** Technical bid opening status not functioning correctly for negotiation tenders [GSUP-1719] ([#5918](https://github.com/pbsgears/Gears_BackEnd/issues/5918)) ([842922a](https://github.com/pbsgears/Gears_BackEnd/commit/842922af50e1e09ed8682c2e19f6a354eb8a8455))
+
 ## [10.38.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.38.1...v10.38.2) (2024-04-26)
 
 
