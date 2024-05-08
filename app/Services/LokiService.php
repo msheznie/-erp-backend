@@ -77,6 +77,9 @@ class LokiService
             case 'asset_finance_category':
                 $table = 'erp_fa_financecategory';
                 break;
+            case 'chart_of_account_config':
+                $table = 'chart_of_account_config';
+                break;
             default:
                 $table = null;
                 break;

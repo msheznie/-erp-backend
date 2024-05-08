@@ -2,6 +2,7 @@
 
 namespace App\Jobs\AuditLog;
 
+use App\Services\AuditLog\ChartOfAccountConfigAuditService;
 use App\Services\AuditLog\ItemFinanceCategorySubAssignedAuditService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -108,6 +109,9 @@ class AuditLogJob implements ShouldQueue
                 break;
             case 'erp_fa_financecategory':
                 $data = AssetFinanceCategoryAuditService::process($auditData);
+                break;
+            case 'chart_of_account_config':
+                $data = ChartOfAccountConfigAuditService::process($auditData);
                 break;
             default:
                 // code...
