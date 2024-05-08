@@ -4192,18 +4192,18 @@ class BudgetMasterAPIController extends AppBaseController
 
         $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
 
-        $glCOdes = ReportTemplateDetails::with(['gllink'])
+        $glCOdes = ReportTemplateDetails::with(['gllink'  => function ($query) {
+                $query->orderBy('sortOrder', 'asc');
+        }])
             ->where('companySystemID', $templateData['companySystemID'])
             ->where('companyReportTemplateID', $templateMasterID)
-            ->orderBy('detID')
+            ->orderBy('sortOrder', 'asc')
             ->get();
 
+        $glMasters = ReportTemplateDetails::where('masterID', null)->where('companySystemID', $templateData['companySystemID'])->where('companyReportTemplateID', $templateMasterID)->orderBy('sortOrder', 'asc')->get();
 
-        foreach ($glCOdes as $key => $value) {
-            $value->sortOrderOfTopLevel = \Helper::headerCategoryOfReportTemplate($value->detID)['sortOrder'];
-        }
+        $glCOdesSorted = collect($glCOdes);
 
-        $glCOdesSorted = collect($glCOdes)->sortBy('sortOrderOfTopLevel');
 
         $templateMaster = ReportTemplate::find($templateMasterID);
         $financeYearMaster = CompanyFinanceYear::find($companyFinanceYearID);
@@ -4227,6 +4227,7 @@ class BudgetMasterAPIController extends AppBaseController
         $output = array(
             'segments' => $segments,
             'company' => $company,
+            'glMasters' => $glMasters,
             'templateDetails' => $glCOdesSorted->values()->all(),
             'sentNotificationAt' => $sentNotificationAt,
             'templateMaster' => $templateMaster,
