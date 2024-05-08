@@ -5494,6 +5494,8 @@ ORDER BY
             ->findWithoutFail($id);
 
         $data['docModifiyMaster'] = DocumentModifyRequest::select('id','description','refferedBackYN','approved')
+            ->where('confirm',0)
+            ->where('modify_type',1)
             ->where('documentSystemCode',$id)
             ->where('requested_document_master_id',$documentId)
             ->orderBy('id', 'desc')
