@@ -1708,10 +1708,12 @@ class ItemMasterAPIController extends AppBaseController
             return $query->where('companySystemID', '=', $companyId)->where('isAssigned', '=', -1);
         })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
         ->when((isset($input['PurchaseRequestID']) && $input['PurchaseRequestID'] > 0), function($query) use ($input) {
+            $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
             $query->whereDoesntHave('purchase_request_details', function($query) use ($input) {
                 $query->where('purchaseRequestID', $input['PurchaseRequestID']);
             });
         })->when((isset($input['purchaseOrderID']) && $input['purchaseOrderID'] > 0), function($query) use ($input) {
+            $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
             $query->whereDoesntHave('purchase_order_details', function($query) use ($input) {
                 $query->where('purchaseOrderMasterID', $input['purchaseOrderID']);
             });
@@ -1719,7 +1721,10 @@ class ItemMasterAPIController extends AppBaseController
             $query->whereDoesntHave('erp_requestdetails', function($query) use ($input) {
                 $query->where('requestDetailsID', $input['materialReqeuestID']);
             });
+        })->when((isset($input['RequestID']) && $input['RequestID'] > 0), function($query) use ($input) {
+                $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
         })->when((isset($input['itemIssueAutoID']) && $input['itemIssueAutoID'] > 0), function($query) use ($input) {
+            $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
             $query->whereDoesntHave('material_issue_details', function($query) use ($input) {
                 $query->where('itemIssueAutoID', $input['itemIssueAutoID']);
             });
