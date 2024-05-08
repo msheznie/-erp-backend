@@ -467,7 +467,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $conversions = DB::table('erp_documentapproved')->select('currency_conversion_master.*','erp_documentapproved.documentApprovedID','rollLevelOrder','approvalLevelID','documentSystemCode', 'employees.empName as createdByEmp', 'employees.empID as createdByEmpID')->join('employeesdepartments',function ($query) use ($companyID,$empID) {
+        $conversions = DB::table('erp_documentapproved')->select('employeesdepartments.approvalDeligated','currency_conversion_master.*','erp_documentapproved.documentApprovedID','rollLevelOrder','approvalLevelID','documentSystemCode', 'employees.empName as createdByEmp', 'employees.empID as createdByEmpID')->join('employeesdepartments',function ($query) use ($companyID,$empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')

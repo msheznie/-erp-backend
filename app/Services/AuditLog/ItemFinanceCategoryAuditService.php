@@ -3,6 +3,7 @@
 namespace App\Services\AuditLog;
 
 use App\Models\ChartOfAccount;
+use Illuminate\Support\Facades\Log;
 
 class ItemFinanceCategoryAuditService
 {
@@ -35,6 +36,7 @@ class ItemFinanceCategoryAuditService
                 ];
                 $fieldMappings = [
                     'categoryDescription' => 'category_description',
+                    'categoryType' => 'category_type',
                     'enableSpecification' => 'enable_specification',
                     'includePLForGRVYN' => 'include_pl_for_grv_yn',
                     'expiryYN' => 'expiry',
@@ -65,6 +67,18 @@ class ItemFinanceCategoryAuditService
                         } else if ($field == "trackingType") {
                             $newValue = $fieldMappingsTracking[$value['new_value']] ?? $value['new_value'];
                             $oldValue = $fieldMappingsTracking[$value['old_value']] ?? $value['old_value'];
+                        } else if ($field == "categoryType"){
+
+                            $data = json_decode($oldValue, true);
+                            if($data != null) {
+                                $itemNames = array_column($data, 'itemName');
+                                $oldValue = implode(", ", $itemNames);
+                            }
+                            $data = json_decode($newValue, true);
+                            if($data != null) {
+                                $itemNames = array_column($data, 'itemName');
+                                $newValue = implode(", ", $itemNames);
+                            }
                         }
                     }
 

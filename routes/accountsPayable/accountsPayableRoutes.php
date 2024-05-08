@@ -238,6 +238,7 @@ Route::group([],function (){
     Route::post('deleteAllSIDirectDetail', 'DirectInvoiceDetailsAPIController@deleteAllSIDirectDetail')->name('Delete all si direct detail');
     Route::post('getPaymentVoucherPendingAmountDetails', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherPendingAmountDetails')->name('Get payment voucher pending amount details');
     Route::post('getAllPaymentVoucherAmendHistory', 'PaySupplierInvoiceMasterReferbackAPIController@getAllPaymentVoucherAmendHistory')->name('Get all payment voucher amend history');
+    Route::post('unitCostValidation', 'BookInvSuppMasterAPIController@unitCostValidation')->name('Check unit cost validation');
 });
 
 //Payment Voucher Matching

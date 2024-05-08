@@ -289,7 +289,8 @@ class JvMasterReferredback extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'reversalDate',
+        'timestamp',
     ];
 
     /**
@@ -336,7 +337,8 @@ class JvMasterReferredback extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'reversalDate' => 'date'
     ];
 
     /**

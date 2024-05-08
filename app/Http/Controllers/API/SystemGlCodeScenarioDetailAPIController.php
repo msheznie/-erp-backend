@@ -8,6 +8,8 @@ use App\Http\Requests\API\CreateSystemGlCodeScenarioDetailAPIRequest;
 use App\Http\Requests\API\UpdateSystemGlCodeScenarioDetailAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
+use App\Models\JvMaster;
+use App\Models\SystemGlCodeScenario;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Repositories\SystemGlCodeScenarioDetailRepository;
 use Carbon\Carbon;
@@ -237,7 +239,6 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
         if (empty($systemGlCodeScenarioDetail)) {
             return $this->sendError('System Gl Code Scenario Detail not found');
         }
-
 
         $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
         DB::beginTransaction();

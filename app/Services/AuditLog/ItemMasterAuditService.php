@@ -66,6 +66,18 @@ class ItemMasterAuditService
                     $modifiedData[] = ['amended_field' => "item_short_description", 'previous_value' => ($auditData['previosValue']['itemShortDescription']) ? $auditData['previosValue']['itemShortDescription']: '', 'new_value' => ($auditData['newValue']['itemShortDescription']) ? $auditData['newValue']['itemShortDescription'] : ''];
                 }
 
+            if($auditData['previosValue']['categoryType'] != $auditData['newValue']['categoryType']) {
+                $data = json_decode($auditData['previosValue']['categoryType'], true);
+                $itemNames = array_column($data, 'itemName');
+                $oldValue = implode(", ", $itemNames);
+
+                $data = json_decode($auditData['newValue']['categoryType'], true);
+                $itemNames = array_column($data, 'itemName');
+                $newValue = implode(", ", $itemNames);
+
+                $modifiedData[] = ['amended_field' => "item_type", 'previous_value' =>  $oldValue, 'new_value' => $newValue];
+            }
+
                 if($auditData['previosValue']['financeCategorySub'] != $auditData['newValue']['financeCategorySub']) { 
                     $previousFinanceCategorySub =FinanceItemCategorySub::where('itemCategorySubID',$auditData['previosValue']['financeCategorySub'])->first();
                     $newFinanceCategorySub =FinanceItemCategorySub::where('itemCategorySubID',$auditData['newValue']['financeCategorySub'])->first();

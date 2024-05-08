@@ -956,6 +956,7 @@ class StockTransferAPIController extends AppBaseController
             ->first();
 
         $stockTransferMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_stocktransfer.stockTransferAutoID',
             'erp_stocktransfer.stockTransferCode',
             'erp_stocktransfer.documentSystemID',

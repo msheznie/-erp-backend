@@ -441,6 +441,28 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice retrieved successfully');
     }
 
+    public function unitCostValidation(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['bookingSuppMasInvAutoID'];
+        $isUnitCostZeroValidate = false;
+
+        if ($input['documentType'][0] == 3) {
+
+            $checkUnitCostValidation = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
+                                                ->where(function ($q) {
+                                                    $q->where('unitCost', '=', 0);
+                                                })
+                                                ->count();
+            if ($checkUnitCostValidation > 0) {
+                $isUnitCostZeroValidate = true;
+            }
+        }
+
+        return $this->sendResponse($isUnitCostZeroValidate, 'Record retrieved successfully');
+    }
+
+
     /**
      * @param int $id
      * @param UpdateBookInvSuppMasterAPIRequest $request
@@ -2467,6 +2489,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_bookinvsuppmaster.bookingSuppMasInvAutoID',
             'erp_bookinvsuppmaster.bookingInvCode',
             'erp_bookinvsuppmaster.documentSystemID',
@@ -3083,32 +3106,36 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $bookInvSuppMasterData = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
-        $documentAutoId = $bookingSuppMasInvAutoID;
-        $documentSystemID = $bookInvSuppMasterData->documentSystemID;
-        $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
-        if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
-            if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
-                return $this->sendError($validateFinanceYear['message']);
-            }
-        }
-        
-        $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
-        if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
-            if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
-                return $this->sendError($validateFinancePeriod['message']);
-            }
-        }
-
-        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
-        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                return $this->sendError($validatePendingGlPost['message']);
-            }
-        }
-
         if (empty($bookInvSuppMasterData)) {
             return $this->sendError('Supplier Invoice not found');
         }
+
+        $documentAutoId = $bookingSuppMasInvAutoID;
+        $documentSystemID = $bookInvSuppMasterData->documentSystemID;
+        
+        if($bookInvSuppMasterData->approved == -1) {
+            $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
+            if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
+                if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
+                    return $this->sendError($validateFinanceYear['message']);
+                }
+            }
+            
+            $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
+            if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+                if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
+                    return $this->sendError($validateFinancePeriod['message']);
+                }
+            }
+    
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
+        }
+
 
         if ($bookInvSuppMasterData->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this Supplier Invoice, it is not confirmed');

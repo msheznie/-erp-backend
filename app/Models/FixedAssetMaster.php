@@ -778,6 +778,11 @@ class FixedAssetMaster extends Model
         return $query->where('assetType',  $assetType);
     }
 
+    public function attributeValues()
+    {
+        return $this->hasMany('App\Models\ErpAttributeValues', 'document_master_id');
+    }
+
     public function location()
     {
         return $this->belongsTo('App\Models\ErpLocation','LOCATION','locationID');

@@ -158,5 +158,12 @@ class EmployeesDepartment extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     } 
-    
+    public function delegator_employee(){
+        return $this->belongsTo('App\Models\Employee','approvalDeligatedFromEmpID','employeeSystemID');
+    }
+
+    public function deligation(){
+        return $this->belongsTo('App\Models\Deligation','approvalDeligated','id');
+    }
+
 }

@@ -73,6 +73,7 @@ use App\Models\Employee;
 use App\Models\CurrencyMaster;
 use App\helper\Helper;
 use App\Models\SupplierBlock;
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class DebitNoteController
@@ -1789,6 +1790,7 @@ class DebitNoteAPIController extends AppBaseController
         $search = $request->input('search.value');
         $debitNotes = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_debitnote.*',
                 'employees.empName As created_emp',
                 'doc_employees.empName As empFullName',
@@ -2226,6 +2228,18 @@ UNION ALL
 
         if ($checkDetailExistMatch) {
             return $this->sendError('Cannot return back to amend. debit note is added to matching');
+        }
+
+
+        $documentAutoId = $debitNoteAutoID;
+        $documentSystemID = $debitNoteMasterData->documentSystemID;
+        if($debitNoteMasterData->approved == -1){
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
         }
 
         $emailBody = '<p>' . $debitNoteMasterData->debitNoteCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';

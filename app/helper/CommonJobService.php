@@ -55,6 +55,8 @@ class CommonJobService
                 return storage_path() . '/logs/item_wac_amount_service.log';
             case 'recurring-voucher':
                 return storage_path() . '/logs/recurring_voucher_service.log';
+            case 'delegation':
+                return storage_path() . '/logs/delegation.log';
         }
     }
 

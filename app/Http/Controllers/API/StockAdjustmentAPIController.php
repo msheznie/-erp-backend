@@ -849,6 +849,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_stockadjustment.*','stockadjustment_reasons.reason as reason',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As serviceLineDes',

@@ -709,6 +709,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $search = $request->input('search.value');
         $debitNotes = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_budgetaddition.*',
                 'employees.empName As confirmed_emp',
                 'erp_documentapproved.documentApprovedID',

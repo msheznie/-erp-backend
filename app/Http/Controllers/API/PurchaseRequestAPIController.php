@@ -970,7 +970,8 @@ class PurchaseRequestAPIController extends AppBaseController
             ->get();
 
         foreach ($approveDetails as $value) {
-
+            $value['delegation'] = false;
+            $value['deparmtnet'] = null;
             if ($value['approvedYN'] == 0) {
                 $companyDocument = CompanyDocumentAttachment::where('companySystemID', $companySystemID)
                     ->where('documentSystemID', $documentSystemID)
@@ -998,6 +999,30 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->groupBy('employeeSystemID')
                     ->get();
                 $value['approval_list'] = $approvalList;
+            }
+            else
+            {
+                $approved_id = $value->employeeSystemID;
+                $approved_date = $value->approvedDate;
+                $approved_date = Carbon::parse($approved_date)->format('Y-m-d');
+                $deparment = EmployeesDepartment::where('employeeSystemID',$approved_id)
+                                    ->where('approvalDeligated','!=',0)
+                                    //->where('isActive','=',1)
+                                    ->where('companySystemID', $companySystemID)
+                                    ->where('documentSystemID', $documentSystemID)
+                                    ->where('employeeGroupID', $value->approvalGroupID)
+                                    //->where('approvalDeligatedFrom', '<=', $approved_date)->where('approvalDeligatedTo', '>=', $approved_date)
+                                    ->with(['delegator_employee'=>function($q){
+                                        $q->Select('employeeSystemID','empUserName');
+                                    }])->select('employeesDepartmentsID','approvalDeligatedFromEmpID')
+                                   ->first(); 
+                if($deparment)
+                {
+                    $value['delegation'] = true;
+                    $value['deparmtnet'] = $deparment;
+                }
+       
+
             }
         }
 
@@ -1111,6 +1136,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequests = DB::table('erp_documentapproved')
             ->selectRaw(
                 'erp_purchaserequest.*,
+                employeesdepartments.approvalDeligated,
                 employees.empName As created_emp,
                 financeitemcategorymaster.categoryDescription As financeCategoryDescription,
                 serviceline.ServiceLineDes As PRServiceLineDes,
@@ -2484,8 +2510,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $id = $request->get('id');
         /** @var PurchaseRequest $purchaseRequest */
         
-        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
-            'priority_pdf', 'location', 'details.uom','details.altUom', 'company', 'approved_by' => function ($query) {
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','segment',
+            'priority_pdf', 'location', 'details.uom','details.altUom', 'company','currency_by','buyer', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
                     ->whereIn('documentSystemID', [1, 50, 51]);
@@ -2509,8 +2535,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $html = view('print.purchase_request', $array);
         $htmlFooter = view('print.purchase_request_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
-        $mpdf->AddPage('L');
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);
         $mpdf->WriteHTML($html);

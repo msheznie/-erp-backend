@@ -175,7 +175,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             ];
 
             if (in_array($extension, $blockExtensions)) {
-                if(isset($input['isFromRecurringVoucher'])){
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "success" => false,
                         "message" => "This type of file not allow to upload."
@@ -189,7 +189,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
             if (isset($input['size'])) {
                 if ($input['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    if(isset($input['isFromRecurringVoucher'])){
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                         return [
                             "success" => false,
                             "message" => "Maximum allowed file size is exceeded"
@@ -241,7 +241,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
             }
 
-            if(isset($input['isFromRecurringVoucher'])){
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->copy($input['path'], $path);
 
                 $input['isUploaded'] = 1;
@@ -273,7 +273,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             }
         } catch (\Exception $exception) {
             DB::rollBack();
-            if(isset($input['isFromRecurringVoucher'])){
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
                     "message" => "Unable to upload the attachment"

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateErpAttributesDropdownAPIRequest;
 use App\Http\Requests\API\UpdateErpAttributesDropdownAPIRequest;
+use App\Models\ErpAttributes;
 use App\Models\ErpAttributesDropdown;
+use App\Models\ErpAttributeValues;
 use App\Repositories\ErpAttributesDropdownRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -78,7 +80,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
             $descriptionValidate = ErpAttributesDropdown::where('description', $input['description'])
                                                             ->where('attributes_id', $input['attributes_id'])->get();
             if (count($descriptionValidate) > 0){
-                return $this->sendError('Dropdown Value Already Exists');
+                return $this->sendError('Description Already Exists');
             }
 
            
@@ -99,6 +101,40 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         return$dropdownData = ErpAttributesDropdown::where('attributes_id',$attributes_id)->get();
 
         return $this->sendResponse($dropdownData, 'Record retrieved successfully');
+    }
+
+    public function getAttributesDropdownData(Request $request){
+        $input = $request->all();
+        $attributes_id = $input['attributes_id'];
+        $attributesDropdown = ErpAttributesDropdown::where('attributes_id',$attributes_id);
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $attributesDropdown = $attributesDropdown->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($attributesDropdown)
+                ->order(function ($query) use ($input) {
+                    if (request()->has('order')) {
+                        if ($input['order'][0]['column'] == 0) {
+                            $query->orderBy('id', $input['order'][0]['dir']);
+                        }
+                    }
+                })
+                ->addIndexColumn()
+                ->with('orderCondition', $sort)
+                ->addColumn('Actions', 'Actions', "Actions")
+                ->make(true);
     }
 
     /**
@@ -306,7 +342,21 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         if (empty($erpAttributesDropdown)) {
             return $this->sendError('Erp Attributes Dropdown not found');
         }
+        $attribute = ErpAttributes::find($id);
 
+            $attributeFieldValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+                ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+                ->join('erp_attributes', 'erp_attribute_values.attribute_id', '=', 'erp_attributes.id')
+                ->where('erp_attribute_values.value', $id)
+                ->where('erp_attribute_values.is_active', 1)
+                ->where('erp_attribute_values.color', '!=', null)
+                ->where('erp_attributes.document_master_id', null)
+                ->where('erp_fa_asset_master.confirmedYN', 1)
+                ->count();
+
+            if ($attributeFieldValidation > 0) {
+                return $this->sendError('Selected attribute drop down value have already been used for an asset', 500);
+            }
         $erpAttributesDropdown->delete();
 
         return $this->sendResponse([],'Erp Attributes Dropdown deleted successfully');

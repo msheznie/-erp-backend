@@ -33,8 +33,6 @@ class StoreReceiptApiRequest extends FormRequest
             'data.*.bank' => "required",
             'data.*.account'  => "required",
             'data.*.bankCurrency' => "required",
-            'data.*.confirmedBy' => "required",
-            'data.*.approvedBy' => "required",
             'data.*.documentDate' => "date_format:d-m-Y",
             'data.*.details.*.invoiceCode' => "required_if:*.receiptType,2",
             'data.*.details.*.segmentCode' => "required_if:*.receiptType,2",

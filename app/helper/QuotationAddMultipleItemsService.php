@@ -60,16 +60,17 @@ class QuotationAddMultipleItemsService
 
         foreach($items as $item) {
             $data = array();
-            Log::info($item['item_code']);
-
             $orgItem  = ItemMaster::where('primaryCode', $item['item_code'])->first();
-            $itemAssigned = ItemAssigned::where('itemCodeSystem', $orgItem->itemCodeSystem)
-            ->where('companySystemID', $quotation['companySystemID'])
-            ->first();
-            $company = Company::find($quotation['companySystemID']);
-            if((is_numeric($item['qty']) && $item['qty'] != 0)  &&  (is_numeric($item['sales_price']) && $item['sales_price'] != 0)  &&  is_numeric($item['discount'])) {
+            if($orgItem)
+            {
 
-                if($orgItem) {
+                if((is_numeric($item['qty']) && $item['qty'] != 0)  &&  (is_numeric($item['sales_price']) && $item['sales_price'] != 0)  &&  is_numeric($item['discount'])) {
+
+                    $itemAssigned = ItemAssigned::where('itemCodeSystem', $orgItem->itemCodeSystem)
+                        ->where('companySystemID', $quotation['companySystemID'])
+                        ->first();
+                    $company = Company::find($quotation['companySystemID']);
+
                     $unit  = Unit::find($orgItem->unit);
                     $data = [
                         'itemAutoID' => $orgItem->itemCodeSystem,
@@ -138,10 +139,8 @@ class QuotationAddMultipleItemsService
         }
 
         QuotationDetails::insert($itemsToUpload);
-
         Log::info($data);
-
-
+        
     }
 
     

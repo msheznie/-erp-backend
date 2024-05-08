@@ -829,6 +829,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         $search = $request->input('search.value');
         $capitalization = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_fa_assetcapitalization.*',
                 'employees.empName As created_emp',
                 'erp_documentapproved.documentApprovedID',

@@ -15,11 +15,13 @@ use App\Http\Requests\API\CreateCustomerInvoiceAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceAPIRequest;
 use App\Models\CustomerInvoice;
 use App\Repositories\CustomerInvoiceRepository;
+use App\Services\API\CustomerInvoiceAPIService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Traits\DocumentSystemMappingTrait;
 
 /**
  * Class CustomerInvoiceController
@@ -30,7 +32,7 @@ class CustomerInvoiceAPIController extends AppBaseController
 {
     /** @var  CustomerInvoiceRepository */
     private $customerInvoiceRepository;
-
+    use DocumentSystemMappingTrait;
     public function __construct(CustomerInvoiceRepository $customerInvoiceRepo)
     {
         $this->customerInvoiceRepository = $customerInvoiceRepo;
@@ -286,5 +288,25 @@ class CustomerInvoiceAPIController extends AppBaseController
         $customerInvoice->delete();
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_invoice')]));
+    }
+
+    public function createCustomerInvoiceAPI(CreateCustomerInvoiceAPIRequest $request){
+
+        $input = $request->all();
+
+        $header = $request->header('Authorization');
+
+        $createCustomerInvoice = CustomerInvoiceAPIService::storeCustomerInvoicesFromAPI($input);
+
+        if($createCustomerInvoice['status']){
+            if (count($createCustomerInvoice['data']) > 0) {
+                $this->storeToDocumentSystemMapping(20,$createCustomerInvoice['data'],$header);
+            }
+            return $this->sendResponse(null,"Customer Invoices Store Successfully");
+        }
+        else{
+            return $this->sendError($createCustomerInvoice['message']);
+        }
+
     }
 }

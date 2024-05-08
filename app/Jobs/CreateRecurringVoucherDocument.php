@@ -72,14 +72,14 @@ class CreateRecurringVoucherDocument implements ShouldQueue
             switch ($rrvSchedule->master->documentType){
                 case 0: // Recurring JV Type
                     try{
-                        DB::beginTransaction();
-                        // start the process for schedule
-                        $rrvSchedule->update([
-                            'isInProccess' => 1
-                        ]);
-                        DB::commit();
                         // Approve state documents
                         if($rrvSchedule->master->documentStatus == 2){
+
+                            // start the process for schedule
+                            $rrvSchedule->update([
+                                'isInProccess' => 1
+                            ]);
+
                             DB::beginTransaction();
 
                             // Convert RRV schedule to JV Document
@@ -93,7 +93,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                 'jvType' => 2,
                                 'isRelatedPartyYN' => $rrvSchedule->master->isRelatedPartyYN,
                                 'JVdate' => $rrvSchedule->processDate,
-                                'isFromRecurringVoucher' => true
+                                'isAutoCreateDocument' => true
                             ]);
                             $controller = app(JvMasterAPIController::class);
                             $jvMasterReturnData = $controller->store($request);
@@ -107,7 +107,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                     $dataset = [
                                         'jvMasterAutoId' => $jvMasterReturnData['data']['jvMasterAutoId'],
                                         'chartOfAccountSystemID' => $rrvDetail->chartOfAccountSystemID,
-                                        'isFromRecurringVoucher' => true
+                                        'isAutoCreateDocument' => true
                                     ];
 
                                     $request = new Request();
@@ -123,7 +123,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                             'serviceLineSystemID' => $rrvDetail->serviceLineSystemID,
                                             'contractUID' => $rrvDetail->contractUID,
                                             'detail_project_id' => $rrvDetail->detail_project_id,
-                                            'isFromRecurringVoucher' => true
+                                            'isAutoCreateDocument' => true
                                         ];
 
                                         $request = new Request();
@@ -161,7 +161,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                         $dataset['fileType'] = end($tempType);
                                         $dataset['documentSystemID'] = 17;
                                         $dataset['documentSystemCode'] = $jvMasterReturnData['data']['jvMasterAutoId'];
-                                        $dataset['isFromRecurringVoucher'] = true;
+                                        $dataset['isAutoCreateDocument'] = true;
                                         unset($dataset['attachmentID'], $dataset['timeStamp']);
 
                                         $request = new Request();
@@ -182,7 +182,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                     if ($jvAttachmentsUpdateState){
                                         $dataset = $jvMasterReturnData['data'];
                                         $dataset['confirmedYN'] = 1;
-                                        $dataset['isFromRecurringVoucher'] = true;
+                                        $dataset['isAutoCreateDocument'] = true;
 
                                         $request = new Request();
                                         $request->replace($dataset);
@@ -196,7 +196,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                             $request->replace([
                                                 'companyId' => $jvConfirmReturnData['data']['companySystemID'],
                                                 'jvMasterAutoId' => $jvConfirmReturnData['data']['jvMasterAutoId'],
-                                                'isFromRecurringVoucher' => true
+                                                'isAutoCreateDocument' => true
                                             ]);
                                             $controller = app(JvMasterAPIController::class);
                                             $jvApproveDocumentReturnData = $controller->getJournalVoucherMasterApproval($request);
@@ -206,7 +206,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                             if($jvApproveDocumentReturnData['success']){
 
                                                 $dataset = $jvApproveDocumentReturnData['data'];
-                                                $dataset['isFromRecurringVoucher'] = true;
+                                                $dataset['isAutoCreateDocument'] = true;
                                                 $request = new Request();
                                                 $request->replace($dataset);
                                                 $controller = app(JvMasterAPIController::class);

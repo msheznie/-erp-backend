@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @SWG\Definition(
@@ -70,6 +71,7 @@ use Eloquent as Model;
  */
 class ErpAttributes extends Model
 {
+    use SoftDeletes;
 
     public $table = 'erp_attributes';
     
@@ -85,6 +87,10 @@ class ErpAttributes extends Model
         'document_id',
         'document_master_id',
         'is_mendatory',
+        'is_active',
+        'value',
+        'color',
+        'inactivated_at',
         'created_by',
         'updated_by'
     ];
@@ -99,8 +105,10 @@ class ErpAttributes extends Model
         'description' => 'string',
         'field_type_id' => 'integer',
         'document_id' => 'string',
+        'value' => 'string',
         'document_master_id' => 'integer',
         'is_mendatory' => 'boolean',
+        'is_active' => 'boolean',
         'created_by' => 'integer',
         'updated_by' => 'integer'
     ];
@@ -119,5 +127,13 @@ class ErpAttributes extends Model
         return $this->belongsTo('App\Models\ErpAttributesFieldType', 'field_type_id', 'id');
     }
 
-    
+    public function fieldOptions()
+    {
+        return $this->hasMany('App\Models\ErpAttributesDropdown', 'attributes_id');
+    }
+
+    public function attributeValues(){
+        return $this->hasMany('App\Models\ErpAttributeValues', 'attribute_id');
+    }
+
 }

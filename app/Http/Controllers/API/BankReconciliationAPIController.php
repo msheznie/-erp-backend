@@ -643,6 +643,7 @@ class BankReconciliationAPIController extends AppBaseController
         $search = $request->input('search.value');
         $bankReconciliation = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_bankrecmaster.*',
                 'employees.empName As created_emp',
                 'erp_bankaccount.AccountNo As AccountNo',

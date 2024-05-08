@@ -63,6 +63,7 @@ class JvMasterRepository extends BaseRepository
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
+        'reversalDate',
         'timestamp'
     ];
 

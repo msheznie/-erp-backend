@@ -890,6 +890,7 @@ class StockCountAPIController extends AppBaseController
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_stockcount.*',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As serviceLineDes',

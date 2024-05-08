@@ -151,6 +151,10 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
             });
         }
 
+
+
+
+
         return \DataTables::eloquent($financeItemCategorySub)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {
@@ -206,6 +210,51 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $attributes = ErpAttributes::with('field_type')->where('document_master_id',$itemCategorySubID)->get();
 
         return $this->sendResponse($attributes, 'Record retrieved successfully');
+    }
+
+    public function getAssetCostAttributesData(Request $request){
+        $input = $request->all();
+
+        $attributes = ErpAttributes::with('field_type')->where('document_id','ASSETCOST')->where('document_master_id', $input['document_master_id']);
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $attributes = $attributes->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($attributes)
+                ->order(function ($query) use ($input) {
+                    if (request()->has('order')) {
+                        if ($input['order'][0]['column'] == 0) {
+                            $query->orderBy('id', $input['order'][0]['dir']);
+                        }
+                    }
+                })
+                ->addIndexColumn()
+                ->with('orderCondition', $sort)
+                ->addColumn('Actions', 'Actions', "Actions")
+                ->make(true);
+    }
+
+
+    public function getAttributesDataFormData(Request $request){
+
+        $fieldTypes = ErpAttributesFieldType::all();
+
+        $output = array(
+            'fieldTypes' => $fieldTypes,
+        );
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
     public function getDropdownValues(Request $request){

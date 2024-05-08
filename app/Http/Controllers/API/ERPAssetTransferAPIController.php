@@ -536,6 +536,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $documentSystemID = 103;
         $assetTransfer = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_fa_fa_asset_transfer.*',
                 'employees.empName As created_emp',
                 'erp_documentapproved.documentApprovedID',
@@ -920,7 +921,9 @@ class ERPAssetTransferAPIController extends AppBaseController
 
         if(!$assetRequestValidation['success']) {
             $data['data']['assetCode'] = isset($assetRequestValidation['data'][0]->assetMaster) ? $assetRequestValidation['data'][0]->assetMaster->asset_code_concat : '-';
-            $data['data']['assetRecords'] = $assetRequestValidation['data'];
+            if(isset($assetRequestValidation['data'])) {
+                $data['data']['assetRecords'] = $assetRequestValidation['data'];
+            }
             $data['data']['message'] = $assetRequestValidation['message'];
             $data['data']['acknowledgedYN'] = 1;
         }else {

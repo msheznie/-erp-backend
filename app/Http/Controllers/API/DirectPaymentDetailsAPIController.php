@@ -43,7 +43,8 @@ use Response;
 use Illuminate\Support\Facades\DB;
 use App\Models\ExpenseAssetAllocation;
 use App\Models\ExpenseEmployeeAllocation;
-
+use App\Models\ServiceLine;
+use App\Models\SrpEmployeeDetails;
 
 /**
  * Class DirectPaymentDetailsController
@@ -256,6 +257,17 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $input['detail_project_id'] = $payMaster->projectID;
         }
 
+        if($payMaster->directPaymentPayeeEmpID > 0 && $payMaster->directPaymentPayeeSelectEmp == -1){
+            $employeeSegment = SrpEmployeeDetails::where('EIdNo',$payMaster->directPaymentPayeeEmpID)->first();
+            if($employeeSegment && $employeeSegment->segmentID > 0){
+                $segment = SegmentMaster::where('serviceLineSystemID',$employeeSegment->segmentID)->where('isActive',1)->first();
+                if($segment){
+                    $input['serviceLineSystemID'] = $segment->serviceLineSystemID;
+                    $input['serviceLineCode'] = $segment->ServiceLineCode;
+                }
+            }
+        }
+
         if ($payMaster->BPVsupplierID) {
             $input['supplierTransCurrencyID'] = $payMaster->supplierTransCurrencyID;
             $input['supplierTransER'] = $payMaster->supplierTransCurrencyER;
@@ -397,7 +409,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $input['detail_project_id'] = null;
         }
 
-        $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
+        $payMaster = null;
+        
+        if(isset($input['directPaymentAutoID'])){
+            $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
+        }
 
         if (empty($payMaster)) {
             return $this->sendError('Direct Payment Supp Master not found');

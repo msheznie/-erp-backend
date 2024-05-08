@@ -85,7 +85,12 @@ class CustomerInvoiceGlService
         $data = [];
         $taxLedgerData = [];
         $finalData = [];
-        $empID = Employee::find($masterModel['employeeSystemID']);
+        if($masterModel['employeeSystemID'] == "SYSTEM"){
+            $empID = Employee::where('empID',$masterModel['employeeSystemID'])->first();
+        }
+        else{
+            $empID = Employee::find($masterModel['employeeSystemID']);
+        }
         $masterData = CustomerInvoiceDirect::with(['finance_period_by'])->find($masterModel["autoID"]);
         $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
 

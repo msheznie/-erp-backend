@@ -43,6 +43,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\AssetDisposalMaster;
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class FixedAssetDepreciationMasterController
@@ -797,6 +798,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         $assetCost = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_fa_depmaster.*',
                 'employees.empName As created_emp',
                 'erp_documentapproved.documentApprovedID',
@@ -935,6 +937,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 return $this->sendError('You cannot amend this document');
             }
 
+
             $fixedAssetDepArray = $fixedAssetDep->toArray();
 
             $storefixedAssetDepHistory = DepreciationMasterReferredHistory::create($fixedAssetDepArray);
@@ -997,6 +1000,16 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             return $this->sendError('You cannot return back to amend this asset depreciation, it is not confirmed');
         }
 
+        $documentAutoId = $id;
+        $documentSystemID = $masterData->documentSystemID;
+        if($masterData->approved == -1){
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
+        }
 
         // checking document matched in depreciation
         

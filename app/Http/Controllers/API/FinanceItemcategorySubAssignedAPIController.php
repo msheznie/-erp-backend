@@ -99,7 +99,17 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
     public function store(CreateFinanceItemcategorySubAssignedAPIRequest $request)
     {
 
+
         $input = $request->all();
+        if (isset($input['categoryTypeDecode'])) {
+            $categoryTypeDecode = array_map(function($item) {
+                $item['id'] = (int) $item['id'];
+                return $item;
+            }, $input['categoryTypeDecode']);
+        } else {
+            $categoryTypeDecode = null;
+        }
+        $categoryType = json_encode($categoryTypeDecode);
         $companies = $input['companySystemID'];
 
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
@@ -138,6 +148,9 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             unset($input['finance_gl_code_revenue']);
         }
 
+        if (array_key_exists('categoryType', $input)) {
+            unset($input['categoryType']);
+        }
 
         foreach ($input as $key => $value) {
             if (is_array($input[$key])) {
@@ -178,6 +191,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             }
             $financeItemCategorySubAssigned->save();
 
+
             $masterData = $financeItemCategorySubAssigned->toArray();
 
             $this->auditLog($db, $input['itemCategoryAssignedID'],$uuid, "financeitemcategorysubassigned", "Company Assign ".$input['categoryDescription']." has been updated", "U", $masterData, $previousValue, $input['itemCategorySubID'], 'financeitemcategorysub');
@@ -185,8 +199,10 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 
             foreach($companies as $companie)
             {
+
                 $company = Company::where('companySystemID', $companie['id'])->first();
                 $input['companyID'] = $company->CompanyID;
+                $input['categoryType'] = $categoryType;
                 $input['companySystemID'] = $companie['id'];
                 $input['isAssigned'] = -1;
                 $input['mainItemCategoryID'] = $input['itemCategoryID'];

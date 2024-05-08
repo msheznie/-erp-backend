@@ -51,10 +51,12 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\helper\CancelDocument;
+use App\Models\GeneralLedger;
 use Response;
 use App\Repositories\MaterielRequestDetailsRepository;
 use Auth;
 use App\Models\ItemIssueMaster;
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class MaterielRequestController
@@ -179,6 +181,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $materielRequests = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_request.*',
                 'serviceline.ServiceLineDes As MRServiceLineDes',
                 'warehousemaster.wareHouseDescription As MRWareHouseDescription',

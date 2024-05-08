@@ -665,6 +665,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $search = $request->input('search.value');
         $reclassifyMaster = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_inventoryreclassification.*',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As ServiceLineDes',

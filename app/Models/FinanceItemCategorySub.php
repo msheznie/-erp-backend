@@ -46,10 +46,12 @@ class FinanceItemCategorySub extends Model
 
 
     protected $dates = ['deleted_at'];
+    protected $appends = ['categoryTypeDecode'];
 
 
     public $fillable = [
         'categoryDescription',
+        'categoryType',
         'itemCategoryID',
         'financeGLcodebBSSystemID',
         'financeGLcodebBS',
@@ -110,9 +112,13 @@ class FinanceItemCategorySub extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
+    public function getCategoryTypeDecodeAttribute()
+    {
+        return json_decode($this->categoryType, true);
+    }
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

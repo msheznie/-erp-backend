@@ -426,7 +426,7 @@ class SupplierMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
 
         $supplierMasters = DB::table('erp_documentapproved')
-            ->select('suppliermaster.*', 'erp_documentapproved.documentApprovedID',
+            ->select('employeesdepartments.approvalDeligated','suppliermaster.*', 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder', 'currencymaster.CurrencyCode',
                 'supplier_categories.category', 'approvalLevelID', 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
@@ -1945,7 +1945,7 @@ class SupplierMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
 
         $registeredSupplier = DB::table('erp_documentapproved')
-            ->select('registeredsupplier.*', 'erp_documentapproved.documentApprovedID',
+            ->select('employeesdepartments.approvalDeligated','registeredsupplier.*', 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder', 'currencymaster.CurrencyCode',
                 'approvalLevelID', 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {

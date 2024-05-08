@@ -16,6 +16,7 @@
 
 namespace App\helper;
 
+use App\helper\IvmsDeliveryOrderService;
 use App\Jobs\BankLedgerInsert;
 use App\Jobs\BudgetAdjustment;
 use App\Jobs\CreateCustomerInvoice;
@@ -93,7 +94,6 @@ use App\helper\StockCountService;
 use App\helper\AssetTransferService;
 use App\helper\BudgetHistoryService;
 use App\helper\CustomerAssignService;
-use App\helper\IvmsDeliveryOrderService;
 use App\helper\BudgetConsumptionService;
 use App\helper\ChartOfAccountDependency;
 use App\helper\CurrencyConversionService;
@@ -1789,21 +1789,26 @@ class Helper
                 }
 
 
-                $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function ($q) {
-                    $q->where('discharegedYN', 0);
-                })
-                    ->groupBy('employeeSystemID')
-                    ->exists();
+                if(!isset($input['isCheckPrivilages']) || (isset($input['isCheckPrivilages']) && $input['isCheckPrivilages']))
+                {
 
-                if (!$checkUserHasApprovalAccess) {
-                    return ['success' => false, 'message' => 'You do not have access to approve this document.'];
-                }
+                    $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function ($q) {
+                        $q->where('discharegedYN', 0);
+                    })
+                        ->groupBy('employeeSystemID')
+                        ->exists();
 
-                if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
-                    if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                        return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                    if (!$checkUserHasApprovalAccess) {
+                        return ['success' => false, 'message' => 'You do not have access to approve this document.'];
+                    }
+
+                    if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
+                        if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
+                            return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                        }
                     }
                 }
+
 
                 if (["documentSystemID"] == 46) {
                     if ($isConfirmed['year'] != date("Y")) {
@@ -3168,6 +3173,7 @@ class Helper
                 
                 //checking whether document approved table has a data for the same document
                 $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+
                 if (!$docExist) {
                     // check document is available in document master table
                     $document = Models\DocumentMaster::where('documentSystemID', $params["document"])->first();
@@ -3178,8 +3184,8 @@ class Helper
                         if (!$isConfirm) {
                             // get current employee detail.
                             if (!in_array($params['document'], $empInfoSkip)) {
-                                // check recurring document or not
-                                if(isset($params['isFromRecurringVoucher']) && $params['isFromRecurringVoucher']) {
+                                // check system user or not
+                                if(isset($params['isAutoCreateDocument']) && $params['isAutoCreateDocument']) {
                                     $empInfo = UserTypeService::getSystemEmployee();
                                 }
                                 else{
@@ -3340,7 +3346,9 @@ class Helper
                                     ->where("rollLevelOrder", 1)
                                     ->first();
                                 if ($documentApproved) {
-                                    if(!isset($params['isFromRecurringVoucher'])){
+                                    if(isset($params['isAutoCreateDocument']) && $params['isAutoCreateDocument']){
+                                    }
+                                    else{
                                         if ($documentApproved->approvedYN == 0) {
                                             $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $documentApproved->companySystemID)
                                                 ->where('documentSystemID', $reference_document_id)
@@ -4431,7 +4439,7 @@ class Helper
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
-            
+
             $userMessage = 'Successfully approved the document';
             $more_data = [];
             $userMessageE = '';
@@ -4446,7 +4454,7 @@ class Helper
 
                     
                 // get current employee detail
-                if(isset($input['isFromRecurringVoucher']) && $input['isFromRecurringVoucher']){
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     $empInfo = UserTypeService::getSystemEmployee();
                 }
                 else{
@@ -4459,7 +4467,9 @@ class Helper
                     return ['success' => false, 'message' => 'Document is not confirmed'];
                 }
 
-                if(!isset($input['isFromRecurringVoucher'])){
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                }
+                else{
                     $policyConfirmedUserToApprove = '';
 
                     if (in_array($input["documentSystemID"], [56, 57, 58, 59])) {
@@ -4709,7 +4719,13 @@ class Helper
 
                                     $uploadEmployeeID = (isset($input['fromUpload']) && $input['fromUpload']) ? $input['approvedBy'] : null;
 
-                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $uploadEmployeeID);
+                                    if(isset($input['isAutoCreateDocument'])){
+                                        $empInfo = UserTypeService::getSystemEmployee();
+                                        $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $empInfo->empID);
+                                    }
+                                    else{
+                                        $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $uploadEmployeeID);
+                                    }
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
                                         return ['success' => false, 'message' => $result["errorMsg"]];
@@ -4923,7 +4939,7 @@ class Helper
                                 if ($jvMasterData->jvType == 1 && $jvMasterData->isReverseAccYN == 0) {
                                     $accrualJournalVoucher = self::generateAccrualJournalVoucher($input["documentSystemCode"]);
                                 } else if ($jvMasterData->jvType == 5 && $jvMasterData->isReverseAccYN == 0) {
-                                    $POAccrualJournalVoucher = self::generatePOAccrualJournalVoucher($input["documentSystemCode"]);
+//                                    //$POAccrualJournalVoucher = self::generatePOAccrualJournalVoucher($input["documentSystemCode"]);
                                 }
                             }
 
@@ -5289,7 +5305,9 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if(!isset($input['isFromRecurringVoucher'])){
+                        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                        }
+                        else{
                             $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
                             $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
                             $emails = array();
@@ -5473,7 +5491,9 @@ class Helper
                             SendEmailForDocument::approvedDocument($input);
                         }
 
-                        if (!isset($input['isFromRecurringVoucher'])){
+                        if (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                        }
+                        else{
                             $notifyApprove = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
 
                             if ($notifyApprove) {

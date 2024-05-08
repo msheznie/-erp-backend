@@ -3866,6 +3866,7 @@ class BudgetMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         $budgets = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_budgetmaster.*',
                 'erp_companyreporttemplate.description As templateDescription',
                 'serviceline.ServiceLineDes As ServiceLineDes',

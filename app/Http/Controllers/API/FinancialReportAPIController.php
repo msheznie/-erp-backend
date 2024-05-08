@@ -773,7 +773,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
     }
 
-    public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $companyWiseTemplate = false)
+    public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained, $companyWiseTemplate = false)
     {
         if ($request->accountType == 1) { // if account type is BS and if any new chart of account created automatically link the gl account
             $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType', 4)->whereNotNull('masterID')->first();
@@ -888,7 +888,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $companyWiseGrandTotal = [];
                 $uncategorizeData = [];
             }
-            $res = $this->processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID);
+            $res = $this->processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID, $showRetained);
             $headers = $res['headers'];
             $companyHeaderColumns = $res['companyHeaderColumns'];
             $uncategorizeDetailArr = $res['uncategorizeDetailArr'];
@@ -915,6 +915,9 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     foreach ($details as $key2 => $val2) {
                         if ($val2->isFinalLevel == 1) {
                             $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                            if($val2->detDescription == "Retained Earning" && $showRetained == false) {
+                                $val2->glCodes = null;
+                            }
                         } else {
                             $detailLevelTwo = $outputCollect->where('masterID', $val2->detID)->sortBy('sortOrder')->values();
                             $val2->detail = $detailLevelTwo;
@@ -1228,15 +1231,16 @@ srp_erp_ioubookingmaster.approvedYN = 1
             case 'FCT': // Finance Customize reports (Income statement, P&L, Cash flow)
                 $request = (object)$request->all();
                 $showZeroGL = isset($request->showZeroGL) ? $request->showZeroGL : false;
+                $showRetained = isset($request->showRetained) ? $request->showRetained : false;
                 $consolidationStatus = isset($request->type) && $request->type ? $request->type : 1;
                 
-                $response = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus);
+                $response = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained);
                 if ($request->type == 2) {
                     $reportData = $response['reportData'];
 
 
                     //company wise cyttd
-                    $companyWiseDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true);
+                    $companyWiseDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true, true);
                     $companyWiseNetProfiData = collect($companyWiseDataArray['reportData'])->where('netProfitStatus', 1)->first();
 
                     $netProfitColumnData = $companyWiseNetProfiData['columnData'];
@@ -1258,7 +1262,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         $request->companySystemID = $this->getAssociateJvCompanies($request->groupCompanySystemID);
                     }
 
-                    $shareOfAccosicateDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true);
+                    $shareOfAccosicateDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true, true);
                 
                     $shareOfAccosicateData = collect($shareOfAccosicateDataArray['reportData'])->where('netProfitStatus', 1)->first();
 
@@ -2050,7 +2054,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
         return $output;
     }
 
-    public function processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID)
+    public function processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID, $showRetained)
     {
         $companyCodes = [];
         $serviceLineDescriptions = [];
@@ -2211,6 +2215,9 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $firstLevel = true;
                 if ($val2['isFinalLevel'] == 1) {
                     $temp2['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val2['detID'])->sortBy('sortOrder')->values();
+                    if($val2['detDescription'] == "Retained Earning" && $showRetained == false) {
+                        $temp2['glCodes'] = null;
+                    }
                 } else {
                     $detailsTwo = collect($newOutputCollect)->where('masterID', $val2['detID'])->sortBy('sortOrder')->values();
                     $secondLevel = true;
@@ -3357,6 +3364,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
             $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
 
+            $data = array();
 
             foreach ($outputArr as $key => $values) {
                 $data[$x][''] = $key;
@@ -3606,8 +3614,9 @@ srp_erp_ioubookingmaster.approvedYN = 1
     }
     private function getGLAllRecordsToExport($output,$request,$extraColumns,$checkIsGroup,$currencyLocal,$currencyRpt,$decimalPlaceLocal,$decimalPlaceRpt): Array {
         $data = array();
+        $x = 0;
+
         if ($output) {
-            $x = 0;
             $subTotalDebitRpt = 0;
             $subTotalCreditRpt = 0;
             $subTotalDebitLocal = 0;
@@ -7594,7 +7603,7 @@ GROUP BY
             $fromDate = $fromDate->format('Y-m-d');
         } else {
             $period = CompanyFinancePeriod::find($request->month);
-            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+            $toDate = ($period) ? Carbon::parse($period->dateTo)->format('Y-m-d') : null;
             $month = Carbon::parse($toDate)->format('Y-m-d');
             $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
         }

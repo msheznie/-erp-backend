@@ -31,6 +31,9 @@ use App\Models\BudgetConsumedData;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\ErpAttributes;
+use App\Models\ErpAttributesDropdown;
+use App\Models\ErpAttributeValues;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetCost;
@@ -62,6 +65,8 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\FixedAssetDepreciationMaster;
 use App\helper\CreateAccumulatedDepreciation;
 use App\helper\CreateExcel;
+use App\Services\ValidateDocumentAmend;
+
 /**
  * Class FixedAssetMasterController
  * @package App\Http\Controllers\API
@@ -840,6 +845,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = $request->all();
         $itemImgaeArr = isset($input['itemImage']) ? $input['itemImage'] : array();
         $itemPicture  = isset($input['itemPicture']) ? $input['itemPicture'] : '';
+        $attributes  = isset($input['attributes']) ? $input['attributes'] : null;
+
         $input = array_except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
@@ -848,6 +855,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
+
      
         if(isset($input['accumulated_depreciation_amount_rpt']))
         {
@@ -876,8 +884,19 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
         }
 
+        if(isset($input['confirmedYN']) && $input['confirmedYN'] == 1) {
+            foreach($attributes as $attribute)
+            {
+                if(isset($attribute['is_mendatory']) && $attribute['is_mendatory'] == 1) {
+                    if(isset($attribute['attribute_values'][0]) && $attribute['attribute_values'][0]['value'] == null) {
+                        return $this->sendError('Please enter a value for all mandatory fields in the attributes', 500);
+                    }
+                }
+            }
+        }
 
-        if(isset($input['salvage_value_rpt']))
+
+            if(isset($input['salvage_value_rpt']))
         {
             if(doubleval($input['salvage_value_rpt']) >  (doubleval($fixedAssetMaster->costUnitRpt))) {
                 return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
@@ -1365,7 +1384,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category','asset_type'])->ofCompany($subCompanies);
+        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category','asset_type', 'attributeValues' => function($query) {
+            $query->where('is_active', 1)->with(['dropdownValues','attributeMaster' => function($query){
+                $query->withTrashed();
+            }]);
+        }])->ofCompany($subCompanies);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -1424,11 +1447,11 @@ class FixedAssetMasterAPIController extends AppBaseController
         return \DataTables::eloquent($assetCositng)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('faID', $input['order'][0]['dir']);
-                    }
-                }
+               if (request()->has('order')) {
+                   if ($input['order'][0]['column'] == 0) {
+                       $query->orderBy('faID', $input['order'][0]['dir']);
+                   }
+               }
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
@@ -1457,6 +1480,119 @@ class FixedAssetMasterAPIController extends AppBaseController
         $output = ['isAuditEnabled' => $financeCat->enableEditing,'fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
 
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+    }
+
+    public function assetAttributes(Request $request){
+        $input = $request->all();
+
+
+        $code = $input['documentSystemCode'];
+        $asset = FixedAssetMaster::find($code);
+
+        $erpAttributes = ErpAttributes::withTrashed()->with(['fieldOptions', 'attributeValues'  => function($query) use ($code){
+            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
+        }])->where('document_id', "ASSETCOST");
+
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $erpAttributes = $erpAttributes->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $erpAttributes = $erpAttributes->where(function ($query) use ($code) {
+            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
+        });
+
+        $erpAttributes = $erpAttributes->get();
+
+            foreach ($erpAttributes as $index => $erpAttribute) {
+                if($erpAttribute->document_master_id == null) {
+                    if($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)){
+                        if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null) {
+                            unset($erpAttributes[$index]);
+                        }
+                    }
+                    if ($asset->approved == -1) {
+                        if (($erpAttribute->is_active == 0 && $asset->approvedDate > $erpAttribute->inactivated_at) || ($erpAttribute->deleted_at != null && $asset->approvedDate > $erpAttribute->deleted_at)) {
+                            unset($erpAttributes[$index]);
+                        }
+                    }
+                } else {
+                    if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null){
+                        unset($erpAttributes[$index]);
+                    }
+                }
+            }
+
+
+
+        return \DataTables::of($erpAttributes)
+            ->addIndexColumn()
+            ->make(true);
+    }
+
+    public function updateAttribute(Request $request){
+
+        $input = $request->all();
+
+        if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
+            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            if(!empty($isAttributeValues)){
+                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['value' => $input['value']]);
+            } else {
+                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID']]);
+            }
+        } else {
+            $dropDownValues = ErpAttributesDropdown::find($input['value']);
+
+            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            if(!empty($isAttributeValues)){
+                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['value' => $input['value'], 'color' => $dropDownValues->color]);
+            } else {
+                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'color' => $dropDownValues->color]);
+            }
+        }
+
+        return $this->sendResponse($attributes, 'Fixed Asset Attributes updated successfully');
+
+    }
+
+    public function updateActionAttribute(Request $request){
+
+        $input = $request->all();
+
+        $attributeValueCount = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('is_active', 1)->count();
+
+        if($attributeValueCount > 3 && $input['action'] == 1){
+            return $this->sendError('Maximum number of selections exceeded');
+        }
+
+        if($input['value'] == null && $input['action'] == 1){
+            return $this->sendError('Please select/insert a value to field');
+        }
+
+        if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
+            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            if(!empty($isAttributeValues)){
+                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['is_active' => $input['action']]);
+            } else {
+                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'is_active' => $input['action']]);
+            }
+        } else {
+            $dropDownValues = ErpAttributesDropdown::find($input['value']);
+
+            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            if(!empty($isAttributeValues)){
+                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['is_active' => $input['action']]);
+            } else {
+                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'color' => $dropDownValues->color, 'is_active' => $input['action']]);
+            }
+        }
+        return $this->sendResponse($attributes, 'Fixed Asset Attributes updated successfully');
+
     }
 
      public function assetCostingForPrint(Request $request)
@@ -1592,6 +1728,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         $assetCost = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_fa_asset_master.*',
                 'employees.empName As created_emp',
                 'erp_documentapproved.documentApprovedID',
@@ -2307,7 +2444,17 @@ class FixedAssetMasterAPIController extends AppBaseController
                 return $this->sendError('This asset cannot be returned back to amend. An approved accumulated depreciation document is linked with this asset. Refer-back the Acc. depreciation and try again'); 
             }
 
-     
+            $documentAutoId = $id;
+            $documentSystemID = $masterData->documentSystemID;
+            if($masterData->approved == -1){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
+                }
+            }
+            
 
 
             $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';

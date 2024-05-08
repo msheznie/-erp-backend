@@ -983,6 +983,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         $itemIssueMaster = DB::table('erp_documentapproved')
             ->select(
+                'employeesdepartments.approvalDeligated',
                 'erp_itemissuemaster.*',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As MIServiceLineDes',

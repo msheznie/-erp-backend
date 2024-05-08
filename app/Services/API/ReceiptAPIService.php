@@ -21,7 +21,9 @@ use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentApproved;
 use App\Models\Employee;
+use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
+use App\Services\UserTypeService;
 use Carbon\Carbon;
 
 class ReceiptAPIService
@@ -80,6 +82,8 @@ class ReceiptAPIService
                         $documentApproved['approvedDate'] = $receipt->approvedDate;
                         $documentApproved['sendMail'] = false;
                         $documentApproved['sendNotication'] = false;
+                        $documentApproved['isCheckPrivilages'] = false;
+
 
                         $approval = \Helper::approveDocumentForApi($documentApproved);
                     }
@@ -112,8 +116,8 @@ class ReceiptAPIService
 
 
             $receipt = self::setCommonValidation($dt,$receipt);
-            $receipt = self::setCompanyDetails($companyID,$receipt); // set company details of the document
             $receipt = self::setDocumentDetails($dt,$receipt); // set document details (narration,custPaymentReceiveDate,documentIds)
+            $receipt = self::setCompanyDetails($companyID,$receipt); // set company details of the document
             $receipt = self::setFinancialYear($dt['documentDate'],$receipt);
             $receipt = self::setBankDetails($dt['bank'],$receipt,$receiptValidationService);
             $receipt = self::setCustomerDetails($dt['customer'],$receipt);
@@ -127,16 +131,21 @@ class ReceiptAPIService
             $receipt = self::setConfirmedDetails($dt,$receipt);
             $receipt = self::setApprovedDetails($dt,$receipt);
 
+
             if($receipt->documentType == 13) {
                 $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
             }
 
-
             foreach ($receipt['details'] as $details) {
 
                 self::checkDecimalPlaces($details,$receipt);
+                if($receipt->documentType == 15 || $receipt->documentType == 14)
+                {
+                    self::validateSegmentCode($details,$receipt);
+                }
 
                 if($receipt->documentType == 13) {
+                    self::validateSegmentCodeCustomerInvoice($details,$receipt);
                     self::validateInvoiceDetails($details,$receipt);
                     self::validateTotalAmount($details,$receipt);
                     self::validateDocumentDate($details,$receipt,$dt);
@@ -150,6 +159,7 @@ class ReceiptAPIService
                     self::validateVatAmount($details,$receipt);
                 }
 
+
             }
 
             array_push($receipts,$receipt);
@@ -161,7 +171,7 @@ class ReceiptAPIService
     private function validateVatAmount($details,$receipt) {
         $customerDetails = CustomerMaster::where('customerCodeSystem',$receipt->customerID)->first();
 
-        if($receipt->isVATApplicable && ($customerDetails && $customerDetails->vatEligible)) {
+        if($receipt->isVATApplicable && $receipt->vatRegisteredYN) {
             if($details['vatAmount'] >= $details['amount']) {
                 $this->isError = true;
                 $error[$receipt->narration][$details['comments']] = ['VAT amount cannot be greater or equal than the amount'];
@@ -415,6 +425,32 @@ class ReceiptAPIService
         return $receipt;
     }
 
+    private function validateSegmentCodeCustomerInvoice($details,$receipt) {
+        $segmentMaster = SegmentMaster::where('ServiceLineCode',$details["segmentCode"])->first();
+
+        if(!isset($segmentMaster))
+        {
+            $this->isError = true;
+            $error[$receipt->narration][$details['invoiceCode']] = ['Segment Code not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }else {
+
+
+            if($segmentMaster->companySystemID != $receipt->companySystemID)
+            {
+                $this->isError = true;
+                $error[$receipt->narration][$details['invoiceCode']] = ['Segment is not assigned to the company'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
+            if(!$segmentMaster->isActive)
+            {
+                $this->isError = true;
+                $error[$receipt->narration][$details['invoiceCode']] = ['Segment is not active'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
+    }
     private function validateInvoiceDetails($details,$receipt) {
         if($receipt->documentType == 13) {
             $invoice = CustomerInvoice::where('bookingInvCode',$details['invoiceCode'])->first();
@@ -434,9 +470,35 @@ class ReceiptAPIService
 
 
     }
-    private function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
-        $userDetails = Employee::where('empID',$detail['confirmedBy'])->first();
 
+    private function  validateSegmentCode($details,$receipt) {
+        $segmentMaster = SegmentMaster::where('ServiceLineCode',$details["segmentCode"])->first();
+
+        if(!isset($segmentMaster))
+        {
+            $this->isError = true;
+            $error[$receipt->narration][$details['comments']] = ['Segment Code not found'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }else {
+
+
+            if($segmentMaster->companySystemID != $receipt->companySystemID)
+            {
+                $this->isError = true;
+                $error[$receipt->narration][$details['comments']] = ['Segment is not assigned to the company'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+
+            if(!$segmentMaster->isActive)
+            {
+                $this->isError = true;
+                $error[$receipt->narration][$details['comments']] = ['Segment is not active'];
+                array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+            }
+        }
+    }
+    private function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
+        $employee = UserTypeService::getSystemEmployee();
         $documentDate = Carbon::createFromFormat('d-m-Y',$detail['documentDate']);
         $confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
 
@@ -446,23 +508,24 @@ class ReceiptAPIService
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
         }
 
-        if(!$userDetails) {
+        if(!$employee) {
             $this->isError = true;
             $error[$receipt->narration] = ['Confirmed By employee data not found'];
             array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
 
         }else {
-            $receipt->confirmedByEmpSystemID = $userDetails->employeeSystemID;
-            $receipt->confirmedByEmpID = $userDetails->empID;
-            $receipt->confirmedByName = $userDetails->empFullName;
+            $receipt->confirmedByEmpSystemID = $employee->employeeSystemID;
+            $receipt->confirmedByEmpID = $employee->empID;
+            $receipt->confirmedByName = $employee->empFullName;
             $receipt->confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
+
         }
 
 
         return $receipt;
     }
     private function setApprovedDetails($detail,$receipt):CustomerReceivePayment {
-        $userDetails = Employee::where('empID',$detail['approvedBy'])->first();
+        $userDetails = UserTypeService::getSystemEmployee();;
 
         if(Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']) > Carbon::createFromFormat('d-m-Y',$detail['approvedDate'])) {
             $this->isError = true;
@@ -494,12 +557,12 @@ class ReceiptAPIService
         switch ($receipt->documentType) {
             case 15:
             case 14 :
-                $totalVatAmount = (($customerDetails && $customerDetails->vatEligible) && $receipt->isVATApplicable) ? collect($receipt->details)->sum('vatAmount') : 0;
+                $totalVatAmount = ($receipt->vatRegisteredYN && $receipt->isVATApplicable) ? collect($receipt->details)->sum('vatAmount') : 0;
                 $totalAmount = collect($receipt->details)->sum('amount');
                 $totalNetAmount = ($totalAmount-$totalVatAmount);
                 break;
             case 13 :
-                $totalVatAmount = (($customerDetails && $customerDetails->vatEligible) && $receipt->isVATApplicable) ? collect($receipt->details)->sum('vatAmount') : 0;
+                $totalVatAmount = ($receipt->vatRegisteredYN && $receipt->isVATApplicable) ? collect($receipt->details)->sum('vatAmount') : 0;
                 $totalAmount = collect($receipt->details)->sum('receiptAmount');
                 $totalNetAmount = ($totalAmount-$totalVatAmount);
                 break;
@@ -795,7 +858,7 @@ class ReceiptAPIService
     private function setCompanyDetails($company_id,$receipt):CustomerReceivePayment
     {
 
-        $companyDetails = Company::select(['companySystemID','CompanyID'])->where('companySystemID',$company_id)->first();
+        $companyDetails = Company::select(['companySystemID','CompanyID','vatRegisteredYN'])->where('companySystemID',$company_id)->first();
         if(!$companyDetails) {
             $this->isError = true;
             $error[$receipt->narration] = ['Company details not found'];
@@ -805,7 +868,14 @@ class ReceiptAPIService
 
         $receipt->companySystemID = $companyDetails->companySystemID;
         $receipt->companyID = $companyDetails->CompanyID;
+        $receipt->vatRegisteredYN = $companyDetails->vatRegisteredYN;
 
+        if($receipt->isVATApplicable && !$receipt->vatRegisteredYN)
+        {
+            $this->isError = true;
+            $error[$receipt->narration] = ['Company is not vat registred'];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
+        }
 
         return $receipt;
 

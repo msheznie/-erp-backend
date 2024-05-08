@@ -1333,7 +1333,7 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError('Item not assigned');
             }
 
-             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+            $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                 ->where('companySystemID', $grvMaster->companySystemID)
                 ->first();
 
@@ -1353,7 +1353,7 @@ class GRVDetailsAPIController extends AppBaseController
                     }
                 }
             }
-            
+
             $user = \Helper::getEmployeeInfo();
             
             $item = ItemAssigned::where('itemCodeSystem', $itemAssign->itemCodeSystem)

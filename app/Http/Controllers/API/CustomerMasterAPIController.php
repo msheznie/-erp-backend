@@ -1,4 +1,6 @@
 <?php
+
+
 /**
  * =============================================
  * -- File Name : CustomerMasterAPIController.php
@@ -216,7 +218,7 @@ class CustomerMasterAPIController extends AppBaseController
             $filter = "AND (( CutomerCode LIKE '%{$search}%') OR ( customerShortCode LIKE '%{$search}%') OR ( CustomerName LIKE '%{$search}%'))";
         }
 
-        $sql = "SELECT customermaster.*, countrymaster.countryName, erp_documentapproved.documentApprovedID, rollLevelOrder, approvalLevelID, documentSystemCode FROM erp_documentapproved
+        $sql = "SELECT customermaster.*, employeesdepartments.approvalDeligated,countrymaster.countryName, erp_documentapproved.documentApprovedID, rollLevelOrder, approvalLevelID, documentSystemCode FROM erp_documentapproved
         inner join employeesdepartments on erp_documentapproved.approvalGroupID =  employeesdepartments.employeeGroupID 
         and erp_documentapproved.documentSystemID = employeesdepartments.documentSystemID
         and erp_documentapproved.companySystemID = employeesdepartments.companySystemID
@@ -1132,6 +1134,8 @@ class CustomerMasterAPIController extends AppBaseController
 
     public function masterBulkUpload(request $request)
     {
+        ini_set('max_execution_time', 1800);
+
         try {
 
             

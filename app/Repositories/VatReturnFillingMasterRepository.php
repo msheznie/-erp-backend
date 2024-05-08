@@ -237,7 +237,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     })
                     ->whereHas('sub_category', function($query) {
                         $query->whereHas('type', function($query) {
-                            $query->where('id', 2);
+                            $query->whereIn('id', [1,2]);
                         });
                     });
 

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateErpAttributesAPIRequest;
 use App\Http\Requests\API\UpdateErpAttributesAPIRequest;
 use App\Models\ErpAttributes;
+use App\Models\ErpAttributeValues;
+use App\Models\FixedAssetMaster;
 use App\Repositories\ErpAttributesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -273,14 +275,20 @@ class ErpAttributesAPIController extends AppBaseController
     {
         /** @var ErpAttributes $erpAttributes */
         $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
-        
-        if($erpAttributes->field_type_id == 3){
-           $dropdownValues = ErpAttributesDropdown::where('attributes_id',$erpAttributes->id)->delete();
-        }
-
 
         if (empty($erpAttributes)) {
             return $this->sendError('Erp Attributes not found');
+        }
+
+        $attributeActiveValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+            ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+            ->where('erp_attribute_values.attribute_id', $id)
+            ->where('erp_fa_asset_master.confirmedYN', 1)
+            ->where('erp_fa_asset_master.approved', 0)
+            ->count();
+
+        if($attributeActiveValidation > 0){
+            return $this->sendError('There are some pending assets awaiting approval', 500);
         }
 
         if ($erpAttributes->document_id == "SUBCAT") {
@@ -291,7 +299,39 @@ class ErpAttributesAPIController extends AppBaseController
             $this->auditLog($db, $id,$uuid, "erp_attributes", "Attribute ".$erpAttributes->description." has deleted", "D", [], $erpAttributes->toArray(), $erpAttributes->document_master_id, 'financeitemcategorysub');
         }
 
+
+
         $erpAttributes->delete();
+
+        $erpAttributes = ErpAttributes::where('document_master_id',$erpAttributes->document_master_id)->where('id', $id)->withTrashed()->first();
+
+        $documentMasterID = isset($erpAttributes->document_master_id) ? $erpAttributes->document_master_id: null;
+
+        if($documentMasterID != null){
+            if ($erpAttributes->deleted_at != null) {
+                    ErpAttributeValues::where('erp_attribute_values.attribute_id', $id)->where('erp_attribute_values.document_master_id', $erpAttributes->document_master_id)->update(['is_active' => 0]);
+            }
+        } else {
+            $attributes= ErpAttributeValues::selectRaw('erp_attribute_values.attribute_id, erp_attribute_values.document_master_id, erp_attribute_values.id')->where('erp_attribute_values.attribute_id', $id)->get();
+
+            foreach ($attributes as $attribute){
+                $erpAttributes = ErpAttributes::withTrashed()->find($attribute->attribute_id);
+                $asset = FixedAssetMaster::find($attribute->document_master_id);
+                if ($asset->confirmedYN == 0){
+                    ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                }
+                if ($asset->confirmedYN == 1 && $asset->approved == 0) {
+                    if ($erpAttributes->deleted_at != null && $asset->createdDateAndTime > $erpAttributes->deleted_at) {
+                        ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                    }
+                }
+                if ($asset->approved == -1) {
+                    if ($erpAttributes->deleted_at != null && $asset->approvedDate > $erpAttributes->deleted_at) {
+                        ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                    }
+                }
+            }
+        }
 
         return $this->sendResponse([],'Erp Attributes deleted successfully');
     }
@@ -319,6 +359,145 @@ class ErpAttributesAPIController extends AppBaseController
         }
 
         return $this->sendResponse($attributesIsMandotaryUpdate, 'Erp Attributes updated successfully');
+
+    }
+
+    public function assetCostAttributesUpdate(Request $request){
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('field_type_id'));
+
+        $id = $input['id'];
+
+        $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+
+        if($erpAttributes->is_active != $input['is_active'] && $input['is_active'] == 0){
+            $attributeActiveValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+                ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+                ->where('erp_attribute_values.attribute_id', $id)
+                ->where('erp_fa_asset_master.confirmedYN', 1)
+                ->where('erp_fa_asset_master.approved', 0)
+                ->count();
+
+            if($attributeActiveValidation > 0){
+                return $this->sendError('There are some pending assets awaiting approval', 500);
+            }
+        }
+
+        if($erpAttributes->field_type_id != $input['field_type_id']){
+            $attribute = ErpAttributes::find($id);
+            if($attribute->document_master_id == null) {
+                $attributeFieldValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+                    ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+                    ->where('erp_attribute_values.attribute_id', $id)
+                    ->where('erp_attribute_values.value', '!=', null)
+                    ->where('erp_fa_asset_master.confirmedYN', 1)
+                    ->count();
+
+                if ($attributeFieldValidation > 0) {
+                    return $this->sendError('Selected attributes have already been used for an asset', 500);
+                }
+            }
+
+            if($erpAttributes->field_type_id == 3){
+                $dropdownValues = ErpAttributesDropdown::where('attributes_id',$erpAttributes->id)->count();
+                 if($dropdownValues > 0){
+                     return $this->sendError('Unable to update. Dropdown value is added for the attribute', 500);
+                 }
+             }
+        }
+
+        if($erpAttributes->description != $input['description']){
+            if(empty($input['description'])){
+                return $this->sendError('Unable to update. Description is empty', 500);
+            }
+            $attributesValidateDescription = ErpAttributes::where('description', $input['description'])->count();
+            if($attributesValidateDescription > 0){
+                return $this->sendError('Unable to update. Description already exist', 500);
+            }
+             
+        }
+
+        if(isset($input['is_active']) && $input['is_active'] == false)
+        {
+            $inactivatedAt = \Helper::currentDateTime();
+        } else {
+            $inactivatedAt = null;
+        }
+
+
+        $updateData = [
+            'description' => $input['description'],
+            'field_type_id' => $input['field_type_id'],
+            'is_mendatory' => $input['is_mendatory'],
+            'is_active' => $input['is_active'],
+            'inactivated_at' => $inactivatedAt
+        ];
+        $attributesUpdate = ErpAttributes::where('id', $id)
+        ->update($updateData);
+
+        $documentMasterID = isset($input['document_master_id']) ? $input['document_master_id']: null;
+        $isActive = isset($input['is_active']) ? $input['is_active']: null;
+
+        $erpAttributes = ErpAttributes::where('document_master_id', $documentMasterID)->where('id', $id)->withTrashed()->first();
+        $documentMasterID = isset($erpAttributes->document_master_id) ? $erpAttributes->document_master_id: null;
+
+        if($isActive == 0) {
+            if ($documentMasterID != null) {
+
+                if ($erpAttributes->is_active == 0) {
+                    ErpAttributeValues::where('erp_attribute_values.attribute_id', $id)->where('erp_attribute_values.document_master_id', $documentMasterID)->update(['is_active' => 0]);
+                }
+            } else {
+                $attributes = ErpAttributeValues::selectRaw('erp_attribute_values.attribute_id, erp_attribute_values.document_master_id, erp_attribute_values.id')
+                    ->where('erp_attribute_values.attribute_id', $id)->get();
+                foreach ($attributes as $attribute) {
+                    $erpAttributes = ErpAttributes::withTrashed()->find($attribute->attribute_id);
+                    $asset = FixedAssetMaster::find($attribute->document_master_id);
+
+                    if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
+                            ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                    }
+                    if ($asset->approved == -1) {
+                        if ($erpAttributes->is_active == 0 && $asset->createdDateAndTime > $erpAttributes->inactivated_at) {
+                            ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->sendResponse($attributesUpdate, 'Erp Attributes updated successfully');
+
+    }
+
+    public function dropdownValuesUpdate(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+
+        $dropdownValues = ErpAttributesDropdown::where('id',$id)->first();
+
+        ErpAttributeValues::where('attribute_id',$dropdownValues->attributes_id)->where('value', $id)->update(['color' => $input['color']]);
+
+
+        if($dropdownValues->description != $input['description']){
+            if(empty($input['description'])){
+                return $this->sendError('Unable to update. Description is empty', 500);
+            }
+            $dropdownValidateDescription = ErpAttributesDropdown::where('description', $input['description'])->count();
+            if($dropdownValidateDescription > 0){
+                return $this->sendError('Unable to update. Description already exist', 500);
+            }
+             
+        }
+
+        $updateData = [
+            'description' => $input['description'],
+            'color' => $input['color']
+        ];
+        $dropdownValuesUpdate = ErpAttributesDropdown::where('id', $id)
+        ->update($updateData);
+
+        return $this->sendResponse($dropdownValuesUpdate, 'Erp Attributes updated successfully');
 
     }
 

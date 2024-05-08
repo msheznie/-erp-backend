@@ -87,6 +87,7 @@ use Response;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\SupplierBlock;
+use App\Services\ValidateDocumentAmend;
 
 /**
  * Class GRVMasterController
@@ -894,6 +895,7 @@ class GRVMasterAPIController extends AppBaseController
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
             $confirm = \Helper::confirmDocument($params);
+
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -1416,6 +1418,7 @@ class GRVMasterAPIController extends AppBaseController
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_grvmaster.grvAutoID',
             'erp_grvmaster.grvPrimaryCode',
             'erp_grvmaster.documentSystemID',
@@ -2071,7 +2074,18 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             return $this->sendError("You cannot reverse the GRV. The GRV is already added to Purchase Return", 500);
         }
 
+        $MasterData = GRVMaster::find($input['grvAutoID']);
+        $documentAutoId = $input['grvAutoID'];
+        $documentSystemID = $MasterData->documentSystemID;
 
+        if($MasterData->approved == -1){
+            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                    return $this->sendError($validatePendingGlPost['message']);
+                }
+            }
+        }
 
         ReversalDocument::sendEmail($input);
 

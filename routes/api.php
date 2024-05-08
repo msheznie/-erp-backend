@@ -52,6 +52,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('fetch_item_wac_amount', 'POS\PosAPIController@fetchItemWacAmount');
         Route::post('create_receipts_voucher','ReceiptAPIController@store');
         Route::post('push_budget_items', 'SRM\ThirdPartySystemsController@pushBudgetItems');
+        Route::post('create_customer_invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -100,6 +101,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::group(['middleware' => 'max_memory_limit'], function () {
                 Route::group(['middleware' => 'max_execution_limit'], function () {
+                    Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
                     Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
                     Route::post('uploadCustomerInvoice', 'CustomerInvoiceDirectAPIController@uploadCustomerInvoice')->name("Upload customer invoice");
                     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
@@ -216,7 +218,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
             Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
             Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
-            Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
 
             Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 

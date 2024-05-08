@@ -1612,6 +1612,7 @@ class SalesReturnAPIController extends AppBaseController
         $empID = Helper::getEmployeeSystemID();
 
         $doMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'salesreturn.id',
             'salesreturn.returnType',
             'salesreturn.salesReturnCode',

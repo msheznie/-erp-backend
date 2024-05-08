@@ -940,6 +940,7 @@ class StockReceiveAPIController extends AppBaseController
             ->first();
 
         $stockTransferMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_stockreceive.stockReceiveAutoID',
             'erp_stockreceive.stockReceiveCode',
             'erp_stockreceive.documentSystemID',

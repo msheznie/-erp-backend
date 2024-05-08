@@ -973,6 +973,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('companySystemID', $procumentOrder->companySystemID)
                 ->first();
 
+
             if ($allowFinanceCategory) {
                 $policy = $allowFinanceCategory->isYesNO;
                 //checking if item category is same or not
@@ -1693,11 +1694,9 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
         }
-
         if ($allowFinanceCategory) {
             $conditions['allowFinanceCategory'] = $allowFinanceCategory->isYesNO;
         }
-
         if ($allowPRinPO) {
             $conditions['pullPRPolicy'] = $allowPRinPO->isYesNO;
         }
@@ -1970,6 +1969,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->first();
 
         $poMasters = DB::table('erp_documentapproved')->select(
+            'employeesdepartments.approvalDeligated',
             'erp_purchaseordermaster.purchaseOrderID',
             'erp_purchaseordermaster.purchaseOrderCode',
             'erp_purchaseordermaster.documentSystemID',
@@ -8274,8 +8274,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }])
                 ->groupBy('directReceiptAutoID')
                 ->where('directReceiptAutoID', $custReceivePaymentAutoID)
-                ->first()
-                ->toArray();
+                ->first();
+                
+                if ($recieptVouchers) {
+                    $recieptVouchers = $recieptVouchers->toArray();
+                } else {
+                    $recieptVouchers = [];
+                }
 
 
             $tracingData[][] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
@@ -8301,9 +8306,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }])
                 ->groupBy('directReceiptAutoID')
                 ->where('directReceiptAutoID', $custReceivePaymentAutoID)
-                ->first()
-                ->toArray();
+                ->first();
                 
+                if ($recieptVouchers) {
+                    $recieptVouchers = $recieptVouchers->toArray();
+                } else {
+                    $recieptVouchers = [];
+                }
+
                 $tracingData[][] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
             }
         }
