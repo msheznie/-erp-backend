@@ -52,7 +52,7 @@ class EmailForQueuing extends Mailable implements ShouldQueue
     public function build()
     {
 
-       $mail = $this->from('noreply@gears-int.com', $this->fromName)
+       $mail = $this->from(env('MAIL_FROM_ADDRESS'), $this->fromName)
                     ->view('email.default_email',['color' => $this->color,'text' => $this->text])
                     ->subject($this->subject)
                     ->sendgrid([
