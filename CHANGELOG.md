@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.40.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.40.0...v10.40.1) (2024-05-09)
+
+
+### Bug Fixes
+
+* **Email:** Email sender's name is not equal to the given value in the backend [Hot-Fix] [GSUP-1769] ([644c2a4](https://github.com/pbsgears/Gears_BackEnd/commit/644c2a465f20d28a925f65356da38a7a23bd4b0e))
+
 ## [10.40.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.39.0...v10.40.0) (2024-05-08)
 
 
