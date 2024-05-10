@@ -1396,6 +1396,15 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $assetCositng->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
                 $assetCositng->where('approved', $input['approved']);
@@ -2290,7 +2299,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $type = $input['type'];
 
-        $assetCositng = FixedAssetMaster::with(['category_by','sub_category_by','finance_category','asset_type','group_to','supplier','disposal_by','department','departmentmaster','confirmed_by','posttogl_by','sub_category_by2','sub_category_by3'])->where('companySystemID', $input['companyID']);
+        $assetCositng = FixedAssetMaster::with(['category_by','sub_category_by','finance_category','asset_type','group_to','supplier','disposal_by','department','departmentmaster','confirmed_by','posttogl_by','sub_category_by2','sub_category_by3','created_by'])->where('companySystemID', $input['companyID']);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -2365,6 +2374,9 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x]['Last Physical Verified Date'] = \Helper::dateFormat($val->lastVerifiedDate);
                 $data[$x]['Unit Price(Local)'] = $val->COSTUNIT;
                 $data[$x]['Unit Price(Rpt)'] = $val->costUnitRpt;
+
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateAndTime);
 
                 if ($val->confirmedYN == 1) {
                     $data[$x]['Confirmed Status'] = 'Yes';

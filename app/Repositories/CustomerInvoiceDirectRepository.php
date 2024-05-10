@@ -226,7 +226,14 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         /* $invMaster = CustomerInvoiceDirect::where('companySystemID', $input['companyId']);
          $invMaster->where('documentSystemID', $input['documentId']);
          $invMaster->with(['currency', 'createduser', 'customer']);*/
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $invMaster->whereIn('erp_custinvoicedirect.createdUserSystemID', $createdBy);
+            }
 
+        }
 
         if (array_key_exists('invConfirmedYN', $input)) {
             if (($input['invConfirmedYN'] == 0 || $input['invConfirmedYN'] == 1) && !is_null($input['invConfirmedYN'])) {

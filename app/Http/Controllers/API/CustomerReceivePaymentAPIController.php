@@ -2710,6 +2710,15 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $master->where('erp_customerreceivepayment.confirmedYN', $input['confirmedYN']);
             }
         }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $master->whereIn('erp_customerreceivepayment.createdUserSystemID', $createdBy);
+            }
+
+        }
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
                 $master->where('erp_customerreceivepayment.approved', $input['approved']);

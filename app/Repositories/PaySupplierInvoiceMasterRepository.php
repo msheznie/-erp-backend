@@ -239,6 +239,15 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $paymentVoucher->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
                 $paymentVoucher->where('approved', $input['approved']);

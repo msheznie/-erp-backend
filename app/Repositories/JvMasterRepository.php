@@ -83,6 +83,16 @@ class JvMasterRepository extends BaseRepository
             $query->selectRaw('COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,jvMasterAutoId');
             $query->groupBy('jvMasterAutoId');
         }]);
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $invMaster->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         if (array_key_exists('jvType', $input)) {
             if (($input['jvType'] == 0 || $input['jvType'] == 1 || $input['jvType'] == 2 || $input['jvType'] == 3 || $input['jvType'] == 4 || $input['jvType'] == 5) && !is_null($input['jvType'])) {
                 $invMaster->where('jvType', $input['jvType']);
