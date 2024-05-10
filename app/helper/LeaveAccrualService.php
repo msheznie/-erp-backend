@@ -32,6 +32,7 @@ class LeaveAccrualService
     public $accrualMasterID = null;
     public $year_det;
     public $month_det;
+    public $accrualType;
 
     public function __construct($company_data, $accrual_type_det, $header_data)
     {
@@ -42,7 +43,7 @@ class LeaveAccrualService
         $this->dailyBasis = $accrual_type_det['dailyBasis'];
         $this->date_time = Carbon::now();
         $this->date = $this->date_time->format('Y-m-d');
-
+        $this->accrualType = $accrual_type_det['description'];
 
         if($header_data){
             $this->header_data = $header_data;
@@ -51,7 +52,9 @@ class LeaveAccrualService
 
     function prepare_for_accrual(){
         $status = $this->get_leave_group_details();
-        if(!$status){ return []; }
+        if (!$status) {
+            return [];
+        }
 
         if(!$this->dailyBasis){
             $leaveBalanceBasedOn = LeaveBalanceValidationHelper::validate($this->company_id,$this->date);
@@ -64,11 +67,9 @@ class LeaveAccrualService
         }
 
         foreach ($this->leave_groups as $group){
-            $group_id = $group['leaveGroupID'];
-            $leave_group = $group['description'];
 
-            $status = $this->get_employee_list($group_id, $leave_group,true);
 
+            $status = $this->get_employee_list($group['leaveGroupID'], $group['description'], true);
             if($status){
                 $this->pending_accruals[] = $group;
             }
@@ -89,7 +90,7 @@ class LeaveAccrualService
         }
 
         if($leave_groups->count() == 0){
-            Log::error("Annual daily Basis leave types not available on ". $this->log_suffix());
+            Log::error($this->accrualType ." leave types not available on ". $this->log_suffix());
             return false;
         }
 
@@ -138,18 +139,17 @@ class LeaveAccrualService
 
     function pending_sql_annual($str, $leaveGroupID, $master_id_filter): string
     {
-        $dailyBasisYN = 1;
-        $year_date_filter = "dailyAccrualDate = '{$this->date}'";
-        if(!$this->dailyBasis){
-            $dailyBasisYN = 0;
-            $year_date_filter = "company_finance_year_id = ".$this->year_det['id'];
-            if ($this->year_det['accrualPolicyValue'] == 2){
-                $yearFirstDate = $this->year_det['startDate'];
-                $yearEndDate =  $this->year_det['endDate'];
-                $year_date_filter = " '{$this->date}' BETWEEN '{$yearFirstDate}' AND '{$yearEndDate}'";
-            }
+        $dailyBasisYN = $this->dailyBasis ? 1 : 0;
+
+        $yearDateFilter = "m.company_finance_year_id = ".$this->year_det['id'];
+        if ($this->year_det['accrualPolicyValue'] == 2){
+            $year = Carbon::parse( $this->date )->format('Y');
+            $yearDateFilter = " m.year = '{$year}' ";
         }
 
+        if ($dailyBasisYN == 1) {
+            $yearDateFilter = "m.dailyAccrualDate = '{$this->date}'";
+        }
         return "SELECT {$str}
             FROM srp_employeesdetails AS emp
             JOIN (
@@ -159,10 +159,12 @@ class LeaveAccrualService
             WHERE NOT EXISTS ( 
                 SELECT * FROM srp_erp_leaveaccrualdetail AS det
                 JOIN srp_erp_leaveaccrualmaster AS m ON m.leaveaccrualMasterID = det.leaveaccrualMasterID
-                WHERE emp.EIdNo = empID AND det.leaveGroupID = {$leaveGroupID} AND m.dailyAccrualYN = {$dailyBasisYN}
-                AND {$year_date_filter} {$master_id_filter}
-                GROUP BY empID
-            ) AND emp.leaveGroupID = {$leaveGroupID} AND isDischarged != 1 AND Erp_companyID={$this->company_id}";
+                WHERE emp.EIdNo = empID AND det.leaveGroupID = {$leaveGroupID} 
+                AND m.dailyAccrualYN = {$dailyBasisYN}
+                AND {$yearDateFilter} {$master_id_filter}
+                AND m.policyMasterID = 1 AND m.manualYN = 0        
+                GROUP BY det.empID
+            ) AND emp.leaveGroupID = {$leaveGroupID} AND emp.isDischarged != 1 AND emp.Erp_companyID={$this->company_id}";
     }
 
     function pending_sql_monthly($str, $leaveGroupID, $master_id_filter): string
