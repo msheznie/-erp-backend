@@ -1077,6 +1077,7 @@ class ItemMasterAPIController extends AppBaseController
                     'itemUrl' => $input['itemUrl'],
                     'isActive' => $input['isActive'],
                     'pos_type' => $input['pos_type'],
+                    'categoryType' => $categoryType,
                     'itemDescription' => $input['itemDescription'],
                     'financeCategorySub' => $input['financeCategorySub'],
                     'itemUnitOfMeasure' => $input['unit'],
