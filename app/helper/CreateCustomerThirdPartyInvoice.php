@@ -66,48 +66,48 @@ class CreateCustomerThirdPartyInvoice
             $companySystemId = $sourceModel['companySystemID'];
           
             
-                    $approvalLevel = ApprovalLevel::with('approvalrole' )
-                    ->where('companySystemID', $companySystemId)
-                    ->where('documentSystemID', 20)
-                    ->where('departmentSystemID', 4)
-                    ->where('isActive', -1)
-                    ->first();
+                    // $approvalLevel = ApprovalLevel::with('approvalrole' )
+                    // ->where('companySystemID', $companySystemId)
+                    // ->where('documentSystemID', 20)
+                    // ->where('departmentSystemID', 4)
+                    // ->where('isActive', -1)
+                    // ->first();
 
-                    $approvalGroupID = [];
-                    if($approvalLevel){
-                        if ($approvalLevel->approvalrole) {
-                            foreach ($approvalLevel->approvalrole as $val) {
-                                if ($val->approvalGroupID) {
-                                  $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
-                                } 
-                                else {
-                                    $errorMsg = "'Please set the approval group.";
-                                    return ['status' => false, 'message' => $errorMsg];
-                                }
-                            }
-                        }
-                    } else {
-                        $errorMsg = "No approval setup created for this document.";
-                        return ['status' => false, 'message' => $errorMsg];
-                    }
+                    // $approvalGroupID = [];
+                    // if($approvalLevel){
+                    //     if ($approvalLevel->approvalrole) {
+                    //         foreach ($approvalLevel->approvalrole as $val) {
+                    //             if ($val->approvalGroupID) {
+                    //               $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
+                    //             } 
+                    //             else {
+                    //                 $errorMsg = "'Please set the approval group.";
+                    //                 return ['status' => false, 'message' => $errorMsg];
+                    //             }
+                    //         }
+                    //     }
+                    // } else {
+                    //     $errorMsg = "No approval setup created for this document.";
+                    //     return ['status' => false, 'message' => $errorMsg];
+                    // }
 
-                    $approvalGroupID;
+                    // $approvalGroupID;
 
-                    $approvalAccess = EmployeesDepartment::where('employeeGroupID', $approvalGroupID)
-                                    ->whereHas('employee', function ($q) {
-                                        $q->where('discharegedYN', 0);
-                                    })
-                                    ->where('companySystemID', $companySystemId)
-                                    ->where('employeeSystemID',$empId->employeeSystemID)
-                                    ->where('documentSystemID', 20)
-                                    ->where('isActive', 1)
-                                    ->where('removedYN', 0)
-                                    ->first();
-
-
+                    // $approvalAccess = EmployeesDepartment::where('employeeGroupID', $approvalGroupID)
+                    //                 ->whereHas('employee', function ($q) {
+                    //                     $q->where('discharegedYN', 0);
+                    //                 })
+                    //                 ->where('companySystemID', $companySystemId)
+                    //                 ->where('employeeSystemID',$empId->employeeSystemID)
+                    //                 ->where('documentSystemID', 20)
+                    //                 ->where('isActive', 1)
+                    //                 ->where('removedYN', 0)
+                    //                 ->first();
 
 
-            if ($approvalAccess) {
+
+
+            // if ($approvalAccess) {
 
                 $customerInvoiceData = array();
                 $customerInvoiceData['transactionMode'] = null;
@@ -254,8 +254,8 @@ class CreateCustomerThirdPartyInvoice
                         $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
                         $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
                         $customerInvoiceData['confirmedYN'] = 1;
-                        $customerInvoiceData['confirmedByEmpSystemID'] = $empId->employeeSystemID;
-                        $customerInvoiceData['confirmedByEmpID'] = $empId->empID;
+                        $customerInvoiceData['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+                        $customerInvoiceData['confirmedByEmpID'] = \Helper::getEmployeeID();
                         $customerInvoiceData['confirmedByName'] = $empId->empName;
                         $customerInvoiceData['confirmedDate'] = NOW();
                         $customerInvoiceData['approved'] = -1;
@@ -264,15 +264,17 @@ class CreateCustomerThirdPartyInvoice
                         $customerInvoiceData['isPerforma'] = 0;
                         $customerInvoiceData['documentType'] = 11;
                         $customerInvoiceData['interCompanyTransferYN'] = 0;
-                        $customerInvoiceData['createdUserSystemID'] = $empId->employeeSystemID;
-                        $customerInvoiceData['createdUserID'] = $empId->empID;
+                        $customerInvoiceData['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $customerInvoiceData['createdUserID'] = \Helper::getEmployeeID();
                         $customerInvoiceData['createdPcID'] = $sourceModel['modifiedPc'];
                         $customerInvoiceData['createdDateAndTime'] = NOW();
                         $customerInvoiceData['isAutoGenerated'] = 1;
                         $customerInvoiceData['isPOS'] = 1;
-                        $customerInvoiceData['approvedByUserSystemID'] = $empId->employeeSystemID;
-                        $customerInvoiceData['approvedByUserID'] = $empId->empID;
+                        $customerInvoiceData['approvedByUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $customerInvoiceData['approvedByUserID'] = \Helper::getEmployeeID();
                         $customerInvoiceData['date_of_supply'] = $today;
+                        $customerInvoiceData['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $customerInvoiceData['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                         
                         $customerInvoice = CustomerInvoiceDirect::create($customerInvoiceData);
     
@@ -347,11 +349,11 @@ class CreateCustomerThirdPartyInvoice
                     return ['status' => false, 'message' => "From Company Finance Year not found, date"];
                 }
 
-            }
-            else
-            {
-                return ['status' => false, 'message' => "The user does not have customer invoices approval access"];
-            }
+            // }
+            // else
+            // {
+            //     return ['status' => false, 'message' => "The user does not have customer invoices approval access"];
+            // }
         } catch (\Exception $e) {
              DB::rollback();
             //dd($e);
