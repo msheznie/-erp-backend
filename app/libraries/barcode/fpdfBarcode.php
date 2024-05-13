@@ -268,8 +268,8 @@ function Barcode($x, $y, $barcode, $h, $w, $fSize, $len,$bool,$price,$name)
 function Code128($assetData,$fSize) {
     $code = $assetData->faCode;
     $companyCode = $assetData->companyID;
-    $segment = $assetData->serviceLineCode ? $assetData->serviceLineCode : '';
-    $location = $assetData->location ? '/'.$assetData->location->locationName : '';
+    /*$segment = $assetData->serviceLineCode ? $assetData->serviceLineCode : '';
+    $location = $assetData->location ? '/'.$assetData->location->locationName : '';*/
 
     $x = 4;
     $y = 5;
@@ -294,10 +294,10 @@ function Code128($assetData,$fSize) {
             $this->Text($a, $b+$h+4, $companyCode);
 
            //Display Segment/Location
-            $a = 4;
+            /*$a = 4;
             $b = 10;
             $this->SetFont('Arial', '', 10);
-            $this->Text($a, $b+$h+4, $segment.$location);
+            $this->Text($a, $b+$h+4, $segment.$location);*/
 
     $SminiC = "OOOO";
     $IminiC = 4;
@@ -407,8 +407,8 @@ function Code39($assetData, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide 
     $h = 6.4;
     $code = $assetData->faCode;
     $companyCode = $assetData->companyID;
-    $segment = $assetData->serviceLineCode ? $assetData->serviceLineCode : '';
-    $location = $assetData->location ? '/'.$assetData->location->locationName : '';
+    /*$segment = $assetData->serviceLineCode ? $assetData->serviceLineCode : '';
+    $location = $assetData->location ? '/'.$assetData->location->locationName : '';*/
 
     //Display code
 
@@ -427,10 +427,10 @@ function Code39($assetData, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide 
     $this->Text($a, $b+$h+4, $companyCode);
 
     //Display Segment/Location
-    $c = 5;
+    /*$c = 5;
     $d = 8;
     $this->SetFont('Arial', '', 10);
-    $this->Text($c, $d+$h+4, $segment.$location);
+    $this->Text($c, $d+$h+4, $segment.$location);*/
 
    
    
