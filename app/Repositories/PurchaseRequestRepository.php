@@ -122,6 +122,10 @@ class PurchaseRequestRepository extends BaseRepository
             $purchaseRequests = $purchaseRequests->where('documentSystemID', $input['documentId']);
         }
 
+        if(isset($request['isFromPortal']) && $request['isFromPortal'] ){
+            $purchaseRequests = $purchaseRequests->where('createdUserSystemID', $request['createdUserSystemID']);
+        }
+
         $purchaseRequests = $purchaseRequests->with(['created_by' => function ($query) {
         }, 'priority' => function ($query) {
 

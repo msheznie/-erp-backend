@@ -41,6 +41,7 @@ Route::group([], function() {
     Route::get('getWarehouse', 'PurchaseRequestAPIController@getWarehouse')->name('Get purchase request warehouse');
     Route::get('getPurchaseRequestTotal', 'PurchaseRequestAPIController@getPurchaseRequestTotal')->name('Get purchase request total');
     Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory')->name('Export Purchase History');
+    Route::get('purchase_request_data', 'PurchaseRequestAPIController@show')->name('Get purchase request data for portal');
 
     Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails')->name('Pull mr details');
     Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails')->name('Remove pulled mr details');
@@ -67,6 +68,9 @@ Route::group([], function() {
 
     Route::resource('pulled-mr-details', 'PulledItemFromMRController');
     Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
+    Route::post('purchase_request_details_update/{id}', 'PurchaseRequestDetailsAPIController@update');
+    Route::post('purchase_request_details_delete/{id}', 'PurchaseRequestDetailsAPIController@destroy');
+    Route::post('purchase_requests/{id}', 'PurchaseRequestAPIController@update');
     Route::resource('purchase_requests', 'PurchaseRequestAPIController');
     Route::resource('item-specification', 'ItemSpecificationController');
     Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
