@@ -622,6 +622,11 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
 
+        if(isset($input['omanization']) && ($input['omanization'] > 100))
+        {
+            return $this->sendError('Omanization percentage cannot be greater than 100');
+        }
+
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
@@ -749,6 +754,10 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Please select advance account.');
         }
 
+        if(isset($input['omanization']) && ($input['omanization'] > 100))
+        {
+            return $this->sendError('Omanization percentage cannot be greater than 100');
+        }
         $id = $input['supplierCodeSystem'];
 
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
