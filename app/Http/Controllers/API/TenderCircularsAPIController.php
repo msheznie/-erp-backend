@@ -13,6 +13,7 @@ use App\Models\DocumentAttachments;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderCirculars;
+use App\Models\TenderMaster;
 use App\Repositories\TenderCircularsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -376,6 +377,10 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $tenderMaster = TenderMaster::select('id','tender_type_id','document_system_id')
+            ->where('id',$input['tenderMasterId'])
+            ->first();
+
         if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
         {        
             if(!isset($input['attachment_id'])){
@@ -387,14 +392,17 @@ class TenderCircularsAPIController extends AppBaseController
             $attachmentList = $input['attachment_id'];
         }
 
-        if(isset($input['supplier_id'])){
-            if(sizeof($input['supplier_id' ]) == 0){
+        if( $tenderMaster['document_system_id'] == 113 || ($tenderMaster['document_system_id'] == 108 && $input['requestType'] != 'Amend')){
+            if(isset($input['supplier_id'])){
+                if(sizeof($input['supplier_id' ]) == 0){
+                    return ['success' => false, 'message' => 'Supplier is required'];
+                }
+                $supplierList = $input['supplier_id' ];
+            } else {
                 return ['success' => false, 'message' => 'Supplier is required'];
             }
-            $supplierList = $input['supplier_id' ];
-        } else {
-            return ['success' => false, 'message' => 'Supplier is required'];
         }
+
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
