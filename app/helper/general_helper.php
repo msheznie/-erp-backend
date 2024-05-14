@@ -122,6 +122,7 @@ use App\helper\CreateCustomerThirdPartyInvoice;
 use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierBlock;
+use App\Models\TenderSupplierAssignee;
 class Helper
 {
     /**
@@ -5203,12 +5204,17 @@ class Helper
                                             $att['status'] = 1;
                                             $result = TenderCirculars::where('id', $circular['id'])->update($att);
 
-                                            if(($tenderObj->document_system_id == 113 || ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id!=1))){
+                                            if(($tenderObj->document_system_id == 113 ||
+                                                ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id!=1))){
 
-                                                $supplierList = CircularSuppliers::select('id','supplier_id','circular_id','status')
-                                                    ->with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])
-                                                    ->where('circular_id', $circular['id'])
-                                                    ->get();
+                                                $supplierList = ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id == 2) ?
+                                                    self::tenderSupplierAssignedList($input['id'], $docApproved->companySystemID) :
+                                                    $supplierList = CircularSuppliers::select('id','supplier_id','circular_id','status')
+                                                        ->with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])
+                                                        ->where('circular_id', $circular['id'])
+                                                        ->get();
+
+
                                                 $amendmentsList = CircularAmendments::select('id','amendment_id')
                                                     ->with('document_attachments')
                                                     ->where('circular_id', $circular['id'])
@@ -5221,20 +5227,27 @@ class Helper
 
                                                 $dataEmail['attachmentList'] = $file;
                                                 if ($result) {
-                                                    foreach ($supplierList as $supplier){
+                                                    if($supplierList){
+                                                        foreach ($supplierList as $supplier){
 
-                                                        $description = "";
-                                                        if(isset($circular['description'])){
-                                                            $description = "<b>Circular Description : </b>" . $circular['description'] . "<br /><br />";
+                                                            $description = "";
+                                                            if(isset($circular['description'])){
+                                                                $description = "<b>Circular Description : </b>" . $circular['description'] . "<br /><br />";
+                                                            }
+
+                                                            $email = ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id == 2) ?
+                                                                $supplier->supplierAssigned->supEmail :
+                                                                $supplier->supplier_registration_link->email;
+
+                                                            $dataEmail['empEmail'] = $email;
+                                                            $dataEmail['companySystemID'] = $docApproved->companySystemID;
+                                                            $temp =  "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
+                                                            $dataEmail['emailAlertMessage'] = $temp;
+                                                            $dataEmail['alertMessage'] = 'Tender Circular';
+                                                            $sendEmail = \Email::sendEmailErp($dataEmail);
                                                         }
-
-                                                        $dataEmail['empEmail'] = $supplier->supplier_registration_link->email;
-                                                        $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                                        $temp =  "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
-                                                        $dataEmail['emailAlertMessage'] = $temp;
-                                                        $dataEmail['alertMessage'] = 'Tender Circular';
-                                                        $sendEmail = \Email::sendEmailErp($dataEmail);
                                                     }
+
                                             }else {
                                                     return ['success' => false, 'message' => 'Published failed'];
                                             }
@@ -9480,6 +9493,18 @@ class Helper
         }
 
         return $emailConfiguration['systemConfigurationDetail']['value'];
+    }
+
+    public static function tenderSupplierAssignedList($tenderId,$companyId){
+        return TenderSupplierAssignee::select('id','tender_master_id','supplier_assigned_id','mail_sent')
+            ->with(['supplierAssigned'=> function ($q) use ($companyId){
+                $q->select('supplierAssignedID','companySystemID','supEmail','companySystemID')
+                ->where('companySystemID',$companyId);
+            }])
+            ->where('mail_sent',1)
+            ->where('tender_master_id',$tenderId)
+            ->where('company_id',$companyId)
+            ->get();
     }
 
 }

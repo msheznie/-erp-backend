@@ -392,7 +392,10 @@ class TenderCircularsAPIController extends AppBaseController
             $attachmentList = $input['attachment_id'];
         }
 
-        if( $tenderMaster['document_system_id'] == 113 || ($tenderMaster['document_system_id'] == 108 && $input['requestType'] != 'Amend')){
+        if ($tenderMaster['document_system_id'] == 113 ||
+            ($tenderMaster['document_system_id'] == 108 &&
+                (($input['requestType'] != 'Amend') ||
+                    ($input['requestType'] == 'Amend' && $input['tenderTypeId'] == 3)))) {
             if(isset($input['supplier_id'])){
                 if(sizeof($input['supplier_id' ]) == 0){
                     return ['success' => false, 'message' => 'Supplier is required'];

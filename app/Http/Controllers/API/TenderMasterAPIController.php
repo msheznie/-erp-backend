@@ -1543,7 +1543,7 @@ ORDER BY
                                 }
                             }
                         }
-                        
+
                         if (isset($input['isRequestProcessComplete']) && ($input['isRequestProcessComplete'] ?? false) || ($input['isProcessCompleteBeforeClosing'] ?? false)) {
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode', $input['id'])->latest('id')->first();
@@ -1739,7 +1739,8 @@ ORDER BY
                         SrmTenderDepartment::where('tender_id', $input['id'])->delete();
                     }
 
-                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0 && !$input['editAfterBidOpeningDate']){
+                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0 &&
+                        isset($input['editAfterBidOpeningDate']) && !$input['editAfterBidOpeningDate']){
                         foreach ($input['departmentMaster'] as $dm) {
                             $data = [
                                 'tender_id' => $input['id'],
