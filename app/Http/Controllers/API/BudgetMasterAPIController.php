@@ -4197,7 +4197,7 @@ class BudgetMasterAPIController extends AppBaseController
         }])
             ->where('companySystemID', $templateData['companySystemID'])
             ->where('companyReportTemplateID', $templateMasterID)
-            ->orderBy('sortOrder', 'asc')->orderBy('detID', 'asc')
+            ->orderBy('sortOrder', 'asc')
             ->get();
 
         $glMasters = ReportTemplateDetails::where('masterID', null)->where('companySystemID', $templateData['companySystemID'])->where('companyReportTemplateID', $templateMasterID)->orderBy('sortOrder', 'asc')->get();
