@@ -27,6 +27,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
+use App\Models\CurrencyMaster;
 use App\Models\ItemAssigned;
 use App\Models\SrpEmployeeDetails;
 use App\Models\StockTransfer;
@@ -1271,6 +1272,21 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
+
+        $company = Company::where('companySystemID', $materielIssue->companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company Master not found');
+        }
+
+        if (!empty($company->localCurrencyID)) {
+            $localCurrency = $company->localCurrencyID;
+            $localCurrency = CurrencyMaster::find($localCurrency);
+            $materielIssue->localCurrencyCode = $localCurrency->CurrencyCode;
+            $materielIssue->localDecimalPlaces = $localCurrency->DecimalPlaces;
+        } else {
+            return $this->sendError('Company local currency not found');
+        }
 
         $array = array('entity' => $materielIssue);
         $time = strtotime("now");

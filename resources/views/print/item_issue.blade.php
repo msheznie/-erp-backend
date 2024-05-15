@@ -273,7 +273,7 @@
                 <th style="text-align: left;">{{ __('custom.manufacture_part_no') }}</th>
                 <th style="text-align: left;">{{ __('custom.uom') }}</th>
                 <th style="text-align: left;">{{ __('custom.qty') }}</th>
-                <th style="text-align: left;">{{ __('custom.cost') }}(USD)</th>
+                <th style="text-align: left;">{{ __('custom.cost') }}({{ $entity->localCurrencyCode }})</th>
                 <th style="text-align: left;">{{ __('custom.comments') }}</th>
             </tr>
             </thead>
@@ -294,7 +294,7 @@
                         @endif
                     </td>
                     <td style="text-align: right; padding-right: 5px;">{{$item->qtyIssued}}</td>
-                    <td style="text-align: right; padding-right: 5px;">{{round($item->issueCostRpt,2)}}</td>
+                    <td style="text-align: right; padding-right: 5px;">{{round($item->issueCostLocal,$entity->localDecimalPlaces)}}</td>
                     <td style="text-align: left; padding-left: 5px;">
                         {{$item->comments}}
                     </td>
