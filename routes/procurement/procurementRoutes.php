@@ -69,10 +69,13 @@ Route::group([], function() {
     Route::resource('pulled-mr-details', 'PulledItemFromMRController');
     Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
     Route::post('purchase_request_details_update/{id}', 'PurchaseRequestDetailsAPIController@update');
+    Route::post('update_segment_allocated_items/{id}', 'SegmentAllocatedItemAPIController@update');
+    Route::post('delete_segment_allocated_items/{id}', 'SegmentAllocatedItemAPIController@destroy');
     Route::post('purchase_request_details_delete/{id}', 'PurchaseRequestDetailsAPIController@destroy');
     Route::post('purchase_requests/{id}', 'PurchaseRequestAPIController@update');
     Route::resource('purchase_requests', 'PurchaseRequestAPIController');
     Route::resource('item-specification', 'ItemSpecificationController');
+    Route::get('item-specification-portal/{id}', 'ItemSpecificationController@show');
     Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
     Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
 });
