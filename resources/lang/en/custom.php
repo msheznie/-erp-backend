@@ -542,6 +542,7 @@ return [
     "request_code" => "Request Code",
     "request_date" => "Request Date",
     "request_name" => "Request Name",
+    "request_by" => "Requested By",
     "reference_no" => "Reference No",
     "approved_by"=> "Approved By",
     "buyer" => "Buyer",
