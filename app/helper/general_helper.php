@@ -5290,15 +5290,14 @@ class Helper
 
                         } else {
                             // update roll level in master table
-                            if($input['documentSystemID'] == 118)
-                            {
+                            if($input['documentSystemID'] == 118) {
                                 $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['confirmation_RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
-
                             }
-                            else
-                            {
+                            elseif ($input['documentSystemID'] == 103){
+                                $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['current_level_no' => $input["rollLevelOrder"] + 1]);
+                            }
+                            else {
                                 $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
-
                             }
                         }
                      
