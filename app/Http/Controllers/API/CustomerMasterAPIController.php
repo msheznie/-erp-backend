@@ -357,7 +357,11 @@ class CustomerMasterAPIController extends AppBaseController
                                                     ->where('isAssigned', -1)    
                                                     ->where('isActive', 1);    
                                         })
-                                        ->where('controlAccountsSystemID',4)
+                                        ->where(function($q){
+                                            $q->where('controlAccountsSystemID',3)
+                                            ->orWhere('controlAccountsSystemID',4)
+                                            ->orWhere('controlAccountsSystemID',5);
+                                         })
                                         ->where('catogaryBLorPL', '=', 'BS')
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
