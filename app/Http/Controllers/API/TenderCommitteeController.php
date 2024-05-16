@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Models\Employee;
+use App\Models\SRMTenderUserAccess;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Auth;
@@ -9,6 +11,8 @@ use Carbon\Carbon;
 use App\Models\SrmEmployees;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
+
 class TenderCommitteeController extends AppBaseController
 {
 
@@ -103,17 +107,54 @@ class TenderCommitteeController extends AppBaseController
     public function getActiveEmployeesForBid(Request $request) {
 
         $exisitingEmployeeIDs = SrmTenderBidEmployeeDetails::where('tender_id',$request['tender_id'])->pluck('emp_id')->toArray();
-        $SrmEmployees = SrmEmployees::where('company_id',$request['companyId'])->where('is_active',true)->whereNotIn('emp_id',$exisitingEmployeeIDs)->with('employee')->get();
+        $srmEmployees = SrmEmployees::where('company_id',$request['companyId'])->where('is_active',true)->whereNotIn('emp_id',$exisitingEmployeeIDs)->with('employee')->get();
+        $data['employeeApproval'] = [];
+        $data['bidOpeningUserDrop'] = $this->tenderUserAccessData($request['tender_id'],$request['companyId'],1);
+        $data['commercialBidOpeningUserDrop'] = $this->tenderUserAccessData($request['tender_id'],$request['companyId'],2);
+        $data['supplierRankingUserDrop'] = $this->tenderUserAccessData($request['tender_id'],$request['companyId'],3);
+        $data['tenderUserAccessDetails'] = $this->getUserAccessDetails($request['tender_id'],$request['companyId']);
 
-        if($SrmEmployees) {
-
-            $data = [];
-            foreach($SrmEmployees as $emp) {
-                array_push($data,["employeeSystemID"  => $emp->employee->employeeSystemID, "empFullName" => $emp->employee->empID." | ".$emp->employee->empFullName]);
+        if($srmEmployees) {
+            foreach($srmEmployees as $emp) {
+                array_push($data['employeeApproval'],["employeeSystemID"  => $emp->employee->employeeSystemID, "empFullName" => $emp->employee->empID." | ".$emp->employee->empFullName]);
             }
-            return $this->sendResponse($data,'Data reterived successfully');
         }
-        return $this->sendResponse([],'Data reterived successfully');
+
+        return $this->sendResponse($data,'Data retrieved successfully');
+    }
+
+    public function tenderUserAccessData($tenderId,$companyId,$moduleId)
+    {
+        $employees = SrmEmployees::select('id', 'emp_id', 'company_id', 'is_active')
+            ->with(['employee' => function ($q) {
+                $q->select('employeeSystemID', DB::raw("CONCAT(empID, ' | ', empFullName) as empFullDetails"));
+            }])
+            ->where('company_id', $companyId)
+            ->where('is_active', true)
+            ->whereDoesntHave('tenderUserAccess', function ($query) use ($tenderId, $companyId, $moduleId) {
+                $query->where('tender_id', $tenderId)
+                    ->where('company_id', $companyId)
+                    ->where('module_id', $moduleId);
+            })
+            ->get();
+
+        return $employees->pluck('employee')->map(function ($employee) {
+            return [
+                'employeeSystemID' => $employee->employeeSystemID,
+                'employeeFullName' => $employee->empFullDetails,
+            ];
+        });
+    }
+
+    public function getUserAccessDetails($tenderId,$companyId)
+    {
+        return SRMTenderUserAccess::select('id','tender_id','user_id','company_id','module_id')
+            ->with(['employee' => function ($q){
+                $q->select('employeeSystemID',DB::raw("CONCAT(empID, ' | ', empFullName) as empFullDetails"));
+            }])
+            ->where('tender_id',$tenderId)
+            ->where('company_id',$companyId)
+            ->get();
     }
 
 

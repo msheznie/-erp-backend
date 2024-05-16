@@ -2,8 +2,8 @@
 
 /**
  * This file contains SRM module related routes
- * 
- * 
+ *
+ *
  * */
 
 
@@ -284,4 +284,6 @@ Route::post('getTenderNegotiationList', 'TenderMasterAPIController@getTenderNego
 Route::post('getIsExistCommonAttachment', 'BidSubmissionMasterAPIController@getIsExistCommonAttachment');
 Route::post('getTenderPurchaseList', 'TenderMasterAPIController@getTenderPurchaseList');
 Route::post('getBudgetItemTotalAmount', 'TenderMasterAPIController@getBudgetItemTotalAmount');
+Route::post('removeTenderUserAccess', 'TenderBidEmployeeDetailsController@removeTenderUserAccess');
+Route::post('addUserAccessEmployee', 'TenderBidEmployeeDetailsController@addUserAccessEmployee');
 

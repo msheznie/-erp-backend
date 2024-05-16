@@ -3022,6 +3022,7 @@ ORDER BY
     public function getPurchasedTenderList(Request $request)
     {
         $input = $request->all();
+        $userId = \Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -3031,14 +3032,18 @@ ORDER BY
 
         $companyId = $request['companyId'];
 
-        $filters = $this->getFilterData($input); 
+        $filters = $this->getFilterData($input);
 
         // $tenderMaster = TenderMasterSupplier::with(['tender_master'=>function($q){
         //     $q->with(['tender_type', 'envelop_type', 'currency']);
         // }])->get();
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
-                        ->withCount(['criteriaDetails', 
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier',
+                        'tenderUserAccess'=> function ($q) use ($userId){
+                                $q->where('user_id',$userId)
+                                ->where('module_id',1);
+                            }])
+                        ->withCount(['criteriaDetails',
                             'criteriaDetails AS go_no_go_count' => function ($query) {
                             $query->where('critera_type_id', 1);
                             },
@@ -3046,6 +3051,13 @@ ORDER BY
                                 $query->where('critera_type_id', 2);
                             }
                         ])
+                        ->where(function ($query) use ($userId) {
+                            $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
+                                $q->where('user_id', $userId)
+                                    ->where('module_id',1);
+                            })
+                                ->orWhere('document_system_id', 113);
+                        })
                         ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
 
 
@@ -3460,6 +3472,7 @@ ORDER BY
     public function getCommercialBidTenderList(Request $request)
     {
         $input = $request->all();
+        $userId = \Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -3476,11 +3489,22 @@ ORDER BY
         //     $q->with(['tender_type', 'envelop_type', 'currency']);
         // }])->get();
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier',
+                'tenderUserAccess'=> function ($q) use ($userId) {
+                            $q->where('user_id', $userId)
+                            ->where('module_id',2);
+        }])
                                 ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
                                 ->where('technical_eval_status', 1)
                                 ->where('doc_verifiy_status', 1)
-                                ->where('go_no_go_status', 1);
+                                ->where('go_no_go_status', 1)
+            ->where(function ($query) use ($userId) {
+                $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
+                    $q->where('user_id', $userId)
+                        ->where('module_id',2);
+                })
+                    ->orWhere('document_system_id', 113);
+            });
 
         if($isNegotiation == 1){ 
             $query->where('is_negotiation_started',1)
@@ -3625,6 +3649,7 @@ ORDER BY
     public function getEvalCompletedTenderList(Request $request)
     {
         $input = $request->all();
+        $userId = \Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -3634,9 +3659,20 @@ ORDER BY
 
         $companyId = $request['companyId'];
         $isNegotiation = $input['isNegotiation'];
-        $filters = $this->getFilterData($input); 
+        $filters = $this->getFilterData($input);
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier','tenderUserAccess'=> function ($q) use ($userId) {
+            $q->where('user_id', $userId)
+                ->where('module_id',3);
+        }])
+            ->where(function ($query) use ($userId) {
+                $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
+                    $q->where('user_id', $userId)
+                        ->where('module_id',3);
+                })
+                    ->orWhere('document_system_id', 113);
+            })
+            ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
             ->where('technical_eval_status', 1);
 
@@ -5137,6 +5173,7 @@ ORDER BY
     public function getTenderNegotiationList(Request $request)
     {
         $input = $request->all();
+        $userId = \Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -5148,7 +5185,10 @@ ORDER BY
 
         $filters = $this->getFilterData($input);
 
-        $query = TenderMaster::with(['currency', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
+        $query = TenderMaster::with(['currency', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier','tenderUserAccess'=> function ($q) use ($userId) {
+                $q->where('user_id', $userId)
+                    ->where('module_id',1);
+            }])
                         ->where('is_negotiation_started',1)
                         ->where('negotiation_published',1)
                         ->withCount(['criteriaDetails', 
@@ -5167,6 +5207,13 @@ ORDER BY
                                 });
                             }
                         ])
+                        ->where(function ($query) use ($userId) {
+                            $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
+                                $q->where('user_id', $userId)
+                                    ->where('module_id',1);
+                            })
+                                ->orWhere('document_system_id', 113);
+                        })
                         ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
 
 
