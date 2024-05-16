@@ -122,9 +122,6 @@ class PurchaseRequestRepository extends BaseRepository
             $purchaseRequests = $purchaseRequests->where('documentSystemID', $input['documentId']);
         }
 
-        if(isset($request['isFromPortal']) && $request['isFromPortal'] ){
-            $purchaseRequests = $purchaseRequests->where('createdUserSystemID', $request['createdUserSystemID']);
-        }
 
         $purchaseRequests = $purchaseRequests->with(['created_by' => function ($query) {
         }, 'priority' => function ($query) {
@@ -173,6 +170,14 @@ class PurchaseRequestRepository extends BaseRepository
             }
         }
 
+        
+        if (isset($request['isFromPortal']) && $request['isFromPortal']) {
+            $purchaseRequests = $purchaseRequests->where('createdUserSystemID', $request['createdUserSystemID']);
+            $purchaseRequests = $purchaseRequests->whereNotIn('purchaseRequestID', function($query) {
+                    $query->select('purcahseRequestID')->from('erp_pulled_from_mr');
+                });
+        }
+        
         $purchaseRequests = $purchaseRequests->select(
             ['erp_purchaserequest.purchaseRequestID',
                 'erp_purchaserequest.purchaseRequestCode',

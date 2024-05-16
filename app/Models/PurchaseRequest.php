@@ -312,6 +312,11 @@ class PurchaseRequest extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'currency', 'currencyID');
     }
     
+    public function pulled_from_mr()
+    {
+        return $this->belongsTo('App\Models\PulledItemFromMR', 'purchaseRequestID', 'purcahseRequestID');
+    }
+
     public function created_by(){
         return $this->belongsTo('App\Models\Employee','createdUserSystemID','employeeSystemID');
     }
