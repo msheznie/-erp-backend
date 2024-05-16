@@ -2244,6 +2244,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $companyId)
                                     ->first();
 
+        $employeeAllocate = CompanyPolicyMaster::where('companyPolicyCategoryID', 90)
+                            ->where('companySystemID', $companyId)
+                            ->first();                            
+
         $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, 12);
 
         $companyData = Company::find($companyId);
@@ -2282,6 +2286,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isVATEligible' => $isVATEligible,
             'isProjectBase' => $isProject_base,
             'projects' => $projects,
+            'employeeAllocatePolicy' => ($employeeAllocate && $employeeAllocate->isYesNO == 1) ? true : false,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

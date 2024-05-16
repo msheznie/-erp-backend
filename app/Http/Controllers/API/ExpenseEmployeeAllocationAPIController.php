@@ -132,13 +132,20 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $companySystemID = 0;
         $transactionCurrencyID = 0;
         if ($input['documentSystemID'] == 11) {
-            $directDetail = DirectInvoiceDetails::with(['supplier_invoice_master'])->find($input['documentDetailID']);
+            $directDetail = DirectInvoiceDetails::with(['supplier_invoice_master','chartofaccount'])->find($input['documentDetailID']);
 
             if (!$directDetail) {
                 return $this->sendError("Supplier invoice detail not found");
             }
-
-            $detailTotal = $directDetail->netAmount + $directDetail->VATAmount;
+            if($directDetail->chartofaccount->controlAccountsSystemID == 2)
+            {
+                $detailTotal = $directDetail->netAmount;
+            }
+            else
+            {
+                $detailTotal = $directDetail->netAmount + $directDetail->VATAmount;
+                $input['dateOfDeduction'] = Carbon::parse($input['dateOfDeduction']);
+            }
 
             $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
             $companySystemID = isset($directDetail->supplier_invoice_master->companySystemID) ? $directDetail->supplier_invoice_master->companySystemID : null;
@@ -148,7 +155,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
             $input['amountRpt'] = $currencyConversion['reportingAmount'];
             $input['amountLocal'] = $currencyConversion['localAmount'];
-            $input['dateOfDeduction'] = Carbon::parse($input['dateOfDeduction']);
+          
         } 
         else if($input['documentSystemID'] == 4) {
             $directDetail = DirectPaymentDetails::with(['master'])->find($input['documentDetailID']);
