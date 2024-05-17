@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateTaxVatCategoriesAPIRequest;
 use App\Http\Requests\API\UpdateTaxVatCategoriesAPIRequest;
+use App\Models\ChartOfAccount;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\VatSubCategoryType;
 use App\Models\ItemAssigned;
@@ -443,11 +444,20 @@ class TaxVatCategoriesAPIController extends AppBaseController
     public function getVatCategoriesFormData(Request $request){
 
         $input = $request->all();
+        $companyID = isset($input['companyId']) ? $input['companyId'] : null;
         $main = TaxVatMainCategories::where('taxMasterAutoID',$input['taxMasterAutoID'])->where('isActive',1)->get();
         $applicable = array(array('value' => 1, 'label' => 'Gross Amount'), array('value' => 2, 'label' => 'Net Amount'));
+
+        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controlAccountsSystemID', 1)
+            ->whereHas('chartofaccount_assigned', function($query) use ($companyID){
+                $query->where('companySystemID', $companyID)
+                    ->where('isAssigned', -1);
+            })->get();
+
         $output = array(
             'mainCategories' => $main,
             'applicableOns' => $applicable,
+            'chartOfAccount' => $chartOfAccount,
             'subCategoryTypes' => VatSubCategoryType::all(),
         );
 

@@ -106,6 +106,8 @@ class TaxVatCategories extends Model
         'mainCategory',
         'subCategoryDescription',
         'percentage',
+        'expenseGL',
+        'recordType',
         'applicableOn',
         'isActive',
         'createdPCID',
