@@ -68,12 +68,26 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-
+use App\Models\SupplierGroup;
 class AccountsPayableReportAPIController extends AppBaseController
 {
     public function getAPFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
+        $supplierGroups = SupplierGroup::onlyNotDeletedAndActive();
+        $type = $request->get('type');
+
+        if($type == 1)
+        {
+            $supplierGroupsIds = collect($supplierGroups)->pluck('id');
+        }
+        else
+        {
+            $supplierGroupsIds = $request->get('selectedGroup');
+        }
+
+   
+
         $companiesByGroup = "";
         if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
             $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
@@ -102,6 +116,10 @@ class AccountsPayableReportAPIController extends AppBaseController
 
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)
                 ->whereIN('supplierCodeSytem', $filterSuppliers)
+                ->whereHas('master',function($q) use($supplierGroupsIds)
+                {
+                    $q->whereIN('supplier_group_id', $supplierGroupsIds);
+                })   
                 ->groupBy('supplierCodeSytem')
                 ->get();
 
@@ -124,7 +142,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ->groupBy('supplierCodeSystem')
                 ->pluck('supplierCodeSystem');
 
-            $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
+            $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')
+                                            ->whereHas('master',function($q) use($supplierGroupsIds)
+                                            {
+                                                $q->whereIN('supplier_group_id', $supplierGroupsIds);
+                                            })                    
+                                            ->get();
 
             $employeeMaster = DB::table('employees')
                 ->select('employees.*')
@@ -166,7 +189,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $controlAccountEmployee = [];
         }
 
-
+        
         $categories = FinanceItemCategoryMaster::all();
         $output = array(
             'controlAccount' => $controlAccount,
@@ -177,7 +200,8 @@ class AccountsPayableReportAPIController extends AppBaseController
             'years' => $years,
             'countries' => $countries,
             'categories' => $categories,
-            'segment' => $segment
+            'segment' => $segment,
+            'supplierGroups' => $supplierGroups
         );
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
@@ -196,7 +220,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     'toDate' => 'required|date|after_or_equal:fromDate',
                     'suppliers' => 'required',
                     'controlAccountsSystemID' => 'required',
-                    'currencyID' => 'required'
+                    'currencyID' => 'required',
+                    'supplierGroup' => 'required',
                 ]);
 
                 if ($validator->fails()) {
@@ -215,7 +240,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'fromDate' => 'required',
                         'suppliers' => 'required',
                         'controlAccountsSystemID' => 'required',
-                        'currencyID' => 'required'
+                        'currencyID' => 'required',
+                        'supplierGroup' => 'required'
                     ]);
 
                     if ($validator->fails()) {
@@ -226,6 +252,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'reportTypeID' => 'required',
                         'fromDate' => 'required',
                         'suppliers' => 'required',
+                        'supplierGroup' => 'required'
                     ]);
 
                     if ($validator->fails()) {
@@ -236,7 +263,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'reportTypeID' => 'required',
                         'fromDate' => 'required',
                         'suppliers' => 'required',
-                        'controlAccountsSystemID' => 'required'
+                        'controlAccountsSystemID' => 'required',
+                        'supplierGroup' => 'required'
                     ]);
 
                     if ($validator->fails()) {
@@ -286,7 +314,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     'fromDate' => 'required',
                     'currencyID' => 'required',
                     'controlAccountsSystemID' => 'required',
-                    'suppliers' => 'required'
+                    'suppliers' => 'required',
+                    'supplierGroup' => 'required',
                 ]);
 
                 if ($validator->fails()) {
@@ -294,15 +323,17 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             case 'APSA':
+                $request = (array)$this->convertArrayToSelectedValue($request->all(), array('supEmpId'));
 
-                $validator = \Validator::make($request->all(), [
+                $validator = \Validator::make($request, [
                         'reportTypeID' => 'required',
                         'fromDate' => 'required',
                         'suppliers' => 'required',
                         'controlAccountsSystemID' => 'required',
                         'currencyID' => 'required',
                         'interval' => 'required',
-                        'through' => 'required'
+                        'through' => 'required',
+                        'supplierGroup' => ['required_if:supEmpId,1']
                 ], [
                     'suppliers.required' => 'The supplier/employee field is required.'
                 ]);

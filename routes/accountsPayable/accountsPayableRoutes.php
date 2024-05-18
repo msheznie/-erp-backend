@@ -192,7 +192,7 @@ Route::group([],function (){
 
 //Supplier Ledger Report
 Route::group([],function (){
-    Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData')->name('Get account payable filter data');
+    Route::post('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData')->name('Get account payable filter data');
     Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport')->name('Validate account payable report');
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
