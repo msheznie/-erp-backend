@@ -349,4 +349,34 @@ class Employee extends Model
         return $this->hasOne('App\Models\SRMTenderUserAccess','user_id','employeeSystemID');
     }
 
+
+    public function supplier_invoice()
+    {
+        return $this->hasMany('App\Models\BookInvSuppMaster','createdUserSystemID','employeeSystemID');
+    }
+
+    public function grv()
+    {
+        return $this->hasMany('App\Models\GRVMaster','createdUserSystemID','employeeSystemID');;
+    }
+
+    public function payment_voucher()
+    {
+        return $this->hasMany('App\Models\PaySupplierInvoiceMaster','createdUserSystemID','employeeSystemID');;
+    }
+
+    public function customer_invoice()
+    {
+        return $this->hasMany('App\Models\CustomerInvoiceDirect','createdUserSystemID','employeeSystemID');;
+    }
+
+    public function asset_costing()
+    {
+        return $this->hasMany('App\Models\FixedAssetMaster','createdUserSystemID','employeeSystemID');;
+    }
+
+    public function jv()
+    {
+        return $this->hasMany('App\Models\JvMaster','createdUserSystemID','employeeSystemID');;
+    }
 }
