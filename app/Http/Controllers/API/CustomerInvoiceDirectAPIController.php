@@ -1613,7 +1613,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse($output, 'Record retrieved successfully');
         }
         if ($id) {
-            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID', 'isPerforma')
+            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID', 'isPerforma','vatRegisteredYN')
                 ->where('custInvoiceDirectAutoID', $id)->first();
         }
 
@@ -1769,7 +1769,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $output['projects'] = ErpProjectMaster::where('companySystemID', $companyId)->get();
         }
 
-        $output['isVATEligible'] = TaxService::checkCompanyVATEligible($companyId);
+        if ($id) {
+            $output['isVATEligible'] = $master->vatRegisteredYN;
+        }
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
