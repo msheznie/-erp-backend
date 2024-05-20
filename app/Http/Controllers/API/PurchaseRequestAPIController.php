@@ -1374,10 +1374,13 @@ class PurchaseRequestAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
-
+        if((!isset($input['isFromMaterielRequest'])) || (isset($input['isFromMaterielRequest']) && !$input['isFromMaterielRequest']))
+        {
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = $user->employee['empID'];
+            $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+        }
+        
         $input['PRRequestedDate'] = now();
 
         if (isset($input['budgetYearID']) && $input['budgetYearID'] > 0) {
