@@ -930,6 +930,7 @@ class FinancialReportAPIController extends AppBaseController
         }
     }
 
+
     public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained, $companyWiseTemplate = false)
     {
         if ($request->accountType == 1) { // if account type is BS and if any new chart of account created automatically link the gl account
