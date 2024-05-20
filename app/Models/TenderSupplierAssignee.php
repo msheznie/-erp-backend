@@ -77,7 +77,7 @@ use Eloquent as Model;
 class TenderSupplierAssignee extends Model
 {
 
-    public $table = 'srm_tender_supplier_assignee';
+        public $table = 'srm_tender_supplier_assignee';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
