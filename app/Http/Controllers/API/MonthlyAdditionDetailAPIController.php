@@ -19,6 +19,8 @@ use App\Http\Requests\API\UpdateMonthlyAdditionDetailAPIRequest;
 use App\Models\Employee;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimDetails;
+use App\Models\ExpenseClaimDetailsMaster;
+use App\Models\ExpenseClaimMaster;
 use App\Models\HRMSChartOfAccounts;
 use App\Models\MonthlyAdditionDetail;
 use App\Repositories\ExpenseClaimRepository;
@@ -28,6 +30,7 @@ use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Distributions\F;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
@@ -394,10 +397,8 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                 $claimedUserID =  $paySupplierInvoice->directPaymentPayeeEmpID;
             }
 
-            $expenseClaims = ExpenseClaim::where('companySystemID', $companySystemID)
-                ->where('approved', -1)
-                ->where('rejectedYN', 0)
-                ->where('pettyCashYN', $input['type'])
+            $expenseClaims = ExpenseClaimMaster::where('companyID', $companySystemID)
+                ->where('approvedYN', 1)
                 ->where('glCodeAssignedYN', -1)
                 ->where('addedToSalary', 0)
                 ->where('addedForPayment', 0);
@@ -405,7 +406,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                     $q->where('currencyID', $monthlyAddition->currency);
                 })*/
                 if($isFromPV && $input['type']==1){
-                    $expenseClaims = $expenseClaims->where('clamiedByNameSystemID',$claimedUserID);
+                    $expenseClaims = $expenseClaims->where('claimedByEmpID',$claimedUserID);
                 }
 
             $expenseClaims = $expenseClaims->orderBy('expenseClaimDate', 'desc')
@@ -421,16 +422,17 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
-        $expenseClaim = ExpenseClaim::find($id);
+        $expenseClaim = ExpenseClaimMaster::find($id);
+
 
         if (empty($expenseClaim)) {
             return $this->sendError('Expense Claim not found');
         }
 
-        $expenseClaimDetails = ExpenseClaimDetails::where('companySystemID', $expenseClaim->companySystemID)
+        $expenseClaimDetails = ExpenseClaimDetailsMaster::where('companyID', $expenseClaim->companyID)
             ->where('expenseClaimMasterAutoID', $id)
             //->where('currencyID', $monthlyAddition->currency)
-            ->with(['currency','local_currency'])
+            ->with(['currency','local_currency','category'])
             ->get();
 
         return $this->sendResponse($expenseClaimDetails, 'Expense Claim Details retrieved successfully');

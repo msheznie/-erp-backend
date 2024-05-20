@@ -208,6 +208,7 @@ use Eloquent as Model;
 class ExpenseClaimMaster extends Model
 {
 
+    public $timestamps = false;
     public $table = 'srp_erp_expenseclaimmaster';
     
     const CREATED_AT = 'created_at';
