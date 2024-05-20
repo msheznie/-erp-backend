@@ -53,6 +53,7 @@ class FilterApiController extends AppBaseController
                 $query->whereHas('jv', function($q) use ($companyId) {
                     $q->where('companySystemID', $companyId);
                 });
+                break;
             case 21:
                 $query->whereHas('receiptVoucher', function($q) use ($companyId) {
                     $q->where('companySystemID', $companyId);
