@@ -345,7 +345,8 @@ class PurchaseRequestReferred extends Model
         'manuallyClosedDate',
         'manuallyClosedComment',
         'timesReferred',
-        'counter'
+        'counter',
+        'requested_by'
     ];
 
     /**
@@ -430,7 +431,8 @@ class PurchaseRequestReferred extends Model
         'manuallyClosedByEmpName' => 'string',
         'manuallyClosedDate' => 'string',
         'manuallyClosedComment' => 'string',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'requested_by' => 'integer'
 
     ];
 

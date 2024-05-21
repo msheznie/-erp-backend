@@ -224,7 +224,11 @@
                             <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
-                            {{ $request->created_by?$request->created_by->empName:'-' }}
+                            @if($request->requestedby)
+                                 {{ $request->requestedby->empName }}
+                            @else
+                                {{ $request->created_by->empName }}
+                            @endif
                         </td>
                     </tr>
                     

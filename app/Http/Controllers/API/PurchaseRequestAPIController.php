@@ -1374,13 +1374,16 @@ class PurchaseRequestAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        if((!isset($input['isFromMaterielRequest'])) || (isset($input['isFromMaterielRequest']) && !$input['isFromMaterielRequest']))
+
+        if(!isset($input['requested_by']))
         {
-            $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = $user->employee['empID'];
-            $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+            $input['requested_by'] = $user->employee['employeeSystemID'];
         }
-        
+
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = $user->employee['empID'];
+        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
         $input['PRRequestedDate'] = now();
 
         if (isset($input['budgetYearID']) && $input['budgetYearID'] > 0) {
@@ -1469,7 +1472,7 @@ class PurchaseRequestAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseRequest $purchaseRequest */
-        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','currency_by',
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','currency_by','requestedby',
             'priority_pdf', 'location_pdf', 'details.uom', 'details.altUom' ,'company', 'segment', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
@@ -2513,7 +2516,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $id = $request->get('id');
         /** @var PurchaseRequest $purchaseRequest */
         
-        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','segment',
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','segment','requestedby',
             'priority_pdf', 'location', 'details.uom','details.altUom', 'company','currency_by','buyer', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
