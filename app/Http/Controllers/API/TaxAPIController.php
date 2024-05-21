@@ -16,6 +16,7 @@ use App\Http\Requests\API\CreateTaxAPIRequest;
 use App\Http\Requests\API\UpdateTaxAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Tax;
 use App\Models\TaxType;
@@ -307,13 +308,18 @@ class TaxAPIController extends AppBaseController
         }
 
         if($taxCategory == 3){
+            if(($input['isDefault'] == 1) && ($input['isActive'] == 0)){
+                return $this->sendError('Default WHT cannot inactive', 500);
+            }
             if(($tax->isDefault == 1) && ($input['isActive'] == 0)){
                 return $this->sendError('Default WHT cannot change inactive', 500);
             }
             if(($tax->isDefault == 0) && ($input['isDefault'] == 1)){
                 $defaultTax = Tax::where('taxCategory',3)->where('isDefault',1)->where('companySystemID', $input['companySystemID'])->first();
-                $defaultTax->isDefault = 0;
-                $defaultTax->save();
+                if($defaultTax){
+                    $defaultTax->isDefault = 0;
+                    $defaultTax->save();
+                }
             }
         }
 
@@ -436,7 +442,13 @@ class TaxAPIController extends AppBaseController
         $taxType = TaxType::all();
         $taxCategory = array(array('value' => 1, 'label' => 'Other'), array('value' => 2, 'label' => 'VAT'), array('value' => 3, 'label' => 'WHT'));
 
-        $suppliers = SupplierMaster::where('isActive',1)->get();
+        $suppliers = SupplierAssigned::where('companySystemID',$selectedCompanyId)
+            ->where('isAssigned',-1)
+            ->whereHas('master', function($query) use ($companies){
+                $query->where('approvedYN',1)
+                    ->where('isActive',1);
+            })
+            ->get();
 
         $isActiveState = Tax::where('taxCategory',3)->where('isActive',1)->where('companySystemID', $selectedCompanyId)->exists();
 
