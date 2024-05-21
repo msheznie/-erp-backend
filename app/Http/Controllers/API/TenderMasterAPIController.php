@@ -3042,6 +3042,8 @@ ORDER BY
                         'tenderUserAccess'=> function ($q) use ($userId){
                                 $q->where('user_id',$userId)
                                 ->where('module_id',1);
+                            }, 'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
+                                    $q1->where('emp_id',$userId);
                             }])
                         ->withCount(['criteriaDetails',
                             'criteriaDetails AS go_no_go_count' => function ($query) {
@@ -3056,6 +3058,9 @@ ORDER BY
                                 $q->where('user_id', $userId)
                                     ->where('module_id',1);
                             })
+                                ->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
+                                    $q1->where('emp_id', $userId);
+                                })
                                 ->orWhere('document_system_id', 113);
                         })
                         ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
@@ -3493,7 +3498,9 @@ ORDER BY
                 'tenderUserAccess'=> function ($q) use ($userId) {
                             $q->where('user_id', $userId)
                             ->where('module_id',2);
-        }])
+        }, 'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
+                $q1->where('emp_id',$userId);
+            }])
                                 ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
                                 ->where('technical_eval_status', 1)
                                 ->where('doc_verifiy_status', 1)
@@ -3502,6 +3509,8 @@ ORDER BY
                 $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
                     $q->where('user_id', $userId)
                         ->where('module_id',2);
+                })->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
+                    $q1->where('emp_id', $userId);
                 })
                     ->orWhere('document_system_id', 113);
             });
@@ -3664,13 +3673,18 @@ ORDER BY
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier','tenderUserAccess'=> function ($q) use ($userId) {
             $q->where('user_id', $userId)
                 ->where('module_id',3);
+        },'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
+            $q1->where('emp_id',$userId);
         }])
             ->where(function ($query) use ($userId) {
                 $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
                     $q->where('user_id', $userId)
                         ->where('module_id',3);
                 })
-                    ->orWhere('document_system_id', 113);
+                ->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
+                    $q1->where('emp_id', $userId);
+                })
+                ->orWhere('document_system_id', 113);
             })
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
@@ -4798,7 +4812,7 @@ ORDER BY
             $search = str_replace("\\", "\\\\", $search);
             $poMasters = $poMasters->where(function ($query) use ($search) {
                 $query->where('tender_code', 'LIKE', "%{$search}%")
-                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('srm_tender_master.description', 'LIKE', "%{$search}%")
                     ->orWhere('title', 'LIKE', "%{$search}%");
             });
         }
@@ -4862,7 +4876,8 @@ ORDER BY
             'approvalLevelID',
             'erp_documentapproved.documentSystemCode',
             'employees.empName As created_user',
-            'document_modify_request.type'
+            'document_modify_request.type',
+            'document_modify_request.description as modifyRequestDescription'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
@@ -4898,7 +4913,7 @@ ORDER BY
             $search = str_replace("\\", "\\\\", $search);
             $poMasters = $poMasters->where(function ($query) use ($search) {
                 $query->where('tender_code', 'LIKE', "%{$search}%")
-                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('srm_tender_master.description', 'LIKE', "%{$search}%")
                     ->orWhere('title', 'LIKE', "%{$search}%");
             });
         }
@@ -5188,7 +5203,9 @@ ORDER BY
         $query = TenderMaster::with(['currency', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier','tenderUserAccess'=> function ($q) use ($userId) {
                 $q->where('user_id', $userId)
                     ->where('module_id',1);
-            }])
+            },'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
+                        $q1->where('emp_id',$userId);
+                        }])
                         ->where('is_negotiation_started',1)
                         ->where('negotiation_published',1)
                         ->withCount(['criteriaDetails', 
@@ -5212,6 +5229,9 @@ ORDER BY
                                 $q->where('user_id', $userId)
                                     ->where('module_id',1);
                             })
+                                ->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
+                                    $q1->where('emp_id', $userId);
+                                })
                                 ->orWhere('document_system_id', 113);
                         })
                         ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
