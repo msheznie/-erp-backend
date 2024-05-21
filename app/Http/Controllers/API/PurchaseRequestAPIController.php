@@ -1871,7 +1871,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = array_except($input, ['created_by', 'confirmed_by',
             'priority_pdf', 'location_pdf', 'details', 'company', 'approved_by',
             'PRConfirmedBy', 'PRConfirmedByEmpName','currency_by',
-            'PRConfirmedBySystemID', 'PRConfirmedDate', 'segment']);
+            'PRConfirmedBySystemID', 'PRConfirmedDate', 'segment','requestedby']);
         $input = $this->convertArrayToValue($input);
 
         /** @var PurchaseRequest $purchaseRequest */
