@@ -2958,7 +2958,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $supplierDirectDetail = DirectInvoiceDetails::where('directInvoiceAutoID', $supInvoiceAutoID)->get();
 
-        $supplierDirectItemDetail = SupplierInvoiceDirectItem::where('directInvoiceAutoID', $supInvoiceAutoID)->get();
+        $supplierDirectItemDetail = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $supInvoiceAutoID)->get();
 
         if (count($supplierDetail) > 0 || count($supplierDirectDetail) > 0 || count($supplierDirectItemDetail) > 0) {
             return $this->sendError('You cannot cancel this supplier invoice, invoice details are exist');
