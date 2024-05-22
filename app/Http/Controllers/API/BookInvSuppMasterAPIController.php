@@ -3285,6 +3285,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();
 
+            if($bookInvSuppMasterData->cancelYN == -1){
+                $oldStatus = 'Cancelled';
+            } else {
+                $oldStatus = 'Approved';
+            }
+
             // updating fields
             $bookInvSuppMasterData->confirmedYN = 0;
             $bookInvSuppMasterData->confirmedByEmpSystemID = null;
@@ -3308,9 +3314,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
             $bookInvSuppMasterData->save();
 
-
-
-            AuditTrial::createAuditTrial($bookInvSuppMasterData->documentSystemID,$bookingSuppMasInvAutoID,$input['returnComment'],'returned back to amend');
+            AuditTrial::createAuditTrial($bookInvSuppMasterData->documentSystemID,$bookingSuppMasInvAutoID,$input['returnComment'],'returned back to amend', $oldStatus);
 
             $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($bookingSuppMasInvAutoID, $bookInvSuppMasterData->documentSystemID);
 
