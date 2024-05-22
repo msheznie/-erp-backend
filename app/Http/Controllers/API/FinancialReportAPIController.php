@@ -56,7 +56,6 @@ use App\Models\Employee;
 use Illuminate\Support\Facades\Storage;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Services\Excel\ExportGeneralLedgerReportService;
-
 ini_set('max_execution_time', 500);
 
 class FinancialReportAPIController extends AppBaseController
@@ -930,7 +929,6 @@ class FinancialReportAPIController extends AppBaseController
         }
     }
 
-
     public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained, $companyWiseTemplate = false)
     {
         if ($request->accountType == 1) { // if account type is BS and if any new chart of account created automatically link the gl account
@@ -996,7 +994,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // detail query
 
-        if((isset($request->reportID) && $request->reportID == "FCT") && $outputCollect)
+         if((isset($request->reportID) && $request->reportID == "FCT") && $outputCollect)
         {
             $outputCollect->each(function ($item) use($outputDetail,$columnKeys) {
                 $detID = ($item->detID) ?  : null;
@@ -1017,8 +1015,7 @@ class FinancialReportAPIController extends AppBaseController
                 }
             });
         }
-
-
+        
         $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
         $grandTotalUncatArr = [];
         $uncategorizeArr = [];
@@ -1417,7 +1414,6 @@ class FinancialReportAPIController extends AppBaseController
                 $consolidationStatus = isset($request->type) && $request->type ? $request->type : 1;
                 
                 $response = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained);
-
                 if ($request->type == 2) {
                     $reportData = $response['reportData'];
 
@@ -2260,6 +2256,7 @@ class FinancialReportAPIController extends AppBaseController
             $groupByColumnName = 'serviceLineID';
         }
 
+
         $uncategorizeArr['columnData'] = [];
         if (isset($uncategorizeData['output'])) {
             foreach ($uncategorizeData['output'] as $key1 => $value1) {
@@ -2449,7 +2446,6 @@ class FinancialReportAPIController extends AppBaseController
             }
             $finalHeaders[] = $temp;
         }
-
 
         $headers = collect($finalHeaders)->forget($removedFromArray)->values();
         $companyHeaderData = collect($companyHeaderData)->sortBy('companyCode')->toArray();
