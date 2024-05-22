@@ -1627,6 +1627,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['deliveryTermsMasters'] = DeliveryTermsMaster::where('is_deleted', 0)->get();
 
         $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,creditDays"))
+            ->whereHas('customer_master',function($q){
+                $q->where('isCustomerActive',1);
+            })
             ->where('companySystemID', $companyId)
             ->where('isActive', 1)
             ->where('isAssigned', -1)

@@ -1061,6 +1061,9 @@ class CreditNoteAPIController extends AppBaseController
             case 'filter':
                 $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
                 $output['customer'] = CustomerAssigned::select('*')
+                    ->whereHas('customer_master',function($q){
+                        $q->where('isCustomerActive',1);
+                    })   
                     ->where('companySystemID', $companySystemID)
                     ->where('isAssigned', '-1')
                     ->where('isActive', '1')
@@ -1080,6 +1083,9 @@ class CreditNoteAPIController extends AppBaseController
             case 'create':
 
                 $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                    ->whereHas('customer_master',function($q){
+                        $q->where('isCustomerActive',1);
+                    })    
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -1126,6 +1132,9 @@ class CreditNoteAPIController extends AppBaseController
                     $output['currencies'] = [];
                 }
                 $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                    ->whereHas('customer_master',function($q){
+                        $q->where('isCustomerActive',1);
+                    })       
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -1159,6 +1168,9 @@ class CreditNoteAPIController extends AppBaseController
                     $output['currencies'] = [];
                 }
                 $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                    ->whereHas('customer_master',function($q){
+                        $q->where('isCustomerActive',1);
+                    })       
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)

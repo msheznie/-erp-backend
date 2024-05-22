@@ -771,6 +771,9 @@ class DeliveryOrderAPIController extends AppBaseController
             ->get();
 
         $customer = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+            ->whereHas('customer_master',function($q){
+                $q->where('isCustomerActive',1);
+            })
             ->where('companySystemID', $subCompanies)
             ->where('isActive', 1)
             ->where('isAssigned', -1)
