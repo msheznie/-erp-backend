@@ -147,6 +147,11 @@ class TaxAPIController extends AppBaseController
         }
 
         if($taxCategory == 3){
+            $isTaxExists = Tax::where('companySystemID',$input['companySystemID'])->where('taxDescription',$input['taxDescription'])->exists();
+            if($isTaxExists){
+                return $this->sendError('Tax description already exists', 500);
+            }
+
             if(($input['isDefault'] == 1) && ($input['isActive'] == 0)){
                 return $this->sendError('Default WHT cannot inactive', 500);
             }
@@ -308,12 +313,19 @@ class TaxAPIController extends AppBaseController
         }
 
         if($taxCategory == 3){
+            $isTaxExists = Tax::where('companySystemID',$input['companySystemID'])->where('taxDescription',$input['taxDescription'])->exists();
+            if($isTaxExists){
+                return $this->sendError('Tax description already exists', 500);
+            }
+
             if(($input['isDefault'] == 1) && ($input['isActive'] == 0)){
                 return $this->sendError('Default WHT cannot inactive', 500);
             }
+
             if(($tax->isDefault == 1) && ($input['isActive'] == 0)){
                 return $this->sendError('Default WHT cannot change inactive', 500);
             }
+
             if(($tax->isDefault == 0) && ($input['isDefault'] == 1)){
                 $defaultTax = Tax::where('taxCategory',3)->where('isDefault',1)->where('companySystemID', $input['companySystemID'])->first();
                 if($defaultTax){
