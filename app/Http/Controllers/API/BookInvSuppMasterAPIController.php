@@ -2976,7 +2976,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $suppInvoiceData->save();
 
         /*Audit entry*/
-        AuditTrial::createAuditTrial($suppInvoiceData->documentSystemiD,$supInvoiceAutoID,$request['cancelComments'],'Cancelled');
+
+        AuditTrial::createAuditTrial($suppInvoiceData->documentSystemID,$supInvoiceAutoID,$request['cancelComments'],'Cancelled', 'Not Confirmed');
 
         return $this->sendResponse($suppInvoiceData->toArray(), 'Customer invoice cancelled successfully');
     }

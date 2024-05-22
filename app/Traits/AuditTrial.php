@@ -15,7 +15,7 @@ trait AuditTrial
      * @param string $companySystemID
      * @return array
      */
-    public static function createAuditTrial($documentSystemID, $documentSystemCode, $comment, $process = '')
+    public static function createAuditTrial($documentSystemID, $documentSystemCode, $comment, $process = '', $oldValue = null)
     {
         $docInforArr = array('modelName' => '', 'primarykey' => '', 'documentCodeColumnName' =>'','companySystemID' => '', 'companyID' => '', 'serviceLineSystemID' =>'','serviceLineCode' => '', 'documentID' => '', 'documentSystemCode' =>'' );
 
@@ -389,7 +389,7 @@ trait AuditTrial
                 'valueFrom' => 0,
                 'valueTo' => 0,
                 'valueFromSystemID' => null,
-                'valueFromText' => null,
+                'valueFromText' => $oldValue,
                 'valueToSystemID' => null,
                 'valueToText' => ucfirst($process),
                 'description' => $description,
