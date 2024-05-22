@@ -557,7 +557,7 @@ class TaxService
 
     public static function processGrvExemptVat($grvAutoID){
 
-        $grvVATCategories = GRVDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
+        $grvVATCategories = GRVDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID, SUM(VATAmount * noQty) as VATAmount, SUM(VATAmountLocal * noQty) as VATAmountLocal, SUM(VATAmountRpt * noQty) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
             ->whereNotNull('vatSubCategoryID')
             ->where('vatSubCategoryID', '>', 0)
             ->join('erp_tax_vat_sub_categories', 'erp_grvdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')

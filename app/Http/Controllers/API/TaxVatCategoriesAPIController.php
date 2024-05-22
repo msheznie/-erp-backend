@@ -272,7 +272,9 @@ class TaxVatCategoriesAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input,['main','tax','created_by', 'Actions', 'type', 'DT_Row_Index']);
-        $input = $this->convertArrayToSelectedValue($input, array('applicableOn', 'mainCategory', 'subCatgeoryType'));
+        $input = $this->convertArrayToSelectedValue($input, array('applicableOn', 'mainCategory', 'subCatgeoryType', 'recordType', 'expenseGL'));
+
+        $input['expenseGL'] = ($input['recordType'] == 1) ? $input['expenseGL'] : null;
 
         /** @var TaxVatCategories $taxVatCategories */
         $taxVatCategories = $this->taxVatCategoriesRepository->findWithoutFail($id);
