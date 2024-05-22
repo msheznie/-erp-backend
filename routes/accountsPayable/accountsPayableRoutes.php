@@ -22,6 +22,7 @@ Route::group([], function() {
     Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView')->name("Get invoice master view");
     Route::get('getInvoiceSupplierTypeBase', 'BookInvSuppMasterAPIController@getInvoiceSupplierTypeBase')->name("Get invoice supplier type base");
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory')->name("Get supplier invoice status history");
+    Route::post('supplierInvoiceCancel', 'BookInvSuppMasterAPIController@supplierInvoiceCancel')->name("Supplier invoice cancel");
     Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems')->name("Get direct items");
     Route::get('getSupplierInvoiceGRVItems', 'BookInvSuppDetAPIController@getSupplierInvoiceGRVItems')->name("Get supplier invoice grv items");
     Route::get('getSupplierInvDirectItems', 'SupplierInvoiceDirectItemAPIController@getSupplierInvDirectItems')->name("Get supplier inv direct items");

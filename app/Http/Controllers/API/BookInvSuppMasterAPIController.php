@@ -46,6 +46,7 @@ use App\Models\BookInvSuppDetRefferedBack;
 use App\Models\MonthlyDeclarationsTypes;
 use App\Models\BookInvSuppMaster;
 use App\Models\BookInvSuppMasterRefferedBack;
+use App\Models\SupplierInvoiceItemDetail;
 use App\Models\SystemGlCodeScenario;
 use App\Models\TaxVatCategories;
 use App\Models\ChartOfAccountsAssigned;
@@ -2930,6 +2931,56 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
+    public function supplierInvoiceCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $supInvoiceAutoID = $input['supInvoiceAutoID'];
+
+        $suppInvoiceData = BookInvSuppMaster::find($supInvoiceAutoID);
+        if (empty($suppInvoiceData)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        if ($suppInvoiceData->confirmedYN == 1) {
+            return $this->sendError('You cannot cancel this customer invoice, this is already confirmed');
+        }
+
+        if ($suppInvoiceData->approved == -1) {
+            return $this->sendError('You cannot cancel this customer invoice, this is already approved');
+        }
+
+        if ($suppInvoiceData->cancelYN == -1) {
+            return $this->sendError('You cannot cancel this customer invoice, this is already cancelled');
+        }
+
+        $supplierDetail = BookInvSuppDet::where('bookingSuppMasInvAutoID', $supInvoiceAutoID)->get();
+
+        $supplierDirectDetail = DirectInvoiceDetails::where('directInvoiceAutoID', $supInvoiceAutoID)->get();
+
+        $supplierDirectItemDetail = SupplierInvoiceDirectItem::where('directInvoiceAutoID', $supInvoiceAutoID)->get();
+
+        if (count($supplierDetail) > 0 || count($supplierDirectDetail) > 0 || count($supplierDirectItemDetail) > 0) {
+            return $this->sendError('You cannot cancel this supplier invoice, invoice details are exist');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $suppInvoiceData->cancelYN = -1;
+        $suppInvoiceData->cancelComment = $request['cancelComments'];
+        $suppInvoiceData->cancelDate = NOW();
+        $suppInvoiceData->canceledByEmpSystemID = \Helper::getEmployeeSystemID();
+        $suppInvoiceData->canceledByEmpID = $employee->empID;
+        $suppInvoiceData->canceledByEmpName = $employee->empFullName;
+        $suppInvoiceData->supplierInvoiceNo = null;
+        $suppInvoiceData->save();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($suppInvoiceData->documentSystemiD,$supInvoiceAutoID,$request['cancelComments'],'Cancelled');
+
+        return $this->sendResponse($suppInvoiceData->toArray(), 'Customer invoice cancelled successfully');
+    }
+
     public function getSupplierInvoiceStatusHistory(Request $request)
     {
         $input = $request->all();
@@ -3142,7 +3193,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         }
 
 
-        if ($bookInvSuppMasterData->confirmedYN == 0) {
+        if ($bookInvSuppMasterData->confirmedYN == 0 && $bookInvSuppMasterData->cancelYN == 0) {
             return $this->sendError('You cannot return back to amend this Supplier Invoice, it is not confirmed');
         }
 
@@ -3246,7 +3297,17 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             $bookInvSuppMasterData->approvedByUserID = null;
             $bookInvSuppMasterData->approvedDate = null;
             $bookInvSuppMasterData->postedDate = null;
+
+            $bookInvSuppMasterData->cancelYN = 0;
+            $bookInvSuppMasterData->cancelComment = null;
+            $bookInvSuppMasterData->cancelDate = null;
+            $bookInvSuppMasterData->canceledByEmpSystemID = null;
+            $bookInvSuppMasterData->canceledByEmpID = null;
+            $bookInvSuppMasterData->canceledByEmpName = null;
+
             $bookInvSuppMasterData->save();
+
+
 
             AuditTrial::createAuditTrial($bookInvSuppMasterData->documentSystemID,$bookingSuppMasInvAutoID,$input['returnComment'],'returned back to amend');
 

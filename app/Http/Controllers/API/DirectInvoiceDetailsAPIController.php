@@ -433,6 +433,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         \Helper::updateSupplierRetentionAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
 
+
         return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details updated successfully');
     }
 
@@ -498,6 +499,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $bookInvSuppMaster = BookInvSuppMaster::find($directInvoiceDetails->directInvoiceAutoID);
         \Helper::updateSupplierRetentionAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
 
+        SupplierInvoice::updateMaster($directInvoiceDetails->directInvoiceAutoID);
+
         return $this->sendResponse($id, 'Direct Invoice Details deleted successfully');
     }
 
@@ -537,6 +540,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError('There are no details to delete',500);
         }
 
+
+
         if (!empty($detailExistAll)) {
 
             foreach ($detailExistAll as $cvDeatil) {
@@ -546,6 +551,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
                 }
             }
         \Helper::updateSupplierRetentionAmount($directInvoiceAutoID,$supInvoice);
+
+        SupplierInvoice::updateMaster($directInvoiceAutoID);
 
         return $this->sendResponse($directInvoiceAutoID, 'Details deleted successfully');
     }
