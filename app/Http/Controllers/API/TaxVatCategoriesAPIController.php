@@ -451,7 +451,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $main = TaxVatMainCategories::where('taxMasterAutoID',$input['taxMasterAutoID'])->where('isActive',1)->get();
         $applicable = array(array('value' => 1, 'label' => 'Gross Amount'), array('value' => 2, 'label' => 'Net Amount'));
 
-        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controlAccountsSystemID', 1)
+        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controlAccountsSystemID', 2)
             ->whereHas('chartofaccount_assigned', function($query) use ($companyID){
                 $query->where('companySystemID', $companyID)
                     ->where('isAssigned', -1);
