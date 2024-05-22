@@ -130,6 +130,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
     {
         $input = $request->all();
 //
+        $input = $this->convertArrayToSelectedValue($input, array('recordType'));
         if(!(isset($input['taxMasterAutoID']) && $input['taxMasterAutoID'])){
             return $this->sendError('Tax Master Auto ID is not found',500);
         }
