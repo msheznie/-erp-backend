@@ -973,8 +973,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssuedDefaultMeasure'] = 0;
         }
         if ($itemIssue->issueType == 2) {
-            if($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyAvailableToIssue){
-                $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+            if($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyRequested){
                 // $qtyError['diff_item'] = ["item_id" => $id,"diff_qnty" => ($input['qtyIssuedDefaultMeasure'] - $itemIssueDetails->qtyRequested)];
                 if($itemIssueDetails->qtyAvailableToIssue == 0) {
                     return $this->sendError("Qty fully issued for this item", 500, $qtyError);
