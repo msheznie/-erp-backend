@@ -626,84 +626,116 @@ class FinancialReportAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public function generateEmployeeLedgerReport(Request $request)
-    {
-
-
-        $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->format('Y-m-d');
-
-        $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->format('Y-m-d');
-
-        
-            $companyID = $request->comapnyID;
-            if($companyID == null)
-            {
-                return $this->sendError('Company ID found');
-            }
-            $companyCurrency = \Helper::companyCurrency($companyID);
-
-            $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
-            $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
-
-            $currencyDecimalLocal = $companyCurrency->localcurrency->DecimalPlaces;
-            $currencyDecimalRpt = $companyCurrency->reportingcurrency->DecimalPlaces;
-
-
+    public function generateEmployeeLedgerReport(Request $request) {
 
         $input = $request->all();
-        if (array_key_exists('employeeID', $input)) {
-            $employeeDatas = (array)$input['employeeID'];
-            $employeeDatas = collect($employeeDatas)->pluck('id');
+
+        $fromDate = Carbon::parse($input['fromDate'])->format('Y-m-d');
+
+        $toDate = Carbon::parse($input['toDate'])->format('Y-m-d');
+        
+        $companyID = $input['comapnyID'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyID);
+        } else {
+            $childCompanies = [$companyID];
+        }
+
+        $currencyID = $input['currencyID'];
+
+        if(!$companyID) {
+            return $this->sendError('Company ID found');
+        }
+
+        // Retrieve company currency information
+        $companyCurrency = \Helper::companyCurrency($companyID);
+        $companyName =  $companyCurrency->CompanyName;
+        $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
+        $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
+        $currencyDecimalLocal = $companyCurrency->localcurrency->DecimalPlaces;
+        $currencyDecimalRpt = $companyCurrency->reportingcurrency->DecimalPlaces;
+
+        // Fetch employee data
+        if(isset($input['all_employee']) && $input['all_employee']){
+            $employeeDatas = Employee::leftJoin('erp_bookinvsuppmaster', function ($join) use ($childCompanies){
+                $join->on('employees.employeeSystemID', '=', 'erp_bookinvsuppmaster.employeeID')
+                     ->where('erp_bookinvsuppmaster.documentType', 4)
+                     ->where('erp_bookinvsuppmaster.approved', -1)
+                     ->whereIn('erp_bookinvsuppmaster.companySystemID', $childCompanies);
+            })
+            ->leftJoin('erp_paysupplierinvoicemaster', function ($join) use ($childCompanies){
+                $join->on('employees.employeeSystemID', '=', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
+                     ->where('erp_paysupplierinvoicemaster.invoiceType', 7)
+                     ->where('erp_paysupplierinvoicemaster.approved', -1)
+                     ->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
+            })
+            ->where(function ($query) {
+                $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
+                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID');
+            })
+            ->groupBy('employees.employeeSystemID')->pluck('employees.employeeSystemID');
+        }
+        else{
+            if (array_key_exists('employeeID', $input)) {
+                $employeeDatas = (array)$input['employeeID'];
+                $employeeDatas = collect($employeeDatas)->pluck('employeeSystemID');
+            }
         }
 
         if (array_key_exists('typeID', $input)) {
             $typeID = (array)$input['typeID'];
             $typeID = collect($typeID)->pluck('id');
         }
-        
-       $data = $this->getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$companyID);
-       $refAmounts = $this->getGeneralLedgerRefAmount();
 
+        $employees = collect($this->getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas));
+
+        // Fetch general ledger query data
+        $data = $this->getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$companyID,$employees->pluck('employeeID'));
+
+        $refAmounts = $this->getGeneralLedgerRefAmount();
 
         $refIouAmounts = DB::select("SELECT * FROM (SELECT
-    srp_erp_ioubookingmaster.companyLocalAmount as referenceAmountLocal,
-    srp_erp_ioubookingmaster.companyReportingAmount as referenceAmountRpt,
-    srp_erp_ioubookingmaster.bookingMasterID AS masterID,    
-    1 as refType
-FROM
-    srp_erp_ioubookingmaster 
-WHERE 
-srp_erp_ioubookingmaster.approvedYN = 1
-    )As t2");
+                   srp_erp_ioubookingmaster.companyLocalAmount as referenceAmountLocal,
+                   srp_erp_ioubookingmaster.companyReportingAmount as referenceAmountRpt,
+                   srp_erp_ioubookingmaster.bookingMasterID AS masterID,    
+                   1 as refType
+               FROM srp_erp_ioubookingmaster 
+               WHERE srp_erp_ioubookingmaster.approvedYN = 1)As t2");
 
+        $i = 0;
+        $arrayTemp = array();
+        $indexArray = array();
+
+        $grandSumArray = [
+            'grandSumLocal' => 0,
+            'grandSumRpt' => 0,
+            'grandRefSumLocal' => 0,
+            'grandRefSumRpt' => 0
+        ];
 
         foreach ($data as $da){
             $da->referenceAmountLocal = 0;
             $da->referenceAmountRpt = 0;
             $da->isLine = 0;
             $da->refType = 0;
+
             foreach($refAmounts as $amount) {
-                if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
-                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
-                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
-                    $da->refType = $amount->refType;
-
-                }
-                if($da->masterID == $amount->masterID && $da->type == 4 && $da->employeeID == $amount->employeeID) {
-                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
-                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
-                    $da->refType = $amount->refType;
-
-                }
-                if($da->masterID == $amount->masterID && $da->type == 2) {
-                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
-                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
-                    $da->refType = $amount->refType;
-
+                if($da->masterID == $amount->masterID) {
+                    if(($da->type == 1 || $da->type == 4) && $da->employeeID == $amount->employeeID){
+                        $da->referenceAmountLocal = $amount->referenceAmountLocal;
+                        $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                        $da->refType = $amount->refType;
+                    }
+                    if($da->type == 2) {
+                        $da->referenceAmountLocal = $amount->referenceAmountLocal;
+                        $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                        $da->refType = $amount->refType;
+                    }
                 }
             }
+
             foreach ($refIouAmounts as $iouAmount){
                 if($da->masterID == $iouAmount->masterID && $da->type == 3) {
                     $da->referenceAmountLocal = $iouAmount->referenceAmountLocal;
@@ -711,66 +743,190 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 }
             }
 
-        }
-        $dataArray = array();
-        $i = 0;
-        foreach ($data as $dt){
+            // remove duplicate type 3 and update first type 3 values
+            if($da->type == 3 && in_array($da->documentCode, $arrayTemp)) {
+                $documentCode = $da->documentCode;
+                $referenceDoc = $da->referenceDoc;
+                $referenceDocDate = Carbon::parse($da->referenceDocDate)->format("d/m/Y");
 
-            if($dt->type == 3){
-                $dataArray[$i]['documentCode'] = $dt->documentCode;
-                $dataArray[$i]['referenceDoc'] = $dt->referenceDoc;
-                $dataArray[$i]['referenceDocDate'] = $dt->referenceDocDate;
-                $dataArray[$i]['index'] = $i;
+                unset($data[$i]);
 
+                $bookingMaster = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first();
+                $refLocalAmount = $bookingMaster->companyLocalAmount ?? 0;
+                $refRptAmount = $bookingMaster->companyReportingAmount ?? 0;
+
+                foreach ($indexArray as $oldData) {
+                    if($oldData['data'] == $documentCode){
+                        $data[$oldData['index']]->referenceDoc = $data[$oldData['index']]->referenceDoc . ', ' . $referenceDoc;
+
+                        try {
+                            $data[$oldData['index']]->referenceDocDate = Carbon::parse($data[$oldData['index']]->referenceDocDate)->format("d/m/Y"). ', ' . $referenceDocDate;
+                        } catch (\Exception $e) {
+                            $data[$oldData['index']]->referenceDocDate = $data[$oldData['index']]->referenceDocDate. ', ' . $referenceDocDate;
+                        }
+                        $data[$oldData['index']]->referenceAmountLocal = $data[$oldData['index']]->referenceAmountLocal + $refLocalAmount;
+                        $data[$oldData['index']]->referenceAmountRpt = $data[$oldData['index']]->referenceAmountRpt + $refRptAmount;
+                        $data[$oldData['index']]->isLine = 1;
+                    }
+                }
             }
+            else {
+                $arrayTemp[] = $da->documentCode;
+
+                $indexArray[] = [
+                  'index' => $i,
+                  'data' => $da->documentCode
+                ];
+            }
+
+            $recordOwner = $employees->where('employeeID', $da->employeeID)->first();
+
+            if(!isset($recordOwner->totalSumLocal)) {
+                $recordOwner->totalSumLocal = 0;
+                $recordOwner->totalSumRpt = 0;
+                $recordOwner->totalSumRefReferenceAmountLocal = 0;
+                $recordOwner->totalSumRefReferenceAmountRpt = 0;
+            }
+
+            if(!isset($recordOwner->isSetOpeningBalance)){
+                $recordOwner->openingBalanceLocal = 0;
+                $recordOwner->openingBalanceRpt = 0;
+                $recordOwner->isSetOpeningBalance = true;
+            }
+
+            if($recordOwner->isSetOpeningBalance){
+                $openingBalanceSum = $this->getOpeningBalanceData($fromDate,$typeID,$companyID,$da->employeeID);
+                $recordOwner->openingBalanceLocal = $openingBalanceSum[0]->amountLocal ?: 0;
+                $recordOwner->openingBalanceRpt = $openingBalanceSum[0]->amountRpt ?: 0;
+
+                $recordOwner->totalSumLocal += $recordOwner->openingBalanceLocal;
+                $recordOwner->totalSumRpt += $recordOwner->openingBalanceRpt;
+
+                $grandSumArray['grandSumLocal'] += $recordOwner->openingBalanceLocal;
+                $grandSumArray['grandSumRpt'] += $recordOwner->openingBalanceRpt;
+
+                $recordOwner->isSetOpeningBalance = false;
+            }
+
+            if (($da->type == 7 || $da->type == 5 || $da->type == 6 || $da->type == 3) && $da->type != 2){
+                // update each employee table total
+                $recordOwner->totalSumLocal += $da->amountLocal * -1;
+                $recordOwner->totalSumRpt += $da->amountRpt * -1;
+
+                // calculate grand sum
+                $grandSumArray['grandSumLocal'] += $da->amountLocal * -1;
+                $grandSumArray['grandSumRpt'] += $da->amountRpt * -1;
+
+                if ($da->refType == 1) {
+                    // update each employee table total
+                    $recordOwner->totalSumRefReferenceAmountLocal += $da->referenceAmountLocal;
+                    $recordOwner->totalSumRefReferenceAmountRpt += $da->referenceAmountRpt;
+
+                    // calculate grand sum ref
+                    $grandSumArray['grandRefSumLocal'] += $da->referenceAmountLocal;
+                    $grandSumArray['grandRefSumRpt'] += $da->referenceAmountRpt;
+                }
+                else{
+                    // update each employee table total
+                    $recordOwner->totalSumRefReferenceAmountLocal += $da->referenceAmountLocal * -1;
+                    $recordOwner->totalSumRefReferenceAmountRpt += $da->referenceAmountRpt * -1;
+
+                    // calculate grand sum ref
+                    $grandSumArray['grandRefSumLocal'] += $da->referenceAmountLocal * -1;
+                    $grandSumArray['grandRefSumRpt'] += $da->referenceAmountRpt * -1;
+                }
+            }
+            else {
+                if($da->type != 2){
+                    // update each employee table total
+                    $recordOwner->totalSumLocal += $da->amountLocal < 0 ? $da->amountLocal * -1 : $da->amountLocal;
+                    $recordOwner->totalSumRpt += $da->amountRpt < 0 ? $da->amountRpt * -1 : $da->amountRpt;
+
+                    $recordOwner->totalSumRefReferenceAmountLocal += $da->referenceAmountLocal < 0 ? $da->referenceAmountLocal * -1 : $da->referenceAmountLocal;
+                    $recordOwner->totalSumRefReferenceAmountRpt += $da->referenceAmountRpt < 0 ? $da->referenceAmountRpt * -1 : $da->referenceAmountRpt;
+
+                    // calculate grand sum
+                    $grandSumArray['grandSumLocal'] += $da->amountLocal;
+                    $grandSumArray['grandSumRpt'] += $da->amountRpt;
+
+                    $grandSumArray['grandRefSumLocal'] += $da->referenceAmountLocal < 0 ? $da->referenceAmountLocal * -1 : $da->referenceAmountLocal;
+                    $grandSumArray['grandRefSumRpt'] += $da->referenceAmountRpt < 0 ? $da->referenceAmountRpt * -1 : $da->referenceAmountRpt;
+                }
+            }
+
             $i++;
         }
 
-        $arrayTemp = array();
 
-        foreach($dataArray as $val)
-        {
-            if (!in_array($val['documentCode'], $arrayTemp))
-            {
-                $arrayTemp[] = $val['documentCode'];
+        foreach ($employees as $key => $value) {
+            $recordOwner = $employees->where('employeeID', $value->employeeID)->first();
+
+            if(!isset($recordOwner->totalSumLocal)) {
+                $recordOwner->totalSumLocal = 0;
+                $recordOwner->totalSumRpt = 0;
             }
-            else
-            {
-                unset($data[$val['index']]);
-                $documentCode = $val['documentCode'];
-                $referenceDoc = $val['referenceDoc'];
-                $referenceDocDate = \Carbon\Carbon::parse($val['referenceDocDate'])->format("d/m/Y");
-                $refLocalAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first();
 
-                 $refLocalAmount = isset($refLocalAmount->companyLocalAmount) ? $refLocalAmount->companyLocalAmount : 0;
+            if(!isset($recordOwner->isSetOpeningBalance)){
+                $recordOwner->openingBalanceLocal = 0;
+                $recordOwner->openingBalanceRpt = 0;
+                $recordOwner->isSetOpeningBalance = true;
+            }
 
-                $refRptAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first();
+            if($recordOwner->isSetOpeningBalance){
+                $openingBalanceSum = $this->getOpeningBalanceData($fromDate,$typeID,$companyID,$value->employeeID);
+                $recordOwner->openingBalanceLocal = $openingBalanceSum[0]->amountLocal ?: 0;
+                $recordOwner->openingBalanceRpt = $openingBalanceSum[0]->amountRpt ?: 0;
 
-                $refRptAmount = isset($refRptAmount->companyReportingAmount) ? $refRptAmount->companyReportingAmount : 0;
+                $recordOwner->totalSumLocal += $recordOwner->openingBalanceLocal;
+                $recordOwner->totalSumRpt += $recordOwner->openingBalanceRpt;
 
-                foreach ($data as $da) {
-                    if ($da->documentCode == $documentCode) {
-                        $da->referenceDoc = $da->referenceDoc . ', ' . $referenceDoc;
+                $grandSumArray['grandSumLocal'] += $recordOwner->openingBalanceLocal;
+                $grandSumArray['grandSumRpt'] += $recordOwner->openingBalanceRpt;
 
-                        try {
-                            $da->referenceDocDate = \Carbon\Carbon::parse($da->referenceDocDate)->format("d/m/Y"). ', ' . $referenceDocDate;
-                        } catch (\Exception $e) {
-                            $da->referenceDocDate = $da->referenceDocDate. ', ' . $referenceDocDate;
-                        }
-                        $da->referenceAmountLocal = $da->referenceAmountLocal + $refLocalAmount;
-                        $da->referenceAmountRpt = $da->referenceAmountRpt + $refRptAmount;
-                        $da->isLine = 1;
-                    }
-                }
-
+                $recordOwner->isSetOpeningBalance = false;
             }
         }
 
+        // Re-index data array
         $data = array_values($data);
-        $employees = $this->getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas);
 
-        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt,$currencyDecimalLocal,$currencyDecimalRpt], 'Record retrieved successfully');
+        if(isset($input['downloadReport']) && $input['downloadReport']){
+            $currencyID = $currencyID[0] ?? $currencyID;
 
+            $reportData = array(
+                'companyName' => $companyName,
+                'report_tittle' => 'Employee Ledger',
+                'datas' => $data,
+                'employees' => $employees,
+                'currencyCodeLocal' => $currencyCodeLocal,
+                'currencyCodeRpt' => $currencyCodeRpt,
+                'currencyDecimalLocal' => $currencyDecimalLocal,
+                'currencyDecimalRpt' => $currencyDecimalRpt,
+                'fromDate' => $fromDate,
+                'toDate' => $toDate,
+                'currencyID' => $currencyID,
+                'grandSumData' => $grandSumArray
+            );
+            
+            $templateName = "export_report.employee_ledger_report";
+
+            return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                    $sheet->loadView($templateName, $reportData);
+                });
+            })->download('xlsx');
+        }
+        else{
+            return $this->sendResponse([
+                $data,
+                $employees,
+                $currencyCodeLocal,
+                $currencyCodeRpt,
+                $currencyDecimalLocal,
+                $currencyDecimalRpt,
+                $grandSumArray
+            ], 'Record retrieved successfully');
+        }
     }
 
     public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained, $companyWiseTemplate = false)
@@ -2480,153 +2636,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
             });
         })->download('xlsx');
     }
-
-    public function downloadEmployeeLedgerReport(Request $request)
-    {
-        $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->format('Y-m-d');
-
-        $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->format('Y-m-d');
-
-
-        $companyID = $request->comapnyID;
-        $currencyID = $request->currencyID;
-
-        $companyCurrency = \Helper::companyCurrency($companyID);
-        $companyName =  $companyCurrency->CompanyName;        
-        $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
-        $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
-
-        $currencyDecimalLocal = $companyCurrency->localcurrency->DecimalPlaces;
-        $currencyDecimalRpt = $companyCurrency->reportingcurrency->DecimalPlaces;
-
-
-
-
-        $input = $request->all();
-        if (array_key_exists('employeeID', $input)) {
-            $employeeDatas = (array)$input['employeeID'];
-            $employeeDatas = collect($employeeDatas)->pluck('id');
-        }
-
-        if (array_key_exists('typeID', $input)) {
-            $typeID = (array)$input['typeID'];
-            $typeID = collect($typeID)->pluck('id');
-        }
-
-        $data = $this->getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$companyID);
-        $refAmounts = $this->getGeneralLedgerRefAmount();
-
-        $refIouAmounts = DB::select("SELECT * FROM (SELECT
-    srp_erp_ioubookingmaster.companyLocalAmount as referenceAmountLocal,
-    srp_erp_ioubookingmaster.companyReportingAmount as referenceAmountRpt,
-    srp_erp_ioubookingmaster.bookingMasterID AS masterID
-FROM
-    srp_erp_ioubookingmaster 
-WHERE 
-srp_erp_ioubookingmaster.approvedYN = 1
-    )As t2");
-
-        foreach ($data as $da){
-            $da->referenceAmountLocal = 0;
-            $da->referenceAmountRpt = 0;
-            $da->isLine = 0;
-            $da->refType = 0;
-            foreach($refAmounts as $amount) {
-                if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
-                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
-                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
-                    $da->refType = $amount->refType;
-                }
-                if($da->masterID == $amount->masterID && $da->type == 4 && $da->employeeID == $amount->employeeID) {
-                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
-                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
-                    $da->refType = $amount->refType;
-                }
-                if($da->masterID == $amount->masterID && $da->type == 2) {
-                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
-                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
-                    $da->refType = $amount->refType;
-                }
-            }
-            foreach ($refIouAmounts as $iouAmount){
-                if($da->masterID == $iouAmount->masterID && $da->type == 3) {
-                    $da->referenceAmountLocal = $iouAmount->referenceAmountLocal;
-                    $da->referenceAmountRpt = $iouAmount->referenceAmountRpt;
-                }
-            }
-
-        }
-        $dataArray = array();
-        $i = 0;
-        foreach ($data as $dt){
-
-            if($dt->type == 3){
-                $dataArray[$i]['documentCode'] = $dt->documentCode;
-                $dataArray[$i]['referenceDoc'] = $dt->referenceDoc;
-                $dataArray[$i]['referenceDocDate'] = $dt->referenceDocDate;
-                $dataArray[$i]['index'] = $i;
-
-            }
-            $i++;
-        }
-
-        $arrayTemp = array();
-
-        foreach($dataArray as $val)
-        {
-            if (!in_array($val['documentCode'], $arrayTemp))
-            {
-                $arrayTemp[] = $val['documentCode'];
-            }
-            else
-            {
-                unset($data[$val['index']]);
-                $documentCode = $val['documentCode'];
-                $referenceDoc = $val['referenceDoc'];
-                $referenceDocDate = \Carbon\Carbon::parse($val['referenceDocDate'])->format("d/m/Y");
-                $refLocalAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first();
-                $refLocalAmount = isset($refLocalAmount->companyLocalAmount) ? $refLocalAmount->companyLocalAmount : 0;
-
-                $refRptAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first();
-                $refRptAmount = isset($refRptAmount->companyReportingAmount) ? $refRptAmount->companyReportingAmount : 0;
-
-                foreach ($data as $da) {
-                    if ($da->documentCode == $documentCode) {
-                        $da->referenceDoc = $da->referenceDoc . ', ' . $referenceDoc;
-                        try {
-                            $da->referenceDocDate = \Carbon\Carbon::parse($da->referenceDocDate)->format("d/m/Y"). ', ' . $referenceDocDate;
-                        } catch (\Exception $e) {
-                            $da->referenceDocDate = $da->referenceDocDate. ', ' . $referenceDocDate;
-                        }
-                        $da->referenceAmountLocal = $da->referenceAmountLocal + $refLocalAmount;
-                        $da->referenceAmountRpt = $da->referenceAmountRpt + $refRptAmount;
-                        $da->isLine = 1;
-                    }
-                }
-
-            }
-        }
-
-        $data = array_values($data);
-
-        $employees = $this->getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas);
-
-
-        $currencyID = isset($currencyID[0]) ? $currencyID[0] : $currencyID;
-
-        $reportData = array('companyName'=>$companyName,'report_tittle'=>'Employee Ledger','datas'=>$data,'employees'=>$employees,'currencyCodeLocal'=>$currencyCodeLocal,'currencyCodeRpt'=>$currencyCodeRpt, 'currencyDecimalLocal'=>$currencyDecimalLocal, 'currencyDecimalRpt'=>$currencyDecimalRpt, 'fromDate'=>$fromDate,'toDate'=>$toDate, 'currencyID'=>$currencyID);
-        $templateName = "export_report.employee_ledger_report";
-
-        return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
-                $sheet->loadView($templateName, $reportData);
-            });
-        })->download('xlsx');
-    }
-
- 
 
     public function exportReport(Request $request, ExportGeneralLedgerReportService $exportGlToExcelService)
     {
@@ -9183,9 +9192,124 @@ GROUP BY
         })->download('xlsx');
     }
 
-    public function getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$companyID) {
+    public function getOpeningBalanceData($fromDate,$typeID,$companyID,$employeeID) {
+
+        $typeIDs = join(',', json_decode($typeID));
 
         $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , 14);
+
+        return DB::select('
+SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
+    SELECT
+        IF(SUM(bookingAmountLocal) < 0, -SUM(bookingAmountLocal), SUM(bookingAmountLocal)) AS amountLocal,
+        IF(SUM(bookingAmountRpt) < 0, -SUM(bookingAmountRpt), SUM(bookingAmountRpt)) AS amountRpt,
+        4 AS type
+    FROM
+        erp_bookinvsuppmaster
+    WHERE
+        DATE(bookingDate) < "' . $fromDate . '" AND 
+        approved = -1 AND
+        documentType = 4 AND
+        employeeID = '.$employeeID.' AND
+        4 IN (' . $typeIDs . ') AND
+        companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
+        -SUM((payAmountCompLocal + VATAmountLocal)) AS amountLocal,
+        -SUM((payAmountCompRpt + VATAmountRpt)) AS amountRpt,
+        5 AS type
+    FROM
+        erp_paysupplierinvoicemaster
+    WHERE
+        invoiceType = 6 AND 
+        DATE(BPVdate) < "' . $fromDate . '" AND 
+        approved = -1 AND
+        directPaymentPayeeEmpID = '.$employeeID.' AND
+        5 IN (' . $typeIDs . ') AND
+        companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
+        -SUM((payAmountCompLocal + VATAmountLocal)) AS amountLocal,
+        -SUM((payAmountCompRpt + VATAmountRpt)) AS amountRpt,
+        6 AS type
+    FROM
+        erp_paysupplierinvoicemaster
+    WHERE
+        invoiceType = 7 AND 
+        DATE(BPVdate) < "' . $fromDate . '" AND 
+        approved = -1 AND
+        directPaymentPayeeEmpID = '.$employeeID.' AND
+        6 IN (' . $typeIDs . ') AND
+        companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
+        IF(SUM(expense_employee_allocation.amountLocal) < 0, -SUM(expense_employee_allocation.amountLocal), SUM(expense_employee_allocation.amountLocal)) AS amountLocal,
+        IF(SUM(expense_employee_allocation.amountRpt) < 0, -SUM(expense_employee_allocation.amountRpt), SUM(expense_employee_allocation.amountRpt)) AS amountRpt,
+        1 AS type
+    FROM
+        erp_bookinvsuppmaster
+        LEFT JOIN expense_employee_allocation ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = expense_employee_allocation.documentSystemCode
+    WHERE
+        DATE(erp_bookinvsuppmaster.bookingDate) < "' . $fromDate . '" AND 
+        erp_bookinvsuppmaster.approved = -1 AND
+        erp_bookinvsuppmaster.documentType = 1 AND
+        expense_employee_allocation.employeeSystemID = '.$employeeID.' AND
+        expense_employee_allocation.documentSystemID = 11 AND
+        1 IN (' . $typeIDs . ') AND
+        erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
+        -SUM(companyLocalAmount) AS amountLocal,
+        -SUM(companyReportingAmount) AS amountRpt,
+        3 AS type
+    FROM
+        srp_erp_iouvouchers
+    WHERE
+        DATE(voucherDate) < "' . $fromDate . '" AND
+        3 IN (' . $typeIDs . ') AND
+        empID = '.$employeeID.' AND
+        companyID = "'.$companyID.'" AND
+        approvedYN = 1
+    UNION ALL  
+    SELECT
+        -SUM(netAmountLocal) AS amountLocal,
+        -SUM(netAmountRpt) AS amountRpt,
+        7 AS type
+    FROM
+        erp_debitnote
+    WHERE
+        DATE(debitNoteDate) < "' . $fromDate . '" AND
+        7 IN (' . $typeIDs . ') AND
+        empID = '.$employeeID.' AND
+        companySystemID = "'.$companyID.'" AND
+        approved = -1
+    UNION ALL
+    SELECT
+        -SUM(erp_generalledger.documentLocalAmount*-1) AS amountLocal,
+        -SUM(erp_generalledger.documentRptAmount*-1) AS amountRpt,
+        5 AS type
+    FROM
+        erp_paysupplierinvoicemaster
+        LEFT JOIN erp_generalledger ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+    WHERE
+        erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+        DATE(erp_paysupplierinvoicemaster.BPVdate) < "' . $fromDate . '" AND 
+        erp_paysupplierinvoicemaster.approved = -1 AND
+        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = '.$employeeID.' AND
+        5 IN (' . $typeIDs . ') AND
+        erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'" AND
+        erp_generalledger.documentSystemID = 4 AND 
+        erp_generalledger.chartOfAccountSystemID = "'.$exchangeGainLossAccount.'"
+) AS t');
+    }
+
+    public function getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$companyID,$employeeIDs) {
+
+        $typeIDs = join(',', json_decode($typeID));
+        $employeeIDs = join(',', json_decode($employeeIDs));
+
+        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , 14);
+
         return DB::select('SELECT * FROM ( SELECT
         erp_bookinvsuppmaster.bookingDate AS documentDate,
         erp_bookinvsuppmaster.bookingInvCode AS documentCode,
@@ -9208,7 +9332,7 @@ GROUP BY
         DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
         erp_bookinvsuppmaster.approved = -1 AND
         erp_bookinvsuppmaster.documentType = 4 AND
-        4 IN (' . join(',', json_decode($typeID)) . ') AND
+        4 IN (' . $typeIDs . ') AND
         erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
         UNION ALL
         SELECT
@@ -9233,9 +9357,8 @@ GROUP BY
         erp_paysupplierinvoicemaster.invoiceType = 6 AND 
         DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
         erp_paysupplierinvoicemaster.approved = -1 AND
-        5 IN (' . join(',', json_decode($typeID)) . ') AND
+        5 IN (' . $typeIDs . ') AND
         erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
-        
         UNION ALL
         SELECT
         erp_paysupplierinvoicemaster.BPVdate AS documentDate,
@@ -9259,9 +9382,8 @@ GROUP BY
         erp_paysupplierinvoicemaster.invoiceType = 7 AND 
         DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
         erp_paysupplierinvoicemaster.approved = -1 AND
-        6 IN (' . join(',', json_decode($typeID)) . ') AND
+        6 IN (' . $typeIDs . ') AND
         erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
-        
         UNION ALL
         SELECT
         erp_bookinvsuppmaster.bookingDate AS documentDate,
@@ -9287,7 +9409,7 @@ GROUP BY
         erp_bookinvsuppmaster.approved = -1 AND
         erp_bookinvsuppmaster.documentType = 1 AND
         expense_employee_allocation.documentSystemID = 11 AND
-        1 IN (' . join(',', json_decode($typeID)) . ') AND
+        1 IN (' . $typeIDs . ') AND
         erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
         UNION ALL
         SELECT
@@ -9312,7 +9434,7 @@ GROUP BY
         erp_paysupplierinvoicemaster.invoiceType = 3 AND 
         DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
         erp_paysupplierinvoicemaster.approved = -1 AND
-        2 IN (' . join(',', json_decode($typeID)) . ') AND
+        2 IN (' . $typeIDs . ') AND
         erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
         UNION ALL 
         SELECT
@@ -9333,7 +9455,7 @@ GROUP BY
         LEFT JOIN srp_erp_ioubookingmaster ON srp_erp_iouvouchers.voucherAutoID = srp_erp_ioubookingmaster.iouVoucherAutoID
     WHERE
         DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
-        3 IN (' . join(',', json_decode($typeID)) . ') AND
+        3 IN (' . $typeIDs . ') AND
         srp_erp_iouvouchers.companyID = "'.$companyID.'" AND
         srp_erp_iouvouchers.approvedYN = 1
         UNION ALL  
@@ -9354,15 +9476,11 @@ GROUP BY
     erp_debitnote
         LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID
         LEFT JOIN currencymaster as rptCurrency ON erp_debitnote.companyReportingCurrencyID = rptCurrency.currencyID
-    
-        
     WHERE
         DATE(erp_debitnote.debitNoteDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
-        7 IN (' . join(',', json_decode($typeID)) . ') AND
+        7 IN (' . $typeIDs . ') AND
         erp_debitnote.companySystemID = "'.$companyID.'" AND
         erp_debitnote.approved = -1
-        ) AS t1
-        
         UNION ALL
         SELECT
         erp_paysupplierinvoicemaster.BPVdate AS documentDate,
@@ -9387,11 +9505,11 @@ GROUP BY
         erp_paysupplierinvoicemaster.invoiceType = 6 AND 
         DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
         erp_paysupplierinvoicemaster.approved = -1 AND
-        5 IN (' . join(',', json_decode($typeID)) . ') AND
+        5 IN (' . $typeIDs . ') AND
         erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'" AND
         erp_generalledger.documentSystemID = 4 AND 
         erp_generalledger.chartOfAccountSystemID = "'.$exchangeGainLossAccount.'"
-        ');
+        ) AS t1 WHERE t1.employeeID IN (' . $employeeIDs . ')');
     }
 
     public function getGeneralLedgerRefAmount() {
@@ -9451,6 +9569,9 @@ GROUP BY
     }
 
     public function getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas) {
+        $typeID = join(",",json_decode($typeID));
+        $employeeDatas = join(",",json_decode($employeeDatas));
+
         return DB::select('SELECT * FROM (
             SELECT
            erp_bookinvsuppmaster.employeeID AS employeeID,
@@ -9460,11 +9581,12 @@ GROUP BY
            erp_bookinvsuppmaster
            LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
        WHERE
-           DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+           (DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" 
+    OR DATE(erp_bookinvsuppmaster.bookingDate) < "' . $fromDate . '") AND 
            erp_bookinvsuppmaster.approved = -1 AND
-           erp_bookinvsuppmaster.employeeID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+           erp_bookinvsuppmaster.employeeID IN (' . $employeeDatas . ') AND
            erp_bookinvsuppmaster.documentType = 4 AND
-           4 IN (' . join(',', json_decode($typeID)) . ')
+           4 IN (' . $typeID . ')
        UNION ALL
        SELECT
            expense_employee_allocation.employeeSystemID AS employeeID,
@@ -9475,11 +9597,11 @@ GROUP BY
        LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
        LEFT JOIN erp_bookinvsuppmaster ON expense_employee_allocation.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
        WHERE
-           DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+           (DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" OR DATE(erp_bookinvsuppmaster.bookingDate) < "' . $fromDate . '") AND 
            expense_employee_allocation.documentSystemID = 11 AND
            erp_bookinvsuppmaster.approved = -1 AND
-           expense_employee_allocation.employeeSystemID IN (' . join(',', json_decode($employeeDatas)) . ') AND
-           1 IN (' . join(',', json_decode($typeID)) . ')  
+           expense_employee_allocation.employeeSystemID IN (' . $employeeDatas . ') AND
+           1 IN (' . $typeID . ')  
            UNION ALL
            SELECT
            erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
@@ -9490,10 +9612,10 @@ GROUP BY
        LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
        WHERE
            erp_paysupplierinvoicemaster.invoiceType = 3 AND 
-           DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+           (DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" OR DATE(erp_paysupplierinvoicemaster.BPVdate) < "' . $fromDate . '") AND 
            erp_paysupplierinvoicemaster.approved = -1 AND
-           erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
-           2 IN (' . join(',', json_decode($typeID)) . ')  
+           erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . $employeeDatas . ') AND
+           2 IN (' . $typeID . ')  
            UNION ALL
            SELECT
            erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
@@ -9504,10 +9626,10 @@ GROUP BY
        LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
        WHERE
            erp_paysupplierinvoicemaster.invoiceType = 6 AND 
-           DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+           (DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" OR DATE(erp_paysupplierinvoicemaster.BPVdate) < "' . $fromDate . '") AND 
            erp_paysupplierinvoicemaster.approved = -1 AND
-           erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
-           5 IN (' . join(',', json_decode($typeID)) . ') 
+           erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . $employeeDatas . ') AND
+           5 IN (' . $typeID . ') 
            
            UNION ALL
            SELECT
@@ -9519,10 +9641,10 @@ GROUP BY
        LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
        WHERE
            erp_paysupplierinvoicemaster.invoiceType = 7 AND 
-           DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+           (DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" OR DATE(erp_paysupplierinvoicemaster.BPVdate) < "' . $fromDate . '") AND 
            erp_paysupplierinvoicemaster.approved = -1 AND
-           erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
-           6 IN (' . join(',', json_decode($typeID)) . ') 
+           erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . $employeeDatas . ') AND
+           6 IN (' . $typeID . ') 
             
            UNION ALL 
            SELECT
@@ -9533,9 +9655,9 @@ GROUP BY
            srp_erp_iouvouchers
        LEFT JOIN employees ON srp_erp_iouvouchers.empID = employees.employeeSystemID
        WHERE
-           DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
-           srp_erp_iouvouchers.empID IN (' . join(',', json_decode($employeeDatas)) . ') AND
-           3 IN (' . join(',', json_decode($typeID)) . ') AND
+           (DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" OR DATE(srp_erp_iouvouchers.voucherDate) < "' . $fromDate . '") AND
+           srp_erp_iouvouchers.empID IN (' . $employeeDatas . ') AND
+           3 IN (' . $typeID . ') AND
            srp_erp_iouvouchers.approvedYN = 1
            UNION ALL 
            SELECT
@@ -9546,10 +9668,10 @@ GROUP BY
        erp_debitnote
        LEFT JOIN employees ON erp_debitnote.empID = employees.employeeSystemID
        WHERE
-           DATE(erp_debitnote.debitNoteDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
-           7 IN (' . join(',', json_decode($typeID)) . ') AND
+           (DATE(erp_debitnote.debitNoteDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" OR DATE(erp_debitnote.debitNoteDate) < "' . $fromDate . '") AND
+           7 IN (' . $typeID . ') AND
            erp_debitnote.companySystemID = "'.$companyID.'" AND
-           erp_debitnote.empID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+           erp_debitnote.empID IN (' . $employeeDatas . ') AND
            erp_debitnote.approved = -1
            ) t GROUP BY t.employeeID');
     }

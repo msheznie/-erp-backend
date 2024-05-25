@@ -211,19 +211,43 @@ class EmployeeAPIController extends AppBaseController
     public function getAllEmployees(Request $request){
         $input = $request->all();
 
-        $output = Employee::where(function($q) use($input){
-            $q->where('empCompanySystemID', $input['selectedCompanyId'])->orWhere(function($q) use($input){
-                    $q->whereHas('invoice',function($q) use($input){
-                        $q->where('documentType',4)->where('approved',-1)->where('companySystemID',$input['selectedCompanyId'])->whereHas('employee',function($q) use($input){
-                            $q->where('empCompanySystemID','!=',$input['selectedCompanyId']);
-                        });
-                    });
-            }); });
-
-        if(isset($input['isFromEmployeeLedger']) && $input['isFromEmployeeLedger']==1){
-            $output = $output->get();
+        $companyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
         } else {
-            $output = $output->where('discharegedYN', 0)->get();
+            $childCompanies = [$companyId];
+        }
+
+        $output = Employee::leftJoin('erp_bookinvsuppmaster', function ($join) use ($childCompanies){
+                $join->on('employees.employeeSystemID', '=', 'erp_bookinvsuppmaster.employeeID')
+                     ->where('erp_bookinvsuppmaster.documentType', 4)
+                     ->where('erp_bookinvsuppmaster.approved', -1)
+                     ->whereIn('erp_bookinvsuppmaster.companySystemID', $childCompanies);
+            })
+            ->leftJoin('erp_paysupplierinvoicemaster', function ($join) use ($childCompanies){
+                $join->on('employees.employeeSystemID', '=', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
+                     ->where('erp_paysupplierinvoicemaster.invoiceType', 7)
+                     ->where('erp_paysupplierinvoicemaster.approved', -1)
+                     ->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
+            })
+            ->where(function ($query) {
+                $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
+                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID');
+            })
+            ->groupBy('employees.employeeSystemID');
+
+        if(isset($input['isFromEmployeeLedger']) && $input['isFromEmployeeLedger'] == 1){
+            if (array_key_exists('search', $input)) {
+                $search = $input['search'];
+                $output = $output->where(function ($query) use ($search) {
+                    $query->where('employees.empName', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $output = $output->select(['employees.employeeSystemID','employees.empName'])->take(20)->get();
+        } else {
+            $output = $output->where('employees.discharegedYN', 0)->get();
         }
         
 
