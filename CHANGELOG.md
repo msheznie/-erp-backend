@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.40.4](https://github.com/pbsgears/Gears_BackEnd/compare/v10.40.3...v10.40.4) (2024-05-25)
+
+
+### Bug Fixes
+
+* **general ledger:** employee ledger loading issue [GCP-3511] ([#6197](https://github.com/pbsgears/Gears_BackEnd/issues/6197)) ([2187d37](https://github.com/pbsgears/Gears_BackEnd/commit/2187d37df9d70d11aa8ae14bb169d2f5639270b1))
+
 ## [10.40.3](https://github.com/pbsgears/Gears_BackEnd/compare/v10.40.2...v10.40.3) (2024-05-19)
 
 
