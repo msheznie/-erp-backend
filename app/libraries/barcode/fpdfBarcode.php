@@ -265,9 +265,10 @@ function Barcode($x, $y, $barcode, $h, $w, $fSize, $len,$bool,$price,$name)
     
 }
 
-function Code128($assetData,$fSize) {
+function Code128($assetData,$fSize,$template,$logo,$name) {
     $code = $assetData->faCode;
     $companyCode = $assetData->companyID;
+    $assetDescription = $assetData->assetDescription;
     /*$segment = $assetData->serviceLineCode ? $assetData->serviceLineCode : '';
     $location = $assetData->location ? '/'.$assetData->location->locationName : '';*/
 
@@ -287,11 +288,47 @@ function Code128($assetData,$fSize) {
         $Cguid .= ((strpos($this->Cset,$needle)===false) ? "N" : "O");
     }
 
-           //Display Company Code
             $a = 4;
             $b = -6.5;
+
+            if($template == 2)
+            {
+                 $a2 = 15;
+                 $b2 = -10;
+                 $this->SetFont('Arial', '', 10);
+                 $this->Text($a, $b+$h+4, $assetDescription);
+        
+        
+             
+                 $a1 = 3;  // x coordinate
+                 $b1 = -9.0;  // y coordinate
+                if($logo != null)
+                {
+                    $this->Image($logo,  $a1, $b1, 10);
+                    if (file_exists($logo)) {
+                        if (unlink($logo)) {
+                        } 
+                    };
+                }
+                $a3 = 15;
+                $b3 = -15;
+
+                $this->SetFont('Arial', '', 10);
+                $this->Text($a3, $b3+$h+4, $name);
+        
+            }
+            else
+            {
+                $a2 = 5;
+                $b2 = -6.5;
+            }
+            
+           //Display Company Code
             $this->SetFont('Arial', '', 10);
-            $this->Text($a, $b+$h+4, $companyCode);
+            $this->Text($a2, $b2+$h+4, $companyCode);
+
+
+
 
            //Display Segment/Location
             /*$a = 4;
@@ -403,14 +440,16 @@ function Transform($tm) {
     $this->_out(sprintf('%.3F %.3F %.3F %.3F %.3F %.3F cm', $tm[0], $tm[1], $tm[2], $tm[3], $tm[4], $tm[5]));
 }
 
-function Code39($assetData, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide = true) {
+function Code39($assetData, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide = true,$template,$logo,$name) {
     $h = 6.4;
     $code = $assetData->faCode;
     $companyCode = $assetData->companyID;
+    $assetDescription = $assetData->assetDescription;
     /*$segment = $assetData->serviceLineCode ? $assetData->serviceLineCode : '';
     $location = $assetData->location ? '/'.$assetData->location->locationName : '';*/
 
     //Display code
+    
 
     $x = 4;
     $y = 5;
@@ -423,9 +462,43 @@ function Code39($assetData, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide 
     //Display Company Code
     $a = 5;
     $b = -6.5;
-    $this->SetFont('Arial', '', 10);
-    $this->Text($a, $b+$h+4, $companyCode);
+    // $this->SetFont('Arial', '', 10);
+    // $this->Text($a, $b+$h+4, $companyCode);
 
+    if($template == 2)
+    {
+         $a2 = 15;
+         $b2 = -10;
+         $this->SetFont('Arial', '', 10);
+         $this->Text($a, $b+$h+4, $assetDescription);
+
+
+     
+         $a1 = 3;  // x coordinate
+         $b1 = -9.0;  // y coordinate
+        if($logo != null)
+        {
+            $this->Image($logo,  $a1, $b1, 10);
+            if (file_exists($logo)) {
+                if (unlink($logo)) {
+                } 
+            };
+        }
+
+        $a3 = 15;
+        $b3 = -15;
+        
+        $this->SetFont('Arial', '', 10);
+        $this->Text($a3, $b3+$h+4, $name);
+
+    }
+    else
+    {
+        $a2 = 5;
+        $b2 = -6.5;
+    }
+    $this->SetFont('Arial', '', 10);
+    $this->Text($a2, $b2+$h+4, $companyCode);
     //Display Segment/Location
     /*$c = 5;
     $d = 8;

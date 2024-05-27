@@ -19,6 +19,7 @@ include_once(app_path().'/libraries/barcode/fpdfBarcode.php') ;
 use DNS1D;
 use App\Models\FixedAssetMaster;
 use DNS2D;
+use Illuminate\Support\Facades\Storage;
 /**
  * Class BarcodeConfigurationController
  * @package App\Http\Controllers\API
@@ -386,6 +387,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
         $input = $request->all();
 
         $selectedCompanyId = $request['companyID'];
+        $template = $request['template'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
@@ -396,7 +398,10 @@ class BarcodeConfigurationAPIController extends AppBaseController
         }
 
         $configuration = BarcodeConfiguration::where('companySystemID',$subCompanies[0])->first();
-
+        $company = Company::find($subCompanies[0]);
+       
+        $logo = $company->logo_url && $company->logo_url != null?$company->logo_url:null;
+        $companyArabicName = $company->CompanyNameLocalized;
         $type = $request->get('type');
 
         $pageSizes = array(
@@ -476,13 +481,26 @@ class BarcodeConfigurationAPIController extends AppBaseController
             }
        
             $bold = $request['bold'] ? 'B' : '';
+            $temp_png = null;
+            if($logo != null)
+            {
+                $imageContent = file_get_contents($logo);
+                $fileName = 'companyLogo.jpg';
+                $filePath = 'public/images/' . $fileName;
+            
+                Storage::put($filePath, $imageContent);
+                $temp_png = storage_path('app/' . $filePath);
+            }
+ 
 
+            
             if($page == "A4") {
                 if($font == 'Code 39') {
+                    
                     $barcodesCountPage = 0;
                     $maxBarcodesPerPage = 21;
                     $maxBarcodesPerRow = 3;
-                    $marginTop = 7;
+                    $marginTop = $template == 1?5:10;
                     $marginLeft = 7;
                     $barcodeWidth = 58;
                     $barcodeHeight = 40;
@@ -504,7 +522,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                         $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
                         //$pdf->Code128($val,10);
                         //$pdf->Code39($val, true, false, 0.2, 10, true);
-                        $pdf->Code39($val, true, false, 0.12, 25, true);
+                        $pdf->Code39($val, true, false, 0.12, 25, true,$template,$temp_png,$companyArabicName);
                         $pdf->StopTransform();
                         $barcodesCountPage++;
                         $barcodesCountTotal++;
@@ -516,7 +534,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $barcodesCountPage = 0;
                     $maxBarcodesPerPage = 24;
                     $maxBarcodesPerRow = 3;
-                    $marginTop = 7;
+                    $marginTop = $template == 1?7:10;
                     $marginLeft = 7;
                     $barcodeWidth = 67;
                     $barcodeHeight = 35;
@@ -535,7 +553,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                         $column = $barcodesCountPage % $maxBarcodesPerRow;
                         $pdf->StartTransform();
                         $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
-                        $pdf->Code128($val,10);
+                        $pdf->Code128($val,10,$template,$temp_png,$companyArabicName);
                         $pdf->StopTransform();
                         $barcodesCountPage++;
                         $barcodesCountTotal++;
@@ -550,7 +568,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $barcodesCountPage = 0;
                     $maxBarcodesPerPage = 50;
                     $maxBarcodesPerRow = 5;
-                    $marginTop = 7;
+                    $marginTop = $template == 1?5:10;
                     $marginLeft = 4;
                     $barcodeWidth = 58;
                     $barcodeHeight = 40;
@@ -570,7 +588,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                         $pdf->StartTransform();
                         $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
                         //$pdf->Code39($val, true, false, 0.3, 10, true);
-                        $pdf->Code39($val, true, false, 0.12, 25, true);
+                        $pdf->Code39($val, true, false, 0.12, 25, true,$template,$temp_png,$companyArabicName);
                         $pdf->StopTransform();
                         $barcodesCountPage++;
                         $barcodesCountTotal++;
@@ -582,7 +600,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $barcodesCountPage = 0;
                     $maxBarcodesPerPage = 40;
                     $maxBarcodesPerRow = 4;
-                    $marginTop = 7;
+                    $marginTop = $template == 1?7:10;
                     $marginLeft = 3;
                     $barcodeWidth = 75;
                     $barcodeHeight = 40;
@@ -602,7 +620,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
                         $pdf->StartTransform();
                         $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
-                        $pdf->Code128($val,10);
+                        $pdf->Code128($val,10,$template,$temp_png,$companyArabicName);
                         $pdf->StopTransform();
                         $barcodesCountPage++;
                         $barcodesCountTotal++;
@@ -617,7 +635,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $barcodesCountPage = 0;
                     $maxBarcodesPerPage = 1;
                     $maxBarcodesPerRow = 1;
-                    $marginTop = 0;
+                    $marginTop = $template == 1?0.5:10;
                     $marginLeft = 0.5;
                     $barcodeWidth = 0.1;
                     $barcodeHeight = 35;
@@ -627,7 +645,8 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $page_height = 45;
     
                     $pdf = new \PDF_BARCODE('L', 'mm', [$page_width,$page_height]);
-    
+                    
+                    $pdf->AddFont('Amiri', '', 'Amiri-Regular.php');
                     foreach($assets as $key => $val) {
                         if ($barcodesCountPage % $maxBarcodesPerPage == 0) {
                             $barcodesCountPage = 0;
@@ -640,7 +659,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                         $pdf->StartTransform();
                         $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
                         //$pdf->Code128($val,10);
-                        $pdf->Code39($val, true, false, 0.115, 25, true);
+                        $pdf->Code39($val, true, false, 0.115, 25, true,$template,$temp_png,$companyArabicName);
                         $pdf->StopTransform();
                         $barcodesCountPage++;
                         $barcodesCountTotal++;
@@ -652,7 +671,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $barcodesCountPage = 0;
                     $maxBarcodesPerPage = 1;
                     $maxBarcodesPerRow = 1;
-                    $marginTop = 0.5;
+                    $marginTop = $template == 1?0.5:10;
                     $marginLeft = 0.5;
                     $barcodeWidth = 95;
                     $barcodeHeight = 35;
@@ -673,7 +692,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
                         $pdf->StartTransform();
                         $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
-                        $pdf->Code128($val,10);
+                        $pdf->Code128($val,10,$template,$temp_png,$companyArabicName);
                         $pdf->StopTransform();
                         $barcodesCountPage++;
                         $barcodesCountTotal++;
