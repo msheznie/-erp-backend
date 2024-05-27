@@ -146,7 +146,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')
                                             ->whereHas('master',function($q) use($supplierGroupsIds)
                                             {
-                                                $q->whereIN('supplier_group_id', $supplierGroupsIds)->select(['supplierName','supplierCodeSytem','primarySupplierCode']);
+                                                $q->whereIN('supplier_group_id', $supplierGroupsIds);
                                             })
                                             ->select(['supplierName','supplierCodeSytem','primarySupplierCode'])
                                             ->get();
@@ -5975,7 +5975,7 @@ ORDER BY
     public function generateAPReportBulkPDF(Request $request)
     {
         $reportID = $request->reportID;
-        $db = isset($request->db) ? $request->db : "qa_new";
+        $db = isset($request->db) ? $request->db : "";
         $employeeID = \Helper::getEmployeeSystemID();
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
         AccountsPayableReportJob::dispatch($db, $request, [$employeeID]);
