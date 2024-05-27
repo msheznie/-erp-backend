@@ -1410,8 +1410,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input['serialNumber'] = $lastSerialNumber;
 
-
-        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        $serviceLineSystemID = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : null;
+        $segment = SegmentMaster::where('serviceLineSystemID', $serviceLineSystemID)->first();
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
