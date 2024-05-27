@@ -41,6 +41,7 @@ use App\helper\CreateExcel;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\DocumentAttachments\SupplierStatementJob;
+use App\Jobs\Report\AccountsPayableReportJob;
 use App\Models\AccountsPayableLedger;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
@@ -145,8 +146,9 @@ class AccountsPayableReportAPIController extends AppBaseController
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')
                                             ->whereHas('master',function($q) use($supplierGroupsIds)
                                             {
-                                                $q->whereIN('supplier_group_id', $supplierGroupsIds);
-                                            })                    
+                                                $q->whereIN('supplier_group_id', $supplierGroupsIds)->select(['supplierName','supplierCodeSytem','primarySupplierCode']);
+                                            })
+                                            ->select(['supplierName','supplierCodeSytem','primarySupplierCode'])
                                             ->get();
 
             $employeeMaster = DB::table('employees')
@@ -5940,8 +5942,12 @@ ORDER BY
     public function pdfExportReport(Request $request)
     {
         $reportID = $request->reportID;
+
+
         switch ($reportID) {
             case 'APSS':
+
+
                 if ($request->reportTypeID == 'SS') {
 
                     $html = $this->supplierStatementPdf($request->all())['html'];
@@ -5963,6 +5969,17 @@ ORDER BY
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+
+    public function generateAPReportBulkPDF(Request $request)
+    {
+        $reportID = $request->reportID;
+        $db = isset($request->db) ? $request->db : "qa_new";
+        $employeeID = \Helper::getEmployeeSystemID();
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        AccountsPayableReportJob::dispatch($db, $request, [$employeeID]);
+        return $this->sendResponse([], "Supplier statement PDF report has been sent to queue");
     }
 
     public function supplierStatementDetailsPdf($request, $sentEmail = false)
