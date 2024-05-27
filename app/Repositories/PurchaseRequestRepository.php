@@ -171,7 +171,7 @@ class PurchaseRequestRepository extends BaseRepository
         }
 
         
-        if (isset($request['isFromPortal']) && $request['isFromPortal']) {
+        if (isset($request['fromPortal']) && $request['fromPortal']) {
             $purchaseRequests = $purchaseRequests->where('createdUserSystemID', $request['createdUserSystemID']);
             $purchaseRequests = $purchaseRequests->whereNotIn('purchaseRequestID', function($query) {
                     $query->select('purcahseRequestID')->from('erp_pulled_from_mr');

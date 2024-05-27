@@ -2514,6 +2514,10 @@ class PurchaseRequestAPIController extends AppBaseController
     public function printPurchaseRequest(Request $request)
     {
         $id = $request->get('id');
+
+        $isFromPortal = $request->get('isFromPortal', 0);
+
+
         /** @var PurchaseRequest $purchaseRequest */
         
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','segment','requestedby',
@@ -2536,6 +2540,11 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest['allowAltUom'] = ($checkAltUOM) ? $checkAltUOM->isYesNO : false;
 
         $array = array('request' => $purchaseRequest);
+
+        if($isFromPortal){
+            return $this->sendResponse($array, 'Purchase Request print data');
+        }
+
         $time = strtotime("now");
         $fileName = 'purchase_request_' . $id . '_' . $time . '.pdf';
 
