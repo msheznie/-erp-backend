@@ -430,6 +430,9 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 $assets = FixedAssetMaster::with('location')->orderBy('faID', 'desc')->ofCompany($subCompanies)->get();
             }
             else {
+                if (array_key_exists('createdBy', $input)) {
+                    $createdBy = ($input['createdBy']);
+                }
                 $input = $this->convertArrayToValue($input);
 
                 $search = $request->get('search_val');
@@ -465,6 +468,21 @@ class BarcodeConfigurationAPIController extends AppBaseController
                         $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
                     }
                 }
+                if (array_key_exists('assetTypeID', $input)) {
+                    if ($input['assetTypeID']) {
+                        $assetCositng->where('assetType', $input['assetTypeID']);
+                    }
+                } 
+
+                if (array_key_exists('createdBy', $input)) {
+                    if($input['createdBy'] && !is_null($input['createdBy']))
+                    {
+
+                        $createdBy = collect($createdBy)->pluck('id')->toArray();
+                        $assetCositng->whereIn('createdUserSystemID', $createdBy);
+                    }
+        
+                }
     
                 if ($search) {
                     $search = str_replace("\\", "\\\\", $search);
@@ -478,7 +496,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
                 $assets = $assetCositng->orderBy('faID', 'desc')->get();
             }
-       
+
             $bold = $request['bold'] ? 'B' : '';
             $temp_png = null;
             if($logo != null)
@@ -495,25 +513,28 @@ class BarcodeConfigurationAPIController extends AppBaseController
             
                 $barcodesCountPage = 0;
                 if($page == "A4") {
-                    $maxBarcodesPerPage = 39;
+                    $maxBarcodesPerPage = 24;
                     $columnSpacing = 6.5; 
                     $marginLeft = 7;
                     $barcodeWidth = 45;
+                    $maxBarcodesPerRow = 4; 
                 }
                 else if($page == "A3") {
-                    $maxBarcodesPerPage = 62;
+                    $maxBarcodesPerPage = 54;
                     $columnSpacing = 3.8; 
                     $marginLeft = 7;
                     $barcodeWidth = 45;
+                    $maxBarcodesPerRow = 6; 
                 }
                 else if($page == "Custom Size") {
                     $maxBarcodesPerPage = 1;
                     $columnSpacing = 3.5; 
                     $marginLeft = 4;
                     $barcodeWidth = 41;
+                    $maxBarcodesPerRow = 1; 
                 }
                
-                $maxBarcodesPerRow = 7; 
+               
                 $marginTop = 5;
                 $barcodeHeight = 20;
                 $rowHeight = 45;
