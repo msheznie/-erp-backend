@@ -384,4 +384,5 @@ class Employee extends Model
     {
         return $this->hasMany('App\Models\CustomerReceivePayment','createdUserSystemID','employeeSystemID');;
     }
+    
 }
