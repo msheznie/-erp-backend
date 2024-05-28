@@ -372,34 +372,41 @@ class SupplierInvoiceGlService
 
                 $exemptVatDetails = TaxService::processSIExemptVatItemInvoice($masterModel["autoID"]);
 
-
                 foreach ($exemptVatDetails as $val) {
                     if($val->recordType == 1) {
                         $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $val['expenseGL'])->where('companySystemID', $masterData->companySystemID)->first();
-                        $data['chartOfAccountSystemID'] = $val['expenseGL'];
-                        $data['glCode'] = $chartOfAccountData->AccountCode;
-                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['documentTransAmount'] = $val['VATAmount'];
-                        $data['documentLocalAmount'] = $val['VATAmountLocal'];
-                        $data['documentRptAmount'] = $val['VATAmountRpt'];
-                        $data['timestamp'] = \Helper::currentDateTime();
-                        array_push($finalData, $data);
-
-                    } else {
-                        if($val->exempt_vat_portion > 0 && $val->subCatgeoryType == 1){
-                            $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->first();
-                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
-                            $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
+                        if (!empty($chartOfAccountData)) {
+                            $data['chartOfAccountSystemID'] = $val['expenseGL'];
                             $data['glCode'] = $chartOfAccountData->AccountCode;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                            $data['documentTransAmount'] = $val['VATAmount'] * $val['exempt_vat_portion'] / 100;
-                            $data['documentLocalAmount'] = $val['VATAmountLocal'] * $val['exempt_vat_portion'] / 100;
-                            $data['documentRptAmount'] = $val['VATAmountRpt'] * $val['exempt_vat_portion'] / 100;
+                            $data['documentTransAmount'] = $val['VATAmount'];
+                            $data['documentLocalAmount'] = $val['VATAmountLocal'];
+                            $data['documentRptAmount'] = $val['VATAmountRpt'];
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
-
+                        }   else {
+                        Log::info('Supplier Invoice Exempt VAT Expense GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                        Log::info('Expense GL Account not assigned to company' . date('H:i:s'));
+                        }
+                    } else {
+                        if($val->exempt_vat_portion > 0 && $val->subCatgeoryType == 1){
+                            $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
+                            if (!empty($chartOfAccountData)) {
+                                $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
+                                $data['glCode'] = $chartOfAccountData->AccountCode;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                $data['documentTransAmount'] = $val['VATAmount'] * $val['exempt_vat_portion'] / 100;
+                                $data['documentLocalAmount'] = $val['VATAmountLocal'] * $val['exempt_vat_portion'] / 100;
+                                $data['documentRptAmount'] = $val['VATAmountRpt'] * $val['exempt_vat_portion'] / 100;
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                array_push($finalData, $data);
+                            } else {
+                                Log::info('Supplier Invoice Exempt VAT Expense GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                Log::info('Expense GL Account not assigned to company' . date('H:i:s'));
+                            }
                         }
                     }
                 }
@@ -526,30 +533,40 @@ class SupplierInvoiceGlService
                 foreach ($exemptDIVatDetails as $val) {
                     if($val->recordType == 1) {
                         $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $val['expenseGL'])->where('companySystemID', $masterData->companySystemID)->first();
-                        $data['chartOfAccountSystemID'] = $val['expenseGL'];
-                        $data['glCode'] = $chartOfAccountData->AccountCode;
-                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['documentTransAmount'] = $val['VATAmount'];
-                        $data['documentLocalAmount'] = $val['VATAmountLocal'];
-                        $data['documentRptAmount'] = $val['VATAmountRpt'];
-                        $data['timestamp'] = \Helper::currentDateTime();
-                        array_push($finalData, $data);
-
-                    } else {
-                        if($val->exempt_vat_portion > 0 && $val->subCatgeoryType == 1){
-                            $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->first();
-                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
-                            $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
+                        if (!empty($chartOfAccountData)) {
+                            $data['chartOfAccountSystemID'] = $val['expenseGL'];
                             $data['glCode'] = $chartOfAccountData->AccountCode;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                            $data['documentTransAmount'] = $val['VATAmount'] * $val['exempt_vat_portion'] / 100;
-                            $data['documentLocalAmount'] = $val['VATAmountLocal'] * $val['exempt_vat_portion'] / 100;
-                            $data['documentRptAmount'] = $val['VATAmountRpt'] * $val['exempt_vat_portion'] / 100;
+                            $data['documentTransAmount'] = $val['VATAmount'];
+                            $data['documentLocalAmount'] = $val['VATAmountLocal'];
+                            $data['documentRptAmount'] = $val['VATAmountRpt'];
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
-
+                        }
+                        else {
+                            Log::info('Supplier Invoice Exempt VAT Expense GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                            Log::info('Expense GL Account not assigned to company' . date('H:i:s'));
+                        }
+                    } else {
+                        if($val->exempt_vat_portion > 0 && $val->subCatgeoryType == 1){
+                            $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
+                            if (!empty($chartOfAccountData)) {
+                                $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
+                                $data['glCode'] = $chartOfAccountData->AccountCode;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                $data['documentTransAmount'] = $val['VATAmount'] * $val['exempt_vat_portion'] / 100;
+                                $data['documentLocalAmount'] = $val['VATAmountLocal'] * $val['exempt_vat_portion'] / 100;
+                                $data['documentRptAmount'] = $val['VATAmountRpt'] * $val['exempt_vat_portion'] / 100;
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                array_push($finalData, $data);
+                            }
+                            else {
+                                Log::info('Supplier Invoice Exempt VAT Expense GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                Log::info('Expense GL Account not assigned to company' . date('H:i:s'));
+                            }
                         }
                     }
                 }
