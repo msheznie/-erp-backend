@@ -313,9 +313,16 @@ class TaxAPIController extends AppBaseController
         }
 
         if($taxCategory == 3){
-            $isTaxExists = Tax::where('companySystemID',$input['companySystemID'])->where('taxDescription',$input['taxDescription'])->exists();
+            $isTaxExists = Tax::where('companySystemID',$input['companySystemID'])->where('taxMasterAutoID', '!=' , $id)->where('taxDescription',$input['taxDescription'])->exists();
             if($isTaxExists){
                 return $this->sendError('Tax description already exists', 500);
+            }
+
+            if ($input['isActive'] == 0){
+                $isPullSupplier = SupplierMaster::where('primaryCompanySystemID',$tax->companySystemID)->where('whtType',$id)->exists();
+                if($isPullSupplier){
+                    return $this->sendError('Tax already use in supplier master. Cannot Inactive');
+                }
             }
 
             if(($input['isDefault'] == 1) && ($input['isActive'] == 0)){
@@ -384,6 +391,13 @@ class TaxAPIController extends AppBaseController
 
         if (empty($tax)) {
             return $this->sendError('VAT not found');
+        }
+
+        if($tax->taxCategory == 3){
+            $isPullSupplier = SupplierMaster::where('primaryCompanySystemID',$tax->companySystemID)->where('whtType',$id)->exists();
+            if($isPullSupplier){
+                return $this->sendError('Tax already use in supplier master. Cannot Delete');
+            }
         }
 
         $isAssigned = Tax::where('taxMasterAutoID',$id)->whereHas('formula_detail')->exists();

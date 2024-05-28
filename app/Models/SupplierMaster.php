@@ -167,7 +167,9 @@ class SupplierMaster extends Model
         'last_activity',
         'advanceAccountSystemID',
         'AdvanceAccount',
-        'omanization'
+        'omanization',
+        'whtApplicableYN',
+        'whtType'
     ];
 
     /**
@@ -249,7 +251,9 @@ class SupplierMaster extends Model
         'createdFrom' => 'integer',
         'supplier_category_id'  => 'integer',
         'supplier_group_id'  => 'integer',
-        'omanization' => 'float'
+        'omanization' => 'float',
+        'whtApplicableYN' => 'integer',
+        'whtType' => 'integer'
     ];
 
     /**

@@ -35,6 +35,7 @@ use App\Models\SupplierMaster;
 use App\Models\suppliernature;
 use App\Models\SupplierContactType;
 use App\Models\SystemGlCodeScenarioDetail;
+use App\Models\Tax;
 use App\Models\YesNoSelection;
 use App\Models\SupplierCritical;
 use App\Models\SupplierType;
@@ -214,6 +215,7 @@ class CompanyAPIController extends AppBaseController
             ->orderBy('AccountDescription', 'asc')
             ->get();
 
+        $whtTypes = Tax::where('companySystemID',$selectedCompanyId)->where('taxCategory',3)->where('isActive',1)->get();
 
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,
@@ -237,8 +239,10 @@ class CompanyAPIController extends AppBaseController
             'isGroup' => $isGroup,
             'hasSupplierGeneratePolicy'=> $hasSupplierGeneratePolicy,
             'discountsChartOfAccounts' => $discountsChartOfAccounts,
-            'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccountCOA
-            );
+            'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccountCOA,
+            'whtTypes' => $whtTypes
+        );
+
         return $this->sendResponse($output, 'Record retrieved successfully');
 
     }
