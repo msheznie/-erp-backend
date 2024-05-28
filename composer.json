@@ -32,6 +32,7 @@
         "seguce92/laravel-dompdf": "^2.1",
         "sentry/sentry-laravel": "^1.8",
         "simplesoftwareio/simple-qrcode": "^4.2",
+        "tecnickcom/tcpdf": "^6.7",
         "webpatser/laravel-uuid": "^4.0",
         "yajra/laravel-datatables-oracle": "^8.4"
     },

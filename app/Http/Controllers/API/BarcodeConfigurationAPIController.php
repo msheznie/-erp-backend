@@ -14,12 +14,11 @@ use Response;
 use App\helper\Helper;
 use App\Scopes\ActiveScope;
 use App\Models\Company;
-include_once(app_path().'/libraries/barcode/fpdfBarcode.php') ;
-//require_once('../../../../lib/fpdfBarcode.php');
 use DNS1D;
 use App\Models\FixedAssetMaster;
 use DNS2D;
 use Illuminate\Support\Facades\Storage;
+use TCPDF;
 /**
  * Class BarcodeConfigurationController
  * @package App\Http\Controllers\API
@@ -492,215 +491,136 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 $temp_png = storage_path('app/' . $filePath);
             }
  
-
+               $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
             
-            if($page == "A4") {
-                if($font == 'Code 39') {
-                    
-                    $barcodesCountPage = 0;
-                    $maxBarcodesPerPage = 21;
-                    $maxBarcodesPerRow = 3;
-                    $marginTop = $template == 1?5:10;
+                $barcodesCountPage = 0;
+                if($page == "A4") {
+                    $maxBarcodesPerPage = 39;
+                    $columnSpacing = 6.5; 
                     $marginLeft = 7;
-                    $barcodeWidth = 58;
-                    $barcodeHeight = 40;
-                    $barcodesCountTotal = 0;
-                    $column = 0;
-    
-                    $pdf = new \PDF_BARCODE('P', 'mm', $page);
-    
-                    foreach($assets as $key => $val) {
-                        if ($barcodesCountPage % $maxBarcodesPerPage == 0) {
-                            $barcodesCountPage = 0;
-                            $pdf->AddPage();
-                        }
-
-                        $row = intval($barcodesCountPage / $maxBarcodesPerRow);
-                        $column = $barcodesCountPage % $maxBarcodesPerRow;
-            
-                        $pdf->StartTransform();
-                        $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
-                        //$pdf->Code128($val,10);
-                        //$pdf->Code39($val, true, false, 0.2, 10, true);
-                        $pdf->Code39($val, true, false, 0.12, 25, true,$template,$temp_png,$companyArabicName);
-                        $pdf->StopTransform();
-                        $barcodesCountPage++;
-                        $barcodesCountTotal++;
-                    }
-
-                    $pdf->Output();
+                    $barcodeWidth = 45;
                 }
-                elseif ($font == 'Code 128') {
-                    $barcodesCountPage = 0;
-                    $maxBarcodesPerPage = 24;
-                    $maxBarcodesPerRow = 3;
-                    $marginTop = $template == 1?7:10;
+                else if($page == "A3") {
+                    $maxBarcodesPerPage = 62;
+                    $columnSpacing = 3.8; 
                     $marginLeft = 7;
-                    $barcodeWidth = 67;
-                    $barcodeHeight = 35;
-                    $barcodesCountTotal = 0;
-                    $column = 0;
-    
-                    $pdf = new \PDF_BARCODE('P', 'mm', $page);
-    
-                    foreach($assets as $key => $val) {
-                        if ($barcodesCountPage % $maxBarcodesPerPage == 0) {
-                            $barcodesCountPage = 0;
-                            $pdf->AddPage();
-                        }
-
-                        $row = intval($barcodesCountPage / $maxBarcodesPerRow);
-                        $column = $barcodesCountPage % $maxBarcodesPerRow;
-                        $pdf->StartTransform();
-                        $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
-                        $pdf->Code128($val,10,$template,$temp_png,$companyArabicName);
-                        $pdf->StopTransform();
-                        $barcodesCountPage++;
-                        $barcodesCountTotal++;
-                    }
-
-                    $pdf->Output();
+                    $barcodeWidth = 45;
                 }
-            }
-
-            if($page == "A3") {
-                if($font == 'Code 39') {
-                    $barcodesCountPage = 0;
-                    $maxBarcodesPerPage = 50;
-                    $maxBarcodesPerRow = 5;
-                    $marginTop = $template == 1?5:10;
+                else if($page == "Custom Size") {
+                    $maxBarcodesPerPage = 1;
+                    $columnSpacing = 3.5; 
                     $marginLeft = 4;
-                    $barcodeWidth = 58;
-                    $barcodeHeight = 40;
-                    $barcodesCountTotal = 0;
-                    $column = 0;
-     
-                    $pdf = new \PDF_BARCODE('P', 'mm', $page);
-
-                    foreach($assets as $key => $val) {
-                        if ($barcodesCountPage % $maxBarcodesPerPage == 0) {
-                            $barcodesCountPage = 0;
-                            $pdf->AddPage();
-                        }
-                        $row = intval($barcodesCountPage / $maxBarcodesPerRow);
-                        $column = $barcodesCountPage % $maxBarcodesPerRow;
-
-                        $pdf->StartTransform();
-                        $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
-                        //$pdf->Code39($val, true, false, 0.3, 10, true);
-                        $pdf->Code39($val, true, false, 0.12, 25, true,$template,$temp_png,$companyArabicName);
-                        $pdf->StopTransform();
-                        $barcodesCountPage++;
-                        $barcodesCountTotal++;
-                    }
-
-                    $pdf->Output();
+                    $barcodeWidth = 41;
                 }
-                elseif ($font == 'Code 128') {
-                    $barcodesCountPage = 0;
-                    $maxBarcodesPerPage = 40;
-                    $maxBarcodesPerRow = 4;
-                    $marginTop = $template == 1?7:10;
-                    $marginLeft = 3;
-                    $barcodeWidth = 75;
-                    $barcodeHeight = 40;
-                    $barcodesCountTotal = 0;
-                    $column = 0;
-    
-                    $pdf = new \PDF_BARCODE('P', 'mm', $page);
-    
-                    foreach($assets as $key => $val) {
+               
+                $maxBarcodesPerRow = 7; 
+                $marginTop = 5;
+                $barcodeHeight = 20;
+                $rowHeight = 45;
+                $row = 0;
+                $column = 0;
+        
+               
+                
+                $pdf->setPrintHeader(false);
+                $pdf->setPrintFooter(false);
+        
+                $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+        
+                $pdf->SetMargins($marginLeft, $marginTop, $marginLeft, true);
+                $pdf->SetHeaderMargin(10);
+                $pdf->SetFooterMargin(10);
+        
+                $pdf->SetAutoPageBreak(true, 5);
+        
+                $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+        
+                $pdf->AddFont('aealarabiya', '', 'aealarabiya.php');
+        
+                $style = array(
+                    'position' => '',
+                    'align' => 'C',
+                    'stretch' => false,
+                    'fitwidth' => true,
+                    'cellfitalign' => '',
+                    'border' => true,
+                    'hpadding' => 'auto',
+                    'vpadding' => 'auto',
+                    'fgcolor' => array(0,0,0),
+                    'bgcolor' => false,
+                    'text' => true,
+                    'font' => 'helvetica',
+                    'fontsize' => 8,
+                    'stretchtext' => 4
+                );
+            
+                    foreach ($assets as $key => $val) {
                         if ($barcodesCountPage % $maxBarcodesPerPage == 0) {
+                            if($page == "A4") {
+                                $pdf->AddPage('P', 'A4');
+                            }
+                            else if($page == "A3") {
+                                $pdf->AddPage('P', 'A3');
+                            }
+                            else if($page == "Custom Size") {
+                                $pdf->AddPage('P', array(55, 45));
+                            }
+                            
                             $barcodesCountPage = 0;
-                            $pdf->AddPage();
+                            $row = 0;
+                            $column = 0;
                         }
+            
+                        $x = $marginLeft + ($column * ($barcodeWidth + $columnSpacing));
+                        $y = $marginTop + ($row * $rowHeight);
+                        if($template == 2)
+                        {
+                            $imageHeight = 10; 
+                            $pdf->Image($temp_png, $x-3, $y, 10, $imageHeight, 'JPG', '', 'T', true, 300, '', false, false, 0, false, false, false);
+                            if (file_exists($temp_png)) {
+                                if (unlink($temp_png)) {
+                                } 
+                            };
+                            $pdf->SetFont('aealarabiya', '', 8);
+                            $pdf->SetXY($x + 7, $y);
+                            $pdf->Write(0, $companyArabicName, '', 0, 'L', true, 0, false, false, 0);
 
-                        $row = intval($barcodesCountPage / $maxBarcodesPerRow);
-                        $column = $barcodesCountPage % $maxBarcodesPerRow;
+                            
+                            $pdf->SetXY($x-3, $y + 11);
+                            $pdf->Write(0, $val->assetDescription, '', 0, 'L', true, 0, false, false, 0);
 
-                        $pdf->StartTransform();
-                        $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
-                        $pdf->Code128($val,10,$template,$temp_png,$companyArabicName);
-                        $pdf->StopTransform();
-                        $barcodesCountPage++;
-                        $barcodesCountTotal++;
-                    }
+                            
+                            $pdf->SetFont('helvetica', '', 8);
+                            $pdf->SetXY($x + 7, $y + 5);
+                            $pdf->Write(0, $val->companyID, '', 0, 'L', true, 0, false, false, 0);
 
-                    $pdf->Output();
-                }
-            }
-
-            if($page == "Custom Size") {
-                if($font == 'Code 39') {
-                    $barcodesCountPage = 0;
-                    $maxBarcodesPerPage = 1;
-                    $maxBarcodesPerRow = 1;
-                    $marginTop = $template == 1?0.5:10;
-                    $marginLeft = 0.5;
-                    $barcodeWidth = 0.1;
-                    $barcodeHeight = 35;
-                    $barcodesCountTotal = 0;
-                    $column = 0;
-                    $page_width = 55;
-                    $page_height = 45;
-    
-                    $pdf = new \PDF_BARCODE('L', 'mm', [$page_width,$page_height]);
-                    
-                    $pdf->AddFont('Amiri', '', 'Amiri-Regular.php');
-                    foreach($assets as $key => $val) {
-                        if ($barcodesCountPage % $maxBarcodesPerPage == 0) {
-                            $barcodesCountPage = 0;
-                            $pdf->AddPage();
+                       }
+                       else
+                       {
+                            $pdf->SetFont('helvetica', '', 8);
+                            $pdf->SetXY($x-2, $y+11);
+                            $pdf->Write(0, $val->companyID, '', 0, 'L', true, 0, false, false, 0);
+                       }
+            
+                        
+                        if($font == 'Code 39') {
+                            $pdf->write1DBarcode($val->faCode, 'C39E', $x-2, $y + 15, $barcodeWidth, $barcodeHeight, 0.4, $style, 'N');
                         }
-
-                        $row = intval($barcodesCountPage / $maxBarcodesPerRow);
-                        $column = $barcodesCountPage % $maxBarcodesPerRow;
-
-                        $pdf->StartTransform();
-                        $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
-                        //$pdf->Code128($val,10);
-                        $pdf->Code39($val, true, false, 0.115, 25, true,$template,$temp_png,$companyArabicName);
-                        $pdf->StopTransform();
+                        else if($font == 'Code 128') {
+                            $pdf->write1DBarcode($val->faCode, 'C128', $x-2, $y + 15, $barcodeWidth, $barcodeHeight, 0.4, $style, 'N');
+                        }
+            
                         $barcodesCountPage++;
-                        $barcodesCountTotal++;
+                        $column++;
+                        if ($column == $maxBarcodesPerRow) {
+                            $column = 0;
+                            $row++;
+                        }
                     }
             
                     $pdf->Output();
-                }
-                elseif ($font == 'Code 128') {
-                    $barcodesCountPage = 0;
-                    $maxBarcodesPerPage = 1;
-                    $maxBarcodesPerRow = 1;
-                    $marginTop = $template == 1?0.5:10;
-                    $marginLeft = 0.5;
-                    $barcodeWidth = 95;
-                    $barcodeHeight = 35;
-                    $barcodesCountTotal = 0;
-                    $column = 0;
-                    $page_width = 55;
-                    $page_height = 45;
-        
-                    $pdf = new \PDF_BARCODE('L', 'mm',  [$page_width,$page_height]);
-        
-                    foreach($assets as $key => $val) {
-                        if ($barcodesCountPage % $maxBarcodesPerPage == 0) {
-                            $barcodesCountPage = 0;
-                            $pdf->AddPage();
-                        }
-                        $row = intval($barcodesCountPage / $maxBarcodesPerRow);
-                        $column = $barcodesCountPage % $maxBarcodesPerRow;
+ 
 
-                        $pdf->StartTransform();
-                        $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
-                        $pdf->Code128($val,10,$template,$temp_png,$companyArabicName);
-                        $pdf->StopTransform();
-                        $barcodesCountPage++;
-                        $barcodesCountTotal++;
-                    }
-
-                    $pdf->Output();
-                }
-            }
         }
         else {
             return $this->sendError('Barcode Configuration not found');
