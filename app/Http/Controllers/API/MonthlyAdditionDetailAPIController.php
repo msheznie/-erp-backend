@@ -399,7 +399,6 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
 
             $expenseClaims = ExpenseClaimMaster::where('companyID', $companySystemID)
                 ->where('approvedYN', 1)
-                ->where('glCodeAssignedYN', -1)
                 ->where('addedToSalary', 0)
                 ->where('addedForPayment', 0);
                 /*->whereHas('details', function ($q) use ($monthlyAddition) {

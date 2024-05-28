@@ -931,7 +931,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 'comments'=> $detail['description'],
                 'expenseClaimMasterAutoID' => $expenseClaim->expenseClaimMasterAutoID,
                 'pettyCashYN' => $expenseClaim->pettyCashYN,
-                'chartOfAccountSystemID'=> $detail['chartOfAccountSystemID'],
+                'chartOfAccountSystemID'=> $detail->category->glAutoID,
                 'glCode' => $detail->category->glCode,
                 'glCodeDes' => $detail->category->glCodeDescription,
                 'glCodeIsBank' => 0,
