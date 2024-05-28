@@ -337,6 +337,6 @@ class HRJobInvokeAPIController extends AppBaseController
         Log::info("$msg \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
 
         AttendanceCrossDayPulling::dispatch($dispatchDb, $companyId, $attDate);
-        return $this->sendResponse(true, 'cross day clock out pulling job added to queue');
+        return $this->sendResponse(true, 'cross day clock out pulling job added to queue1');
     }
 }
