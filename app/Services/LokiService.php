@@ -80,6 +80,9 @@ class LokiService
             case 'chart_of_account_config':
                 $table = 'chart_of_account_config';
                 break;
+            case 'asset_costing':
+                $table = 'erp_fa_asset_master';
+                break;
             default:
                 $table = null;
                 break;

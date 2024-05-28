@@ -66,6 +66,7 @@ use App\Models\FixedAssetDepreciationMaster;
 use App\helper\CreateAccumulatedDepreciation;
 use App\helper\CreateExcel;
 use App\Services\ValidateDocumentAmend;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class FixedAssetMasterController
@@ -76,6 +77,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     /** @var  FixedAssetMasterRepository */
     private $fixedAssetMasterRepository;
     private $fixedAssetCostRepository;
+    use AuditLogsTrait;
 
     public function __construct(FixedAssetMasterRepository $fixedAssetMasterRepo, FixedAssetCostRepository $fixedAssetCostRepo)
     {
@@ -1098,6 +1100,19 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             }
 
+            $previosValue = $fixedAssetMaster->toArray();
+            $newValue = $input;
+            // return $newValue['dateAQ'];
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+    
+            if(isset($input['tenant_uuid']) ){
+                unset($input['tenant_uuid']);
+            }
+    
+            if(isset($input['db']) ){
+                unset($input['db']);
+            }
 
             if ($fixedAssetMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -1162,6 +1177,12 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 if($fixedAssetMaster->approved == -1)
                 UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$fixedAssetMaster->documentSystemID,$fixedAssetMaster->companySystemID,$fixedAssetMaster->faID,$employee->empName." Amend Asset Costing (".$fixedAssetMaster->faID.") itemPicture",$path,$path,'itemPicture');
+            }
+
+
+
+            if($fixedAssetMaster->approved == -1){
+                $this->auditLog($db, $input['faID'],$uuid, "erp_fa_asset_master", $previosValue['faCode']." has updated", "U", $newValue, $previosValue);
             }
 
             DB::commit();
