@@ -208,6 +208,7 @@ Route::group([],function (){
 //Supplier Statement Report
 Route::group([],function (){
     Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement')->name('Sent supplier statement');
+    Route::post('generateAPReportBulkPDF', 'AccountsPayableReportAPIController@generateAPReportBulkPDF')->name('Generate report for bulk data');
 });
 
 //Advance Payment Request

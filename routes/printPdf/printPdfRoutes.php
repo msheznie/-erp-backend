@@ -23,7 +23,6 @@ Route::group(['middleware' => 'max_memory_limit'], function () {
 });
 
 Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
-Route::post('generateAPReportBulkPDF', 'AccountsPayableReportAPIController@generateAPReportBulkPDF');
 Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
 Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
 Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');

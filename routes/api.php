@@ -926,8 +926,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         });
     });
 
-    require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
-    
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');

@@ -61,66 +61,19 @@ class AccountsPayableReportJob implements ShouldQueue
         switch ($reportTypeId) {
             case "SS":
                 $request = $this->requestData;
-                $checkIsGroup = Company::find($request->companySystemID);
-
-                $companyLogo = $checkIsGroup->logo_url;
-
                 $request->fromPath = 'pdf';
                 $output = $this->getSupplierStatementQRY($request);
-                $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
-                $grandTotal = array_sum($grandTotal);
-
-
-                $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
-                $balanceAmount = array_sum($balanceAmount);
-
-                $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
-                $decimalPlace = array_unique($decimalPlace);
                 $outputChunkData = collect($output)->chunk(50);
                 $reportCount = 1;
                 $rootPathDatandTime = strtotime(date("Y-m-d H:i:s"));
+                $root = "supplier-payable/".$rootPathDatandTime;
 
-                foreach ($outputChunkData as $key1 => $output1) {
-                    $outputArr = array();
-
-                    if ($output1) {
-                        foreach ($output1 as $val) {
-                            $outputArr[$val->concatCompany][$val->concatSupplierName][] = $val;
-                        }
-                    }
-
-
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => false);
-                    $count = $reportCount;
-
-                    $fromDate = new Carbon($request->fromDate);
-                    $fromDate = $fromDate->format('Y-m-d');
-
-                    $toDate = new Carbon($request->toDate);
-                    $toDate = $toDate->format('Y-m-d');
-
-                    $pdfReport = new PdfReport();
-                    $pdfReport->setCount(count($outputChunkData));
-                    $pdfReport->setDataArray($dataArr);
-                    $pdfReport->setViewName('print.supplier_statement');
-                    $pdfReport->setDirectoryName('supplier-payable');
-                    $pdfReport->setRootPath($rootPathDatandTime);
-                    $pdfReport->setFileName('supplier_statement');
-                    $pdfReport->setCompanyId($request->companySystemID);
-                    $pdfReport->setFromDate($fromDate);
-                    $pdfReport->setToDate($toDate);
-                    $pdfReport->setReportCount($reportCount);
-                    $pdfReport->setIsZip(true);
-
-                    $printPdfService = new PrintPDFService($pdfReport);
-                    $printPdfService->printPdfBulk();
+                foreach ($outputChunkData as $output1)
+                {
+                    GeneratePdfJob::dispatch($db,$request,$reportCount,$this->userIds,$output1,count($outputChunkData), $root);
 
                     $reportCount++;
                 }
-
-
-                $this->zipData($rootPathDatandTime,count($outputChunkData),$request);
-
 
                 break;
         }
@@ -128,57 +81,6 @@ class AccountsPayableReportJob implements ShouldQueue
 
     }
 
-
-    public function zipData($rootPathDatandTime,$outputChunkCount,$request)
-    {
-        $files = File::files(public_path('supplier-payable/'.$rootPathDatandTime));
-
-        if (count($files) == $outputChunkCount) {
-            $fromDate = new Carbon($request->fromDate);
-            $fromDate = $fromDate->format('Y-m-d');
-
-            $toDate = new Carbon($request->toDate);
-            $toDate = $toDate->format('Y-m-d');
-
-            $companyCode = isset($checkIsGroup->CompanyID)?$checkIsGroup->CompanyID:'common';
-
-
-            $zip = new ZipArchive;
-            $fileName = $companyCode.'_'.'supplier_statement('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
-            if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE)
-            {
-                foreach($files as $key => $value) {
-                    $relativeNameInZipFile = basename($value);
-                    $zip->addFile($value, $relativeNameInZipFile);
-                }
-                $zip->close();
-            }
-
-            $contents = Storage::disk('local_public')->get($fileName);
-            $zipPath = $companyCode."/accounts-payable/reports/".$fileName;
-            $fileMoved = Storage::disk('s3')->put($zipPath, $contents);
-
-            if ($fileMoved) {
-                if ($exists = Storage::disk('local_public')->exists($fileName)) {
-                    $fileDeleted = Storage::disk('local_public')->delete($fileName);
-                }
-            }
-
-            $reportTitle = "Bank Ledger Report PDF has been generated";
-
-            $webPushData = [
-                'title' => $reportTitle,
-                'body' => 'Period : '.$fromDate.' - '.$toDate,
-                'url' => "",
-                'path' => $zipPath,
-            ];
-
-            WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds);
-
-            Storage::disk('local_public')->deleteDirectory('supplier-payable');
-        }
-
-    }
 
     function getSupplierStatementQRY($request)
     {
