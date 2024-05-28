@@ -555,27 +555,31 @@ class TaxService
         return $output;
     }
 
-    public static function processGrvExemptVat($grvAutoID){
+    public static function processGrvExpense($grvAutoID){
 
-        $grvVATCategories = GRVDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID, SUM(VATAmount * noQty) as VATAmount, SUM(VATAmountLocal * noQty) as VATAmountLocal, SUM(VATAmountRpt * noQty) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
+        $grvVATCategories = GRVDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID,
+        SUM(CASE 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmount * noQty * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmount * noQty 
+            ELSE 0
+        END) as VATAmount,
+        SUM(CASE 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountLocal * noQty * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountLocal * noQty  
+            ELSE 0
+        END) as VATAmountLocal,
+        SUM(CASE 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountRpt * noQty * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountRpt * noQty  
+            ELSE 0
+        END) as VATAmountRpt,
+        exempt_vat_portion,
+        erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
             ->whereNotNull('vatSubCategoryID')
-            ->where('vatSubCategoryID', '>', 0)
             ->join('erp_tax_vat_sub_categories', 'erp_grvdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-            ->where('grvAutoID', $grvAutoID)
-            ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
-            ->get();
-
-        return $grvVATCategories;
-    }
-
-    public static function checkGrvExpense($grvDetailsID){
-
-        $grvVATCategories = GRVDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID, (VATAmount * noQty) as VATAmount, (VATAmountLocal * noQty) as VATAmountLocal, (VATAmountRpt * noQty) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
-            ->whereNotNull('vatSubCategoryID')
-            ->where('vatSubCategoryID', '>', 0)
-            ->join('erp_tax_vat_sub_categories', 'erp_grvdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-            ->where('erp_grvdetails.grvDetailsID', $grvDetailsID)
-            ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
+            ->where('erp_grvdetails.grvAutoID', $grvAutoID)
+            ->whereIn('erp_tax_vat_sub_categories.subCatgeoryType', [1,3])
+            ->groupBy('erp_grvdetails.grvAutoID')
             ->first();
 
         return $grvVATCategories;
@@ -1322,27 +1326,28 @@ class TaxService
         return $resultData;
     }
 
-    public static function processSIExemptVatItemInvoice($bookingSuppMasInvAutoID){
+    public static function processSIExpenseVatItemInvoice($autoID){
 
-        $siVATCategoryDetails = SupplierInvoiceDirectItem::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID, SUM(VATAmount * noQty) as VATAmount, SUM(VATAmountLocal * noQty) as VATAmountLocal, SUM(VATAmountRpt * noQty) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
+        $siVATCategoryDetails = SupplierInvoiceDirectItem::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID, SUM(CASE 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmount * noQty * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmount * noQty 
+            ELSE 0
+        END) as VATAmount,
+        SUM(CASE 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountLocal * noQty * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountLocal * noQty  
+            ELSE 0
+        END) as VATAmountLocal,
+        SUM(CASE 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountRpt * noQty * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountRpt * noQty  
+            ELSE 0
+        END) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
             ->whereNotNull('vatSubCategoryID')
-            ->where('vatSubCategoryID', '>', 0)
-            ->join('erp_tax_vat_sub_categories', 'supplier_invoice_items.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-            ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
-            ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
-            ->get();
-
-        return $siVATCategoryDetails;
-    }
-
-    public static function checkSIExpenseVatItemInvoice($autoID){
-
-        $siVATCategoryDetails = SupplierInvoiceDirectItem::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
-            ->whereNotNull('vatSubCategoryID')
-            ->where('vatSubCategoryID', '>', 0)
             ->join('erp_tax_vat_sub_categories', 'supplier_invoice_items.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
             ->where('bookingSuppMasInvAutoID', $autoID)
-            ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
+            ->whereIn('erp_tax_vat_sub_categories.subCatgeoryType', [1,3])
+            ->groupBy('supplier_invoice_items.bookingSuppMasInvAutoID')
             ->first();
 
         return $siVATCategoryDetails;
@@ -1350,13 +1355,28 @@ class TaxService
 
     public static function processSIExemptVatDirectInvoice($directInvoiceAutoID){
 
-        $siVATCategoryDetails = DirectInvoiceDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
+        $siVATCategoryDetails = DirectInvoiceDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, SUM(CASE 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmount * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmount 
+            ELSE 0
+        END) as VATAmount,
+        SUM(CASE 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountLocal * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountLocal  
+            ELSE 0
+        END) as VATAmountLocal,
+        SUM(CASE 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountRpt * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountRpt  
+            ELSE 0
+        END) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
             ->whereNotNull('vatSubCategoryID')
             ->where('vatSubCategoryID', '>', 0)
             ->join('erp_tax_vat_sub_categories', 'erp_directinvoicedetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-            ->where('directInvoiceAutoID', $directInvoiceAutoID)
-            ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
-            ->get();
+            ->where('erp_directinvoicedetails.directInvoiceAutoID', $directInvoiceAutoID)
+            ->whereIn('erp_tax_vat_sub_categories.subCatgeoryType', [1,3])
+            ->groupBy('erp_directinvoicedetails.directInvoiceAutoID')
+            ->first();
 
         return $siVATCategoryDetails;
     }
