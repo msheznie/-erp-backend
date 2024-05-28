@@ -80,6 +80,7 @@ class SMCrossDayOnlyComputation{
         $this->flexibleHourTo = $data->flexibleHourTo;
         $this->clockInDateTime = $this->clockInDate .' '.$this->clockIn;
         $this->clockOutDateTime = $this->clockOutDate .' '.$this->clockOut;
+        $this->isClockInOutSet = $data->isClockInOutSet;
 
         if($this->isClockInOutSet){
             $this->clockOutDtObj = new DateTime($this->clockOutDateTime);
