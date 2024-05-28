@@ -2295,7 +2295,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function exportAssetMaster(Request $request){
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory','assetTypeID'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory','assetTypeID','createdBy'));
 
         $type = $input['type'];
 
@@ -2336,6 +2336,16 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $assetCositng->where('assetType', $input['assetTypeID']);
             }
         }
+
+        if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy']) {
+                $createdBy = $request['createdBy'];
+                $createdBy = (array)$createdBy;
+                $createdBy = collect($createdBy)->pluck('id');
+                $assetCositng->whereIn('createdUserSystemID', $createdBy);
+            }
+        }
+
 
         $output = $assetCositng->orderBy('faID','desc')->get();
 

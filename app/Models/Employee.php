@@ -379,4 +379,9 @@ class Employee extends Model
     {
         return $this->hasMany('App\Models\JvMaster','createdUserSystemID','employeeSystemID');;
     }
+
+    public function receiptVoucher()
+    {
+        return $this->hasMany('App\Models\CustomerReceivePayment','createdUserSystemID','employeeSystemID');;
+    }
 }

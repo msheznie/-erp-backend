@@ -3036,6 +3036,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $projectID = (array)$projectID;
         $projectID = collect($projectID)->pluck('id');
 
+        $createdBy = $request['createdBy'];
+        $createdBy = (array)$createdBy;
+        $createdBy = collect($createdBy)->pluck('id');
+
         $search = $request->input('search.value');
         
         if(empty($input['BPVAccount'])){
@@ -3078,7 +3082,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             unset($input['chequePaymentYN']);
         }
 
-        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);
+        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID,$createdBy);
 
         return \DataTables::eloquent($paymentVoucher)
             ->addColumn('Actions', 'Actions', "Actions")

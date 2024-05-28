@@ -203,7 +203,7 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '4':
-                $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', '','chequeSentToTreasury', 'projectID', 'employeeID'));
+                $input = $this->convertArrayToSelectedValue($input, array('month', 'createdBy' ,'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', '','chequeSentToTreasury', 'projectID', 'employeeID'));
                 
                 $employeeID = $request['employeeID'];
                 $employeeID = (array)$employeeID;
@@ -217,7 +217,11 @@ class TransactionsExportExcel extends AppBaseController
                 $projectID = (array)$projectID;
                 $projectID = collect($projectID)->pluck('id');
 
-                $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);
+                $createdBy = $request['createdBy'];
+                $createdBy = (array)$createdBy;
+                $createdBy = collect($createdBy)->pluck('id');
+
+                $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID,$createdBy);
                 $data = $this->paySupplierInvoiceMasterRepository->setExportExcelData($dataQry);
                 break;
 
@@ -370,7 +374,7 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '21':
-                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN'));
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN','createdBy'));
                 $dataQry = $this->customerReceivePaymentRepository->customerReceiveListQuery($request, $input, $search);
                 $data = $this->customerReceivePaymentRepository->setExportExcelData($dataQry);
                 break;
