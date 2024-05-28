@@ -37,8 +37,6 @@ class SMAttendanceCrossDayPullingService{
 
             $this->mapEachEmpData();
 
-            $this->updateUnConfirmAttendance();
-
             DB::commit();
             Log::info('Data cross day shifts pulled successfully'.$this->log_suffix(__LINE__));
             return true;
@@ -80,18 +78,23 @@ class SMAttendanceCrossDayPullingService{
             $leaveData = $this->getLeaveData($curEmpId);
             $shiftData = $this->getShiftData($shiftId);
 
-            $this->reviewAttData[$key]->clockOutDate = $clockOutData->clockOutDate;
-            $this->reviewAttData[$key]->checkOut = $clockOutData->attTime;
-            $this->reviewAttData[$key]->autoId = $clockOutData->autoID;
-            $this->reviewAttData[$key]->clockOutFloorId = $clockOutData->floorID;
-            $this->reviewAttData[$key]->leaveMasterID = isset($leaveData->leaveMasterID) ?? $leaveData->leaveMasterID;
-            $this->reviewAttData[$key]->leaveHalfDay = isset($shiftData->ishalfDay) ?? $shiftData->ishalfDay;
+            $this->reviewAttData[$key]->clockOutDate =
+                isset($clockOutData->clockOutDate) ? $clockOutData->clockOutDate : $this->prvDate;
+
+            $this->reviewAttData[$key]->isClockInOutSet = isset($clockOutData->clockOutDate) ? 1 : 0;
+            $this->reviewAttData[$key]->checkOut = isset($clockOutData->attTime) ? $clockOutData->attTime : null;
+            $this->reviewAttData[$key]->autoId = isset($clockOutData->autoID) ? $clockOutData->autoID : null;
+            $this->reviewAttData[$key]->clockOutFloorId = isset($clockOutData->floorID) ? $clockOutData->floorID : null;
+
+            $this->reviewAttData[$key]->leaveMasterID =
+                isset($leaveData->leaveMasterID) ? $leaveData->leaveMasterID : null;
+
+            $this->reviewAttData[$key]->leaveHalfDay = isset($shiftData->ishalfDay) ? $shiftData->ishalfDay : null;
+
             $this->reviewAttData[$key]->crossDayCutOffTime = $this->cutOffTime;
             $this->reviewAttData[$key]->isFlexibleHour = $shiftData->isFlexyHour;
             $this->reviewAttData[$key]->flexibleHourFrom = $shiftData->flexyHrFrom;
             $this->reviewAttData[$key]->flexibleHourTo = $shiftData->flexyHrTo;
-
-
 
             $curRow = $this->reviewAttData[$key];
 
@@ -187,24 +190,25 @@ class SMAttendanceCrossDayPullingService{
 
         ];
 
+        if (!empty($this->updateData)) {
+            foreach ($this->updateData as $data) {
+                DB::table('srp_erp_pay_empattendancereview')
+                    ->where('ID', $attId)
+                    ->update($data);
 
-        foreach ($this->updateData as $data) {
-            DB::table('srp_erp_pay_empattendancereview')
-                ->where('ID', $attId)
-                ->update($data);
+                if (!empty($autoId)) {
+                    DB::table('srp_erp_pay_empattendancetemptable')
+                        ->where('autoID', $autoId)
+                        ->update([
+                            'isUpdated' => 1,
+                            'timestamp' => $this->dateTime
+                        ]);
+                }
 
-            DB::table('srp_erp_pay_empattendancetemptable')
-                ->where('autoID', $autoId)
-                ->update([
-                    'isUpdated' => 1,
-                    'timestamp' => $this->dateTime
-                ]);
+            }
         }
-
     }
-    function updateUnConfirmAttendance(){
 
-    }
     public function insertToLogTb($logData, $logType = 'info'){
         $logData = json_encode($logData);
 

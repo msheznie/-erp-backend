@@ -41,12 +41,12 @@ class SMCrossDayOnlyComputation{
     public $isGracePeriodSet;
     public $isFlexibleHourBaseComputation;
     public $isFlexibleHour;
-    public $isShiftHoursSet;
+    public $isShiftHoursSet = false;
     public $flexibleHourFrom;
     public $flexibleHourTo;
 
-    public $actualWorkingHours;
-    public $officialWorkTime;
+    public $actualWorkingHours = 0;
+    public $officialWorkTime = 0;
 
     public $realTime = 0;
     public $lateHours = 0;
@@ -78,17 +78,22 @@ class SMCrossDayOnlyComputation{
         $this->clockOutDate = $data->clockOutDate;
         $this->flexibleHourFrom = $data->flexibleHourFrom;
         $this->flexibleHourTo = $data->flexibleHourTo;
-
-        $this->isShiftHoursSet = !empty($this->clockOut) ? true : false;
         $this->clockInDateTime = $this->clockInDate .' '.$this->clockIn;
         $this->clockOutDateTime = $this->clockOutDate .' '.$this->clockOut;
 
+        if($this->isClockInOutSet){
+            $this->clockOutDtObj = new DateTime($this->clockOutDateTime);
+            $this->clockInDtObj = new DateTime($this->clockInDateTime);
+        }
 
-        $this->clockOutDtObj = new DateTime($this->clockOutDateTime);
-        $this->clockInDtObj = new DateTime($this->clockInDateTime);
 
         $this->onDutyTime = $data->onDuty;
         $this->offDutyTime = $data->offDuty;
+
+        if (!empty($this->onDutyTime) && !empty($this->offDutyTime)) {
+            $this->isShiftHoursSet = true;
+        }
+
         $this->isCrossDay = $data->is_cross_day;
 
         $this->absDedAmount= 0;
@@ -101,7 +106,6 @@ class SMCrossDayOnlyComputation{
 
     function calculate(){
         $this->configCrossDayType();
-        $this->configClockinClockoutSet();
 
         if ($this->dayType == AttDayType::NORMAL_DAY) {
             $this->calculateRotaShiftHours();
@@ -195,7 +199,7 @@ class SMCrossDayOnlyComputation{
             return;
         }
 
-        $abDayDeductionObj = new AbsentDayDeductionService($this->empId, $this->data->att_date, $this->companyId);
+        $abDayDeductionObj = new AbsentDayDeductionService($this->empId, $this->data->attendanceDate, $this->companyId);
         $abDayDeductionData = $abDayDeductionObj->process();
 
         if (array_key_exists('pay', $abDayDeductionData)) {
@@ -237,9 +241,14 @@ class SMCrossDayOnlyComputation{
 
         $t1 = $this->clockOutDtObj;
 
+        if(empty($t1)){
+            return false;
+        }
+
         $t2 = ($this->isShiftHoursSet && $this->onDutyDtObj >= $this->clockInDtObj)
             ? $this->onDutyDtObj
             : $this->clockInDtObj;
+
 
         $totWorkingHoursObj = $t1->diff($t2);
         $hours = $totWorkingHoursObj->format('%h');
@@ -261,6 +270,10 @@ class SMCrossDayOnlyComputation{
         $in = ($this->isShiftHoursSet && ($this->onDutyDateTime >= $this->clockInDtObj))
             ? $this->onDutyDateTime
             : $this->clockInDtObj;
+
+        if(empty($out)|| empty($in)){
+            return false;
+        }
 
         $officialWorkTimeObj = $out->diff($in);
         $hours = $officialWorkTimeObj->format('%h');
