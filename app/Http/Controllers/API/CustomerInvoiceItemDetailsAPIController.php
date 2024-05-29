@@ -409,10 +409,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                    return $this->sendError($resVat['message']); 
                 } 
 
-                $resVat = $this->updateVatEligibilityOfCustomerInvoiceFromDO($customerInvoiceItemDetails->custInvoiceDirectAutoID);
+                /*$resVat = $this->updateVatEligibilityOfCustomerInvoiceFromDO($customerInvoiceItemDetails->custInvoiceDirectAutoID);
                 if (!$resVat['status']) {
                    return $this->sendError($resVat['message']); 
-                } 
+                } */
             }
             $this->updateDOInvoicedStatus($customerInvoiceItemDetails->deliveryOrderID);
 
@@ -450,10 +450,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                    return $this->sendError($resVat['message']); 
                 } 
 
-                $resVat = $this->updateVatEligibilityOfCustomerInvoice($customerInvoiceItemDetails->custInvoiceDirectAutoID);
+                /*$resVat = $this->updateVatEligibilityOfCustomerInvoice($customerInvoiceItemDetails->custInvoiceDirectAutoID);
                 if (!$resVat['status']) {
                    return $this->sendError($resVat['message']); 
-                } 
+                } */
             }
 
         } else if ($customerInvoice->isPerforma == 2) {
