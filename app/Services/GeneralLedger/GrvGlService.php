@@ -205,7 +205,9 @@ class GrvGlService
             array_push($finalData, $data);
 
             $exemptExpenseDetails = TaxService::processGrvExpense($masterModel["autoID"]);
-            $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+            $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                $query->where('companySystemID', $masterData->companySystemID);
+            })->where('isActive', 1)->first();
 
             if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
                 $exemptVatTrans = $exemptExpenseDetails->VATAmount;
@@ -318,7 +320,9 @@ class GrvGlService
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
                     $exemptExpenseDetails = TaxService::processGrvExpenseDetail($masterModel["autoID"],  $data['chartOfAccountSystemID']);
-                    $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+                    $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                        $query->where('companySystemID', $masterData->companySystemID);
+                    })->where('isActive', 1)->first();
 
                     if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
                             $exemptVatTrans = $exemptExpenseDetails->VATAmount;
@@ -364,7 +368,9 @@ class GrvGlService
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
                     $exemptExpenseDetails = TaxService::processGrvExpenseDetailForPL($masterModel["autoID"],  $data['chartOfAccountSystemID']);
-                    $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+                    $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                        $query->where('companySystemID', $masterData->companySystemID);
+                    })->where('isActive', 1)->first();
 
                     if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
                         $exemptVatTrans = $exemptExpenseDetails->VATAmount;

@@ -371,7 +371,9 @@ class SupplierInvoiceGlService
             else if ($masterData->documentType == 3) {
 
                 $exemptExpenseDetails = TaxService::processSIExpenseVatItemInvoice($masterModel["autoID"]);
-                $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+                $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                    $query->where('companySystemID', $masterData->companySystemID);
+                })->where('isActive', 1)->first();
                 if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
                     $exemptVatTrans = $exemptExpenseDetails->VATAmount;
                     $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
@@ -411,7 +413,9 @@ class SupplierInvoiceGlService
 
 
                         $exemptExpenseDetails = TaxService::processSIExpenseVatItemInvoiceDetail($masterModel["autoID"], $data['chartOfAccountSystemID']);
-                        $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+                        $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                            $query->where('companySystemID', $masterData->companySystemID);
+                        })->where('isActive', 1)->first();
 
                         if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
                             $exemptVatTrans = $exemptExpenseDetails->VATAmount;
@@ -455,7 +459,9 @@ class SupplierInvoiceGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
                         $exemptExpenseDetails = TaxService::processSIExpenseVatItemInvoiceDetailForPL($masterModel["autoID"], $data['chartOfAccountSystemID']);
-                        $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+                        $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                            $query->where('companySystemID', $masterData->companySystemID);
+                        })->where('isActive', 1)->first();
 
                         if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
                             $exemptVatTrans = $exemptExpenseDetails->VATAmount;
@@ -512,7 +518,9 @@ class SupplierInvoiceGlService
             } else {
 
                 $exemptExpenseDetails = TaxService::processSIExemptVatDirectInvoice($masterModel["autoID"]);
-                $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+                $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                    $query->where('companySystemID', $masterData->companySystemID);
+                })->where('isActive', 1)->first();
 
                 if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
                     $exemptVatTrans = $exemptExpenseDetails->VATAmount;
@@ -552,7 +560,9 @@ class SupplierInvoiceGlService
                         $data['documentNarration'] = $val->comments;
 
                         $exemptExpenseDIDetails = TaxService::checkSIExpenseVatDirectInvoice($val->directInvoiceDetailsID);
-                        $expenseCOA = TaxVatCategories::where('subCatgeoryType', 3)->where('isActive', 1)->first();
+                        $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                            $query->where('companySystemID', $masterData->companySystemID);
+                        })->where('isActive', 1)->first();
 
                         if(!empty($exemptExpenseDIDetails)){
                             if($exemptExpenseDIDetails->exempt_vat_portion > 0 && $exemptExpenseDIDetails->subCatgeoryType == 1 && $expenseCOA->expenseGL != null) {
