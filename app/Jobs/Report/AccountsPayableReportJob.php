@@ -63,7 +63,7 @@ class AccountsPayableReportJob implements ShouldQueue
                 $request = $this->requestData;
                 $request->fromPath = 'pdf';
                 $output = $this->getSupplierStatementQRY($request);
-                $outputChunkData = collect($output)->chunk(50);
+                $outputChunkData = collect($output)->chunk(300);
                 $reportCount = 1;
                 $rootPathDatandTime = strtotime(date("Y-m-d H:i:s"));
                 $root = "supplier-payable/".$rootPathDatandTime;
