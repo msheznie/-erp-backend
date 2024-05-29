@@ -288,7 +288,7 @@ trait AttendanceComputationTrait{
 
     public function calculateRealTime(){
 
-        if (!$this->isShiftHoursSet || !$this->isClockInOutSet) {
+            if (!$this->isShiftHoursSet || !$this->isClockInOutSet) {
             return false;
         }
 

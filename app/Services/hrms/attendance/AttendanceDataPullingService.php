@@ -322,7 +322,7 @@ class AttendanceDataPullingService{
         ) AS shd ON shd.shiftID = she.shiftID AND shd.weekDayNo = WEEKDAY(t.att_date) 
         LEFT JOIN ( 
             SELECT leaveMasterID, empID, startDate, endDate, ishalfDay as leaveHalfDay
-            FROM srp_erp_leavemaster WHERE companyID = {$this->companyId} AND approvedYN = 1
+            FROM srp_erp_leavemaster WHERE companyID = {$this->companyId} AND approvedYN = 1 AND cancelledYN is null
         ) AS lm ON lm.empID = t.emp_id AND t.att_date BETWEEN lm.startDate AND lm.endDate 
         LEFT JOIN ( 
             SELECT * FROM srp_erp_calender WHERE companyID = {$this->companyId} 
