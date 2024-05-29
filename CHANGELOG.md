@@ -23,6 +23,7 @@
 * **inventory:** changed print view to local currency [GCP-3492] ([#6148](https://github.com/pbsgears/Gears_BackEnd/issues/6148)) ([ebfa813](https://github.com/pbsgears/Gears_BackEnd/commit/ebfa813af81ece036a407c86e4900dbe3f95e7cb))
 * **treasury management:** error while clearing the PV in Treasury [GCP-3599] ([#6147](https://github.com/pbsgears/Gears_BackEnd/issues/6147)) ([ab510cb](https://github.com/pbsgears/Gears_BackEnd/commit/ab510cba736c2cdc065c851ba83589a79ef71d66))
 
+
 ## [10.40.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.40.0...v10.40.1) (2024-05-09)
 
 

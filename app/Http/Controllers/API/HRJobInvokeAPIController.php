@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\API;
 
 use App\enums\modules\Modules;
+use App\Jobs\AttendanceCrossDayPulling;
 use App\Jobs\AttendanceDayEndPulling;
 use App\Jobs\AttendanceDayEndPullingInitiate;
 use App\Jobs\BirthdayWishInitiate;
+use App\Services\hrms\attendance\SMAttendanceCrossDayPullingService;
 use App\Services\hrms\attendance\SMAttendancePullingService;
 use App\Services\hrms\modules\HrModuleAssignService;
 use Exception;
@@ -317,5 +319,24 @@ class HRJobInvokeAPIController extends AppBaseController
         
         return $this->sendResponse([], $scenario->scenarioDescription. ' is processed');
         
+    }
+
+    function crossDayClockOutJobCall(Request $request)
+    {
+        $tenantId = $request->input('tenantId');
+        $companyId = $request->input('companyId');
+        $attDate = $request->input('attendanceDate');
+        $dispatchDb = CommonJobService::get_tenant_db($tenantId);
+
+        $validateRep = $this->validateClockOutJob($attDate, $tenantId, $dispatchDb, $companyId);
+        if (!$validateRep['status']) {
+            Log::error($validateRep['msg'] . " \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
+        }
+
+        $msg = "{$dispatchDb} DB added to the queue for attendance cross day pulling initiate ({$attDate}).";
+        Log::info("$msg \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
+
+        AttendanceCrossDayPulling::dispatch($dispatchDb, $companyId, $attDate);
+        return $this->sendResponse(true, 'cross day clock out pulling job added to queue');
     }
 }
