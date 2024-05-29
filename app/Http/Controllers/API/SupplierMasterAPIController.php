@@ -773,7 +773,7 @@ class SupplierMasterAPIController extends AppBaseController
                     ->where('erp_bookinvsuppmaster.supplierID',$id)
                     ->whereIn('erp_bookinvsuppmaster.documentType', [0,1])
                     ->where(function($query) {
-                        $query->where('erp_bookinvsuppmaster.confirmedYN', 0)
+                        $query->whereIn('erp_bookinvsuppmaster.confirmedYN', [0,1])
                             ->where('erp_bookinvsuppmaster.approved', 0);
                     });
             })->leftJoin('erp_paysupplierinvoicemaster', function ($join) use ($id) {
@@ -781,7 +781,7 @@ class SupplierMasterAPIController extends AppBaseController
                     ->where('erp_paysupplierinvoicemaster.BPVsupplierID',$id)
                     ->where('erp_paysupplierinvoicemaster.invoiceType',3)
                     ->where(function($query) {
-                        $query->where('erp_paysupplierinvoicemaster.confirmedYN', 0)
+                        $query->whereIn('erp_paysupplierinvoicemaster.confirmedYN', [0,1])
                             ->where('erp_paysupplierinvoicemaster.approved', 0);
                     });
             })->where(function ($query) {
