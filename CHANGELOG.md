@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.40.5](https://github.com/pbsgears/Gears_BackEnd/compare/v10.40.4...v10.40.5) (2024-05-29)
+
+
+### Bug Fixes
+
+* **leave:** Leave Job issue[GHR-1115] ([#6118](https://github.com/pbsgears/Gears_BackEnd/issues/6118)) ([103aeae](https://github.com/pbsgears/Gears_BackEnd/commit/103aeae256e14ccc1e0cb8522656b0795feb240c))
+
 ## [10.40.4](https://github.com/pbsgears/Gears_BackEnd/compare/v10.40.3...v10.40.4) (2024-05-25)
 
 
