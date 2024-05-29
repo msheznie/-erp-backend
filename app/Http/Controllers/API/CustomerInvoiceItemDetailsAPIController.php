@@ -858,10 +858,10 @@ WHERE
                return $this->sendError($resVat['message']); 
             } 
 
-            $resVat = $this->updateVatEligibilityOfCustomerInvoiceFromDO($custInvoiceDirectAutoID);
+            /*$resVat = $this->updateVatEligibilityOfCustomerInvoiceFromDO($custInvoiceDirectAutoID);
             if (!$resVat['status']) {
                return $this->sendError($resVat['message']); 
-            } 
+            } */
 
             DB::commit();
             return $this->sendResponse([], 'Customer Invoice Item Details saved successfully');
@@ -1367,10 +1367,10 @@ WHERE
                return $this->sendError($resVat['message']); 
             } 
 
-            $resVat = $this->updateVatEligibilityOfCustomerInvoice($custInvoiceDirectAutoID);
+            /*$resVat = $this->updateVatEligibilityOfCustomerInvoice($custInvoiceDirectAutoID);
             if (!$resVat['status']) {
                return $this->sendError($resVat['message']); 
-            } 
+            }*/
 
             DB::commit();
             return $this->sendResponse([], 'Customer Invoice Item Details saved successfully');
