@@ -554,7 +554,8 @@
                 <tr class="theme-tr-head">
                     <th style="width:3%"></th>
                     <th style="width:10%;text-align: center">GL Code</th>
-                    <th style="width:60%;text-align: center">GL Code Description</th>
+                    <th style="width:50%;text-align: center">GL Code Description</th>
+                    <th style="width:20%;text-align: center">Segment</th>
                     <th style="width:10%;text-align: center">UoM</th>
                     <th style="width:10%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Unit Rate</th>
@@ -572,6 +573,7 @@
                         <td>{{$x}}</td>
                         <td style="text-align: left">{{$item->glCode}}</td>
                         <td style="text-align: left">{{$item->glCodeDes}}</td>
+                        <td class="text-left">{{isset($item->department->ServiceLineDes)?$item->department->ServiceLineDes:''}}</td>
                         <td class="text-left" style="text-align: left">{{$item->unit->UnitShortCode}}</td>
                         <td class="text-right" style="text-align: right">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>

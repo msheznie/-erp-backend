@@ -437,6 +437,7 @@
                     @if($request->isProjectBase && $request->isPerforma == 0)
                         <th style="text-align: center">Project</th>
                     @endif
+                    <th style="text-align: center">Segment</th>
                     <th style="text-align: center">UOM</th>
                     <th style="text-align: center">QTY</th>
                     <th style="text-align: center">Sales Price</th>
@@ -465,6 +466,7 @@
                                 @endif
                             </td>
                         @endif
+                        <td class="text-left">{{isset($item->department->ServiceLineDes)?$item->department->ServiceLineDes:''}}</td>
                         <td style="text-align: left">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                         <td class="text-center" style="text-align: right">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->salesPrice,$numberFormatting)}}</td>
