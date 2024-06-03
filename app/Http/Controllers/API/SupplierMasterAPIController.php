@@ -694,6 +694,9 @@ class SupplierMasterAPIController extends AppBaseController
             $input['companyLinkedToSystemID'] = null;
         }
 
+        if(isset($input['whtApplicableYN']) && $input['whtApplicableYN'] == 0){
+            $input['whtType'] = null;
+        }
 
         $supplierMasters = $this->supplierMasterRepository->create($input);
 
