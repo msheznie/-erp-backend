@@ -1604,6 +1604,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (isset($input["discountPercentage"]) && $input["discountPercentage"] > 100) {
             return [
                 'status' => false,
+                'type' => array('type' => 'discountPercentageError'),
                 'message' => 'Discount Percentage cannot be greater than 100 percentage'
             ];
         }
@@ -1611,7 +1612,24 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (isset($input["discountAmountLine"]) && isset($input['salesPrice']) && $input['discountAmountLine'] > $input['salesPrice']) {
             return [
                 'status' => false,
+                'type' => array('type' => 'discountAmountLineError'),
                 'message' => 'Discount amount cannot be greater than sales price'
+            ];
+        }
+
+        if (isset($input["VATPercentage"]) && $input["VATPercentage"] > 100) {
+            return [
+                'status' => false,
+                'type' => array('type' => 'VATPercentageError'),
+                'message' => 'Vat Percentage cannot be greater than 100 percentage'
+            ];
+        }
+
+        if (isset($input["VATAmount"]) && isset($input['salesPrice']) && $input['VATAmount'] > $input['salesPrice']) {
+            return [
+                'status' => false,
+                'type' => array('type' => 'VATAmountError'),
+                'message' => 'Vat Amount cannot be greater than sales price'
             ];
         }
 
