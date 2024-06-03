@@ -767,6 +767,10 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Omanization percentage cannot be greater than 100');
         }
 
+        if(isset($input['whtApplicableYN']) && $input['whtApplicableYN'] == 0){
+            $input['whtType'] = null;
+        }
+
         if(($supplierMaster->whtApplicableYN != $input['whtApplicableYN']) || ($supplierMaster->whtType != $input['whtType'])){
             $isPendingDocument = SupplierMaster::leftJoin('erp_bookinvsuppmaster', function ($join) use ($id) {
                 $join->on('suppliermaster.supplierCodeSystem', '=', 'erp_bookinvsuppmaster.supplierID')
