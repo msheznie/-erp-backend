@@ -4378,19 +4378,14 @@ class BudgetMasterAPIController extends AppBaseController
 
         $storePOMasterHistory = BudgetMasterRefferedHistory::insert($budgetMasterArray);
 
-        $fetchBudgetDetail = Budjetdetails::where('budgetmasterID', $budgetMasterID)
-            ->get();
 
-
-        if (!empty($fetchBudgetDetail)) {
-            foreach ($fetchBudgetDetail as $poDetail) {
-                $poDetail['timesReferred'] = $budgetMaster->timesReferred;
+        Budjetdetails::where('budgetmasterID', $budgetMasterID)->chunk(500, function($budgetDetails) use ($budgetMaster) {
+            foreach ($budgetDetails as $budgetDetail){
+                $budgetDetail['timesReferred'] = $budgetMaster->timesReferred;
+                $budgetDetail = $budgetDetail->toArray();
+                BudgetDetailsRefferedHistory::insert($budgetDetail);
             }
-        }
-
-        $budgetDetailArray = $fetchBudgetDetail->toArray();
-
-        $storePODetailHistory = BudgetDetailsRefferedHistory::insert($budgetDetailArray);
+        });
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $budgetMasterID)
             ->where('companySystemID', $budgetMaster->companySystemID)
