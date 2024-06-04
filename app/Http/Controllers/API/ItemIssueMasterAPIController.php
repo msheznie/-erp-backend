@@ -64,6 +64,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use SwaggerFixures\Customer;
 use App\helper\ItemTracking;
+use App\Models\Employee;
 use App\Models\ErpProjectMaster;
 Use App\Models\UserToken;
 use GuzzleHttp\Client;
@@ -1331,21 +1332,23 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $employees = "";
+        $discharged = isset($input['discharged']) ? $input['discharged'] : 0;
         $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
+        $checkDischarged = isset($input['checkDischarged']) ? $input['checkDischarged'] : 1;
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
-            $employees = SrpEmployeeDetails::where(function ($query) use ($search) {
-                $query->where('Ecode', 'LIKE', "%{$search}%")
-                    ->orWhere('Ename2', 'LIKE', "%{$search}%");
+            $employees = Employee::where(function ($query) use ($search) {
+                $query->where('empID', 'LIKE', "%{$search}%")
+                    ->orWhere('empName', 'LIKE', "%{$search}%");
             });
 
             if ($companySystemID > 0) {
-                $employees = $employees->where('Erp_companyID', $companySystemID);
+                $employees = $employees->where('empCompanySystemID', $companySystemID);
             }
-            $employees = $employees->where('empConfirmedYN', 1);
-            $employees = $employees->where('isDischarged', 0);
 
-
+            if(!$discharged && $checkDischarged == 1){
+                $employees = $employees->where('discharegedYN', 0);
+            }
         }
 
         $employees = $employees
