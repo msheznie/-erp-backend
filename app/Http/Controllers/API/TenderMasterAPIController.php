@@ -1143,7 +1143,7 @@ ORDER BY
 
         if (!is_null($input['stage']) || $input['stage'] != 0) {
 
-            if ($input['stage'][0] == 1) {
+            if ($input['stage'][0] == 1 || $input['stage'] == 1) {
 
                 if (isset($input['bid_opening_date_time'])) {
                     $bid_opening_time =  ($input['bid_opening_date_time']) ?  new Carbon($input['bid_opening_date_time']) : null;
@@ -1203,7 +1203,7 @@ ORDER BY
 
 
 
-            if (($input['stage'][0] == 2)) {
+            if ($input['stage'][0] == 2 || $input['stage'] == 2) {
 
                 if (is_null($input['technical_bid_opening_date']) && !$rfq) {
                     return ['success' => false, 'message' => 'Technical Bid Opening from date cannot be empty'];
