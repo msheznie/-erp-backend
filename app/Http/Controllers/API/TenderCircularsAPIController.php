@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\TenderDetails;
 use App\Models\CircularAmendments;
 use App\Models\CircularSuppliers;
 use App\Http\Requests\API\CreateTenderCircularsAPIRequest;
@@ -13,6 +14,7 @@ use App\Models\DocumentAttachments;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderCirculars;
+use App\Models\TenderMaster;
 use App\Repositories\TenderCircularsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -376,6 +378,10 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $tenderMaster = TenderMaster::select('id','tender_type_id','document_system_id')
+            ->where('id',$input['tenderMasterId'])
+            ->first();
+
         if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
         {        
             if(!isset($input['attachment_id'])){
@@ -387,14 +393,18 @@ class TenderCircularsAPIController extends AppBaseController
             $attachmentList = $input['attachment_id'];
         }
 
-        if(isset($input['supplier_id'])){
-            if(sizeof($input['supplier_id' ]) == 0){
+        if ($tenderMaster['document_system_id'] == 113 ||
+            ($tenderMaster['document_system_id'] == 108 && $input['tenderTypeId'] == 3)) {
+            if(isset($input['supplier_id'])){
+                if(sizeof($input['supplier_id' ]) == 0){
+                    return ['success' => false, 'message' => 'Supplier is required'];
+                }
+                $supplierList = $input['supplier_id' ];
+            } else {
                 return ['success' => false, 'message' => 'Supplier is required'];
             }
-            $supplierList = $input['supplier_id' ];
-        } else {
-            return ['success' => false, 'message' => 'Supplier is required'];
         }
+
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
@@ -553,10 +563,10 @@ class TenderCircularsAPIController extends AppBaseController
             $att['updated_by'] = $employee->employeeSystemID;
             $att['status'] = 1;
             $result = TenderCirculars::where('id', $input['id'])->update($att);
-            $supplierList = CircularSuppliers::with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])->where('circular_id', $input['id'])->get();
             $amendmentsList = CircularAmendments::with('document_attachments')->where('circular_id', $input['id'])->get();
             $circular = TenderCirculars::where('id', $input['id'])->get()->toArray();
-
+            $tenderObj = TenderDetails::getTenderMasterData($input['tender_id']);
+            $supplierList = Helper::getTenderCircularSupplierList($tenderObj, $input['id'], $input['tender_id'], $input['company_id']);
             $file = array();
             foreach ($amendmentsList as $amendments){
                 $file[$amendments->document_attachments->originalFileName] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
@@ -566,7 +576,7 @@ class TenderCircularsAPIController extends AppBaseController
 
             $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
 
-            if ($result) {
+            if ($result && $supplierList) {
                 DB::commit();
                 foreach ($supplierList as $supplier){
                     $description = "";
@@ -574,9 +584,19 @@ class TenderCircularsAPIController extends AppBaseController
                         $description = "<b>Circular Description : </b>" . $circular[0]['description']. "<br /><br />";
                     }
 
-                    $email = email::emailAddressFormat($supplier->supplier_registration_link->email);
+                    $email = ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id == 2) ?
+                        $supplier->supplierAssigned->supEmail :
+                        $supplier->supplier_registration_link->email;
 
-                    Mail::to($email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
+                    $emailFormatted = email::emailAddressFormat($email);
+                    
+                    $dataEmail['companySystemID'] = $request->input('company_id');
+                    $dataEmail['alertMessage'] = "Tender Circular";
+                    $dataEmail['empEmail'] = $emailFormatted;
+                    $body = "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
+                    $dataEmail['emailAlertMessage'] = $body;
+                    $dataEmail['attachmentList'] = $file;
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];

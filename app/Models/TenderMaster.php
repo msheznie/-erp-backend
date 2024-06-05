@@ -672,4 +672,13 @@ class TenderMaster extends Model
         return $this->hasOne('App\Models\DocumentApproved', 'documentSystemCode', 'id')->where('status',1);
     }
 
+    public function tenderUserAccess()
+    {
+        return $this->hasMany('App\Models\SRMTenderUserAccess', 'tender_id', 'id');
+    }
+    public function tenderBidMinimumApproval()
+    {
+        return $this->hasMany('App\Models\SrmTenderBidEmployeeDetails', 'tender_id', 'id');
+    }
+
 }

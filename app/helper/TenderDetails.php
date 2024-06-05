@@ -46,7 +46,7 @@ class TenderDetails
 
     public static function getTenderMasterData($id)
     {
-        return TenderMaster::select('id', 'bid_submission_opening_date', 'tender_edit_version_id')
+        return TenderMaster::select('id', 'bid_submission_opening_date', 'tender_edit_version_id','tender_type_id','document_system_id')
             ->where('id', $id)
             ->first();
     }

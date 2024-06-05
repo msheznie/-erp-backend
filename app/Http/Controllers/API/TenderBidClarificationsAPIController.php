@@ -541,6 +541,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
     public function forwardPreBidClarification(Request $request){
         $input = $request->all();
         $bidId = $input['bid_id'];
+        $companyId = $input['companyId'];
 
         $bidClarifications = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
@@ -589,8 +590,6 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $preBidClarificationsString .= $clarificationText;
         }
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
-
         $emailString = $input['emailString'];
         $validator = Validator::make(
             ['emails' => $emailString],
@@ -621,7 +620,13 @@ class TenderBidClarificationsAPIController extends AppBaseController
         } else {
             foreach ($emailString as $email){
             $forwardEmail = email::emailAddressFormat($email);
-            Mail::to($forwardEmail)->send(new EmailForQueuing("Pre Bid Clarification", "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file,"#C23C32","GEARS","$fromName"));
+            $dataEmail['companySystemID'] = $companyId;
+            $dataEmail['alertMessage'] = "Pre Bid Clarification";
+            $dataEmail['empEmail'] = $forwardEmail;
+            $body = "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>";
+            $dataEmail['emailAlertMessage'] = $body;
+            $dataEmail['attachmentList'] = $file;
+            $sendEmail = \Email::sendEmailErp($dataEmail);
             }
         }
         return ['success' => true, 'message' => 'Email/s sent successfully'];

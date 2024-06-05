@@ -2246,9 +2246,6 @@ class SRMService
 
         $data['attachments'] = $attachments;
         $data['tenderCirculars'] = TenderCirculars::with(['document_amendments.document_attachments'])
-            ->whereHas('srm_circular_suppliers', function($q) use($supplierRegId) {
-                    $q->where('supplier_id', $supplierRegId);
-            })
             ->where('tender_id', $tenderMasterId)
             ->where('status', 1)
 

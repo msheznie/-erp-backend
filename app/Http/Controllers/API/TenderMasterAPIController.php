@@ -1143,7 +1143,7 @@ ORDER BY
 
         if (!is_null($input['stage']) || $input['stage'] != 0) {
 
-            if ($input['stage'][0] == 1) {
+            if ($input['stage'][0] == 1 || $input['stage'] == 1) {
 
                 if (isset($input['bid_opening_date_time'])) {
                     $bid_opening_time =  ($input['bid_opening_date_time']) ?  new Carbon($input['bid_opening_date_time']) : null;
@@ -1203,7 +1203,7 @@ ORDER BY
 
 
 
-            if (($input['stage'][0] == 2)) {
+            if ($input['stage'][0] == 2 || $input['stage'] == 2) {
 
                 if (is_null($input['technical_bid_opening_date']) && !$rfq) {
                     return ['success' => false, 'message' => 'Technical Bid Opening from date cannot be empty'];
@@ -1543,7 +1543,7 @@ ORDER BY
                                 }
                             }
                         }
-                        
+
                         if (isset($input['isRequestProcessComplete']) && ($input['isRequestProcessComplete'] ?? false) || ($input['isProcessCompleteBeforeClosing'] ?? false)) {
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode', $input['id'])->latest('id')->first();
@@ -1739,7 +1739,8 @@ ORDER BY
                         SrmTenderDepartment::where('tender_id', $input['id'])->delete();
                     }
 
-                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0 && !$input['editAfterBidOpeningDate']){
+                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0 &&
+                        isset($input['editAfterBidOpeningDate']) && !$input['editAfterBidOpeningDate']){
                         foreach ($input['departmentMaster'] as $dm) {
                             $data = [
                                 'tender_id' => $input['id'],
@@ -2475,7 +2476,10 @@ ORDER BY
             $docType = 'Tender';
             $emailFormatted = email::emailAddressFormat($SupplierList['email']);
 
-            Mail::to($emailFormatted)->send(new EmailForQueuing(" ".$docType." Invitation link", "Dear Supplier," . "<br /><br />" . "
+            $dataEmail['companySystemID'] = $companyId;
+            $dataEmail['alertMessage'] = " ".$docType." Invitation link";
+            $dataEmail['empEmail'] = $emailFormatted;
+            $body = "Dear Supplier," . "<br /><br />" . "
             I trust this message finds you well." . "<br /><br />" . "
             We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
             If your company is interested in participating in the ".$docType." process, please click on the link below." . "<br /><br />" . "
@@ -2483,7 +2487,9 @@ ORDER BY
             " . "<b>" . " ".$docType." Description :" . "</b> " . $tenderDescription . "<br /><br />" . "
             " . "<b>" . "Link :" . "</b> " . "<a href='" . $urlString . "'>" . $urlString . "</a><br /><br />" . "
             If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
-            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />",null, $file,"#C23C32","GEARS","$fromName"));
+            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />";
+            $dataEmail['emailAlertMessage'] = $body;
+            $sendEmail = \Email::sendEmailErp($dataEmail);
         }
     }
 
@@ -2535,7 +2541,14 @@ ORDER BY
         $isCreated = $this->registrationLinkRepository->save($request, $token);
         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
         if ($isCreated['status'] == true) {
-            Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>",null, $file,"#C23C32","GEARS","$fromName"));
+
+            $dataEmail['companySystemID'] = $request->input('company_id');
+            $dataEmail['alertMessage'] = "Registration Link";
+            $dataEmail['empEmail'] = $email;
+            $body = "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
+            $dataEmail['emailAlertMessage'] = $body;
+            $sendEmail = \Email::sendEmailErp($dataEmail);
+
             return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         } else {
             return $this->sendError('Supplier Registration Link Generation Failed', 500);
@@ -3009,6 +3022,7 @@ ORDER BY
     public function getPurchasedTenderList(Request $request)
     {
         $input = $request->all();
+        $userId = \Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -3018,14 +3032,20 @@ ORDER BY
 
         $companyId = $request['companyId'];
 
-        $filters = $this->getFilterData($input); 
+        $filters = $this->getFilterData($input);
 
         // $tenderMaster = TenderMasterSupplier::with(['tender_master'=>function($q){
         //     $q->with(['tender_type', 'envelop_type', 'currency']);
         // }])->get();
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
-                        ->withCount(['criteriaDetails', 
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier',
+                        'tenderUserAccess'=> function ($q) use ($userId){
+                                $q->where('user_id',$userId)
+                                ->where('module_id',1);
+                            }, 'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
+                                    $q1->where('emp_id',$userId);
+                            }])
+                        ->withCount(['criteriaDetails',
                             'criteriaDetails AS go_no_go_count' => function ($query) {
                             $query->where('critera_type_id', 1);
                             },
@@ -3033,6 +3053,16 @@ ORDER BY
                                 $query->where('critera_type_id', 2);
                             }
                         ])
+                        ->where(function ($query) use ($userId) {
+                            $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
+                                $q->where('user_id', $userId)
+                                    ->where('module_id',1);
+                            })
+                                ->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
+                                    $q1->where('emp_id', $userId);
+                                })
+                                ->orWhere('document_system_id', 113);
+                        })
                         ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
 
 
@@ -3447,6 +3477,7 @@ ORDER BY
     public function getCommercialBidTenderList(Request $request)
     {
         $input = $request->all();
+        $userId = \Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -3463,11 +3494,26 @@ ORDER BY
         //     $q->with(['tender_type', 'envelop_type', 'currency']);
         // }])->get();
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier',
+                'tenderUserAccess'=> function ($q) use ($userId) {
+                            $q->where('user_id', $userId)
+                            ->where('module_id',2);
+        }, 'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
+                $q1->where('emp_id',$userId);
+            }])
                                 ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
                                 ->where('technical_eval_status', 1)
                                 ->where('doc_verifiy_status', 1)
-                                ->where('go_no_go_status', 1);
+                                ->where('go_no_go_status', 1)
+            ->where(function ($query) use ($userId) {
+                $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
+                    $q->where('user_id', $userId)
+                        ->where('module_id',2);
+                })->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
+                    $q1->where('emp_id', $userId);
+                })
+                    ->orWhere('document_system_id', 113);
+            });
 
         if($isNegotiation == 1){ 
             $query->where('is_negotiation_started',1)
@@ -3612,6 +3658,7 @@ ORDER BY
     public function getEvalCompletedTenderList(Request $request)
     {
         $input = $request->all();
+        $userId = \Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -3621,9 +3668,25 @@ ORDER BY
 
         $companyId = $request['companyId'];
         $isNegotiation = $input['isNegotiation'];
-        $filters = $this->getFilterData($input); 
+        $filters = $this->getFilterData($input);
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier','tenderUserAccess'=> function ($q) use ($userId) {
+            $q->where('user_id', $userId)
+                ->where('module_id',3);
+        },'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
+            $q1->where('emp_id',$userId);
+        }])
+            ->where(function ($query) use ($userId) {
+                $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
+                    $q->where('user_id', $userId)
+                        ->where('module_id',3);
+                })
+                ->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
+                    $q1->where('emp_id', $userId);
+                })
+                ->orWhere('document_system_id', 113);
+            })
+            ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
             ->where('technical_eval_status', 1);
 
@@ -4712,7 +4775,8 @@ ORDER BY
             'approvalLevelID',
             'erp_documentapproved.documentSystemCode',
             'employees.empName As created_user',
-            'document_modify_request.type'
+            'document_modify_request.type',
+            'document_modify_request.description as modifyRequestDescription'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
@@ -4748,7 +4812,7 @@ ORDER BY
             $search = str_replace("\\", "\\\\", $search);
             $poMasters = $poMasters->where(function ($query) use ($search) {
                 $query->where('tender_code', 'LIKE', "%{$search}%")
-                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('srm_tender_master.description', 'LIKE', "%{$search}%")
                     ->orWhere('title', 'LIKE', "%{$search}%");
             });
         }
@@ -4812,7 +4876,8 @@ ORDER BY
             'approvalLevelID',
             'erp_documentapproved.documentSystemCode',
             'employees.empName As created_user',
-            'document_modify_request.type'
+            'document_modify_request.type',
+            'document_modify_request.description as modifyRequestDescription'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
@@ -4848,7 +4913,7 @@ ORDER BY
             $search = str_replace("\\", "\\\\", $search);
             $poMasters = $poMasters->where(function ($query) use ($search) {
                 $query->where('tender_code', 'LIKE', "%{$search}%")
-                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('srm_tender_master.description', 'LIKE', "%{$search}%")
                     ->orWhere('title', 'LIKE', "%{$search}%");
             });
         }
@@ -5123,6 +5188,7 @@ ORDER BY
     public function getTenderNegotiationList(Request $request)
     {
         $input = $request->all();
+        $userId = \Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -5134,7 +5200,12 @@ ORDER BY
 
         $filters = $this->getFilterData($input);
 
-        $query = TenderMaster::with(['currency', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
+        $query = TenderMaster::with(['currency', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier','tenderUserAccess'=> function ($q) use ($userId) {
+                $q->where('user_id', $userId)
+                    ->where('module_id',1);
+            },'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
+                        $q1->where('emp_id',$userId);
+                        }])
                         ->where('is_negotiation_started',1)
                         ->where('negotiation_published',1)
                         ->withCount(['criteriaDetails', 
@@ -5153,6 +5224,16 @@ ORDER BY
                                 });
                             }
                         ])
+                        ->where(function ($query) use ($userId) {
+                            $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
+                                $q->where('user_id', $userId)
+                                    ->where('module_id',1);
+                            })
+                                ->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
+                                    $q1->where('emp_id', $userId);
+                                })
+                                ->orWhere('document_system_id', 113);
+                        })
                         ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
 
 
@@ -5479,6 +5560,24 @@ ORDER BY
                     ->where('documentSystemID', $documentId);
             }])
             ->findWithoutFail($id);
+
+        $data['docModifiyMaster'] = DocumentModifyRequest::select('id','description','refferedBackYN','approved')
+            ->where('confirm',0)
+            ->where('modify_type',1)
+            ->where('documentSystemCode',$id)
+            ->where('requested_document_master_id',$documentId)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $data['docModifyApprovedData'] = DocumentApproved::select('documentApprovedID','companySystemID','documentSystemID','documentSystemCode','approvedComments',
+        'employeeSystemID','approvedDate','rejectedYN','approvedYN','rejectedDate','rejectedComments')
+        ->with(['employee' => function ($q){
+            $q->select('employeeSystemID','empFullName');
+        }])
+        ->where('documentSystemCode',$data['docModifiyMaster']['id'])
+        ->whereIn('documentSystemID',[117,118])
+        ->get();
+
 
         $data['rejectedHistory'] = DocumentReferedHistory::select('documentReferedID','documentApprovedID','companySystemID','documentSystemID','documentSystemCode',
         'employeeSystemID','rejectedYN','rejectedDate','rejectedComments')

@@ -50,4 +50,8 @@ class SrmEmployees extends Model
     {
         return $this->hasOne('App\Models\Employee', 'employeeSystemID', 'emp_id');
     }
+    public function tenderUserAccess()
+    {
+        return $this->hasOne('App\Models\SRMTenderUserAccess','user_id','emp_id');
+    }
 }

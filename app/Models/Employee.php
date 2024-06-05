@@ -344,4 +344,9 @@ class Employee extends Model
         return $this->hasMany('App\Models\BookInvSuppMaster','employeeID','employeeSystemID');
     }
 
+    public function tenderUserAccess()
+    {
+        return $this->hasOne('App\Models\SRMTenderUserAccess','user_id','employeeSystemID');
+    }
+
 }
