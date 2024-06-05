@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.41.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.40.5...v10.41.0) (2024-06-05)
+
+
+### Features
+
+* **Email Configuration:** Header name and color in all the SRM-related emails change according to the Appearance Designer in the portal [GSUP-1748] ([#6064](https://github.com/pbsgears/Gears_BackEnd/issues/6064)) ([ad699b5](https://github.com/pbsgears/Gears_BackEnd/commit/ad699b563a69ea9ef219e6856a08abd137c9a040))
+* **Supplier Registration:** Supplier KYC | Refer back email notification [GSUP-1759] ([#6091](https://github.com/pbsgears/Gears_BackEnd/issues/6091)) ([a7a9edf](https://github.com/pbsgears/Gears_BackEnd/commit/a7a9edf76c34d14594635cbfdcff736a3d941030))
+* **Tender:** Navigation access control based on individual Tender [GSUP-1768] ([#6162](https://github.com/pbsgears/Gears_BackEnd/issues/6162)) ([6468ef5](https://github.com/pbsgears/Gears_BackEnd/commit/6468ef5594e2376eda17f881855e150bef11ee76))
+* **Tender:** Show Edit or Amend Request Comment During the approval [GSUP-1757] ([#6104](https://github.com/pbsgears/Gears_BackEnd/issues/6104)) ([d310b0f](https://github.com/pbsgears/Gears_BackEnd/commit/d310b0f6fc21bfb9c3f72970de85b11ff5db7a29))
+* **Tender:** Tender Amend Enhancement | Closed Tender [GSUP-1764] ([#6142](https://github.com/pbsgears/Gears_BackEnd/issues/6142)) ([c374f41](https://github.com/pbsgears/Gears_BackEnd/commit/c374f41776b8fc32fc8ec215f32cfcd300f69767))
+* **Tender:** Tender Amend Enhancement | Open Tender [GSUP-1770] ([#6139](https://github.com/pbsgears/Gears_BackEnd/issues/6139)) ([5cd77a5](https://github.com/pbsgears/Gears_BackEnd/commit/5cd77a501450478bb3cc016c9d9cf9c694a0a136))
+* **Tender:** Tender Circular Enhancement for Open and Closed tenders [GSUP-1780] ([#6165](https://github.com/pbsgears/Gears_BackEnd/issues/6165)) ([0ee1823](https://github.com/pbsgears/Gears_BackEnd/commit/0ee1823189b572c7aea890543372639b142d80f8))
+* **Tender:** Tender Navigation access control Enhancement [GSUP-1788] ([#6177](https://github.com/pbsgears/Gears_BackEnd/issues/6177)) ([95ba420](https://github.com/pbsgears/Gears_BackEnd/commit/95ba420713e14ff55ef06d543ae460f27daa9af3))
+
+
+### Bug Fixes
+
+* **Email Configuration:** Header name and color in all the SRM-related emails change according to the Appearance Designer in the portal [GSUP-1748] ([#6075](https://github.com/pbsgears/Gears_BackEnd/issues/6075)) ([8f46491](https://github.com/pbsgears/Gears_BackEnd/commit/8f464914bcf2398ef3c52cf10b84d53ec10f84cc))
+* **Email:** Email sender's name is not equal to the given value in the backend [Hot-Fix] [GSUP-1769] ([#6124](https://github.com/pbsgears/Gears_BackEnd/issues/6124)) ([f66b781](https://github.com/pbsgears/Gears_BackEnd/commit/f66b7817c005fb77336e2409e22c580a3c8c2115))
+
 ## [10.40.5](https://github.com/pbsgears/Gears_BackEnd/compare/v10.40.4...v10.40.5) (2024-05-29)
 
 
