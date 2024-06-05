@@ -205,7 +205,8 @@ class PurchaseRequest extends Model
         'allocateItemToSegment',
         'manuallyClosedComment',
         'isBulkItemJobRun',
-        'counter'
+        'counter',
+        'requested_by'
     ];
 
     /**
@@ -294,7 +295,8 @@ class PurchaseRequest extends Model
         'manuallyClosedByEmpName' => 'string',
         'manuallyClosedDate' => 'string',
         'manuallyClosedComment' => 'string',
-        'approval_remarks' => 'string'
+        'approval_remarks' => 'string',
+        'requested_by' =>'integer'
     ];
 
     /**
@@ -312,6 +314,11 @@ class PurchaseRequest extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'currency', 'currencyID');
     }
     
+    public function pulled_from_mr()
+    {
+        return $this->belongsTo('App\Models\PulledItemFromMR', 'purchaseRequestID', 'purcahseRequestID');
+    }
+
     public function created_by(){
         return $this->belongsTo('App\Models\Employee','createdUserSystemID','employeeSystemID');
     }
@@ -425,6 +432,10 @@ class PurchaseRequest extends Model
 }
     public function tender_purchase_request(){
         return $this->hasOne(TenderPurchaseRequest::class,'purchase_request_id','purchaseRequestID');
+    }
+
+    public function requestedby(){
+        return $this->belongsTo('App\Models\Employee','requested_by','employeeSystemID');
     }
 
 }

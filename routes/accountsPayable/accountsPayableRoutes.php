@@ -22,6 +22,7 @@ Route::group([], function() {
     Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView')->name("Get invoice master view");
     Route::get('getInvoiceSupplierTypeBase', 'BookInvSuppMasterAPIController@getInvoiceSupplierTypeBase')->name("Get invoice supplier type base");
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory')->name("Get supplier invoice status history");
+    Route::post('supplierInvoiceCancel', 'BookInvSuppMasterAPIController@supplierInvoiceCancel')->name("Supplier invoice cancel");
     Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems')->name("Get direct items");
     Route::get('getSupplierInvoiceGRVItems', 'BookInvSuppDetAPIController@getSupplierInvoiceGRVItems')->name("Get supplier invoice grv items");
     Route::get('getSupplierInvDirectItems', 'SupplierInvoiceDirectItemAPIController@getSupplierInvDirectItems')->name("Get supplier inv direct items");
@@ -192,7 +193,7 @@ Route::group([],function (){
 
 //Supplier Ledger Report
 Route::group([],function (){
-    Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData')->name('Get account payable filter data');
+    Route::post('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData')->name('Get account payable filter data');
     Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport')->name('Validate account payable report');
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
@@ -207,6 +208,7 @@ Route::group([],function (){
 //Supplier Statement Report
 Route::group([],function (){
     Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement')->name('Sent supplier statement');
+    Route::post('generateAPReportBulkPDF', 'AccountsPayableReportAPIController@generateAPReportBulkPDF')->name('Generate report for bulk data');
 });
 
 //Advance Payment Request

@@ -550,6 +550,7 @@ return [
     "request_code" => "رمز الطلب",
     "request_date" => "تاريخ الطلب",
     "request_name" => "إسم صاحب الطلب",
+    "request_by" =>  "بتوصية من",
     "reference_no" => "رقم المرجع",
     "location_required" =>  "الموقع المطلوب",
     "approved_by"=> "تمت الموافقة بواسطة",

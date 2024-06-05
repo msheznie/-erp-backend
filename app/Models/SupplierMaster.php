@@ -167,6 +167,9 @@ class SupplierMaster extends Model
         'last_activity',
         'advanceAccountSystemID',
         'AdvanceAccount',
+        'omanization',
+        'whtApplicableYN',
+        'whtType'
     ];
 
     /**
@@ -247,7 +250,10 @@ class SupplierMaster extends Model
         'jsrsExpiry' => 'string',
         'createdFrom' => 'integer',
         'supplier_category_id'  => 'integer',
-        'supplier_group_id'  => 'integer'
+        'supplier_group_id'  => 'integer',
+        'omanization' => 'float',
+        'whtApplicableYN' => 'integer',
+        'whtType' => 'integer'
     ];
 
     /**

@@ -56,7 +56,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
+
         Route::group(['middleware' => ['authorization:api','mobileAccess']], function () {
+            Route::post('getAllCreatedByEmployees', 'FilterApiController@getAllCreatedByEmployees');
 
             require __DIR__.'/../routes/systemAdmin/systemAdminRoutes.php';
             require __DIR__.'/../routes/general/generalRoutes.php';
@@ -324,8 +326,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('performa_masters', 'PerformaMasterAPIController');
             Route::resource('rig_masters', 'RigMasterAPIController');
-
-            
 
             //Logistic Configuration Master
 
@@ -925,9 +925,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('s_r_m_supplier_values', 'SRMSupplierValuesAPIController');
         });
     });
-
     require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
-    
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');

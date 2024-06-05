@@ -164,6 +164,17 @@ class CustomerReceivePaymentRepository extends BaseRepository
         }
     }
 
+    if (array_key_exists('createdBy', $input)) {
+        if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+            $createdBy = $request['createdBy'];
+            $createdBy = (array)$createdBy;
+            $createdBy = collect($createdBy)->pluck('id');
+
+            $master->whereIn('erp_customerreceivepayment.createdUserSystemID',$createdBy);
+        }
+    }
+
     $master = $master->select([
         'custPaymentReceiveCode',
         'transCurr.CurrencyCode as transCurrencyCode',

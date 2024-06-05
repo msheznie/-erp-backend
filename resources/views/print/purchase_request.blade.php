@@ -218,13 +218,17 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">{{ __('custom.request_name') }}</span>
+                            <span style="font-weight:bold;">{{ __('custom.request_by') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
-                            {{ $request->created_by?$request->created_by->empName:'-' }}
+                            @if($request->requestedby)
+                                 {{ $request->requestedby->empName }}
+                            @else
+                                {{ $request->created_by->empName }}
+                            @endif
                         </td>
                     </tr>
                     

@@ -2486,6 +2486,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->get();
                 $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->where('empCompanySystemID', $companySystemID)->where('discharegedYN', '<>', 2)->get();
                 $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                    ->whereHas('customer_master',function($q){
+                        $q->where('isCustomerActive',1);
+                    })     
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -2496,6 +2499,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             case 'create':
 
                 $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                    ->whereHas('customer_master',function($q){
+                        $q->where('isCustomerActive',1);
+                    })       
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -2543,6 +2549,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $output['currencies'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 }
                 $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                    ->whereHas('customer_master',function($q){
+                        $q->where('isCustomerActive',1);
+                    })      
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -2609,6 +2618,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 }
 
                 $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                    ->whereHas('customer_master',function($q){
+                        $q->where('isCustomerActive',1);
+                    })       
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -2709,6 +2721,15 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
                 $master->where('erp_customerreceivepayment.confirmedYN', $input['confirmedYN']);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $master->whereIn('erp_customerreceivepayment.createdUserSystemID', $createdBy);
+            }
+
         }
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {

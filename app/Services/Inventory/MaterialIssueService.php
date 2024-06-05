@@ -108,7 +108,7 @@ class MaterialIssueService
                 }
             }
 
-            $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - ($issuedQty + $input['qtyIssued']));
+            $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - $issuedQty);
             return $input;
 
         }else {

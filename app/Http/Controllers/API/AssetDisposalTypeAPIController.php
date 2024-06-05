@@ -14,6 +14,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Yajra\DataTables\Facades\DataTables;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class AssetDisposalTypeController
@@ -24,6 +25,7 @@ class AssetDisposalTypeAPIController extends AppBaseController
 {
     /** @var  AssetDisposalTypeRepository */
     private $assetDisposalTypeRepository;
+    use AuditLogsTrait;
 
     public function __construct(AssetDisposalTypeRepository $assetDisposalTypeRepo)
     {
@@ -230,7 +232,25 @@ class AssetDisposalTypeAPIController extends AppBaseController
 
         $input['glCode'] = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountID'])->value('AccountCode');
         $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
+
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
+
+        $previousValue = $assetDisposalType->toArray();
+        $newValue = $input;
+        $transactionID = 0;
+
         $assetDisposalType = $this->assetDisposalTypeRepository->update($input, $id);
+
+        $this->auditLog($db, $transactionID, $uuid, "chart_of_account_config", "{$input['departmentName']} - {$assetDisposalType->typeDescription} has updated", "U", $newValue, $previousValue);
 
         return $this->sendResponse($assetDisposalType->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_disposal_types')]));
     }

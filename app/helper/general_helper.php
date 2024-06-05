@@ -77,6 +77,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Services\ChartOfAccountValidationService;
 use App\Services\UserTypeService;
+use App\Services\DocumentAutoApproveService;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -3275,7 +3276,6 @@ class Helper
                             
                             //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
                             if (empty($output)) {
-
                                 if ($isCategoryWise) {
                                     $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
                                     if ($isSegmentWise) {
@@ -3312,7 +3312,14 @@ class Helper
                                     $output = $approvalLevel->first();
                                 }
                             }
-                            
+
+                            if(isset($params['isAutoCreateDocument']) && $params['isAutoCreateDocument']){
+                                $sorceDocument = $namespacedModel::find($params["autoID"]);
+                                $documentApprovedAuto = DocumentAutoApproveService::setDocumentApprovedData($params, $sorceDocument, $docInforArr, $empInfo);
+                                Models\DocumentApproved::insert($documentApprovedAuto);
+                                DB::commit();
+                                return ['success' => true, 'message' => 'Successfully document confirmed'];
+                            }
 
                             if ($output) {
                                 /** get source document master record*/
@@ -4557,9 +4564,9 @@ class Helper
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
-                    $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
+                    $approvalLevel = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? null : Models\ApprovalLevel::find($input["approvalLevelID"]);
 
-                    if ($approvalLevel) {
+                    if ($approvalLevel || (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument'])) {
                         //Budget check on the 1st level approval for PR/DR/WR
                         if ($input["rollLevelOrder"] == 1) {
                             if (BudgetConsumptionService::budgetCheckDocumentList($input["documentSystemID"]) && !$budgetBlockOveride) {
@@ -4588,7 +4595,7 @@ class Helper
                             ];
                         }
 
-                        if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
+                        if (($approvalLevel && ($approvalLevel->noOfLevels == $input["rollLevelOrder"])) || (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument'])) { // update the document after the final approval
 
                             $validatePostedDate = GlPostedDateService::validatePostedDate($input["documentSystemCode"], $input["documentSystemID"]);
 
@@ -4871,7 +4878,7 @@ class Helper
                             $masterDataDEO = ['documentSystemID' => $docApproved->documentSystemID, 'id' => $docApproved->id, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
-                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
+                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,categoryType,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
                                 $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
                             }
 

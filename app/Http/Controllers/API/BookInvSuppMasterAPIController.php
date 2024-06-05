@@ -46,6 +46,7 @@ use App\Models\BookInvSuppDetRefferedBack;
 use App\Models\MonthlyDeclarationsTypes;
 use App\Models\BookInvSuppMaster;
 use App\Models\BookInvSuppMasterRefferedBack;
+use App\Models\SupplierInvoiceItemDetail;
 use App\Models\SystemGlCodeScenario;
 use App\Models\TaxVatCategories;
 use App\Models\ChartOfAccountsAssigned;
@@ -2244,6 +2245,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $companyId)
                                     ->first();
 
+        $employeeAllocate = CompanyPolicyMaster::where('companyPolicyCategoryID', 90)
+                            ->where('companySystemID', $companyId)
+                            ->first();                            
+
         $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, 12);
 
         $companyData = Company::find($companyId);
@@ -2282,6 +2287,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isVATEligible' => $isVATEligible,
             'isProjectBase' => $isProject_base,
             'projects' => $projects,
+            'employeeAllocatePolicy' => ($employeeAllocate && $employeeAllocate->isYesNO == 1) ? true : false,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -2466,7 +2472,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->delete();
 
         /*Audit entry*/
-        AuditTrial::createAuditTrial($bookInvSuppMaster->documentSystemID,$bookingSuppMasInvAutoID,$input['reopenComments'],'Reopened');
+        AuditTrial::createAuditTrial($bookInvSuppMaster->documentSystemID,$bookingSuppMasInvAutoID,$input['reopenComments'],'Reopened','Pending Approval');
 
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice reopened successfully');
     }
@@ -2925,6 +2931,57 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
+    public function supplierInvoiceCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $supInvoiceAutoID = $input['supInvoiceAutoID'];
+
+        $suppInvoiceData = BookInvSuppMaster::find($supInvoiceAutoID);
+        if (empty($suppInvoiceData)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        if ($suppInvoiceData->confirmedYN == 1) {
+            return $this->sendError('You cannot cancel this customer invoice, this is already confirmed');
+        }
+
+        if ($suppInvoiceData->approved == -1) {
+            return $this->sendError('You cannot cancel this customer invoice, this is already approved');
+        }
+
+        if ($suppInvoiceData->cancelYN == -1) {
+            return $this->sendError('You cannot cancel this customer invoice, this is already cancelled');
+        }
+
+        $supplierDetail = BookInvSuppDet::where('bookingSuppMasInvAutoID', $supInvoiceAutoID)->get();
+
+        $supplierDirectDetail = DirectInvoiceDetails::where('directInvoiceAutoID', $supInvoiceAutoID)->get();
+
+        $supplierDirectItemDetail = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $supInvoiceAutoID)->get();
+
+        if (count($supplierDetail) > 0 || count($supplierDirectDetail) > 0 || count($supplierDirectItemDetail) > 0) {
+            return $this->sendError('You cannot cancel this supplier invoice, invoice details are exist');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $suppInvoiceData->cancelYN = -1;
+        $suppInvoiceData->cancelComment = $request['cancelComments'];
+        $suppInvoiceData->cancelDate = NOW();
+        $suppInvoiceData->canceledByEmpSystemID = \Helper::getEmployeeSystemID();
+        $suppInvoiceData->canceledByEmpID = $employee->empID;
+        $suppInvoiceData->canceledByEmpName = $employee->empFullName;
+        $suppInvoiceData->supplierInvoiceNo = null;
+        $suppInvoiceData->save();
+
+        /*Audit entry*/
+
+        AuditTrial::createAuditTrial($suppInvoiceData->documentSystemID,$supInvoiceAutoID,$request['cancelComments'],'Cancelled', 'Not Confirmed');
+
+        return $this->sendResponse($suppInvoiceData->toArray(), 'Customer invoice cancelled successfully');
+    }
+
     public function getSupplierInvoiceStatusHistory(Request $request)
     {
         $input = $request->all();
@@ -3137,7 +3194,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         }
 
 
-        if ($bookInvSuppMasterData->confirmedYN == 0) {
+        if ($bookInvSuppMasterData->confirmedYN == 0 && $bookInvSuppMasterData->cancelYN == 0) {
             return $this->sendError('You cannot return back to amend this Supplier Invoice, it is not confirmed');
         }
 
@@ -3228,6 +3285,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();
 
+            if($bookInvSuppMasterData->cancelYN == -1){
+                $oldStatus = 'Cancelled';
+            } else {
+                $oldStatus = 'Approved';
+            }
+
             // updating fields
             $bookInvSuppMasterData->confirmedYN = 0;
             $bookInvSuppMasterData->confirmedByEmpSystemID = null;
@@ -3241,9 +3304,17 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             $bookInvSuppMasterData->approvedByUserID = null;
             $bookInvSuppMasterData->approvedDate = null;
             $bookInvSuppMasterData->postedDate = null;
+
+            $bookInvSuppMasterData->cancelYN = 0;
+            $bookInvSuppMasterData->cancelComment = null;
+            $bookInvSuppMasterData->cancelDate = null;
+            $bookInvSuppMasterData->canceledByEmpSystemID = null;
+            $bookInvSuppMasterData->canceledByEmpID = null;
+            $bookInvSuppMasterData->canceledByEmpName = null;
+
             $bookInvSuppMasterData->save();
 
-            AuditTrial::createAuditTrial($bookInvSuppMasterData->documentSystemID,$bookingSuppMasInvAutoID,$input['returnComment'],'returned back to amend');
+            AuditTrial::createAuditTrial($bookInvSuppMasterData->documentSystemID,$bookingSuppMasInvAutoID,$input['returnComment'],'returned back to amend', $oldStatus);
 
             $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($bookingSuppMasInvAutoID, $bookInvSuppMasterData->documentSystemID);
 

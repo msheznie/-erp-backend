@@ -1466,7 +1466,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 }
             }
         }
-        elseif ($master->isVatEligible && $master->isPerforma != 2) {
+        elseif ($master->vatRegisteredYN && $master->isPerforma != 2) {
             $checkIsVatEligible = true;
         }
 
@@ -2299,7 +2299,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 }
             }
         }
-        elseif ($customerInvoiceDirect->isVatEligible) {
+        elseif ($customerInvoiceDirect->vatRegisteredYN) {
             $checkIsVatEligible = true;
         }
 

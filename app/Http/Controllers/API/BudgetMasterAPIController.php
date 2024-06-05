@@ -4192,20 +4192,18 @@ class BudgetMasterAPIController extends AppBaseController
 
         $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
 
-        $segments = SegmentMaster::where('isActive', 1)->where('companySystemID', $templateData['companySystemID'])->get();
-
-        $glCOdes = ReportTemplateDetails::with(['gllink'])
+        $glCOdes = ReportTemplateDetails::with(['gllink'  => function ($query) {
+                $query->orderBy('sortOrder', 'asc');
+        }])
             ->where('companySystemID', $templateData['companySystemID'])
             ->where('companyReportTemplateID', $templateMasterID)
-            ->orderBy('sortOrder')
+            ->orderBy('sortOrder', 'asc')
             ->get();
 
+        $glMasters = ReportTemplateDetails::where('masterID', null)->where('companySystemID', $templateData['companySystemID'])->where('companyReportTemplateID', $templateMasterID)->orderBy('sortOrder', 'asc')->get();
 
-        foreach ($glCOdes as $key => $value) {
-            $value->sortOrderOfTopLevel = \Helper::headerCategoryOfReportTemplate($value->detID)['sortOrder'];
-        }
+        $glCOdesSorted = collect($glCOdes);
 
-        $glCOdesSorted = collect($glCOdes)->sortBy('sortOrderOfTopLevel');
 
         $templateMaster = ReportTemplate::find($templateMasterID);
         $financeYearMaster = CompanyFinanceYear::find($companyFinanceYearID);
@@ -4218,9 +4216,18 @@ class BudgetMasterAPIController extends AppBaseController
         $endDate = $financeYearMaster->endingDate;
         $endDate = date('d/m/Y', strtotime($endDate));
 
+        $budgetMasterSegments = BudgetMaster::where('companySystemID', $templateData['companySystemID'])->where('companyFinanceYearID', $companyFinanceYearID)->where('templateMasterID', $templateMasterID)->pluck('serviceLineSystemID');
+
+        $segments = SegmentMaster::where('isActive', 1)->where('companySystemID', $templateData['companySystemID'])->whereNotIn('serviceLineSystemID', $budgetMasterSegments)->get();
+
+        if($segments->isEmpty()){
+            return $this->sendError('The budget for all segments has already been uploaded');
+        }
+
         $output = array(
             'segments' => $segments,
             'company' => $company,
+            'glMasters' => $glMasters,
             'templateDetails' => $glCOdesSorted->values()->all(),
             'sentNotificationAt' => $sentNotificationAt,
             'templateMaster' => $templateMaster,
@@ -4371,19 +4378,14 @@ class BudgetMasterAPIController extends AppBaseController
 
         $storePOMasterHistory = BudgetMasterRefferedHistory::insert($budgetMasterArray);
 
-        $fetchBudgetDetail = Budjetdetails::where('budgetmasterID', $budgetMasterID)
-            ->get();
 
-
-        if (!empty($fetchBudgetDetail)) {
-            foreach ($fetchBudgetDetail as $poDetail) {
-                $poDetail['timesReferred'] = $budgetMaster->timesReferred;
+        Budjetdetails::where('budgetmasterID', $budgetMasterID)->chunk(500, function($budgetDetails) use ($budgetMaster) {
+            foreach ($budgetDetails as $budgetDetail){
+                $budgetDetail['timesReferred'] = $budgetMaster->timesReferred;
+                $budgetDetail = $budgetDetail->toArray();
+                BudgetDetailsRefferedHistory::insert($budgetDetail);
             }
-        }
-
-        $budgetDetailArray = $fetchBudgetDetail->toArray();
-
-        $storePODetailHistory = BudgetDetailsRefferedHistory::insert($budgetDetailArray);
+        });
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $budgetMasterID)
             ->where('companySystemID', $budgetMaster->companySystemID)

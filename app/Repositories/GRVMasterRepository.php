@@ -208,6 +208,15 @@ class GRVMasterRepository extends BaseRepository
         }, 'project' => function ($query) {
         }]);
 
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $grvMaster->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $grvMaster->whereIn('serviceLineSystemID', $serviceLineSystemID);

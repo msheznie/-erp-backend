@@ -993,6 +993,29 @@ class FinancialReportAPIController extends AppBaseController
         $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // main query
 
         $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // detail query
+
+         if((isset($request->reportID) && $request->reportID == "FCT") && $outputCollect)
+        {
+            $outputCollect->each(function ($item) use($outputDetail,$columnKeys) {
+                $detID = ($item->detID) ?  : null;
+                if($detID)
+                {
+                    $data = $outputDetail->filter(function($detail) use ($detID) {
+                        return $detail->templateDetailID == $detID;
+                    });
+                    if($data->isNotEmpty())
+                    {
+                        collect($columnKeys)->each(function($colKey) use ($item,$data)
+                        {
+                            $key = explode('-',$colKey);
+                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
+                                $item->$colKey = collect($data)->sum($colKey);
+                        });
+                    }
+                }
+            });
+        }
+        
         $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
         $grandTotalUncatArr = [];
         $uncategorizeArr = [];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Company;
 use Closure;
 use App\Models\ThirdPartySystems;
 use App\Models\ThirdPartyIntegrationKeys;
@@ -31,10 +32,18 @@ class PosApi
                 $third_party_key = ThirdPartyIntegrationKeys::where('third_party_system_id','=',$system_id)->where('api_key','=',$value)->first();
                 if(!empty($third_party_key))
                 {
-                    $request->request->add(['company_id' => $third_party_key->company_id]);
-                    $request->request->add(['api_external_key' => $third_party_key->api_external_key]);
-                    $request->request->add(['api_external_url' => $third_party_key->api_external_url]);
-                    $request->request->add(['third_party_system_id' => $third_party_key->third_party_system_id]);
+                    $company = Company::where('companySystemID',$third_party_key->company_id)->where('isActive', 1)->exists();
+                    if ($company)
+                    {
+                        $request->request->add(['company_id' => $third_party_key->company_id]);
+                        $request->request->add(['api_external_key' => $third_party_key->api_external_key]);
+                        $request->request->add(['api_external_url' => $third_party_key->api_external_url]);
+                        $request->request->add(['third_party_system_id' => $third_party_key->third_party_system_id]);
+                    }
+                    else
+                    {
+                        return errorMsgs("Company is not active",401);
+                    }
                 }
                 else
                 {

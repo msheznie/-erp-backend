@@ -29,6 +29,8 @@ use App\Models\DirectPaymentDetails;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Employee;
 use App\Models\ExpenseClaimDetails;
+use App\Models\ExpenseClaimDetailsMaster;
+use App\Models\ExpenseClaimMaster;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
@@ -732,9 +734,9 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         foreach ($expenseClaimDetails as $detail){
             if($detail['expenseClaimMasterAutoID']){
-                $expenseClaim = $this->expenseClaimRepository->find($detail['expenseClaimMasterAutoID']);
+                $expenseClaim = ExpenseClaimMaster::find($detail['expenseClaimMasterAutoID']);
                 if (!empty($expenseClaim)) {
-                    $this->expenseClaimRepository->update(['addedForPayment' => 0, 'addedToSalary' => 0], $detail['expenseClaimMasterAutoID']);
+                    ExpenseClaimMaster::find($detail['expenseClaimMasterAutoID'])->update(['addedForPayment' => 0, 'addedToSalary' => 0]);
                 }
             }
         }
@@ -865,7 +867,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $id = $input['expenseClaimId'];
         $payMasterAutoId = $input['PayMasterAutoId'];
 
-        $expenseClaim = $this->expenseClaimRepository->find($id);
+        $expenseClaim = ExpenseClaimMaster::find($id);
 
         if (empty($expenseClaim)) {
             return $this->sendError('Expense Claim not found');
@@ -879,15 +881,15 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Pay Supplier Invoice not found');
         }
         // check policy 16 is on for ec
-        if($expenseClaim->pettyCashYN == 1){
-            $UPECSLPolicy = CompanyPolicyMaster::where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
-                ->where('companyPolicyCategoryID', 16)
-                ->where('isYesNO', 1)
-                ->first();
-            if (isset($UPECSLPolicy->isYesNO) && $UPECSLPolicy->isYesNO==1 ) {
-                return $this->sendError('You can not add detail. UPECS policy is on for the company');
-            }
-        }
+//        if($expenseClaim->pettyCashYN == 1){
+//            $UPECSLPolicy = CompanyPolicyMaster::where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
+//                ->where('companyPolicyCategoryID', 16)
+//                ->where('isYesNO', 1)
+//                ->first();
+//            if (isset($UPECSLPolicy->isYesNO) && $UPECSLPolicy->isYesNO==1 ) {
+//                return $this->sendError('You can not add detail. UPECS policy is on for the company');
+//            }
+//        }
 
         if ($paySupplierInvoiceMaster->BPVdate) {
             $finYearExp = explode('-', $paySupplierInvoiceMaster->BPVdate);
@@ -896,9 +898,9 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $budgetYear = date("Y");
         }
 
-        $expenseClaimDetails = ExpenseClaimDetails::where('companySystemID', $expenseClaim->companySystemID)
+        $expenseClaimDetails = ExpenseClaimDetailsMaster::where('companyID', $expenseClaim->companyID)
             ->where('expenseClaimMasterAutoID', $id)
-            ->with(['currency'])
+            ->with(['currency','segment','category','local_currency'])
             ->get();
 
         foreach ($expenseClaimDetails as $detail) {
@@ -915,45 +917,47 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 }
             }
 
+
             $currencyConvert = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID,
-                $detail['localCurrency'], $detail['localCurrency'], $detail['localAmount'],
+                $detail->transactionCurrencyID, $detail->companyLocalCurrencyID, $detail->companyLocalAmount,
                 $paySupplierInvoiceMaster->BPVAccount);
 
             $temData = array(
                 'directPaymentAutoID' => $paySupplierInvoiceMaster->PayMasterAutoId,
-                'companySystemID' => $detail['companySystemID'],
-                'companyID' => $detail['companyID'],
-                'serviceLineSystemID' => $detail['serviceLineSystemID'],
-                'serviceLineCode'=> $detail['serviceLineCode'],
+                'companySystemID' => $detail['companyID'],
+                'companyID' => $detail['companyCode'],
+                'serviceLineSystemID' => ($detail->segment) ? $detail->segment->serviceLineSystemID : null,
+                'serviceLineCode'=> ($detail->segment) ? $detail->segment->ServiceLineCode : null,
                 'comments'=> $detail['description'],
                 'expenseClaimMasterAutoID' => $expenseClaim->expenseClaimMasterAutoID,
-//                'pettyCashYN' => 2,
                 'pettyCashYN' => $expenseClaim->pettyCashYN,
-                'chartOfAccountSystemID'=> $detail['chartOfAccountSystemID'],
-                'glCode' => $detail['glCode'],
-                'glCodeDes' => $detail['glCodeDescription'],
+                'chartOfAccountSystemID'=> $detail->category->glAutoID,
+                'glCode' => $detail->category->glCode,
+                'glCodeDes' => $detail->category->glCodeDescription,
                 'glCodeIsBank' => 0,
                 'budgetYear' => $budgetYear,
-                'supplierTransCurrencyID' => $detail['localCurrency'],
+                'supplierTransCurrencyID' => $detail->transactionCurrencyID,
                 'supplierTransER' => 1,
-                'DPAmountCurrency' => $detail['localCurrency'],
+                'DPAmountCurrency' => $detail->companyLocalCurrencyID,
                 'DPAmountCurrencyER' => 1,
-                'DPAmount' => $detail['localAmount'],
+                'DPAmount' => $detail->transactionAmount,
+                'netAmount' => $detail->transactionAmount,
                 'bankAmount' => \Helper::roundValue($currencyConvert['bankAmount']),
                 'bankCurrencyID' => $paySupplierInvoiceMaster->supplierTransCurrencyID,
                 'bankCurrencyER' =>  $currencyConvert['transToBankER'],
-                'localCurrency' => $detail['localCurrency'],
+                'localCurrency' => $detail['companyLocalCurrencyID'],
                 'localCurrencyER' => 1,
-                'localAmount' => $detail['localAmount'],
-                'comRptCurrency' => $detail['comRptCurrency'],
+                'localAmount' => $detail->companyLocalAmount,
+                'comRptCurrency' => $detail->companyReportingCurrencyID,
                 'comRptCurrencyER' => $currencyConvert['trasToRptER'],
                 'comRptAmount' => \Helper::roundValue($currencyConvert['reportingAmount'])
                 );
+
             $this->directPaymentDetailsRepository->create($temData);
         }
 
         if (count($expenseClaimDetails) > 0) {
-            $this->expenseClaimRepository->update(['addedForPayment' => -1, 'addedToSalary' => -1], $id);
+            ExpenseClaimMaster::find($id)->update(['addedForPayment' => -1, 'addedToSalary' => -1]);
         }
 
         return $this->sendResponse($expenseClaimDetails, 'Monthly Addition Details added successfully');

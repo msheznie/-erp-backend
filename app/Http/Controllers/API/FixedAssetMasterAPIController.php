@@ -66,6 +66,7 @@ use App\Models\FixedAssetDepreciationMaster;
 use App\helper\CreateAccumulatedDepreciation;
 use App\helper\CreateExcel;
 use App\Services\ValidateDocumentAmend;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class FixedAssetMasterController
@@ -76,6 +77,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     /** @var  FixedAssetMasterRepository */
     private $fixedAssetMasterRepository;
     private $fixedAssetCostRepository;
+    use AuditLogsTrait;
 
     public function __construct(FixedAssetMasterRepository $fixedAssetMasterRepo, FixedAssetCostRepository $fixedAssetCostRepo)
     {
@@ -1098,6 +1100,19 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             }
 
+            $previosValue = $fixedAssetMaster->toArray();
+            $newValue = $input;
+            // return $newValue['dateAQ'];
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+    
+            if(isset($input['tenant_uuid']) ){
+                unset($input['tenant_uuid']);
+            }
+    
+            if(isset($input['db']) ){
+                unset($input['db']);
+            }
 
             if ($fixedAssetMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -1162,6 +1177,12 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 if($fixedAssetMaster->approved == -1)
                 UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$fixedAssetMaster->documentSystemID,$fixedAssetMaster->companySystemID,$fixedAssetMaster->faID,$employee->empName." Amend Asset Costing (".$fixedAssetMaster->faID.") itemPicture",$path,$path,'itemPicture');
+            }
+
+
+
+            if($fixedAssetMaster->approved == -1){
+                $this->auditLog($db, $input['faID'],$uuid, "erp_fa_asset_master", $previosValue['faCode']." has updated", "U", $newValue, $previosValue);
             }
 
             DB::commit();
@@ -1394,6 +1415,15 @@ class FixedAssetMasterAPIController extends AppBaseController
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
                 $assetCositng->where('confirmedYN', $input['confirmedYN']);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $assetCositng->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
         if (array_key_exists('approved', $input)) {
@@ -2286,11 +2316,11 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function exportAssetMaster(Request $request){
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory','assetTypeID'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory','assetTypeID','createdBy'));
 
         $type = $input['type'];
 
-        $assetCositng = FixedAssetMaster::with(['category_by','sub_category_by','finance_category','asset_type','group_to','supplier','disposal_by','department','departmentmaster','confirmed_by','posttogl_by','sub_category_by2','sub_category_by3'])->where('companySystemID', $input['companyID']);
+        $assetCositng = FixedAssetMaster::with(['category_by','sub_category_by','finance_category','asset_type','group_to','supplier','disposal_by','department','departmentmaster','confirmed_by','posttogl_by','sub_category_by2','sub_category_by3','created_by'])->where('companySystemID', $input['companyID']);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -2327,6 +2357,16 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $assetCositng->where('assetType', $input['assetTypeID']);
             }
         }
+
+        if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy']) {
+                $createdBy = $request['createdBy'];
+                $createdBy = (array)$createdBy;
+                $createdBy = collect($createdBy)->pluck('id');
+                $assetCositng->whereIn('createdUserSystemID', $createdBy);
+            }
+        }
+
 
         $output = $assetCositng->orderBy('faID','desc')->get();
 
@@ -2365,6 +2405,9 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x]['Last Physical Verified Date'] = \Helper::dateFormat($val->lastVerifiedDate);
                 $data[$x]['Unit Price(Local)'] = $val->COSTUNIT;
                 $data[$x]['Unit Price(Rpt)'] = $val->costUnitRpt;
+
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateAndTime);
 
                 if ($val->confirmedYN == 1) {
                     $data[$x]['Confirmed Status'] = 'Yes';

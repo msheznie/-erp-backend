@@ -1179,6 +1179,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 ->where('companySystemID', $input['rollMasterDetailData']['companySystemID'])
                 ->where('documentSystemID', $input['rollMasterDetailData']['documentSystemID'])
                 ->where('removedYN', 0)
+                ->where('ServiceLineSystemID',$input['rollMasterDetailData']['serviceLineSystemID'])
                  ->with(['deligation'=>function($q) use($current_date){
                      $q->where('approved',0)
                      ->orWhere(function($q)use($current_date){

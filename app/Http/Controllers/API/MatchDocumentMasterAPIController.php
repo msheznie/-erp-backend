@@ -2587,6 +2587,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
             ->get();
 
         $customer = CustomerAssigned::select('*')
+                                    ->whereHas('customer_master',function($q){
+                                        $q->where('isCustomerActive',1);
+                                    })   
                                     ->where('companySystemID', $companyId)
                                     ->where('isAssigned', '-1')
                                     ->where('isActive', '1')

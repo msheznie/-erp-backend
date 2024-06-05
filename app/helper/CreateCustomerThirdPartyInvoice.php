@@ -37,7 +37,6 @@ use App\Models\Taxdetail;
 use App\Models\Unit;
 use App\Models\UploadCustomerInvoice;
 use App\Traits\AuditTrial;
-use AWS\CRT\HTTP\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -51,7 +50,9 @@ use App\Models\AssetDisposalDetail;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\AssetDisposalType;
 use App\Jobs\GeneralLedgerInsert;
-
+use App\Services\UserTypeService;
+use App\Http\Controllers\API\CustomerInvoiceDirectAPIController;
+use Illuminate\Http\Request;
 class CreateCustomerThirdPartyInvoice
 {
     /** @var  CustomerInvoiceDirectRepository */
@@ -65,49 +66,49 @@ class CreateCustomerThirdPartyInvoice
         try {
             $companySystemId = $sourceModel['companySystemID'];
           
-            
-                    $approvalLevel = ApprovalLevel::with('approvalrole' )
-                    ->where('companySystemID', $companySystemId)
-                    ->where('documentSystemID', 20)
-                    ->where('departmentSystemID', 4)
-                    ->where('isActive', -1)
-                    ->first();
+                
+                    // $approvalLevel = ApprovalLevel::with('approvalrole' )
+                    // ->where('companySystemID', $companySystemId)
+                    // ->where('documentSystemID', 20)
+                    // ->where('departmentSystemID', 4)
+                    // ->where('isActive', -1)
+                    // ->first();
 
-                    $approvalGroupID = [];
-                    if($approvalLevel){
-                        if ($approvalLevel->approvalrole) {
-                            foreach ($approvalLevel->approvalrole as $val) {
-                                if ($val->approvalGroupID) {
-                                  $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
-                                } 
-                                else {
-                                    $errorMsg = "'Please set the approval group.";
-                                    return ['status' => false, 'message' => $errorMsg];
-                                }
-                            }
-                        }
-                    } else {
-                        $errorMsg = "No approval setup created for this document.";
-                        return ['status' => false, 'message' => $errorMsg];
-                    }
+                    // $approvalGroupID = [];
+                    // if($approvalLevel){
+                    //     if ($approvalLevel->approvalrole) {
+                    //         foreach ($approvalLevel->approvalrole as $val) {
+                    //             if ($val->approvalGroupID) {
+                    //               $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
+                    //             } 
+                    //             else {
+                    //                 $errorMsg = "'Please set the approval group.";
+                    //                 return ['status' => false, 'message' => $errorMsg];
+                    //             }
+                    //         }
+                    //     }
+                    // } else {
+                    //     $errorMsg = "No approval setup created for this document.";
+                    //     return ['status' => false, 'message' => $errorMsg];
+                    // }
 
-                    $approvalGroupID;
+                    // $approvalGroupID;
 
-                    $approvalAccess = EmployeesDepartment::where('employeeGroupID', $approvalGroupID)
-                                    ->whereHas('employee', function ($q) {
-                                        $q->where('discharegedYN', 0);
-                                    })
-                                    ->where('companySystemID', $companySystemId)
-                                    ->where('employeeSystemID',$empId->employeeSystemID)
-                                    ->where('documentSystemID', 20)
-                                    ->where('isActive', 1)
-                                    ->where('removedYN', 0)
-                                    ->first();
-
-
+                    // $approvalAccess = EmployeesDepartment::where('employeeGroupID', $approvalGroupID)
+                    //                 ->whereHas('employee', function ($q) {
+                    //                     $q->where('discharegedYN', 0);
+                    //                 })
+                    //                 ->where('companySystemID', $companySystemId)
+                    //                 ->where('employeeSystemID',$empId->employeeSystemID)
+                    //                 ->where('documentSystemID', 20)
+                    //                 ->where('isActive', 1)
+                    //                 ->where('removedYN', 0)
+                    //                 ->first();
 
 
-            if ($approvalAccess) {
+
+
+            // if ($approvalAccess) {
 
                 $customerInvoiceData = array();
                 $customerInvoiceData['transactionMode'] = null;
@@ -249,34 +250,25 @@ class CreateCustomerThirdPartyInvoice
                         }
             
                     }
-    
+                        $systemUser = UserTypeService::getSystemEmployee();
                         $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
                         $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
                         $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
-                        $customerInvoiceData['confirmedYN'] = 1;
-                        $customerInvoiceData['confirmedByEmpSystemID'] = $empId->employeeSystemID;
-                        $customerInvoiceData['confirmedByEmpID'] = $empId->empID;
-                        $customerInvoiceData['confirmedByName'] = $empId->empName;
-                        $customerInvoiceData['confirmedDate'] = NOW();
-                        $customerInvoiceData['approved'] = -1;
-                        $customerInvoiceData['approvedDate'] = NOW();
                         $customerInvoiceData['postedDate'] = NOW();
                         $customerInvoiceData['isPerforma'] = 0;
                         $customerInvoiceData['documentType'] = 11;
                         $customerInvoiceData['interCompanyTransferYN'] = 0;
-                        $customerInvoiceData['createdUserSystemID'] = $empId->employeeSystemID;
-                        $customerInvoiceData['createdUserID'] = $empId->empID;
+                        $customerInvoiceData['createdUserSystemID'] = $systemUser->employeeSystemID;
+                        $customerInvoiceData['createdUserID'] = $systemUser->empID;
                         $customerInvoiceData['createdPcID'] = $sourceModel['modifiedPc'];
                         $customerInvoiceData['createdDateAndTime'] = NOW();
                         $customerInvoiceData['isAutoGenerated'] = 1;
                         $customerInvoiceData['isPOS'] = 1;
-                        $customerInvoiceData['approvedByUserSystemID'] = $empId->employeeSystemID;
-                        $customerInvoiceData['approvedByUserID'] = $empId->empID;
                         $customerInvoiceData['date_of_supply'] = $today;
-                        
+                        $customerInvoiceData['modifiedUserSystemID'] = $systemUser->employeeSystemID;
+                        $customerInvoiceData['modifiedUser'] = $systemUser->empID;
                         $customerInvoice = CustomerInvoiceDirect::create($customerInvoiceData);
-    
-    
+                    
                         $interComAssetDisposal = [
                             'assetDisposalID' => $sourceModel['assetdisposalMasterAutoID'],
                             'customerInvoiceID' => $sourceModel['custInvoiceDirectAutoID']
@@ -331,13 +323,55 @@ class CreateCustomerThirdPartyInvoice
                                 $customerInvoiceDet = CustomerInvoiceDirectDetail::create($cusInvoiceDetails);
                           
                         }
-                         $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $companySystemId, 'employeeSystemID' => $sourceModel['confimedByEmpSystemID']];
-                        $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel, $db);
-    
-                       
-    
-                        DB::commit();
-                        return ['status' => true, 'message' => "Customer invoice created successfully"];
+
+                        $params = array(
+                            'autoID' => $customerInvoice->custInvoiceDirectAutoID,
+                            'company' => $customerInvoice->companySystemID,
+                            'document' => $customerInvoice->documentSystemiD,
+                            'segment' => '',
+                            'category' => '',
+                            'amount' => '',
+                            'isAutoCreateDocument' => true
+                        );
+
+                        $returnData = \Helper::confirmDocument($params);
+
+                        if($returnData['success']){
+
+                            $request = new Request();
+                            $request->replace([
+                                'companyId' => $customerInvoice->companySystemID,
+                                'custInvoiceDirectAutoID' => $customerInvoice->custInvoiceDirectAutoID,
+                                'isAutoCreateDocument' => true
+                            ]);
+                            $controller = app(CustomerInvoiceDirectAPIController::class);
+                           $customerInvoiceApprovalData = $controller->getCustomerInvoiceApproval($request);
+                           $customerInvoiceApprovalData = json_decode(json_encode($customerInvoiceApprovalData),true);
+
+                            if($customerInvoiceApprovalData['success']){
+
+                                $dataset = $customerInvoiceApprovalData['data'];
+                                $dataset['isAutoCreateDocument'] = true;
+                                $dataset['companySystemID'] = $customerInvoice->companySystemID;
+                                $dataset['approvedComments'] = "Created from Disposal";
+
+                                $dataset['db'] = $db;
+                                $approveDocument = \Helper::approveDocument($dataset);
+
+                                if ($approveDocument["success"]) {
+                                    DB::commit();
+                                    return ['status' => true, 'message' => "Customer invoice created successfully"];
+                                }
+                                else {
+                                    return ['status' => false, 'message' => $approveDocument['message']];
+                                }
+                               
+                            }
+                            else{
+                                return ['status' => false, 'message' => $customerInvoiceApprovalData['message']];
+                            }
+                        }
+
                     }
                     else {
                         return ['status' => false, 'message' => "Finance period not activated"];
@@ -347,11 +381,11 @@ class CreateCustomerThirdPartyInvoice
                     return ['status' => false, 'message' => "From Company Finance Year not found, date"];
                 }
 
-            }
-            else
-            {
-                return ['status' => false, 'message' => "The user does not have customer invoices approval access"];
-            }
+            // }
+            // else
+            // {
+            //     return ['status' => false, 'message' => "The user does not have customer invoices approval access"];
+            // }
         } catch (\Exception $e) {
              DB::rollback();
             //dd($e);

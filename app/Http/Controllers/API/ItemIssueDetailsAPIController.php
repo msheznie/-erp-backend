@@ -973,13 +973,25 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssuedDefaultMeasure'] = 0;
         }
         if ($itemIssue->issueType == 2) {
-            if($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyAvailableToIssue){
-                $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
-                // $qtyError['diff_item'] = ["item_id" => $id,"diff_qnty" => ($input['qtyIssuedDefaultMeasure'] - $itemIssueDetails->qtyRequested)];
-                if($itemIssueDetails->qtyAvailableToIssue == 0) {
-                    return $this->sendError("Qty fully issued for this item", 500, $qtyError);
-                }else {
-                    return $this->sendError("Issuing qty cannot be more than requested qty/remaining qty", 500, $qtyError);
+            $itemIssueApproved = ItemIssueMaster::where('reqDocID', $itemIssue->reqDocID)->where('approved', -1)->first();
+            if(empty($itemIssueApproved)) {
+                if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyRequested) {
+                    $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0, 'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                    // $qtyError['diff_item'] = ["item_id" => $id,"diff_qnty" => ($input['qtyIssuedDefaultMeasure'] - $itemIssueDetails->qtyRequested)];
+                    if ($itemIssueDetails->qtyAvailableToIssue == 0) {
+                        return $this->sendError("Qty fully issued for this item", 500, $qtyError);
+                    } else {
+                        return $this->sendError("Issuing qty cannot be more than requested qty/remaining qty", 500, $qtyError);
+                    }
+                }
+            } else {
+                if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyAvailableToIssue) {
+                    $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0, 'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                    if ($itemIssueDetails->qtyAvailableToIssue == 0) {
+                        return $this->sendError("Qty fully issued for this item", 500, $qtyError);
+                    } else {
+                        return $this->sendError("Issuing qty cannot be more than requested qty/remaining qty", 500, $qtyError);
+                    }
                 }
             }
         }
@@ -1300,7 +1312,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $items = ItemAssigned::where('companySystemID', $companyId)
                     ->where('isActive', 1)->where('isAssigned', -1)
                     ->whereIn('financeCategoryMaster', $categories)
-                    ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode','itemCodeSystem']);
+                    ->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode','itemCodeSystem']);
 
                 if (array_key_exists('search', $input)) {
                     $search = $input['search'];

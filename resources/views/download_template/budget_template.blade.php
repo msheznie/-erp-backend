@@ -31,8 +31,11 @@
                 </tr>
                 </thead>
                 <tbody>
+                @foreach ($glMasters as $glMaster)
                 @foreach ($templateDetails as $rowLevel)
-                    @foreach ($rowLevel->gllink as $row)
+                    @if($glMaster->detID == $rowLevel->masterID)
+
+                        @foreach ($rowLevel->gllink as $row)
                         <tr>
                             <td>
                                 {{\App\helper\Helper::headerCategoryOfReportTemplate($row->templateDetailID)['description'] }}
@@ -50,7 +53,9 @@
                             <td>0</td>
                             @endforeach
                         </tr>
-                    @endforeach
+                        @endforeach
+                    @endif
+                @endforeach
                 @endforeach
                 </tbody>
             </table>

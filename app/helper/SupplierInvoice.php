@@ -7,6 +7,7 @@ namespace App\helper;
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
 use App\Models\Taxdetail;
+use Illuminate\Support\Facades\DB;
 
 class SupplierInvoice
 {
@@ -70,6 +71,10 @@ class SupplierInvoice
                 $newVat['rptCurrencyER'] = $bookInvSuppMaster->companyReportingER;
                 $newVat['rptAmount'] = $bookInvSuppMaster['VATAmountRpt'];
                 Taxdetail::create($newVat);
+            } else {
+                $details = DirectInvoiceDetails::select(DB::raw("IFNULL(SUM(DIAmount + VATAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount + VATAmountLocal),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount + VATAmountRpt),0) as bookingAmountRpt"), DB::raw("IFNULL(SUM(VATAmount),0) as VATAmount"), DB::raw("IFNULL(SUM(VATAmountLocal),0) as VATAmountLocal"), DB::raw("IFNULL(SUM(VATAmountRpt),0) as VATAmountRpt"), DB::raw("IFNULL(SUM(DIAmount),0) as netAmount"), DB::raw("IFNULL(SUM(localAmount),0) as netAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as netAmountRpt"))->where('directInvoiceAutoID', $bookInvSuppMaster->bookingSuppMasInvAutoID)->first()->toArray();
+
+                BookInvSuppMaster::where('bookingSuppMasInvAutoID', $bookInvSuppMaster->bookingSuppMasInvAutoID)->update($details);
             }
         }
     }

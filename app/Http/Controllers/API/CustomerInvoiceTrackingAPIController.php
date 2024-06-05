@@ -513,6 +513,9 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $isCreate = $request['isCreate'];
         $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+            ->whereHas('customer_master',function($q){
+                $q->where('isCustomerActive',1);
+            })     
             ->where('companySystemID', $companyId)
             ->where('isActive', 1)
             ->where('isAssigned', -1)

@@ -65,8 +65,6 @@ class Tax extends Model
         'taxType',
         'isActive',
         'authorityAutoID',
-        'GLAutoID',
-        'GLAccount',
         'inputVatGLAccountAutoID',
         'inputVatGLAccount',
         'outputVatGLAccountAutoID',
@@ -91,7 +89,9 @@ class Tax extends Model
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
-        'timestamp'
+        'timestamp',
+        'whtPercentage',
+        'whtType'
     ];
 
     /**
@@ -108,8 +108,6 @@ class Tax extends Model
         'taxType' => 'integer',
         'isActive' => 'boolean',
         'authorityAutoID' => 'integer',
-        'GLAutoID' => 'integer',
-        'GLAccount' => 'string',
         'inputVatGLAccountAutoID' => 'integer',
         'inputVatGLAccount' => 'string',
         'outputVatGLAccountAutoID' => 'integer',
@@ -131,7 +129,9 @@ class Tax extends Model
         'createdUserName' => 'string',
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
-        'modifiedUserName' => 'string'
+        'modifiedUserName' => 'string',
+        'whtPercentage' => 'float',
+        'whtType' => 'integer'
     ];
 
     /**
@@ -143,10 +143,8 @@ class Tax extends Model
         
     ];
 
-    public function authority()
-    {
-        /** one tax can have only one authority */
-        return $this->hasOne('App\Models\TaxAuthority', 'taxAuthourityMasterID', 'authorityAutoID');
+    public function authority(){
+        return $this->hasOne('App\Models\SupplierMaster', 'supplierCodeSystem', 'authorityAutoID');
     }
 
     public function type()
@@ -170,5 +168,4 @@ class Tax extends Model
         return $this->hasMany('App\Models\TaxVatMainCategories', 'taxMasterAutoID', 'taxMasterAutoID');
     }
 
-    
 }

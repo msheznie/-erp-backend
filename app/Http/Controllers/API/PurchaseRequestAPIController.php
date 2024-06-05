@@ -166,7 +166,7 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1);
+        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
 
 
         if ($policy == 0 && $financeCategoryId != 0) {
@@ -1374,6 +1374,12 @@ class PurchaseRequestAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
+
+        if(!isset($input['requested_by']))
+        {
+            $input['requested_by'] = $user->employee['employeeSystemID'];
+        }
+
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
@@ -1404,8 +1410,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input['serialNumber'] = $lastSerialNumber;
 
-
-        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        $serviceLineSystemID = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : null;
+        $segment = SegmentMaster::where('serviceLineSystemID', $serviceLineSystemID)->first();
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
@@ -1466,7 +1472,7 @@ class PurchaseRequestAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseRequest $purchaseRequest */
-        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','currency_by',
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','currency_by','requestedby',
             'priority_pdf', 'location_pdf', 'details.uom', 'details.altUom' ,'company', 'segment', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
@@ -1865,7 +1871,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = array_except($input, ['created_by', 'confirmed_by',
             'priority_pdf', 'location_pdf', 'details', 'company', 'approved_by',
             'PRConfirmedBy', 'PRConfirmedByEmpName','currency_by',
-            'PRConfirmedBySystemID', 'PRConfirmedDate', 'segment']);
+            'PRConfirmedBySystemID', 'PRConfirmedDate', 'segment','requestedby']);
         $input = $this->convertArrayToValue($input);
 
         /** @var PurchaseRequest $purchaseRequest */
@@ -2508,9 +2514,13 @@ class PurchaseRequestAPIController extends AppBaseController
     public function printPurchaseRequest(Request $request)
     {
         $id = $request->get('id');
+
+        $isFromPortal = $request->get('isFromPortal', 0);
+
+
         /** @var PurchaseRequest $purchaseRequest */
         
-        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','segment',
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','segment','requestedby',
             'priority_pdf', 'location', 'details.uom','details.altUom', 'company','currency_by','buyer', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
@@ -2530,6 +2540,11 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest['allowAltUom'] = ($checkAltUOM) ? $checkAltUOM->isYesNO : false;
 
         $array = array('request' => $purchaseRequest);
+
+        if($isFromPortal){
+            return $this->sendResponse($array, 'Purchase Request print data');
+        }
+
         $time = strtotime("now");
         $fileName = 'purchase_request_' . $id . '_' . $time . '.pdf';
 

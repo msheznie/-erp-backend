@@ -20,6 +20,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Yajra\DataTables\Facades\DataTables;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class SystemGlCodeScenarioDetailController
@@ -30,6 +31,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
 {
     /** @var  SystemGlCodeScenarioDetailRepository */
     private $systemGlCodeScenarioDetailRepository;
+    use AuditLogsTrait;
 
     public function __construct(SystemGlCodeScenarioDetailRepository $systemGlCodeScenarioDetailRepo)
     {
@@ -241,6 +243,22 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
         }
 
         $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
+
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
+
+        $previousValue = $systemGlCodeScenarioDetail->toArray();
+        $newValue = $input;
+        $transactionID = 0;
+
         DB::beginTransaction();
         try {
 
@@ -266,6 +284,9 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
             }
 
             DB::commit();
+
+            $this->auditLog($db, $transactionID, $uuid, "chart_of_account_config", "{$input['departmentName']} - {$systemGlCodeScenarioDetail->master->description} has updated", "U", $newValue, $previousValue);
+
             return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), 'Gl code updated successfully');
         }catch(\Exception $e){
             DB::rollBack();

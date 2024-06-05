@@ -76,6 +76,8 @@ use App\Models\CustomerReceivePayment;
 use App\Models\QuotationMaster;
 use App\Models\MatchDocumentMaster;
 use App\Traits\AuditLogsTrait;
+use App\Models\SalesReturn;
+use App\Models\ItemIssueMaster;
 
 /**
  * Class CustomerMasterController
@@ -357,7 +359,11 @@ class CustomerMasterAPIController extends AppBaseController
                                                     ->where('isAssigned', -1)    
                                                     ->where('isActive', 1);    
                                         })
-                                        ->where('controlAccountsSystemID',4)
+                                        ->where(function($q){
+                                            $q->where('controlAccountsSystemID',3)
+                                            ->orWhere('controlAccountsSystemID',4)
+                                            ->orWhere('controlAccountsSystemID',5);
+                                         })
                                         ->where('catogaryBLorPL', '=', 'BS')
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
@@ -593,6 +599,84 @@ class CustomerMasterAPIController extends AppBaseController
         
         if (array_key_exists('customerCodeSystem', $input)) {
 
+            if($input['isCustomerActive'] == 0)
+            {
+                $Quatation = [];
+                $Delivery = [];
+                $ItemIssue = [];
+                $MatDoc = [];
+                $Recived = [];
+                $Credit = [];
+                $CustomerInvoice = [];
+                $SalesReturn = [];
+
+                $quatation = QuotationMaster::where('customerSystemCode',$input['customerCodeSystem'])->where('approvedYN',0);
+
+                if($quatation->count() > 0)
+                {
+                    $Quatation =  $quatation->pluck('quotationCode')->toArray();
+                }
+
+                $delivery = DeliveryOrder::where('customerID',$input['customerCodeSystem'])->where('approvedYN',0);
+
+                if($delivery->count() > 0)
+                {
+                    $Delivery =  $delivery->pluck('deliveryOrderCode')->toArray();
+                }
+
+                $salesReturn = SalesReturn::where('customerID',$input['customerCodeSystem'])->where('approvedYN',0);
+
+                if($salesReturn->count() > 0)
+                {
+                    $SalesReturn =  $salesReturn->pluck('salesReturnCode')->toArray();
+                }
+
+                $customerInvoice = CustomerInvoice::where('customerID',$input['customerCodeSystem'])->where('approved',0);
+
+                if($customerInvoice->count() > 0)
+                {
+                    $CustomerInvoice =  $customerInvoice->pluck('bookingInvCode')->toArray();
+                }
+
+                $credit = CreditNote::where('customerID', $input['customerCodeSystem'])->where('approved',0);
+
+                if($credit->count() > 0)
+                {
+                    $Credit =  $credit->pluck('creditNoteCode')->toArray();
+                }
+
+
+                $recived = CustomerReceivePayment::where('customerID', $input['customerCodeSystem'])->where('approved',0);
+
+                if($recived->count() > 0)
+                {
+                    $Recived =  $recived->pluck('custPaymentReceiveCode')->toArray();
+                }
+
+                $matDoc = MatchDocumentMaster::where('BPVsupplierID',$input['customerCodeSystem'])->where('approved',0);
+
+                if($matDoc->count() > 0)
+                {
+                    $MatDoc =  $matDoc->pluck('matchingDocCode')->toArray();
+                }
+
+                $itemIssue = ItemIssueMaster::where('customerSystemID',$input['customerCodeSystem'])->where('approved',0);
+
+                if($itemIssue->count() > 0)
+                {
+                    $ItemIssue =  $itemIssue->pluck('itemIssueCode')->toArray();
+                }
+
+
+                $mergedArray = array_merge($Quatation,$Delivery,$ItemIssue, $MatDoc, $Recived,$Credit,$CustomerInvoice,$SalesReturn);
+                if(count($mergedArray) > 0)
+                {
+                    return $this->sendError('The selected customer has already been pulled into the document.',500,['type' => 'customerBlock','data' =>$mergedArray]);
+        
+                }
+
+
+            }
             $customerMasters = CustomerMaster::where('customerCodeSystem', $input['customerCodeSystem'])->first();
 
             if (empty($customerMasters)) {
@@ -806,6 +890,9 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
         $customers = CustomerAssigned::whereIn('companySystemID', $companies)
+            ->whereHas('customer_master',function($q){
+                $q->where('isCustomerActive',1);
+            })
             ->select(['customerCodeSystem', 'CustomerName', 'CutomerCode'])
             ->when(request('search', false), function ($q, $search) {
                 return $q->where(function ($query) use ($search) {
@@ -3117,6 +3204,9 @@ class CustomerMasterAPIController extends AppBaseController
         $companyID = $request->companyId;
         $search = $request->search;
         $customers = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+            ->whereHas('customer_master',function($q){
+                $q->where('isCustomerActive',1);
+            })
             ->where('companySystemID', $companyID)
             ->where('isActive', 1)
             ->where('isAssigned', -1)

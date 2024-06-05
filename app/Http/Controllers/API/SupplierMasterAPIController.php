@@ -622,6 +622,11 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
 
+        if(isset($input['omanization']) && ($input['omanization'] > 100))
+        {
+            return $this->sendError('Omanization percentage cannot be greater than 100');
+        }
+
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
@@ -689,6 +694,9 @@ class SupplierMasterAPIController extends AppBaseController
             $input['companyLinkedToSystemID'] = null;
         }
 
+        if(isset($input['whtApplicableYN']) && $input['whtApplicableYN'] == 0){
+            $input['whtType'] = null;
+        }
 
         $supplierMasters = $this->supplierMasterRepository->create($input);
 
@@ -734,6 +742,14 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $input = $this->convertArrayToValue(array_except($request->all(),['company', 'final_approved_by', 'blocked_by']));
 
+        $id = $input['supplierCodeSystem'];
+
+        $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
+
+        if (empty($supplierMaster)) {
+            return $this->sendError('Supplier Master not found');
+        }
+
         if( !isset($input['liabilityAccountSysemID']) || (isset($input['liabilityAccountSysemID']) && $input['liabilityAccountSysemID'] == null)){
             return $this->sendError('Please select liability account.');
         }
@@ -749,7 +765,41 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Please select advance account.');
         }
 
-        $id = $input['supplierCodeSystem'];
+        if(isset($input['omanization']) && ($input['omanization'] > 100))
+        {
+            return $this->sendError('Omanization percentage cannot be greater than 100');
+        }
+
+        if(isset($input['whtApplicableYN']) && $input['whtApplicableYN'] == 0){
+            $input['whtType'] = null;
+        }
+
+        if(($supplierMaster->whtApplicableYN != $input['whtApplicableYN']) || ($supplierMaster->whtType != $input['whtType'])){
+            $isPendingDocument = SupplierMaster::leftJoin('erp_bookinvsuppmaster', function ($join) use ($id) {
+                $join->on('suppliermaster.supplierCodeSystem', '=', 'erp_bookinvsuppmaster.supplierID')
+                    ->where('erp_bookinvsuppmaster.supplierID',$id)
+                    ->whereIn('erp_bookinvsuppmaster.documentType', [0,1])
+                    ->where(function($query) {
+                        $query->whereIn('erp_bookinvsuppmaster.confirmedYN', [0,1])
+                            ->where('erp_bookinvsuppmaster.approved', 0);
+                    });
+            })->leftJoin('erp_paysupplierinvoicemaster', function ($join) use ($id) {
+                $join->on('suppliermaster.supplierCodeSystem', '=', 'erp_paysupplierinvoicemaster.BPVsupplierID')
+                    ->where('erp_paysupplierinvoicemaster.BPVsupplierID',$id)
+                    ->where('erp_paysupplierinvoicemaster.invoiceType',3)
+                    ->where(function($query) {
+                        $query->whereIn('erp_paysupplierinvoicemaster.confirmedYN', [0,1])
+                            ->where('erp_paysupplierinvoicemaster.approved', 0);
+                    });
+            })->where(function ($query) {
+                $query->whereNotNull('erp_bookinvsuppmaster.supplierID')
+                    ->orWhereNotNull('erp_paysupplierinvoicemaster.BPVsupplierID');
+            })->exists();
+
+            if ($isPendingDocument) {
+                return $this->sendError('WHT fields cannot be updated. There are Supplier Invoice/Payment Vouchers pending for approval');
+            }
+        }
 
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
             'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by','companySystemID']);
@@ -846,6 +896,8 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if($supplierMaster->approvedYN){
+
+            $this->supplierMasterRepository->update(array_only($input,['whtApplicableYN','whtType']),$id);
 
             //check policy 3
 
