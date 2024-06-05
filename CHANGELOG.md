@@ -1,5 +1,51 @@
 # Changelog
 
+## [10.42.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.41.0...v10.42.0) (2024-06-05)
+
+
+### Features
+
+* **accounts payable:** allocate Employees to Expense [GCP-2996] ([#6154](https://github.com/pbsgears/Gears_BackEnd/issues/6154)) ([62151ed](https://github.com/pbsgears/Gears_BackEnd/commit/62151eda2c44ebd01871c4c45324ea5e2a35a813))
+* **accounts payable:** expense claim created in hrms dosen't get pulled in pv [GCP-3409] ([#6175](https://github.com/pbsgears/Gears_BackEnd/issues/6175)) ([76d4303](https://github.com/pbsgears/Gears_BackEnd/commit/76d43031f6611b37992da45c1a9814105ef8b227))
+* **accounts payable:** implemented logic for supplier cancellation [GCP-1479]] ([#6181](https://github.com/pbsgears/Gears_BackEnd/issues/6181)) ([cf5f1bb](https://github.com/pbsgears/Gears_BackEnd/commit/cf5f1bbe9008041ff30ec69d8a63680ca49d913a))
+* **accounts payable:** supplier Group Filter for all AP reports [GCP-3379] ([#6167](https://github.com/pbsgears/Gears_BackEnd/issues/6167)) ([2ed7cd2](https://github.com/pbsgears/Gears_BackEnd/commit/2ed7cd2a93dbced09cb3231067e96aaef2ccab08))
+* **accounts receivable:** customer advance GL selection & entries Posting [GCP-3322] ([#6133](https://github.com/pbsgears/Gears_BackEnd/issues/6133)) ([ec5fe87](https://github.com/pbsgears/Gears_BackEnd/commit/ec5fe8758654014a28f750e253dda813ff7badde))
+* **accounts receivable:** customer invoice amend validation [GCP-3449] ([#6119](https://github.com/pbsgears/Gears_BackEnd/issues/6119)) ([93b5bd3](https://github.com/pbsgears/Gears_BackEnd/commit/93b5bd336335086625814d3c9ee3897144beb794))
+* **approval setup:** delegation introduce the segment [GCP-3485] ([#6128](https://github.com/pbsgears/Gears_BackEnd/issues/6128)) ([6a3db1a](https://github.com/pbsgears/Gears_BackEnd/commit/6a3db1a56af123c411aaa6bb3a62f707344cd474))
+* **asset management:** asset barcode arabic language template addedd [GCP-3676] ([#6212](https://github.com/pbsgears/Gears_BackEnd/issues/6212)) ([7dc1fda](https://github.com/pbsgears/Gears_BackEnd/commit/7dc1fda15b9b15932219bbb118cfe3be3fa67f82))
+* **asset management:** asset Barcode Generation [GCP-3531] ([#6200](https://github.com/pbsgears/Gears_BackEnd/issues/6200)) ([c813e20](https://github.com/pbsgears/Gears_BackEnd/commit/c813e201d283b444f9df1d1bdedffb9c2331acf3))
+* **asset management:** Update Existing Barcode In Asset Costing [GCP-3163] ([#6132](https://github.com/pbsgears/Gears_BackEnd/issues/6132)) ([159a030](https://github.com/pbsgears/Gears_BackEnd/commit/159a030f28a504ad936287d6258ff649d68bfb1b))
+* **asset management:** View logs for Asset Costing [GCP-2534] ([#6209](https://github.com/pbsgears/Gears_BackEnd/issues/6209)) ([f97afa9](https://github.com/pbsgears/Gears_BackEnd/commit/f97afa9cd4ce001dee925c5663cbb71eccc0e26a))
+* **common:** added created by filter to different areas [GCP-3002] ([#6126](https://github.com/pbsgears/Gears_BackEnd/issues/6126)) ([acb2880](https://github.com/pbsgears/Gears_BackEnd/commit/acb28808ff0072c5404e0b2ba2b53a94ee1a4ad1))
+* **common:** Create PR in Portal [GCP-3525] ([#6151](https://github.com/pbsgears/Gears_BackEnd/issues/6151)) ([48e3cf0](https://github.com/pbsgears/Gears_BackEnd/commit/48e3cf025c987071429c65ce677ebf79ef46c3be))
+* **common:** Create PR in Portal [GCP-3527] ([#6199](https://github.com/pbsgears/Gears_BackEnd/issues/6199)) ([a7382af](https://github.com/pbsgears/Gears_BackEnd/commit/a7382afdbd67b061bfd6230dc718469f1f27f8f8))
+* **common:** implemented exempt vat update [GCP-3003] ([#6164](https://github.com/pbsgears/Gears_BackEnd/issues/6164)) ([e23bbaa](https://github.com/pbsgears/Gears_BackEnd/commit/e23bbaaf603c30cb995651a056966e8812232fd9))
+* **common:** implemented purchase item filter for related documents [GCP-3376] ([#6122](https://github.com/pbsgears/Gears_BackEnd/issues/6122)) ([29b1ef0](https://github.com/pbsgears/Gears_BackEnd/commit/29b1ef07347f063cd4c56cefe84988b524ed3d6a))
+* **general ledger:** implemented reverse JV option to standard JV [GCP-2780] ([#6251](https://github.com/pbsgears/Gears_BackEnd/issues/6251)) ([7cf1a4f](https://github.com/pbsgears/Gears_BackEnd/commit/7cf1a4f6a09ac21a9749aeee44c7e406e2833c8d))
+* **general ledger:** sort order changed as template with validations for segments [GCP-3367] ([#6083](https://github.com/pbsgears/Gears_BackEnd/issues/6083)) ([ccf772b](https://github.com/pbsgears/Gears_BackEnd/commit/ccf772bfc673920d2aa27ff12bb77aae51595678))
+* **inventory:** material reqiested created employee as created by employee in pr [GCP-3634] ([#6171](https://github.com/pbsgears/Gears_BackEnd/issues/6171)) ([df131ba](https://github.com/pbsgears/Gears_BackEnd/commit/df131babb1b8bf457266f90cefd429b34f0116a6))
+* **my profile:** Create PR in portal [GCP-3524] ([#6141](https://github.com/pbsgears/Gears_BackEnd/issues/6141)) ([4742ad1](https://github.com/pbsgears/Gears_BackEnd/commit/4742ad1b9aa7ff8d15a1ec5996c09f28436ae87e))
+* **procument:** while create mr new requested_by filed added in purchase request [GCP-3633] ([#6178](https://github.com/pbsgears/Gears_BackEnd/issues/6178)) ([246b11a](https://github.com/pbsgears/Gears_BackEnd/commit/246b11a1607fe58afe1dc9409156ceb8805d44fe))
+* **procurement:** request name changed to requested by in print [GCP-3513] ([#6152](https://github.com/pbsgears/Gears_BackEnd/issues/6152)) ([c30e2ae](https://github.com/pbsgears/Gears_BackEnd/commit/c30e2aef28a51e5db3630948ab489c3b59ecb49c))
+* **system admin:** added new field omanization in supplier master [GCP-3041] ([#6140](https://github.com/pbsgears/Gears_BackEnd/issues/6140)) ([e109081](https://github.com/pbsgears/Gears_BackEnd/commit/e109081e2eadfb4442c15566c97d2be0f4357676))
+* **system admin:** chart of account configuration log [GCP-2536] ([#6103](https://github.com/pbsgears/Gears_BackEnd/issues/6103)) ([e595a1e](https://github.com/pbsgears/Gears_BackEnd/commit/e595a1e5301389a53c3e9a9868831dab6e0cc99d))
+* **system admin:** supplier master wht configuration [GCP-3486] ([#6205](https://github.com/pbsgears/Gears_BackEnd/issues/6205)) ([da3225e](https://github.com/pbsgears/Gears_BackEnd/commit/da3225efd484eea570c06177e797925537133cf0))
+* **system admin:** wht configuration in tax setup [GCP-3476] ([#6174](https://github.com/pbsgears/Gears_BackEnd/issues/6174)) ([30b87c4](https://github.com/pbsgears/Gears_BackEnd/commit/30b87c42bf7070a21842f2bb23b2359d64e519a1))
+
+
+### Bug Fixes
+
+* **accounts payable:** bulk record print trough job [GCP-3239] ([#6203](https://github.com/pbsgears/Gears_BackEnd/issues/6203)) ([7192f3a](https://github.com/pbsgears/Gears_BackEnd/commit/7192f3a1595fef9e95a5d7c01a513d325d588ee5))
+* **accounts receivable:** aPI validation [GCP-3420] ([#6106](https://github.com/pbsgears/Gears_BackEnd/issues/6106)) ([bfb6355](https://github.com/pbsgears/Gears_BackEnd/commit/bfb635542ae558466c4f633bc6f0a84c68d18a14))
+* **accounts receivable:** customer inoice API approval level issue [GCP-3603] ([#6176](https://github.com/pbsgears/Gears_BackEnd/issues/6176)) ([ba07904](https://github.com/pbsgears/Gears_BackEnd/commit/ba07904aa67ac5322d0156e71e4c52328b15e510))
+* **accounts receivable:** customer invoice vat configuration [GCP-3421] ([#6173](https://github.com/pbsgears/Gears_BackEnd/issues/6173)) ([b9f9c3f](https://github.com/pbsgears/Gears_BackEnd/commit/b9f9c3fb6c313ff96c3c97730700b2d16cd73fea))
+* **accounts receivable:** general ledger entries not posting due to decimal issue fixed [GCP-3648] ([#6201](https://github.com/pbsgears/Gears_BackEnd/issues/6201)) ([2228182](https://github.com/pbsgears/Gears_BackEnd/commit/22281821daf9b7bb29eae77e4752bde9eacbc09f))
+* **accounts receivable:** in-Active Customers are still showing in the transaction [GCP-3443] ([#6185](https://github.com/pbsgears/Gears_BackEnd/issues/6185)) ([f9dd48c](https://github.com/pbsgears/Gears_BackEnd/commit/f9dd48c218e60b153bb88126404fe353e5a1a049))
+* **asset management:** Asset Disposal - Approval Not Possible  [GCP-3445] ([#6131](https://github.com/pbsgears/Gears_BackEnd/issues/6131)) ([ec0804b](https://github.com/pbsgears/Gears_BackEnd/commit/ec0804bd3307709486b1920e08cd89e8c338a48d))
+* **general ledger:** budget detail amending issue for large data fixed [GCP-3695] ([#6238](https://github.com/pbsgears/Gears_BackEnd/issues/6238)) ([fb33b72](https://github.com/pbsgears/Gears_BackEnd/commit/fb33b72527349635a59583953cab1f6894d453c2))
+* **general ledger:** employee ledger loading issue [GCP-3511] ([#6169](https://github.com/pbsgears/Gears_BackEnd/issues/6169)) ([c6bf8d3](https://github.com/pbsgears/Gears_BackEnd/commit/c6bf8d3181c2dd7554ce9ee6d6588e4b0c7194da))
+* **inventory:** item issue qty popup error message when issue qty within limit fixed [GCP-3530] ([#6194](https://github.com/pbsgears/Gears_BackEnd/issues/6194)) ([31dfe8d](https://github.com/pbsgears/Gears_BackEnd/commit/31dfe8d6fee040556f0bb2c717b2ecb82859f02f))
+
 ## [10.41.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.40.5...v10.41.0) (2024-06-05)
 
 
