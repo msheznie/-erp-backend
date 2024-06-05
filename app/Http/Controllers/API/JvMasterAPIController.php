@@ -270,6 +270,12 @@ class JvMasterAPIController extends AppBaseController
             }
         }
 
+        if (isset($input['reversalDate'])) {
+            if ($input['reversalDate']) {
+                $input['reversalDate'] = new Carbon($input['reversalDate']);
+            }
+        }
+
         $documentDate = $input['JVdate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
@@ -501,6 +507,13 @@ class JvMasterAPIController extends AppBaseController
                     $input['JVdate'] = Carbon::parse($input['JVdate']);
                 }
             }
+
+            if (isset($input['reversalDate'])) {
+                if ($input['reversalDate']) {
+                    $input['reversalDate'] = new Carbon($input['reversalDate']);
+                }
+            }
+
 
             if (isset($input['jvType']) && $input['jvType'] == 5) {
                 $systemGlCodeScenario = SystemGlCodeScenario::where('slug','po-accrual-liability')->first();
@@ -2266,6 +2279,9 @@ HAVING
 
         if (empty($jvMaster)) {
             return $this->sendError('Journal voucher not found');
+        }
+        if ($jvMaster->isReverseAccYN == -1 && $jvMaster->jvType == 0) {
+            return $this->sendError('You cannot return back to amend this journal voucher, as it is a reversal JV');
         }
 
         if ($jvMaster->confirmedYN == 0) {
