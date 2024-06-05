@@ -272,10 +272,7 @@ class JvMaster extends Model
         'createdDateTime',
         'timestamp',
         'isAutoApprove',
-        'reversalDate',
-        'reversalJV',
-        'reversedYN',
-        'stopReversalJV'
+        'reversalDate'
     ];
 
     /**
