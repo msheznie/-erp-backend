@@ -9,4 +9,9 @@ class AbsentType{
     const HALF_DAY = 7;
     const HOLIDAY = 8;
     const WEEKEND = 9;
+    const WORK_OUT = 10;
+    const REMOTELY = 11;
+    const MANDATE = 12;
+    const SECONDMENT = 13;
+    const ON_TRIP = 14;
 }
