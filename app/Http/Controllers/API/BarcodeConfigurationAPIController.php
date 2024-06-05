@@ -499,7 +499,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
             $bold = $request['bold'] ? 'B' : '';
             $temp_png = null;
-            if($logo != null)
+            if($logo != null && $template == 2)
             {
                 $imageContent = file_get_contents($logo);
                 $fileName = 'companyLogo.jpg';
@@ -535,8 +535,8 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 }
                
                
-                $marginTop = 5;
-                $barcodeHeight = 20;
+                $marginTop = 0;
+                $barcodeHeight = 12;
                 $rowHeight = 45;
                 $row = 0;
                 $column = 0;
@@ -584,7 +584,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                                 $pdf->AddPage('P', 'A3');
                             }
                             else if($page == "Custom Size") {
-                                $pdf->AddPage('P', array(55, 45));
+                                $pdf->AddPage('P', array(45, 45));
                             }
                             
                             $barcodesCountPage = 0;
@@ -596,39 +596,39 @@ class BarcodeConfigurationAPIController extends AppBaseController
                         $y = $marginTop + ($row * $rowHeight);
                         if($template == 2)
                         {
-                            $imageHeight = 10; 
-                            $pdf->Image($temp_png, $x-3, $y, 10, $imageHeight, 'JPG', '', 'T', true, 300, '', false, false, 0, false, false, false);
+                            $imageHeight = 6; 
+                            $pdf->Image($temp_png, $x-1, $y+3, 6, $imageHeight, 'JPG', '', 'T', true, 300, '', false, false, 0, false, false, false);
                             if (file_exists($temp_png)) {
                                 if (unlink($temp_png)) {
                                 } 
                             };
                             $pdf->SetFont('aealarabiya', '', 8);
-                            $pdf->SetXY($x + 7, $y);
+                            $pdf->SetXY($x + 6, $y+2);
                             $pdf->Write(0, $companyArabicName, '', 0, 'L', true, 0, false, false, 0);
 
                             
-                            $pdf->SetXY($x-3, $y + 11);
+                            $pdf->SetXY($x-2, $y + 9);
                             $pdf->Write(0, $val->assetDescription, '', 0, 'L', true, 0, false, false, 0);
 
                             
                             $pdf->SetFont('helvetica', '', 8);
-                            $pdf->SetXY($x + 7, $y + 5);
+                            $pdf->SetXY($x + 6, $y + 6);
                             $pdf->Write(0, $val->companyID, '', 0, 'L', true, 0, false, false, 0);
 
                        }
                        else
                        {
                             $pdf->SetFont('helvetica', '', 8);
-                            $pdf->SetXY($x-2, $y+11);
+                            $pdf->SetXY($x-2, $y+3);
                             $pdf->Write(0, $val->companyID, '', 0, 'L', true, 0, false, false, 0);
                        }
             
-                        
+                        $barcodeY = $template == 2?$y + 13:$y + 8;
                         if($font == 'Code 39') {
-                            $pdf->write1DBarcode($val->faCode, 'C39E', $x-2, $y + 15, $barcodeWidth, $barcodeHeight, 0.4, $style, 'N');
+                            $pdf->write1DBarcode($val->faCode, 'C39E', $x-2, $barcodeY, $barcodeWidth, $barcodeHeight, 0.4, $style, 'N');
                         }
                         else if($font == 'Code 128') {
-                            $pdf->write1DBarcode($val->faCode, 'C128', $x-2, $y + 15, $barcodeWidth, $barcodeHeight, 0.4, $style, 'N');
+                            $pdf->write1DBarcode($val->faCode, 'C128', $x-2, $barcodeY, $barcodeWidth, $barcodeHeight, 0.4, $style, 'N');
                         }
             
                         $barcodesCountPage++;
