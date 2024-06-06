@@ -2290,6 +2290,10 @@ HAVING
             return $this->sendError('You cannot return back to amend this journal voucher, as it is a reversal JV');
         }
 
+        if ($jvMaster->reversedYN == 1 && $jvMaster->jvType == 0 && $jvMaster->reversalJV == 1) {
+            return $this->sendError('You cannot return back to amend this journal voucher, as it has an already auto generated JV');
+        }
+
         if ($jvMaster->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this journal voucher, it is not confirmed');
         }
