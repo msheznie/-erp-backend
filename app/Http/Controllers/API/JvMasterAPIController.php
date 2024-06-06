@@ -549,6 +549,12 @@ class JvMasterAPIController extends AppBaseController
                 }
             }
 
+            if(isset($input['reversalJV']) && $input['reversalJV'] == 1){
+                if($input['reversalDate'] == null) {
+                    return $this->sendError('Reversal Date is mandatory');
+                }
+            }
+
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
