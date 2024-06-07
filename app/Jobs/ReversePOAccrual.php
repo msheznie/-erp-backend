@@ -3,16 +3,19 @@
 namespace App\Jobs;
 
 use App\helper\CommonJobService;
+use App\Http\Controllers\API\DocumentAttachmentsAPIController;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
+use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\JvDetail;
 use App\Models\JvMaster;
 use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
+use Illuminate\Http\Request;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -194,7 +197,30 @@ class ReversePOAccrual implements ShouldQueue
 
 
                     }
-                    //confirm document
+                    
+                    if($jvMasterRes && $jvMaster->jvType == 0) {
+                        $documentAttachments = DocumentAttachments::where('companySystemID', $jvMaster->companySystemID)
+                            ->where('documentSystemID', $jvMaster->documentSystemID)
+                            ->where('documentSystemCode', $jvMaster->jvMasterAutoId)
+                            ->get();
+
+                        foreach ($documentAttachments as $documentAttachment){
+                            $dataset = $documentAttachment->toArray();
+                            $tempType = explode('.',$dataset['myFileName']);
+                            $dataset['fileType'] = end($tempType);
+                            $dataset['documentSystemID'] = 17;
+                            $dataset['documentSystemCode'] = $jvMasterRes->jvMasterAutoId;
+                            $dataset['isAutoCreateDocument'] = true;
+                            unset($dataset['attachmentID'], $dataset['timeStamp']);
+
+                            $request = new Request();
+                            $request->replace($dataset);
+                            $controller = app(DocumentAttachmentsAPIController::class);
+                            $controller->store($request);
+                        }
+                    }
+
+                        //confirm document
                     $JvDetailDebitSum = JvDetail::where('jvMasterAutoId', $jvMasterRes->jvMasterAutoId)->get();
 
                     $params = array(
