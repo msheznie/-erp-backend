@@ -232,7 +232,7 @@ class VATReportAPIController extends AppBaseController
                 $VATAmountLocalTotal += $val->VATAmountLocal;
                 $recoverabilityAmountTotal += $val->recoverabilityAmount;
 
-                $transdecimalPlace = $val->transcurrency->DecimalPlaces;
+                $transdecimalPlace = isset($val->transcurrency->DecimalPlaces)? $val->transcurrency->DecimalPlaces : 3;
             }
         }
         

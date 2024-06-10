@@ -86,11 +86,13 @@ class VatDetailReportService
                 $objVatDetailReport->setTaxCodeType('');
                 isset($val->sub_category->subCategoryDescription) ? $objVatDetailReport->setTaxCodeDescription($val->sub_category->subCategoryDescription) : "";
                 $objVatDetailReport->setVatRate($val->VATPercentage);
-                $objVatDetailReport->setValueExculdingInDocumentCurency(CurrencyService::convertNumberFormatToNumber(number_format($val->taxableAmount, $val->transcurrency->DecimalPlaces)));
-                $objVatDetailReport->setVatInDocumentCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->VATAmount, $val->transcurrency->DecimalPlaces)));
+                $transdecimalPlace = isset($val->transcurrency->DecimalPlaces)? $val->transcurrency->DecimalPlaces : 3;
+
+                $objVatDetailReport->setValueExculdingInDocumentCurency(CurrencyService::convertNumberFormatToNumber(number_format($val->taxableAmount, $transdecimalPlace)));
+                $objVatDetailReport->setVatInDocumentCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->VATAmount, $transdecimalPlace)));
                 $objVatDetailReport->setDocumentCurrencyToLocalCurrencyRate($val->localER);
-                $objVatDetailReport->setValueExculdingInLocalCurency( CurrencyService::convertNumberFormatToNumber(number_format($val->taxableAmountLocal, $val->transcurrency->DecimalPlaces)));
-                $objVatDetailReport->setVatInLocalCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->VATAmountLocal, $val->transcurrency->DecimalPlaces)));
+                $objVatDetailReport->setValueExculdingInLocalCurency( CurrencyService::convertNumberFormatToNumber(number_format($val->taxableAmountLocal, $transdecimalPlace)));
+                $objVatDetailReport->setVatInLocalCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->VATAmountLocal, $transdecimalPlace)));
                 isset($val->output_vat->AccountCode) ? $objVatDetailReport->setVatGlCode($val->output_vat->AccountCode) : "";
                 isset($val->output_vat->AccountDescription) ? $objVatDetailReport->setVatGlDescription($val->output_vat->AccountDescription) : "";
             }
@@ -164,7 +166,7 @@ class VatDetailReportService
             $taxableAmountLocalTotal += $val->taxableAmountLocal;
             $VATAmountLocalTotal += $val->VATAmountLocal;
             $recoverabilityAmountTotal += $val->recoverabilityAmount;
-            $transdecimalPlace = $val->transcurrency->DecimalPlaces;
+            $transdecimalPlace = isset($val->transcurrency->DecimalPlaces)? $val->transcurrency->DecimalPlaces : 3;
         }
 
            if($input['reportTypeID'] == 3) {

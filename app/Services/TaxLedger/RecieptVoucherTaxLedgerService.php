@@ -78,7 +78,7 @@ class RecieptVoucherTaxLedgerService
             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,directReceiptAutoID');
         }])->find($masterModel["autoID"]);
 
-        if($masterData->documentType == 15)
+        if($masterData->documentType == 15 || $masterData->documentType == 14)
         {
             
 
