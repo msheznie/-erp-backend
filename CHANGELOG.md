@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.42.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.42.0...v10.42.1) (2024-06-10)
+
+
+### Bug Fixes
+
+* **inventory:** item finance categpry chcked while pulling po in grv removed [GCP-3773] ([152a9ab](https://github.com/pbsgears/Gears_BackEnd/commit/152a9abc9935cfddb73153d39d86306113fdf245))
+
 ## [10.42.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.41.0...v10.42.0) (2024-06-05)
 
 
