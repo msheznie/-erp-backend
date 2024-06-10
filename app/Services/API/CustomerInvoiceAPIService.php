@@ -35,6 +35,7 @@ use App\Models\QuotationMaster;
 use App\Models\SegmentMaster;
 use App\Models\StockTransfer;
 use App\Models\Taxdetail;
+use App\Models\TaxVatCategories;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
@@ -1618,6 +1619,10 @@ class CustomerInvoiceAPIService extends AppBaseController
             ];
         }
 
+        $vatCategories = TaxVatCategories::where('taxVatSubCategoriesAutoID', $input["vatSubCategoryID"])
+                                                ->where('mainCategory', $input["vatMasterCategoryID"])
+                                                ->first();
+
         if (isset($input["VATPercentage"]) && $input["VATPercentage"] > 100) {
             return [
                 'status' => false,
@@ -1626,12 +1631,24 @@ class CustomerInvoiceAPIService extends AppBaseController
             ];
         }
 
-        if (isset($input["VATAmount"]) && isset($input['salesPrice']) && $input['VATAmount'] > $input['salesPrice']) {
-            return [
-                'status' => false,
-                'type' => array('type' => 'VATAmountError'),
-                'message' => 'Vat Amount cannot be greater than sales price'
-            ];
+        if($vatCategories->applicableOn == 1){
+            if (isset($input["VATAmount"]) && isset($input['salesPrice']) && $input['VATAmount'] > $input['salesPrice']) {
+                return [
+                    'status' => false,
+                    'type' => array('type' => 'VATAmountError'),
+                    'message' => 'Vat Amount cannot be greater than sales price'
+                ];
+            }
+        }
+
+        if($vatCategories->applicableOn == 2){
+            if (isset($input["VATAmount"]) && isset($input['unitCost']) && $input['VATAmount'] > $input['unitCost']) {
+                return [
+                    'status' => false,
+                    'type' => array('type' => 'VATAmountError'),
+                    'message' => 'Vat Amount cannot be greater than unit price'
+                ];
+            }
         }
 
         if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID) {
@@ -2429,6 +2446,33 @@ class CustomerInvoiceAPIService extends AppBaseController
                 'message' => 'Discount amount cannot be greater than sales price'
             ];
         }
+
+
+        $vatCategories = TaxVatCategories::where('taxVatSubCategoriesAutoID', $input["vatSubCategoryID"])
+                                                ->where('mainCategory', $input["vatMasterCategoryID"])
+                                                ->first();
+
+
+        if($vatCategories->applicableOn == 1){
+            if (isset($input["VATAmount"]) && isset($input['salesPrice']) && $input['VATAmount'] > $input['salesPrice']) {
+                return [
+                    'status' => false,
+                    'type' => array('type' => 'VATAmountError'),
+                    'message' => 'Vat Amount cannot be greater than sales price'
+                ];
+            }
+        }
+
+        if($vatCategories->applicableOn == 2){
+            if (isset($input["VATAmount"]) && isset($input['sellingCostAfterMargin']) && $input['VATAmount'] > $input['sellingCostAfterMargin']) {
+                return [
+                    'status' => false,
+                    'type' => array('type' => 'VATAmountError'),
+                    'message' => 'Vat Amount cannot be greater than unit price'
+                ];
+            }
+        }
+
 
         if ($input['itemUnitOfMeasure'] != $input['unitOfMeasureIssued']) {
             $unitConvention = UnitConversion::where('masterUnitID', $input['itemUnitOfMeasure'])
