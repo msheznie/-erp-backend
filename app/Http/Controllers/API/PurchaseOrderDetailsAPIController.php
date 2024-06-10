@@ -1528,7 +1528,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->where('GRVSelectedYN', 0)
             ->where('goodsRecievedYN', '<>', 2)
             ->where('manuallyClosed', 0)
-            ->whereIn('itemFinanceCategoryID',[1,2,4])
             ->get();
 
 
