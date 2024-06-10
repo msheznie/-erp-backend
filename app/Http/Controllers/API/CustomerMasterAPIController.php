@@ -349,6 +349,8 @@ class CustomerMasterAPIController extends AppBaseController
                                                   ->where('isActive', 1);    
                                          })
                                         ->where('controlAccountsSystemID',3)
+                                        ->where('isApproved',1)
+                                        ->where('isActive',1)
                                         ->where('catogaryBLorPL', '=', 'BS')
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
@@ -365,6 +367,8 @@ class CustomerMasterAPIController extends AppBaseController
                                             ->orWhere('controlAccountsSystemID',5);
                                          })
                                         ->where('catogaryBLorPL', '=', 'BS')
+                                        ->where('isApproved',1)
+                                        ->where('isActive',1)
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
         $data['liabilityAccountsCOA'] = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($input) {
@@ -373,6 +377,8 @@ class CustomerMasterAPIController extends AppBaseController
                                                 ->where('isActive', 1);
                                         })
                                         ->where('catogaryBLorPL', '=', 'BS')
+                                        ->where('isApproved',1)
+                                        ->where('isActive',1)
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
 

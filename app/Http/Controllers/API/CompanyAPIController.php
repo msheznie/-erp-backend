@@ -123,7 +123,13 @@ class CompanyAPIController extends AppBaseController
 
         /**Chart of Account Drop Down */
         $liabilityAccount = ChartOfAccount::where('controllAccountYN', '=', 1)
-            ->where('controlAccountsSystemID', 4)
+            ->whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+                $query->where('companySystemID', $selectedCompanyId)
+                    ->where('isAssigned', -1)
+                    ->where('isActive', 1);
+            })->where('controlAccountsSystemID', 4)
+            ->where('isApproved',1)
+            ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'BS')
             ->orderBy('AccountDescription', 'asc')
             ->get();
@@ -134,19 +140,21 @@ class CompanyAPIController extends AppBaseController
                 ->orWhere('controlAccountsSystemID', 4);
         })
          ->where('isBank',0)
-         ->where('isApproved',1)
+            ->where('isApproved',1)
+            ->where('isActive',1)
         ->where('catogaryBLorPL', '=', 'BS')
         ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
-            $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
+            $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1)->where('isActive', 1);
         })
         ->orderBy('AccountDescription', 'asc')
         ->get();
 
         $assetAndLiabilityAccountCOA = ChartOfAccount::where('isBank',0)
             ->where('isApproved',1)
+            ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'BS')
             ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
-                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
+                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1)->where('isActive', 1);
             })
             ->orderBy('AccountDescription', 'asc')
             ->get();
@@ -212,6 +220,9 @@ class CompanyAPIController extends AppBaseController
         $discountsChartOfAccounts = ChartOfAccount::where('isApproved',1)
             ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'PL')
+            ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1)->where('isActive', 1);
+            })
             ->orderBy('AccountDescription', 'asc')
             ->get();
 
@@ -915,19 +926,29 @@ class CompanyAPIController extends AppBaseController
     public function getChartOfAccountsForDropwdown(Request $request) {
         $selectedCompanyId = $request['selectedCompanyId'];
 
-        $liabilityAccount = ChartOfAccount::where('controllAccountYN', '=', 1)
+        $liabilityAccount = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+            $query->where('companySystemID', $selectedCompanyId)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        })->where('controllAccountYN', '=', 1)
+            ->where('isApproved',1)
+            ->where('isActive',1)
             ->where('controlAccountsSystemID', 4)
             ->where('catogaryBLorPL', '=', 'BS')
             ->orderBy('AccountDescription', 'asc')
             ->get();
 
-        $assetAndLiabilityAccount = ChartOfAccount::
-        where(function ($query)  {
+        $assetAndLiabilityAccount = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+            $query->where('companySystemID', $selectedCompanyId)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        })->where(function ($query)  {
             $query->where('controlAccountsSystemID', 3)
                 ->orWhere('controlAccountsSystemID', 4);
         })
             ->where('isBank',0)
             ->where('isApproved',1)
+            ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'BS')
             ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
                 $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
@@ -940,6 +961,7 @@ class CompanyAPIController extends AppBaseController
                 ->where('isAssigned', -1)
                 ->where('isActive', 1);
         })->where('isApproved',1)
+            ->where('isApproved',1)
             ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'PL')
             ->orderBy('AccountDescription', 'asc')
@@ -952,6 +974,8 @@ class CompanyAPIController extends AppBaseController
                     ->where('isAssigned', -1)
                     ->where('isActive', 1);
             })
+            ->where('isApproved',1)
+            ->where('isActive',1)
             ->where('controlAccountsSystemID',3)
             ->where('catogaryBLorPL', '=', 'BS')
             ->orderBy('AccountDescription', 'asc')
@@ -969,6 +993,8 @@ class CompanyAPIController extends AppBaseController
                 ->orWhere('controlAccountsSystemID',4)
                 ->orWhere('controlAccountsSystemID',5);
              })
+            ->where('isApproved',1)
+            ->where('isActive',1)
             ->where('catogaryBLorPL', '=', 'BS')
             ->orderBy('AccountDescription', 'asc')
             ->get();
