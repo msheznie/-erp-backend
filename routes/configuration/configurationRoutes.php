@@ -147,3 +147,14 @@ Route::group([], function() {
     Route::post('getAllAssignedSuppliers', 'PaymentTermTemplateAssignedAPIController@getAllAssignedSuppliers')->name('Get all assigned suppliers');
     Route::post('changeActiveStatus', 'PaymentTermTemplateAPIController@changeActiveStatus')->name('Change template active status');
 });
+
+//Supplier Evaluation 
+Route::group([], function() {
+
+    Route::post('getAllSupplierEvaluationMasters', 'SupplierEvaluationMastersAPIController@getAllSupplierEvaluationMasters')->name("Get all supplier evaluation masters");
+    Route::post('getAllSupplierEvaluationDetails', 'SupplierEvaluationMasterDetailsAPIController@getAllSupplierEvaluationDetails')->name("Get all supplier evaluation masters");
+
+    Route::resource('supplier_evaluation_masters', 'SupplierEvaluationMastersAPIController');
+
+    Route::resource('evaluation_master_details', 'SupplierEvaluationMasterDetailsAPIController');
+});
