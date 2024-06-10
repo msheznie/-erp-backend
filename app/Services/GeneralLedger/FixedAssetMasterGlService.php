@@ -87,6 +87,7 @@ class FixedAssetMasterGlService
         $empID = Employee::find($masterModel['employeeSystemID']);
         $masterData = FixedAssetMaster::with(['grvdetail_by', 'posttogl_by'])->find($masterModel["autoID"]);
         $companyCurrency = Company::find($masterModel["companySystemID"]);
+        $grvMaster = GRVMaster::where('grvAutoID',$masterData->docOriginSystemCode)->first();
 
         $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
 
@@ -166,6 +167,8 @@ class FixedAssetMasterGlService
                         }
                     } else {
                         if ($masterData->grvdetail_by) {
+                            $data['serviceLineSystemID'] = ($grvMaster) ? $grvMaster->serviceLineSystemID : null;
+                            $data['serviceLineCode'] = ($grvMaster) ? $grvMaster->serviceLineCode : null;
                             $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
                             $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
@@ -198,6 +201,8 @@ class FixedAssetMasterGlService
                         array_push($finalData, $data);
                     } else {
                         if ($masterData->grvdetail_by) {
+                            $data['serviceLineSystemID'] = ($grvMaster) ? $grvMaster->serviceLineSystemID : null;
+                            $data['serviceLineCode'] = ($grvMaster) ? $grvMaster->serviceLineCode : null;
                             $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
                             $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);

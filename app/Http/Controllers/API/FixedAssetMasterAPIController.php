@@ -394,6 +394,13 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 if ($qty <= $assetSerialNoCount) {
                                     if ($input['assetSerialNo'][$key]['faUnitSerialNo']) {
                                         $input["faUnitSerialNo"] = $input['assetSerialNo'][$key]['faUnitSerialNo'];
+                                        $assetSerialNoInput = $this->convertArrayToValue($input['assetSerialNo'][$key]);
+                                        $segmentAsset = SegmentMaster::find($assetSerialNoInput['serviceLineSerialNo']);
+                                        $input["faUnitSerialNo"] = $assetSerialNoInput['faUnitSerialNo'];
+                                        $input["serviceLineSystemID"] = $assetSerialNoInput['serviceLineSerialNo'];
+                                        if ($segmentAsset) {
+                                            $input['serviceLineCode'] = $segmentAsset->ServiceLineCode;
+                                        }
                                     }
                                 }
                                 $input["serialNo"] = $lastSerialNumber;
