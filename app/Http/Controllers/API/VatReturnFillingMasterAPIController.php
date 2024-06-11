@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\email;
+use App\helper\Helper;
 use App\Http\Requests\API\CreateVatReturnFillingMasterAPIRequest;
 use App\Http\Requests\API\UpdateVatReturnFillingMasterAPIRequest;
 use App\Models\VatReturnFillingMaster;
@@ -21,6 +23,8 @@ use App\Models\Company;
 use App\Models\TaxLedgerDetail;
 use App\Models\VatReturnFilledCategory;
 use App\Repositories\VatReturnFillingMasterRepository;
+use App\Services\ValidateDocumentAmend;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -447,6 +451,8 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             });
         }
 
+        $results = $results->selectRaw('*, CASE WHEN serialNo = (SELECT MAX(serialNo) FROM vat_return_filling_master) THEN 1 ELSE 0 END AS isLast');
+
         return \DataTables::of($results)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -515,6 +521,11 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                                                 }, 'confirmed_by'])
                                                 ->where('id', $input['ID'])
                                                 ->first();
+
+        $isLastItem = VatReturnFillingMaster::where('companySystemID', $vatReturnFilling->companySystemID)->max('serialNo');
+        $isLastItem = $isLastItem == $vatReturnFilling->serialNo ? 1 : 0;
+        $isAvailableDraft = VatReturnFillingMaster::where('companySystemID', $vatReturnFilling->companySystemID)->where('confirmedYN', 0)->exists();
+        $vatReturnFilling->isCanAmend = $isLastItem && !$isAvailableDraft;
 
         return $this->sendResponse($vatReturnFilling, "VAT return filling data retrieved successfully");
 
@@ -880,5 +891,96 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($vrfData->toArray(), 'VAT Return Filling Amend successfully');
+    }
+
+    public function vatReturnFillingAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $employee = Helper::getEmployeeInfo();
+        $emails = array();
+
+        $masterData = VatReturnFillingMaster::find($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Vat return filling not found');
+        }
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this Vat Return Filling, it is not confirmed');
+        }
+
+        $emailBody = '<p>' . $masterData->returnFillingCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->returnFillingCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemID,
+                    'docSystemCode' => $id,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docCode' => $masterData->returnFillingCode
+                );
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->get();
+
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemID,
+                        'docSystemCode' => $id,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docCode' => $masterData->returnFillingCode
+                    );
+                }
+            }
+
+            $sendEmail = Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $masterData->confirmedYN = 0;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByEmpName = null;
+            $masterData->confirmedDate = null;
+            $masterData->RollLevForApp_curr = 1;
+
+            $masterData->approvedYN = 0;
+            $masterData->approvedByUserSystemID = null;
+            $masterData->approvedEmpID = null;
+            $masterData->approvedDate = null;
+            $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Vat Return Filling amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

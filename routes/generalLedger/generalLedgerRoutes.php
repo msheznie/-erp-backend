@@ -321,6 +321,6 @@ Route::group([], function(){
     Route::post('getBudgetConsumptionForReview', 'BudgetConsumedDataAPIController@getBudgetConsumptionForReview')->name('Get Buget Consumption for review');
     Route::post('getBudgetConsumptionByDoc', 'BudgetConsumedDataAPIController@getBudgetConsumptionByDoc')->name('Get budget consumption for review');
     Route::post('changeBudgetConsumption', 'BudgetConsumedDataAPIController@changeBudgetConsumption')->name('Change budget consumption');
-
+    Route::post('vatReturnFillingAmend', 'VatReturnFillingMasterAPIController@vatReturnFillingAmend')->name('Vat return filling amend');
 });
 
