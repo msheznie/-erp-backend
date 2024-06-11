@@ -2453,6 +2453,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                                                 ->first();
 
 
+        if (isset($input["VATPercentage"]) && $input["VATPercentage"] > 100) {
+            return [
+                'status' => false,
+                'type' => array('type' => 'VATPercentageError'),
+                'message' => 'Vat Percentage cannot be greater than 100 percentage'
+            ];
+        }
+
         if($vatCategories->applicableOn == 1){
             if (isset($input["VATAmount"]) && isset($input['salesPrice']) && $input['VATAmount'] > $input['salesPrice']) {
                 return [
