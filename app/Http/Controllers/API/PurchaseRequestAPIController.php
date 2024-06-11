@@ -351,6 +351,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies);
         $warehouseData = $wareHouses->where('isActive', 1);
+        $warehouseData = $warehouseData->get();
         return $this->sendResponse($warehouseData, 'Record retrieved successfully');
     }
 
