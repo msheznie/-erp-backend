@@ -359,6 +359,12 @@ class JvMasterAPIController extends AppBaseController
             $input['JVcode'] = $jvCode;
         }
 
+        if (isset($input['reversalJV'])) {
+            if ($input['reversalJV'] == 0 && $input['jvType'] == 0) {
+                $input['reversalDate'] = null;
+            }
+        }
+        
         $jvMaster = $this->jvMasterRepository->create($input);
 
         if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
@@ -811,6 +817,13 @@ class JvMasterAPIController extends AppBaseController
                 }
             }
         }
+
+        if (isset($input['reversalJV'])) {
+            if ($input['reversalJV'] == 0 && $input['jvType'] == 0) {
+                $input['reversalDate'] = null;
+            }
+        }
+
 
         $employee = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? UserTypeService::getSystemEmployee() : Helper::getEmployeeInfo();
 
