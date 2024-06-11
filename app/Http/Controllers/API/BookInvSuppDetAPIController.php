@@ -493,6 +493,8 @@ class BookInvSuppDetAPIController extends AppBaseController
         $this->deleteReturnUnbilledGrvs($unbilledSum->grvAutoID, $bookInvSuppDet->bookingSuppMasInvAutoID);
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookInvSuppDet->bookingSuppMasInvAutoID);
+        $bookInvSuppMaster->whtEdited = false;
+        $bookInvSuppMaster->save();
 
         \Helper::updateSupplierRetentionAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
 
@@ -539,7 +541,8 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
-
+        $bookInvSuppMaster->whtEdited = false;
+        $bookInvSuppMaster->save();
         if (empty($bookInvSuppMaster)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice')]));
         }
@@ -1097,7 +1100,11 @@ class BookInvSuppDetAPIController extends AppBaseController
         $invoiceID = $input['invoiceID'];
 
         $items = BookInvSuppDet::where('bookingSuppMasInvAutoID', $invoiceID)
-            ->with(['grvmaster', 'pomaster'])
+            ->with(['grvmaster' => function($q){
+                $q->with('details');
+            }, 'pomaster','suppinvmaster'=>function($q){
+                $q->select('bookingSuppMasInvAutoID','documentType');
+            }])
             ->get();
 
         return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.grv_invoice_details')]));

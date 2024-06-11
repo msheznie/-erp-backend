@@ -103,6 +103,7 @@ use Response;
 use App\Models\SupplierBlock;
 use App\Services\ValidateDocumentAmend;
 use DateTime;
+use App\Models\Tax;
 /**
  * Class BookInvSuppMasterController
  * @package App\Http\Controllers\API
@@ -426,7 +427,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         },'supplier' => function($query){
-            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage');
+            $query->with('tax')->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage,whtApplicableYN,whtType');
         },'employee' => function($query){
             $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
@@ -2183,7 +2184,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function getInvoiceMasterFormData(Request $request)
     {
         $companyId = $request['companyId'];
-
+        
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -2266,6 +2267,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $projects = [];
         $projects = ErpProjectMaster::where('companySystemID', $companyId)
                                         ->get();
+        $whtTypes = Tax::where('companySystemID',$companyId)->where('taxCategory',3)->where('isActive',1)->get();
+
+  
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -2288,6 +2292,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isProjectBase' => $isProject_base,
             'projects' => $projects,
             'employeeAllocatePolicy' => ($employeeAllocate && $employeeAllocate->isYesNO == 1) ? true : false,
+            'whtTypes' => $whtTypes
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

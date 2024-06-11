@@ -344,7 +344,12 @@ class SupplierMaster extends Model
     {
         return $this->belongsTo('App\Models\SupplierCritical', 'isCriticalYN', 'suppliercriticalID');
     }
-
+    
+    public function tax()
+    {
+        return $this->belongsTo('App\Models\Tax',  'whtType','taxMasterAutoID');
+    }
+    
     public function getIsSUPDAmendAccessAttribute()
     {
         return true;
