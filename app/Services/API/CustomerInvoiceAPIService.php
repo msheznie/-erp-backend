@@ -1296,6 +1296,7 @@ class CustomerInvoiceAPIService extends AppBaseController
 
                         }
                         $groupby = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
+                        CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->where('contractID', 0)->update(['contractID' => null]);
                         $groupbycontract = CustomerInvoiceDirectDetail::select('contractID')->where('custInvoiceDirectID', $id)->groupBy('contractID')->get();
 
                         if (count($groupby) != 0) {
