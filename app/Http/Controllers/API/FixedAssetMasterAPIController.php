@@ -2248,7 +2248,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
 
                 foreach ($record as $val) {
-                    if ($val['asset_description'] || $val['serial_no']) {
+                    if (isset($val['asset_description']) || isset($val['serial_no'])) {
                         $data = [];
                         $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
                         $data['assetDescription'] = $val['asset_description'];
