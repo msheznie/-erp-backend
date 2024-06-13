@@ -7656,7 +7656,7 @@ GROUP BY
 
         $columns = ReportTemplateColumns::all();
         $linkedColumn = ReportTemplateColumnLink::ofTemplate($request->templateType)->where('hideColumn', 0)->orderBy('sortOrder')->get();
-        if (count($columns) > 0) {
+        if ((count($columns) > 0) && isset($financeYear)) {
             $currentYearPeriod = CarbonPeriod::create($financeYear->bigginingDate, '1 month', $financeYear->endingDate);
             $currentYearPeriodArr = [];
             $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
