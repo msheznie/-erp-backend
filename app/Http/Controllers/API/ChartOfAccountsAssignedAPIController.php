@@ -341,12 +341,16 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $from_master_tbl = $input['from_master_tbl'];
         $from_master_tbl =($from_master_tbl == 'true');
 
-
         if($from_master_tbl){
-            $data = ChartOfAccount::where('isActive', 1);
+            $data = ChartOfAccount::whereHas('chartofaccount_assigned',function($query) use($companyID){
+                $query->where('companySystemID',$companyID)->where('isAssigned',-1)->where('isActive', 1);
+            })->where('isActive', 1)->where('isApproved',1);
         }
         else{
-            $data = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+            $data = ChartOfAccountsAssigned::whereHas('chartofaccount', function($query) {
+                $query->where('isApproved',1)
+                        ->where('isActive',1);
+            })->where('companySystemID', $companyID)
                 ->where('isAssigned', -1)
                 ->where('isActive', 1);
         }
