@@ -5813,7 +5813,7 @@ class BudgetConsumptionService
 	    $consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) use($detail){
 
 												$query->with(['grv_details'=>function($query){
-													$query->select('grvDetailsID','grvAutoID','purchaseOrderMastertID','purchaseOrderDetailsID')->with(['grv_master'=>function($query){
+													$query->select('grvDetailsID','grvAutoID','purchaseOrderMastertID','purchaseOrderDetailsID','financeGLcodePLSystemID','netAmount')->with(['grv_master'=>function($query){
 														$query->with('details')->select('grvAutoID','grvPrimaryCode','approved','grvConfirmedYN','grvTotalComRptCurrency');
 													}]);
 												}])->when($detail->controlAccountsSystemID != 3,function($query){
@@ -5948,12 +5948,21 @@ class BudgetConsumptionService
 						{
 							if($grv->grv_master->approved == -1)
 							{
-								$grvApprovedPoAmount += $grv->grv_master->grvTotalComRptCurrency;
+								if($grv->financeGLcodePLSystemID == $value->chartOfAccountID)
+								{
+									$grvApprovedPoAmount += $grv->netAmount;
+								}
+							
 							}
 						}
-						$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
-						$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $grvApprovedPoAmount;
+
 						
+
+						$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+			
+
+						$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
+						$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
 						$currencyConversionRptAmountRec = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
 						$partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
 					}
