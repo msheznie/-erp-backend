@@ -175,45 +175,24 @@ class SupplierInvoiceAPLedgerService
             if ($masterData->whtApplicable) {
 
                 if ($masterData->documentType != 4) {
-                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
 
                         $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
                         $whtAmountConTran = $masterData->whtAmount;
                         $whtAmountConInvoicet = $masterData->whtAmount;
                         $whtAmountConLocal = \Helper::roundValue($currencyWht['localAmount']);
                         $whtAmountConRpt = \Helper::roundValue($currencyWht['reportingAmount']);
-
+                        $whtSupplier = null;
                         $taxSetup = Tax::where('taxMasterAutoID',$masterData->whtType)->first();
                         $whtAuthority = null;
                         if($taxSetup)
                         {
                             $whtAuthority = $taxSetup->authorityAutoID;
                             $supplier = SupplierMaster::where('supplierCodeSystem',$whtAuthority)->first();
-                            $data['supplierCodeSystem'] = $supplier->supplierCodeSystem;
+                            $whtSupplier = $supplier->supplierCodeSystem;
                         }
 
-                        if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
-
-                            $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
-                            $totalVATAmount = 0;
-                            $totalVATAmountLocal = 0;
-                            $totalVATAmountRpt = 0;
-                            $totalVATAmount = $vatDetails['totalVAT'];
-                            $totalVATAmountLocal = $vatDetails['totalVATLocal'];
-                            $totalVATAmountRpt = $vatDetails['totalVATRpt'];
-
-                            $whtInvoiceAmount = ($whtAmountConInvoicet - $totalVATAmount);
-                            $whtTrans = ($whtAmountConTran - $totalVATAmount);
-                            $whtLocal = ($whtAmountConLocal - $totalVATAmountLocal);
-                            $whtRpt = ($whtAmountConRpt - $totalVATAmountRpt);
-
-
-                            $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] - $whtInvoiceAmount;
-                            $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] - $whtTrans;
-                            $data['localAmount'] = $data['localAmount'] - $whtLocal;
-                            $data['comRptAmount'] = $data['comRptAmount'] - $whtRpt;
-                        }
-                        else {
+         
                             $whtInvoiceAmount = ($whtAmountConInvoicet);
                             $whtTrans = ($whtAmountConTran);
                             $whtLocal = ($whtAmountConLocal);
@@ -223,13 +202,14 @@ class SupplierInvoiceAPLedgerService
                             $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] - $whtTrans;
                             $data['localAmount'] = $data['localAmount'] - $whtLocal;
                             $data['comRptAmount'] = $data['comRptAmount'] - $whtRpt;
-                        }
+                        
 
                     }
 
                 }
             }
 
+          
 
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
@@ -345,7 +325,8 @@ class SupplierInvoiceAPLedgerService
             }
 
             if ($masterData->whtApplicable) {
-                if ($masterData->documentType == 0 || $masterData->documentType == 2){
+                if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3){
+                    $data['supplierCodeSystem'] = $whtSupplier;
                     $data['supplierInvoiceAmount'] = $whtInvoiceAmount;
                     $data['supplierDefaultAmount'] = $whtTrans;
                     $data['localAmount'] = $whtLocal;

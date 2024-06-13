@@ -275,7 +275,10 @@ class SupplierInvoiceDirectItem extends Model
         'createdPcID',
         'createdUserID',
         'modifiedPc',
-        'modifiedUser'
+        'modifiedUser',
+        'whtApplicable',
+        'whtAmount',
+        'whtEdited'
     ];
 
     /**

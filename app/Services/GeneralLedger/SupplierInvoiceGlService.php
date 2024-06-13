@@ -308,7 +308,7 @@ class SupplierInvoiceGlService
             {
                 if ($masterData->documentType != 4) {
 
-                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
 
                         $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
                      
@@ -317,44 +317,16 @@ class SupplierInvoiceGlService
                         $whtAmountConLocal =  -1 *\Helper::roundValue($currencyWht['localAmount']);
                         $whtAmountConRpt =  -1 *\Helper::roundValue($currencyWht['reportingAmount']);
 
-                        $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
-                        $totalVATAmount = 0;
-                        $totalVATAmountLocal = 0;
-                        $totalVATAmountRpt = 0;
-                        $totalVATAmount = $vatDetails['totalVAT'];
-                        $totalVATAmountLocal = $vatDetails['totalVATLocal'];
-                        $totalVATAmountRpt = $vatDetails['totalVATRpt'];
-                        if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
-                            Log::info('vat has it');
-                            $whtTransWithoutVat = ($whtAmountCon + ABS($totalVATAmount));
-                            $whtLocalWithoutVat = ($whtAmountConLocal + ABS($totalVATAmountLocal));
-                            $whtRptWithoutVat = ($whtAmountConRpt + ABS($totalVATAmountRpt));
 
-                            $whtFullAmount = $whtTransWithoutVat;
-                            $whtFullAmountLocal = $whtLocalWithoutVat;
-                            $whtFullAmountRpt = $whtRptWithoutVat;
-
-                        } else {
-                            $whtTrans = $whtAmountCon;
-                            $whtLocal = $whtAmountConLocal;
-                            $whtRpt = $whtAmountConRpt;
-
-                            $whtFullAmount = $whtAmountCon;
-                            $whtFullAmountLocal = $whtAmountConLocal;
-                            $whtFullAmountRpt = $whtAmountConRpt;
-                        }
-                    }
-                    else
-                    {
-                        $whtTrans = $whtAmountCon ;
+                        $whtTrans = $whtAmountCon;
                         $whtLocal = $whtAmountConLocal;
                         $whtRpt = $whtAmountConRpt;
-                    }
 
-              
-                    $data['documentTransAmount'] = $data['documentTransAmount'] - $whtFullAmount;
-                    $data['documentLocalAmount'] = $data['documentLocalAmount'] - $whtFullAmountLocal;
-                    $data['documentRptAmount'] = $data['documentRptAmount'] - $whtFullAmountRpt;
+                        
+                    }
+                    $data['documentTransAmount'] = $data['documentTransAmount'] - $whtAmountCon;
+                    $data['documentLocalAmount'] = $data['documentLocalAmount'] - $whtAmountConLocal;
+                    $data['documentRptAmount'] = $data['documentRptAmount'] - $whtAmountConRpt;
 
                 }
             }
@@ -428,24 +400,18 @@ class SupplierInvoiceGlService
                     $data['glCode'] = $whtAuthority != null?$supplier->liablity_account->AccountCode:null;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
-                        if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
-
-                            $data['documentTransAmount'] = $whtTransWithoutVat;
-                            $data['documentLocalAmount'] = $whtLocalWithoutVat;
-                            $data['documentRptAmount'] = $whtRptWithoutVat;
-                            
-                        } else {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
+             
                             $data['documentTransAmount'] = $whtTrans;
                             $data['documentLocalAmount'] = $whtLocal;
                             $data['documentRptAmount'] = $whtRpt;
-                        }
+                        
                     } 
                     }
                     array_push($finalData, $data);
                 }
             
-
+                $data['supplierCodeSystem'] = $masterData->supplierID;
 
             if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                 $data['chartOfAccountSystemID'] = $masterData->UnbilledGRVAccountSystemID;
@@ -709,7 +675,7 @@ class SupplierInvoiceGlService
                 }
             }
 
-
+          
             //VAT entries
             $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
             $totalVATAmount = $vatDetails['totalVAT'];
