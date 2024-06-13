@@ -597,7 +597,7 @@ class StockReceiveAPIController extends AppBaseController
                 }
             }
 
-            $checkPlAccount = ($stockReceive->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, 1) : SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, 2);
+            $checkPlAccount = ($stockReceive->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer") : SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, "stock-transfer-pl-account");
 
             if (is_null($checkPlAccount)) {
                 return $this->sendError('Please configure PL account for stock receive', 500);

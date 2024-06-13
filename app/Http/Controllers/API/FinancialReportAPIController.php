@@ -9221,7 +9221,7 @@ GROUP BY
         $typeIDs = join(',', json_decode($typeID));
         $companyID = join(',', json_decode($companyID));
 
-        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , 14);
+        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , "exchange-gainloss-gl");
 
         return DB::select('
 SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
@@ -9334,7 +9334,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         $employeeIDs = join(',', json_decode($employeeIDs));
         $companyID = join(',', json_decode($companyID));
 
-        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , 14);
+        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , "exchange-gainloss-gl");
 
         return DB::select('SELECT * FROM ( SELECT
         erp_bookinvsuppmaster.bookingDate AS documentDate,

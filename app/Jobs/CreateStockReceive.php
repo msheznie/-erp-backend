@@ -226,18 +226,18 @@ class CreateStockReceive implements ShouldQueue
                         $glPL = $cusInvoiceDetails;
                         $glCost = $cusInvoiceDetails;
 
-                        $glPL['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, 10);
-                        $glPL['glSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, 10);
-                        $glPL['glCodeDes'] = SystemGlCodeScenarioDetail::getGlDescriptionByScenario($fromCompany->companySystemID, null, 10);
+                        $glPL['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, "inter-company-transfer-revenue");
+                        $glPL['glSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, "inter-company-transfer-revenue");
+                        $glPL['glCodeDes'] = SystemGlCodeScenarioDetail::getGlDescriptionByScenario($fromCompany->companySystemID, null, "inter-company-transfer-revenue");
                         $glPL['accountType'] = 'PL';
                         $glPL['invoiceAmount'] = $revenueTotalRpt + $totalRpt;
                         $glPL['unitCost'] = $revenueTotalRpt + $totalRpt;
                         $glPL['localAmount'] = $revenueTotalLocal + $totalLocal;
                         $glPL['comRptAmount'] = $revenueTotalRpt + $totalRpt;
 
-                        $glBS['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, 1);
-                        $glBS['glSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, 1);
-                        $glBS['glCodeDes'] = SystemGlCodeScenarioDetail::getGlDescriptionByScenario($fromCompany->companySystemID, null, 1);
+                        $glBS['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, "stock-transfer-pl-account-for-inter-company-transfer");
+                        $glBS['glSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, "stock-transfer-pl-account-for-inter-company-transfer");
+                        $glBS['glCodeDes'] = SystemGlCodeScenarioDetail::getGlDescriptionByScenario($fromCompany->companySystemID, null, "stock-transfer-pl-account-for-inter-company-transfer");
                         $glBS['accountType'] = 'BS';
                         $glBS['invoiceAmount'] = $totalRpt;
                         $glBS['unitCost'] = $totalRpt;

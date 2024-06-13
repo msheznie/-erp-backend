@@ -1361,9 +1361,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                         if ((round($DebitNoteMasterExData->debitAmountLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($DebitNoteMasterExData->debitAmountRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
 
-                            $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , 14);
+                            $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , "exchange-gainloss-gl");
                             if (is_null($checkExchangeGainLossAccount)) {
-                                $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, 14);
+                                $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, "exchange-gainloss-gl");
 
                                 if ($checkExchangeGainLossAccountCode) {
                                     return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
@@ -1451,8 +1451,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                 $data['serviceLineCode'] = 'X';
                             }
 
-                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($DebitNoteMasterExData->companySystemID, $DebitNoteMasterExData->documentSystemID, 14);
-                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($DebitNoteMasterExData->companySystemID, $DebitNoteMasterExData->documentSystemID, 14);
+                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($DebitNoteMasterExData->companySystemID, $DebitNoteMasterExData->documentSystemID, "exchange-gainloss-gl");
+                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($DebitNoteMasterExData->companySystemID, $DebitNoteMasterExData->documentSystemID, "exchange-gainloss-gl");
                             $data['glAccountType'] = 'PL';
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                             if ($diffLocal > 0) {
@@ -1496,9 +1496,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                         if ((round($PaySupplierInvoiceMasterExData->payAmountCompLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($PaySupplierInvoiceMasterExData->payAmountCompRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
 
-                            $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , 14);
+                            $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , "exchange-gainloss-gl");
                             if (is_null($checkExchangeGainLossAccount)) {
-                                $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, 14);
+                                $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, "exchange-gainloss-gl");
                                 if ($checkExchangeGainLossAccountCode) {
                                     return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
                                 }
@@ -1584,8 +1584,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                 $data['serviceLineSystemID'] = 24;
                                 $data['serviceLineCode'] = 'X';
                             }
-                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, 14);
-                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, 14);
+                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, "exchange-gainloss-gl");
+                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, "exchange-gainloss-gl");
                             $data['glAccountType'] = 'PL';
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                             if ($diffLocal > 0) {
@@ -1610,9 +1610,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                     else if((($totalAmountPayEx->supplierPaymentAmount / $PaySupplierInvoiceMasterExData->localCurrencyER) - $totalAmountPayEx->paymentLocalAmount != 0) || (($totalAmountPayEx->supplierPaymentAmount / $PaySupplierInvoiceMasterExData->companyRptCurrencyER) - $totalAmountPayEx->paymentComRptAmount != 0)){
 
-                        $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , 14);
+                        $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , "exchange-gainloss-gl");
                         if (is_null($checkExchangeGainLossAccount)) {
-                            $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, 14);
+                            $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, "exchange-gainloss-gl");
                             if ($checkExchangeGainLossAccountCode) {
                                 return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
                             }
@@ -1695,8 +1695,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                             $data['serviceLineSystemID'] = 24;
                             $data['serviceLineCode'] = 'X';
                         }
-                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, 14);
-                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, 14);
+                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, "exchange-gainloss-gl");
+                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, "exchange-gainloss-gl");
                         $data['glAccountType'] = 'PL';
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         if ($diffLocal > 0) {

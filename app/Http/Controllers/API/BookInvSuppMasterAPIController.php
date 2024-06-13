@@ -366,7 +366,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
             }
         } else {
-            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
             if (is_null($checkEmployeeControlAccount)) {
                 return $this->sendError('Please configure Employee control account for this company', 500);
@@ -595,7 +595,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
         } else {
-            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
             if (is_null($checkEmployeeControlAccount)) {
                 return $this->sendError('Please configure Employee control account for this company', 500);
@@ -838,12 +838,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             }
 
-            
             if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
 
-                $isConfigured = SystemGlCodeScenario::find(13);
+                $slug = "retention-control-account";
+                $isConfigured = SystemGlCodeScenario::where('slug',$slug)->first();
                 $companyID = isset($bookInvSuppMaster->companySystemID) ? $bookInvSuppMaster->companySystemID: null;
-                $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->where('companySystemID', $companyID)->first();
+                $isDetailConfigured = ($isConfigured) ? SystemGlCodeScenarioDetail::where('systemGLScenarioID', $isConfigured->id)->where('companySystemID', $companyID)->first() : null;
                 if($isConfigured && $isDetailConfigured) {
                     if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
                         return $this->sendError('Chart of account is not configured for retention control account', 500);
@@ -876,7 +876,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $bookInvSuppMaster->companySystemID)
                                     ->first();
 
-                $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($bookInvSuppMaster->companySystemID, null, 12);
+                $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($bookInvSuppMaster->companySystemID, null, "employee-control-account");
 
                 $companyData = Company::find($bookInvSuppMaster->companySystemID);
 
@@ -2250,7 +2250,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->where('companySystemID', $companyId)
                             ->first();                            
 
-        $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, 12);
+        $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, "employee-control-account");
 
         $companyData = Company::find($companyId);
 

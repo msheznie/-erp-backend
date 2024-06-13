@@ -153,19 +153,19 @@ class StockRecieveGlService
 
             if ($pl) {
                 if ($masterData->interCompanyTransferYN == -1) {
-                    if (is_null(SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 1))) {
+                    if (is_null(SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer"))) {
                         return ['status' => false, 'error' => ['message' => "Stock Transfer Pl Account for inter company transfer is not configured"]];    
                     }
 
-                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 1);
-                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 1);
+                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer");
+                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer");
                 } else {
-                    if (is_null(SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 2))) {
+                    if (is_null(SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "stock-transfer-pl-account"))) {
                         return ['status' => false, 'error' => ['message' => "Stock Transfer Pl Account is not configured"]];    
                     }
 
-                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 2);
-                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 2);
+                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "stock-transfer-pl-account");
+                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "stock-transfer-pl-account");
                 }
                 $data['glAccountType'] =ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);

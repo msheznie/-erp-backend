@@ -179,13 +179,13 @@ class DebitNoteAPIController extends AppBaseController
         $type =  $input['type'];
         $company_id = $input['companySystemID'];
 
-      
+
         if($type == 2)
         {
                 $is_valid = true;
-
-                               $emp_control_acc = SystemGlCodeScenario::where('id',12)->where('isActive',1)->with(['company_scenario'=>function($query) use($company_id){
-                                $query->where('systemGlScenarioID',12)->where('companySystemID',$company_id);
+                               $slug = "employee-control-account";
+                               $emp_control_acc = SystemGlCodeScenario::where('slug',$slug)->where('isActive',1)->with(['company_scenario'=>function($query) use($company_id){
+                                $query->where('companySystemID',$company_id);
                                }])->first();
 
                                if(isset($emp_control_acc))
@@ -527,8 +527,9 @@ class DebitNoteAPIController extends AppBaseController
             $company_id = $debitNote->companySystemID;
             $is_valid = true;
 
-            $emp_control_acc = SystemGlCodeScenario::where('id',12)->where('isActive',1)->with(['company_scenario'=>function($query) use($company_id){
-             $query->where('systemGlScenarioID',12)->where('companySystemID',$company_id);
+            $slug = "employee-control-account";
+            $emp_control_acc = SystemGlCodeScenario::where('slug',$slug)->where('isActive',1)->with(['company_scenario'=>function($query) use($company_id){
+             $query->where('companySystemID',$company_id);
             }])->first();
 
             if(isset($emp_control_acc))

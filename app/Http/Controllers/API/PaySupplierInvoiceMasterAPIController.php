@@ -361,7 +361,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($input['invoiceType'] == 7) {
-                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
                 if (is_null($checkEmployeeControlAccount)) {
                     return $this->sendError('Please configure Employee control account for this company', 500);
@@ -377,7 +377,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
 
             if ($input['invoiceType'] == 6) {
-                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
                 if (is_null($checkEmployeeControlAccount)) {
                     return $this->sendError('Please configure Employee control account for this company', 500);
@@ -619,7 +619,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
 
             if ($input['invoiceType'] == 6) {
-                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
                 if (is_null($checkEmployeeControlAccount)) {
                     return $this->sendError('Please configure Employee control account for this company', 500);
@@ -783,7 +783,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('PDC Cheque amount should equal to PV total amount', 500);
                     }
 
-                    $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $paySupplierInvoiceMaster->documentSystemID, 5);
+                    $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $paySupplierInvoiceMaster->documentSystemID, "pdc-payable-account");
 
                     if (is_null($checkPlAccount)) {
                         return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
@@ -1566,7 +1566,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($input['invoiceType'] == 6 || $input['invoiceType'] == 7) {
-                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
                 if (is_null($checkEmployeeControlAccount)) {
                     return $this->sendError('Please configure Employee control account for this company', 500);
@@ -1806,7 +1806,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('PDC Cheque amount should equal to PV total amount', 500); 
                     }
 
-                    $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $paySupplierInvoiceMaster->documentSystemID, 5);
+                    $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $paySupplierInvoiceMaster->documentSystemID, "pdc-payable-account");
 
                     if (is_null($checkPlAccount)) {
                         return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
@@ -1833,9 +1833,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
 
-                        $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $documentSystemID, 14);
+                        $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $documentSystemID, "exchange-gainloss-gl");
                         if (is_null($checkExchangeGainLossAccount)) {
-                            $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($companySystemID, $documentSystemID, 14);
+                            $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($companySystemID, $documentSystemID, "exchange-gainloss-gl");
 
                             if ($checkExchangeGainLossAccountCode) {
                                 return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
@@ -2216,7 +2216,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
                                     ->first();
 
-                    $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($paySupplierInvoiceMaster->companySystemID, null, 12);
+                    $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($paySupplierInvoiceMaster->companySystemID, null, "employee-control-account");
 
                     $companyData = Company::find($paySupplierInvoiceMaster->companySystemID);
 
@@ -2585,7 +2585,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
                     }
                 } else {
-                    $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+                    $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
                     if (is_null($checkEmployeeControlAccount)) {
                         return $this->sendError('Please configure Employee control account for this company', 500);
@@ -3200,7 +3200,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $companyId)
                                     ->first();
 
-            $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, 12);
+            $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, "employee-control-account");
 
             $companyData = Company::find($companyId);
 

@@ -385,7 +385,7 @@ class AccountsPayableReportJob implements ShouldQueue
     public function exchangeGainLoss($results, $currency) {
 
         foreach ($results as $index => $result){
-            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
+            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , "exchange-gainloss-gl");
             $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
             if(!empty($chartOfAccount)) {
                 if ($currency == 1) {

@@ -443,7 +443,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                 }
             }
 
-            $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($inventoryReclassification->companySystemID, $inventoryReclassification->documentSystemID, 9);
+            $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($inventoryReclassification->companySystemID, $inventoryReclassification->documentSystemID, "inventory-reclassification-bs-account");
 
             if (is_null($checkPlAccount)) {
                 return $this->sendError('Please configure BS account for inventory recalssification', 500);

@@ -148,8 +148,8 @@ class InventoryReclassificationGlService
                 $data['timestamp'] = \Helper::currentDateTime();
                 array_push($finalData, $data);
 
-                $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 9);
-                $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 9);
+                $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "inventory-reclassification-bs-account");
+                $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "inventory-reclassification-bs-account");
                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                 $data['documentLocalCurrencyID'] = $bs->localCurrencyID;

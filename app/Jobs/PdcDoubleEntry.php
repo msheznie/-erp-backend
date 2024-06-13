@@ -201,8 +201,8 @@ class PdcDoubleEntry implements ShouldQueue
 
                                         $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
                                         if ($pdcData['newStatus'] == 1) {
-                                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
-                                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
+                                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
+                                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                             $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
                                             $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']);
                                             $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']);
@@ -217,8 +217,8 @@ class PdcDoubleEntry implements ShouldQueue
                                         }
 
                                         if ($pdcData['newStatus'] == 2) {
-                                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
-                                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
+                                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
+                                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                             $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
                                             $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']) * -1;
                                             $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
@@ -252,8 +252,8 @@ class PdcDoubleEntry implements ShouldQueue
                                         $data['timestamp'] = \Helper::currentDateTime();
 
                                         if ($pdcData['newStatus'] == 1) {
-                                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
-                                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
+                                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
+                                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                             $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
                                             $data['documentLocalAmount'] = $convertAmount["localAmount"];
                                             $data['documentRptAmount'] = $convertAmount["reportingAmount"];
@@ -268,8 +268,8 @@ class PdcDoubleEntry implements ShouldQueue
                                         }
 
                                         if ($pdcData['newStatus'] == 2) {
-                                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
-                                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
+                                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
+                                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                             $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
                                             $data['documentLocalAmount'] = $convertAmount["localAmount"] * -1;
                                             $data['documentRptAmount'] = $convertAmount["reportingAmount"] * -1;
@@ -301,8 +301,8 @@ class PdcDoubleEntry implements ShouldQueue
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
 
                                     if ($pdcData['newStatus'] == 1) {
-                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
-                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
+                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
+                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                         $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
                                         $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']);
                                         $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']);
@@ -319,8 +319,8 @@ class PdcDoubleEntry implements ShouldQueue
                                     }
 
                                      if ($pdcData['newStatus'] == 2) {
-                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
-                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
+                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
+                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                         $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
                                         $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']) * -1;
                                         $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
@@ -355,8 +355,8 @@ class PdcDoubleEntry implements ShouldQueue
                                 $data['timestamp'] = \Helper::currentDateTime();
 
                                 if ($pdcData['newStatus'] == 1) {
-                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
-                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                     $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
                                     $data['documentLocalAmount'] = \Helper::roundValue($masterLocal);
                                     $data['documentRptAmount'] = \Helper::roundValue($masterRpt);
@@ -371,8 +371,8 @@ class PdcDoubleEntry implements ShouldQueue
                                 }
 
                                 if ($pdcData['newStatus'] == 2) {
-                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
-                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5);
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                     $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
                                     $data['documentLocalAmount'] = \Helper::roundValue($masterLocal) * -1;
                                     $data['documentRptAmount'] = \Helper::roundValue($masterRpt) * -1;
@@ -501,8 +501,8 @@ class PdcDoubleEntry implements ShouldQueue
 
 
                                     if ($pdcData['newStatus'] == 1) {
-                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 6);
-                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 6);
+                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
+                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
                                         $data['documentTransAmount'] = abs(\Helper::roundValue($pdcData['amount'])) * -1;
                                         $data['documentLocalAmount'] = abs(\Helper::roundValue($currencyConvertionData['localAmount'])) * -1;
                                         $data['documentRptAmount'] = abs(\Helper::roundValue($currencyConvertionData['reportingAmount'])) * -1;
@@ -517,8 +517,8 @@ class PdcDoubleEntry implements ShouldQueue
                                     }
 
                                     if ($pdcData['newStatus'] == 2) {
-                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 6);
-                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 6);
+                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
+                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
                                         $data['documentTransAmount'] = abs(\Helper::roundValue($pdcData['amount']));
                                         $data['documentLocalAmount'] = abs(\Helper::roundValue($currencyConvertionData['localAmount']));
                                         $data['documentRptAmount'] = abs(\Helper::roundValue($currencyConvertionData['reportingAmount']));
@@ -559,8 +559,8 @@ class PdcDoubleEntry implements ShouldQueue
                                     $data['timestamp'] = \Helper::currentDateTime();
 
                                     if ($pdcData['newStatus'] == 1) {
-                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 6);
-                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 6);
+                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
+                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
                                         $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
                                         $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']) * -1;
                                         $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
@@ -575,8 +575,8 @@ class PdcDoubleEntry implements ShouldQueue
                                     }
 
                                     if ($pdcData['newStatus'] == 2) {
-                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 6);
-                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 6);
+                                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
+                                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
                                         $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
                                         $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']);
                                         $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']);

@@ -176,8 +176,10 @@ class AccountsPayableReportAPIController extends AppBaseController
         $countries = CountryMaster::all();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
 
-        $isConfigured = SystemGlCodeScenario::where('isActive', 1)->where('id',12)->first();
-        $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 12)->where('companySystemID', $companiesByGroup)->first();
+        $slug = "employee-control-account";
+
+        $isConfigured = SystemGlCodeScenario::where('isActive', 1)->where('slug',$slug)->first();
+        $isDetailConfigured = ($isConfigured) ? SystemGlCodeScenarioDetail::where('systemGLScenarioID', $isConfigured->id)->where('companySystemID', $companiesByGroup)->first() : [];
 
         if(!empty($isConfigured) && !empty($isDetailConfigured)) {
             $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->where('isActive', 1)->where('isAssigned', -1)->first();
@@ -1941,7 +1943,7 @@ class AccountsPayableReportAPIController extends AppBaseController
     public function exchangeGainLoss($results, $currency) {
 
         foreach ($results as $index => $result){
-            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
+            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , "exchange-gainloss-gl");
             $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
             if(!empty($chartOfAccount)) {
                 if ($currency == 1) {
@@ -5914,7 +5916,7 @@ ORDER BY
         $results = \DB::select($qry);
 
         foreach ($results as $index => $result){
-            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
+            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , "exchange-gainloss-gl");
             $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
             if(!empty($chartOfAccount)) {
                     $result->exchangeGLTrans = $chartOfAccount->documentTransAmount;

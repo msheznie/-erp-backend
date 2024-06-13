@@ -440,6 +440,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     return $this->sendError(trans('custom.asset_disposal_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                 }
 
+
                 if ($assetDisposalMaster->disposalType == 1) {
 
                     $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($checkDisposalType->chartOfAccountID, $assetDisposalMaster->companySystemID);
@@ -488,8 +489,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         return $this->sendError(trans('custom.is_not_active', ['attribute' => trans('custom.assigned_supplier')]), 500, ['type' => 'confirm']);
                     }
 
-                    $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($assetDisposalMaster->companySystemID, $assetDisposalMaster->documentSystemID, 11);
-                
+                    $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($assetDisposalMaster->companySystemID, $assetDisposalMaster->documentSystemID, "asset-disposal-inter-company-sales");
+
                     if (is_null($checkRevenueAc)) {
                         return $this->sendError('Please configure income from sales', 500);
                     }

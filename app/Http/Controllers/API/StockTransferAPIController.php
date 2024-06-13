@@ -697,14 +697,14 @@ class StockTransferAPIController extends AppBaseController
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
 
-            $checkPlAccount = ($stockTransfer->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 1) : SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 2);
+            $checkPlAccount = ($stockTransfer->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer") : SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, "stock-transfer-pl-account");
 
             if (is_null($checkPlAccount)) {
                 return $this->sendError('Transit account for stock transfer is not configured. Please update it in Chart of Account → Chart of Account Configuration', 500);
             }
 
             if ($stockTransfer->interCompanyTransferYN == -1) {
-                $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 10);
+                $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, "inter-company-transfer-revenue");
                 
                 if (is_null($checkRevenueAc)) {
                     return $this->sendError('Please configure Inter Company stock transfer revenue account', 500);

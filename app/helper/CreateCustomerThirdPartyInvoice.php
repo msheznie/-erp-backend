@@ -280,7 +280,7 @@ class CreateCustomerThirdPartyInvoice
                             SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail,SUM(sellingPriceLocal) as sellingPriceLocal,SUM(sellingPriceRpt) as sellingPriceRpt')->OfMaster($sourceModel['assetdisposalMasterAutoID'])->first();
                         $segment = AssetDisposalDetail::OfMaster($sourceModel['assetdisposalMasterAutoID'])->first();
                         if ($disposalDetail) {
-                           $accID = SystemGlCodeScenarioDetail::getGlByScenario($companySystemId, $sourceModel['documentSystemID'], 11);
+                           $accID = SystemGlCodeScenarioDetail::getGlByScenario($companySystemId, $sourceModel['documentSystemID'], "asset-disposal-inter-company-sales");
                             $comment = "INV Created by -Sold to 3rd. Party Disposal - ".$sourceModel['disposalDocumentCode'];
                        
                                 $disposalType = AssetDisposalType::where('disposalTypesID',6)->first();

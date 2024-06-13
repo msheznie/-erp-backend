@@ -1347,7 +1347,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError('PDC Cheque amount should equal to PV total amount', 500); 
                 }
 
-                $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 6);
+                $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "pdc-receivable-account");
 
                 if (is_null($checkPlAccount)) {
                     return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
@@ -2265,7 +2265,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError('PDC Cheque amount should equal to PV total amount', 500);
                 }
 
-                $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 6);
+                $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "pdc-receivable-account");
 
                 if (is_null($checkPlAccount)) {
                     return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
