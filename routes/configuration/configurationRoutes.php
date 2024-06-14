@@ -151,10 +151,12 @@ Route::group([], function() {
 //Supplier Evaluation 
 Route::group([], function() {
 
+    Route::post('getAllSupplierEvaluationTemplates', 'SupplierEvaluationTemplateAPIController@getAllSupplierEvaluationTemplates')->name("Get all supplier evaluation masters");
     Route::post('getAllSupplierEvaluationMasters', 'SupplierEvaluationMastersAPIController@getAllSupplierEvaluationMasters')->name("Get all supplier evaluation masters");
     Route::post('getAllSupplierEvaluationDetails', 'SupplierEvaluationMasterDetailsAPIController@getAllSupplierEvaluationDetails')->name("Get all supplier evaluation masters");
 
     Route::resource('supplier_evaluation_masters', 'SupplierEvaluationMastersAPIController');
 
     Route::resource('evaluation_master_details', 'SupplierEvaluationMasterDetailsAPIController');
+    Route::resource('supplier_evaluation_templates', 'SupplierEvaluationTemplateAPIController');
 });
