@@ -438,7 +438,7 @@ class SMAttendancePullingService{
 
     function step5(){
 
-        DB::table('aattendance_temporary_tbl')->where('uniqueID', $this->uniqueKey)->delete();
+        DB::table('attendance_temporary_tbl')->where('uniqueID', $this->uniqueKey)->delete();
         DB::table('srp_erp_pay_empattendancedaterangetemp')->where('uniqueID', $this->uniqueKey)->delete();
 
 
