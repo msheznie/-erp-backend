@@ -65,6 +65,7 @@ use App\Models\AdvanceReceiptDetails;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\BudgetConsumedData;
+use App\Models\CompanyDigitalStamp;
 use App\Models\TaxVatCategories;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -3241,7 +3242,9 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
     {
         
         $id = $request->get('id');
-        $typeID = $request->get('typeID');
+        $paymentTerms = $request->get('paymentTerms');
+        $detailsComment = $request->get('detailsComment');
+        $digitalStamp = $request->get('digitalStamp');
         $spec_id = 1;
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
@@ -3267,9 +3270,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
 
-
-
-        $is_specification = 0;       
+        $is_specification = 0;
 
         if (!empty($outputRecord)) {
 
@@ -3284,7 +3285,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                 }
             }
         }
-
 
         $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemID', $procumentOrder->documentSystemID)
@@ -3332,7 +3332,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         if ($checkCompanyIsMerged) {
             $isMergedCompany = true;
         }
-
         
         $checkAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
         ->where('companySystemID', $procumentOrder->companySystemID)
@@ -3347,7 +3346,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $purchaseOrderID = $outputRecord[0]->purchaseOrderID;
         $purchaseOrderPaymentTermConfigs = [];
 
-        if ($typeID == 1) {
+        if ($paymentTerms == 1) {
             $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->value('templateID');
             $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->value('isActive');
 
@@ -3389,6 +3388,14 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             }
         }
 
+        $digitalStampDetails = array();
+        if ($digitalStamp == 1) {
+            $digitalStampDetails = CompanyDigitalStamp::where('company_system_id', $procumentOrder->companySystemID)->where('is_default', 1)->get();
+            if(count($digitalStampDetails) > 0) {
+                $digitalStampDetails = $digitalStampDetails[0];
+            }
+        }
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
@@ -3396,7 +3403,10 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'isMergedCompany' => $isMergedCompany,
             'secondaryCompany' => $checkCompanyIsMerged,
             'title' => $documentTitle,
-            'termsCond' => $typeID,
+            'termsCond' => $paymentTerms,
+            'detailComment' => $detailsComment,
+            'digitalStamp' => $digitalStamp,
+            'digitalStampDetails' => $digitalStampDetails,
             'specification' => $is_specification,
             'paymentTermsView' => $paymentTermsView,
             'addons' => $orderAddons,
@@ -3404,8 +3414,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'allowAltUom' => ($checkAltUOM) ? $checkAltUOM->isYesNO : false,
             'paymentTermConfigs' => $purchaseOrderPaymentTermConfigs
         );
-
-
 
         try {
             // check document type has set template as default, then get rendered html with data
