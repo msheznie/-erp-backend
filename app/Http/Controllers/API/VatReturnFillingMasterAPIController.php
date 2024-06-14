@@ -522,10 +522,12 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                                                 ->where('id', $input['ID'])
                                                 ->first();
 
-        $isLastItem = VatReturnFillingMaster::where('companySystemID', $vatReturnFilling->companySystemID)->max('serialNo');
-        $isLastItem = $isLastItem == $vatReturnFilling->serialNo ? 1 : 0;
-        $isAvailableDraft = VatReturnFillingMaster::where('companySystemID', $vatReturnFilling->companySystemID)->where('confirmedYN', 0)->exists();
-        $vatReturnFilling->isCanAmend = $isLastItem && !$isAvailableDraft;
+        if($vatReturnFilling){
+            $isLastItem = VatReturnFillingMaster::where('companySystemID', $vatReturnFilling->companySystemID)->max('serialNo');
+            $isLastItem = $isLastItem == $vatReturnFilling->serialNo ? 1 : 0;
+            $isAvailableDraft = VatReturnFillingMaster::where('companySystemID', $vatReturnFilling->companySystemID)->where('confirmedYN', 0)->exists();
+            $vatReturnFilling->isCanAmend = $isLastItem && !$isAvailableDraft;
+        }
 
         return $this->sendResponse($vatReturnFilling, "VAT return filling data retrieved successfully");
 
@@ -562,22 +564,9 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             ];    
         }
 
-        $updateVATDetail = TaxLedgerDetail::where('id', $input['id'])->update($updateData);
+        TaxLedgerDetail::where('id', $input['id'])->update($updateData);
 
-
-        $taxDetail = TaxLedgerDetail::where('returnFilledDetailID', $input['returnFilledDetailID'])
-                                    ->get();
-
-        $taxAmount = collect($taxDetail)->sum('VATAmountLocal');
-        $taxableAmount = collect($taxDetail)->sum('taxableAmountLocal');
-
-        $updateReturnDetail = VatReturnFillingDetail::where('id', $input['returnFilledDetailID'])
-                                                    ->update(['taxableAmount' => $taxableAmount, 'taxAmount' => $taxAmount]);
-
-        $fillingDetail = VatReturnFillingDetail::find($input['returnFilledDetailID']);
-
-
-        $this->vatReturnFillingMasterRepository->updateFillingFormula($fillingDetail->vatReturnFillingID);
+        $this->vatReturnFillingMasterRepository->updateVatReturnFillingDetails($input['returnFilledDetailID']);
 
         return $this->sendResponse([], 'Record updated successfully');
     }

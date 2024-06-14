@@ -89,6 +89,7 @@ use App\Models\ExpenseAssetAllocation;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
+use App\Repositories\VatReturnFillingMasterRepository;
 use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
@@ -115,13 +116,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
     private $userRepository;
     private $supplierInvoiceItemDetailRepository;
     private $expenseAssetAllocationRepository;
+    private $vatReturnFillingMasterRepo;
 
-    public function __construct(BookInvSuppMasterRepository $bookInvSuppMasterRepo, UserRepository $userRepo, SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo)
+    public function __construct(BookInvSuppMasterRepository $bookInvSuppMasterRepo, UserRepository $userRepo, SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo,VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
     {
         $this->bookInvSuppMasterRepository = $bookInvSuppMasterRepo;
         $this->userRepository = $userRepo;
         $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
         $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
+        $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
     }
 
     /**
@@ -3196,6 +3199,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                     return $this->sendError($validatePendingGlPost['message']);
                 }
             }
+
+            $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$bookInvSuppMasterData->companySystemID);
+            if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
+                $errorMessage = "Supplier Invoice " . $validateVatReturnFilling['message'];
+                return $this->sendError($errorMessage);
+            }
         }
 
 
@@ -3280,10 +3289,22 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();
 
-            TaxLedgerDetail::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
+            $taxLedgerDetails = TaxLedgerDetail::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
-                ->delete();
+                ->get();
+
+            $returnFilledDetailID = null;
+            foreach ($taxLedgerDetails as $taxLedgerDetail) {
+                if($taxLedgerDetail->returnFilledDetailID != null){
+                    $returnFilledDetailID = $taxLedgerDetail->returnFilledDetailID;
+                }
+                $taxLedgerDetail->delete();
+            }
+
+            if($returnFilledDetailID != null){
+                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
+            }
 
             BudgetConsumedData::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)

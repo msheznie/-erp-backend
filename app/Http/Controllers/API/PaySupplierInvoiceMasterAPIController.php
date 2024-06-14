@@ -77,6 +77,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use App\Repositories\MatchDocumentMasterRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
+use App\Repositories\VatReturnFillingMasterRepository;
 use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -101,13 +102,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     private $paySupplierInvoiceMasterRepository;
     private $matchDocumentMasterRepository;
     private $expenseAssetAllocationRepository;
+    private $vatReturnFillingMasterRepo;
 
 
-    public function __construct(PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo, MatchDocumentMasterRepository $matchDocumentMasterRepository)
+    public function __construct(PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo, MatchDocumentMasterRepository $matchDocumentMasterRepository,VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
     {
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
         $this->matchDocumentMasterRepository = $matchDocumentMasterRepository;
         $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
+        $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
     }
 
     /**
@@ -4828,8 +4831,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         }
     }
 
-    public
-    function amendPaymentVoucherReview(Request $request)
+    public function amendPaymentVoucherReview(Request $request)
     {
         $input = $request->all();
 
@@ -4866,6 +4868,12 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
                     return $this->sendError($validatePendingGlPost['message']);
                 }
+            }
+
+            $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$paymentVoucherData->companySystemID);
+            if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
+                $errorMessage = "Payment Voucher " . $validateVatReturnFilling['message'];
+                return $this->sendError($errorMessage);
             }
         }
 
@@ -4983,11 +4991,23 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 ->whereNull('matchDocumentMasterAutoID')
                 ->delete();
 
-            TaxLedgerDetail::where('documentMasterAutoID', $PayMasterAutoId)
+            $taxLedgerDetails = TaxLedgerDetail::where('documentMasterAutoID', $PayMasterAutoId)
                 ->where('companySystemID', $paymentVoucherData->companySystemID)
                 ->where('documentSystemID', $paymentVoucherData->documentSystemID)
                 ->whereNull('matchDocumentMasterAutoID')
-                ->delete();
+                ->get();
+
+            $returnFilledDetailID = null;
+            foreach ($taxLedgerDetails as $taxLedgerDetail) {
+                if($taxLedgerDetail->returnFilledDetailID != null){
+                    $returnFilledDetailID = $taxLedgerDetail->returnFilledDetailID;
+                }
+                $taxLedgerDetail->delete();
+            }
+
+            if($returnFilledDetailID != null){
+                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
+            }
 
             BudgetConsumedData::where('documentSystemCode', $PayMasterAutoId)
                 ->where('companySystemID', $paymentVoucherData->companySystemID)

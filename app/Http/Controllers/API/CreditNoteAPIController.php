@@ -50,6 +50,7 @@ use App\Models\CustomerMaster;
 use App\Models\Company;
 use App\Models\ErpProjectMaster;
 use App\Models\SegmentMaster;
+use App\Repositories\VatReturnFillingMasterRepository;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use App\Models\CustomerCurrency;
@@ -70,10 +71,12 @@ class CreditNoteAPIController extends AppBaseController
 {
     /** @var  CreditNoteRepository */
     private $creditNoteRepository;
+    private $vatReturnFillingMasterRepo;
 
-    public function __construct(CreditNoteRepository $creditNoteRepo)
+    public function __construct(CreditNoteRepository $creditNoteRepo, VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
     {
         $this->creditNoteRepository = $creditNoteRepo;
+        $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
     }
 
     /**
@@ -1774,6 +1777,12 @@ WHERE
                     return $this->sendError($validatePendingGlPost['message']);
                 }
             }
+
+            $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$masterData->companySystemID);
+            if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
+                $errorMessage = "Credit Note " . $validateVatReturnFilling['message'];
+                return $this->sendError($errorMessage);
+            }
         }
 
 
@@ -1837,15 +1846,27 @@ WHERE
                 ->delete();
 
             //deleting records from tax ledger
-            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
+            TaxLedger::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
                 ->delete();
 
-            TaxLedgerDetail::where('documentMasterAutoID', $id)
+            $taxLedgerDetails = TaxLedgerDetail::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
+                ->get();
+
+            $returnFilledDetailID = null;
+            foreach ($taxLedgerDetails as $taxLedgerDetail) {
+                if($taxLedgerDetail->returnFilledDetailID != null){
+                    $returnFilledDetailID = $taxLedgerDetail->returnFilledDetailID;
+                }
+                $taxLedgerDetail->delete();
+            }
+
+            if($returnFilledDetailID != null){
+                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
+            }
 
             // updating fields
             $masterData->confirmedYN = 0;

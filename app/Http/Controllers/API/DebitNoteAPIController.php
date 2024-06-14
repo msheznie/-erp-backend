@@ -59,6 +59,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\SystemGlCodeScenario;
 use App\Repositories\DebitNoteRepository;
+use App\Repositories\VatReturnFillingMasterRepository;
 use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -83,10 +84,12 @@ class DebitNoteAPIController extends AppBaseController
 {
     /** @var  DebitNoteRepository */
     private $debitNoteRepository;
+    private $vatReturnFillingMasterRepo;
 
-    public function __construct(DebitNoteRepository $debitNoteRepo)
+    public function __construct(DebitNoteRepository $debitNoteRepo,VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
     {
         $this->debitNoteRepository = $debitNoteRepo;
+        $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
     }
 
     /**
@@ -2241,6 +2244,12 @@ UNION ALL
                     return $this->sendError($validatePendingGlPost['message']);
                 }
             }
+
+            $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$debitNoteMasterData->companySystemID);
+            if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
+                $errorMessage = "Debit note " . $validateVatReturnFilling['message'];
+                return $this->sendError($errorMessage);
+            }
         }
 
         $emailBody = '<p>' . $debitNoteMasterData->debitNoteCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
@@ -2305,15 +2314,27 @@ UNION ALL
                 ->delete();
 
             //deleting records from tax ledger
-            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $debitNoteAutoID)
+            TaxLedger::where('documentMasterAutoID', $debitNoteAutoID)
                 ->where('companySystemID', $debitNoteMasterData->companySystemID)
                 ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
                 ->delete();
 
-            TaxLedgerDetail::where('documentMasterAutoID', $debitNoteAutoID)
+            $taxLedgerDetails = TaxLedgerDetail::where('documentMasterAutoID', $debitNoteAutoID)
                 ->where('companySystemID', $debitNoteMasterData->companySystemID)
                 ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
-                ->delete();
+                ->get();
+
+            $returnFilledDetailID = null;
+            foreach ($taxLedgerDetails as $taxLedgerDetail) {
+                if($taxLedgerDetail->returnFilledDetailID != null){
+                    $returnFilledDetailID = $taxLedgerDetail->returnFilledDetailID;
+                }
+                $taxLedgerDetail->delete();
+            }
+
+            if($returnFilledDetailID != null){
+                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
+            }
 
             BudgetConsumedData::where('documentSystemCode', $debitNoteAutoID)
                 ->where('companySystemID', $debitNoteMasterData->companySystemID)

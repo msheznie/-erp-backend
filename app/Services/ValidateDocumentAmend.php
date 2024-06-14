@@ -17,6 +17,8 @@ use App\Models\GRVMaster;
 use App\Models\JvMaster;
 use App\Models\MaterielRequest;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\TaxLedgerDetail;
+use App\Models\VatReturnFillingMaster;
 use Carbon\Carbon;
 
 class ValidateDocumentAmend
@@ -349,4 +351,25 @@ class ValidateDocumentAmend
 
         return ['status' => true];
 	}
+
+    public static function validateVatReturnFilling($documentAutoID,$documentSystemID,$companySystemID) {
+        $vatReturnFillingDetails = TaxLedgerDetail::with(['vat_return_filling_details'])
+            ->where('documentMasterAutoID', $documentAutoID)
+            ->where('companySystemID', $companySystemID)
+            ->where('documentSystemID', $documentSystemID)
+            ->whereNotNull('returnFilledDetailID')
+            ->first();
+
+        if($vatReturnFillingDetails) {
+            $vatReturnFillingState = VatReturnFillingMaster::find($vatReturnFillingDetails->vat_return_filling_details->vatReturnFillingID);
+            if(isset($vatReturnFillingState) && $vatReturnFillingState->confirmedYN == 1) {
+                return [
+                    'status' => false,
+                    'message' => 'pulled to VAT return filling ' . $vatReturnFillingState->returnFillingCode
+                ];
+            }
+        }
+
+        return ['status' => true];
+    }
 }

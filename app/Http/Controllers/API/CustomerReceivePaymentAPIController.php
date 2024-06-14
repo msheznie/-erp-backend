@@ -70,6 +70,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
 use App\Repositories\CustomerReceivePaymentRepository;
+use App\Repositories\VatReturnFillingMasterRepository;
 use App\Services\API\ApiPermissionServices;
 use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
@@ -91,10 +92,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 {
     /** @var  CustomerReceivePaymentRepository */
     private $customerReceivePaymentRepository;
+    private $vatReturnFillingMasterRepo;
 
-    public function __construct(CustomerReceivePaymentRepository $customerReceivePaymentRepo)
+    public function __construct(CustomerReceivePaymentRepository $customerReceivePaymentRepo, VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
     {
         $this->customerReceivePaymentRepository = $customerReceivePaymentRepo;
+        $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
     }
 
     /**
@@ -3481,6 +3484,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError($validatePendingGlPost['message']);
                 }
             }
+
+            $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$masterData->companySystemID);
+            if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
+                $errorMessage = "Receipt Voucher " . $validateVatReturnFilling['message'];
+                return $this->sendError($errorMessage);
+            }
         }
 
 
@@ -3580,15 +3589,27 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 ->delete();
 
             //deleting records from tax ledger
-            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
+            TaxLedger::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
 
-            TaxLedgerDetail::where('documentMasterAutoID', $id)
+            $taxLedgerDetails = TaxLedgerDetail::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemID)
-                ->delete();
+                ->get();
+
+            $returnFilledDetailID = null;
+            foreach ($taxLedgerDetails as $taxLedgerDetail) {
+                if($taxLedgerDetail->returnFilledDetailID != null){
+                    $returnFilledDetailID = $taxLedgerDetail->returnFilledDetailID;
+                }
+                $taxLedgerDetail->delete();
+            }
+
+            if($returnFilledDetailID != null){
+                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
+            }
 
             // updating fields
             $masterData->confirmedYN = 0;
