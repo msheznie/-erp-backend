@@ -497,6 +497,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppMaster->save();
 
         \Helper::updateSupplierRetentionAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
+        \Helper::updateSupplierWhtAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.supplier_invoice_details')]));
     }
@@ -790,6 +791,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
 
             \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
+            \Helper::updateSupplierWhtAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
 
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
@@ -902,6 +904,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 } 
             }
             \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
+            \Helper::updateSupplierWhtAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
         } catch (\Exception $exception) {
