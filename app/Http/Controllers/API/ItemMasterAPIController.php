@@ -182,6 +182,8 @@ class ItemMasterAPIController extends AppBaseController
                 $item['primaryCompanyID'] = $company->CompanyID;
                 $item['primaryCompanySystemID'] = $input['primaryCompanySystemID'];
                 $item['financeCategoryMaster'] = $input['financeCategoryMaster'];
+                $itemType = isset($item['itemType']) ? $item['itemType'] : null;
+                $item['categoryType'] = json_encode($itemType);
 
                 $itemMaster = $this->itemMasterRepository->create($item);
 
@@ -333,6 +335,60 @@ class ItemMasterAPIController extends AppBaseController
 
 
         ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+    }
+
+    public function getSubcategoriesByItemType(Request $request)
+    {
+
+        $itemType = $request->itemTypeID;
+        $companyId = $request->primaryCompanySystemID;
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $companyID = \Helper::getGroupCompany($companyId);
+        } else {
+            $companyID = [$companyId];
+        }
+
+        if (is_array($itemType)) {
+            if (count($itemType) != 0) {
+                if (count($itemType) > 1) {
+                    $subCategories = FinanceItemcategorySubAssigned::where('mainItemCategoryID', $request->financeCategoryID)
+                        ->where('isActive', 1)
+                        ->whereHas('finance_item_category_sub', function ($query) {
+                            $query->where('isActive', 1);
+                        })
+                        ->whereIn('companySystemID', $companyID)
+                        ->where('isAssigned', -1)
+                        ->with(['finance_gl_code_bs', 'finance_gl_code_pl'])
+                        ->groupBy('itemCategorySubID')
+                        ->get();
+                } else {
+                    $subCategories = FinanceItemcategorySubAssigned::where('mainItemCategoryID', $request->financeCategoryID)
+                        ->where('isActive', 1)
+                        ->whereHas('finance_item_category_sub', function ($query) {
+                            $query->where('isActive', 1);
+                        })
+                        ->whereIn('companySystemID', $companyID)
+                        ->where('isAssigned', -1)
+                        ->with(['finance_gl_code_bs', 'finance_gl_code_pl'])
+                        ->groupBy('itemCategorySubID');
+
+                    if (isset($itemType[0]['id']) && $itemType[0]['id'] == 2) {
+                        $subCategories = $subCategories->whereIn('categoryType', ['[{"id":2,"itemName":"Sale"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->get();
+                    }
+
+                    if (isset($itemType[0]['id']) && $itemType[0]['id'] == 1) {
+                        $subCategories = $subCategories->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->get();
+                    }
+                }
+            } else {
+                $subCategories = [];
+            }
+
+            return $subCategories;
+        }
+
     }
 
     public function getAllItemsQry($request, $search, $financeCategorySub)
