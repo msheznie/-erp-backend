@@ -4153,7 +4153,7 @@ SELECT
 	mainQuery.documentDateFilter,
 	mainQuery.invoiceNumber,
 	mainQuery.invoiceDate,
-	mainQuery.chartOfAccountSystemID,
+	mainQuery.chartOfAccountSystemID as chartOfAccountSystemID,
 	mainQuery.glCode,
 	mainQuery.documentNarration,
 	mainQuery.clientContractID,
