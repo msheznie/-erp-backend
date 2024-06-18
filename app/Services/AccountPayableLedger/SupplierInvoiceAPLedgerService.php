@@ -185,11 +185,24 @@ class SupplierInvoiceAPLedgerService
                         $whtSupplier = null;
                         $taxSetup = Tax::where('taxMasterAutoID',$masterData->whtType)->first();
                         $whtAuthority = null;
+                        $currencyID= null;
+                        $localER = null;
+                        $comRptER = null;
                         if($taxSetup)
                         {
                             $whtAuthority = $taxSetup->authorityAutoID;
                             $supplier = SupplierMaster::where('supplierCodeSystem',$whtAuthority)->first();
                             $whtSupplier = $supplier->supplierCodeSystem;
+
+                            $supplierCurrencies = DB::table('suppliercurrency')
+                            ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
+                            ->where('supplierCodeSystem', '=', $whtSupplier)->where('isDefault',-1)->first();
+
+                            $currencyID = $supplierCurrencies->currencyID;
+
+                            $companyCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $currencyID, $currencyID, 0);
+                            $localER = $companyCurrencyConversion['trasToLocER'];
+                            $comRptER = $companyCurrencyConversion['trasToRptER'];
                         }
 
          
@@ -327,6 +340,10 @@ class SupplierInvoiceAPLedgerService
             if ($masterData->whtApplicable) {
                 if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3){
                     $data['supplierCodeSystem'] = $whtSupplier;
+                    $data['supplierTransCurrencyID']  = $currencyID;
+                    $data['supplierDefaultCurrencyID'] = $currencyID;
+                    $data['localER'] = $localER;
+                    $data['comRptER'] = $comRptER;
                     $data['supplierInvoiceAmount'] = $whtInvoiceAmount;
                     $data['supplierDefaultAmount'] = $whtTrans;
                     $data['localAmount'] = $whtLocal;
