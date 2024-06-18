@@ -4224,7 +4224,7 @@ SELECT
 	erp_generalledger.chequeNumber,
 	erp_generalledger.invoiceNumber,
 	erp_generalledger.invoiceDate,
-	erp_generalledger.chartOfAccountSystemID,
+	erp_generalledger.chartOfAccountSystemID as chartOfAccountSystemID,
 	erp_generalledger.glCode,
 	erp_generalledger.documentNarration,
 	erp_generalledger.clientContractID,
