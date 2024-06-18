@@ -4261,7 +4261,7 @@ WHERE
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
 	) AS mainQuery
-	LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
+	LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = mainQuery.chartOfAccountSystemID
 	LEFT JOIN (
 	SELECT
 		erp_matchdocumentmaster.companySystemID,
