@@ -451,7 +451,8 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             });
         }
 
-        $results = $results->selectRaw('*, CASE WHEN serialNo = (SELECT MAX(serialNo) FROM vat_return_filling_master) THEN 1 ELSE 0 END AS isLast');
+        $results = $results->selectRaw('*, CASE WHEN serialNo = (SELECT MAX(serialNo) FROM vat_return_filling_master WHERE companySystemID IN ('.implode(',', $subCompanies).')) THEN 1 ELSE 0 END AS isLast');
+
 
         return \DataTables::of($results)
             ->order(function ($query) use ($input) {
