@@ -1139,11 +1139,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $excelColumnFormat = [
                         'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
                         'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'k' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
+
                     return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat) {
                         $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
                             $sheet->setColumnFormat($excelColumnFormat);
