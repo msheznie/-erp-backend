@@ -70,6 +70,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $this->documentAttachmentsRepository->pushCriteria(new FilterDocumentAttachmentsCriteria($request));
         $documentAttachments = $this->documentAttachmentsRepository->all();
 
+        foreach ($documentAttachments as $value) {
+            $url = Storage::disk(Helper::policyWiseDisk($value->companySystemID, 'public'))->temporaryUrl($value->path, Carbon::now()->addHours(3));
+            $value->url = $url;
+        }
+
         return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments retrieved successfully');
     }
 
