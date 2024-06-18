@@ -523,10 +523,8 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                                                 ->first();
 
         if($vatReturnFilling){
-            $isLastItem = VatReturnFillingMaster::where('companySystemID', $vatReturnFilling->companySystemID)->max('serialNo');
-            $isLastItem = $isLastItem == $vatReturnFilling->serialNo ? 1 : 0;
-            $isAvailableDraft = VatReturnFillingMaster::where('companySystemID', $vatReturnFilling->companySystemID)->where('confirmedYN', 0)->exists();
-            $vatReturnFilling->isCanAmend = $isLastItem && !$isAvailableDraft;
+            $lastItem = VatReturnFillingMaster::where('companySystemID', $vatReturnFilling->companySystemID)->max('serialNo');
+            $vatReturnFilling->isLastItem = $lastItem == $vatReturnFilling->serialNo ? 1 : 0;
         }
 
         return $this->sendResponse($vatReturnFilling, "VAT return filling data retrieved successfully");
