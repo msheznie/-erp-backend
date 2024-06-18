@@ -1425,7 +1425,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 
         SupplierInvoice::updateMaster($id);
-
+        \Helper::updateSupplierWhtAmount($id,$bookInvSuppMaster);
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully');
     }
 

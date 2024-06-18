@@ -9615,7 +9615,8 @@ class Helper
                     }
                 
                 $amount = round($WhtTotalAmount*($bookInvSuppMaster['whtPercentage']/100),2);
-                $bookInvSuppMaster->whtAmount = $amount;
+                $totalAmount = $whtTrue == true?$amount:0;
+                $bookInvSuppMaster->whtAmount = $totalAmount;
                 $bookInvSuppMaster->whtApplicable = $whtTrue;
                 $bookInvSuppMaster->whtEdited = false;
                 $bookInvSuppMaster->save();
