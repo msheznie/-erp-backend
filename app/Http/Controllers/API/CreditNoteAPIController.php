@@ -1085,7 +1085,7 @@ class CreditNoteAPIController extends AppBaseController
                 break;
             case 'create':
 
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
                     ->whereHas('customer_master',function($q){
                         $q->where('isCustomerActive',1);
                     })    
@@ -1097,7 +1097,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
-                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
 
                 $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
                 ->where('companySystemID', $companySystemID)
@@ -1127,14 +1127,14 @@ class CreditNoteAPIController extends AppBaseController
             case 'edit' :
                 $id = $input['id'];
                 $master = CreditNote::where('creditNoteAutoID', $id)->first();
-                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
 
                 if ($master->customerID != '') {
                     $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
                 } else {
                     $output['currencies'] = [];
                 }
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
                     ->whereHas('customer_master',function($q){
                         $q->where('isCustomerActive',1);
                     })       
