@@ -19,6 +19,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\Http\Requests\API\CreateItemIssueDetailsAPIRequest;
 use App\Http\Requests\API\CreateItemIssueMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemIssueMasterAPIRequest;
 use App\Models\Company;
@@ -28,7 +29,11 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\DeliveryOrder;
+use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
+use App\Models\PurchaseReturn;
 use App\Models\SrpEmployeeDetails;
 use App\Models\StockTransfer;
 use App\Models\CustomerMaster;
@@ -55,6 +60,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ItemIssueMasterRepository;
 use App\Services\Inventory\MaterialIssueService;
 use App\Traits\AuditTrial;
+use App\Validations\Inventory\StoreDetailsToMaterielRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1688,6 +1694,76 @@ class ItemIssueMasterAPIController extends AppBaseController
 
       
        return $this->sendResponse($details, 'Data retrived!');
+
+    }
+
+    public function validateItemBeforeAdd(Request $request)
+    {
+
+        $storeDetailsToMaterielRequest = new StoreDetailsToMaterielRequest();
+        $response =$storeDetailsToMaterielRequest->validate($request);
+
+        if(!$response->getData()->success)
+            return $this->sendError($response->getData()->message);
+
+        return $this->sendResponse($response->getData()->data, '');
+
+    }
+
+    public function addItemFromMrToMiDetails(Request $request)
+    {
+        $input = $request->all();
+
+        if(!isset($input['items']))
+            return $this->sendError('Materiel Issue details not found');
+
+        $items = ($input['items']) ? : [];
+        $materielIssueId = ($input['materielIssueId']) ? :null;
+
+        if(empty($items))
+            return $this->sendError('Materiel Issue details not found');
+
+        if(!$materielIssueId)
+            return $this->sendError('Materiel Issue id not found');
+
+
+        $materielIssue = ItemIssueMaster::where('itemIssueAutoID',$materielIssueId)->first();
+
+        if(!$materielIssue)
+            return $this->sendError('Materiel Issue not found');
+
+        $materielIssue->reqDocID = collect($items)->first()['RequestID'];
+        $materielIssue->save();
+
+
+       collect($items)->each(function($item) use ($materielIssue){
+
+            $data = [
+                'comments' => '',
+                'companySystemID' => $materielIssue->companySystemID,
+                'itemCode' => $item['itemCode'],
+                'itemIssueAutoID' => $materielIssue->itemIssueAutoID,
+                'issueType' => [2],
+                'reqDocID' =>$item['RequestID'],
+                'unitOfMeasureIssued' => [],
+                'partNumber' => $item['partNumber'],
+                'itemCodeSystem' => $item['itemCode'],
+                'originFrom' =>  "material-request",
+                'qtyIssued' => (int) $item['qtyIssued'],
+                'mappingItemCode' => isset($item['mappingItemCode']) ? $item['mappingItemCode'][0] : null
+            ];
+
+           $requestNew = new CreateItemIssueDetailsAPIRequest($data);
+           $itemIssueDetailsController = app('App\Http\Controllers\API\ItemIssueDetailsAPIController')->store($requestNew);
+           $response = ($itemIssueDetailsController->getData()) ? $itemIssueDetailsController->getData() : null;
+
+           if(!$response->success)
+               return $this->sendError($response->message);
+
+           return $this->sendResponse($response->data, 'Materiel Issue Details saved successfully');
+
+        });
+
 
     }
 
