@@ -67,6 +67,7 @@ use App\helper\CreateAccumulatedDepreciation;
 use App\helper\CreateExcel;
 use App\Services\ValidateDocumentAmend;
 use App\Traits\AuditLogsTrait;
+use App\Models\CompanyFinanceYear;
 
 /**
  * Class FixedAssetMasterController
@@ -1122,6 +1123,34 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             if ($fixedAssetMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+                /** Document Date And accumulated date validation*/
+                if (isset($input['documentDate'])) {
+                    if ($input['documentDate']) {
+                        $documentDateYearActive = CompanyFinanceYear::active_finance_year($input['companySystemID'], $input['documentDate']->format('Y-m-d'));
+                        if($documentDateYearActive) {
+                            $documentDateMonthActive = CompanyFinancePeriod::activeFinancePeriod($input['companySystemID'], 9, $input['documentDate']->format('Y-m-d'));
+                            if(!$documentDateMonthActive) {
+                                return $this->sendError('Document Date is not within the active Financial Period.',500);
+                            }
+                        } else {
+                            return $this->sendError('Document Date is not within the active Financial Period.',500);
+                        }
+                    }
+                }
+
+                if (isset($input['accumulated_depreciation_date'])) {
+                    if ($input['accumulated_depreciation_date']) {
+                        $accumulatedDateYearActive = CompanyFinanceYear::active_finance_year($input['companySystemID'], $input['accumulated_depreciation_date']->format('Y-m-d'));
+                        if($accumulatedDateYearActive) {
+                            $accumulatedMonthActive = CompanyFinancePeriod::activeFinancePeriod($input['companySystemID'], 9, $input['accumulated_depreciation_date']->format('Y-m-d'));
+                            if(!$accumulatedMonthActive) {
+                                return $this->sendError('Accumulated Depreciation Date is not within the active Financial Period.',500);
+                            }
+                        } else {
+                            return $this->sendError('Accumulated Depreciation Date is not within the active Financial Period.',500);
+                        }
+                    }
+                }
 
                 $params = array('autoID' => $id, 'company' => $fixedAssetMaster->companySystemID, 'document' => $fixedAssetMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
                 $confirm = \Helper::confirmDocument($params);
