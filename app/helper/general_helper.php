@@ -9527,100 +9527,282 @@ class Helper
 
     public static function updateSupplierWhtAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
     { 
+        
+        $bookInvSuppMaster = BookInvSuppMaster::with(['supplier' => function($query){
+            $query->with('tax');
+          }])->find($bookingSuppMasInvAutoID);
 
-        $bookInvSuppMaster = BookInvSuppMaster::with('supplier')->find($bookingSuppMasInvAutoID);
-
-        $isWHTApplicableSupplier = $bookInvSuppMaster->supplier->whtApplicableYN == 1?true:false;
-        if( $bookInvSuppMaster->supplier->whtApplicableYN == 1)
-          {       
-            $isWHTApplicableSupplier = $bookInvSuppMaster->whtApplicableYN == 1?true:false;
-          }
-
-        $WhtTotalAmount = 0 ;
-        $isGrvApplicable = false;
-        $isWHTApplicableVat = false;
-        $isPoApplicable = false;
-        $rcmActive = false;
-        $whtTrue = true;
-        $items = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
-                    ->with(['grvmaster' => function($q){
-                        $q->with('details');
-                    }, 'pomaster','suppinvmaster'=>function($q){
-                        $q->select('bookingSuppMasInvAutoID','documentType');
-                    }])
-                    ->get();
-
-
-            foreach ($items as $i => $invDetailItem) {
-
-                
-                    if (($invDetailItem->pomaster != null && $invDetailItem->pomaster->VATAmount == 0) ||( $invDetailItem->pomaster != null && $invDetailItem->pomaster->VATAmount != 0 && $invDetailItem->pomaster->rcmActivated == 1 )
-                        && $bookInvSuppMaster['documentType'] == 0
-                    ) {
-                        $isPoApplicable = true;
-                        $WhtTotalAmount += $invDetailItem->supplierInvoAmount;
-                    }
-                
-                    if ($invDetailItem->grvmaster != null && $bookInvSuppMaster['documentType'] == 2) {
-                        $isGrvApp = true;
-                        foreach ($invDetailItem->grvmaster->details as $k => $detail) {
-                            if ($detail->VATAmount != 0) {
-                                $isGrvApp = false;
-                            }
-                        }
-                        if ($isGrvApp) {
-                            $isGrvApplicable = true;
+         $percentage = 0;
+         if(isset($bookInvSuppMaster->supplier->tax))
+         {
+            $percentage = $bookInvSuppMaster->supplier->tax->whtPercentage;
+         } 
+        if($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2)
+        {
+            $isWHTApplicableSupplier = $bookInvSuppMaster->supplier->whtApplicableYN == 1?true:false;
+            if( $bookInvSuppMaster->supplier->whtApplicableYN == 1)
+              {       
+                $isWHTApplicableSupplier = $bookInvSuppMaster->whtApplicableYN == 1?true:false;
+              }
+            $isDetailVat = false;
+            $WhtTotalAmount = 0 ;
+            $isGrvApplicable = false;
+            $isWHTApplicableVat = false;
+            $isPoApplicable = false;
+            $rcmActive = false;
+            $whtTrue = true;
+            $items = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                        ->with(['grvmaster' => function($q){
+                            $q->with('details');
+                        }, 'pomaster','suppinvmaster'=>function($q){
+                            $q->select('bookingSuppMasInvAutoID','documentType');
+                        }])
+                        ->get();
+    
+    
+                foreach ($items as $i => $invDetailItem) {
+    
+                    
+                        if (($invDetailItem->pomaster != null && $invDetailItem->pomaster->VATAmount == 0) ||( $invDetailItem->pomaster != null && $invDetailItem->pomaster->VATAmount != 0 && $invDetailItem->pomaster->rcmActivated == 1 )
+                            && $bookInvSuppMaster['documentType'] == 0
+                        ) {
+                            $isPoApplicable = true;
                             $WhtTotalAmount += $invDetailItem->supplierInvoAmount;
                         }
+                    
+                        if ($invDetailItem->grvmaster != null && $bookInvSuppMaster['documentType'] == 2) {
+                            $isGrvApp = true;
+                            foreach ($invDetailItem->grvmaster->details as $k => $detail) {
+                                if ($detail->VATAmount != 0) {
+                                    $isGrvApp = false;
+                                }
+                            }
+                            if ($isGrvApp) {
+                                $isGrvApplicable = true;
+                                $WhtTotalAmount += $invDetailItem->supplierInvoAmount;
+                            }
+                        }
+                        
+    
+                        if($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 1)
+                        {
+                          if($invDetailItem->pomaster != null && $invDetailItem->pomaster->rcmActivated == 1)
+                            {
+                              $rcmActive = true;
+                            }
+                        }
+                   
+                    
+                    }
+    
+                    
+                        if($isGrvApplicable &&  ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
+                        {
+                            $isWHTApplicableVat = true;
+                            $isDetailVat = true;
+                        }
+    
+                        if($isPoApplicable &&  ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
+                        {
+                            $isWHTApplicableVat = true;
+                            $isDetailVat = true;
+                        }
+    
+                        if(count($items) == 0 && ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
+                        {
+                            $isWHTApplicableVat = true;
+                            $isDetailVat = false;
+                        }
+    
+                        if($bookInvSuppMaster['documentType'] == 0)
+                        {
+                            if(($isWHTApplicableVat == true && $isWHTApplicableSupplier == true) || ($isWHTApplicableSupplier == true && $rcmActive == true))
+                            {
+                                $whtTrue = true;
+                            }
+                            else
+                            {
+                                $whtTrue = false;
+                            }
+                        }
+    
+                        if($bookInvSuppMaster['documentType'] == 2)
+                        {
+                            if(($isWHTApplicableVat == true && $isWHTApplicableSupplier == true))
+                            {
+                                $whtTrue = true;
+                            }
+                            else
+                            {
+                                $whtTrue = false;
+                            }
+                        }
+                    
+                    $amount = round($WhtTotalAmount*($percentage/100),2);
+                    $totalAmount = $whtTrue == true?$amount:0;
+                    $bookInvSuppMaster->whtAmount = $totalAmount;
+                    $bookInvSuppMaster->whtApplicable = $whtTrue;
+                    $bookInvSuppMaster->whtEdited = false;
+                    $bookInvSuppMaster->whtPercentage = $percentage;
+                    $bookInvSuppMaster->isWHTApplicableVat = $isDetailVat;
+                    $bookInvSuppMaster->save();
+        }
+    
+
+
+    }
+
+
+    public static function updateSupplierDirectWhtAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
+    {
+        if($bookInvSuppMaster['documentType'] == 1 )
+        {
+            //$invmaster = BookInvSuppMaster::with('supplier')->find($bookingSuppMasInvAutoID);
+
+            $invmaster = BookInvSuppMaster::with(['supplier' => function($query){
+                $query->with('tax');
+              }])->find($bookingSuppMasInvAutoID);
+    
+             $percentage = 0;
+             if(isset($invmaster->supplier->tax))
+             {
+                $percentage = $invmaster->supplier->tax->whtPercentage;
+             } 
+
+            $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
+            if( $invmaster->supplier->whtApplicableYN == 1)
+              {       
+                $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
+              }
+    
+              $whtTotalAmountDirect = 0;
+              
+            $directItems = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
+                    ->with(['segment', 'purchase_order','chartofaccount'])
+                    ->get();
+    
+                    foreach ($directItems as $index => $item) {
+    
+    
+                        if ($item->VATAmount != 0) {
+                            if ($invmaster->rcmActivated && $invmaster->documentType == 1) {
+                                if ($item->whtEdited == 0) {
+                                    $item->whtAmount = $item->netAmount * ($percentage / 100);
+                                }
+                                if ($invmaster->documentType == 1 && $invmaster->whtApplicable == true) {
+                                    $whtTotalAmountDirect += $item->whtAmount;
+                                }
+                    
+                                if ($invmaster->whtApplicable == false) {
+                                    $item->whtApplicable = false;
+                                    $item->whtAmount = 0;
+                                }
+                            } else {
+                                $item->whtApplicable = false;
+                                $item->whtAmount = 0;
+                            }
+                        } else {
+    
+    
+    
+                            if ($invmaster->whtApplicable == false) {
+                                $item->whtApplicable = false;
+                                $item->whtAmount = 0;
+                            } else {
+                                $isWhtapp = true;
+                                $item->whtApplicable = true;
+                                if ($item->whtEdited == 0) {
+                                    $item->whtAmount = $item->netAmount * ($percentage / 100);
+                                }
+                                if ($invmaster->documentType == 1 && $invmaster->whtApplicable == true) {
+                                    $whtTotalAmountDirect += $item->whtAmount;
+                                }
+    
+    
+                            }
+                        }
+    
+    
+                        if ($invmaster->rcmActivated && $invmaster->documentType == 1 && $invmaster->whtApplicable == true) {
+                            $item->whtApplicable = true;
+                        }
+    
+                        DirectInvoiceDetails::where('directInvoiceDetailsID', $item->directInvoiceDetailsID)->update([
+                            'whtAmount' => $item->whtAmount,
+                            'whtApplicable' => $item->whtApplicable,
+                        ]);
+                        
                     }
                     
+                    $invmaster->whtAmount = $whtTotalAmountDirect;
+                    $invmaster->whtPercentage = $percentage;
+                    // $bookInvSuppMaster->whtEdited = false;
+                    $invmaster->save();
+        }
+ 
+    }
 
-                    if($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 1)
-                    {
-                      if($invDetailItem->pomaster != null && $invDetailItem->pomaster->rcmActivated == 1)
-                        {
-                          $rcmActive = true;
+
+    public static function updateSupplierItemWhtAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
+    {
+        if($bookInvSuppMaster['documentType'] == 3)
+        {
+            //$invmaster = BookInvSuppMaster::with('supplier')->find($bookingSuppMasInvAutoID);
+
+            $invmaster = BookInvSuppMaster::with(['supplier' => function($query){
+                $query->with('tax');
+              }])->find($bookingSuppMasInvAutoID);
+    
+             $percentage = 0;
+             if(isset($invmaster->supplier->tax))
+             {
+                $percentage = $invmaster->supplier->tax->whtPercentage;
+             } 
+
+            $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
+            if( $invmaster->supplier->whtApplicableYN == 1)
+              {       
+                $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
+              }
+    
+              $whtTotalAmountDirect = 0;
+              
+              $items = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                        ->with(['unit' => function ($query) {
+                        }, 'vat_sub_category'])->get();
+    
+                        foreach ($items as $index => $item) {
+                            if ($item->VATAmount != 0) {
+                                $item->whtApplicable = false;
+                                $item->whtAmount = 0;
+                            } else {
+                                if ($invmaster->whtApplicable == false) {
+                                    $item->whtApplicable = false;
+                                    $item->whtAmount = 0;
+                                } else {
+                                    $isWhtapp = true;
+                                    $item->whtApplicable = true;
+                                    if ($item->whtEdited == 0) {
+                                        $item->whtAmount = $item->netAmount * ($percentage  / 100);
+                                    }
+                                    if ($invmaster->documentType == 3 && $invmaster->whtApplicable == true) {
+                                        $whtTotalAmountDirect += $item->whtAmount;
+                                    }
+                                }
+                            }
+                        
+                            SupplierInvoiceDirectItem::where('id', $item->id)->update([
+                                'whtAmount' => $item->whtAmount,
+                                'whtApplicable' => $item->whtApplicable,
+                            ]);
                         }
-                    }
-               
-                
-                }
-
-                
-                    if($isGrvApplicable &&  ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
-                    {
-                        $isWHTApplicableVat = true;
-                    }
-
-                    if($isPoApplicable &&  ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
-                    {
-                        $isWHTApplicableVat = true;
-                    }
-
-                    if(count($items) == 0 && ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
-                    {
-                        $isWHTApplicableVat = true;
-                    }
-
-                    if($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2)
-                    {
-                        if(($isWHTApplicableVat == true && $isWHTApplicableSupplier == true) || ($isWHTApplicableSupplier == true && $rcmActive == true))
-                        {
-                            $whtTrue = true;
-                        }
-                        else
-                        {
-                            $whtTrue = false;
-                        }
-                    }
-                
-                $amount = round($WhtTotalAmount*($bookInvSuppMaster['whtPercentage']/100),2);
-                $totalAmount = $whtTrue == true?$amount:0;
-                $bookInvSuppMaster->whtAmount = $totalAmount;
-                $bookInvSuppMaster->whtApplicable = $whtTrue;
-                $bookInvSuppMaster->whtEdited = false;
-                $bookInvSuppMaster->save();
-
-
+                    
+                    $invmaster->whtAmount = $whtTotalAmountDirect;
+                    $invmaster->whtPercentage = $percentage;
+                    // $bookInvSuppMaster->whtApplicable = $whtTrue;
+                    // $bookInvSuppMaster->whtEdited = false;
+                    $invmaster->save();
+        }
+       
     }
 }

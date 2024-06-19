@@ -374,7 +374,8 @@ class BookInvSuppMaster extends Model
         'whtApplicable',
         'whtAmount',
         'whtPercentage',
-        'whtEdited'
+        'whtEdited',
+        'isWHTApplicableVat'
 
     ];
 

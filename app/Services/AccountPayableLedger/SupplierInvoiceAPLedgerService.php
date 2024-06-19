@@ -172,55 +172,7 @@ class SupplierInvoiceAPLedgerService
             $whtAmountConRpt = 0;
 
 
-            if ($masterData->whtApplicable) {
-
-                if ($masterData->documentType != 4) {
-                    if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
-
-                        $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
-                        $whtAmountConTran = $masterData->whtAmount;
-                        $whtAmountConInvoicet = $masterData->whtAmount;
-                        $whtAmountConLocal = \Helper::roundValue($currencyWht['localAmount']);
-                        $whtAmountConRpt = \Helper::roundValue($currencyWht['reportingAmount']);
-                        $whtSupplier = null;
-                        $taxSetup = Tax::where('taxMasterAutoID',$masterData->whtType)->first();
-                        $whtAuthority = null;
-                        $currencyID= null;
-                        $localER = null;
-                        $comRptER = null;
-                        if($taxSetup)
-                        {
-                            $whtAuthority = $taxSetup->authorityAutoID;
-                            $supplier = SupplierMaster::where('supplierCodeSystem',$whtAuthority)->first();
-                            $whtSupplier = $supplier->supplierCodeSystem;
-
-                            $supplierCurrencies = DB::table('suppliercurrency')
-                            ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
-                            ->where('supplierCodeSystem', '=', $whtSupplier)->where('isDefault',-1)->first();
-
-                            $currencyID = $supplierCurrencies->currencyID;
-
-                            $companyCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $currencyID, $currencyID, 0);
-                            $localER = $companyCurrencyConversion['trasToLocER'];
-                            $comRptER = $companyCurrencyConversion['trasToRptER'];
-                        }
-
-         
-                            $whtInvoiceAmount = ($whtAmountConInvoicet);
-                            $whtTrans = ($whtAmountConTran);
-                            $whtLocal = ($whtAmountConLocal);
-                            $whtRpt = ($whtAmountConRpt);
-
-                            $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] - $whtInvoiceAmount;
-                            $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] - $whtTrans;
-                            $data['localAmount'] = $data['localAmount'] - $whtLocal;
-                            $data['comRptAmount'] = $data['comRptAmount'] - $whtRpt;
-                        
-
-                    }
-
-                }
-            }
+      
 
           
 
@@ -319,6 +271,57 @@ class SupplierInvoiceAPLedgerService
                         $data['localAmount'] = $data['localAmount'] * (1 - ($retentionPercentage / 100));
                         $data['comRptAmount'] = $data['comRptAmount'] * (1 - ($retentionPercentage / 100));
                     }
+                }
+            }
+
+
+            if ($masterData->whtApplicable) {
+
+                if ($masterData->documentType != 4) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
+
+                        $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
+                        $whtAmountConTran = $masterData->whtAmount;
+                        $whtAmountConInvoicet = $masterData->whtAmount;
+                        $whtAmountConLocal = \Helper::roundValue($currencyWht['localAmount']);
+                        $whtAmountConRpt = \Helper::roundValue($currencyWht['reportingAmount']);
+                        $whtSupplier = null;
+                        $taxSetup = Tax::where('taxMasterAutoID',$masterData->whtType)->first();
+                        $whtAuthority = null;
+                        $currencyID= null;
+                        $localER = null;
+                        $comRptER = null;
+                        if($taxSetup)
+                        {
+                            $whtAuthority = $taxSetup->authorityAutoID;
+                            $supplier = SupplierMaster::where('supplierCodeSystem',$whtAuthority)->first();
+                            $whtSupplier = $supplier->supplierCodeSystem;
+
+                            $supplierCurrencies = DB::table('suppliercurrency')
+                            ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
+                            ->where('supplierCodeSystem', '=', $whtSupplier)->where('isDefault',-1)->first();
+
+                            $currencyID = $supplierCurrencies->currencyID;
+
+                            $companyCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $currencyID, $currencyID, 0);
+                            $localER = $companyCurrencyConversion['trasToLocER'];
+                            $comRptER = $companyCurrencyConversion['trasToRptER'];
+                        }
+
+         
+                            $whtInvoiceAmount = ($whtAmountConInvoicet);
+                            $whtTrans = ($whtAmountConTran);
+                            $whtLocal = ($whtAmountConLocal);
+                            $whtRpt = ($whtAmountConRpt);
+
+                            $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] - $whtInvoiceAmount;
+                            $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] - $whtTrans;
+                            $data['localAmount'] = $data['localAmount'] - $whtLocal;
+                            $data['comRptAmount'] = $data['comRptAmount'] - $whtRpt;
+                        
+
+                    }
+
                 }
             }
 
