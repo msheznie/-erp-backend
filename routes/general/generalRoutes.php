@@ -49,6 +49,8 @@ Route::get('checkBudgetShowPolicy', 'BudgetMasterAPIController@checkBudgetShowPo
 Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights'); //!! Do not add route name to this route !!
 Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod')->name('Get all finance period');
 Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany')->name('Get search supplier by company');
+Route::post('approveDocumentBulk', 'DocumentApprovedAPIController@approveDocumentBulk')->name("Approve Document Bulk");
+Route::post('rejectDocumentBulk', 'DocumentApprovedAPIController@rejectDocumentBulk')->name("Reject Document Bulk");
 
 Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview')->name('Get General Ledger Review');
 // Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');

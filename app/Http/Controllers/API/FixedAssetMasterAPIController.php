@@ -2693,4 +2693,166 @@ class FixedAssetMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Fixed Asset Master deleted successfully');
     }
 
+    public function getCostingBulkApprovalByUser(Request $request)
+    {
+
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        
+
+        $assetCost = FixedAssetMaster::select('docOrigin', \DB::raw('count(*) as total'),'createdUserSystemID','docOriginSystemCode')
+        ->with(['created_by' =>function($q){
+            $q->select('employeeSystemID','empName');
+         }])
+        ->where('docOriginDocumentSystemID', 3)
+        ->where('approved','!=',-1)
+        ->groupBy('docOrigin');
+
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCost = $assetCost->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $assetCost = [];
+        }
+
+        return \DataTables::of($assetCost)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    public function getCostingBulkApprovalDetails(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $grv_id = $input['grv_id'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $query1 = DB::table('erp_documentapproved')
+            ->select(
+                'employeesdepartments.approvalDeligated',
+                'erp_fa_asset_master.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode',
+                'erp_fa_category.catDescription as catDescription',
+                'erp_fa_categorysub.catDescription as subCatDescription'
+            )
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $query->whereIn('employeesdepartments.documentSystemID', [22])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
+            })
+            ->join('erp_fa_asset_master', function ($query) use ($companyId, $search,$grv_id) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'faID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_fa_asset_master.companySystemID', $companyId)
+                    ->where('erp_fa_asset_master.approved', 0)
+                    ->where('erp_fa_asset_master.docOriginSystemCode', $grv_id)
+                    ->where('erp_fa_asset_master.confirmedYN', 1)
+                    ->whereNull('erp_fa_asset_master.deleted_at');
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_fa_category', 'erp_fa_category.faCatID', 'erp_fa_asset_master.faCatID')
+            ->leftJoin('erp_fa_categorysub', 'erp_fa_categorysub.faCatSubID', 'erp_fa_asset_master.faSubCatID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [22])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+            $query2 = DB::table('erp_fa_asset_master')->where('docOriginSystemCode', $grv_id)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_fa_category', 'erp_fa_category.faCatID', 'erp_fa_asset_master.faCatID')
+            ->leftJoin('erp_fa_categorysub', 'erp_fa_categorysub.faCatSubID', 'erp_fa_asset_master.faSubCatID')
+            ->where('confirmedYN', 0)
+            ->select(
+                DB::raw('NULL as approvalDeligated'),
+                'erp_fa_asset_master.*',
+                DB::raw('employees.empName as created_emp'),
+                DB::raw('NULL as documentApprovedID'),
+                DB::raw('NULL as rollLevelOrder'),
+                DB::raw('NULL as approvalLevelID'),
+                DB::raw('NULL as documentSystemCode'),
+                DB::raw('erp_fa_category.catDescription as catDescription'),
+                DB::raw('erp_fa_categorysub.catDescription as subCatDescription')
+            );  
+        $assetCost = $query1->union($query2);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCost = $assetCost->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
+            });
+        }
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $assetCost = [];
+        }
+
+        return \DataTables::of($assetCost)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
 }

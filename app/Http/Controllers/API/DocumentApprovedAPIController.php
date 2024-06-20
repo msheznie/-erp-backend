@@ -3319,7 +3319,6 @@ WHERE
     {
         $apiKey = $request->input('api_key');
         $request->except('api_key');
-
 		if($request->input('documentSystemID') && ($request->input('documentSystemID') == 117 || $request->input('documentSystemID') == 118) ){ 
 				$id = $request->input('documentSystemCode');
 				$documentModifyRequestRepo = app(DocumentModifyRequestRepository::class); 
@@ -3455,4 +3454,118 @@ WHERE
         $controller = new SupplierRegistrationApprovalController($srmService);
         return $controller;
     }
+
+	public function approveDocumentBulk(Request $request)
+    {
+		$input = $request->all();
+		$companyId = $input['companyId'];
+		$grv_id = $input['docOriginSystemCode'];
+		$empID = \Helper::getEmployeeSystemID();
+		
+		$results = $this->getPendingData($companyId,$grv_id); 
+
+		if(count($results) == 0)
+		{
+			return $this->sendError('There is no document to approve');
+		}
+
+		foreach($results as $result)
+		{	
+			$params = array(
+				'documentApprovedID' => $result->documentApprovedID,
+				'documentSystemCode' => $result->documentSystemCode,
+					'documentSystemID' => $$result->documentSystemID,
+				'approvalLevelID' => $result->approvalLevelID,
+				'rollLevelOrder' => $result->rollLevelOrder,
+				'approvedComments' => $input['approvedComments'],
+			);
+			$approve = \Helper::approveDocument($params);
+			if (!$approve["success"]) {
+				return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
+			} 
+
+		}
+
+		return $this->sendResponse(true, 'Document Approved succesfully');
+
+	}
+
+
+	public function rejectDocumentBulk(Request $request)
+	{
+		$input = $request->all();
+		$companyId = $input['companyId'];
+		$grv_id = $input['docOriginSystemCode'];
+		$empID = \Helper::getEmployeeSystemID();
+
+		$results = $this->getPendingData($companyId,$grv_id); 
+		if(count($results) == 0)
+		{
+			return $this->sendError('There is no document to reject');
+		}
+
+		foreach($results as $result)
+		{	
+			$params = array(
+				'documentApprovedID' => $result->documentApprovedID,
+				'documentSystemCode' => $result->documentSystemCode,
+					'documentSystemID' => $$result->documentSystemID,
+				'approvalLevelID' => $result->approvalLevelID,
+				'rollLevelOrder' => $result->rollLevelOrder,
+				'approvedComments' => $input['approvedComments'],
+			);
+			$reject = \Helper::rejectDocument($params);
+            if (!$reject["success"]) {
+                return $this->sendError($reject["message"]);
+            } 
+
+		}
+
+		return $this->sendResponse(true, 'Document Rejected succesfully');
+	}
+
+	
+	public function getPendingData($companyId,$grv_id){ 
+		
+		$empID = \Helper::getEmployeeSystemID();
+		return DB::table('erp_documentapproved')
+		->select(
+			'employeesdepartments.approvalDeligated',
+			'erp_fa_asset_master.*',
+			'employees.empName As created_emp',
+			'erp_documentapproved.documentApprovedID',
+			'rollLevelOrder',
+			'approvalLevelID',
+			'documentSystemCode',
+			'erp_fa_category.catDescription as catDescription',
+			'erp_fa_categorysub.catDescription as subCatDescription'
+		)
+		->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+			$query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+				->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+				->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+			$query->whereIn('employeesdepartments.documentSystemID', [22])
+				->where('employeesdepartments.companySystemID', $companyId)
+				->where('employeesdepartments.employeeSystemID', $empID)
+				->where('employeesdepartments.isActive', 1)
+				->where('employeesdepartments.removedYN', 0);
+		})
+		->join('erp_fa_asset_master', function ($query) use ($companyId,$grv_id) {
+			$query->on('erp_documentapproved.documentSystemCode', '=', 'faID')
+				->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+				->where('erp_fa_asset_master.companySystemID', $companyId)
+				->where('erp_fa_asset_master.approved', 0)
+				->where('erp_fa_asset_master.docOriginSystemCode', $grv_id)
+				->where('erp_fa_asset_master.confirmedYN', 1)
+				->whereNull('erp_fa_asset_master.deleted_at');
+		})
+		->where('erp_documentapproved.approvedYN', 0)
+		->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+		->leftJoin('erp_fa_category', 'erp_fa_category.faCatID', 'erp_fa_asset_master.faCatID')
+		->leftJoin('erp_fa_categorysub', 'erp_fa_categorysub.faCatSubID', 'erp_fa_asset_master.faSubCatID')
+		->where('erp_documentapproved.rejectedYN', 0)
+		->whereIn('erp_documentapproved.documentSystemID', [22])
+		->where('erp_documentapproved.companySystemID', $companyId)->get();
+	}
 }
