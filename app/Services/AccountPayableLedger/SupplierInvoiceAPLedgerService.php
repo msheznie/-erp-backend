@@ -351,6 +351,8 @@ class SupplierInvoiceAPLedgerService
                     $data['supplierDefaultAmount'] = $whtTrans;
                     $data['localAmount'] = $whtLocal;
                     $data['comRptAmount'] = $whtRpt;
+                    $data['isWHT'] = 1;
+                    $data['isRetention'] = 0;
                     array_push($finalData, $data);
                 }
             }

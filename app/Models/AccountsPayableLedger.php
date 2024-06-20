@@ -235,7 +235,8 @@ class AccountsPayableLedger extends Model
         'createdPcID',
         'timeStamp',
         'isRetention',
-        'purchaseOrderID'
+        'purchaseOrderID',
+        'isWHT',
     ];
 
     /**
