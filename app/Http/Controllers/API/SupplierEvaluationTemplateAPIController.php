@@ -164,7 +164,7 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SupplierEvaluationTemplate $supplierEvaluationTemplate */
-        $supplierEvaluationTemplate = $this->supplierEvaluationTemplateRepository->findWithoutFail($id);
+        $supplierEvaluationTemplate = SupplierEvaluationTemplate::with(['company'])->where('id', $id)->first();
 
         if (empty($supplierEvaluationTemplate)) {
             return $this->sendError('Supplier Evaluation Template not found');
@@ -269,6 +269,11 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
     public function update($id, UpdateSupplierEvaluationTemplateAPIRequest $request)
     {
         $input = $request->all();
+
+        if(isset($input['company']) && $input['company']){
+            unset ($input['company']);
+        }
+        
         $input = $this->convertArrayToValue($input);
 
         /** @var SupplierEvaluationTemplate $supplierEvaluationTemplate */
