@@ -538,6 +538,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
         /** @var BookInvSuppMaster $bookInvSuppMaster */
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
 
+        $isRcmActive = $bookInvSuppMaster->rcmActivated;
+        $totalOrderAmount = 0;
+        $totalTaxAmount = 0;
+
+        $totalNetAmount = 0;
         if (empty($bookInvSuppMaster)) {
             return $this->sendError('Supplier Invoice not found');
         }
@@ -745,7 +750,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-
+            $totalWhtAmount = $bookInvSuppMaster->whtAmount;
+            $retentionPercentageVal = $bookInvSuppMaster->retentionPercentage;
             if(($input['isSupplierBlocked']) && ($bookInvSuppMaster->documentType == 0 ||$bookInvSuppMaster->documentType == 2) )
             {
        
@@ -1002,6 +1008,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 if (TaxService::checkPOVATEligible($input['supplierVATEligible'], $input['vatRegisteredYN'])) {
                     if (!empty($dirItemDetails)) {
                         foreach ($dirItemDetails as $itemDiscont) {
+
+                            $totalOrderAmount += floatval($itemDiscont['netAmount']);
+                            $totalTaxAmount += floatval($itemDiscont['VATAmount']) * floatval($itemDiscont['noQty']);
+
                             $calculateItemDiscount = 0;
                             $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
 
@@ -1046,6 +1056,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 } else {
                     if (!empty($dirItemDetails)) {
                         foreach ($dirItemDetails as $itemDiscont) {
+
+                            $totalOrderAmount += floatval($itemDiscont['netAmount']);
+                            $totalTaxAmount += floatval($itemDiscont['VATAmount']) * floatval($itemDiscont['noQty']);
+
                             $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
 
                             $currencyConversion = \Helper::currencyConversion(
@@ -1175,6 +1189,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+      
             $directInvoiceDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
 
             $finalError = array('amount_zero' => array(),
@@ -1200,6 +1215,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             foreach ($directInvoiceDetails as $item) {
+                $totalOrderAmount += floatval($item->DIAmount);
+                $totalTaxAmount += floatval($item->VATAmount);
                 $updateItem = DirectInvoiceDetails::find($item['directInvoiceDetailsID']);
 
                 if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
@@ -1238,6 +1255,25 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
             }
+          
+
+            if ($input['documentType'] == 1 || $input['documentType'] == 3) 
+            {
+                    if($isRcmActive == 1)
+                    {
+                        $totalNetAmount = $totalOrderAmount-(($totalOrderAmount + $totalTaxAmount) * $retentionPercentageVal/100 ) - $totalWhtAmount;
+                    }
+                    else
+                    {
+                        $totalNetAmount = ($totalOrderAmount + $totalTaxAmount)-(($totalOrderAmount + $totalTaxAmount) * $retentionPercentageVal/100 ) - $totalWhtAmount;
+                    }
+                    if($totalNetAmount < 0)
+                    {
+                        return $this->sendError('The net amount cannot be less than zero. Please check the net amount.',500);
+
+                    }
+            }
+       
 
             if($input['documentType'] == 1 || $input['documentType'] == 4) {
                 $directInvoiceItems = $directItems;
