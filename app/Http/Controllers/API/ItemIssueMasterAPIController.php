@@ -33,6 +33,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\DeliveryOrder;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
+use App\Models\ItemMaster;
 use App\Models\PurchaseReturn;
 use App\Models\SrpEmployeeDetails;
 use App\Models\StockTransfer;
@@ -1736,7 +1737,8 @@ class ItemIssueMasterAPIController extends AppBaseController
         $materielIssue->save();
 
 
-       collect($items)->each(function($item) use ($materielIssue){
+       collect($items)->each(function($item) use ($materielIssue)
+       {
 
             $data = [
                 'comments' => '',
@@ -1755,6 +1757,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
            $requestNew = new CreateItemIssueDetailsAPIRequest($data);
            $itemIssueDetailsController = app('App\Http\Controllers\API\ItemIssueDetailsAPIController')->store($requestNew);
+
            $response = ($itemIssueDetailsController->getData()) ? $itemIssueDetailsController->getData() : null;
 
            if(!$response->success)
@@ -1764,7 +1767,282 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         });
 
+        return $this->sendResponse([], 'Materiel Issue Details saved successfully');
 
+    }
+
+    public function storeAllItemsFromMr(Request $request)
+    {
+
+        $input = $request->input();
+
+        $messages = array(
+            'companySystemId.required' => 'Company id not found.',
+            'details.required' => 'Materiel Issue details not found.',
+            'itemIssueAutoId.required' => 'Material issue auto id not found.',
+        );
+
+        $validator = \Validator::make($input, [
+            'companySystemId' => 'required',
+            'details' => 'required',
+            'itemIssueAutoId' => 'required'
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+
+
+        $details = $input['details'];
+        $companySystemID = $input['companySystemId'];
+        $itemIssueAutoId = $input['itemIssueAutoId'];
+        $validate = $this->validateItems($details,$companySystemID,$itemIssueAutoId);
+
+
+        if(!empty($validate))
+        {
+            return $this->sendError(implode('<br/><br/>',$validate),422);
+        }else {
+            $newRequest = new Request([
+                'items'   => $details,
+                'materielIssueId' => $itemIssueAutoId,
+            ]);
+            $addItems = $this->addItemFromMrToMiDetails($newRequest);
+
+            $response = $addItems->getData();
+
+            if($response->success)
+                return $this->sendResponse([], 'Materiel Issue Details saved successfully');
+        }
+
+    }
+
+    public function validateItems($details,$companySystemID,$itemIssueAutoId)
+    {
+        $errorsArray = Array();
+
+        foreach ($details as $detail)
+        {
+            $item = ItemAssigned::where('itemCodeSystem', $detail['itemCodeSystem'])
+                ->where('companySystemID', $companySystemID)
+                ->first();
+
+            if($detail['itemPrimaryCode'])
+            {
+                $itemPrimaryCode = $detail['itemPrimaryCode'].'-'.$detail['itemDescription'];
+            }else {
+                $itemPrimaryCode = $detail['itemDescription'];
+            }
+
+            if(!isset($detail['itemCodeSystem']) && (!($detail['mappingItemCode']) ||$detail['mappingItemCode'] == 0))
+                array_push($errorsArray,$itemPrimaryCode.'-'.'Please  map the original item');
+
+            if(isset($detail['qtyIssued']) && $detail['qtyIssued'] == 0)
+               array_push($errorsArray,$itemPrimaryCode.'-'.'Issuing quantity cannot be zero');
+
+            if(!isset($detail['qtyIssued'])  || $detail['qtyIssued'] == '')
+               array_push($errorsArray,$itemPrimaryCode.'-'.'Issuing quantity cannot be empty');
+
+
+            if(isset($detail['mappingItemCode']))
+            {
+                $originalItem = ItemMaster::where('itemCodeSystem',$detail['mappingItemCode'])->first();
+                $detail['itemFinanceCategoryID'] = $originalItem->financeCategoryMaster;
+                $detail['itemFinanceCategorySubID'] = $originalItem->financeCategorySub;
+                $detail['itemCodeSystem'] = $originalItem->itemCodeSystem;
+                $detail['itemPrimaryCode'] = $originalItem->primaryCode;
+                $detail['itemDescription'] = $originalItem->itemDescription;
+                $detail['partNumber'] = $originalItem->itemPrimaryCode;
+            }
+            $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+                ->where('mainItemCategoryID', $detail['itemFinanceCategoryID'])
+                ->where('itemCategorySubID', $detail['itemFinanceCategorySubID'])
+                ->first();
+
+
+            if(empty($financeItemCategorySubAssigned))
+                array_push($errorsArray,$itemPrimaryCode.'-'.'Account code not updated');
+
+            $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $itemIssueAutoId)->first();
+
+            // check policy 18
+
+            $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
+                ->where('companySystemID', $companySystemID)
+                ->first();
+
+            $checkWhether = ItemIssueMaster::where('itemIssueAutoID', '!=', $itemIssueMaster->itemIssueAutoID)
+                ->where('companySystemID', $companySystemID)
+                ->where('wareHouseFrom', $itemIssueMaster->wareHouseFrom)
+                ->select([
+                    'erp_itemissuemaster.itemIssueAutoID',
+                    'erp_itemissuemaster.companySystemID',
+                    'erp_itemissuemaster.wareHouseFromCode',
+                    'erp_itemissuemaster.itemIssueCode',
+                    'erp_itemissuemaster.approved'
+                ])
+                ->groupBy(
+                    'erp_itemissuemaster.itemIssueAutoID',
+                    'erp_itemissuemaster.companySystemID',
+                    'erp_itemissuemaster.wareHouseFromCode',
+                    'erp_itemissuemaster.itemIssueCode',
+                    'erp_itemissuemaster.approved'
+                )
+                ->whereHas('details', function ($query) use ($companySystemID, $detail) {
+                    $query->where('itemCodeSystem', $detail['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+
+            if (!empty($checkWhether)) {
+                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.");
+            }
+
+
+            $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+                ->where('locationFrom', $itemIssueMaster->wareHouseFrom)
+                ->select([
+                    'erp_stocktransfer.stockTransferAutoID',
+                    'erp_stocktransfer.companySystemID',
+                    'erp_stocktransfer.locationFrom',
+                    'erp_stocktransfer.stockTransferCode',
+                    'erp_stocktransfer.approved'
+                ])
+                ->groupBy(
+                    'erp_stocktransfer.stockTransferAutoID',
+                    'erp_stocktransfer.companySystemID',
+                    'erp_stocktransfer.locationFrom',
+                    'erp_stocktransfer.stockTransferCode',
+                    'erp_stocktransfer.approved'
+                )
+                ->whereHas('details', function ($query) use ($companySystemID, $detail) {
+                    $query->where('itemCodeSystem', $detail['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherStockTransfer)) {
+                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.");
+            }
+
+            /*check item sales invoice*/
+            $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                    'erp_custinvoicedirect.bookingInvCode',
+                    'erp_custinvoicedirect.wareHouseSystemCode',
+                    'erp_custinvoicedirect.approved'
+                ])
+                ->groupBy(
+                    'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                    'erp_custinvoicedirect.companySystemID',
+                    'erp_custinvoicedirect.bookingInvCode',
+                    'erp_custinvoicedirect.wareHouseSystemCode',
+                    'erp_custinvoicedirect.approved'
+                )
+                ->whereHas('issue_item_details', function ($query) use ($companySystemID, $detail) {
+                    $query->where('itemCodeSystem', $detail['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->where('canceledYN', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherInvoice)) {
+                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.");
+            }
+
+            // check in delivery order
+            $checkWhetherDeliveryOrder = DeliveryOrder::where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_delivery_order.deliveryOrderID',
+                    'erp_delivery_order.deliveryOrderCode'
+                ])
+                ->groupBy(
+                    'erp_delivery_order.deliveryOrderID',
+                    'erp_delivery_order.companySystemID'
+                )
+                ->whereHas('detail', function ($query) use ($companySystemID, $detail) {
+                    $query->where('itemCodeSystem', $detail['itemCodeSystem']);
+                })
+                ->where('approvedYN', 0)
+                ->first();
+
+            if (!empty($checkWhetherDeliveryOrder)) {
+                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.");
+            }
+
+            /*Check in purchase return*/
+            $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_purchasereturnmaster.purhaseReturnAutoID',
+                    'erp_purchasereturnmaster.companySystemID',
+                    'erp_purchasereturnmaster.purchaseReturnLocation',
+                    'erp_purchasereturnmaster.purchaseReturnCode',
+                ])
+                ->groupBy(
+                    'erp_purchasereturnmaster.purhaseReturnAutoID',
+                    'erp_purchasereturnmaster.companySystemID',
+                    'erp_purchasereturnmaster.purchaseReturnLocation'
+                )
+                ->whereHas('details', function ($query) use ($detail) {
+                    $query->where('itemCode', $detail['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherPR)) {
+                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.");
+            }
+
+            $data = array('companySystemID' => $companySystemID,
+                'itemCodeSystem' => $detail['itemCodeSystem'],
+                'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
+            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+
+            $detail['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+            $detail['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+            $detail['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+            $detail['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+            $detail['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+
+            $detail['reqDocID'] = $detail['RequestID'];
+            $detail['issueType'] = 2;
+            $detail['qtyRequested'] = $detail['quantityRequested'];
+            $qntyDetails = MaterialIssueService::getItemDetailsForMaterialIssue($detail);
+
+
+            if((int)$detail['qtyIssued'] > $qntyDetails['qtyAvailableToIssue']) {
+                array_push($errorsArray,$itemPrimaryCode.'-'."Quantity Issuing is greater than the available quantity");
+            }
+
+
+            if((int)$detail['qtyIssued'] >  $detail['currentWareHouseStockQty']) {
+                array_push($errorsArray,$itemPrimaryCode.'-'."Current warehouse stock Qty is: " .  $detail['currentWareHouseStockQty'] . " .You cannot issue more than the current warehouse stock qty.");
+            }
+
+
+            if ($item && is_null($item->itemCodeSystem)) {
+                if (isset($detail['mappingItemCode']) && $detail['mappingItemCode'] > 0) {
+                    $storeDetailsToMaterialRequestValidation = new StoreDetailsToMaterielRequest();
+                    $itemMap = $storeDetailsToMaterialRequestValidation->matchRequestItem($item->RequestID, $detail['mappingItemCode'], $companySystemID, $item->toArray());
+                    if (!$itemMap['status']) {
+                        array_push($errorsArray,$itemPrimaryCode.'-'.$itemMap['message']);
+                    } else {
+                        $item = $itemMap['data'];
+                    }
+                } else {
+                    array_push($errorsArray,$itemPrimaryCode.'-'.'Item not found, Please map this item with a original item');
+                }
+            }
+
+        }
+
+        return $errorsArray;
     }
 
 }

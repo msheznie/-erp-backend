@@ -10,14 +10,13 @@ use App\Models\MaterielRequest;
 
 class PullMaterialRequestFromMaterialIssueService
 {
-    public function getMaterialRequest($subCompanies,$input,$confirmYn):Array {
+    public function getMaterialRequest($input):Array {
 
         $search = isset($input['search']) ? $input['search'] : null;
 
-        $materielRequests = MaterielRequest::with('details')->whereIn('companySystemID', $subCompanies)
+        $materielRequests = MaterielRequest::with('details')->where('RequestID',$input['RequestID'])
             ->where("approved", -1)
-            ->where("cancelledYN", 0)
-            ->where("serviceLineSystemID", $input['serviceLineSystemID']);
+            ->where("cancelledYN", 0);
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -95,12 +94,8 @@ class PullMaterialRequestFromMaterialIssueService
                 $totalIssuedQty += $mi->details->sum('qtyIssued');
             }
 
-            if($confirmYn == 1) {
+            if($totalQuantityRequested != 0 && ($totalQuantityRequested != $totalIssuedQty)) {
                 array_push($data,$mr);
-            }else {
-                if($totalQuantityRequested != 0 && ($totalQuantityRequested != $totalIssuedQty)) {
-                    array_push($data,$mr);
-                }
             }
         }
 

@@ -58,7 +58,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         }
 
 
-        if(!isset($input['itemCodeSystem']) && (!($detail['mappingItemCode']) ||$detail['mappingItemCode'] == 0))
+        if(!isset($detail['itemCodeSystem']) && (!($detail['mappingItemCode']) ||$detail['mappingItemCode'] == 0))
             return $this->sendError('Please map the original item.');
 
         if(isset($detail['qtyIssued']) && $detail['qtyIssued'] == 0)

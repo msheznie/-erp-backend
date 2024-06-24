@@ -1527,6 +1527,54 @@ class MaterielRequestAPIController extends AppBaseController
         return $this->sendResponse($materialRequest, 'Purchase Request successfully return back to amend');
     }
 
+    public function getMaterialRequestRequestCodes(Request $request)
+    {
+        $input = $request->all();
+
+        $origin = $input['origin'];
+
+        switch ($origin)
+        {
+            case "materiel-issue":
+
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'wareHouseFrom'));
+
+                $selectedCompanyId = $input['companyId'];
+                $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+                if ($isGroup) {
+                    $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+                } else {
+                    $subCompanies = [$selectedCompanyId];
+                }
+
+                $confirmYn= 0;
+                if(isset($input['id']))
+                    $materialIssue = ItemIssueMaster::select('confirmedYN')->where('itemIssueAutoID',$input['id'])->first();
+                $confirmYn = $materialIssue->confirmedYN;
+
+                $search = isset($input['search']) ? $input['search'] : null;
+
+                $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
+                    ->where("approved", -1)
+                    ->where("cancelledYN", 0)
+                    ->where("serviceLineSystemID", $input['serviceLineSystemID']);
+
+                if ($search) {
+                    $search = str_replace("\\", "\\\\", $search);
+                    $materielRequests = $materielRequests->where(function ($query) use ($search) {
+                        $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+                            ->orWhere('comment', 'LIKE', "%{$search}%");
+                    });
+                }
+
+                $materielRequests = $materielRequests->get(['RequestID', 'RequestCode']);
+                return $materielRequests;
+                break;
+        }
+
+        return [];
+    }
+
     public function getMaterialRequestDetails(Request $request) {
        $input = $request->all();
 
@@ -1548,20 +1596,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'wareHouseFrom'));
 
-        $selectedCompanyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $confirmYn= 0;
-        if(isset($input['id']))
-            $materialIssue = ItemIssueMaster::select('confirmedYN')->where('itemIssueAutoID',$input['id'])->first();
-        $confirmYn = $materialIssue->confirmedYN;
-
-        return $this->pullMrService->getMaterialRequest($subCompanies,$input,$confirmYn);
+        return $this->pullMrService->getMaterialRequest($input);
 
     }
 
