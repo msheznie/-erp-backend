@@ -2721,11 +2721,7 @@ class CustomerMasterAPIController extends AppBaseController
 
                     break;
                 case '57':
-
-                 
-                
-                        $count = 0;
-                    
+                        $count = 1;
 
                     foreach($formatChk as $key=>$value)
                     {   
