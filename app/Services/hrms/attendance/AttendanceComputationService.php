@@ -152,6 +152,12 @@ class AttendanceComputationService
 
     public function configPresentAbsentType()
     {
+
+        if($this->data['typeId']) {
+            $this->presentTypeSwitch();
+            return;
+        }
+
         if ($this->isClockInOutSet) {
             $this->presentAbsentType = AbsentType::ON_TIME;
             return;
@@ -173,6 +179,26 @@ class AttendanceComputationService
             $this->presentAbsentType = AbsentType::WEEKEND;
         }
     }
+    private function presentTypeSwitch()
+    {
+        switch ($this->data['typeId']) {
+            case 1:
+                $this->presentAbsentType = AbsentType::WORK_OUT;
+                break;
+            case 2:
+                $this->presentAbsentType = AbsentType::REMOTELY;
+                break;
+            case 3:
+                $this->presentAbsentType = AbsentType::MANDATE;
+                break;
+            case 4:
+                $this->presentAbsentType = AbsentType::SECONDMENT;
+                break;
+            default:
+                break;
+        }
+    }
+
 
     public function calculateActualTime()
     {

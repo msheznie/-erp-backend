@@ -310,7 +310,7 @@ class SMAttendancePullingService{
         shd.onDutyTime, shd.offDutyTime, shd.weekDayNo, IF (IFNULL(shd.isHalfDay, 0), 1, 0) AS isHalfDay, 
         IF(IFNULL(calenders.holiday_flag, 0), 1, 0) AS isHoliday, shd.isWeekend, shd.gracePeriod, shd.isFlexyHour, 
         shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour,
-        t.company_id, shd.is_cross_day, '12:00:00' as crossDayCutOffTime
+        t.company_id, shd.is_cross_day, '12:00:00' as crossDayCutOffTime, wrd.typeId, wrd.detailId
         FROM attendance_temporary_tbl AS t
         JOIN (
             SELECT EIdNo, ECode, Ename2, isCheckin AS isCheckInMust
@@ -321,6 +321,12 @@ class SMAttendancePullingService{
             SELECT leaveMasterID, empID, startDate, endDate, ishalfDay as leaveHalfDay
             FROM srp_erp_leavemaster WHERE companyID = {$this->companyId} AND approvedYN = 1 AND cancelledYN is null
         ) AS lm ON lm.empID = t.emp_id AND t.att_date BETWEEN lm.startDate AND lm.endDate 
+        LEFT JOIN ( 
+            SELECT 	wd.id AS detailId, emp_id, wd.work_out_type_id AS typeId, att_date 
+            FROM hr_workout_request_details AS wd
+            JOIN hr_workout_request_master AS wm ON wm.id = wd.master_id 
+            WHERE wd.company_id = {$this->companyId} AND wm.approved_yn = 1 AND wd.hr_is_approved = 1
+        ) AS wrd ON wrd.emp_id = t.emp_id AND t.att_date = wrd.att_date 
         LEFT JOIN ( 
             SELECT * FROM srp_erp_calender WHERE companyID = {$this->companyId} 
             AND fulldate = '{$this->pullingDate}'
@@ -381,6 +387,7 @@ class SMAttendancePullingService{
 
                 'checkIn' => $obj->clockIn,
                 'checkOut' => $obj->clockOut,
+                'work_out_detail_id'=> $row['detailId'],
                 'presentTypeID' => $obj->presentAbsentType,
 
                 'normalTime' => ($row['isHalfDay'] == 1) ? 0.5 : 1,
