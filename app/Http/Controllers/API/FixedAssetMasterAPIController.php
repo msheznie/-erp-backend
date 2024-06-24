@@ -177,6 +177,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $input['assetSerialNo'] = $assetSerialNoArr;
 
+
         DB::beginTransaction();
         try {
 
@@ -307,6 +308,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         if ($input['assetSerialNo'][0]['faUnitSerialNo']) {
                             $input["faUnitSerialNo"] = $input['assetSerialNo'][0]['faUnitSerialNo'];
                         }
+
                         $input["serialNo"] = $lastSerialNumber;
                         $input['docOriginDocumentSystemID'] = $grvDetails->grv_master->documentSystemID;
                         $input['docOriginDocumentID'] = $grvDetails->grv_master->documentID;
@@ -401,6 +403,22 @@ class FixedAssetMasterAPIController extends AppBaseController
                                         $input["serviceLineSystemID"] = $assetSerialNoInput['serviceLineSerialNo'];
                                         if ($segmentAsset) {
                                             $input['serviceLineCode'] = $segmentAsset->ServiceLineCode;
+
+                                            $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $segmentAsset->serviceLineSystemID,$input['faCatID'],$input['faSubCatID']);
+
+                                            if ($documentCodeData['status']) {
+                                                $documentCode = $documentCodeData['documentCode'];
+                                                $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
+                                                $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
+                                                    ->first();
+
+                                                if ($checkForDuplicateCode) {
+                                                    return $this->sendError("Asset code is already found.", 500);
+                                                }
+
+                                            } else {
+                                                return $this->sendError("Asset code is not configured.", 500);
+                                            }
                                         }
                                     }
                                 }
