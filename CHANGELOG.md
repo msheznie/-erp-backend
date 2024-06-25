@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.43.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.42.1...v10.43.0) (2024-06-25)
+
+
+### Miscellaneous Chores
+
+* release 10.43.0 ([7c9b52c](https://github.com/pbsgears/Gears_BackEnd/commit/7c9b52c302cf248f2d2a4e5dc6e8f5135ed27a13))
+
 ## [10.42.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.42.0...v10.42.1) (2024-06-10)
 
 
