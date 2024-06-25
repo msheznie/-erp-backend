@@ -165,7 +165,7 @@ class StockTransferGlService
                     }
 
                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "stock-transfer-pl-account");
-                    $data['glCode'] = SystemGlCodeSce.narioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "stock-transfer-pl-account");
+                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "stock-transfer-pl-account");
                 }
                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
