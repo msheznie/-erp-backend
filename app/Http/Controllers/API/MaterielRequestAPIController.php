@@ -1610,12 +1610,18 @@ class MaterielRequestAPIController extends AppBaseController
         switch ($input['origin'])
         {
             case "material-issue" :
-                $itemMasters = ItemMaster::whereHas('itemAssigned', function($q) use ($companyId) {
-                    $q->where('isActive',1)->where('isAssigned',-1)->where('companySystemID',$companyId);
-                })->where('primaryCompanySystemID',$companyId)->where('isActive',1)->where('financeCategoryMaster',1)
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
-                    ->orWhere('primaryCode', 'LIKE', "%{$search}%")
-                    ->limit(100)->get();
+                $itemMastersQuery = ItemMaster::where('primaryCompanySystemID',$companyId)->where('isActive',1)->where('financeCategoryMaster',1)
+                    ->whereHas('itemAssigned', function($q) use ($companyId) {
+                        $q->where('isActive',1)->where('isAssigned',-1)->where('companySystemID',$companyId);
+                    });
+
+
+                if($search) {
+                    $itemMastersQuery
+                        ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                        ->orWhere('primaryCode', 'LIKE', "%{$search}%");
+                }
+                    $itemMasters = $itemMastersQuery->limit(100)->get();
 
                 return $this->sendResponse($itemMasters->toArray(), 'Data retrieved successfully');
                 break;
