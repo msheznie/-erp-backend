@@ -1610,7 +1610,7 @@ class MaterielRequestAPIController extends AppBaseController
         switch ($input['origin'])
         {
             case "material-issue" :
-                $itemMastersQuery = ItemMaster::where('primaryCompanySystemID',$companyId)->where('isActive',1)->where('financeCategoryMaster',1)
+                $itemMastersQuery = ItemMaster::where('primaryCompanySystemID',$companyId)->where('isActive',1)->where('itemApprovedYN',1)->where('financeCategoryMaster',1)
                     ->whereHas('itemAssigned', function($q) use ($companyId) {
                         $q->where('isActive',1)->where('isAssigned',-1)->where('companySystemID',$companyId);
                     });
