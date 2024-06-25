@@ -3474,7 +3474,7 @@ WHERE
 			$params = array(
 				'documentApprovedID' => $result->documentApprovedID,
 				'documentSystemCode' => $result->documentSystemCode,
-					'documentSystemID' => $$result->documentSystemID,
+					'documentSystemID' => $result->documentSystemID,
 				'approvalLevelID' => $result->approvalLevelID,
 				'rollLevelOrder' => $result->rollLevelOrder,
 				'approvedComments' => $input['approvedComments'],
@@ -3509,10 +3509,11 @@ WHERE
 			$params = array(
 				'documentApprovedID' => $result->documentApprovedID,
 				'documentSystemCode' => $result->documentSystemCode,
-					'documentSystemID' => $$result->documentSystemID,
+					'documentSystemID' => $result->documentSystemID,
 				'approvalLevelID' => $result->approvalLevelID,
 				'rollLevelOrder' => $result->rollLevelOrder,
-				'approvedComments' => $input['approvedComments'],
+				'rejectedComments' => $input['rejectedComments'],
+				'document_system_id' => $result->documentSystemID,
 			);
 			$reject = \Helper::rejectDocument($params);
             if (!$reject["success"]) {

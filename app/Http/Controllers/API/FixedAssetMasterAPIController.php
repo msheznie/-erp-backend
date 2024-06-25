@@ -2729,12 +2729,13 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         
 
-        $assetCost = FixedAssetMaster::select('docOrigin', \DB::raw('count(*) as total'),'createdUserSystemID','docOriginSystemCode')
+        $assetCost = FixedAssetMaster::select('docOrigin', \DB::raw('count(*) as total'),'createdUserSystemID','docOriginSystemCode',\DB::raw('SUM(CASE WHEN confirmedYN = 1 THEN 1 ELSE 0 END) as pending' ))
         ->with(['created_by' =>function($q){
             $q->select('employeeSystemID','empName');
          }])
         ->where('docOriginDocumentSystemID', 3)
         ->where('approved','!=',-1)
+        ->where('refferedBackYN','!=',-1)
         ->groupBy('docOrigin');
 
 
