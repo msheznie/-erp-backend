@@ -57,6 +57,8 @@ class StoreDetailsToMaterielRequest extends AppBaseController
             return $this->sendError('Materiel Issue not found');
         }
 
+        if((isset($itemIssueMaster->reqDocID) && $itemIssueMaster->reqDocID > 0) && ($itemIssueMaster->reqDocID != $detail['RequestID']))
+            return $this->sendError('Cannot select items from multiple material requests');
 
         if(!isset($detail['itemCodeSystem']) && (!($detail['mappingItemCode']) ||$detail['mappingItemCode'] == 0))
             return $this->sendError('Please map the original item.');

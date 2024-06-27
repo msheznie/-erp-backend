@@ -552,6 +552,13 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input['reqByName'] = null;
         }
 
+        if(isset($itemIssueMaster->reqDocID) && $itemIssueMaster->reqDocID > 0)
+        {
+            $input['reqDocID'] = $itemIssueMaster->reqDocID;
+            $input['reqDate'] = $itemIssueMaster->reqDate;
+            $input['reqComment'] = $itemIssueMaster->reqComment;
+            $input['reqByName'] = $itemIssueMaster->reqByName;
+        }
 
         if ($itemIssueMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -1743,16 +1750,16 @@ class ItemIssueMasterAPIController extends AppBaseController
             $data = [
                 'comments' => '',
                 'companySystemID' => $materielIssue->companySystemID,
-                'itemCode' => $item['itemCode'],
+                'itemCode' => $item['RequestDetailsID'],
                 'itemIssueAutoID' => $materielIssue->itemIssueAutoID,
-                'issueType' => [2],
+                'issueType' => 2,
                 'reqDocID' =>$item['RequestID'],
                 'unitOfMeasureIssued' => [],
                 'partNumber' => $item['partNumber'],
-                'itemCodeSystem' => $item['itemCode'],
+                'itemCodeSystem' => isset($item['mappingItemCode']) ? $item['mappingItemCode'][0]: null,
                 'originFrom' =>  "material-request",
                 'qtyIssued' => (int) $item['qtyIssued'],
-                'mappingItemCode' => isset($item['mappingItemCode']) ? $item['mappingItemCode'][0] : null
+                'mappingItemCode' => isset($item['mappingItemCode']) ? $item['mappingItemCode'][0]: null
             ];
 
            $requestNew = new CreateItemIssueDetailsAPIRequest($data);

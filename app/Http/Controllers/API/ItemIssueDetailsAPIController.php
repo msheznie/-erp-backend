@@ -1201,6 +1201,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         $itemIssueDetails->delete();
 
+        if(isset($itemIssue->details) && $itemIssue->details->count() == 0) {
+            $itemIssue->reqDocID = 0;
+            $itemIssue->save();
+        }
+
         return $this->sendResponse($id, 'Materiel Issue Details deleted successfully');
     }
 

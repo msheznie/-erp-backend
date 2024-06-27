@@ -1645,12 +1645,18 @@ class MaterielRequestAPIController extends AppBaseController
             return $this->sendError('Company Id not found');
 
         $itemIssueMaster =  ItemIssueMaster::where('itemIssueAutoID',$input['itemIssueAutoId'])->first();
+        $materialRequestId = $input['requestID'];
+
+        $materielIssuesPrvIssuedDetails = ItemIssueDetails::whereHas('master', function($q) use ($materialRequestId) {
+            $q->where('reqDocID',$materialRequestId);
+        })->where('itemCodeSystem',$input['itemSystemCode'])->sum('qtyIssued');
 
         $data = array('companySystemID' => $input['companyId'],
             'itemCodeSystem' => $input['itemSystemCode'],
             'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
         $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
         $itemCurrentCostAndQty['originalItem'] = ItemMaster::where('itemCodeSystem',$input['itemSystemCode'])->first();
+        $itemCurrentCostAndQty['prvIssuedQty'] = $materielIssuesPrvIssuedDetails;
         if(!$itemCurrentCostAndQty)
             return $this->sendError('Item details not found');
 
