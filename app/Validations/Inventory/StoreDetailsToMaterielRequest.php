@@ -70,7 +70,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
             return $this->sendError('Issuing quantity cannot be empty');
 
 
-        if(isset($detail['mappingItemCode']))
+        if(isset($detail['mappingItemCode']) && $detail['mappingItemCode'][0] > 0)
         {
            $originalItem = ItemMaster::where('itemCodeSystem',$detail['mappingItemCode'])->first();
            $detail['itemFinanceCategoryID'] = $originalItem->financeCategoryMaster;
