@@ -1249,6 +1249,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             ItemIssueDetails::where('itemIssueAutoID', $id)->delete();
             ItemIssueMaster::where('itemIssueAutoID', $id)->update(['counter' => 0]);
+            ItemIssueMaster::where('itemIssueAutoID', $id)->update(['reqDocID' => 0]);
             return $this->sendResponse([], 'Items Deleted Successfully');
 
         } else {
