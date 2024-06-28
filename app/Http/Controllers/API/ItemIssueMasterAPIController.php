@@ -1852,7 +1852,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                array_push($errorsArray,$itemPrimaryCode.'-'.'Issuing quantity cannot be empty');
 
 
-            if(isset($detail['mappingItemCode']) && $detail['mappingItemCode'][0] > 0)
+            if(isset($detail['mappingItemCode']) && isset($detail['mappingItemCode'][0]) && $detail['mappingItemCode'][0] > 0)
             {
                 $originalItem = ItemMaster::where('itemCodeSystem',$detail['mappingItemCode'])->first();
                 $detail['itemFinanceCategoryID'] = $originalItem->financeCategoryMaster;
