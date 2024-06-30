@@ -58,7 +58,6 @@ class PrBulkBulkItem implements ShouldQueue
     {
         $db = $this->dispatch_db;
         Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
         CommonJobService::db_switch($db);
 
         $input = $this->data;
@@ -134,12 +133,10 @@ class PrBulkBulkItem implements ShouldQueue
 
         $chunkDataSizeCounts = ceil($count / $chunkSize);
         for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
-            Log::info('started '.$i);
             PrBulkBulkItemQuery::dispatch($i, $db, $companyId, $financeCategoryMaster,$financeCategorySub,$input['purchaseRequestID'],$chunkDataSizeCounts,$isSearched,$searchVal,$budgetYear)->onQueue('single');
         }
                                 
                                 
-        Log::info('succefully added PR items');
         DB::commit();
         } catch (\Exception $exception) {
             DB::rollBack();

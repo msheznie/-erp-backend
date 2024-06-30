@@ -58,7 +58,6 @@ class AttendanceCrossDayScheduler extends Command
 
             $msg = "{$dispatchDb} DB added to the queue for cross day attendance pulling initiate";
             $msg .= " ( {$attDate} ).";
-            Log::info("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
             AttendanceCrossDayPulling::dispatch($dispatchDb, $this->signature, $attDate);
         }

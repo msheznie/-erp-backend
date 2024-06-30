@@ -52,7 +52,6 @@ class CreateConsoleJV implements ShouldQueue
     {
         Log::useFiles(storage_path() . '/logs/create_console_jv_jobs.log');
         DB::beginTransaction();
-        Log::info('Successfully start  console jv' . date('H:i:s'));
         try {
             switch ($this->consoleJVData['type']) {
                 case "STOCK_TRANSFER":
@@ -234,7 +233,6 @@ class CreateConsoleJV implements ShouldQueue
             }   
         }
 
-        Log::info('Successfully end  console jv' . date('H:i:s'));
     }
 
 
@@ -360,7 +358,6 @@ class CreateConsoleJV implements ShouldQueue
                 }   
             }
 
-            Log::info('Successfully end  console jv' . date('H:i:s'));
         }
 
     }
@@ -529,7 +526,6 @@ class CreateConsoleJV implements ShouldQueue
                 }   
             }
 
-            Log::info('Successfully end  console jv' . date('H:i:s'));
 
         }
     }

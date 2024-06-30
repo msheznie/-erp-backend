@@ -46,7 +46,6 @@ class CreateAccumulatedDepreciation implements ShouldQueue
 
      
         Log::useFiles(storage_path() . '/logs/accumulated_dep_job.log');
-        Log::info('job is starting..');
 
         try {
             $faMaster = FixedAssetMaster::where('faID',$this->assetAutoID)->first();
@@ -86,7 +85,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             
                             $companyFinanceYear = \Helper::companyFinanceYearCheck($finance_data);
                             if (!$companyFinanceYear["success"]) {
-                                Log::info($companyFinanceYear["message"]);
+                                Log::error($companyFinanceYear["message"]);
                             } else {
                                 $dep_data['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
                                 $dep_data['FYEnd'] = $companyFinanceYear["message"]->endingDate;
@@ -99,7 +98,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
 
                             if (!$companyFinancePeriod["success"]) {
-                                Log::info('company finance period not found');
+                                Log::error('company finance period not found');
                             } else {
                                 $dep_data['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
                                 $dep_data['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
@@ -115,7 +114,6 @@ class CreateAccumulatedDepreciation implements ShouldQueue
 
                             // if (!empty($lastMonthRun)) {
                             //     if ($lastMonthRun->approved == 0) {
-                            //         Log::info('Last month depreciation is not approved. Please approve it before you run for this month');
                             //     }
                             // }
 
@@ -169,11 +167,9 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             //$dep_data['approved'] = -1;
                             $dep_data['is_acc_dep'] = true;
 
-                            Log::info('job is creating..');
 
                             $depMaster = FixedAssetDepreciationMaster::create($dep_data);
 
-                            //Log::info(print_r($depMaster, true));
 
                             // $amount_local = 0;
 
@@ -240,10 +236,8 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                                     $dep_per = FixedAssetDepreciationPeriod::create($data);
 
                                     $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMaster->depMasterAutoID)->first();
-                                    // Log::info('Depreciation processing');
                                     if($depDetail) {
                                         //$fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMaster->depMasterAutoID);
-                                        Log::info('job is processing..');
                                         $fixedAssetDepreciationMasters = $faDepMaster->where('depMasterAutoID', $depMaster->depMasterAutoID)->update(array('depAmountLocal' => $depDetail->depAmountLocal,'depAmountRpt' => $depDetail->depAmountRpt,'isDepProcessingYN' => 1));
 
 
@@ -251,26 +245,25 @@ class CreateAccumulatedDepreciation implements ShouldQueue
 
                                     }
 
-                                    Log::info('job is End..');
                                 }
 
                             } else {
-                                Log::info('asset not found');
+                                Log::error('asset not found');
                             }
 
 
                         } else {
-                            Log::info('companyFinanceYear not found');
+                            Log::error('companyFinanceYear not found');
                         }
 
                     } else {
-                        Log::info('Document system not found');
+                        Log::error('Document system not found');
                     }
                 } else {
-                    Log::info('Accumulated Amount is  cannot exceed the net of Total Asset Cost - Salvage/Residual Value');
+                    Log::error('Accumulated Amount is  cannot exceed the net of Total Asset Cost - Salvage/Residual Value');
                 }
             } else {
-                Log::info('Accumulated Amount is less than zero');
+                Log::error('Accumulated Amount is less than zero');
             }
         } catch (\Exception $e) {
             Log::error($this->failed($e));

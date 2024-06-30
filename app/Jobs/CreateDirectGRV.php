@@ -168,7 +168,6 @@ class CreateDirectGRV implements ShouldQueue
                     $directGRV['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
                     $directGRV['createdUserID'] = $dpMaster->confimedByEmpID;
 
-                    Log::info($directGRV);
                     $grvMaster = $grvMasterRepo->create($directGRV);
 
                     $interComapnyData = InterCompanyAssetDisposal::where('assetDisposalID', $data['assetdisposalMasterAutoID'])
@@ -252,18 +251,14 @@ class CreateDirectGRV implements ShouldQueue
                             $directGRVDet['createdPcID'] = gethostname();
                             $directGRVDet['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
                             $directGRVDet['createdUserID'] = $dpMaster->confimedByEmpID;
-                            Log::info($directGRVDet);
                             $item = $grvDetailsRepository->create($directGRVDet);
                         }
                         DB::commit();
                     }
                 }else{
-                    Log::info('From Company Finance Period not found, date : '. $dpMaster->disposalDocumentDate);
-                    Log::info('From Company Finance Year Id : '. $fromCompanyFinanceYear->companyFinanceYearID);
                 }
 
             }else{
-                Log::info('From Company Finance Year not found, date : '. $dpMaster->disposalDocumentDate);
             }
 
 

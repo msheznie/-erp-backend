@@ -41,7 +41,6 @@ class EliminationLedgerInsert implements ShouldQueue
     public function handle()
     {
         Log::useFiles(storage_path() . '/logs/elimination_ledger_jobs.log');
-        Log::info('---- EL  Start-----' . date('H:i:s'));
         $masterModel = $this->masterModel;
 
         if (!empty($masterModel)) {
@@ -135,23 +134,17 @@ class EliminationLedgerInsert implements ShouldQueue
 
 
                     if ($finalData) {
-                        Log::info($finalData);
                         foreach ($finalData as $data) {
                             EliminationLedger::create($data);
                         }
 
-                        Log::info('Successfully inserted to EL table ' . date('H:i:s'));
                         DB::commit();
-                        Log::info('---- EL End Successfully -----' . date('H:i:s'));
                     }
                 }
 
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
-                Log::info('Error Line No: ' . $e->getLine());
-                Log::info($e->getMessage());
-                Log::info('---- EL  End with Error-----' . date('H:i:s'));
             }
 
         }

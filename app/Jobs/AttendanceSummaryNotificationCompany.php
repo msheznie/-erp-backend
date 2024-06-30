@@ -54,7 +54,6 @@ class AttendanceSummaryNotificationCompany implements ShouldQueue
 
         $logSlug = ($this->isDailyBasis)? "Daily": "Weekly";
 
-        Log::info("{$logSlug} basis work hour shortage job process started on {$this->companyName} . \t on file: "
              . __CLASS__ ." \tline no :".__LINE__);
         
         $now = Carbon::now();

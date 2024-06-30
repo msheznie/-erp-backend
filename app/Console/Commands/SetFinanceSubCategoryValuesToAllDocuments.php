@@ -401,7 +401,6 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
         // $tenants = CommonJobService::tenant_list();
         
         // if(count($tenants) == 0){
-        //     Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         // }
 
 

@@ -55,7 +55,6 @@ class PrBulkBulkItemProcess implements ShouldQueue
     {
         $db = $this->dispatch_db;
         Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
         CommonJobService::db_switch($db);
 
         $companyId = $this->companyId;
@@ -222,12 +221,10 @@ class PrBulkBulkItemProcess implements ShouldQueue
         }
 
 
-        Log::info('succefully added PR items');
         DB::commit();
         } catch (\Exception $exception) {
             DB::rollBack();
             Log::error('Error');
-            Log::info('Error Line No: ' . $exception->getLine());
             Log::error($exception->getMessage());
         }
     }

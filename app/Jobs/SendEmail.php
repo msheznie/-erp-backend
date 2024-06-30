@@ -56,10 +56,6 @@ class SendEmail implements ShouldQueue
     public function handle()
     {
         Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
-        Log::info('Email send start');
         Mail::to($this->to)->send(new EmailForQueuing($this->subject, $this->content));
-        Log::info('email sent success fully to :' . $this->to );
-        Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
-        Log::info('Email send end');
     }
 }

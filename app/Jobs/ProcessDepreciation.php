@@ -209,7 +209,6 @@ class ProcessDepreciation implements ShouldQueue
 
             $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
             if ($depDetail) {
-                Log::info("Before Condition Check - newCounterValue: $newCounterValue, chunkDataSizeCounts: $totalChunks");
                 if ($newCounterValue == $totalChunks) {
                     $fixedAssetDepreciationMasters = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1]);
                 } else {
@@ -221,10 +220,6 @@ class ProcessDepreciation implements ShouldQueue
         catch (\Exception $e){
             DB::rollback();
             Log::error($this->failed($e));
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- Dep  End with Error-----' . date('H:i:s'));
         }
 
     }

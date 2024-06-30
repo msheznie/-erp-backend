@@ -57,7 +57,6 @@ class LeaveAccrualProcess implements ShouldQueue
         $leaveGroup = $this->group['description'];
 
         $msg = "Processing the {$accDes} | {$leaveGroup} (leave group) for {$company_code} | {$company_name}";
-        Log::info($msg . " on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         CommonJobService::db_switch( $this->dispatch_db );
         $ser = new LeaveAccrualService($this->company, $this->accrual_type_det, $this->group, $this->debugDate);

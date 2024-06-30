@@ -58,7 +58,6 @@ class AttendanceDayEndScheduler extends Command
 
             $msg = "{$dispatchDb} DB added to the queue for attendance day end pulling initiate";
             $msg .= " ( {$attDate} ).";
-            Log::info("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
             AttendanceDayEndPullingInitiate::dispatch($dispatchDb, $this->signature, $attDate);
         }

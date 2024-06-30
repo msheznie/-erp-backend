@@ -117,7 +117,6 @@ class ProcessMaterialRequestQuery implements ShouldQueue
                                 ->toArray();                   
                         
                 if (count($output) > 0) {
-                    Log::info('processing ');
                     ProcessMaterialRequestBulk::dispatch($db, $output, $companyId, $empID, $employeeSystemID,$chunkDataSizeCounts,$requestID)->onQueue('single');
                 } else {
 
@@ -130,9 +129,6 @@ class ProcessMaterialRequestQuery implements ShouldQueue
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info($e->getMessage());
-            Log::info('---- Dep  End with Error-----' . date('H:i:s'));
         }
     }
 

@@ -56,7 +56,6 @@ class TaxLedgerInsert implements ShouldQueue
     {
         CommonJobService::db_switch($this->dataBase);
         Log::useFiles(storage_path() . '/logs/tax_ledger_jobs.log');
-        Log::info('---- Tax Ledger  Start-----' . date('H:i:s'));
         $masterModel = $this->masterModel;
         $taxLedgerData = $this->taxLedgerData;
 
@@ -75,9 +74,6 @@ class TaxLedgerInsert implements ShouldQueue
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
-                Log::info('Error Line No: ' . $e->getLine());
-                Log::info($e->getMessage());
-                Log::info('---- Tax Ledger  End with Error-----' . date('H:i:s'));
 
                 JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());            
             }

@@ -53,7 +53,6 @@ class CreateSupplierInvoice implements ShouldQueue
         if (!empty($srMaster)) {
             DB::beginTransaction();
             try {
-                Log::info('Successfully start  supplier_invoice' . date('H:i:s'));
                 if ($srMaster->interCompanyTransferYN == -1 && $srMaster->approved == -1) {
 
                     // supplier Invoice master start
@@ -161,7 +160,6 @@ class CreateSupplierInvoice implements ShouldQueue
                     $supplierInvoiceData['createdUserID'] = $srMaster->confirmedByEmpID;
                     $supplierInvoiceData['createdPcID'] = gethostname();
                     $bookInvSuppMaster = $bookInvSuppMasterRepo->create($supplierInvoiceData);
-                    Log::info($bookInvSuppMaster);
                     // supplier Invoice master end
 
                     if (!empty($bookInvSuppMaster)) {
@@ -194,7 +192,6 @@ class CreateSupplierInvoice implements ShouldQueue
                         $supplierInvoiceDetail['timesReferred'] = 0;
                         $supplierInvoiceDetail['timeStamp'] = $today;
                         $bookInvSuppDet = $bookInvSuppDetRepo->create($supplierInvoiceDetail);
-                        Log::info($bookInvSuppDet);
 
                         // supplier Invoice details end
                         // GL Start
@@ -250,7 +247,6 @@ class CreateSupplierInvoice implements ShouldQueue
                             $glAP['documentRptAmount'] = ABS($bookingAmountRpt) * -1;
                             $glAP['documentTransAmount'] = ABS($bookingAmountRpt) * -1;
                             $glAP = $generalLedgerRepo->create($glAP);
-                            Log::info($glAP);
                         }
 
                         if ($glINC) {
@@ -262,7 +258,6 @@ class CreateSupplierInvoice implements ShouldQueue
                             $glINC['documentRptAmount'] = ABS($bookingAmountRpt);
                             $glINC['documentTransAmount'] = ABS($bookingAmountRpt);
                             $interCompanyGL = $generalLedgerRepo->create($glINC);
-                            Log::info($interCompanyGL);
                         }
                         // GL end
 
@@ -300,7 +295,6 @@ class CreateSupplierInvoice implements ShouldQueue
 
                         $accountsPayableLedger = $accountsPayableLedgerRepo->create($apLedger);
 
-                        Log::info($accountsPayableLedger);
                         // AP update end
 
                         $checkStockReceive = InterCompanyStockTransfer::where('stockReceiveID', $sr->stockReceiveAutoID)->first();
@@ -321,7 +315,6 @@ class CreateSupplierInvoice implements ShouldQueue
                     }
 
 
-                    Log::info('Successfully end  supplier_invoice' . date('H:i:s'));
                 }
                 DB::commit();
             } catch (\Exception $e) {

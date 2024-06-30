@@ -43,7 +43,6 @@ class AttendanceDailySummaryScheduler extends Command
     {
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-notification') );                    
 
-        Log::info("Attendance daily summary job scheduler started  . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){

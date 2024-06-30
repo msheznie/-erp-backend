@@ -59,7 +59,6 @@ class PoSentToSupplierJob implements ShouldQueue
         $db = $this->dispatch_db;
 
         Log::useFiles(storage_path() . '/logs/po_sent_to_supplier.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
 
         CommonJobService::db_switch($db);
 
@@ -256,10 +255,6 @@ class PoSentToSupplierJob implements ShouldQueue
             DB::rollback();
             Log::error($this->failed($e));
             JobErrorLogService::storeError($this->dispatch_db, 2, $purchaseOrderID, $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
         }
     }
 

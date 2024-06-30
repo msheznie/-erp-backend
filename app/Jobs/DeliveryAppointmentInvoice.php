@@ -214,7 +214,6 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                                $resDetail = $this->storeSupplierInvoiceGrvDetails($new, $item->bookingSupInvoiceDetAutoID, $invoice_id, $groupMaster);
            
                                if (!$resDetail['status']) {
-                                      Log::info($result['message']);
                                }
            
                                $pullAmount = $resDetail['data'];
@@ -228,7 +227,6 @@ class DeliveryAppointmentInvoice implements ShouldQueue
            
                                    if (!$resultUpdateDetail['status']) {
                                   
-                                       Log::info($result['message']);
                                    } 
                                }
                            
@@ -237,16 +235,15 @@ class DeliveryAppointmentInvoice implements ShouldQueue
               
                     }
                     DB::commit();
-                    Log::info('successfully invoice completedd..');
                 }
                 else
                 {
-                    Log::info('From Company Finance period not found, date : ');
+                    Log::error('From Company Finance period not found, date : ');
                 }
     
             }
             else{
-                Log::info('From Company Finance Year not found, date : ');
+                Log::error('From Company Finance Year not found, date : ');
             }
 
 
@@ -555,11 +552,9 @@ class DeliveryAppointmentInvoice implements ShouldQueue
         $bookInvSuppDet = BookInvSuppDet::find($id);
 
         if (empty($bookInvSuppDet)) {
-            Log::info('Supplier Invoice Details Not Found');
         }
 
         if($bookInvSuppDet->suppinvmaster && $bookInvSuppDet->suppinvmaster->confirmedYN){
-            Log::info('You cannot update Supplier Invoice Detail, this document already confirmed');
         }
 
         $unbilledGrvGroupByMaster = UnbilledGrvGroupBy::where('unbilledgrvAutoID', $bookInvSuppDet['unbilledgrvAutoID'])
@@ -567,7 +562,6 @@ class DeliveryAppointmentInvoice implements ShouldQueue
            
 
         if (empty($unbilledGrvGroupByMaster)) {
-            Log::info('Supplier Invoice Details Not Found');
         }
 
         if ($input['supplierInvoAmount'] == "") {

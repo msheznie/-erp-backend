@@ -58,7 +58,6 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
         DB::beginTransaction();
         try {
-            Log::info('Budget Segment Bulk Insert Started');
 
             $uploadBudget = $uploadData['uploadBudget'];
             $employee = $uploadData['employee'];
@@ -127,10 +126,9 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             });
 
             $totalSegments = count($segments);
-            Log::info('Total Segments: ' . $totalSegments);
 
             if($uploadedCompany != $template->companySystemID){
-                Log::info('Uploaded company is different from the template company');
+                Log::error('Uploaded company is different from the template company');
 
                 $webPushData = [
                     'title' => "Upload Budget Failed",
@@ -164,7 +162,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             }
 
             if($totalSegments == 0){
-                Log::info('Zero segments available');
+                Log::error('Zero segments available');
 
                 $webPushData = [
                     'title' => "Upload Budget Failed",
@@ -183,10 +181,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- Budget Segment Bulk Insert Error-----' . date('H:i:s'));
+            Log::error($e->getMessage());
             DB::beginTransaction();
             $webPushData = [
                 'title' => "Upload Budget Failed",

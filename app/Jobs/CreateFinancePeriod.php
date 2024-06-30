@@ -39,7 +39,6 @@ class CreateFinancePeriod implements ShouldQueue
     {
         $financeYear = $this->financeYear;
         Log::useFiles(storage_path() . '/logs/create_finance_period_jobs.log');
-        Log::info('Create Finance Period Jobs Start');
         $bigginingDate = new Carbon($financeYear->bigginingDate);
         $endingDate    = new Carbon($financeYear->endingDate);
         $currentMonth  = $bigginingDate->month;
@@ -58,8 +57,6 @@ class CreateFinancePeriod implements ShouldQueue
                 $month = $i;
             }
 
-            Log::info('Current Month : ' . $month);
-            Log::info('Current Year :' . $currentYear);
 
             $startDate = new Carbon($currentYear.'-'.$month.'-'.$firstDay);
             $endDate   = new Carbon(date("Y-m-t", strtotime($startDate)));
@@ -74,9 +71,7 @@ class CreateFinancePeriod implements ShouldQueue
                     'dateFrom' => $startDate,
                     'dateTo' => $formatedEndDate);
                 $financeYearPeriodMasterRepo->create($dataArray);
-                Log::info('Created Finance Period : '.$i);
             //}else{
-             //   Log::info('Not Created Finance Period : '.$i);
             //}
         }
 
@@ -124,7 +119,5 @@ class CreateFinancePeriod implements ShouldQueue
 
             $financeYearRepo->update([ 'generateStatus' => $totalPercentage],$financeYear->companyFinanceYearID);
         }
-        Log::info($financeYearPeriodMasters);
-        Log::info('Create Finance Period Jobs End');
     }
 }

@@ -119,7 +119,6 @@ class PrBulkBulkItemQuery implements ShouldQueue
                                 ->toArray();                   
                         
                 if (count($output) > 0) {
-                    Log::info('spppppppppp ');
                     PrBulkBulkItemProcess::dispatch($db, $output, $companyId, $budgetYear,$chunkDataSizeCounts,$requestID)->onQueue('single');
                 } else {
 
@@ -132,9 +131,6 @@ class PrBulkBulkItemQuery implements ShouldQueue
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info($e->getMessage());
-            Log::info('---- Dep  End with Error-----' . date('H:i:s'));
         }
     }
 

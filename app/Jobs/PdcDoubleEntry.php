@@ -102,7 +102,6 @@ class PdcDoubleEntry implements ShouldQueue
     public function handle()
     {
         Log::useFiles(storage_path() . '/logs/pdc_double_entry_jobs.log');
-        Log::info('---- GL  Start-----' . date('H:i:s'));
         $masterModel = $this->masterModel;
         $pdcData = $this->pdcData;
 
@@ -393,8 +392,6 @@ class PdcDoubleEntry implements ShouldQueue
                             $masterModel['pdcChequeDate'] = $pdcData['chequeDate'];
                             $masterModel['pdcChequeNo'] = $pdcData['chequeNo'];
                             $masterModel['pdcID'] = $pdcData['id'];
-                            Log::info($pdcData);
-                            Log::info($masterModel);
                             if ($pdcData['newStatus'] == 1) {
                                 $bankLedger = BankLedgerInsert::dispatch($masterModel);
                             } else if ($pdcData['newStatus'] == 2) {
@@ -673,13 +670,11 @@ class PdcDoubleEntry implements ShouldQueue
                 }
 
                 if ($finalData) {
-                    Log::info($finalData);
                     //$generalLedgerInsert = GeneralLedger::insert($finalData);
                     foreach ($finalData as $data) {
                         GeneralLedger::create($data);
                     }
                     $generalLedgerInsert = true;
-                    Log::info('Successfully inserted to GL table ' . date('H:i:s'));
 
                     if ($generalLedgerInsert) {
                         // updating posted date in relevant documents
@@ -713,15 +708,11 @@ class PdcDoubleEntry implements ShouldQueue
                         }
                     }
                     DB::commit();
-                    Log::info('---- GL End Successfully -----' . date('H:i:s'));
                 }
 
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
-                Log::info('Error Line No: ' . $e->getLine());
-                Log::info($e->getMessage());
-                Log::info('---- GL  End with Error-----' . date('H:i:s'));
             }
         }
     }

@@ -43,14 +43,12 @@ class DelegationActivation implements ShouldQueue
     {
         $tenantDb = $this->tenantDb;
         CommonJobService::db_switch( $this->tenantDb );
-        Log::info('started');
         $current_date = Carbon::parse(now())->format('Y-m-d');
         $deligate = Deligation::where('approved',-1)->where('end_date','<',$current_date);
         $dlegations_expire_ids = $deligate->pluck('id');
         $deligate->update(['is_active' => 0]);
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_expire_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 0]);
 
-        Log::info('pass date updated');
 
         $dlegationPeriod = Deligation::where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date)->where('approved',-1);
         $dlegationPeriod->update(['is_active' => 1]);

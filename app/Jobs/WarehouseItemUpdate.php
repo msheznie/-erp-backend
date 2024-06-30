@@ -56,16 +56,12 @@ class WarehouseItemUpdate implements ShouldQueue
                                 'itemSystemCode' => $detail['itemCode']])
                                 ->first();
                             if (!empty($warehouseItem)) {
-                                Log::info('warehouse item');
-                                Log::info($warehouseItem);
                                 $warehouseItem = WarehouseItems::where(['companySystemID' => $grvMaster->companySystemID,
                                     'warehouseSystemCode' => $grvMaster->grvLocation,
                                     'itemSystemCode' => $detail['itemCode']])
                                     ->update(['binNumber' => $detail['binNumber']]);
-                                Log::info('warehouse item updated');
-                                Log::info($warehouseItem);
                             } else {
-                                Log::info('warehouse item not found');
+                                Log::error('warehouse item not found');
                                 $item = ItemMaster::find($detail['itemCode']);
 
                                 if(!empty($item)) {
@@ -97,8 +93,6 @@ class WarehouseItemUpdate implements ShouldQueue
                                     $warehouseItem['binNumber'] = $detail['binNumber'];
                                     $warehouseItem['toDelete'] = 0;
                                     $newWarehouseItem = $warehouseItemsRepository->create($warehouseItem);
-                                    Log::info('new warehouse item created');
-                                    Log::info($newWarehouseItem);
                                 }
                             }
                         }

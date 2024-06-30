@@ -52,7 +52,6 @@ class AttendanceDayEndPulling implements ShouldQueue
         CommonJobService::db_switch( $this->dispatchDb );
 
         $msg = "Company id {$this->companyId} started to execute the day end pulling in {$this->dispatchDb} DB ( {$this->attDate} )";
-        Log::info("$msg \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         $isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
         if($isShiftModule){

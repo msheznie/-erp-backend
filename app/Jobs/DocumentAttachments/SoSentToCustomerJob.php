@@ -57,7 +57,6 @@ class SoSentToCustomerJob implements ShouldQueue
         $db = $this->dispatch_db;
 
         Log::useFiles(storage_path() . '/logs/so_sent_to_customer.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
 
         CommonJobService::db_switch($db);
 
@@ -163,10 +162,6 @@ class SoSentToCustomerJob implements ShouldQueue
             DB::rollback();
             Log::error($this->failed($e));
             JobErrorLogService::storeError($this->dispatch_db, $quotationMasterData->documentSystemID, $id, $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
         }
     }
 

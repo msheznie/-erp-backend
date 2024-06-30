@@ -43,7 +43,6 @@ class ActiveDelegation extends Command
     {
         Log::useFiles( CommonJobService::get_specific_log_file('delegation') );                    
 
-        Log::info("Delegation process start");
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){

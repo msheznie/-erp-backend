@@ -48,7 +48,6 @@ class AttendanceSummaryNotificationTenant implements ShouldQueue
         
         $logSlug = ($this->isDailyBasis)? "Daily": "Weekly";
 
-        Log::info("{$logSlug} basis work hour shortage job initiated on {$this->tenantDb} DB. \t on file: "
              . __CLASS__ ." \tline no :".__LINE__);
         
         $scenarioId = ($this->isDailyBasis)? 16: 17;

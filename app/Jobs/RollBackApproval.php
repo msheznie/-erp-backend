@@ -44,7 +44,6 @@ class RollBackApproval implements ShouldQueue
                         $deleteOutputGL = GeneralLedger::where('documentSystemCode',$masterModel["documentSystemCode"])->where('documentSystemID',$masterModel["documentSystemID"])->delete();
                     }
                 }
-                Log::info('Successfully roll backed');
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();

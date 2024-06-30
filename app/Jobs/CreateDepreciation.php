@@ -68,11 +68,8 @@ class CreateDepreciation implements ShouldQueue
         if($depMaster && !$depMaster->is_acc_dep) {
             DB::beginTransaction();
             try {
-                Log::info('Depreciation Started');
-                Log::info('Depreciation ID - '.$depMasterAutoID);
 
                 if($depMaster) {
-                    Log::info('Depreciation Query Started');
                     $chunkSize = 100;
                     $totalChunks = 0;
                     $chunkDataSizeCounts = 0;

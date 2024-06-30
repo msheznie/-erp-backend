@@ -42,9 +42,7 @@ class AddBudgetDetails implements ShouldQueue
         $glData = $this->glData;
         $months = $this->monthArray;
         Log::useFiles(storage_path() . '/logs/budget_details_jobs.log');
-        Log::info('Budget Details Jobs Start');
         if ($budgetMasters) {
-            Log::info('Inside the if Start');
 
             foreach ($months as $month) {
                 foreach ($glData as $gl) {
@@ -75,11 +73,8 @@ class AddBudgetDetails implements ShouldQueue
                     'templateMasterID' => $budgetMasters->templateMasterID,
                 ]);
 
-                Log::info('budgets count' . count($budgets));
-                Log::info($budgets);
                 $percentage = 8; //100 / 12;
                 foreach ($budgets as $budget){
-                    Log::info('Budget Id'. $budget->budgetmasterID);
                     $updatedPercentage = ($budget->generateStatus + $percentage);
 
                     if( $updatedPercentage > 100){
@@ -94,7 +89,6 @@ class AddBudgetDetails implements ShouldQueue
                 }
             }
 
-            Log::info('Inside the if End ');
         }
     }
 }

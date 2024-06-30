@@ -63,7 +63,6 @@ class ProcessMaterialIssueBulk implements ShouldQueue
                 $res = MaterialRequestService::validateMaterialIssueItem($value['itemCodeSystem'], $companyId, $requestID);
                             
                 if ($res['status']) {
-                    Log::info($value['itemCodeSystem']. " - inserted success");
                     MaterialRequestService::saveMaterialIssueItem($value['itemCodeSystem'], $companyId, $requestID, $empID, $employeeSystemID);
                 } else {
                     $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $res['message']];
@@ -86,10 +85,7 @@ class ProcessMaterialIssueBulk implements ShouldQueue
         }
         catch (\Exception $e){
             DB::rollback();
-            Log::error($this->failed($e));
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info($e->getMessage());
-            Log::info('---- Dep  End with Error-----' . date('H:i:s'));
+            Log::error($e->getMessage());
         }
 
     }

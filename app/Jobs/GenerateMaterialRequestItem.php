@@ -98,7 +98,6 @@ class GenerateMaterialRequestItem implements ShouldQueue
             
             $isJobData = ['is_job_run'=>0];
             $isJobUpdate = MaterielRequest::where('RequestID', $MaterialRequestID)->update($isJobData);
-            Log::info('succefully added MR items');
 
         
     }

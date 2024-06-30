@@ -52,7 +52,6 @@ class PoAddBulkItemJob implements ShouldQueue
         $db = $this->dispatch_db;
 
         Log::useFiles(storage_path() . '/logs/po_bulk_item.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
 
         CommonJobService::db_switch($db);
         $input = $this->data;
@@ -89,7 +88,6 @@ class PoAddBulkItemJob implements ShouldQueue
 
             ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->update(['isBulkItemJobRun' => 0]);
             
-            Log::info('Successfully completed');
 
             DB::commit();
         } catch (\Exception $exception) {

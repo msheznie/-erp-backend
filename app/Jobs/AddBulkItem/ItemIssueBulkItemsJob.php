@@ -54,7 +54,6 @@ class ItemIssueBulkItemsJob implements ShouldQueue
         $db = $this->dispatch_db;
 
         Log::useFiles(storage_path() . '/logs/item_issue_bulk_items.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
 
         CommonJobService::db_switch($db);
         $input = $this->data;
@@ -98,7 +97,6 @@ class ItemIssueBulkItemsJob implements ShouldQueue
             
             $chunkDataSizeCounts = ceil($count / $chunkSize);
             for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
-                Log::info('started '.$i);
                 ProcessMaterialIssueQuery::dispatch($i, $db, $companyId, $financeCategoryMaster,$financeCategorySub,$input['itemIssueAutoID'],$chunkDataSizeCounts,$input['empID'], $input['employeeSystemID'],$isSearched,$searchVal)->onQueue('single');
             }
 
@@ -119,7 +117,6 @@ class ItemIssueBulkItemsJob implements ShouldQueue
 
             // ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->update(['isBulkItemJobRun' => 0]);
             
-            Log::info('Successfully completed');
 
             DB::commit();
         } catch (\Exception $exception) {

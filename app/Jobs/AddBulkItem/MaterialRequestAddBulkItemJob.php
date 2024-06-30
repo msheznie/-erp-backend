@@ -54,7 +54,6 @@ class MaterialRequestAddBulkItemJob implements ShouldQueue
         $db = $this->dispatch_db;
 
         Log::useFiles(storage_path() . '/logs/material_request_bulk_item.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
 
         CommonJobService::db_switch($db);
         $input = $this->data;
@@ -99,11 +98,9 @@ class MaterialRequestAddBulkItemJob implements ShouldQueue
             $invalidItems = [];
             $chunkDataSizeCounts = ceil($count / $chunkSize);
             for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
-                Log::info('started '.$i);
                 ProcessMaterialRequestQuery::dispatch($i, $db, $companyId, $financeCategoryMaster,$financeCategorySub,$input['RequestID'],$chunkDataSizeCounts,$input['empID'], $input['employeeSystemID'],$isSearched,$searchVal)->onQueue('single');
             }
 
-            Log::info('Successfully completed');
 
             DB::commit();
         } catch (\Exception $exception) {

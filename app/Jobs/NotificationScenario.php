@@ -45,7 +45,6 @@ class NotificationScenario implements ShouldQueue
     public function handle()
     {
         Log::useFiles( NotificationService::log_file() );
-        Log::info("Processing {$this->scenario} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         NotificationService::db_switch( $this->dispatch_db );
 

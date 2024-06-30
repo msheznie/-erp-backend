@@ -67,8 +67,6 @@ class WebPushNotification implements ShouldQueue
 
             $response = $client->request('POST', $url, ['json' => $params]);
 
-            // Log::info($response);
-            Log::info("Success");
         }catch (ClientException $exception) {
             Log::error("Error");
             Log::error($exception->getResponse()->getBody(true));

@@ -39,7 +39,6 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
         }
         $this->dispatch_db = $dispatch_db;
         $this->compAssignScenarioData = $compAssignScenarioData;
-        Log::info('Budget cutoff JOB construct'.$this->dispatch_db);
     }
 
     /**
@@ -64,27 +63,21 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
                                              ->where('companySystemID', $companyIDFromScenario)
                                              ->get();
         
-        Log::info('Company Name: ' . $compAssignScenario['company']['CompanyName']);
-        Log::info('PO count: ' . count($partiallyRecivedPos));
 
         $partiallyRecivedPos = $partiallyRecivedPos->toArray();
         if (count($compAssignScenario['notification_day_setup']) == 0) {
-            Log::info('Notification day setup not exist in '.$db);
+            Log::error('Notification day setup not exist in '.$db);
         } else {
-            Log::info('notification_day_setup');
-            Log::info($compAssignScenario['notification_day_setup']);
             foreach ($compAssignScenario['notification_day_setup'] as $notDaySetup) {
                 $beforeAfter = $notDaySetup['beforeAfter'];
                 $days = $notDaySetup['days'];
 
                 $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup['id']);
                 if (count($notificationUserSettings['email']) == 0) {
-                    Log::info("User setup not found for scenario");
+                    Log::error("User setup not found for scenario");
                     continue;
                 }
 
-                Log::info('notification_day_setup_emails');
-                Log::info($notificationUserSettings['email']);
 
                 BudgetCutOffNotificationService::getCutOffPurchaseOrders($db, $partiallyRecivedPos, $beforeAfter, $days, $notificationUserSettings['email'], $companyIDFromScenario);
             }   

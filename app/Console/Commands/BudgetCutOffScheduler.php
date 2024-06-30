@@ -41,18 +41,15 @@ class BudgetCutOffScheduler extends Command
     public function handle()
     {
         Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');     
-        Log::info('Butget cutoff po Shedular'.now());
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
-            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
 
 
         foreach ($tenants as $tenant){
             $tenant_database = $tenant->database;
 
-            Log::info("{$tenant_database} DB added to queue for re order pr . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
             BudgetCutOffNotificationJob::dispatch($tenant_database);
         } 
