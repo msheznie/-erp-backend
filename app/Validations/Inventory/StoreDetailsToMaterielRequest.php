@@ -80,13 +80,17 @@ class StoreDetailsToMaterielRequest extends AppBaseController
            $detail['itemDescription'] = $originalItem->itemDescription;
            $detail['partNumber'] = $originalItem->itemPrimaryCode;
         }
+
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
                 ->where('mainItemCategoryID', $detail['itemFinanceCategoryID'])
             ->where('itemCategorySubID', $detail['itemFinanceCategorySubID'])
             ->first();
 
-        if(empty($financeItemCategorySubAssigned))
+        if(!isset($financeItemCategorySubAssigned))
+        {
             return $this->sendError("Account code not updated.", 500);
+        }
+
 
         // check policy 18
 
