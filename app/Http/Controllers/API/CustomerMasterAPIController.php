@@ -3064,7 +3064,7 @@ class CustomerMasterAPIController extends AppBaseController
                     else
                     {
                         if ($succesfully_created == $totalItemCount) {
-                            $message = "All record Upload successfully";
+                            $message = "All records uploaded Successfully";
                             $msg_detail = [];
                             $is_success = true;
                            
