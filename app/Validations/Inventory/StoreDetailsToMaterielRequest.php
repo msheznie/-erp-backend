@@ -17,6 +17,7 @@ use App\Models\MaterielRequestDetails;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseReturn;
 use App\Models\StockTransfer;
+use App\Models\WarehouseMaster;
 use App\Services\Inventory\MaterialIssueService;
 use Illuminate\Http\Request;
 
@@ -86,11 +87,35 @@ class StoreDetailsToMaterielRequest extends AppBaseController
             ->where('itemCategorySubID', $detail['itemFinanceCategorySubID'])
             ->first();
 
-        if(!isset($financeItemCategorySubAssigned))
+        $mfq_no = $itemIssueMaster->mfqJobID;
+        if(isset($financeItemCategorySubAssigned))
         {
+            if(!empty($mfq_no) && WarehouseMaster::checkManuefactoringWareHouse($itemIssueMaster->wareHouseFrom))
+            {
+                $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
+                $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
+
+            }
+            else
+            {
+
+                $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            }
+
+
+            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+        }else {
             return $this->sendError("Account code not updated.", 500);
         }
 
+        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
+            return $this->sendError("Account code not updated.", 500);
+        }
 
         // check policy 18
 
