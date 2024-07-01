@@ -49,8 +49,6 @@ class BirthdayWishScheduler extends Command
         foreach ($tenants as $tenant){
             $tenant_database = $tenant->database;
 
-                . __CLASS__ . " \tline no :" . __LINE__);
-
             BirthdayWishInitiate::dispatch($tenant_database);
         }
     }
