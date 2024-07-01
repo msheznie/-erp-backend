@@ -1622,8 +1622,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                         $data = [];
                         $finalData = [];
-                        $diffLocal = ($totalAmountPayEx->supplierPaymentAmount / $PaySupplierInvoiceMasterExData->localCurrencyER) - $totalAmountPayEx->paymentLocalAmount;
-                        $diffRpt = ($totalAmountPayEx->supplierPaymentAmount / $PaySupplierInvoiceMasterExData->companyRptCurrencyER) - $totalAmountPayEx->paymentComRptAmount;
+                        $diffLocal = $totalAmountPayEx->paymentLocalAmount - ($totalAmountPayEx->supplierPaymentAmount / $PaySupplierInvoiceMasterExData->localCurrencyER);
+                        $diffRpt = $totalAmountPayEx->paymentComRptAmount - ($totalAmountPayEx->supplierPaymentAmount / $PaySupplierInvoiceMasterExData->companyRptCurrencyER);
 
                         $data['companySystemID'] = $PaySupplierInvoiceMasterExData->companySystemID;
                         $data['companyID'] = $PaySupplierInvoiceMasterExData->companyID;
