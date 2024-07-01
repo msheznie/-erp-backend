@@ -1867,11 +1867,41 @@ class ItemIssueMasterAPIController extends AppBaseController
                 ->where('itemCategorySubID', $detail['itemFinanceCategorySubID'])
                 ->first();
 
-
             if(empty($financeItemCategorySubAssigned))
                 array_push($errorsArray,$itemPrimaryCode.'-'.'Account code not updated');
 
             $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $itemIssueAutoId)->first();
+
+
+            $mfq_no = $itemIssueMaster->mfqJobID;
+
+            if(isset($financeItemCategorySubAssigned))
+            {
+                if(!empty($mfq_no) && WarehouseMaster::checkManuefactoringWareHouse($itemIssueMaster->wareHouseFrom))
+                {
+                    $detail['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                    $detail['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                    $detail['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
+                    $detail['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
+
+                }
+                else
+                {
+
+                    $detail['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                    $detail['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                    $detail['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                    $detail['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                }
+
+
+                $detail['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+
+            }
+
+            if (!$detail['financeGLcodebBS'] || !$detail['financeGLcodebBSSystemID'] || !$detail['financeGLcodePL'] || !$detail['financeGLcodePLSystemID']) {
+                array_push($errorsArray,$itemPrimaryCode.'-'.'Account code not updated');
+            }
 
             // check policy 18
 
