@@ -69,6 +69,7 @@ class PullMaterialRequestFromMaterialIssueService
                 }else {
                     $prvIssuedQnty = 0;
                     $currentStock = 0;
+                    $currentWareHouseStockQty =0;
                     $currentMaterielIssue = null;
 
                 }
