@@ -29,7 +29,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         $input = $this->convertArrayToValue($request->input('item'));
 
         $detail = $input;
-        $companySystemID = 1;
+        $companySystemID = $request->companyId;
 
         $company = Company::where('companySystemID', $companySystemID)->first();
 
