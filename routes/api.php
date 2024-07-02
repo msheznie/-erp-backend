@@ -965,7 +965,7 @@ Route::group(['middleware' => ['tenantById']], function (){
     Route::group(['middleware' => ['pos_api','hrms_employee']], function () {
         Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
         Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
-        require __DIR__.'/../routes/OSOS_3_0.php';
+        require __DIR__.'/../routes/osos_3_0.php';
     });
 });
 
