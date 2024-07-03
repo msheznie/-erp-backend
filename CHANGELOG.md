@@ -1,5 +1,54 @@
 # Changelog
 
+## [10.44.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.43.0...v10.44.0) (2024-07-03)
+
+
+### Features
+
+* **account management:** asset allocation segement aded and entry changes [GCP-2642] ([#6274](https://github.com/pbsgears/Gears_BackEnd/issues/6274)) ([7ad8816](https://github.com/pbsgears/Gears_BackEnd/commit/7ad8816fc103f73081b436925ae4bb0cdaee81ae))
+* **accounts payable:** WHT Application in Direct Invoice [GCP-3718] ([#6290](https://github.com/pbsgears/Gears_BackEnd/issues/6290)) ([97fc830](https://github.com/pbsgears/Gears_BackEnd/commit/97fc830ac4b2d2effe79280aa70ddd3a6ff2ead8))
+* **accounts payable:** wHT Application in PO Based Supplier Invoice [GCP-3510] ([#6279](https://github.com/pbsgears/Gears_BackEnd/issues/6279)) ([37216b7](https://github.com/pbsgears/Gears_BackEnd/commit/37216b7d89e1bae10aa3ae5ad56baf581ec92344))
+* **accounts payable:** wHT Payable Settlement in Payment Voucher [GCP-3532] ([#6302](https://github.com/pbsgears/Gears_BackEnd/issues/6302)) ([d270d0a](https://github.com/pbsgears/Gears_BackEnd/commit/d270d0acbe44d0a272de4db023953f55ebebc229))
+* **accounts recaivable:** credit note vat configuration [GCP-3690] ([#6313](https://github.com/pbsgears/Gears_BackEnd/issues/6313)) ([323183e](https://github.com/pbsgears/Gears_BackEnd/commit/323183e554f31c9d93f37770bc098a4286b61014))
+* **accounts receivable:** credit note default vat value configuration [GCP-3850] ([#6319](https://github.com/pbsgears/Gears_BackEnd/issues/6319)) ([47d0855](https://github.com/pbsgears/Gears_BackEnd/commit/47d0855f19c62b06a3fed980c73e8018d6f2153d))
+* **accounts receivable:** customer Invoice Segments [GCP-2483] ([#6237](https://github.com/pbsgears/Gears_BackEnd/issues/6237)) ([de69da6](https://github.com/pbsgears/Gears_BackEnd/commit/de69da60278fae723f559ae0567b1cdd40244b77))
+* **accounts receivable:** customer ledger report account column added excel and report [GCP-3554] ([#6234](https://github.com/pbsgears/Gears_BackEnd/issues/6234)) ([d0cb3bc](https://github.com/pbsgears/Gears_BackEnd/commit/d0cb3bc7bda102c52d19a52ba98b7f6f7155282d))
+* **approvl setup:** Make approvl group unique inside the approval level [GCP-3484] ([#6247](https://github.com/pbsgears/Gears_BackEnd/issues/6247)) ([5123ae3](https://github.com/pbsgears/Gears_BackEnd/commit/5123ae32c5ee609b36ec04c612043edd073de09c))
+* **asset management:** Asset Capitalization as a Bulk [GCP-3225] ([#6316](https://github.com/pbsgears/Gears_BackEnd/issues/6316)) ([b0eb218](https://github.com/pbsgears/Gears_BackEnd/commit/b0eb218816473cec42086c41e0f811b354484718))
+* **common:** attachment preview option [GCP-3769] ([#6306](https://github.com/pbsgears/Gears_BackEnd/issues/6306)) ([4e87d89](https://github.com/pbsgears/Gears_BackEnd/commit/4e87d8934021e17defd3fbd4983fa700dfd9a8a8))
+* **common:** chart of account reterived by id changed to slug [GCP-3609] ([#6282](https://github.com/pbsgears/Gears_BackEnd/issues/6282)) ([a9ed266](https://github.com/pbsgears/Gears_BackEnd/commit/a9ed266793bfdc66b6fa059f737d8ad4d020fe94))
+* **common:** vAT Return Filling Related Document Review Validation [GCP-3471] ([#6293](https://github.com/pbsgears/Gears_BackEnd/issues/6293)) ([8188350](https://github.com/pbsgears/Gears_BackEnd/commit/8188350abe67b79b0eac319868806107067c41e8))
+* **configuration:** Supplier Evaluation Master [GCP-3699] ([#6270](https://github.com/pbsgears/Gears_BackEnd/issues/6270)) ([60acd32](https://github.com/pbsgears/Gears_BackEnd/commit/60acd32745cbd07455b3be645a8053093b318d47))
+* **configuration:** Supplier evaluation template [GCP-3787] ([#6292](https://github.com/pbsgears/Gears_BackEnd/issues/6292)) ([0ea3a25](https://github.com/pbsgears/Gears_BackEnd/commit/0ea3a255d7c3c37f95c641aeeefc6109bed2e0dc))
+* **configuration:** Supplier evaluation template header & comment [GCP-3818] ([#6317](https://github.com/pbsgears/Gears_BackEnd/issues/6317)) ([9b15db1](https://github.com/pbsgears/Gears_BackEnd/commit/9b15db1ea6f139401f4c13fe62117f7ac1627993))
+* **general ledger:** implemented document attachments for reversal JVs [GCP-3744] ([#6269](https://github.com/pbsgears/Gears_BackEnd/issues/6269)) ([ba8baf4](https://github.com/pbsgears/Gears_BackEnd/commit/ba8baf418fd8137ecdd28321f19c17dce87a0693))
+* **general ledger:** implemented reverse JV option to standard JV [GCP-2780] ([#6259](https://github.com/pbsgears/Gears_BackEnd/issues/6259)) ([f23697b](https://github.com/pbsgears/Gears_BackEnd/commit/f23697bc7a88e71ec5c66334624fd29b0c0e0c3a))
+* **general ledger:** vat return filling review option [GCP-3467] ([#6283](https://github.com/pbsgears/Gears_BackEnd/issues/6283)) ([0a9b6d4](https://github.com/pbsgears/Gears_BackEnd/commit/0a9b6d45c46c791b8cd8209b5c9ca3f1236ba567))
+* **general ledger:** vat summary report modified to get direct receipt voucher amounts [GCP-3368] ([#6272](https://github.com/pbsgears/Gears_BackEnd/issues/6272)) ([8274759](https://github.com/pbsgears/Gears_BackEnd/commit/827475962e65a3749d0c13196e336d3ab86acca7))
+* **inventory:** grv pull po details modifitions [GCP-2972] ([#6257](https://github.com/pbsgears/Gears_BackEnd/issues/6257)) ([d028a56](https://github.com/pbsgears/Gears_BackEnd/commit/d028a562d55c34ac351c16fed40f87b9d9c3e008))
+* **inventory:** pull from mr option added to mi [GCP-2546] ([#6311](https://github.com/pbsgears/Gears_BackEnd/issues/6311)) ([f918544](https://github.com/pbsgears/Gears_BackEnd/commit/f918544f74e73601163967a0a5b27f21713a8f0c))
+* **inventory:** validation added to check all and showed on pop up [GCP-2546] ([#6318](https://github.com/pbsgears/Gears_BackEnd/issues/6318)) ([c011ca3](https://github.com/pbsgears/Gears_BackEnd/commit/c011ca3979d5ea21e4bc37e1c46684ab115dacbd))
+* **procurement:** Purchase Order Print Update [GCP-3006] ([#6291](https://github.com/pbsgears/Gears_BackEnd/issues/6291)) ([cf9fd4e](https://github.com/pbsgears/Gears_BackEnd/commit/cf9fd4e8d4242464c25e40ced7e9cf39a8649c11))
+* **system admin:** implementing item type for upload items in item master [GCP-3440] ([#6296](https://github.com/pbsgears/Gears_BackEnd/issues/6296)) ([b4da8dd](https://github.com/pbsgears/Gears_BackEnd/commit/b4da8dde4a1cbde031183321102bb1d3d256e450))
+* **system admin:** implementing new column Item Type to bulk item master option [GCP-3439] ([#6300](https://github.com/pbsgears/Gears_BackEnd/issues/6300)) ([1f1e566](https://github.com/pbsgears/Gears_BackEnd/commit/1f1e566c35b9a0a14ed89eae1e91a5263d7bab33))
+
+
+### Bug Fixes
+
+* **accounts payable:** exchange gain or loss gl entry not posting for the partial matching scenario fixed [GCP-2206] ([#6285](https://github.com/pbsgears/Gears_BackEnd/issues/6285)) ([228ac8e](https://github.com/pbsgears/Gears_BackEnd/commit/228ac8e06cc922de454dcc2403cd8cd29215c4d6))
+* **accounts receivable:** Vat amount & Percentage validation in CI detail level [GCP-3422] ([#6236](https://github.com/pbsgears/Gears_BackEnd/issues/6236)) ([ee672d6](https://github.com/pbsgears/Gears_BackEnd/commit/ee672d61772efcde5955ee8a0c35ea54a6707394))
+* **asset management:** asset Management | Error in Asset Transfer Approval [GCP-3876] ([#6352](https://github.com/pbsgears/Gears_BackEnd/issues/6352)) ([a21ed0b](https://github.com/pbsgears/Gears_BackEnd/commit/a21ed0b7fb36b6ff00157d274226fd42be8f91c7))
+* **asset management:** asset transfer details not loading issue fixed [GCP-3611] ([#6235](https://github.com/pbsgears/Gears_BackEnd/issues/6235)) ([c83e36f](https://github.com/pbsgears/Gears_BackEnd/commit/c83e36ff24e0c269e954f286928b3e08edc6a6ad))
+* **asset management:** condition checked as asset description or serial not null [GCP-3804] ([#6288](https://github.com/pbsgears/Gears_BackEnd/issues/6288)) ([3be9e29](https://github.com/pbsgears/Gears_BackEnd/commit/3be9e294e2f8473a18afbe7cc8466d759733ecf7))
+* **asset management:** Financial Period Active Status Validation for Asset Costing Confirmation [GCP-3724] ([#6294](https://github.com/pbsgears/Gears_BackEnd/issues/6294)) ([b91ac22](https://github.com/pbsgears/Gears_BackEnd/commit/b91ac2285b1c4efeeb96fce30ddecf8514608ff2))
+* **common:** mismatches for local and reporting amounts in general ledger fixed [GCP-3648] ([#6254](https://github.com/pbsgears/Gears_BackEnd/issues/6254)) ([607bc3e](https://github.com/pbsgears/Gears_BackEnd/commit/607bc3e7779a96c12e62dbdb819adadc6a5daecd))
+* **common:** only active COA retrevied in masters and configuration [GCP-3451] ([#6275](https://github.com/pbsgears/Gears_BackEnd/issues/6275)) ([c19a314](https://github.com/pbsgears/Gears_BackEnd/commit/c19a3143e5f7197b67afdd85f3d7c494672814c9))
+* **general ledger:** Budget summary report Actual Consumption amount modified [GCP-2449] ([#6256](https://github.com/pbsgears/Gears_BackEnd/issues/6256)) ([5b6e5ab](https://github.com/pbsgears/Gears_BackEnd/commit/5b6e5ab2eb72b27dd62c10cffc79a066b6c6eadd))
+* **general ledger:** financial report finance year validation [GCP-3697] ([#6286](https://github.com/pbsgears/Gears_BackEnd/issues/6286)) ([1974423](https://github.com/pbsgears/Gears_BackEnd/commit/1974423f0ae1b75b5e074475a42ad35348ec0cb5))
+* **general ledger:** group company employee ledger configuration [GCP-3043] ([#6268](https://github.com/pbsgears/Gears_BackEnd/issues/6268)) ([25dcaca](https://github.com/pbsgears/Gears_BackEnd/commit/25dcacaf0e00f12e6f81837d1f130e56c0f39eee))
+* **inventory:** Fixed Stock Taking Report Filters not loading issue [GCP-3234] ([#6280](https://github.com/pbsgears/Gears_BackEnd/issues/6280)) ([e30ac9b](https://github.com/pbsgears/Gears_BackEnd/commit/e30ac9bbed614218f4e6137dd01ed0cea11690fd))
+* **procurement:** po payment term cancellation [GCP-2402] ([#6249](https://github.com/pbsgears/Gears_BackEnd/issues/6249)) ([014355e](https://github.com/pbsgears/Gears_BackEnd/commit/014355eb001f0ef553108bf9ee55b6ef0fa13a9e))
+
 ## [10.43.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.42.1...v10.43.0) (2024-06-25)
 
 
