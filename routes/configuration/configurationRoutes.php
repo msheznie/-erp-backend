@@ -25,6 +25,7 @@ Route::group([], function(){
     Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
     Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
 
+
     Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy')->name("Get all report templates for copy");
     Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory')->name("Add template sub category");
     Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate')->name("Get all report templates");
@@ -162,4 +163,14 @@ Route::group([], function() {
     Route::resource('evaluation_master_details', 'SupplierEvaluationMasterDetailsAPIController');
     Route::resource('supplier_evaluation_templates', 'SupplierEvaluationTemplateAPIController');
     Route::resource('evaluation_template_comments', 'SupplierEvaluationTemplateCommentAPIController');
+});
+
+// Exchange setup Configurations
+
+Route::group([], function() {
+    Route::resource('exchange_setup_document', 'ExchangeSetup\ExchangeSetupDocumentController');
+    Route::resource('exchange_setup_document_type', 'ExchangeSetup\ExchangeSetupDocumentTypeController');
+    Route::resource('exhange_setup_config', 'ExchangeSetup\ExchangeSetupConfigurationController');
+
+    Route::get('exchange_setup_document/{id}/types', 'ExchangeSetup\ExchangeSetupDocumentController@getTypesOfDocument');
 });
