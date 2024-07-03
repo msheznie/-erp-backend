@@ -270,6 +270,12 @@ class JvMasterAPIController extends AppBaseController
             }
         }
 
+        if (isset($input['reversalDate'])) {
+            if ($input['reversalDate']) {
+                $input['reversalDate'] = new Carbon($input['reversalDate']);
+            }
+        }
+
         $documentDate = $input['JVdate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
@@ -353,6 +359,12 @@ class JvMasterAPIController extends AppBaseController
             $input['JVcode'] = $jvCode;
         }
 
+        if (isset($input['reversalJV'])) {
+            if ($input['reversalJV'] == 0 && $input['jvType'] == 0) {
+                $input['reversalDate'] = null;
+            }
+        }
+        
         $jvMaster = $this->jvMasterRepository->create($input);
 
         if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
@@ -502,6 +514,13 @@ class JvMasterAPIController extends AppBaseController
                 }
             }
 
+            if (isset($input['reversalDate'])) {
+                if ($input['reversalDate']) {
+                    $input['reversalDate'] = new Carbon($input['reversalDate']);
+                }
+            }
+
+
             if (isset($input['jvType']) && $input['jvType'] == 5) {
                 $systemGlCodeScenario = SystemGlCodeScenario::where('slug','po-accrual-liability')->first();
 
@@ -533,6 +552,12 @@ class JvMasterAPIController extends AppBaseController
 
                 if ($checkPendingJv) {
                     return $this->sendError('There is a pending allocation JV, please approve those allocation JVs');
+                }
+            }
+
+            if(isset($input['reversalJV']) && $input['reversalJV'] == 1){
+                if($input['reversalDate'] == null) {
+                    return $this->sendError('Reversal Date is mandatory');
                 }
             }
 
@@ -792,6 +817,13 @@ class JvMasterAPIController extends AppBaseController
                 }
             }
         }
+
+        if (isset($input['reversalJV'])) {
+            if ($input['reversalJV'] == 0 && $input['jvType'] == 0) {
+                $input['reversalDate'] = null;
+            }
+        }
+
 
         $employee = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? UserTypeService::getSystemEmployee() : Helper::getEmployeeInfo();
 
@@ -2266,6 +2298,13 @@ HAVING
 
         if (empty($jvMaster)) {
             return $this->sendError('Journal voucher not found');
+        }
+        if ($jvMaster->isReverseAccYN == -1 && $jvMaster->jvType == 0) {
+            return $this->sendError('You cannot return back to amend this journal voucher, as it is a reversal JV');
+        }
+
+        if ($jvMaster->reversedYN == 1 && $jvMaster->jvType == 0 && $jvMaster->reversalJV == 1) {
+            return $this->sendError('You cannot return back to amend this journal voucher, as it has an already auto generated JV');
         }
 
         if ($jvMaster->confirmedYN == 0) {

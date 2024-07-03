@@ -194,7 +194,7 @@ class HRMSAPIController extends AppBaseController
                         return $this->sendError('Employee not found', 500);
                     }
 
-                    $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($dt['companySystemID'], 11, 12);
+                    $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($dt['companySystemID'], 11, "employee-control-account");
 
                     if (is_null($checkEmployeeControlAccount)) {
                         return $this->sendError('Please configure Employee control account for this company', 500);

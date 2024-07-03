@@ -108,36 +108,58 @@ class SystemGlCodeScenarioDetail extends Model
     }
 
 
-    public static function getGlByScenario($companySystemID, $documentSystemID, $systemGlScenarioID)
+    public static function getGlByScenario($companySystemID, $documentSystemID, $slug)
     {
-        $res = SystemGlCodeScenarioDetail::where('companySystemID', $companySystemID)
-                                        ->where('systemGlScenarioID', $systemGlScenarioID)
-                                        ->whereHas('chart_of_account_assigned', function($query) use ($companySystemID) {
-                                            $query->where('companySystemID', $companySystemID)
-                                                  ->where('isAssigned', -1);
-                                        })
-                                        ->first();
+            $companySystemIDs = explode(',', $companySystemID);
 
-        return (($res) ? $res->chartOfAccountSystemID : null);
+            $systemGlScenario = SystemGlCodeScenario::where('slug', $slug)->first();
+            if ($systemGlScenario) {
+                $id = $systemGlScenario->id;
+            } else {
+                $id = null;
+            }
+
+            $res = SystemGlCodeScenarioDetail::whereIn('companySystemID', $companySystemIDs)
+                ->where('systemGlScenarioID', $id)
+                ->whereHas('chart_of_account_assigned', function($query) use ($companySystemIDs) {
+                    $query->whereIn('companySystemID', $companySystemIDs)
+                        ->where('isAssigned', -1);
+                })->first();
+
+            return ($res) ? $res->chartOfAccountSystemID : null;
     }
 
-    public static function getGlCodeByScenario($companySystemID, $documentSystemID, $systemGlScenarioID)
+    public static function getGlCodeByScenario($companySystemID, $documentSystemID, $slug)
     {
+        $systemGlScenario = SystemGlCodeScenario::where('slug', $slug)->first();
+        if ($systemGlScenario) {
+            $id = $systemGlScenario->id;
+        } else {
+            $id = null;
+        }
+
         $res = SystemGlCodeScenarioDetail::with(['chart_of_account'])
                                         ->whereHas('chart_of_account')
                                         ->where('companySystemID', $companySystemID)
-                                        ->where('systemGlScenarioID', $systemGlScenarioID)
+                                        ->where('systemGlScenarioID', $id)
                                         ->first();
 
         return (($res) ? $res->chart_of_account->AccountCode : null);
     }
 
-    public static function getGlDescriptionByScenario($companySystemID, $documentSystemID, $systemGlScenarioID)
+    public static function getGlDescriptionByScenario($companySystemID, $documentSystemID, $slug)
     {
+        $systemGlScenario = SystemGlCodeScenario::where('slug', $slug)->first();
+        if ($systemGlScenario) {
+            $id = $systemGlScenario->id;
+        } else {
+            $id = null;
+        }
+
         $res = SystemGlCodeScenarioDetail::with(['chart_of_account'])
                                         ->whereHas('chart_of_account')
                                         ->where('companySystemID', $companySystemID)
-                                        ->where('systemGlScenarioID', $systemGlScenarioID)
+                                        ->where('systemGlScenarioID', $id)
                                         ->first();
 
         return (($res) ? $res->chart_of_account->AccountDescription : null);

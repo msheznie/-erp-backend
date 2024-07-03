@@ -493,8 +493,11 @@ class BookInvSuppDetAPIController extends AppBaseController
         $this->deleteReturnUnbilledGrvs($unbilledSum->grvAutoID, $bookInvSuppDet->bookingSuppMasInvAutoID);
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookInvSuppDet->bookingSuppMasInvAutoID);
+        $bookInvSuppMaster->whtEdited = false;
+        $bookInvSuppMaster->save();
 
         \Helper::updateSupplierRetentionAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
+        \Helper::updateSupplierWhtAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.supplier_invoice_details')]));
     }
@@ -539,7 +542,8 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
-
+        $bookInvSuppMaster->whtEdited = false;
+        $bookInvSuppMaster->save();
         if (empty($bookInvSuppMaster)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice')]));
         }
@@ -787,6 +791,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
 
             \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
+            \Helper::updateSupplierWhtAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
 
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
@@ -899,6 +904,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 } 
             }
             \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
+            \Helper::updateSupplierWhtAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
         } catch (\Exception $exception) {
@@ -1097,7 +1103,11 @@ class BookInvSuppDetAPIController extends AppBaseController
         $invoiceID = $input['invoiceID'];
 
         $items = BookInvSuppDet::where('bookingSuppMasInvAutoID', $invoiceID)
-            ->with(['grvmaster', 'pomaster'])
+            ->with(['grvmaster' => function($q){
+                $q->with('details');
+            }, 'pomaster','suppinvmaster'=>function($q){
+                $q->select('bookingSuppMasInvAutoID','documentType');
+            }])
             ->get();
 
         return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.grv_invoice_details')]));

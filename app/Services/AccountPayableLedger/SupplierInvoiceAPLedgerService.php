@@ -20,6 +20,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\Models\Tax;
+use App\Models\SupplierMaster;
 
 class SupplierInvoiceAPLedgerService
 {
@@ -157,6 +159,23 @@ class SupplierInvoiceAPLedgerService
             $retentionLocal = 0;
             $retentionInvoiceAmount = 0;
             $retentionRpt = 0;
+
+            $whtTrans = 0;
+            $whtLocal = 0;
+            $whtInvoiceAmount = 0;
+            $whtRpt = 0;
+
+
+            $whtAmountConTran = 0;
+            $whtAmountConInvoicet = 0;
+            $whtAmountConLocal = 0;
+            $whtAmountConRpt = 0;
+
+
+      
+
+          
+
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
                     if ($masterData->documentType == 0) {
@@ -255,6 +274,57 @@ class SupplierInvoiceAPLedgerService
                 }
             }
 
+
+            if ($masterData->whtApplicable) {
+
+                if ($masterData->documentType != 4) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
+
+                        $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
+                        $whtAmountConTran = $masterData->whtAmount;
+                        $whtAmountConInvoicet = $masterData->whtAmount;
+                        $whtAmountConLocal = \Helper::roundValue($currencyWht['localAmount']);
+                        $whtAmountConRpt = \Helper::roundValue($currencyWht['reportingAmount']);
+                        $whtSupplier = null;
+                        $taxSetup = Tax::where('taxMasterAutoID',$masterData->whtType)->first();
+                        $whtAuthority = null;
+                        $currencyID= null;
+                        $localER = null;
+                        $comRptER = null;
+                        if($taxSetup)
+                        {
+                            $whtAuthority = $taxSetup->authorityAutoID;
+                            $supplier = SupplierMaster::where('supplierCodeSystem',$whtAuthority)->first();
+                            $whtSupplier = $supplier->supplierCodeSystem;
+
+                            $supplierCurrencies = DB::table('suppliercurrency')
+                            ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
+                            ->where('supplierCodeSystem', '=', $whtSupplier)->where('isDefault',-1)->first();
+
+                            $currencyID = $supplierCurrencies->currencyID;
+
+                            $companyCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $currencyID, $currencyID, 0);
+                            $localER = $companyCurrencyConversion['trasToLocER'];
+                            $comRptER = $companyCurrencyConversion['trasToRptER'];
+                        }
+
+         
+                            $whtInvoiceAmount = ($whtAmountConInvoicet);
+                            $whtTrans = ($whtAmountConTran);
+                            $whtLocal = ($whtAmountConLocal);
+                            $whtRpt = ($whtAmountConRpt);
+
+                            $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] - $whtInvoiceAmount;
+                            $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] - $whtTrans;
+                            $data['localAmount'] = $data['localAmount'] - $whtLocal;
+                            $data['comRptAmount'] = $data['comRptAmount'] - $whtRpt;
+                        
+
+                    }
+
+                }
+            }
+
             array_push($finalData, $data);
 
             if ($retentionPercentage > 0) {
@@ -269,6 +339,24 @@ class SupplierInvoiceAPLedgerService
             } else {
                 $data['isRetention'] = 0;
             }
+
+            if ($masterData->whtApplicable) {
+                if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3){
+                    $data['supplierCodeSystem'] = $whtSupplier;
+                    $data['supplierTransCurrencyID']  = $currencyID;
+                    $data['supplierDefaultCurrencyID'] = $currencyID;
+                    $data['localER'] = $localER;
+                    $data['comRptER'] = $comRptER;
+                    $data['supplierInvoiceAmount'] = $whtInvoiceAmount;
+                    $data['supplierDefaultAmount'] = $whtTrans;
+                    $data['localAmount'] = $whtLocal;
+                    $data['comRptAmount'] = $whtRpt;
+                    $data['isWHT'] = 1;
+                    $data['isRetention'] = 0;
+                    array_push($finalData, $data);
+                }
+            }
+
         }
 
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData]];

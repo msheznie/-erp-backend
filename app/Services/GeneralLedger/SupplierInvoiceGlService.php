@@ -77,6 +77,9 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\Models\Tax;
+use App\Models\SupplierMaster;
+
 
 class SupplierInvoiceGlService
 {
@@ -118,7 +121,7 @@ class SupplierInvoiceGlService
         $taxRpt = 0;
         $taxTrans = 0;
         $retentionPercentage = ($masterData->retentionPercentage > 0) ? $masterData->retentionPercentage : 0;
-
+        $whtPercentage = ($masterData->whtPercentage > 0) ? $masterData->whtPercentage : 0;
         $poInvoiceDirectLocalExtCharge = 0;
         $poInvoiceDirectRptExtCharge = 0;
         $poInvoiceDirectTransExtCharge = 0;
@@ -219,9 +222,24 @@ class SupplierInvoiceGlService
                 }
             }
 
+            $whtTrans = 0;
+            $whtLocal = 0;
+            $whtRpt = 0;
+
             $retentionTrans = 0;
             $retentionLocal = 0;
             $retentionRpt = 0;
+
+            $whtAmountCon = 0;
+            $whtAmountConLocal = 0;
+            $whtAmountConRpt = 0;
+
+
+            $whtFullAmount = 0;
+            $whtFullAmountLocal = 0;
+            $whtFullAmountRpt = 0;
+
+
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
 
@@ -285,6 +303,34 @@ class SupplierInvoiceGlService
                 }
             }
 
+
+            if($masterData->whtApplicable)
+            {
+                if ($masterData->documentType != 4) {
+
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
+
+                        $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
+                     
+                      
+                        $whtAmountCon =  -1 *$masterData->whtAmount;
+                        $whtAmountConLocal =  -1 *\Helper::roundValue($currencyWht['localAmount']);
+                        $whtAmountConRpt =  -1 *\Helper::roundValue($currencyWht['reportingAmount']);
+
+
+                        $whtTrans = $whtAmountCon;
+                        $whtLocal = $whtAmountConLocal;
+                        $whtRpt = $whtAmountConRpt;
+
+                        
+                    }
+                    $data['documentTransAmount'] = $data['documentTransAmount'] - $whtAmountCon;
+                    $data['documentLocalAmount'] = $data['documentLocalAmount'] - $whtAmountConLocal;
+                    $data['documentRptAmount'] = $data['documentRptAmount'] - $whtAmountConRpt;
+
+                }
+            }
+
             $data['holdingShareholder'] = null;
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;
@@ -298,8 +344,8 @@ class SupplierInvoiceGlService
 
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
-                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
-                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
+                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
+                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     if ($masterData->documentType == 0) {
@@ -336,6 +382,36 @@ class SupplierInvoiceGlService
                     array_push($finalData, $data);
                 }
             }
+
+
+            if ($masterData->whtApplicable) {
+                if ($masterData->documentType != 4) {
+
+                    $taxSetup = Tax::where('taxMasterAutoID',$masterData->whtType)->first();
+                    $whtAuthority = null;
+                    if($taxSetup)
+                    {
+                        $whtAuthority = $taxSetup->authorityAutoID;
+                        $supplier = SupplierMaster::where('supplierCodeSystem',$whtAuthority)->with('liablity_account')->first();
+                        $data['supplierCodeSystem'] = $supplier->supplierCodeSystem;
+                    }
+
+                    $data['chartOfAccountSystemID'] = $whtAuthority != null?$supplier->liablity_account->chartOfAccountSystemID:null;
+                    $data['glCode'] = $whtAuthority != null?$supplier->liablity_account->AccountCode:null;
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
+             
+                            $data['documentTransAmount'] = $whtTrans;
+                            $data['documentLocalAmount'] = $whtLocal;
+                            $data['documentRptAmount'] = $whtRpt;
+                        
+                    } 
+                    }
+                    array_push($finalData, $data);
+                }
+            
+                $data['supplierCodeSystem'] = $masterData->supplierID;
 
             if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                 $data['chartOfAccountSystemID'] = $masterData->UnbilledGRVAccountSystemID;
@@ -599,7 +675,7 @@ class SupplierInvoiceGlService
                 }
             }
 
-
+          
             //VAT entries
             $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
             $totalVATAmount = $vatDetails['totalVAT'];
@@ -631,6 +707,7 @@ class SupplierInvoiceGlService
                                 $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
                                 $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
                             }
+
 
                             array_push($finalData, $data);
 

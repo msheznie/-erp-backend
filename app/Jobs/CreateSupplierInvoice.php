@@ -254,8 +254,8 @@ class CreateSupplierInvoice implements ShouldQueue
                         }
 
                         if ($glINC) {
-                            $glINC['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($srMaster->companySystemID, $srMaster->documentSystemID, 1);
-                            $glINC['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($srMaster->companySystemID, $srMaster->documentSystemID, 1);
+                            $glINC['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($srMaster->companySystemID, $srMaster->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer");
+                            $glINC['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($srMaster->companySystemID, $srMaster->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer");
                             $glINC['glAccountType'] = 'BS';
                             $glINC['glAccountTypeID'] = 1;
                             $glINC['documentLocalAmount'] = ABS($bookingAmountLocal);

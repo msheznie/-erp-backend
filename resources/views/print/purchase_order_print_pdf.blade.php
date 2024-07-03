@@ -605,6 +605,9 @@
                     <th colspan="4" style="text-align: center">{{ __('custom.project') }}</th>
                 @endif
                 <th style="text-align: center">{{ __('custom.part_no') }} / {{ __('custom.ref_no') }}</th>
+                @if($detailComment==1)
+                    <th style="text-align: center">{{ __('custom.comments') }}</th>
+                @endif
                 <th style="text-align: center">{{ __('custom.uom') }}</th>
                 <th style="text-align: center">{{ __('custom.qty') }}</th>
                 @if(isset($allowAltUom))
@@ -646,6 +649,9 @@
                     @endif
                     
                     <td>{{$det->supplierPartNumber}}</td>
+                    @if($detailComment==1)
+                        <td>{{$det->comment}}</td>
+                    @endif
                     <td>{{$det->unit->UnitShortCode}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
                     @if(isset($allowAltUom))

@@ -1521,7 +1521,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input = $request->all();
         $poID = $input['purchaseOrderID'];
 
-        $detail = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as poQty,unitOfMeasure,purchaseOrderMasterID,purchaseOrderDetailsID,serviceLineCode,itemCode,companySystemID,companyID,serviceLineCode,itemPrimaryCode,itemDescription,itemFinanceCategoryID,itemFinanceCategorySubID,financeGLcodebBSSystemID,financeGLcodebBS,financeGLcodePLSystemID,financeGLcodePL,includePLForGRVYN,supplierPartNumber,unitOfMeasure,unitCost,discountPercentage,discountAmount,netAmount,comment,supplierDefaultCurrencyID,supplierDefaultER,supplierItemCurrencyID,foreignToLocalER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER,addonDistCost,GRVcostPerUnitLocalCur,GRVcostPerUnitSupDefaultCur,GRVcostPerUnitSupTransCur,GRVcostPerUnitComRptCur,VATPercentage,VATAmount,VATAmountLocal,VATAmountRpt,receivedQty,markupPercentage,markupTransactionAmount,markupLocalAmount,markupReportingAmount, vatMasterCategoryID,vatSubCategoryID, exempt_vat_portion'))
+        $details = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as poQty,unitOfMeasure,purchaseOrderMasterID,purchaseOrderDetailsID,serviceLineCode,itemCode,companySystemID,companyID,serviceLineCode,itemPrimaryCode,itemDescription,itemFinanceCategoryID,itemFinanceCategorySubID,financeGLcodebBSSystemID,financeGLcodebBS,financeGLcodePLSystemID,financeGLcodePL,includePLForGRVYN,supplierPartNumber,unitOfMeasure,unitCost,discountPercentage,discountAmount,netAmount,comment,supplierDefaultCurrencyID,supplierDefaultER,supplierItemCurrencyID,foreignToLocalER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER,addonDistCost,GRVcostPerUnitLocalCur,GRVcostPerUnitSupDefaultCur,GRVcostPerUnitSupTransCur,GRVcostPerUnitComRptCur,VATPercentage,VATAmount,VATAmountLocal,VATAmountRpt,receivedQty,markupPercentage,markupTransactionAmount,markupLocalAmount,markupReportingAmount, vatMasterCategoryID,vatSubCategoryID, exempt_vat_portion'))
             ->with(['unit' => function ($query) {
             }])
             ->where('purchaseOrderMasterID', $poID)
@@ -1530,10 +1530,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->where('manuallyClosed', 0)
             ->get();
 
+        foreach ($details as $detail) {
+            $detail['grvAmount'] = 0;
+        }
 
 
-
-        return $this->sendResponse($detail, 'Purchase Order Details retrieved successfully');
+        return $this->sendResponse($details, 'Purchase Order Details retrieved successfully');
 
     }
 

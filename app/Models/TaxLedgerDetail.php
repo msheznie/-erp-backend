@@ -515,5 +515,9 @@ class TaxLedgerDetail extends Model
 
     public function item_detail(){
         return $this->belongsTo('App\Models\ItemMaster','itemSystemCode', 'itemCodeSystem');
-    } 
+    }
+
+    public function vat_return_filling_details(){
+        return $this->belongsTo('App\Models\VatReturnFillingDetail','returnFilledDetailID', 'id');
+    }
 }

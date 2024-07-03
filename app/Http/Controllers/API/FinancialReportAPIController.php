@@ -646,7 +646,7 @@ class FinancialReportAPIController extends AppBaseController
         $currencyID = $input['currencyID'];
 
         if(!$companyID) {
-            return $this->sendError('Company ID found');
+            return $this->sendError('Company ID not found');
         }
 
         // Retrieve company currency information
@@ -689,10 +689,12 @@ class FinancialReportAPIController extends AppBaseController
             $typeID = collect($typeID)->pluck('id');
         }
 
-        $employees = collect($this->getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas));
+        $childCompanies = collect($childCompanies);
+
+        $employees = collect($this->getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$childCompanies,$employeeDatas));
 
         // Fetch general ledger query data
-        $data = $this->getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$companyID,$employees->pluck('employeeID'));
+        $data = $this->getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$childCompanies,$employees->pluck('employeeID'));
 
         $refAmounts = $this->getGeneralLedgerRefAmount();
 
@@ -795,7 +797,7 @@ class FinancialReportAPIController extends AppBaseController
             }
 
             if($recordOwner->isSetOpeningBalance){
-                $openingBalanceSum = $this->getOpeningBalanceData($fromDate,$typeID,$companyID,$da->employeeID);
+                $openingBalanceSum = $this->getOpeningBalanceData($fromDate,$typeID,$childCompanies,$da->employeeID);
                 $recordOwner->openingBalanceLocal = $openingBalanceSum[0]->amountLocal ?: 0;
                 $recordOwner->openingBalanceRpt = $openingBalanceSum[0]->amountRpt ?: 0;
 
@@ -857,8 +859,7 @@ class FinancialReportAPIController extends AppBaseController
             $i++;
         }
 
-
-        foreach ($employees as $key => $value) {
+        foreach ($employees as $value) {
             $recordOwner = $employees->where('employeeID', $value->employeeID)->first();
 
             if(!isset($recordOwner->totalSumLocal)) {
@@ -873,7 +874,7 @@ class FinancialReportAPIController extends AppBaseController
             }
 
             if($recordOwner->isSetOpeningBalance){
-                $openingBalanceSum = $this->getOpeningBalanceData($fromDate,$typeID,$companyID,$value->employeeID);
+                $openingBalanceSum = $this->getOpeningBalanceData($fromDate,$typeID,$childCompanies,$value->employeeID);
                 $recordOwner->openingBalanceLocal = $openingBalanceSum[0]->amountLocal ?: 0;
                 $recordOwner->openingBalanceRpt = $openingBalanceSum[0]->amountRpt ?: 0;
 
@@ -7655,7 +7656,7 @@ GROUP BY
 
         $columns = ReportTemplateColumns::all();
         $linkedColumn = ReportTemplateColumnLink::ofTemplate($request->templateType)->where('hideColumn', 0)->orderBy('sortOrder')->get();
-        if (count($columns) > 0) {
+        if ((count($columns) > 0) && isset($financeYear)) {
             $currentYearPeriod = CarbonPeriod::create($financeYear->bigginingDate, '1 month', $financeYear->endingDate);
             $currentYearPeriodArr = [];
             $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
@@ -9218,8 +9219,9 @@ GROUP BY
     public function getOpeningBalanceData($fromDate,$typeID,$companyID,$employeeID) {
 
         $typeIDs = join(',', json_decode($typeID));
+        $companyID = join(',', json_decode($companyID));
 
-        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , 14);
+        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , "exchange-gainloss-gl");
 
         return DB::select('
 SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
@@ -9235,7 +9237,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         documentType = 4 AND
         employeeID = '.$employeeID.' AND
         4 IN (' . $typeIDs . ') AND
-        companySystemID = "'.$companyID.'"
+        companySystemID IN ('.$companyID.')
     UNION ALL
     SELECT
         -SUM((payAmountCompLocal + VATAmountLocal)) AS amountLocal,
@@ -9249,7 +9251,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         approved = -1 AND
         directPaymentPayeeEmpID = '.$employeeID.' AND
         5 IN (' . $typeIDs . ') AND
-        companySystemID = "'.$companyID.'"
+        companySystemID IN ('.$companyID.')
     UNION ALL
     SELECT
         -SUM((payAmountCompLocal + VATAmountLocal)) AS amountLocal,
@@ -9263,7 +9265,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         approved = -1 AND
         directPaymentPayeeEmpID = '.$employeeID.' AND
         6 IN (' . $typeIDs . ') AND
-        companySystemID = "'.$companyID.'"
+        companySystemID IN ('.$companyID.')
     UNION ALL
     SELECT
         IF(SUM(expense_employee_allocation.amountLocal) < 0, -SUM(expense_employee_allocation.amountLocal), SUM(expense_employee_allocation.amountLocal)) AS amountLocal,
@@ -9279,7 +9281,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         expense_employee_allocation.employeeSystemID = '.$employeeID.' AND
         expense_employee_allocation.documentSystemID = 11 AND
         1 IN (' . $typeIDs . ') AND
-        erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
+        erp_bookinvsuppmaster.companySystemID IN ('.$companyID.')
     UNION ALL
     SELECT
         -SUM(companyLocalAmount) AS amountLocal,
@@ -9291,7 +9293,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         DATE(voucherDate) < "' . $fromDate . '" AND
         3 IN (' . $typeIDs . ') AND
         empID = '.$employeeID.' AND
-        companyID = "'.$companyID.'" AND
+        companyID IN ('.$companyID.') AND
         approvedYN = 1
     UNION ALL  
     SELECT
@@ -9304,7 +9306,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         DATE(debitNoteDate) < "' . $fromDate . '" AND
         7 IN (' . $typeIDs . ') AND
         empID = '.$employeeID.' AND
-        companySystemID = "'.$companyID.'" AND
+        companySystemID IN ('.$companyID.') AND
         approved = -1
     UNION ALL
     SELECT
@@ -9320,7 +9322,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         erp_paysupplierinvoicemaster.approved = -1 AND
         erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = '.$employeeID.' AND
         5 IN (' . $typeIDs . ') AND
-        erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'" AND
+        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.') AND
         erp_generalledger.documentSystemID = 4 AND 
         erp_generalledger.chartOfAccountSystemID = "'.$exchangeGainLossAccount.'"
 ) AS t');
@@ -9330,8 +9332,9 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
 
         $typeIDs = join(',', json_decode($typeID));
         $employeeIDs = join(',', json_decode($employeeIDs));
+        $companyID = join(',', json_decode($companyID));
 
-        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , 14);
+        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , "exchange-gainloss-gl");
 
         return DB::select('SELECT * FROM ( SELECT
         erp_bookinvsuppmaster.bookingDate AS documentDate,
@@ -9356,7 +9359,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         erp_bookinvsuppmaster.approved = -1 AND
         erp_bookinvsuppmaster.documentType = 4 AND
         4 IN (' . $typeIDs . ') AND
-        erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
+        erp_bookinvsuppmaster.companySystemID IN ('.$companyID.')
         UNION ALL
         SELECT
         erp_paysupplierinvoicemaster.BPVdate AS documentDate,
@@ -9381,7 +9384,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
         erp_paysupplierinvoicemaster.approved = -1 AND
         5 IN (' . $typeIDs . ') AND
-        erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
+        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
         UNION ALL
         SELECT
         erp_paysupplierinvoicemaster.BPVdate AS documentDate,
@@ -9406,7 +9409,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
         erp_paysupplierinvoicemaster.approved = -1 AND
         6 IN (' . $typeIDs . ') AND
-        erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
+        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
         UNION ALL
         SELECT
         erp_bookinvsuppmaster.bookingDate AS documentDate,
@@ -9433,7 +9436,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         erp_bookinvsuppmaster.documentType = 1 AND
         expense_employee_allocation.documentSystemID = 11 AND
         1 IN (' . $typeIDs . ') AND
-        erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
+        erp_bookinvsuppmaster.companySystemID IN ('.$companyID.')
         UNION ALL
         SELECT
         erp_paysupplierinvoicemaster.BPVdate AS documentDate,
@@ -9458,7 +9461,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
         erp_paysupplierinvoicemaster.approved = -1 AND
         2 IN (' . $typeIDs . ') AND
-        erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
+        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
         UNION ALL 
         SELECT
          srp_erp_iouvouchers.voucherDate AS documentDate,
@@ -9479,7 +9482,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
     WHERE
         DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
         3 IN (' . $typeIDs . ') AND
-        srp_erp_iouvouchers.companyID = "'.$companyID.'" AND
+        srp_erp_iouvouchers.companyID IN ('.$companyID.') AND
         srp_erp_iouvouchers.approvedYN = 1
         UNION ALL  
         SELECT
@@ -9502,7 +9505,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
     WHERE
         DATE(erp_debitnote.debitNoteDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
         7 IN (' . $typeIDs . ') AND
-        erp_debitnote.companySystemID = "'.$companyID.'" AND
+        erp_debitnote.companySystemID IN ('.$companyID.') AND
         erp_debitnote.approved = -1
         UNION ALL
         SELECT
@@ -9529,7 +9532,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
         erp_paysupplierinvoicemaster.approved = -1 AND
         5 IN (' . $typeIDs . ') AND
-        erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'" AND
+        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.') AND
         erp_generalledger.documentSystemID = 4 AND 
         erp_generalledger.chartOfAccountSystemID = "'.$exchangeGainLossAccount.'"
         ) AS t1 WHERE t1.employeeID IN (' . $employeeIDs . ')');
@@ -9594,6 +9597,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
     public function getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas) {
         $typeID = join(",",json_decode($typeID));
         $employeeDatas = join(",",json_decode($employeeDatas));
+        $companyID = join(",",json_decode($companyID));
 
         return DB::select('SELECT * FROM (
             SELECT
@@ -9653,7 +9657,6 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
            erp_paysupplierinvoicemaster.approved = -1 AND
            erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . $employeeDatas . ') AND
            5 IN (' . $typeID . ') 
-           
            UNION ALL
            SELECT
            erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
@@ -9668,7 +9671,6 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
            erp_paysupplierinvoicemaster.approved = -1 AND
            erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . $employeeDatas . ') AND
            6 IN (' . $typeID . ') 
-            
            UNION ALL 
            SELECT
            srp_erp_iouvouchers.empID AS employeeID,
@@ -9693,7 +9695,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
        WHERE
            (DATE(erp_debitnote.debitNoteDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" OR DATE(erp_debitnote.debitNoteDate) < "' . $fromDate . '") AND
            7 IN (' . $typeID . ') AND
-           erp_debitnote.companySystemID = "'.$companyID.'" AND
+           erp_debitnote.companySystemID IN (' . $companyID . ') AND
            erp_debitnote.empID IN (' . $employeeDatas . ') AND
            erp_debitnote.approved = -1
            ) t GROUP BY t.employeeID');

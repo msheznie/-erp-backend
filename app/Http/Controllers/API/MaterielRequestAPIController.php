@@ -16,6 +16,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\inventory;
 use App\Http\Requests\API\CreateMaterielRequestAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestAPIRequest;
 use App\Models\Company;
@@ -27,6 +28,8 @@ use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\ItemIssueDetails;
+use App\Models\ItemMaster;
 use App\Models\PurchaseRequestDetails;
 use App\Models\ItemAssigned;
 use App\Models\Location;
@@ -44,6 +47,8 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\MaterielRequestRepository;
+use App\Services\Inventory\MaterialIssueService;
+use App\Services\Inventory\PullMaterialRequestFromMaterialIssueService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -57,6 +62,7 @@ use App\Repositories\MaterielRequestDetailsRepository;
 use Auth;
 use App\Models\ItemIssueMaster;
 use App\Services\ValidateDocumentAmend;
+use function Clue\StreamFilter\fun;
 
 /**
  * Class MaterielRequestController
@@ -69,11 +75,14 @@ class MaterielRequestAPIController extends AppBaseController
     private $materielRequestRepository;
     private $materielRequestDetailsRepository;
 
+    private $pullMrService;
 
-    public function __construct(MaterielRequestRepository $materielRequestRepo, MaterielRequestDetailsRepository $materielRequestDetailsRepo)
+
+    public function __construct(MaterielRequestRepository $materielRequestRepo, MaterielRequestDetailsRepository $materielRequestDetailsRepo, PullMaterialRequestFromMaterialIssueService $pullMrService)
     {
         $this->materielRequestRepository = $materielRequestRepo;
         $this->materielRequestDetailsRepository = $materielRequestDetailsRepo;
+        $this->pullMrService = $pullMrService;
 
     }
 
@@ -1518,6 +1527,142 @@ class MaterielRequestAPIController extends AppBaseController
         return $this->sendResponse($materialRequest, 'Purchase Request successfully return back to amend');
     }
 
+    public function getMaterialRequestRequestCodes(Request $request)
+    {
+        $input = $request->all();
+
+        $origin = $input['origin'];
+
+        switch ($origin)
+        {
+            case "materiel-issue":
+
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'wareHouseFrom'));
+
+                $selectedCompanyId = $input['companyId'];
+                $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+                if ($isGroup) {
+                    $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+                } else {
+                    $subCompanies = [$selectedCompanyId];
+                }
+
+                $confirmYn= 0;
+                if(isset($input['id']))
+                    $materialIssue = ItemIssueMaster::select('confirmedYN')->where('itemIssueAutoID',$input['id'])->first();
+                $confirmYn = $materialIssue->confirmedYN;
+
+                $search = isset($input['search']) ? $input['search'] : null;
+
+                $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
+                    ->where("approved", -1)
+                    ->where("cancelledYN", 0)
+                    ->where("serviceLineSystemID", $input['serviceLineSystemID']);
+
+                if ($search) {
+                    $search = str_replace("\\", "\\\\", $search);
+                    $materielRequests = $materielRequests->where(function ($query) use ($search) {
+                        $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+                            ->orWhere('comment', 'LIKE', "%{$search}%");
+                    });
+                }
+
+                $materielRequests = $materielRequests->get(['RequestID', 'RequestCode']);
+                return $materielRequests;
+                break;
+        }
+
+        return [];
+    }
+
+    public function getMaterialRequestDetails(Request $request) {
+       $input = $request->all();
+
+       $origin = $input['origin'];
+
+       switch ($origin)
+       {
+           case "materiel-issue":
+             return $this->pullMrFromMi($input);
+             break;
+       }
+
+       return [];
+
+    }
+
+    public function pullMrFromMi($input)
+    {
+
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'wareHouseFrom'));
+
+        return $this->pullMrService->getMaterialRequest($input);
+
+    }
+
+
+
+    public function getItemsToLink(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $search = $input['search'];
+        switch ($input['origin'])
+        {
+            case "material-issue" :
+                $itemMastersQuery = ItemMaster::where('primaryCompanySystemID',$companyId)->where('isActive',1)->where('itemApprovedYN',1)->where('financeCategoryMaster',1)
+                    ->whereHas('itemAssigned', function($q) use ($companyId) {
+                        $q->where('isActive',1)->where('isAssigned',-1)->where('companySystemID',$companyId);
+                    });
+
+
+                if($search) {
+                    $itemMastersQuery
+                        ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                        ->orWhere('primaryCode', 'LIKE', "%{$search}%");
+                }
+                    $itemMasters = $itemMastersQuery->limit(100)->get();
+
+                return $this->sendResponse($itemMasters->toArray(), 'Data retrieved successfully');
+                break;
+            default :
+                return [];
+                break;
+        }
+    }
+
+    public function getLinkedItemsDetails(Request $request)
+    {
+        $input = $request->all();
+
+        if(!isset($input['itemIssueAutoId']))
+            return $this->sendError('Materiel Issue id not found');
+
+        if(!isset($input['itemSystemCode']))
+            return $this->sendError('Item id not found to link');
+
+        if(!isset($input['companyId']))
+            return $this->sendError('Company Id not found');
+
+        $itemIssueMaster =  ItemIssueMaster::where('itemIssueAutoID',$input['itemIssueAutoId'])->first();
+        $materialRequestId = $input['requestID'];
+
+        $materielIssuesPrvIssuedDetails = ItemIssueDetails::whereHas('master', function($q) use ($materialRequestId) {
+            $q->where('reqDocID',$materialRequestId);
+        })->where('itemCodeSystem',$input['itemSystemCode'])->sum('qtyIssued');
+
+        $data = array('companySystemID' => $input['companyId'],
+            'itemCodeSystem' => $input['itemSystemCode'],
+            'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty['originalItem'] = ItemMaster::where('itemCodeSystem',$input['itemSystemCode'])->first();
+        $itemCurrentCostAndQty['prvIssuedQty'] = $materielIssuesPrvIssuedDetails;
+        if(!$itemCurrentCostAndQty)
+            return $this->sendError('Item details not found');
+
+        return $this->sendResponse($itemCurrentCostAndQty,"Details reterived successfully!");
+
+    }
 
     
 }

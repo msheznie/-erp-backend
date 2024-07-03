@@ -334,7 +334,8 @@ class TaxService
             $data['percentage'] = $taxDetails->percentage;
             $data['vatSubCategoryID'] = $taxDetails->taxVatSubCategoriesAutoID;
             $data['vatMasterCategoryID'] = $taxDetails->mainCategory;
-        } else {
+        }
+        /*else {
             if ($isSupplier) {
                 $supplier = SupplierAssigned::where('companySystemID', $companySystemID)
                     ->where('supplierCodeSytem', $partyID)
@@ -352,7 +353,7 @@ class TaxService
                     $data['percentage'] = $customer->vatPercentage;
                 }
             }
-        }
+        }*/
 
         return $data;
     }

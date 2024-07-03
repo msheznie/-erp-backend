@@ -64,13 +64,27 @@ class VatReportService
             if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                 $inputOutputVatReport->setPartyName($val->supplier->supplierName);
             }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
-                $inputOutputVatReport->setPartyName($val->customer->CustomerName);
+                if(isset($val->bank_receipt['payeeTypeID']) && $val->bank_receipt['payeeTypeID'] == 2){
+                    if(isset($val->employee['empFullName'])) {
+                        $inputOutputVatReport->setPartyName($val->employee['empFullName']);
+                    }
+                } else {
+                    if(isset($val->customer->CustomerName)) {
+                        $inputOutputVatReport->setPartyName($val->customer->CustomerName);
+                    }
+                }
             }
 
             if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                 $inputOutputVatReport->setCountry($val->supplier->country->countryName);
             }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
-                $inputOutputVatReport->setCountry($val->customer->country->countryName);
+                if(isset($val->bank_receipt['payeeTypeID']) && $val->bank_receipt['payeeTypeID'] == 2) {
+                }
+                else {
+                    if(isset($val->customer->country->countryName)) {
+                        $inputOutputVatReport->setCountry($val->customer->country->countryName);
+                    }
+                }
             }
 
             if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){

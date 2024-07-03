@@ -28,6 +28,7 @@
                         <th></th>
                         <th>Document Code</th>
                         <th>Posted Date</th>
+                        <th>Account</th>
                         <th>Invoice Number</th>
                         <th>Invoice Date</th>
                         <th>Narration</th>
@@ -48,6 +49,12 @@
 
                             @if ($value->PostedDate && $value->PostedDate != '1970-01-01')
                                 <td>{{ \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\App\helper\Helper::dateFormat($value->PostedDate))}}</td>
+                            @else
+                                <td>-</td>
+                            @endif
+
+                            @if ($value->AccountDescription)
+                                <td>{{ $value->AccountDescription }}</td>
                             @else
                                 <td>-</td>
                             @endif
@@ -84,7 +91,7 @@
                         </tr>
                     @endforeach
                     <tr>
-                        <td colspan="7" style="text-align: right;"><b>Total:</b></td>
+                        <td colspan="8" style="text-align: right;"><b>Total:</b></td>
                         <td style="text-align: left;  font-weight: bold">{{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber(\App\helper\Helper::customerLedgerReportSum($reportData[$name][$currencyKey], 'invoice'))}}</td>
                         <td></td>
                     </tr>
@@ -93,7 +100,7 @@
         @endforeach
         <tbody>
             <tr>
-                <td colspan="7" style="text-align: right"><b>Grand Total:</b></td>
+                <td colspan="8" style="text-align: right"><b>Grand Total:</b></td>
                 <td style="text-align: left; font-weight: bold;">
                         @if(isset($invoiceAmount))
                         {{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber(round($invoiceAmount, $currencyDecimalPlace))}}

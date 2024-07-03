@@ -50,6 +50,7 @@ use App\Models\CustomerMaster;
 use App\Models\Company;
 use App\Models\ErpProjectMaster;
 use App\Models\SegmentMaster;
+use App\Repositories\VatReturnFillingMasterRepository;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use App\Models\CustomerCurrency;
@@ -70,10 +71,12 @@ class CreditNoteAPIController extends AppBaseController
 {
     /** @var  CreditNoteRepository */
     private $creditNoteRepository;
+    private $vatReturnFillingMasterRepo;
 
-    public function __construct(CreditNoteRepository $creditNoteRepo)
+    public function __construct(CreditNoteRepository $creditNoteRepo, VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
     {
         $this->creditNoteRepository = $creditNoteRepo;
+        $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
     }
 
     /**
@@ -1082,7 +1085,7 @@ class CreditNoteAPIController extends AppBaseController
                 break;
             case 'create':
 
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
                     ->whereHas('customer_master',function($q){
                         $q->where('isCustomerActive',1);
                     })    
@@ -1094,7 +1097,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
-                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
 
                 $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
                 ->where('companySystemID', $companySystemID)
@@ -1124,14 +1127,14 @@ class CreditNoteAPIController extends AppBaseController
             case 'edit' :
                 $id = $input['id'];
                 $master = CreditNote::where('creditNoteAutoID', $id)->first();
-                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
 
                 if ($master->customerID != '') {
                     $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
                 } else {
                     $output['currencies'] = [];
                 }
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
                     ->whereHas('customer_master',function($q){
                         $q->where('isCustomerActive',1);
                     })       
@@ -1774,6 +1777,12 @@ WHERE
                     return $this->sendError($validatePendingGlPost['message']);
                 }
             }
+
+            $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$masterData->companySystemID);
+            if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
+                $errorMessage = "Credit Note " . $validateVatReturnFilling['message'];
+                return $this->sendError($errorMessage);
+            }
         }
 
 
@@ -1837,15 +1846,27 @@ WHERE
                 ->delete();
 
             //deleting records from tax ledger
-            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
+            TaxLedger::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
                 ->delete();
 
-            TaxLedgerDetail::where('documentMasterAutoID', $id)
+            $taxLedgerDetails = TaxLedgerDetail::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
+                ->get();
+
+            $returnFilledDetailID = null;
+            foreach ($taxLedgerDetails as $taxLedgerDetail) {
+                if($taxLedgerDetail->returnFilledDetailID != null){
+                    $returnFilledDetailID = $taxLedgerDetail->returnFilledDetailID;
+                }
+                $taxLedgerDetail->delete();
+            }
+
+            if($returnFilledDetailID != null){
+                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
+            }
 
             // updating fields
             $masterData->confirmedYN = 0;

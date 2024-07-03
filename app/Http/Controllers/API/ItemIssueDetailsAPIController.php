@@ -218,7 +218,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     ->first();
             } else if ($input['issueType'] == 2) {
                 $item = MaterielRequestDetails::where('RequestDetailsID', $input['itemCode'])->with(['item_by'])->first();
-
                 if ($item && is_null($item->itemCode)) {
                     if (isset($input['mappingItemCode']) && $input['mappingItemCode'] > 0) {
                         $itemMap = $this->matchRequestItem($item->RequestID, $input['mappingItemCode'], $companySystemID, $item->toArray());
@@ -239,6 +238,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if (empty($item)) {
             return $this->sendError('Item not found');
         }
+
 
         if (isset($input['itemIssueAutoID'])) {
             if ($input['itemIssueAutoID'] > 0) {
@@ -303,7 +303,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
 
-        } else if ($input['issueType'] == 2) {
+        }
+        else if ($input['issueType'] == 2) {
 
 
             $input['itemCodeSystem'] = $item->itemCode;
@@ -329,8 +330,15 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             $input['convertionMeasureVal'] = $item->convertionMeasureVal;
             $input['qtyRequested'] = (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] :$item->quantityRequested;
-            $input['qtyIssued'] = (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
-            $input['qtyIssuedDefaultMeasure'] =  (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
+            if(isset($input['originFrom']) && $input['originFrom'] == "material-request")
+            {
+                $input['qtyIssued'] = (isset($input['qtyIssued'])) ? $input['qtyIssued'] : 0;
+                $input['qtyIssuedDefaultMeasure'] =  (isset($input['qtyIssued'])) ? $input['qtyIssued'] : 0;
+            }else {
+                $input['qtyIssued'] = (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
+                $input['qtyIssuedDefaultMeasure'] =  (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
+            }
+
             $input['itemPrimaryCode'] = $item->item_by->primaryCode;
         }
 
@@ -611,7 +619,13 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $input['clientReferenceNumber'] = $clientReferenceNumber->clientReferenceNumber;
             }
         }
-        $input = MaterialIssueService::getItemDetailsForMaterialIssue($input);
+        if(!isset($input['originFrom']))
+        {
+            $input = MaterialIssueService::getItemDetailsForMaterialIssue($input);
+
+        }
+
+
         $itemIssueDetails = $this->itemIssueDetailsRepository->create($input);
 
 
@@ -1187,6 +1201,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         $itemIssueDetails->delete();
 
+        if(isset($itemIssue->details) && $itemIssue->details->count() == 0) {
+            $itemIssue->reqDocID = 0;
+            $itemIssue->save();
+        }
+
         return $this->sendResponse($id, 'Materiel Issue Details deleted successfully');
     }
 
@@ -1230,6 +1249,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             ItemIssueDetails::where('itemIssueAutoID', $id)->delete();
             ItemIssueMaster::where('itemIssueAutoID', $id)->update(['counter' => 0]);
+            ItemIssueMaster::where('itemIssueAutoID', $id)->update(['reqDocID' => 0]);
             return $this->sendResponse([], 'Items Deleted Successfully');
 
         } else {

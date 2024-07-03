@@ -30,6 +30,8 @@ Route::group([], function(){
     Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser')->name("Get asset depreciation approved");
     Route::post('getVerificationApprovalByUser', 'AssetVerificationAPIController@getVerificationApprovalByUser')->name("Get asset verification pending for approval");
     Route::post('getVerificationApprovedByUser', 'AssetVerificationAPIController@getVerificationApprovedByUser')->name("Get asset verification approved");
+    Route::post('getCostingBulkApprovalByUser', 'FixedAssetMasterAPIController@getCostingBulkApprovalByUser')->name("Get asset costing pending bulk for approval");
+    Route::post('getCostingBulkApprovalDetails', 'FixedAssetMasterAPIController@getCostingBulkApprovalDetails')->name("Get asset costing pending details bulk for approval");
 
 });
 

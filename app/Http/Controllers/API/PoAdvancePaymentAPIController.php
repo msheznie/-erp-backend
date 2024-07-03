@@ -916,8 +916,18 @@ ORDER BY
         $advancePayment->cancelledComment = $input['comment']; 
         $advancePayment->cancelledByEmployeeSystemID = \Helper::getEmployeeSystemID(); 
         $advancePayment->cancelledDate = Carbon::now(); 
+        $advancePayment->reqAmount = 0;
+        $advancePayment->reqAmountTransCur_amount = 0;
+        $advancePayment->reqAmountInPOTransCur = 0;
+        $advancePayment->reqAmountInPOLocalCur = 0;
+        $advancePayment->reqAmountInPORptCur = 0;
 
         $advancePayment->save();
+
+        PoPaymentTerms::where('paymentTermID',$advancePayment['poTermID'])->update([
+            'comAmount' => 0,
+            'comPercentage' => 0
+        ]);
 
         return $this->sendResponse([], 'Successfully cancelled');
     }

@@ -78,7 +78,7 @@ class RecieptVoucherTaxLedgerService
             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,directReceiptAutoID');
         }])->find($masterModel["autoID"]);
 
-        if($masterData->documentType == 15)
+        if($masterData->documentType == 15 || $masterData->documentType == 14)
         {
             
 
@@ -88,8 +88,11 @@ class RecieptVoucherTaxLedgerService
             }
     
             $ledgerData['documentCode'] = $masterData->custPaymentReceiveCode;
-        
-            $ledgerData['partyID'] = $masterData->customerID;
+            if($masterData->payeeTypeID == 1) {
+                $ledgerData['partyID'] = $masterData->customerID;
+            } else {
+                $ledgerData['partyID'] = $masterData->PayeeEmpID;
+            }
             $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
     
             if (isset($masterModel["matching"]) && $masterModel["matching"]) {
@@ -266,8 +269,13 @@ class RecieptVoucherTaxLedgerService
                         $ledgerDetailsData['originalInvoice'] = null;
                         $ledgerDetailsData['originalInvoiceDate'] = null;
                         $ledgerDetailsData['dateOfSupply'] = null;
-                        $ledgerDetailsData['partyType'] = 1;
-                        $ledgerDetailsData['partyAutoID'] = $masterData->customerID;
+                        if($masterData->payeeTypeID == 1) {
+                            $ledgerDetailsData['partyType'] = 1;
+                            $ledgerDetailsData['partyAutoID'] = $masterData->customerID;
+                        } else {
+                            $ledgerDetailsData['partyType'] = 2;
+                            $ledgerDetailsData['partyAutoID'] = $masterData->PayeeEmpID;
+                        }
                         $ledgerDetailsData['partyVATRegisteredYN'] = isset($masterData->customer->vatEligible) ? $masterData->customer->vatEligible : 0;
                         $ledgerDetailsData['partyVATRegNo'] = isset($masterData->customer->vatNumber) ? $masterData->customer->vatNumber : "";
                         $ledgerDetailsData['countryID'] = isset($masterData->customer->customerCountry) ? $masterData->customer->customerCountry : "";

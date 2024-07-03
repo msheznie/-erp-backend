@@ -89,8 +89,11 @@ Route::group([], function () {
 
 
 //Material request Trans
+
 Route::group([], function () {
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
+
+
     Route::resource('request_reffered_back', 'RequestRefferedBackAPIController');
     Route::resource('request_details_reffered_backs', 'RequestDetailsRefferedBackAPIController');
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
@@ -123,6 +126,10 @@ Route::group([], function () {
     Route::post('requestDetailsAddAllItems', 'MaterielRequestDetailsAPIController@requestDetailsAddAllItems')->name('Material request add all item');
     Route::post('materialRequestValidateItem', 'MaterielRequestDetailsAPIController@materialRequestValidateItem')->name('Material request validate item');
     Route::post('material_requests/remove_all_items/{id}', 'MaterielRequestDetailsAPIController@removeAllItems')->name('Material request remove all items');
+    Route::post('get-mr-codes','MaterielRequestAPIController@getMaterialRequestRequestCodes');
+    Route::post('get-mr-details','MaterielRequestAPIController@getMaterialRequestDetails');
+    Route::post('get-items-to-link','MaterielRequestAPIController@getItemsToLink');
+    Route::post('get-linked-items-details','MaterielRequestAPIController@getLinkedItemsDetails');
 
 });
 
@@ -151,6 +158,10 @@ Route::group([], function () {
     Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack')->name("Material Issue Refer Back");
     Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany')->name("Get All Material Issue By Company");
     Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues')->name("Get ReferBack History By Materiel Issues");
+    Route::post('add-items-to-mi-from-mr','ItemIssueMasterAPIController@addItemFromMrToMiDetails');
+    Route::post('validate-item-before-add','ItemIssueMasterAPIController@validateItemBeforeAdd');
+    Route::post('store-all-details-mi','ItemIssueMasterAPIController@storeAllItemsFromMr');
+
 });
 
 //Material return Trans

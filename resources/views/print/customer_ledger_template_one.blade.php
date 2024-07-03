@@ -176,6 +176,7 @@
                 <tr style="width:100%">
                     <th>Document Code</th>
                     <th>Posted Date</th>
+                    <th>Account</th>
                     <th>Invoice Number</th>
                     <th>Invoice Date</th>
                     <th>Contract</th>
@@ -194,6 +195,7 @@
                     <tr style="width:100%">
                         <td>{{ $det2->DocumentCode }}</td>
                         <td>{{ \App\helper\Helper::dateFormat($det2->PostedDate)}}</td>
+                        <td>{{ $det2->AccountDescription }}</td>
                         <td class="white-space-pre-line">{{ $det2->invoiceNumber }}</td>
                         <td> {{ \App\helper\Helper::dateFormat($det2->InvoiceDate)}}</td>
                         <td>{{ $det2->Contract }}</td>
@@ -209,7 +211,7 @@
                     {{$lineTotal3 += $det2->balanceAmount}}
                 @endforeach
                 <tr width="100%">
-                    <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
+                    <td colspan="8" style="border-bottom-color:white !important;border-left-color:white !important"
                             class="text-right"><b>Total:</b></td>
                   
                     <td style="text-align: right"><b>{{ number_format($lineTotal1, $currencyDecimalPlace) }}</b></td>

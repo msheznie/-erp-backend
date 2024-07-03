@@ -151,7 +151,17 @@ class ApprovalRoleAPIController extends AppBaseController
     }
 
     public function assignApprovalGroup(Request $request){
+
+        $approvalGroupAlreadyExist = ApprovalRole::where('approvalLevelID',$request->approvalLevelID)
+                                                    ->where('approvalGroupID',$request->approvalGroupID)
+                                                    ->count();
+
         $approvalRole = $this->approvalRoleRepository->findWithoutFail($request->rollMasterID);
+
+        if($approvalGroupAlreadyExist > 0){
+            return $this->sendError('The selected approval group has already been assigned to an approval level.', 500,['type' => $approvalRole]);
+        }
+
         if (empty($approvalRole)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_groups')]));
         }

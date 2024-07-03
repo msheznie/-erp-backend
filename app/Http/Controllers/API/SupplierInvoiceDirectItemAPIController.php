@@ -408,7 +408,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($supplierInvoice->documentSystemID, $supplierInvoice->companySystemID, $id, $input, 0, $supplierInvoice->documentType);
 
             \Helper::updateSupplierRetentionAmount($input['bookingSuppMasInvAutoID'],$supplierInvoice);
-
+            \Helper::updateSupplierItemWhtAmount($input['bookingSuppMasInvAutoID'],$supplierInvoice);
             DB::commit();
             return $this->sendResponse($suppItemDetails->toArray(), 'Supplier Invoice Details updated successfully');
         } catch (\Exception $ex) {
@@ -471,6 +471,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
     
         \Helper::updateSupplierRetentionAmount($supplierInvoiceDirectItem->bookingSuppMasInvAutoID,$supplierInvoice);
+        \Helper::updateSupplierItemWhtAmount($supplierInvoiceDirectItem->bookingSuppMasInvAutoID,$supplierInvoice);
 
         return $this->sendResponse([], 'Supplier Invoice Direct Item deleted successfully');
     }
@@ -525,6 +526,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         }
 
         \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$supInvoice);
+        \Helper::updateSupplierItemWhtAmount($bookingSuppMasInvAutoID,$supInvoice);
         return $this->sendResponse($bookingSuppMasInvAutoID, 'Details deleted successfully');
     }
 }

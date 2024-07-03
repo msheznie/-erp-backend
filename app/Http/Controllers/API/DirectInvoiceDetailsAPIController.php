@@ -432,6 +432,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         SupplierInvoice::updateMaster($input['directInvoiceAutoID']);
 
         \Helper::updateSupplierRetentionAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
+        \Helper::updateSupplierDirectWhtAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
 
 
         return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details updated successfully');
@@ -498,7 +499,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         $bookInvSuppMaster = BookInvSuppMaster::find($directInvoiceDetails->directInvoiceAutoID);
         \Helper::updateSupplierRetentionAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
-
+        \Helper::updateSupplierDirectWhtAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
         SupplierInvoice::updateMaster($directInvoiceDetails->directInvoiceAutoID);
 
         return $this->sendResponse($id, 'Direct Invoice Details deleted successfully');
@@ -551,7 +552,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
                 }
             }
         \Helper::updateSupplierRetentionAmount($directInvoiceAutoID,$supInvoice);
-
+        \Helper::updateSupplierDirectWhtAmount($directInvoiceAutoID,$supInvoice);
         SupplierInvoice::updateMaster($directInvoiceAutoID);
 
         return $this->sendResponse($directInvoiceAutoID, 'Details deleted successfully');

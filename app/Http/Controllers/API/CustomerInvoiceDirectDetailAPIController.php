@@ -370,7 +370,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             return $this->sendError(
                 $resultData['message'],
                 404,
-                (isset($resultData['type']['type']) && $resultData['type']['type'] == 'vat') ? $resultData['type'] : array('type' => '')
+                (isset($resultData['type']['type']) && $resultData['type']['type']) ? $resultData['type'] : array('type' => '')
             );
         }
 

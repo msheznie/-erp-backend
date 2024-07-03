@@ -204,6 +204,7 @@ Route::group([], function() {
     Route::get('checkUnitConversions', 'ItemMasterAPIController@checkUnitConversions')->name('Check unit conversions');
     Route::post('updateUnitConversion', 'ItemMasterAPIController@updateUnitConversion')->name('Update unit conversion');
     Route::post('getCategoryType', 'ItemMasterAPIController@categoryType')->name('Get category type');
+    Route::post('getSubcategoriesByItemType', 'ItemMasterAPIController@getSubcategoriesByItemType')->name('Get sub categories by item type');
 });
 
 

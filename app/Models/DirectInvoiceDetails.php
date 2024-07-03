@@ -181,7 +181,10 @@ class DirectInvoiceDetails extends Model
         'deductionType',
         'netAmountLocal',
         'netAmountRpt',
-        'detail_project_id'
+        'detail_project_id',
+        'whtApplicable',
+        'whtAmount',
+        'whtEdited'
     ];
 
     /**

@@ -89,6 +89,7 @@ use App\Models\ExpenseAssetAllocation;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
+use App\Repositories\VatReturnFillingMasterRepository;
 use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
@@ -103,6 +104,7 @@ use Response;
 use App\Models\SupplierBlock;
 use App\Services\ValidateDocumentAmend;
 use DateTime;
+use App\Models\Tax;
 /**
  * Class BookInvSuppMasterController
  * @package App\Http\Controllers\API
@@ -114,13 +116,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
     private $userRepository;
     private $supplierInvoiceItemDetailRepository;
     private $expenseAssetAllocationRepository;
+    private $vatReturnFillingMasterRepo;
 
-    public function __construct(BookInvSuppMasterRepository $bookInvSuppMasterRepo, UserRepository $userRepo, SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo)
+    public function __construct(BookInvSuppMasterRepository $bookInvSuppMasterRepo, UserRepository $userRepo, SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo,VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
     {
         $this->bookInvSuppMasterRepository = $bookInvSuppMasterRepo;
         $this->userRepository = $userRepo;
         $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
         $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
+        $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
     }
 
     /**
@@ -365,7 +369,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
             }
         } else {
-            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
             if (is_null($checkEmployeeControlAccount)) {
                 return $this->sendError('Please configure Employee control account for this company', 500);
@@ -426,7 +430,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         },'supplier' => function($query){
-            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage');
+            $query->with('tax')->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage,whtApplicableYN,whtType');
         },'employee' => function($query){
             $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
@@ -534,6 +538,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
         /** @var BookInvSuppMaster $bookInvSuppMaster */
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
 
+        $isRcmActive = $bookInvSuppMaster->rcmActivated;
+        $totalOrderAmount = 0;
+        $totalTaxAmount = 0;
+
+        $totalNetAmount = 0;
         if (empty($bookInvSuppMaster)) {
             return $this->sendError('Supplier Invoice not found');
         }
@@ -594,7 +603,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
         } else {
-            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
             if (is_null($checkEmployeeControlAccount)) {
                 return $this->sendError('Please configure Employee control account for this company', 500);
@@ -741,7 +750,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-
+            $totalWhtAmount = $bookInvSuppMaster->whtAmount;
+            $retentionPercentageVal = $bookInvSuppMaster->retentionPercentage;
             if(($input['isSupplierBlocked']) && ($bookInvSuppMaster->documentType == 0 ||$bookInvSuppMaster->documentType == 2) )
             {
        
@@ -837,12 +847,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             }
 
-            
             if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
 
-                $isConfigured = SystemGlCodeScenario::find(13);
+                $slug = "retention-control-account";
+                $isConfigured = SystemGlCodeScenario::where('slug',$slug)->first();
                 $companyID = isset($bookInvSuppMaster->companySystemID) ? $bookInvSuppMaster->companySystemID: null;
-                $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->where('companySystemID', $companyID)->first();
+                $isDetailConfigured = ($isConfigured) ? SystemGlCodeScenarioDetail::where('systemGLScenarioID', $isConfigured->id)->where('companySystemID', $companyID)->first() : null;
                 if($isConfigured && $isDetailConfigured) {
                     if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
                         return $this->sendError('Chart of account is not configured for retention control account', 500);
@@ -875,7 +885,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $bookInvSuppMaster->companySystemID)
                                     ->first();
 
-                $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($bookInvSuppMaster->companySystemID, null, 12);
+                $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($bookInvSuppMaster->companySystemID, null, "employee-control-account");
 
                 $companyData = Company::find($bookInvSuppMaster->companySystemID);
 
@@ -998,6 +1008,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 if (TaxService::checkPOVATEligible($input['supplierVATEligible'], $input['vatRegisteredYN'])) {
                     if (!empty($dirItemDetails)) {
                         foreach ($dirItemDetails as $itemDiscont) {
+
+                            $totalOrderAmount += floatval($itemDiscont['netAmount']);
+                            $totalTaxAmount += floatval($itemDiscont['VATAmount']) * floatval($itemDiscont['noQty']);
+
                             $calculateItemDiscount = 0;
                             $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
 
@@ -1042,6 +1056,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 } else {
                     if (!empty($dirItemDetails)) {
                         foreach ($dirItemDetails as $itemDiscont) {
+
+                            $totalOrderAmount += floatval($itemDiscont['netAmount']);
+                            $totalTaxAmount += floatval($itemDiscont['VATAmount']) * floatval($itemDiscont['noQty']);
+
                             $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
 
                             $currencyConversion = \Helper::currencyConversion(
@@ -1171,6 +1189,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+      
             $directInvoiceDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
 
             $finalError = array('amount_zero' => array(),
@@ -1196,6 +1215,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             foreach ($directInvoiceDetails as $item) {
+                $totalOrderAmount += floatval($item->DIAmount);
+                $totalTaxAmount += floatval($item->VATAmount);
                 $updateItem = DirectInvoiceDetails::find($item['directInvoiceDetailsID']);
 
                 if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
@@ -1234,6 +1255,25 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
             }
+          
+
+            if ($input['documentType'] == 1 || $input['documentType'] == 3) 
+            {
+                    if($isRcmActive == 1)
+                    {
+                        $totalNetAmount = $totalOrderAmount-(($totalOrderAmount + $totalTaxAmount) * $retentionPercentageVal/100 ) - $totalWhtAmount;
+                    }
+                    else
+                    {
+                        $totalNetAmount = ($totalOrderAmount + $totalTaxAmount)-(($totalOrderAmount + $totalTaxAmount) * $retentionPercentageVal/100 ) - $totalWhtAmount;
+                    }
+                    if($totalNetAmount < 0)
+                    {
+                        return $this->sendError('The net amount cannot be less than zero. Please check the net amount.',500);
+
+                    }
+            }
+       
 
             if($input['documentType'] == 1 || $input['documentType'] == 4) {
                 $directInvoiceItems = $directItems;
@@ -1421,7 +1461,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 
         SupplierInvoice::updateMaster($id);
+        if($bookInvSuppMaster->whtEdited == false)
+        {
+            \Helper::updateSupplierWhtAmount($id,$bookInvSuppMaster);
+            \Helper::updateSupplierDirectWhtAmount($id,$bookInvSuppMaster);
+            \Helper::updateSupplierItemWhtAmount($id,$bookInvSuppMaster);
 
+        }
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully');
     }
 
@@ -2183,7 +2229,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function getInvoiceMasterFormData(Request $request)
     {
         $companyId = $request['companyId'];
-
+        
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -2249,7 +2295,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->where('companySystemID', $companyId)
                             ->first();                            
 
-        $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, 12);
+        $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, "employee-control-account");
 
         $companyData = Company::find($companyId);
 
@@ -2266,6 +2312,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $projects = [];
         $projects = ErpProjectMaster::where('companySystemID', $companyId)
                                         ->get();
+        $whtTypes = Tax::where('companySystemID',$companyId)->where('taxCategory',3)->where('isActive',1)->get();
+
+  
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -2288,6 +2337,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isProjectBase' => $isProject_base,
             'projects' => $projects,
             'employeeAllocatePolicy' => ($employeeAllocate && $employeeAllocate->isYesNO == 1) ? true : false,
+            'whtTypes' => $whtTypes
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -3191,6 +3241,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                     return $this->sendError($validatePendingGlPost['message']);
                 }
             }
+
+            $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$bookInvSuppMasterData->companySystemID);
+            if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
+                $errorMessage = "Supplier Invoice " . $validateVatReturnFilling['message'];
+                return $this->sendError($errorMessage);
+            }
         }
 
 
@@ -3275,10 +3331,22 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();
 
-            TaxLedgerDetail::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
+            $taxLedgerDetails = TaxLedgerDetail::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
-                ->delete();
+                ->get();
+
+            $returnFilledDetailID = null;
+            foreach ($taxLedgerDetails as $taxLedgerDetail) {
+                if($taxLedgerDetail->returnFilledDetailID != null){
+                    $returnFilledDetailID = $taxLedgerDetail->returnFilledDetailID;
+                }
+                $taxLedgerDetail->delete();
+            }
+
+            if($returnFilledDetailID != null){
+                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
+            }
 
             BudgetConsumedData::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)

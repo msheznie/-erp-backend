@@ -588,4 +588,20 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
         return ['status' => true];
     }
+
+    /*
+     * Start update vat return filling total amounts after document pull for vat return filling & amend document
+     */
+    public function updateVatReturnFillingDetails($returnFilledDetailID){
+        $taxDetail = TaxLedgerDetail::where('returnFilledDetailID', $returnFilledDetailID)->get();
+
+        $taxAmount = collect($taxDetail)->sum('VATAmountLocal');
+        $taxableAmount = collect($taxDetail)->sum('taxableAmountLocal');
+
+        $fillingDetail = VatReturnFillingDetail::find($returnFilledDetailID);
+
+        $fillingDetail->update(['taxableAmount' => $taxableAmount, 'taxAmount' => $taxAmount]);
+
+        $this->updateFillingFormula($fillingDetail->vatReturnFillingID);
+    }
 }

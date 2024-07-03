@@ -1139,11 +1139,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $excelColumnFormat = [
                         'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
                         'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'k' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
+
                     return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat) {
                         $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
                             $sheet->setColumnFormat($excelColumnFormat);
@@ -4086,7 +4087,8 @@ GROUP BY
         $customers = (array)$request->customers;
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
 
         $currency = $request->currencyID;
         $currencyQry = '';
@@ -4133,7 +4135,9 @@ GROUP BY
 	final.companyID,
 	final.CompanyName,
 	final.documentSystemCode,
-	final.documentSystemID
+	final.documentSystemID,
+	final.chartOfAccountSystemID,
+	final.AccountDescription
 FROM
 	(
 SELECT
@@ -4150,7 +4154,7 @@ SELECT
 	mainQuery.documentDateFilter,
 	mainQuery.invoiceNumber,
 	mainQuery.invoiceDate,
-	mainQuery.chartOfAccountSystemID,
+	mainQuery.chartOfAccountSystemID as chartOfAccountSystemID,
 	mainQuery.glCode,
 	mainQuery.documentNarration,
 	mainQuery.clientContractID,
@@ -4200,7 +4204,8 @@ IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS
 	mainQuery.concatCustomerName, 
 	mainQuery.CutomerCode,
 	mainQuery.CustomerName,  
-	mainQuery.PONumber 
+	mainQuery.PONumber,
+	chartofaccounts.AccountDescription
 FROM
 	(
 SELECT
@@ -4220,7 +4225,7 @@ SELECT
 	erp_generalledger.chequeNumber,
 	erp_generalledger.invoiceNumber,
 	erp_generalledger.invoiceDate,
-	erp_generalledger.chartOfAccountSystemID,
+	erp_generalledger.chartOfAccountSystemID as chartOfAccountSystemID,
 	erp_generalledger.glCode,
 	erp_generalledger.documentNarration,
 	erp_generalledger.clientContractID,
@@ -4253,10 +4258,11 @@ FROM
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" OR erp_generalledger.documentSystemID = "87" ) 
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+	AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
 	) AS mainQuery
+	LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = mainQuery.chartOfAccountSystemID
 	LEFT JOIN (
 	SELECT
 		erp_matchdocumentmaster.companySystemID,
@@ -4459,7 +4465,9 @@ WHERE
         $customers = (array)$request->customers;
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+
+        $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
 
         $currencyID = $request->currencyID;
         $currencyQry = '';
@@ -4496,7 +4504,8 @@ WHERE
 	CustomerBalanceSummary_Detail.documentSystemID,
 	 ' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
-	' . $invoiceAmountQry . '
+	' . $invoiceAmountQry . ',
+	CustomerBalanceSummary_Detail.AccountDescription	
 FROM
 (
 SELECT
@@ -4535,7 +4544,8 @@ SELECT
 	IFNULL(srInvoiced.sumReturnRptAmount, 0) AS sumReturnRptAmount,
 	IFNULL(srDEO.sumReturnDEOTransactionAmount, 0) AS sumReturnDEOTransactionAmount,
 	IFNULL(srDEO.sumReturnDEOLocalAmount, 0) AS sumReturnDEOLocalAmount,
-	IFNULL(srDEO.sumReturnDEORptAmount, 0) AS sumReturnDEORptAmount
+	IFNULL(srDEO.sumReturnDEORptAmount, 0) AS sumReturnDEORptAmount,
+	chartofaccounts.AccountDescription as AccountDescription
 FROM
 	erp_generalledger
 	INNER JOIN customermaster ON customermaster.customerCodeSystem=erp_generalledger.supplierCodeSystem
@@ -4543,6 +4553,7 @@ FROM
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+	LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 	LEFT JOIN (
     SELECT 
         salesreturndetails.custInvoiceDirectAutoID,
@@ -4581,7 +4592,7 @@ FROM
 WHERE
 	(erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
 	AND DATE( erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
-	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
+	AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	UNION ALL 
@@ -4621,7 +4632,8 @@ WHERE
 	0 AS sumReturnRptAmount,
 	0 AS sumReturnDEOTransactionAmount,
 	0 AS sumReturnDEOLocalAmount,
-	0 AS sumReturnDEORptAmount
+	0 AS sumReturnDEORptAmount,
+	chartofaccounts.AccountDescription as AccountDescription
 FROM
 	erp_generalledger
 	INNER JOIN customermaster ON customermaster.customerCodeSystem=erp_generalledger.supplierCodeSystem
@@ -4629,10 +4641,11 @@ FROM
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+	LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 WHERE
 	(erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
 	AND DATE( erp_generalledger.documentDate) < "' . $fromDate . '"
-	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
+	AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.supplierCodeSystem) AS CustomerBalanceSummary_Detail ORDER BY CustomerBalanceSummary_Detail.documentDate ASC');

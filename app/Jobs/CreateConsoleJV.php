@@ -187,9 +187,9 @@ class CreateConsoleJV implements ShouldQueue
 
         $consoleJVDetailData['companySystemID'] = $stMaster->companyFromSystemID;
         $consoleJVDetailData['companyID'] = $stMaster->companyFrom;
-        $consoleJVDetailData['glAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, 10);
-        $consoleJVDetailData['glAccount'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, 10);
-        $consoleJVDetailData['glAccountDescription'] = SystemGlCodeScenarioDetail::getGlDescriptionByScenario($fromCompany->companySystemID, null, 10);
+        $consoleJVDetailData['glAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, "inter-company-transfer-revenue");
+        $consoleJVDetailData['glAccount'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, "inter-company-transfer-revenue");
+        $consoleJVDetailData['glAccountDescription'] = SystemGlCodeScenarioDetail::getGlDescriptionByScenario($fromCompany->companySystemID, null, "inter-company-transfer-revenue");
 
         $consoleJVDetailData['debitAmount'] = $revenueTotalRpt + $totalRpt;
         $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);

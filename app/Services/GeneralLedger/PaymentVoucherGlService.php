@@ -188,8 +188,8 @@ class PaymentVoucherGlService
                         $retentionRptAmount = $retentionData->rptAmount;
 
 
-                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
-                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
+                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
+                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransAmount'] = \Helper::roundValue($retentionTransAmount);
@@ -219,8 +219,8 @@ class PaymentVoucherGlService
 
                         $data['serviceLineSystemID'] = 24;
                         $data['serviceLineCode'] = 'X';
-                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
-                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") :$masterData->bank->chartOfAccountSystemID;
+                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->glCodeLinked;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
@@ -271,8 +271,8 @@ class PaymentVoucherGlService
 
                         $data['serviceLineSystemID'] = 24;
                         $data['serviceLineCode'] = 'X';
-                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
-                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") :$masterData->bank->chartOfAccountSystemID;
+                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->glCodeLinked;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
@@ -331,8 +331,8 @@ class PaymentVoucherGlService
 
                         Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
 
-                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
-                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
+                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
+                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
@@ -463,8 +463,8 @@ class PaymentVoucherGlService
 
                     $data['serviceLineSystemID'] = 24;
                     $data['serviceLineCode'] = 'X';
-                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
-                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") :$masterData->bank->chartOfAccountSystemID;
+                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->glCodeLinked;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
@@ -547,8 +547,8 @@ class PaymentVoucherGlService
                             $masterRpt = $masterData->payAmountCompRpt;
                             $data['serviceLineSystemID'] = 24;
                             $data['serviceLineCode'] = 'X';
-                            $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->chartOfAccountSystemID;
-                            $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                            $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->chartOfAccountSystemID;
+                            $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->glCodeLinked;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                             $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
@@ -745,8 +745,8 @@ class PaymentVoucherGlService
                             $masterRpt = $masterData->payAmountCompRpt;
                             $data['serviceLineSystemID'] = 24;
                             $data['serviceLineCode'] = 'X';
-                            $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->chartOfAccountSystemID;
-                            $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                            $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->chartOfAccountSystemID;
+                            $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->glCodeLinked;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                             $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
@@ -978,8 +978,8 @@ class PaymentVoucherGlService
                         $masterRpt = $masterData->payAmountCompRpt;
                         $data['serviceLineSystemID'] = 24;
                         $data['serviceLineCode'] = 'X';
-                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->chartOfAccountSystemID;
-                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->chartOfAccountSystemID;
+                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->glCodeLinked;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
@@ -1080,8 +1080,8 @@ class PaymentVoucherGlService
                     $masterRpt = $masterData->payAmountCompRpt;
                     $data['serviceLineSystemID'] = 24;
                     $data['serviceLineCode'] = 'X';
-                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->chartOfAccountSystemID;
-                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->chartOfAccountSystemID;
+                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account") : $masterData->bank->glCodeLinked;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
@@ -1210,8 +1210,8 @@ class PaymentVoucherGlService
 
                     Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
 
-                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
-                    $data['glCode'] =  SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
+                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
+                    $data['glCode'] =  SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;

@@ -78,6 +78,8 @@ use App\Models\MatchDocumentMaster;
 use App\Traits\AuditLogsTrait;
 use App\Models\SalesReturn;
 use App\Models\ItemIssueMaster;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 /**
  * Class CustomerMasterController
@@ -349,6 +351,8 @@ class CustomerMasterAPIController extends AppBaseController
                                                   ->where('isActive', 1);    
                                          })
                                         ->where('controlAccountsSystemID',3)
+                                        ->where('isApproved',1)
+                                        ->where('isActive',1)
                                         ->where('catogaryBLorPL', '=', 'BS')
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
@@ -365,6 +369,8 @@ class CustomerMasterAPIController extends AppBaseController
                                             ->orWhere('controlAccountsSystemID',5);
                                          })
                                         ->where('catogaryBLorPL', '=', 'BS')
+                                        ->where('isApproved',1)
+                                        ->where('isActive',1)
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
         $data['liabilityAccountsCOA'] = ChartOfAccount::whereHas('chartofaccount_assigned', function($query) use ($input) {
@@ -373,6 +379,8 @@ class CustomerMasterAPIController extends AppBaseController
                                                 ->where('isActive', 1);
                                         })
                                         ->where('catogaryBLorPL', '=', 'BS')
+                                        ->where('isApproved',1)
+                                        ->where('isActive',1)
                                         ->orderBy('AccountDescription', 'asc')
                                         ->get();
 
@@ -1262,15 +1270,31 @@ class CustomerMasterAPIController extends AppBaseController
            
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
-            //die();
-            //$originalFileName = 'item_template.xlsx';
-            
-         
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-              
-            })->get();
-             $uniqueData = array_filter(collect($formatChk)->toArray());
 
+
+            if($document_id == 57) {
+
+                $filePath = Storage::disk($disk)->path($originalFileName);
+                $spreadsheet = IOFactory::load($filePath);
+
+                $sheet = $spreadsheet->getActiveSheet();
+
+                $sheet->removeRow(1, 3);
+
+                $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+                $writer->save($filePath);
+                $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {
+                })->get();
+
+            } else {
+                //die();
+                //$originalFileName = 'item_template.xlsx';
+
+                $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+
+                })->get();
+            }
+             $uniqueData = array_filter(collect($formatChk)->toArray());
 
   
            
@@ -1280,8 +1304,6 @@ class CustomerMasterAPIController extends AppBaseController
          
              $total_count = count($uniqueData);
 
-
-        
 
              $supplier_error = array(
               'Primary Company' => array(),
@@ -1314,6 +1336,7 @@ class CustomerMasterAPIController extends AppBaseController
             $item_error = array(
                 'Primary Company' => array(),
                 'Finance Category' => array(),
+                'Item Type' => array(),
                 'Finance Sub Category' => array(),
                 'Part No / Ref.Number' => array(),
                 'Item Description'=> array(),
@@ -2698,12 +2721,8 @@ class CustomerMasterAPIController extends AppBaseController
 
                     break;
                 case '57':
+                        $count = 4;
 
-                 
-                
-                        $count = 1;
-                    
-                     
                     foreach($formatChk as $key=>$value)
                     {   
                         $item_data = [];
@@ -2722,6 +2741,35 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                   $totalItemCount++;
                                 }
+
+                            //check item type
+                            if ( (isset($value['item_type']) && !is_null($value['item_type'])) )
+                            {
+                                if($value['item_type'] != "S" && $value['item_type'] != "P" && $value['item_type'] != "SP") {
+                                    $valueNotExit = true;
+                                    array_push($item_error['Item Type'], 'line number '.$count.' Item Type should only have the values S, P and SP');
+                                } else {
+                                    if (isset($value['finance_sub_category']) && $value['item_type'] == 'S') {
+                                        $subCat = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])->whereIn('categoryType', ['[{"id":2,"itemName":"Sale"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->first();
+                                    } else if (isset($value['finance_sub_category']) && $value['item_type'] == 'P') {
+                                        $subCat = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->first();
+                                    } else {
+                                        $subCat = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])->first();
+                                    }
+
+                                    if (empty($subCat)) {
+                                        $valueNotExit = true;
+                                        array_push($item_error['Item Type'], 'Item Type not valid Item Type and Finance Sub Category mis-match in line item ' . $count . ', Finance Sub Category should match the Item Type selection. If Purchase it can be Purchase or Purchase & Sale, If Sales it can be  Sales or Purchase & Sale, If Purchase & Sales it can be of any type');
+                                    }
+                                }
+
+
+                            }
+                            else
+                            {
+                                $nullValue = true;
+                                array_push($item_error['Item Type'], 'line number '.$count.' null value');
+                            }
 
                                       //check companu validation
                             if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) )
@@ -2922,6 +2970,18 @@ class CustomerMasterAPIController extends AppBaseController
                             }
 
 
+                        if ( (isset($value['item_type']) && !is_null($value['item_type'])) )
+                        {
+
+                            if($value['item_type'] == 'S'){
+                                $item_data['categoryType'] = '[{"id":2,"itemName":"Sale"}]';
+                            } elseif ($value['item_type'] == 'P') {
+                                $item_data['categoryType'] = '[{"id":1,"itemName":"Purchase"}]';
+                            } elseif ($value['item_type'] == 'SP') {
+                                $item_data['categoryType'] = '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]';
+                            }
+                        }
+
                          
                             //check short description
                             if ( (isset($value['item_short_description']) && !is_null($value['item_short_description'])) )
@@ -3004,7 +3064,7 @@ class CustomerMasterAPIController extends AppBaseController
                     else
                     {
                         if ($succesfully_created == $totalItemCount) {
-                            $message = "All record Upload successfully";
+                            $message = "All records uploaded Successfully";
                             $msg_detail = [];
                             $is_success = true;
                            
