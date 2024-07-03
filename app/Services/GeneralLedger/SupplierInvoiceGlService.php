@@ -274,7 +274,7 @@ class SupplierInvoiceGlService
                             $retentionLocal = $data['documentLocalAmount'] * ($retentionPercentage / 100);
                             $retentionRpt = $data['documentRptAmount'] * ($retentionPercentage / 100);
                         }
-                    } else if ($masterData->documentType == 0) {
+                    } else if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
                         $totalVATAmount = 0;
                         $totalVATAmountLocal = 0;
@@ -348,7 +348,7 @@ class SupplierInvoiceGlService
                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                    if ($masterData->documentType == 0) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
 
                             $data['documentTransAmount'] = $retentionTransWithoutVat;
