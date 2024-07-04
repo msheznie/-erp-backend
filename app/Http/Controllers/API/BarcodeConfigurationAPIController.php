@@ -400,7 +400,6 @@ class BarcodeConfigurationAPIController extends AppBaseController
         $configuration = BarcodeConfiguration::where('companySystemID',$subCompanies[0])->first();
         $company = Company::find($subCompanies[0]);
         $companyID = $company?$company->CompanyName:null;
-
         $logo = $company->logo_url && $company->logo_url != null?$company->logo_url:null;
         $companyLogo = $company->companyLogo;
         $companyArabicName = $company->CompanyNameLocalized;
