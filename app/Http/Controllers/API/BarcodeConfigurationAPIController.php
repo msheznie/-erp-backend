@@ -628,11 +628,6 @@ class BarcodeConfigurationAPIController extends AppBaseController
                             $pdf->SetXY($x + 6, $y + 6);
                             $pdf->Write(0, $companyID, '', 0, 'L', true, 0, false, false, 0);
 
-                            $pdf->Ln(1);
-                            $pdf->SetXY($x - 2, $pdf->GetY());
-                            $pdf->Write(0, $val->assetDescription, '', 0, 'L', true, 0, false, false, 0);
-                            $pdf->Ln(1);
-
                        }
                        else
                        {
