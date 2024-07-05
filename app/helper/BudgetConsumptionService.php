@@ -141,9 +141,7 @@ class BudgetConsumptionService
                 $budgetFormData['budgetYear'] = $masterData->budgetYear;
                 $budgetFormData['currency'] = $masterData->currency;
 
-                $detailData = PurchaseRequestDetails::where('purchaseRequestID', $documentSystemCode)
-                									->where('itemFinanceCategoryID', '!=',3)
-                								   ->get();
+                $detailData = PurchaseRequestDetails::where('purchaseRequestID', $documentSystemCode)->get();
 
 
                 $segmentAllocationData = SegmentAllocatedItem::where('documentMasterAutoID', $documentSystemCode)
@@ -569,8 +567,7 @@ class BudgetConsumptionService
 
 			$pendingDISIAmounts = self::pendingDirectItemSIQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
 			
-			// $pendingPrAmounts = self::pendingPurchaseRequestQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
-			$pendingPrAmounts = [];
+			 $pendingPrAmounts = self::pendingPurchaseRequestQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
 
 			$pendingSupplierInvoiceAmounts = self::pendingSupplierInvoiceQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
 
@@ -1498,7 +1495,7 @@ class BudgetConsumptionService
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$pendingPoQry = PurchaseRequestDetails::selectRaw('(estimatedCost * quantityRequested) AS transAmount, '.$budgetFormData['glColumnName'].', companySystemID, purchaseRequestID')
-											->where('itemFinanceCategoryID', '!=',3)
+                                             ->where('itemFinanceCategoryID', 3)
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
 											 		   ->where('Year', $budgetFormData['budgetYear'])
@@ -1540,9 +1537,9 @@ class BudgetConsumptionService
 	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 	 																 });
 	 													 });
-	 										 }, 'purchase_request'])
+	 										 }, 'purchase_request', 'podetail.order' ])
 	 										 ->whereHas('purchase_request', function($query) use ($budgetFormData) {
-	 										 	$query->where('approved', 0)
+	 										 	$query->where('approved', -1)
 	 										 		  ->where('cancelledYN', 0)
 	 										 		  ->where('companySystemID', $budgetFormData['companySystemID'])
 	 										 		  ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
@@ -1550,6 +1547,9 @@ class BudgetConsumptionService
 													  })
 	 										 		  ->where('budgetYear', $budgetFormData['budgetYear']);
 	 										 })
+                                             ->whereHas('podetail.order', function($query) {
+                                                 $query->where('poConfirmedYN', 1);
+                                             })
 	 										 ->when(in_array($budgetFormData['documentSystemID'], [1,50,51]), function($query) use ($budgetFormData) {
 	 										 	$query->where('purchaseRequestID', '!=' ,$budgetFormData['documentSystemCode']);
 	 										 })
@@ -2775,7 +2775,6 @@ class BudgetConsumptionService
 
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$docAmountQry = PurchaseRequestDetails::selectRaw('SUM(estimatedCost * quantityRequested) AS totalCost, purchaseRequestID, companySystemID, budgetYear,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'] .' as chartOfAccountID')
-											 ->where('itemFinanceCategoryID', '!=',3)
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
 											 		   ->where('Year', $budgetFormData['budgetYear'])
