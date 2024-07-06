@@ -60,7 +60,7 @@ namespace App\Services\OSOS_3_0;
              $client = new Client();
              $headers = [
                  'content-type' => 'application/json',
-                 'auth-key' =>  $this->apiKey,
+                 'auth-key' =>  $this->apiExternalKey,
                  'menu-id' =>  'defualt'
              ];
 

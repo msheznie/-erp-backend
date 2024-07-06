@@ -965,7 +965,7 @@ Route::group(['middleware' => ['tenantById']], function (){
     Route::group(['middleware' => ['pos_api','hrms_employee']], function () {
         Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
         Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
-
+        require __DIR__.'/../routes/osos_3_0.php';
     });
 });
 
@@ -1003,7 +1003,7 @@ Route::group(['prefix' => 'external'], function (){
 
 
 require __DIR__.'/../routes/hrms/jobRoutes.php';
-require __DIR__.'/../routes/osos_3_0.php';
+
 
 
 Route::group(['middleware' => 'max_memory_limit'], function () {

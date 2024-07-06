@@ -60,7 +60,7 @@ class DesignationService
             $client = new Client();
             $headers = [
                 'content-type' => 'application/json',
-                'auth-key' =>  $this->apiKey,
+                'auth-key' =>  $this->apiExternalKey,
                 'menu-id' =>  'defualt'
             ];
 
