@@ -40,8 +40,9 @@ namespace App\Services\OSOS_3_0;
 
          $this->getOperation();
          $this->getPivotTableId(1);
-         $this->getUrl('location');
          $this->getLocationData();
+         $this->getUrl('location');
+
      }
 
      function execute(){

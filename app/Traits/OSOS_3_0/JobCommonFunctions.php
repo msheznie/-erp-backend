@@ -28,18 +28,23 @@ trait JobCommonFunctions{
 
         }
 
-        if($this->thirdParty->api_key == null){
+        if(empty($this->thirdParty->api_key)){
             $error = 'Api key not found';
             return ['status' =>false, 'message'=> $error];
         }
 
-        if ($this->thirdParty->api_external_key == null) {
+        if(empty($this->thirdParty->api_external_key)){
             $error = 'Api external key not found';
             return ['status' =>false, 'message'=> $error];
         }
 
-        if($this->thirdParty->api_external_key == null){
+        if(empty($this->thirdParty->api_external_url)){
             $error = 'Api external url not found';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        if(empty($this->thirdParty->company_id)){
+            $error = 'Api company not found';
             return ['status' =>false, 'message'=> $error];
         }
 
@@ -50,8 +55,13 @@ trait JobCommonFunctions{
         switch ($funcName) {
             case 'location':
                 $this->url = ($this->postType === 'DELETE')
-                    ? "hrm/api/Locations?locationId='{$this->locationUuid}'"
+                    ? "hrm/api/Locations/'{$this->locationUuid}'"
                     : 'hrm/api/Locations';
+                break;
+            case 'designation':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "hrm/api/Designations/'{$this->designationUuid}'"
+                    : 'hrm/api/Designations';
                 break;
             default:
                 $this->url = '';
@@ -76,7 +86,7 @@ trait JobCommonFunctions{
     }
 
     function getReferenceId(){
-        $this->locationUuId = DB::table('third_party_pivot_record')
+        $this->masterUuId = DB::table('third_party_pivot_record')
             ->where('pivot_table_id', $this->pivotTableId)
             ->where('system_id', $this->id)
             ->where('third_party_sys_det_id', $this->detailId)
@@ -89,15 +99,18 @@ trait JobCommonFunctions{
 
     function insertOrUpdateThirdPartyPivotTable($referenceId)
     {
-        if ($this->postType === 'POST') {
-            $existingRecord = $this->checkRecordExits();
-
-            if (!empty($existingRecord)) {
-                return True;
-            }
-
-            return $this->saveThirdPivotTable($referenceId);
+        if ($this->postType != 'POST') {
+            return true;
         }
+
+        $existingRecord = $this->checkRecordExits();
+
+        if (!empty($existingRecord)) {
+            return True;
+        }
+
+        return $this->saveThirdPivotTable($referenceId);
+
     }
 
     function saveThirdPivotTable($referenceId){
