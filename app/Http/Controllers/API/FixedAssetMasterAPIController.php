@@ -47,6 +47,7 @@ use App\Models\InsurancePolicyType;
 use App\Models\Location;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
+use App\Models\UploadAssetCosting;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetCostRepository;
@@ -2360,11 +2361,61 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $disk = Helper::policyWiseDisk($input['companySystemID']);
-        if ($exists = Storage::disk($disk)->exists('asset_master_template/asset_upload_template.xlsx')) {
-            return Storage::disk($disk)->download('asset_master_template/asset_upload_template.xlsx', 'asset_upload_template.xlsx');
+        $companyMaster = Company::find($input['companySystemID']);
+
+        if($input['type'] == 1){
+            if (Storage::disk($disk)->exists('asset_master_template/asset_upload_template.xlsx')) {
+                return Storage::disk($disk)->download('asset_master_template/asset_upload_template.xlsx', 'asset_upload_template.xlsx');
+            } else {
+                return $this->errorMessageForAttachments();
+            }
         } else {
-            return $this->sendError('Attachments not found', 500);
+            if(!empty($companyMaster)) {
+                if ($companyMaster->localCurrencyID == $companyMaster->reportingCurrency) {
+                    if (Storage::disk($disk)->exists('asset_master_template/same_currency_own_asset_upload_template.xlsx')) {
+                        return Storage::disk($disk)->download('asset_master_template/same_currency_own_asset_upload_template.xlsx', 'same_currency_own_asset_upload_template.xlsx');
+                    } else {
+                        return $this->errorMessageForAttachments();
+                    }
+                } else {
+                    if (Storage::disk($disk)->exists('asset_master_template/own_asset_upload_template.xlsx')) {
+                        return Storage::disk($disk)->download('asset_master_template/own_asset_upload_template.xlsx', 'own_asset_upload_template.xlsx');
+                    } else {
+                        return $this->errorMessageForAttachments();
+                    }
+                }
+            }
         }
+    }
+
+    function errorMessageForAttachments(){
+        return $this->sendError('Attachments not found', 500);
+    }
+
+    public function getAssetCostingUploads(Request $request) {
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $uploadAssetCosting = UploadAssetCosting::where('companySystemID', $input['companyId'])->with('uploaded_by')->select('*');
+
+
+        return \DataTables::eloquent($uploadAssetCosting)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
     public function exportAssetMaster(Request $request){

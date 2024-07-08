@@ -84,6 +84,7 @@ Route::group([], function(){
     Route::post('getAssetAttributes', 'FixedAssetMasterAPIController@assetAttributes')->name("Get asset attributes");
     Route::post('updateAttribute', 'FixedAssetMasterAPIController@updateAttribute')->name("Update asset attribute");
     Route::post('updateActionAttribute', 'FixedAssetMasterAPIController@updateActionAttribute')->name("Update asset attribute");
+    Route::post('getAssetCostingUploads', 'FixedAssetMasterAPIController@getAssetCostingUploads')->name("Get asset costing uploads");
 
 
     Route::post('assetCostAttributesUpdate', 'ErpAttributesAPIController@assetCostAttributesUpdate')->name('Asset cost attributes update');
@@ -91,7 +92,6 @@ Route::group([], function(){
     Route::get('getAttributesDataFormData', 'FinanceItemCategoryMasterAPIController@getAttributesDataFormData')->name('Get attributes data form data');
     Route::post('getAssetCostAttributesData', 'FinanceItemCategoryMasterAPIController@getAssetCostAttributesData')->name('Get asset cost attributes data');
     Route::post('getAttributesDropdownData', 'ErpAttributesDropdownAPIController@getAttributesDropdownData');
-
 
 });
 
