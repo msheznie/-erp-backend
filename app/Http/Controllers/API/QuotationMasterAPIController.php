@@ -1953,7 +1953,7 @@ class QuotationMasterAPIController extends AppBaseController
             $totalRecords = count(collect($formatChk)->toArray());
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
-            $uniqueData = collect($uniqueData)->unique('item_code')->toArray();
+            $uniqueData = collect($uniqueData)->toArray();
             $validateHeaderCode = false;
             $validateHeaderQty = false;
             $validateHeaderPrice = false;
@@ -2021,7 +2021,7 @@ class QuotationMasterAPIController extends AppBaseController
 
             $finalArray = [];
             $count = 0;
-            $uniqueData =  collect($uniqueData)->unique('item_code')->toArray();
+            $uniqueData =  collect($uniqueData)->toArray();
 
             foreach($uniqueData as $finalRecords) {
                  if((is_numeric($finalRecords['qty']) && $finalRecords['qty'] != 0)  &&  (is_numeric($finalRecords['sales_price']) && $finalRecords['sales_price'] != 0) &&  (is_numeric($finalRecords['discount']) && $finalRecords['discount'] < $finalRecords['sales_price']) && (is_numeric($finalRecords['vat']) && $finalRecords['vat'] <= 100)) {

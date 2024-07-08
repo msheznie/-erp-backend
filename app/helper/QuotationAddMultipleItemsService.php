@@ -94,7 +94,7 @@ class QuotationAddMultipleItemsService
                     $currencyConversionDefault = \Helper::currencyConversion($quotation['companySystemID'], $quotation['customerCurrencyID'], $quotation['customerCurrencyID'], $quotation['transactionAmount']);
 
                     $data['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
-                    $data['wacValueLocal'] = $itemAssigned->wacValueLocal;
+                    $data['wacValueLocal'] = $itemAssigned?$itemAssigned->wacValueLocal:0;
 
 
 
