@@ -92,7 +92,7 @@ namespace App\Services\OSOS_3_0;
                  return $this->capture400Err(json_decode($msg));
              }
 
-             return $this->callLocationHook($statusCode, 'location');
+             //return $this->callLocationHook($statusCode, 'location');
 
 
          } catch (\Exception $e) {

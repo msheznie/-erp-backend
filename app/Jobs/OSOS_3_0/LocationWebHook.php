@@ -38,7 +38,7 @@ class LocationWebHook implements ShouldQueue
 
     public function handle()
     {
-        CommonJobService::db_switch($this->dataBase);
+        //CommonJobService::db_switch($this->dataBase);
 
         $locationService = new LocationService($this->dataBase, $this->id, $this->postType, $this->thirdPartyData);
         $locationService->execute();

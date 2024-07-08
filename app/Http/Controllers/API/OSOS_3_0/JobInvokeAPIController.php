@@ -18,8 +18,6 @@ class JobInvokeAPIController extends AppBaseController
 
     }
     public function verifyIntegration(){
-        CommonJobService::db_switch('gears_erp_hrms_qa');
-
         $this->thirdParty = ThirdPartyIntegrationKeys::whereHas('thirdPartySystem', function ($query) {
             $query->where('description', 'OSOS_3_O');
         })->first();
@@ -48,8 +46,8 @@ class JobInvokeAPIController extends AppBaseController
 
             $db = isset($request->db) ? $request->db : "";
 
-            $mainDb = env('DB_DATABASE'); // the job should be run on main db later job will change to client
-            CommonJobService::db_switch($mainDb);
+           /* $mainDb = env('DB_DATABASE'); // the job should be run on main db later job will change to client
+            CommonJobService::db_switch($mainDb);*/
             LocationWebHook::dispatch($db, $postType, $id, $this->thirdParty);
 
             return $this->sendResponse([], 'OSOS 3.0 location triggered success');
