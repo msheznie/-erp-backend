@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\API\OSOS_3_0;
+use App\helper\CommonJobService;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\OSOS_3_0\DesignationWebHook;
 use App\Jobs\OSOS_3_0\LocationWebHook;
@@ -23,7 +24,7 @@ class JobInvokeAPIController extends AppBaseController
 
         if(empty($this->thirdParty)){
             $msg = 'The third party integration not available';
-            $this->insertToLogTb($msg, 'error', 'Location', '');
+            $this->insertToLogTb($msg, 'error', '', '');
             throw new Exception($msg);
         }
     }
@@ -45,9 +46,11 @@ class JobInvokeAPIController extends AppBaseController
 
             $db = isset($request->db) ? $request->db : "";
 
+            $mainDb = env('DB_DATABASE'); // the job should be run on main db later job will change to client
+            CommonJobService::db_switch($mainDb);
             LocationWebHook::dispatch($db, $postType, $id, $this->thirdParty);
 
-            return $this->sendResponse([], 'OSOS 3.0 success');
+            return $this->sendResponse([], 'OSOS 3.0 location triggered success');
         }
         catch(\Exception $e){
             $error = 'Error Line No: ' . $e->getLine();

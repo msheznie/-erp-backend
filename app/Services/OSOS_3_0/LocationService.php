@@ -92,7 +92,7 @@ namespace App\Services\OSOS_3_0;
                  return $this->capture400Err(json_decode($msg));
              }
 
-             return $this->callLocationHook();
+             return $this->callLocationHook($statusCode, 'location');
 
 
          } catch (\Exception $e) {
@@ -112,16 +112,26 @@ namespace App\Services\OSOS_3_0;
          }
      }
 
-     function callLocationHook(){
-         $i = 1;
-         while ($i <= 3) {
-             LocationWebHook::dispatch(
-                 $this->dataBase,
-                 $this->postType,
-                 $this->id,
-                 $this->thirdPartyData
-             );
-             $i++;
+     function callLocationHook($statusCode, $desc){
+
+         if (!in_array($statusCode, [200, 201])) {
+
+
+             $i = 1;
+             $msg = 'Att' . $i;
+
+             while ($i <= 3) {
+
+                 $this->insertToLogTb($msg, 'info', $desc, $this->companyId);
+
+                 LocationWebHook::dispatch(
+                     $this->dataBase,
+                     $this->postType,
+                     $this->id,
+                     $this->thirdPartyData
+                 );
+                 $i++;
+             }
          }
      }
 
