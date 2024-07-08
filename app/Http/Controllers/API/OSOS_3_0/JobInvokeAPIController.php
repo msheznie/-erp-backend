@@ -18,6 +18,8 @@ class JobInvokeAPIController extends AppBaseController
 
     }
     public function verifyIntegration(){
+        CommonJobService::db_switch('gears_erp_hrms_qa');
+
         $this->thirdParty = ThirdPartyIntegrationKeys::whereHas('thirdPartySystem', function ($query) {
             $query->where('description', 'OSOS_3_O');
         })->first();
