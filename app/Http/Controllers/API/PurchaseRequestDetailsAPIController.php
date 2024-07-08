@@ -38,6 +38,7 @@ use App\Repositories\PurchaseRequestRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
@@ -1199,9 +1200,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-            $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $filePath = Storage::disk($disk)->path($originalFileName);
+            $spreadsheet = IOFactory::load($filePath);
+
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $sheet->removeRow(1, 2);
+
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save($filePath);
+            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -1220,7 +1228,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     $allowItemToTypePolicy = true;
                 }
             }
-
 
             foreach ($uniqueData as $key => $value) {
 
@@ -1262,6 +1269,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
             }
 
+            $excelRowNumber = 4;
             foreach ($record as $key => $data) {
                 if (isset($data['estimated_unit_cost'])) {
                     if (!is_numeric($data['estimated_unit_cost'])) {
@@ -1272,8 +1280,15 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                         return $this->sendError('Estimated unit cost value can not be less than zero.', 500);
                     }
                 }
+                // item categorytype validation for purchase || purchase & sales items
+                $isPurchaseItem = ItemMaster::where('primaryCode', $data['item_code'])
+                                            ->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]'])
+                                            ->first();
+                if (empty($isPurchaseItem)) {
+                    return $this->sendError('The added items in excel row number: ' . $excelRowNumber . ', Item Type should only be Purchase or Purchase & Sales', 500);
+                }
+                $excelRowNumber++;
             }
-            
 
             if (count($record) > 0) {
                 $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount,$this->segmentAllocatedItemRepository);            
