@@ -624,7 +624,6 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
                             
                             $pdf->SetFont($fontName, 'B', 4);
-
                             $pdf->SetXY($x + 6, $y + 6);
                             $pdf->Write(0, $companyID, '', 0, 'L', true, 0, false, false, 0);
 
