@@ -157,12 +157,27 @@ Route::group([], function() {
     Route::post('getAllSupplierEvaluationTemplates', 'SupplierEvaluationTemplateAPIController@getAllSupplierEvaluationTemplates')->name("Get all supplier evaluation masters");
     Route::post('getAllSupplierEvaluationMasters', 'SupplierEvaluationMastersAPIController@getAllSupplierEvaluationMasters')->name("Get all supplier evaluation masters");
     Route::post('getAllSupplierEvaluationDetails', 'SupplierEvaluationMasterDetailsAPIController@getAllSupplierEvaluationDetails')->name("Get all supplier evaluation masters");
+    Route::post('addMasterColumns', 'SupplierEvaluationTemplateSectionTableAPIController@addMasterColumns')->name("Create evaluation master columns");
+    Route::post('confirmTable', 'SupplierEvaluationTemplateSectionTableAPIController@confirmTable')->name("Confirm section table");
+    Route::get('sectionTableData', 'SupplierEvaluationTemplateSectionTableAPIController@sectionTableData')->name("Get section table data");
+    Route::post('updateRow', 'TemplateSectionTableRowAPIController@updateRow')->name("Update row data");
+    Route::get('getEvaluationMasters', 'SupplierEvaluationMastersAPIController@index')->name("Get evaluation masters");
+    Route::post('getTemplateSectionLabel', 'EvaluationTemplateSectionLabelAPIController@getTemplateSectionLabel')->name("Get template section label");
+    Route::post('getTemplateSectionFormula', 'EvaluationTemplateSectionFormulaAPIController@getTemplateSectionFormula')->name("Get template section formula");
+    Route::post('getTemplateSectionFormData', 'EvaluationTemplateSectionAPIController@getTemplateSectionFormData')->name("Get template section from data");
+
 
     Route::resource('supplier_evaluation_masters', 'SupplierEvaluationMastersAPIController');
-
     Route::resource('evaluation_master_details', 'SupplierEvaluationMasterDetailsAPIController');
     Route::resource('supplier_evaluation_templates', 'SupplierEvaluationTemplateAPIController');
     Route::resource('evaluation_template_comments', 'SupplierEvaluationTemplateCommentAPIController');
+    Route::resource('template_section_tables', 'SupplierEvaluationTemplateSectionTableAPIController');
+    Route::resource('template_section_table_columns', 'SupplierEvaluationTemplateSectionTableColumnAPIController');
+    Route::resource('template_section_table_rows', 'TemplateSectionTableRowAPIController');
+    Route::resource('evaluation_template_sections', 'EvaluationTemplateSectionAPIController');
+    Route::resource('template_section_labels', 'EvaluationTemplateSectionLabelAPIController');
+    Route::resource('template_section_formulas', 'EvaluationTemplateSectionFormulaAPIController');
+
 });
 
 // Exchange setup Configurations

@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="SupplierEvaluationTemplate",
+ *      schema="SupplierEvaluationTemplateSectionTable",
  *      required={""},
  *      @OA\Property(
  *          property="id",
@@ -17,47 +17,31 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="template_name",
- *          description="template_name",
+ *          property="supplier_evaluation_template_id",
+ *          description="supplier_evaluation_template_id",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @OA\Property(
+ *          property="table_name",
+ *          description="table_name",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="string"
  *      ),
  *      @OA\Property(
- *          property="template_type",
- *          description="Supplier Delivery Evaluation = 1 , Supplier General Evaluation = 2, ",
+ *          property="table_row",
+ *          description="table_row",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="is_active",
- *          description="is_active",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="integer",
- *          format="int32"
- *      ),
- *      @OA\Property(
- *          property="is_confirmed",
- *          description="is_confirmed",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="integer",
- *          format="int32"
- *      ),
- *      @OA\Property(
- *          property="is_draft",
- *          description="is_draft",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="integer",
- *          format="int32"
- *      ),
- *      @OA\Property(
- *          property="companySystemID",
- *          description="companySystemID",
+ *          property="table_column",
+ *          description="table_column",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
@@ -97,10 +81,10 @@ use Eloquent as Model;
  *      )
  * )
  */
-class SupplierEvaluationTemplate extends Model
+class SupplierEvaluationTemplateSectionTable extends Model
 {
 
-    public $table = 'supplier_evaluation_template';
+    public $table = 'supplier_evaluation_template_section_table';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -109,14 +93,12 @@ class SupplierEvaluationTemplate extends Model
 
 
     public $fillable = [
-        'template_name',
-        'user_text',
-        'initial_instruction',
-        'template_type',
-        'is_active',
-        'is_confirmed',
-        'is_draft',
-        'companySystemID',
+        'supplier_evaluation_template_id',
+        'evaluation_template_section_id',
+        'table_name',
+        'table_row',
+        'table_column',
+        'isConfirmed',
         'created_by',
         'updated_by'
     ];
@@ -128,14 +110,12 @@ class SupplierEvaluationTemplate extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'template_name' => 'string',
-        'user_text' => 'string',
-        'initial_instruction' => 'string',
-        'template_type' => 'integer',
-        'is_active' => 'integer',
-        'is_confirmed' => 'integer',
-        'is_draft' => 'integer',
-        'companySystemID' => 'integer',
+        'supplier_evaluation_template_id' => 'integer',
+        'evaluation_template_section_id' => 'integer',
+        'table_name' => 'string',
+        'table_row' => 'integer',
+        'table_column' => 'integer',
+        'isConfirmed' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer'
     ];
@@ -148,13 +128,19 @@ class SupplierEvaluationTemplate extends Model
     public static $rules = [
     ];
 
-    
-    public function company(){
-        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    public function column()
+    {
+        return $this->hasMany('App\Models\SupplierEvaluationTemplateSectionTableColumn', 'table_id', 'id');
     }
 
-    public function section()
+    public function row()
     {
-        return $this->belongsTo('App\Models\EvaluationTemplateSection', 'id', 'supplier_evaluation_template_id');
+        return $this->hasMany('App\Models\TemplateSectionTableRow', 'table_id', 'id');
     }
+
+    public function formula()
+    {
+        return $this->hasMany('App\Models\EvaluationTemplateSectionFormula', 'table_id', 'id');
+    }
+    
 }

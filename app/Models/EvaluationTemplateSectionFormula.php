@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="SupplierEvaluationTemplate",
+ *      schema="EvaluationTemplateSectionFormula",
  *      required={""},
  *      @OA\Property(
  *          property="id",
@@ -17,47 +17,32 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="template_name",
- *          description="template_name",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="template_type",
- *          description="Supplier Delivery Evaluation = 1 , Supplier General Evaluation = 2, ",
+ *          property="evaluation_template_section_id",
+ *          description="evaluation_template_section_id",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="is_active",
- *          description="is_active",
+ *          property="table_id",
+ *          description="table_id",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="is_confirmed",
- *          description="is_confirmed",
+ *          property="lable_id",
+ *          description="lable_id",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="is_draft",
- *          description="is_draft",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="integer",
- *          format="int32"
- *      ),
- *      @OA\Property(
- *          property="companySystemID",
- *          description="companySystemID",
+ *          property="formulaType",
+ *          description="Sum = 1, Average = 2, Score% = 3",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
@@ -97,10 +82,10 @@ use Eloquent as Model;
  *      )
  * )
  */
-class SupplierEvaluationTemplate extends Model
+class EvaluationTemplateSectionFormula extends Model
 {
 
-    public $table = 'supplier_evaluation_template';
+    public $table = 'template_section_formula';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -109,14 +94,12 @@ class SupplierEvaluationTemplate extends Model
 
 
     public $fillable = [
-        'template_name',
-        'user_text',
-        'initial_instruction',
-        'template_type',
-        'is_active',
-        'is_confirmed',
-        'is_draft',
-        'companySystemID',
+        'evaluation_template_section_id',
+        'supplier_evaluation_template_id',
+        'table_id',
+        'lable_id',
+        'formulaType',
+        'formulaName',
         'created_by',
         'updated_by'
     ];
@@ -128,14 +111,12 @@ class SupplierEvaluationTemplate extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'template_name' => 'string',
-        'user_text' => 'string',
-        'initial_instruction' => 'string',
-        'template_type' => 'integer',
-        'is_active' => 'integer',
-        'is_confirmed' => 'integer',
-        'is_draft' => 'integer',
-        'companySystemID' => 'integer',
+        'evaluation_template_section_id' => 'integer',
+        'supplier_evaluation_template_id' => 'integer',
+        'table_id' => 'integer',
+        'lable_id' => 'integer',
+        'formulaType' => 'integer',
+        'formulaName' => 'string',
         'created_by' => 'integer',
         'updated_by' => 'integer'
     ];
@@ -148,13 +129,13 @@ class SupplierEvaluationTemplate extends Model
     public static $rules = [
     ];
 
-    
-    public function company(){
-        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    public function label()
+    {
+        return $this->belongsTo('App\Models\EvaluationTemplateSectionLabel', 'lable_id', 'id');
     }
 
-    public function section()
+    public function table()
     {
-        return $this->belongsTo('App\Models\EvaluationTemplateSection', 'id', 'supplier_evaluation_template_id');
+        return $this->belongsTo('App\Models\SupplierEvaluationTemplateSectionTable', 'table_id', 'id');
     }
 }
