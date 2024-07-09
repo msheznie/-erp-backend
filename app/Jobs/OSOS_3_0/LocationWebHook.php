@@ -17,6 +17,7 @@ class LocationWebHook implements ShouldQueue
     protected $postType;
     protected $thirdPartyData;
     protected $dataBase;
+
     use JobCommonFunctions;
 
     public function __construct($dataBase, $postType, $id, $thirdPartyData)
@@ -35,7 +36,6 @@ class LocationWebHook implements ShouldQueue
         $this->id = $id;
         $this->postType = $postType;
         $this->thirdPartyData = $thirdPartyData;
-
     }
 
     public function handle()
@@ -48,10 +48,10 @@ class LocationWebHook implements ShouldQueue
         if(isset($resp['status']) && !$resp['status']){
             $this->callLocationService($resp['code'], 'Location');
         }
-
     }
 
-    function callLocationService($statusCode, $desc){
+    function callLocationService($statusCode, $desc)
+    {
 
         if (!in_array($statusCode, [200, 201])) {
             for ($i = 1; $i <= 3; $i++) {
@@ -64,12 +64,13 @@ class LocationWebHook implements ShouldQueue
                     $this->thirdPartyData
                 );
 
-                $resp =$locationService->execute();
+                $resp = $locationService->execute();
                 if (isset($resp['status']) && in_array($resp['status'], [200, 201])) {
                     return true;
                 }
             }
         }
+        return true;
     }
 
 }

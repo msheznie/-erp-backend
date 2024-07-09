@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers\API\OSOS_3_0;
-use App\helper\CommonJobService;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\OSOS_3_0\DesignationWebHook;
 use App\Jobs\OSOS_3_0\LocationWebHook;
@@ -17,6 +16,7 @@ class JobInvokeAPIController extends AppBaseController
     function __construct(){
 
     }
+
     public function verifyIntegration(){
         $data = ThirdPartyIntegrationKeys::whereHas('thirdPartySystem', function ($query) {
             $query->where('description', 'OSOS_3_O');
@@ -29,7 +29,6 @@ class JobInvokeAPIController extends AppBaseController
         }
 
         $this->thirdParty = $data->toArray();
-
     }
 
     public function location(Request $request){
@@ -38,7 +37,7 @@ class JobInvokeAPIController extends AppBaseController
             $this->verifyIntegration();
             $valResp = $this->commonValidations($request);
 
-            if(!$valResp['status']){
+            if (!$valResp['status']) {
                 $this->sendError($valResp['message']);
                 $this->insertToLogTb($valResp['message'], 'error', 'Location', $this->thirdParty['company_id']);
                 return;
@@ -52,14 +51,12 @@ class JobInvokeAPIController extends AppBaseController
             LocationWebHook::dispatch($db, $postType, $id, $this->thirdParty);
 
             return $this->sendResponse([], 'OSOS 3.0 location triggered success');
-        }
 
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             $error = 'Error Line No: ' . $e->getLine();
             $this->insertToLogTb($error, 'error', 'Location', $this->thirdParty['company_id']);
-            return $this->sendError($e->getMessage(),500);
+            return $this->sendError($e->getMessage(), 500);
         }
-
     }
 
     public function designation(Request $request){
