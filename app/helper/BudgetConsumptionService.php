@@ -4540,7 +4540,6 @@ class BudgetConsumptionService
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$docAmountQry = PurchaseRequestDetails::selectRaw('estimatedCost, purchaseRequestID, companySystemID, budgetYear,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'] .' as chartOfAccountID, purchaseRequestDetailsID')
-											 ->where('itemFinanceCategoryID', '!=',3)
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
 											 		   ->where('Year', $budgetFormData['budgetYear'])
