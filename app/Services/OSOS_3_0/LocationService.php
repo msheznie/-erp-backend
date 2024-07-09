@@ -22,6 +22,7 @@ class LocationService
     protected $companyId;
     protected $operation;
     protected $pivotTableId;
+    protected $masterUuId;
 
     use JobCommonFunctions;
 
