@@ -28,22 +28,22 @@ trait JobCommonFunctions{
 
         }
 
-        if(empty($this->thirdParty->api_key)){
+        if(empty($this->thirdParty['api_key'])){
             $error = 'Api key not found';
             return ['status' =>false, 'message'=> $error];
         }
 
-        if(empty($this->thirdParty->api_external_key)){
+        if(empty($this->thirdParty['api_external_key'])){
             $error = 'Api external key not found';
             return ['status' =>false, 'message'=> $error];
         }
 
-        if(empty($this->thirdParty->api_external_url)){
+        if(empty($this->thirdParty['api_external_url'])){
             $error = 'Api external url not found';
             return ['status' =>false, 'message'=> $error];
         }
 
-        if(empty($this->thirdParty->company_id)){
+        if(empty($this->thirdParty['company_id'])){
             $error = 'Api company not found';
             return ['status' =>false, 'message'=> $error];
         }
@@ -55,12 +55,12 @@ trait JobCommonFunctions{
         switch ($funcName) {
             case 'location':
                 $this->url = ($this->postType === 'DELETE')
-                    ? "hrm/api/Locations/'{$this->locationUuid}'"
+                    ? "hrm/api/Locations/'{$this->masterUuId}'"
                     : 'hrm/api/Locations';
                 break;
             case 'designation':
                 $this->url = ($this->postType === 'DELETE')
-                    ? "hrm/api/Designations/'{$this->designationUuid}'"
+                    ? "hrm/api/Designations/'{$this->masterUuId}'"
                     : 'hrm/api/Designations';
                 break;
             default:

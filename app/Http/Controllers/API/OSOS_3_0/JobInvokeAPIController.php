@@ -18,15 +18,18 @@ class JobInvokeAPIController extends AppBaseController
 
     }
     public function verifyIntegration(){
-        $this->thirdParty = ThirdPartyIntegrationKeys::whereHas('thirdPartySystem', function ($query) {
+        $data = ThirdPartyIntegrationKeys::whereHas('thirdPartySystem', function ($query) {
             $query->where('description', 'OSOS_3_O');
         })->first();
 
-        if(empty($this->thirdParty)){
+        if(empty($data)){
             $msg = 'The third party integration not available';
             $this->insertToLogTb($msg, 'error', '', '');
             throw new Exception($msg);
         }
+
+        $this->thirdParty = $data->toArray();
+
     }
 
     public function location(Request $request){
@@ -37,7 +40,7 @@ class JobInvokeAPIController extends AppBaseController
 
             if(!$valResp['status']){
                 $this->sendError($valResp['message']);
-                $this->insertToLogTb($valResp['message'], 'error', 'Location', $this->thirdParty->company_id);
+                $this->insertToLogTb($valResp['message'], 'error', 'Location', $this->thirdParty['company_id']);
                 return;
             }
 
@@ -46,15 +49,14 @@ class JobInvokeAPIController extends AppBaseController
 
             $db = isset($request->db) ? $request->db : "";
 
-           /* $mainDb = env('DB_DATABASE'); // the job should be run on main db later job will change to client
-            CommonJobService::db_switch($mainDb);*/
             LocationWebHook::dispatch($db, $postType, $id, $this->thirdParty);
 
             return $this->sendResponse([], 'OSOS 3.0 location triggered success');
         }
+
         catch(\Exception $e){
             $error = 'Error Line No: ' . $e->getLine();
-            $this->insertToLogTb($error, 'error', 'Location', $this->thirdParty->company_id);
+            $this->insertToLogTb($error, 'error', 'Location', $this->thirdParty['company_id']);
             return $this->sendError($e->getMessage(),500);
         }
 
