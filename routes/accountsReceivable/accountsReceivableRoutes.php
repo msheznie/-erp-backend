@@ -127,6 +127,7 @@ Route::group([], function () {
     Route::get('getADVPaymentForBRV', 'CustomerReceivePaymentAPIController@getADVPaymentForBRV')->name("Get adv payment for brv");
     Route::post('deleteAllADVReceiptDetail', 'AdvanceReceiptDetailsAPIController@deleteAllADVReceiptDetail')->name("Delete all adv receipt detail");
     Route::post('generatePdcForReceiptVoucher', 'CustomerReceivePaymentAPIController@generatePdcForReceiptVoucher')->name("Generate pdc for receipt voucher");
+    Route::get('checkConversionRateIsUpdate', 'CustomerReceivePaymentAPIController@checkConversionRateIsUpdate')->name("Check conversion rate is update");
 
     Route::resource('advance_receipt_details', 'AdvanceReceiptDetailsAPIController');
     Route::resource('receiptVoucherAmendHistoryCRUD', 'CustomerReceivePaymentRefferedHistoryAPIController');
