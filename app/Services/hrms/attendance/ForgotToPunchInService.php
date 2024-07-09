@@ -1,6 +1,9 @@
 <?php
 namespace App\Services\hrms\attendance;
 
+use App\enums\modules\Modules;
+use App\enums\shift\Shifts;
+use App\Services\hrms\modules\HrModuleAssignService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\helper\NotificationService;
@@ -18,7 +21,8 @@ class ForgotToPunchInService{
     private $dayName;
     private $proceedShifts = [];
     private $shiftMasters;
-    
+    private $isShiftModule;
+
     public function __construct($companyId, $date, $time)
     {
         $this->companyId = $companyId;
@@ -26,10 +30,90 @@ class ForgotToPunchInService{
         $this->time = $time;
 
         $this->processedFor = Carbon::parse($date.' '.$time)->format('Y:m:d H:i:s');
+        $this->isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
     }
 
     public function run(){
 
+        if($this->isShiftModule){
+            return $this->newShiftProcess();
+        }
+
+        return $this->defaultProcess();
+
+    }
+
+    function newShiftProcess(){
+        $isHoliday = $this->isHoliday();
+
+        if($isHoliday){
+            return;
+        }
+
+        $this->loadProceedShifts();
+        $this->getShiftData();
+
+        if($this->shiftMasters->count() == 0){
+            $this->insertToLogTb(
+                [ 'message'=> 'No data found to proceed (punch-in)'], 'info'
+            );
+            return;
+        }
+
+        $this->processOverShifts();
+
+
+    }
+
+    function getShiftData(){
+
+        $shFixed = Shifts::FIXED;
+        $shRota = Shifts::ROTA;
+
+        // we have to check the punch-in status after two hours from on-duty-time
+        $onDutyTime = Carbon::parse($this->time)->subHours(2)->format('H:i:s');
+
+        $fixedJoin = "SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sm.shiftType, sd.is_cross_day, 
+                she.schedule_date, sm.Description
+                FROM hr_shift_schedule_details AS she 
+                JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
+                JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
+                AND sd.weekDayNo = WEEKDAY(she.schedule_date)
+                WHERE sm.companyID = {$this->companyId}
+                AND sm.shiftType = {$shFixed} 
+                AND she.schedule_date = '{$this->date}'";
+
+        $rotaUnion = " UNION ALL 
+                SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sm.shiftType, sd.is_cross_day, she.schedule_date, 
+                sm.Description
+                FROM hr_shift_schedule_details AS she 
+                JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
+                JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
+                WHERE sm.companyID = {$this->companyId}
+                AND sm.shiftType = {$shRota} 
+                AND she.schedule_date = '{$this->date}'";
+
+        $offDayUnion = " UNION ALL 
+                SELECT shift_id AS shiftID, '' AS onDutyTime, '' AS offDutyTime, -1 AS shiftType, 0 AS is_cross_day,
+                she.schedule_date, 'OFF' as Description
+                FROM hr_shift_schedule_details AS she
+                WHERE she.company_id = {$this->companyId} 
+                AND she.shift_id = 0 
+                AND she.schedule_date = '{$this->date}'
+                GROUP BY shift_id";
+
+
+        $query = $fixedJoin . $rotaUnion . $offDayUnion;
+
+        $data = DB::table(DB::raw("($query) as shiftDetails"))
+            ->where('shiftDetails.onDutyTime', $onDutyTime)
+            ->groupBy('shiftDetails.shiftID')
+            ->get();
+
+        $this->shiftMasters = $data;
+    }
+
+    function defaultProcess(){
         $isHoliday = $this->isHoliday();
 
         if($isHoliday){
@@ -133,13 +217,25 @@ class ForgotToPunchInService{
     }
     
     public function empAssignedWithShift($shiftId){
-        $empArr = DB::table('srp_erp_pay_shiftemployees')
-            ->select('empID') 
-            ->where('shiftID', $shiftId) 
-            ->whereRaw("('{$this->date}' BETWEEN startDate and endDate)")
-            ->where('companyID', $this->companyId)
-            // ->where('isActive', 1)
-            ->get();
+        if ($this->isShiftModule) {
+
+            $empArr = DB::table('hr_shift_schedule_details')
+                ->select('emp_id as empID')
+                ->where('shift_id', $shiftId)
+                ->where('schedule_date', $this->date)
+                ->where('company_id', $this->companyId)
+                ->get();
+        } else {
+
+            $empArr = DB::table('srp_erp_pay_shiftemployees')
+                ->select('empID')
+                ->where('shiftID', $shiftId)
+                ->whereRaw("('{$this->date}' BETWEEN startDate and endDate)")
+                ->where('companyID', $this->companyId)
+                // ->where('isActive', 1)
+                ->get();
+
+        }
 
         if($empArr->count() == 0){
             return [];
