@@ -179,6 +179,12 @@ class LeaveAccrualService
 
         $month_date_filter = "AND `year` = {$year} AND `month` = {$month}";
 
+        $accrualTriggerBasedOnValues = [1 => 'First of Month', 2 => 'End of Month'];
+        $policyMsg = $accrualTriggerBasedOnValues[$accrualTriggerBasedOn];
+        $this->insertToLogTb(
+            "Accrual triggered at :  {$accTrigDate} based on '{$policyMsg}' policy",
+            'info', 'Leave Accrual Monthly', $this->company_id);
+
         if ($this->year_det['accrualPolicyValue'] == 3){
             $month_date_filter = "AND company_finance_year_id = ".$this->month_det['id'];
             
@@ -323,6 +329,22 @@ class LeaveAccrualService
         $line_no = $debugTrace[0]['line'];
 
         return " $this->company_code | $this->company_name \t on file:  " . __CLASS__ ." \tline no : {$line_no}";
+    }
+
+    function insertToLogTb($logData, $type, $desc, $companyId){
+
+        $data = [
+            'company_id'=> $companyId,
+            'module'=> 'Leave Management',
+            'description'=> $desc,
+            'scenario_id'=> 0,
+            'processed_for'=> Carbon::now()->format('Y-m-d H:i:s'),
+            'logged_at'=> Carbon::now()->format('Y-m-d H:i:s'),
+            'log_type'=> $type,
+            'log_data'=> json_encode($logData),
+        ];
+
+        DB::table('job_logs')->insert($data);
     }
 
 }
