@@ -4521,7 +4521,6 @@ class BudgetMasterAPIController extends AppBaseController
         $sortedFlat = flattenTree($tree);
 
 
-
         $templateMaster = ReportTemplate::find($templateMasterID);
         $financeYearMaster = CompanyFinanceYear::find($companyFinanceYearID);
 
