@@ -73,6 +73,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use PHPExcel_IOFactory;
 use App\Models\FixedAssetMaster;
+use App\Models\logUploadBudget;
 
 /**
  * Class BudgetMasterController
@@ -4602,7 +4603,6 @@ class BudgetMasterAPIController extends AppBaseController
 
         $uploadBudget = UploadBudgets::create($uploadArray);
 
-
         $db = isset($request->db) ? $request->db : "";
 
         $disk = 'local';
@@ -4633,7 +4633,7 @@ class BudgetMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $uploadBudgets = UploadBudgets::where('companySystemID', $input['companyId'])->with('uploaded_by')->select('*');
+        $uploadBudgets = UploadBudgets::where('companySystemID', $input['companyId'])->with(['uploaded_by','log'])->select('*');
 
 
         return \DataTables::eloquent($uploadBudgets)
