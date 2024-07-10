@@ -405,33 +405,36 @@ class CompanyAPIController extends AppBaseController
         /*image upload*/
         $attachment = $input['nextAttachment'];
         if(!empty($attachment) && isset($attachment['file'])){
-            $extension = $attachment['fileType'];
-            $allowExtensions = ['png','jpg','jpeg'];
+            try {
+                $extension = $attachment['fileType'];
+                $allowExtensions = ['png', 'jpg', 'jpeg'];
 
-            if (!in_array($extension, $allowExtensions))
-            {
-                return $this->sendError('This type of file not allow to upload.',500);
-            }
-
-            if(isset($attachment['size'])){
-                if ($attachment['size'] > 2097152) {
-                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.",500);
+                if (!in_array($extension, $allowExtensions)) {
+                    return $this->sendError('This type of file not allow to upload.', 500);
                 }
+
+                if (isset($attachment['size'])) {
+                    if ($attachment['size'] > 2097152) {
+                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    }
+                }
+
+                $file = $attachment['file'];
+                $decodeFile = base64_decode($file);
+
+                $input['companyLogo'] = $input['CompanyID'] . '_logo.' . $extension;
+
+                if ($awsPolicy) {
+                    $path = $input['CompanyID'] . '/logos/' . $input['companyLogo'];
+                } else {
+                    $path = 'logos/' . $input['companyLogo'];
+                }
+
+                $input['logoPath'] = $path;
+                Storage::disk($disk)->put($path, $decodeFile);
+            } catch(Exception $ex){
+                return $this->sendError('It is not possible to upload the company logo at the moment. Please contact the System Administrator', 500);
             }
-
-            $file = $attachment['file'];
-            $decodeFile = base64_decode($file);
-
-            $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
-
-            if ($awsPolicy) {
-                $path = $input['CompanyID'].'/logos/' . $input['companyLogo'];
-            } else {
-                $path = 'logos/' . $input['companyLogo'];
-            }
-
-            $input['logoPath'] = $path;
-            Storage::disk($disk)->put($path, $decodeFile);
         }
 
 
@@ -549,40 +552,41 @@ class CompanyAPIController extends AppBaseController
         /*image upload*/
         $attachment = $input['nextAttachment'];
         if(!empty($attachment) && isset($attachment['file'])){
-            $extension = $attachment['fileType'];
-            $allowExtensions = ['png','jpg','jpeg'];
+            try {
+                $extension = $attachment['fileType'];
+                $allowExtensions = ['png', 'jpg', 'jpeg'];
 
-            if (!in_array($extension, $allowExtensions))
-            {
-                return $this->sendError('This type of file not allow to upload.',500);
-            }
-
-            if(isset($attachment['size'])){
-                if ($attachment['size'] > 2097152) {
-                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.",500);
+                if (!in_array($extension, $allowExtensions)) {
+                    return $this->sendError('This type of file not allow to upload.', 500);
                 }
+
+                if (isset($attachment['size'])) {
+                    if ($attachment['size'] > 2097152) {
+                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    }
+                }
+
+                $file = $attachment['file'];
+
+                $decodeFile = base64_decode($file);
+
+                $input['companyLogo'] = $input['CompanyID'] . '_logo.' . $extension;
+
+                if ($awsPolicy) {
+                    $path = $input['CompanyID'] . '/logos/' . $input['companyLogo'];
+                } else {
+                    $path = 'logos/' . $input['companyLogo'];
+                }
+
+                if ($exists = Storage::disk($disk)->exists($path)) {
+                    Storage::disk($disk)->delete($path);
+                }
+                $input['logoPath'] = $path;
+
+                Storage::disk($disk)->put($path, $decodeFile);
+            } catch(Exception $ex){
+                return $this->sendError('It is not possible to upload the company logo at the moment. Please contact the System Administrator', 500);
             }
-
-            $file = $attachment['file'];
-
-            $decodeFile = base64_decode($file);
-
-            $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
-
-            if ($awsPolicy) {
-                $path = $input['CompanyID'].'/logos/' . $input['companyLogo'];
-            } else {
-                $path = 'logos/' . $input['companyLogo'];
-            }
-
-            if ($exists = Storage::disk($disk)->exists($path)) {
-                Storage::disk($disk)->delete($path);
-            }
-
-
-            $input['logoPath'] = $path;
-
-            Storage::disk($disk)->put($path, $decodeFile);
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -787,55 +791,50 @@ class CompanyAPIController extends AppBaseController
     }
 
     public function uploadDigitalStamp(Request $request){
-        $input = $request->all();
-        $imageData = $input['item_path'];
-        $companySystemID = $input['companySystemID'];
-        unset($input['item_path']);
+        try {
+            $input = $request->all();
+            $imageData = $input['item_path'];
+            $companySystemID = $input['companySystemID'];
+            unset($input['item_path']);
 
-        $masterData = [];
-        $path_dir['path'] = '';
-        
-        $disk = Helper::policyWiseDisk($companySystemID, 'public');
-        
+            $masterData = [];
+            $path_dir['path'] = '';
 
-        if($imageData != null || !empty($imageData))
-        {
-            foreach($imageData as $key=>$val)
-            {   
-                // $path_dir['path'] = '';
-                if (preg_match('/^https/', $val['path']))
-                 { 
-                    $path_dir['path'] = $val['db_path'];
-                 } else
-                 {
-                    $t=time();
-                    $tem = substr($t,5);
-                    $valtt = $this->quickRandom();
-                    $random_words = $valtt.'_'.$tem;
-                    if (Helper::checkPolicy($input['companySystemID'], 50)) {
-                        $base_path = $companySystemID.'/G_ERP/company-setting/digital-stamps/';
-                    }   
-                    else
-                    {
-    
-                        $base_path = 'company-setting/digital-stamps/';
+            $disk = Helper::policyWiseDisk($companySystemID, 'public');
+
+            if ($imageData != null || !empty($imageData)) {
+                foreach ($imageData as $key => $val) {
+                    // $path_dir['path'] = '';
+                    if (preg_match('/^https/', $val['path'])) {
+                        $path_dir['path'] = $val['db_path'];
+                    } else {
+                        $t = time();
+                        $tem = substr($t, 5);
+                        $valtt = $this->quickRandom();
+                        $random_words = $valtt . '_' . $tem;
+                        if (Helper::checkPolicy($input['companySystemID'], 50)) {
+                            $base_path = $companySystemID . '/G_ERP/company-setting/digital-stamps/';
+                        } else {
+
+                            $base_path = 'company-setting/digital-stamps/';
+                        }
+
+                        $path_dir = $this->storeImage($val['path'], $random_words, $base_path, $disk);
+
+                        $masterData = [
+                            'path' => $path_dir,
+                            'is_default' => false,
+                            'company_system_id' => $companySystemID
+                        ];
+
+                        $digitalStampUpload = $this->companyDigitalStampRepository->create($masterData);
                     }
-                    
-                    $path_dir = $this->storeImage($val['path'], $random_words, $base_path,$disk);
-
-                    $masterData= [
-                        'path'=>$path_dir,
-                        'is_default'=>false,
-                        'company_system_id'=> $companySystemID
-                    ];
-        
-                    $digitalStampUpload = $this->companyDigitalStampRepository->create($masterData);
-                 }
+                }
             }
-
+            return $this->sendResponse($digitalStampUpload, 'Digital Stamp Uploaded successfully');
+        } catch (\Exception $e) {
+            return $this->sendError('It is not possible to upload the digital stamp at the moment. Please contact the System Administrator', 500);
         }
-
-        return $this->sendResponse($digitalStampUpload , 'Digital Stamp Uploaded successfully');
     }
 
     private function storeImage($imageData, $picName, $picBasePath,$disk)
