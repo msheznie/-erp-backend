@@ -2,6 +2,7 @@
 
 namespace App\helper;
 
+use App\helper\SME;
 use App\Models\CompanyFinanceYear;
 use App\Models\LeaveAccrualDetail;
 use App\Models\LeaveAccrualMaster;
@@ -9,7 +10,6 @@ use App\Models\LeaveGroup;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\helper\SME;
 use App\helper\LeaveBalanceValidationHelper;
 
 
@@ -108,14 +108,11 @@ class LeaveAccrualService
 
         //when preparing for the data no need to check with a master id,
         //but when creating the details we have to check this condition
-        $master_id_filter = ($this->accrualMasterID) ? " AND m.leaveaccrualMasterID != $this->accrualMasterID": '';
+        $masterIdFilter = ($this->accrualMasterID) ? " AND m.leaveaccrualMasterID != $this->accrualMasterID": '';
 
-        if($this->policy == 1){
-            $sql = $this->pending_sql_annual($str, $leaveGroupID, $master_id_filter);
-        }
-        else{ // $this->policy == 3 ( monthly )
-            $sql = $this->pending_sql_monthly($str, $leaveGroupID, $master_id_filter);
-        }
+        $sql = ($this->policy == 3)
+            ? $this->pending_sql_monthly($str, $leaveGroupID, $masterIdFilter)
+            : $this->pending_sql_annual($str, $leaveGroupID, $masterIdFilter);
 
         $emp_arr = DB::select($sql);
 
@@ -173,7 +170,12 @@ class LeaveAccrualService
 
         $year = Carbon::parse( $this->date )->format('Y');
         $month = Carbon::parse( $this->date )->format('m');
-        $lastDate = $this->month_det['dateTo'];
+
+        $accrualTriggerBasedOn= SME::accrualTriggerBasedOn($this->company_id);
+        $accTrigDate = $this->month_det['dateTo'];
+        if ($accrualTriggerBasedOn != 2) {
+            $accTrigDate = $this->month_det['dateFrom'];
+        }
 
         $month_date_filter = "AND `year` = {$year} AND `month` = {$month}";
 
@@ -185,7 +187,7 @@ class LeaveAccrualService
             FROM srp_employeesdetails AS emp
             JOIN srp_erp_leavegroupdetails AS gd ON gd.leaveGroupID = emp.leaveGroupID AND policyMasterID = 3             
             JOIN srp_erp_leavetype ON gd.leaveTypeID = srp_erp_leavetype.leaveTypeID 
-            WHERE Erp_companyID = {$this->company_id} AND isDischarged != 1 AND DateAssumed <= '{$lastDate}'  
+            WHERE Erp_companyID = {$this->company_id} AND isDischarged != 1 AND DateAssumed <= '{$accTrigDate}'  
             AND emp.leaveGroupID IS NOT NULL AND emp.leaveGroupID = {$leaveGroupID} AND
             (EIdNo, srp_erp_leavetype.leaveTypeID) NOT IN (
                 SELECT empID, leaveType FROM srp_erp_leaveaccrualmaster AS m

@@ -71,28 +71,6 @@ class LeaveAccrualInitiate implements ShouldQueue
                     $ser = new LeaveAccrualService($company, $accrual_type_det, []);
                     $groups = $ser->prepare_for_accrual();
 
-
-                    /*
-                     $groups example
-
-                    $groups = [
-                        [
-                            "leaveGroupID": 2,
-                            "description": "AL22",
-                            "details": [
-                                {
-                                  "leaveGroupDetailID": 3,
-                                  "leaveGroupID": 2,
-                                  "leaveTypeID": 2,
-                                  "policyMasterID": 1,
-                                  "isDailyBasisAccrual": true,
-                                  "noOfDays": 22
-                                }
-                            ]
-                        ]
-                    ];
-                    */
-
                     Log::info(count($groups). " groups found for {$acc_type} " . $this->log_suffix(__LINE__));
 
                     if(count($groups) > 0){
