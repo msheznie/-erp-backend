@@ -50,6 +50,7 @@ class ForgotToPunchInService{
             return;
         }
 
+        $this->getDayId();
         $this->loadProceedShifts();
         $this->getShiftData();
 
@@ -106,9 +107,13 @@ class ForgotToPunchInService{
         $query = $fixedJoin . $rotaUnion . $offDayUnion;
 
         $data = DB::table(DB::raw("($query) as shiftDetails"))
-            ->where('shiftDetails.onDutyTime', $onDutyTime)
-            ->groupBy('shiftDetails.shiftID')
-            ->get();
+            ->where('shiftDetails.onDutyTime', $onDutyTime);
+
+        if ($this->proceedShifts) {
+            $data = $data->whereNotIn('shiftDetails.shiftID', $this->proceedShifts);
+        }
+
+        $data = $data->groupBy('shiftDetails.shiftID')->get();
 
         $this->shiftMasters = $data;
     }
