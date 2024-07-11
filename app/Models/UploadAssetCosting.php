@@ -19,7 +19,6 @@ class UploadAssetCosting extends Model
         'uploadedDate',
         'uploadedBy',
         'uploadStatus',
-        'totalInvoices',
         'counter',
         'companySystemID'
     ];

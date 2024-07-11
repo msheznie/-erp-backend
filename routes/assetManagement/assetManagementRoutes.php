@@ -11,6 +11,7 @@ Route::group([], function(){
     Route::post('getCostingApprovalByUser', 'FixedAssetMasterAPIController@getCostingApprovalByUser')->name("Get asset costing pending for approval");
     Route::post('getCostingApprovedByUser', 'FixedAssetMasterAPIController@getCostingApprovedByUser')->name("Get asset costing approved");
     Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData')->name("Get asset form data");
+    Route::get('getAssetCostingUploadData', 'FixedAssetMasterAPIController@getAssetCostingUploadData')->name("Get asset costing upload data");
     Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID')->name("Get asset id");
     Route::post('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat')->name("Get asset sub category");
     Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts')->name("Get post gl account");
