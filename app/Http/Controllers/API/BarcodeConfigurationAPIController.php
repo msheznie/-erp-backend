@@ -511,7 +511,6 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 Storage::put($filePath, $imageContent);
                 $temp_png = storage_path('app/' . $filePath);
 
-                
                 if($companyLogo != null) {
                     $imageType = strtolower(pathinfo($companyLogo, PATHINFO_EXTENSION));
                 }
