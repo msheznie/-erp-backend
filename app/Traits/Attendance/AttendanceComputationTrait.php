@@ -89,6 +89,9 @@ trait AttendanceComputationTrait{
             case 4:
                 $this->presentAbsentType = AbsentType::SECONDMENT;
                 break;
+            case 5:
+                $this->presentAbsentType = AbsentType::ON_TRIP;
+                break;
             default:
                 break;
         }
