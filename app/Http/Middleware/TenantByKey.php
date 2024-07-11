@@ -21,7 +21,9 @@ class TenantByKey
         $dbRoutes = [
             'api/v1/postEmployee',
             'api/v1/pull_company_details',
-            'api/v1/postLocation'
+            'api/v1/postLocation',
+            'api/v1/postDesignation',
+            'api/v1/postDepartment'
 //            'api/v1/post_supplier_invoice'
         ];
 

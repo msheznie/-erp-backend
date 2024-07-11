@@ -63,6 +63,16 @@ trait JobCommonFunctions{
                     ? "hrm/api/Designations/'{$this->masterUuId}'"
                     : 'hrm/api/Designations';
                 break;
+            case 'department':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "hrm/api/Department/'{$this->masterUuId}'"
+                    : 'hrm/api/Department';
+                break;
+            case 'employee':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "hrm/api/Employee/'{$this->masterUuId}'"
+                    : 'hrm/api/Employee';
+                break;
             default:
                 $this->url = '';
                 break;
@@ -93,8 +103,8 @@ trait JobCommonFunctions{
             ->value('reference_id');
     }
 
-    function capture400Err($msgBody){
-        return $this->insertToLogTb($msgBody, 'error', 'Location', $this->companyId);
+    function capture400Err($msgBody, $description){
+        return $this->insertToLogTb($msgBody, 'error', $description, $this->companyId);
     }
 
     function insertOrUpdateThirdPartyPivotTable($referenceId)
@@ -128,5 +138,13 @@ trait JobCommonFunctions{
             ->where('pivot_table_id', $this->pivotTableId)
             ->where('system_id', $this->id)
             ->first();
+    }
+
+    function getOtherReferenceId($id, $pivotTbId) {
+        return DB::table('third_party_pivot_record')
+            ->where('third_party_sys_det_id', $this->detailId)
+            ->where('pivot_table_id', $pivotTbId)
+            ->where('system_id', $id)
+            ->value('reference_id');
     }
 }

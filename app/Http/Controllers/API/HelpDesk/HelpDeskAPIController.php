@@ -3,15 +3,26 @@
 namespace App\Http\Controllers\API\HelpDesk;
 
 use App\Http\Controllers\AppBaseController;
+use App\Jobs\OSOS_3_0\EmployeeWebHook;
 use App\Jobs\UserWebHook;
 use App\Models\ThirdPartyIntegrationKeys;
+use App\Traits\OSOS_3_0\JobCommonFunctions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class HelpDeskAPIController extends AppBaseController
 {
+    private $thirdParty;
+    use JobCommonFunctions;
         public function postEmployee(Request $request){
+            try{
+                $this->employeeOSOS_3_0($request);
+            } catch(\Exception $e) {
+                $error = 'Error Line No: ' . $e->getLine();
+                $this->insertToLogTb($error, 'error', 'Employee', $this->thirdParty['company_id']);
+            }
+
             DB::beginTransaction();
             try {
                 $empID = $request->employeeSystemID;
@@ -37,4 +48,34 @@ class HelpDeskAPIController extends AppBaseController
             }
 
         }
+
+    public function employeeOSOS_3_0($request){
+        $this->verifyIntegration();
+        $valResp = $this->commonValidations($request);
+        if(!$valResp['status']){
+            $error = $valResp['message'];
+            $this->insertToLogTb($error, 'error', 'Employee', $this->thirdParty['company_id']);
+        }
+
+        $postType = $request->postType;
+        $id = $request->employeeSystemID;
+        $db = isset($request->db) ? $request->db : "";
+        EmployeeWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+
+        return $this->sendResponse([], 'OSOS 3.0 employee triggered');
+    }
+
+    public function verifyIntegration(){
+        $data = ThirdPartyIntegrationKeys::whereHas('thirdPartySystem', function ($query) {
+            $query->where('description', 'OSOS_3_O');
+        })->first();
+
+        if(empty($data)){
+            $msg = 'The third party integration not available';
+            $this->insertToLogTb($msg, 'error', '', '');
+            throw new Exception($msg);
+        }
+
+        $this->thirdParty = $data->toArray();
+    }
 }

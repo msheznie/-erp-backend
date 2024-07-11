@@ -93,7 +93,7 @@ class LocationService
 
             if ($statusCode == 400) {
                 $msg = $res->getBody();
-                $this->capture400Err(json_decode($msg));
+                $this->capture400Err(json_decode($msg), 'Location');
                 return ['status' => false, 'message' => $msg, 'code' => $statusCode];
             }
 
@@ -102,7 +102,7 @@ class LocationService
             $exStatusCode = $e->getCode();
             if ($exStatusCode == 400) {
                 $msg = $e->getMessage();
-                return $this->capture400Err($msg);
+                return $this->capture400Err($msg, 'Location');
             }
 
             $msg = "Exception \n";

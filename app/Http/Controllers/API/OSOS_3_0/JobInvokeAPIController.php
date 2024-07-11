@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\OSOS_3_0;
 use App\Http\Controllers\AppBaseController;
+use App\Jobs\OSOS_3_0\DepartmentWebHook;
 use App\Jobs\OSOS_3_0\DesignationWebHook;
 use App\Jobs\OSOS_3_0\LocationWebHook;
 use App\Models\ThirdPartyIntegrationKeys;
@@ -90,4 +91,27 @@ class JobInvokeAPIController extends AppBaseController
         }
     }
 
+    public function department(Request $request){
+        try {
+            $this->verifyIntegration();
+            $valResp = $this->commonValidations($request);
+            if(!$valResp['status']){
+                $error = $valResp['message'];
+                $this->insertToLogTb($error, 'error', 'Department', $this->thirdParty['company_id']);
+                $this->sendError($error);
+            }
+
+            $postType = $request->postType;
+            $id = $request->departmentId;
+            $db = isset($request->db) ? $request->db : "";
+            DepartmentWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+
+            return $this->sendResponse([], 'OSOS 3.0 department triggered');
+        } catch(\Exception $e) {
+            $error = 'Error Line No: ' . $e->getLine();
+            $this->insertToLogTb($error, 'error', 'Department', $this->thirdParty['company_id']);
+
+            return $this->sendError($e->getMessage(),500);
+        }
+    }
 }

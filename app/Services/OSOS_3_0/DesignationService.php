@@ -89,7 +89,7 @@ class DesignationService
 
             if ($statusCode == 400) {
                 $msg = $res->getBody();
-                return $this->capture400Err(json_decode($msg));
+                return $this->capture400Err(json_decode($msg), 'Designation');
             }
 
             return $this->callDesignationHook();
@@ -100,7 +100,7 @@ class DesignationService
             $exStatusCode = $e->getCode();
             if ($exStatusCode == 400) {
                 $msg = $e->getMessage();
-                return $this->capture400Err($msg);
+                return $this->capture400Err($msg, 'Designation');
             }
 
             $msg = "Exception \n";
