@@ -331,7 +331,7 @@ class SMAttendancePullingService{
         LEFT JOIN ( 
             SELECT req_emp_id_confirmed AS emp_id, 5 as typeId, date_travel, date_return 
             FROM hr_trip_request_master 
-            WHERE company_id = {$this->companyId} AND approvedYN = 1
+            WHERE company_id = {$this->companyId} AND rpt_manager_confirmed_yn = 1
         ) AS trd ON trd.emp_id = t.emp_id AND t.att_date BETWEEN trd.date_travel AND trd.date_return 
         LEFT JOIN ( 
             SELECT * FROM srp_erp_calender WHERE companyID = {$this->companyId} 
