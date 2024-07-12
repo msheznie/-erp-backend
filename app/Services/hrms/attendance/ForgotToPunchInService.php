@@ -199,10 +199,11 @@ class ForgotToPunchInService{
             $empOnTrip = $this->empOnTrip($empArr);
 
             if(!empty($empOnTrip)){
+                $empOnTripString = implode(', ', $empOnTrip);
                 $this->insertToLogTb(
                     [
                         'shiftId'=> $shiftID,
-                        'message'=> "Following employees on trip : $empOnTrip"
+                        'message'=> "Following employees on trip : $empOnTripString"
                     ],
                     'data'
                 );
