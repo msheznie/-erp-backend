@@ -285,7 +285,7 @@ class ForgotToPunchInService{
             ->where('company_id', $this->companyId)
             ->where('rpt_manager_confirmed_yn', 1)
             ->whereIn('req_emp_id_confirmed', $empArr)
-            ->whereRaw("('{$this->date}' BETWEEN trd.date_travel AND trd.date_return)")
+            ->whereRaw("('{$this->date}' BETWEEN date_travel AND date_return)")
             ->get();
 
         if($onTripEmp->count() == 0){
