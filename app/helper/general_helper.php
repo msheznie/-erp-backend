@@ -9158,12 +9158,19 @@ class Helper
 
             $detail = ReportTemplateDetails::find($secondLevelID);
 
-            return $detail->sortOrder;
+            if($detail){
+                return $detail->sortOrder;
+            }
+
         } else {
             $detail = ReportTemplateDetails::find($topLevelID);
 
-            return $detail->sortOrder;
+            if($detail) {
+                return $detail->sortOrder;
+            }
         }
+
+        return 1;
     }
 
     public static function getLevelTwoSortOfReportTemplate($topLevelID, $detID){
