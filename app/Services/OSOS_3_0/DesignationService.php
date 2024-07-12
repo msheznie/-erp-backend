@@ -32,11 +32,11 @@ class DesignationService
         $this->dataBase = $dataBase;
         $this->postType = trim(strtoupper($postType),'"');
         $this->id = $id;
-        $this->detailId = $thirdPartyData->id;
-        $this->apiKey = $thirdPartyData->api_key;
-        $this->apiExternalKey = $thirdPartyData->api_external_key;
-        $this->apiExternalUrl = $thirdPartyData->api_external_url;
-        $this->companyId = $thirdPartyData->company_id;
+        $this->detailId = $thirdPartyData['id'];
+        $this->apiKey = $thirdPartyData['api_key'];
+        $this->apiExternalKey = $thirdPartyData['api_external_key'];
+        $this->apiExternalUrl = $thirdPartyData['api_external_url'];
+        $this->companyId = $thirdPartyData['company_id'];
         $this->thirdPartyData = $thirdPartyData;
 
         $this->getOperation();
@@ -83,17 +83,16 @@ class DesignationService
 
                 $this->insertOrUpdateThirdPartyPivotTable($je['id']);
                 $msg = "Api Designation {$this->operation} successfully finished";
-                return  $this->insertToLogTb($msg, 'info', 'Designation', $this->companyId);
+                $this->insertToLogTb($msg, 'info', 'Designation', $this->companyId);
+                return ['status' => true, 'message' => $msg, 'code' => $statusCode];
 
             }
 
             if ($statusCode == 400) {
                 $msg = $res->getBody();
-                return $this->capture400Err(json_decode($msg), 'Designation');
+                $this->capture400Err(json_decode($msg), 'Designation');
+                return ['status' => false, 'message' => $msg, 'code' => $statusCode];
             }
-
-            return $this->callDesignationHook();
-
 
         } catch (\Exception $e) {
 
@@ -108,20 +107,8 @@ class DesignationService
             $msg .= "message : ".$e->getMessage()."\n";
             $msg .= "file : ".$e->getFile()."\n";
             $msg .= "line no : ".$e->getLine()."\n";
-            return $this->insertToLogTb($msg, 'error', 'Designation', $this->companyId);
-        }
-    }
-
-    function callDesignationHook(){
-        $i = 1;
-        while ($i <= 3) {
-            DesignationWebHook::dispatch(
-                $this->dataBase,
-                $this->postType,
-                $this->id,
-                $this->thirdPartyData
-            );
-            $i++;
+            $this->insertToLogTb($msg, 'error', 'Designation', $this->companyId);
+            return ['status' => false, 'message' => $msg, 'code' => $exStatusCode];
         }
     }
 
@@ -153,8 +140,18 @@ class DesignationService
             $error = 'Designation code not found';
             return ['status' =>false, 'message'=> $error];
         }
+        if(empty($this->validateCompanyReference())){
+            $error = 'Company reference not found';
+            return ['status' =>false, 'message'=> $error];
+        }
 
         return ['status' =>true, 'message'=> 'success'];
+    }
+
+    function validateCompanyReference() {
+        return DB::table('pivot_tbl_reference')
+            ->where('id', 5)
+            ->value('id');
     }
 
     function getDesignationData()
@@ -166,26 +163,27 @@ class DesignationService
                     WHEN is_active = 0 THEN 0 
                     WHEN is_active = 1 THEN 1 
                 END as Status, 
-                isDeleted as IsDeleted")
+                isDeleted as IsDeleted,
+                Erp_companyID as companyId")
             ->where('DesignationID', $this->id)
             ->first();
 
         if(empty($data)){
             return;
         }
-        $this->getReferenceId();
+
         $this->designationData = [
             "code" => $data->id,
             "name" => $data->Name,
             "description" => $data->Description,
             "status" => $data->Status,
             "isDeleted" => $data->IsDeleted,
-            "companyId" => strval($this->masterUuId)
+            "companyId" => $this->getOtherReferenceId($data->companyId, 5)
         ];
 
         if($this->postType != "POST"){
-            $this->designationData['id'] = strval($this->masterUuId);
-            $this->designationData['companyId'] = null;
+            $this->getReferenceId();
+            $this->designationData['id'] = $this->masterUuId;
         }
     }
 }

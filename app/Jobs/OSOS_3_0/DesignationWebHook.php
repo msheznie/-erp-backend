@@ -40,7 +40,33 @@ class DesignationWebHook implements ShouldQueue
         CommonJobService::db_switch($this->dataBase);
 
         $designationService = new DesignationService($this->dataBase, $this->id, $this->postType, $this->thirdPartyData);
-        $designationService->execute();
+        $resp = $designationService->execute();
 
+        if(isset($resp['status']) && !$resp['status']){
+            $this->callDesignationService($resp['code'], 'Location');
+        }
+    }
+
+    function callDesignationService($statusCode, $desc)
+    {
+
+        if (!in_array($statusCode, [200, 201])) {
+            for ($i = 1; $i <= 3; $i++) {
+                $msg = 'API Designation attempt' . $i;
+                $this->insertToLogTb($msg, 'info', $desc, $this->thirdPartyData['company_id']);
+
+                $locationService = new DesignationService(
+                    $this->dataBase,
+                    $this->id, $this->postType,
+                    $this->thirdPartyData
+                );
+
+                $resp = $locationService->execute();
+                if (isset($resp['status']) && in_array($resp['status'], [200, 201])) {
+                    return true;
+                }
+            }
+        }
+        return true;
     }
 }

@@ -67,7 +67,7 @@ class JobInvokeAPIController extends AppBaseController
 
             if(!$valResp['status']){
                 $this->sendError($valResp['message']);
-                $this->insertToLogTb($valResp['message'], 'error', 'Designation', $this->thirdParty->company_id);
+                $this->insertToLogTb($valResp['message'], 'error', 'Designation', $this->thirdParty['company_id']);
             }
 
             $postType = $request->postType;
@@ -77,16 +77,15 @@ class JobInvokeAPIController extends AppBaseController
             foreach ($ids as $id) {
 
                 DesignationWebHook::dispatch($db, $postType, $id, $this->thirdParty);
-
                 $msg = "Webhook triggered for Designation ID: $id";
-                $this->insertToLogTb($msg, 'info', 'Designation', $this->thirdParty->company_id);
+                $this->insertToLogTb($msg, 'info', 'Designation', $this->thirdParty['company_id']);
             }
 
-            return $this->sendResponse([], 'OSOS 3.0 success');
+            return $this->sendResponse([], 'OSOS 3.0 | Designation | triggered success');
 
         } catch (\Exception $e){
             $error = 'Error Line No: ' . $e->getLine();
-            $this->insertToLogTb($error, 'error', 'Designation', $this->thirdParty->company_id);
+            $this->insertToLogTb($error, 'error', 'Designation', $this->thirdParty['company_id']);
             return $this->sendError($e->getMessage(),500);
         }
     }
