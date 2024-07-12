@@ -196,6 +196,20 @@ class ForgotToPunchInService{
                 continue;
             }
 
+            $empOnTrip = $this->empOnTrip($empArr);
+
+            if(!empty($empOnTrip)){
+                $this->insertToLogTb(
+                    [
+                        'shiftId'=> $shiftID,
+                        'message'=> "Following employees on trip : $empOnTrip"
+                    ],
+                    'data'
+                );
+            }
+
+            $empArr = array_values( array_diff($empArr, $empOnTrip) );
+
             $notPunched = $this->empForgotToPunchIn($empArr);
             if($notPunched->count() == 0){
                 $this->insertToLogTb(
@@ -263,6 +277,22 @@ class ForgotToPunchInService{
         }
         
         return $onLeaveEmp->pluck('empID')->toArray();
+    }
+
+    public function empOnTrip($empArr) {
+        $onTripEmp = DB::table('hr_trip_request_master')
+            ->select('req_emp_id_confirmed as empID')
+            ->where('company_id', $this->companyId)
+            ->where('rpt_manager_confirmed_yn', 1)
+            ->whereIn('req_emp_id_confirmed', $empArr)
+            ->whereRaw("('{$this->date}' BETWEEN trd.date_travel AND trd.date_return)")
+            ->get();
+
+        if($onTripEmp->count() == 0){
+            return [];
+        }
+
+        return $onTripEmp->pluck('empID')->toArray();
     }
 
     public function empForgotToPunchIn($empArr){        
