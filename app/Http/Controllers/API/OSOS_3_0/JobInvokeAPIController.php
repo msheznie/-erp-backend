@@ -75,10 +75,7 @@ class JobInvokeAPIController extends AppBaseController
             $db = isset($request->db) ? $request->db : "";
 
             foreach ($ids as $id) {
-
                 DesignationWebHook::dispatch($db, $postType, $id, $this->thirdParty);
-                $msg = "Webhook triggered for Designation ID: $id";
-                $this->insertToLogTb($msg, 'info', 'Designation', $this->thirdParty['company_id']);
             }
 
             return $this->sendResponse([], 'OSOS 3.0 | Designation | triggered success');
