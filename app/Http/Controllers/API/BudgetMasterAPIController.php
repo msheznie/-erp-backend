@@ -4474,7 +4474,6 @@ class BudgetMasterAPIController extends AppBaseController
 
         $glMasters = ReportTemplateDetails::where('companySystemID', $templateData['companySystemID'])->where('companyReportTemplateID', $templateMasterID)->where('masterID', null)->where('itemType', '!=', 3)->orderBy('sortOrder', 'asc')->get();
 
-
         function buildTree($elements, $parentId = null) {
             $branch = array();
 
