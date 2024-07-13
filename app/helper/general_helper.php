@@ -9149,47 +9149,6 @@ class Helper
     }
 
 
-    public static function getNextSortOfReportTemplate($detID)
-    {
-        $topLevelID = self::getMasterLevelOfReportTemplate($detID);
-
-        if($topLevelID != $detID) {
-            $secondLevelID = self::getLevelTwoSortOfReportTemplate($topLevelID, $detID);
-
-            $detail = ReportTemplateDetails::find($secondLevelID);
-
-            if($detail){
-                return $detail->sortOrder;
-            }
-
-        } else {
-            $detail = ReportTemplateDetails::find($topLevelID);
-
-            if($detail) {
-                return $detail->sortOrder;
-            }
-        }
-
-        return 1;
-    }
-
-    public static function getLevelTwoSortOfReportTemplate($topLevelID, $detID){
-
-        $masterID = null;
-        $detail = ReportTemplateDetails::find($detID);
-
-        if ($detail) {
-            if ($topLevelID == $detail->masterID) {
-                $masterID = $detail->detID;
-            } else {
-                $masterID = self::getLevelTwoSortOfReportTemplate($topLevelID,$detail->masterID);
-            }
-        }
-
-        return $masterID;
-    }
-
-
     public static function getMasterLevelOfReportTemplate($detID)
     {
 
