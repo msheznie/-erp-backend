@@ -19,6 +19,7 @@ use App\Models\FixedAssetMaster;
 use DNS2D;
 use Illuminate\Support\Facades\Storage;
 use TCPDF;
+use TCPDF_FONTS;
 /**
  * Class BarcodeConfigurationController
  * @package App\Http\Controllers\API
@@ -398,8 +399,9 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
         $configuration = BarcodeConfiguration::where('companySystemID',$subCompanies[0])->first();
         $company = Company::find($subCompanies[0]);
-       
+        $companyID = $company?$company->CompanyName:null;
         $logo = $company->logo_url && $company->logo_url != null?$company->logo_url:null;
+        $companyLogo = $company->companyLogo;
         $companyArabicName = $company->CompanyNameLocalized;
         $type = $request->get('type');
 
@@ -499,6 +501,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
             $bold = $request['bold'] ? 'B' : '';
             $temp_png = null;
+            $imageType = 'JPG';
             if($logo != null && $template == 2)
             {
                 $imageContent = file_get_contents($logo);
@@ -507,10 +510,19 @@ class BarcodeConfigurationAPIController extends AppBaseController
             
                 Storage::put($filePath, $imageContent);
                 $temp_png = storage_path('app/' . $filePath);
+
+                
+                if($companyLogo != null) {
+                    $imageType = strtolower(pathinfo($companyLogo, PATHINFO_EXTENSION));
+                }
             }
  
                $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-            
+
+              // $fontFile = storage_path('app/fonts/helvetica.TTF');
+
+               $fontName = 'helvetica';//TCPDF_FONTS::addTTFfont($fontFile, 'TrueTypeUnicode', '', 96);
+
                 $barcodesCountPage = 0;
                 if($page == "A4") {
                     $maxBarcodesPerPage = 24;
@@ -528,9 +540,9 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 }
                 else if($page == "Custom Size") {
                     $maxBarcodesPerPage = 1;
-                    $columnSpacing = 3.5; 
-                    $marginLeft = 4;
-                    $barcodeWidth = 41;
+                    $columnSpacing = 6.5; 
+                    $marginLeft = 2;
+                    $barcodeWidth = 45;
                     $maxBarcodesPerRow = 1; 
                 }
                
@@ -546,7 +558,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 $pdf->setPrintHeader(false);
                 $pdf->setPrintFooter(false);
         
-                $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+                $pdf->SetDefaultMonospacedFont($fontName);
         
                 $pdf->SetMargins($marginLeft, $marginTop, $marginLeft, true);
                 $pdf->SetHeaderMargin(10);
@@ -556,7 +568,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
         
                 $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
         
-                $pdf->AddFont('aealarabiya', '', 'aealarabiya.php');
+               // $pdf->AddFont('aealarabiya', '', 'aealarabiya.php');
         
                 $style = array(
                     'position' => '',
@@ -564,15 +576,15 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     'stretch' => false,
                     'fitwidth' => true,
                     'cellfitalign' => '',
-                    'border' => true,
+                    'border' => false,
                     'hpadding' => 'auto',
                     'vpadding' => 'auto',
                     'fgcolor' => array(0,0,0),
                     'bgcolor' => false,
                     'text' => true,
-                    'font' => 'helvetica',
-                    'fontsize' => 8,
-                    'stretchtext' => 4
+                    'font' => 'helveticaB',
+                    'fontsize' => 4,
+                    'stretchtext' => 0
                 );
             
                     foreach ($assets as $key => $val) {
@@ -597,38 +609,38 @@ class BarcodeConfigurationAPIController extends AppBaseController
                         if($template == 2)
                         {
                             $imageHeight = 6; 
-                            $pdf->Image($temp_png, $x-1, $y+3, 6, $imageHeight, 'JPG', '', 'T', true, 300, '', false, false, 0, false, false, false);
+                            $pdf->Image($temp_png, $x-1, $y+3, 6, $imageHeight, $imageType, '', 'T', true, 300, '', false, false, 0, false, false, false);
                             if (file_exists($temp_png)) {
                                 if (unlink($temp_png)) {
                                 } 
                             };
-                            $pdf->SetFont('aealarabiya', '', 8);
-                            $pdf->SetXY($x + 6, $y+2);
+                            $pdf->SetFont('aealarabiya', '', 4);
+                            $pdf->SetXY($x + 6, $y+3);
                             $pdf->Write(0, $companyArabicName, '', 0, 'L', true, 0, false, false, 0);
 
-                            
-                            $pdf->SetXY($x-2, $y + 9);
+                            $pdf->SetFont($fontName, 'B', 5);
+                            $pdf->SetXY($x-2, $y + 10);
                             $pdf->Write(0, $val->assetDescription, '', 0, 'L', true, 0, false, false, 0);
 
                             
-                            $pdf->SetFont('helvetica', '', 8);
+                            $pdf->SetFont($fontName, 'B', 4);
                             $pdf->SetXY($x + 6, $y + 6);
-                            $pdf->Write(0, $val->companyID, '', 0, 'L', true, 0, false, false, 0);
+                            $pdf->Write(0, $companyID, '', 0, 'L', true, 0, false, false, 0);
 
                        }
                        else
                        {
-                            $pdf->SetFont('helvetica', '', 8);
+                            $pdf->SetFont($fontName, 'B', 8);
                             $pdf->SetXY($x-2, $y+3);
-                            $pdf->Write(0, $val->companyID, '', 0, 'L', true, 0, false, false, 0);
+                            $pdf->Write(0, $companyID, '', 0, 'L', true, 0, false, false, 0);
                        }
             
-                        $barcodeY = $template == 2?$y + 13:$y + 8;
+                        $barcodeY = $template == 2?$y + 12:$y + 7;
                         if($font == 'Code 39') {
-                            $pdf->write1DBarcode($val->faCode, 'C39E', $x-2, $barcodeY, $barcodeWidth, $barcodeHeight, 0.4, $style, 'N');
+                            $pdf->write1DBarcode($val->faCode, 'C39E', $x-2, $barcodeY, $barcodeWidth, $barcodeHeight, 0.9, $style, 'N');
                         }
                         else if($font == 'Code 128') {
-                            $pdf->write1DBarcode($val->faCode, 'C128', $x-2, $barcodeY, $barcodeWidth, $barcodeHeight, 0.4, $style, 'N');
+                            $pdf->write1DBarcode($val->faCode, 'C128', $x-2, $barcodeY, $barcodeWidth, $barcodeHeight, 0.9, $style, 'N');
                         }
             
                         $barcodesCountPage++;
