@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.44.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.44.0...v10.44.1) (2024-07-14)
+
+
+### Bug Fixes
+
+* **asset management:** Barcode label company name updated according to current company details [GCP-3956] ([#6361](https://github.com/pbsgears/Gears_BackEnd/issues/6361)) ([ae208a6](https://github.com/pbsgears/Gears_BackEnd/commit/ae208a68773865ca10b9a7308c2f91865fb47075))
+* **general ledger:** Fixed to show even when gl codes levels are more than two [GCP-3992] ([#6418](https://github.com/pbsgears/Gears_BackEnd/issues/6418)) ([f2ab7d1](https://github.com/pbsgears/Gears_BackEnd/commit/f2ab7d1b358162546c8ddcff82de6f2c7a335565))
+
 ## [10.44.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.43.0...v10.44.0) (2024-07-03)
 
 
