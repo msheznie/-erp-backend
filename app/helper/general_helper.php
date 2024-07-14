@@ -9148,6 +9148,24 @@ class Helper
         return $headerDetail;
     }
 
+
+    public static function getMasterLevelOfReportTemplate($detID)
+    {
+
+        $detail = ReportTemplateDetails::find($detID);
+
+        $masterID = null;
+        if ($detail) {
+            if (is_null($detail->masterID)) {
+                $masterID = $detail->detID;
+            } else {
+                $masterID = self::getMasterLevelOfReportTemplate($detail->masterID);
+            }
+        }
+
+        return $masterID;
+    }
+
     public static function dataTableSortOrder($input): string
     {
         $sort = 'desc';

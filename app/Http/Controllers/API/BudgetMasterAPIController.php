@@ -4468,11 +4468,58 @@ class BudgetMasterAPIController extends AppBaseController
             ->where('companySystemID', $templateData['companySystemID'])
             ->where('companyReportTemplateID', $templateMasterID)
             ->orderBy('sortOrder', 'asc')
+            ->where('itemType', '!=', 3)
             ->get();
 
-        $glMasters = ReportTemplateDetails::where('masterID', null)->where('companySystemID', $templateData['companySystemID'])->where('companyReportTemplateID', $templateMasterID)->orderBy('sortOrder', 'asc')->get();
+        $glMasters = ReportTemplateDetails::where('companySystemID', $templateData['companySystemID'])->where('companyReportTemplateID', $templateMasterID)->where('masterID', null)->where('itemType', '!=', 3)->orderBy('sortOrder', 'asc')->get();
 
-        $glCOdesSorted = collect($glCOdes);
+
+        function buildTree($elements, $parentId = null) {
+            $branch = array();
+
+            foreach ($elements as $element) {
+                if ($element['masterID'] == $parentId) {
+                    $children = buildTree($elements, $element['detID']);
+                    if ($children) {
+                        $element['children'] = $children;
+                    }
+                    $branch[] = $element;
+                }
+            }
+
+            return $branch;
+        }
+
+        function sortTree(&$tree) {
+            usort($tree, function ($a, $b) {
+                return $a['sortOrder'] <=> $b['sortOrder'];
+            });
+
+            foreach ($tree as &$branch) {
+                if (isset($branch['children'])) {
+                    sortTree($branch['children']);
+                }
+            }
+        }
+
+        function flattenTree($tree) {
+            $flat = array();
+
+            foreach ($tree as $node) {
+                $flat[] = $node;
+                if (isset($node['children'])) {
+                    $flat = array_merge($flat, flattenTree($node['children']));
+                    unset($node['children']);
+                }
+            }
+
+            return $flat;
+        }
+
+        $tree = buildTree($glCOdes->toArray());
+        sortTree($tree);
+        $sortedFlat = flattenTree($tree);
+
 
 
         $templateMaster = ReportTemplate::find($templateMasterID);
@@ -4494,11 +4541,13 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError('The budget for all segments has already been uploaded');
         }
 
+
+
         $output = array(
             'segments' => $segments,
             'company' => $company,
             'glMasters' => $glMasters,
-            'templateDetails' => $glCOdesSorted->values()->all(),
+            'templateDetails' => $sortedFlat,
             'sentNotificationAt' => $sentNotificationAt,
             'templateMaster' => $templateMaster,
             'financeYearMaster' => $financeYearMaster,

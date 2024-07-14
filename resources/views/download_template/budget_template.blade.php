@@ -33,21 +33,22 @@
                 <tbody>
                 @foreach ($glMasters as $glMaster)
                 @foreach ($templateDetails as $rowLevel)
-                    @if($glMaster->detID == $rowLevel->masterID)
 
-                        @foreach ($rowLevel->gllink as $row)
+                    @if($glMaster->detID == \App\helper\Helper::getMasterLevelOfReportTemplate($rowLevel['masterID']))
+
+                        @foreach ($rowLevel['gllink'] as $row)
                         <tr>
                             <td>
-                                {{\App\helper\Helper::headerCategoryOfReportTemplate($row->templateDetailID)['description'] }}
+                                {{\App\helper\Helper::headerCategoryOfReportTemplate($row['templateDetailID'])['description'] }}
                             </td>
                             <td>
-                                {{$rowLevel->description}}
+                                {{$rowLevel['description']}}
                             </td>
                             <td>
-                                {{$row->glCode}}
+                                {{$row['glCode']}}
                             </td>
                             <td>
-                                {{$row->glDescription}}
+                                {{$row['glDescription']}}
                             </td>
                             @foreach($segments as $segment)
                             <td>0</td>
