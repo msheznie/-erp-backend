@@ -70,7 +70,7 @@ class BudgetConsumptionService
                         	$userMessageE .= "Segment : ". $value['serviceLine'] ;
                         	$userMessageE .= "<br>";
                         }
-                        
+
                         if (isset($budgetData['checkBudgetBasedOnGLPolicyProject']) && $budgetData['checkBudgetBasedOnGLPolicyProject'] &&  (isset($budgetData['projectBased']) && $budgetData['projectBased'])) {
                         	$userMessageE .= "GL Account : ". $value['serviceLine'] ;
                         	$userMessageE .= "<br>";
@@ -1495,7 +1495,6 @@ class BudgetConsumptionService
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$pendingPoQry = PurchaseRequestDetails::selectRaw('(estimatedCost * quantityRequested) AS transAmount, '.$budgetFormData['glColumnName'].', companySystemID, purchaseRequestID')
-                                             ->where('itemFinanceCategoryID', 3)
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
 											 		   ->where('Year', $budgetFormData['budgetYear'])
@@ -1537,7 +1536,7 @@ class BudgetConsumptionService
 	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 	 																 });
 	 													 });
-	 										 }, 'purchase_request', 'podetail.order' ])
+	 										 }, 'purchase_request'])
 	 										 ->whereHas('purchase_request', function($query) use ($budgetFormData) {
 	 										 	$query->where('approved', -1)
 	 										 		  ->where('cancelledYN', 0)
@@ -1547,9 +1546,6 @@ class BudgetConsumptionService
 													  })
 	 										 		  ->where('budgetYear', $budgetFormData['budgetYear']);
 	 										 })
-                                             ->whereHas('podetail.order', function($query) {
-                                                 $query->where('poConfirmedYN', 1);
-                                             })
 	 										 ->when(in_array($budgetFormData['documentSystemID'], [1,50,51]), function($query) use ($budgetFormData) {
 	 										 	$query->where('purchaseRequestID', '!=' ,$budgetFormData['documentSystemCode']);
 	 										 })
