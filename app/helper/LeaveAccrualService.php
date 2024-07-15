@@ -19,6 +19,7 @@ class LeaveAccrualService
     public $company_code;
     public $company_name;
     public $policy;
+    public $debugDate;
     public $dailyBasis;
     public $date;
     public $date_time;
@@ -34,7 +35,7 @@ class LeaveAccrualService
     public $month_det;
     public $accrualType;
 
-    public function __construct($company_data, $accrual_type_det, $header_data)
+    public function __construct($company_data, $accrual_type_det, $header_data, $debugDate = null)
     {
         $this->company_id = $company_data['id'];
         $this->company_code = $company_data['code'];
@@ -44,6 +45,7 @@ class LeaveAccrualService
         $this->date_time = Carbon::now();
         $this->date = $this->date_time->format('Y-m-d');
         $this->accrualType = $accrual_type_det['description'];
+        $this->debugDate = $debugDate;
 
         if($header_data){
             $this->header_data = $header_data;
@@ -166,24 +168,11 @@ class LeaveAccrualService
 
     function pending_sql_monthly($str, $leaveGroupID, $master_id_filter): string
     {
-        $this->month_det = LeaveBalanceValidationHelper::validate_month($this->company_id,$this->date)['details'];
-
+        $accTrigDate = $this->accrualTriggerDate();
         $year = Carbon::parse( $this->date )->format('Y');
         $month = Carbon::parse( $this->date )->format('m');
 
-        $accrualTriggerBasedOn= SME::accrualTriggerBasedOn($this->company_id);
-        $accTrigDate = $this->month_det['dateTo'];
-        if ($accrualTriggerBasedOn != 2) {
-            $accTrigDate = $this->month_det['dateFrom'];
-        }
-
         $month_date_filter = "AND `year` = {$year} AND `month` = {$month}";
-
-        $accrualTriggerBasedOnValues = [1 => 'First of Month', 2 => 'End of Month'];
-        $policyMsg = $accrualTriggerBasedOnValues[$accrualTriggerBasedOn];
-        $this->insertToLogTb(
-            "Accrual triggered at :  {$accTrigDate} based on '{$policyMsg}' policy",
-            'info', 'Leave Accrual Monthly', $this->company_id);
 
         if ($this->year_det['accrualPolicyValue'] == 3){
             $month_date_filter = "AND company_finance_year_id = ".$this->month_det['id'];
@@ -204,7 +193,31 @@ class LeaveAccrualService
     }
 
     function create_accrual(){
+        $accrualDate = $this->accrualTriggerDate();
+        if($this->debugDate) {
+            $accrualDate = $this->date;
+        }
 
+        $accrualTriggerBasedOnValues = [1 => 'First of Month', 2 => 'End of Month'];
+        if ($this->policy == 3) {
+            if($accrualDate == $this->date) {
+                $accrualTriggerBasedOn= SME::accrualTriggerBasedOn($this->company_id);
+                $policyMsg = $accrualTriggerBasedOnValues[$accrualTriggerBasedOn];
+                $this->insertToLogTb(
+                    "Monthly Accrual triggered at :  {$accrualDate} based on '{$policyMsg}' policy",
+                    'info', 'Leave Accrual Monthly', $this->company_id);
+
+                $this->createAccrualData();
+            }
+        } else {
+            $this->insertToLogTb(
+                "Annual accrual triggered at :  {$this->date}",
+                'info', 'Leave Accrual Annual', $this->company_id);
+            $this->createAccrualData();
+        }
+    }
+
+    function createAccrualData() {
         DB::beginTransaction();
         try {
 
@@ -322,6 +335,17 @@ class LeaveAccrualService
             LeaveAccrualDetail::insert($detail);
         }
 
+    }
+
+    function accrualTriggerDate() {
+        $this->month_det = LeaveBalanceValidationHelper::validate_month($this->company_id,$this->date)['details'];
+        $accrualTriggerBasedOn= SME::accrualTriggerBasedOn($this->company_id);
+        $accTrigDate = $this->month_det['dateTo'];
+        if ($accrualTriggerBasedOn != 2) {
+            $accTrigDate = $this->month_det['dateFrom'];
+        }
+
+        return $accTrigDate;
     }
 
     function log_suffix(){

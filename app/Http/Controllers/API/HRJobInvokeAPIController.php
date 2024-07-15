@@ -341,14 +341,18 @@ class HRJobInvokeAPIController extends AppBaseController
         return $this->sendResponse(true, 'cross day clock out pulling job added to queue1');
     }
 
-    function leaveAccrualJobCall(Request $req){
+    function leaveAccrualJobCallDebug(Request $req){
         $tenantId = $req->input('tenantId');
+        $debugDate = $req->input('debug_date');
         $tdb = CommonJobService::get_tenant_db($tenantId);
         if(empty($tdb)){
             Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
 
-        Log::info("{$tdb} DB added to queue for leave accrual initiate . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
-        LeaveAccrualInitiate::dispatch($tdb);
+        Log::info("{$tdb} DB added to queue for leave accrual initiate 
+        . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+
+        LeaveAccrualInitiate::dispatch($tdb,$debugDate);
+        return $this->sendResponse(true, 'Leave accrual schedule job added to queue');
     }
 }
