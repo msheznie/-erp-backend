@@ -1084,11 +1084,19 @@ GROUP BY
         }
 
         $formattedDate = Carbon::parse($jvMasterData->JVdate)->format('M Y');
+        if(!strpos(JvMaster::find($jvMasterAutoId)->JVNarration,'+'))
+        {
+            $narration = (JvMaster::find($jvMasterAutoId)) ? 'PO Accrual for the month of '.$formattedDate.'+'.JvMaster::find($jvMasterAutoId)->JVNarration : null;
+        }else {
+            $data = explode('+',JvMaster::find($jvMasterAutoId)->JVNarration);
 
+            if(!empty($data))
+                $narration = 'PO Accrual for the month of '.$formattedDate.'+'.$data[1];
+        }
         //updating JV master
         $updateJvMaster = JvMaster::find($jvMasterAutoId)
             ->update([
-                'JVNarration' => 'PO Accrual for the month of '.$formattedDate
+                'JVNarration' => $narration
             ]);
 
         return $this->sendResponse('', 'JV Details saved successfully');
