@@ -54,9 +54,11 @@ class JobInvokeAPIController extends AppBaseController
             return $this->sendResponse([], 'OSOS 3.0 location triggered success');
 
         } catch (\Exception $e) {
-            $error = 'Error Line No: ' . $e->getLine();
+            $msg = $e->getMessage();
+            $error = $msg.' Error Line No: ' . $e->getLine();
             $this->insertToLogTb($error, 'error', 'Location', $this->thirdParty['company_id']);
-            return $this->sendError($e->getMessage(), 500);
+
+            return $this->sendError($msg, 500);
         }
     }
 
@@ -81,9 +83,11 @@ class JobInvokeAPIController extends AppBaseController
             return $this->sendResponse([], 'OSOS 3.0 | Designation | triggered success');
 
         } catch (\Exception $e){
-            $error = 'Error Line No: ' . $e->getLine();
+            $msg = $e->getMessage();
+            $error = $msg.' Error Line No: ' . $e->getLine();
             $this->insertToLogTb($error, 'error', 'Designation', $this->thirdParty['company_id']);
-            return $this->sendError($e->getMessage(),500);
+
+            return $this->sendError($msg, 500);
         }
     }
 
@@ -104,10 +108,11 @@ class JobInvokeAPIController extends AppBaseController
 
             return $this->sendResponse([], 'OSOS 3.0 department triggered');
         } catch(\Exception $e) {
-            $error = 'Error Line No: ' . $e->getLine();
+            $msg = $e->getMessage();
+            $error = $msg.' Error Line No: ' . $e->getLine();
             $this->insertToLogTb($error, 'error', 'Department', $this->thirdParty['company_id']);
 
-            return $this->sendError($e->getMessage(),500);
+            return $this->sendError($msg, 500);
         }
     }
 }

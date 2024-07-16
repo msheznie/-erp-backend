@@ -25,13 +25,16 @@ class HelpDeskAPIController extends AppBaseController
 
             DB::beginTransaction();
             try {
-                $empID = $request->employeeSystemID;
+                $ids = is_array($request->employeeSystemID)? $request->employeeSystemID :
+                    [$request->employeeSystemID];
                 $db = isset($request->db) ? $request->db : "";
                 $thirdParty = ThirdPartyIntegrationKeys::where('third_party_system_id', 5)->first();
                 DB::commit();
 
                 if(!empty($thirdParty)){
-                    UserWebHook::dispatch($db, $empID, $thirdParty->api_external_key, $thirdParty->api_external_url);
+                    foreach ($ids as $id) {
+                        UserWebHook::dispatch($db, $id, $thirdParty->api_external_key, $thirdParty->api_external_url);
+                    }
                 } else {
                     return $this->sendResponse([], 'There is no third party integration');
                 }
@@ -58,9 +61,12 @@ class HelpDeskAPIController extends AppBaseController
         }
 
         $postType = $request->postType;
-        $id = $request->employeeSystemID;
+        $ids = is_array($request->employeeSystemID)? $request->employeeSystemID : [$request->employeeSystemID];
         $db = isset($request->db) ? $request->db : "";
-        EmployeeWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+
+        foreach ($ids as $id) {
+            EmployeeWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+        }
 
         return $this->sendResponse([], 'OSOS 3.0 employee triggered');
     }

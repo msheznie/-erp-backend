@@ -140,18 +140,13 @@ class DesignationService
             $error = 'Designation code not found';
             return ['status' =>false, 'message'=> $error];
         }
+
         if(empty($this->validateCompanyReference())){
             $error = 'Company reference not found';
             return ['status' =>false, 'message'=> $error];
         }
 
         return ['status' =>true, 'message'=> 'success'];
-    }
-
-    function validateCompanyReference() {
-        return DB::table('pivot_tbl_reference')
-            ->where('id', 5)
-            ->value('id');
     }
 
     function getDesignationData()

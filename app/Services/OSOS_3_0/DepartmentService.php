@@ -134,6 +134,11 @@ namespace App\Services\OSOS_3_0;
              return ['status' =>false, 'message'=> $error];
          }
 
+         if(empty($this->validateCompanyReference())){
+             $error = 'Company reference not found';
+             return ['status' =>false, 'message'=> $error];
+         }
+
          return ['status' =>true, 'message'=> 'success'];
      }
 

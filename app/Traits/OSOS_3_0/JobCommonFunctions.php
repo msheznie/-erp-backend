@@ -147,4 +147,10 @@ trait JobCommonFunctions{
             ->where('system_id', $id)
             ->value('reference_id');
     }
+
+    function validateCompanyReference() {
+        return DB::table('third_party_pivot_record')
+            ->where('pivot_table_id', 5)
+            ->first();
+    }
 }
