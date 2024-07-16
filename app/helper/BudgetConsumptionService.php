@@ -1558,7 +1558,7 @@ class BudgetConsumptionService
 
             $assetCost = FixedAssetMaster::selectRaw('erp_fa_asset_master.approved')->leftjoin('erp_grvmaster', 'erp_grvmaster.grvAutoID', '=', 'erp_fa_asset_master.docOriginSystemCode')->leftjoin('erp_grvdetails', 'erp_grvdetails.grvAutoID', '=', 'erp_fa_asset_master.docOriginSystemCode')->leftjoin('erp_purchaseorderdetails', 'erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'erp_grvdetails.purchaseOrderDetailsID')->where('purchaseRequestID', $value->purchaseRequestID)->first();
 
-            if($assetCost->approved == -1){
+            if(!empty($assetCost) && $assetCost->approved == -1){
                 unset($pendingPoQry[$key]);
             }
         }
