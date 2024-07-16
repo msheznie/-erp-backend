@@ -1494,7 +1494,7 @@ class BudgetConsumptionService
 	public static function pendingPurchaseRequestQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
-		$pendingPoQry = PurchaseRequestDetails::selectRaw('(estimatedCost * quantityRequested) AS transAmount, '.$budgetFormData['glColumnName'].', companySystemID, purchaseRequestID')
+		$pendingPoQry = PurchaseRequestDetails::selectRaw('(estimatedCost * quantityRequested) AS transAmount, '.$budgetFormData['glColumnName'].', companySystemID, purchaseRequestID')->where('itemFinanceCategoryID', 3)
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
 											 		   ->where('Year', $budgetFormData['budgetYear'])
@@ -1555,9 +1555,15 @@ class BudgetConsumptionService
 			$currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->purchase_request->currency, $value->purchase_request->currency, $value->transAmount);
 			$value->rptAmt = $currencyConversionRptAmount['reportingAmount'];
 			$value->localAmt = $currencyConversionRptAmount['localAmount'];
-		}
 
-		$groupedPending = collect($pendingPoQry)->groupBy($budgetFormData['glColumnName'])->all();
+            $assetCost = FixedAssetMaster::selectRaw('erp_fa_asset_master.approved')->leftjoin('erp_grvmaster', 'erp_grvmaster.grvAutoID', '=', 'erp_fa_asset_master.docOriginSystemCode')->leftjoin('erp_grvdetails', 'erp_grvdetails.grvAutoID', '=', 'erp_fa_asset_master.docOriginSystemCode')->leftjoin('erp_purchaseorderdetails', 'erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'erp_grvdetails.purchaseOrderDetailsID')->where('purchaseRequestID', $value->purchaseRequestID)->first();
+
+            if($assetCost->approved == -1){
+                unset($pendingPoQry[$key]);
+            }
+        }
+
+        $groupedPending = collect($pendingPoQry)->groupBy($budgetFormData['glColumnName'])->all();
 
 		$finalPending = [];
 		foreach ($groupedPending as $key => $value) {
