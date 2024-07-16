@@ -1233,6 +1233,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                 if (isset($value['item_code']) || (isset($value['item_description']) && $allowItemToTypePolicy)) {
                     $validateHeaderCode = true;
+                } else {
+                    return $this->sendError('Items cannot be uploaded, as there are null values found in excel row number: ' . ($totalItemCount + 4), 500);
                 }
 
                 if (isset($value['qty'])) {

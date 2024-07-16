@@ -121,6 +121,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                     if (isset($input['item_code'])) {
                         $item = ItemAssigned::where('itemPrimaryCode', $input['item_code'])
                                         ->where('companySystemID', $companySystemID)
+                                        ->where('isActive', 1)
                                         ->first();
                     }
 
@@ -159,7 +160,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                         $reorderQty = ItemAssigned::where('itemPrimaryCode', $input['item_code'])->where('companySystemID', $companySystemID)->sum('rolQuantity');
                         $itemFinanceCategoryID = $insertData['itemFinanceCategoryID'];
                         $requestAndReorderTotal = $requestedQty + $reorderQty;
-                        if($$insertData['quantityInHand'] > $requestAndReorderTotal && $itemFinanceCategoryID==1){
+                        if($insertData['quantityInHand'] > $requestAndReorderTotal && $itemFinanceCategoryID==1){
                             $insertData['is_eligible_mr'] = 1;
                         } else {
                             $insertData['is_eligible_mr'] = 0;
