@@ -1576,6 +1576,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $itemArray = $item->toArray();
+        unset($itemArray['categoryTypeDecode']);
 
         if(isset($itemArray['categoryTypeDecode'])){
             unset($itemArray['categoryTypeDecode']);
