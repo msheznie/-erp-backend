@@ -1971,16 +1971,15 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
     public function reverseGRVPreCheck(Request $request)
     {
         $input = $request->all();
+
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input, 'reversal');
+
         if ($isEligible['status'] == 0) {
-            $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '') ? $isEligible['msg'] : 'GRV Not Eligible for reversal';
-            return $this->sendError($errorMsg, 500);
-        }
-
-        $isExistBSI = PurchaseReturnDetails::where('grvAutoID',$input['grvAutoID'])->exists();
-
-        if ($isExistBSI) {
-            return $this->sendError("You cannot reverse the GRV. The GRV is already added to Purchase Return", 500);
+            return $this->sendError(
+                $isEligible['msg'],
+                $isEligible['code'] ?? 500,
+                $isEligible['data'] ?? array('type' => '')
+            );
         }
 
         return $this->sendResponse([], 'GRV Eligible for reversal');

@@ -2,11 +2,18 @@
 
 namespace App\Repositories;
 
+use App\helper\Helper;
 use App\Models\BookInvSuppDet;
+use App\Models\CustomerInvoiceItemDetails;
+use App\Models\DeliveryOrderDetail;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
+use App\Models\ItemIssueDetails;
+use App\Models\PurchaseReturnDetails;
+use App\Models\StockTransferDetails;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\FixedAssetMaster;
+use Carbon\Carbon;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
 
@@ -106,90 +113,211 @@ class GRVMasterRepository extends BaseRepository
 
     public function isGrvEligibleForCancellation($input, $type = null){
 
-        $grv = GRVMaster::find($input['grvAutoID']);
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMaster = GRVMaster::find($grvAutoID);
         $document = 'cancel';
 
         if ($type == "reversal") {
             $document = 'reverse';
         }
 
-        if (empty($grv)) {
-            return $array = [
+        if (empty($grvMaster)) {
+            return [
                 'status' => 0,
-                'msg' => 'GRV not found',
+                'msg' => 'GRV not found'
             ];
         }
 
-        if ($grv->approved != -1) {
-            return $array = [
+        if ($grvMaster->approved != -1) {
+            return [
                 'status' => 0,
-                'msg' => 'You cannot '.$document.', This document not approved.',
+                'msg' => 'You cannot '.$document.', This document not approved.'
             ];
         }
 
-        if ($grv->grvCancelledYN == -1) {
-            return $array = [
+        if ($grvMaster->grvCancelledYN == -1) {
+            return [
                 'status' => 0,
-                'msg' => 'GRV already cancelled',
+                'msg' => 'GRV already cancelled'
             ];
         }
 
-        $checkInAllocation = FixedAssetMaster::where('docOriginDocumentSystemID', 3)->where('docOriginSystemCode', $input['grvAutoID'])->first();
-        if ($checkInAllocation) {
-            return $array = [
-                'status' => 0,
-                'msg' => 'You cannot '.$document.' the GRV. The GRV is already added to Asset Allocation',
-            ];
+        $grvDetails = GRVDetails::where('grvAutoID',$grvAutoID)->get();
+
+        $inventoryItems = [];
+        $otherItems = [];
+
+        $itemList = [];
+
+        // filter inventory items and other items
+        foreach ($grvDetails as $grvDetail) {
+            if($grvDetail->itemFinanceCategoryID == 1) {
+                $inventoryItems[] = $grvDetail;
+            }
+            else {
+                $otherItems[] = $grvDetail;
+            }
+            // create item object array
+            $itemList[] = (object)['itemSystemCode' => $grvDetail->itemCode];
         }
 
-        $oneDetail = GRVDetails::where('grvAutoID',$input['grvAutoID'])->first();
-
-        if (empty($oneDetail)) {
-            return $array = [
+        // purchase return
+        $isPullPurchaseReturn = PurchaseReturnDetails::where('grvAutoID',$grvAutoID)->exists();
+        if($isPullPurchaseReturn) {
+            return [
                 'status' => 0,
-                'msg' => 'GRV Details not found',
+                'msg' => 'You cannot reverse the GRV. The GRV is already added to Supplier Invoice or purchase return'
             ];
         }
-
-        switch ($oneDetail->itemFinanceCategoryID){
-            case 1: //Inventory - Don't allow to cancel and ask user to create a purchase return for Inventory GRVs
-                return $array = [
+        else {
+            // supplier invoice
+            $isPullSupplierInvoice = BookInvSuppDet::where('grvAutoID',$grvAutoID)->exists();
+            if($isPullSupplierInvoice) {
+                return [
                     'status' => 0,
-                    'msg' => 'You cannot '.$document.' inventory type GRV. Please do a purchase return for this GRV',
+                    'msg' => 'You cannot reverse the GRV. The GRV is already added to Supplier Invoice or purchase return'
                 ];
-                break;
-            case 2: // Service - Don't allow to cancel the GRV, If the GRV is added to BSI
-            case 3: // Don’t allow to cancel, If the GRV is added in the asset allocation or  If the GRV is added to BSI
-            case 4: // Don't allow to cancel the GRV, If the GRV is added to BSI
-               // $isExistBSI = UnbilledGrvGroupBy::where('grvAutoID',$input['grvAutoID'])->where('selectedForBooking',-1)->exists();
-                $isExistBSI = BookInvSuppDet::where('grvAutoID',$input['grvAutoID'])->exists();
-                if($isExistBSI){
-                    return $array = [
+            }
+        }
+
+        // only inventory items or both inventory and other items
+        if((!empty($inventoryItems) && empty($otherItems)) || (!empty($inventoryItems) && !empty($otherItems))) {
+            $deliveryNote = DeliveryOrderDetail::with(['master' => function ($query) use ($grvMaster) {
+                $query->where('wareHouseSystemCode', $grvMaster->grvLocation);
+                $query->where('createdDateTime', '>', $grvMaster->createdDateTime);
+            }])->whereIn('itemCodeSystem',$inventoryItems)->exists();
+
+            $directItemInvoice = CustomerInvoiceItemDetails::with(['master' => function ($query) use ($grvMaster) {
+                $query->where('wareHouseSystemCode', $grvMaster->grvLocation);
+                $query->where('createdDateAndTime', '>', $grvMaster->createdDateTime);
+            }])->whereIn('itemCodeSystem',$inventoryItems)->exists();
+
+            $materialIssue = ItemIssueDetails::with(['master' => function ($query) use ($grvMaster) {
+                $query->where('wareHouseFrom', $grvMaster->grvLocation);
+                $query->where('createdDateTime', '>', $grvMaster->createdDateTime);
+            }])->whereIn('itemCodeSystem',$inventoryItems)->exists();
+
+            $stockTransferOut = StockTransferDetails::with(['master_by' => function ($query) use ($grvMaster) {
+                $query->where('locationFrom', $grvMaster->grvLocation);
+                $query->where('createdDateTime', '>', $grvMaster->createdDateTime);
+            }])->whereIn('itemCodeSystem',$inventoryItems)->exists();
+
+            if($deliveryNote || $directItemInvoice || $materialIssue || $stockTransferOut) {
+                return [
+                    'status' => 0,
+                    'msg' => 'The Stock-Out Document Created for Selected GRV'
+                ];
+            }
+
+            // document id list for item ledger
+            $documentList = [71,3,61,20,8,24,10,7,97,11,87,12,13];
+
+            // create document id object array
+            $docs = array_map(function($item) {
+                return (object) ['documentSystemID' => $item];
+            }, $documentList);
+
+            $itemLedgerInputData = [
+                'companySystemID' => $input['companySystemID'],
+                'reportID' => "SL",
+                'reportType' => 1,
+                'toDate' => Carbon::now()->format('Y-m-d'),
+                'fromDate' => Carbon::now()->format('Y-m-d'),
+                'Warehouse' => [(object)['wareHouseSystemCode' => $grvMaster->grvLocation]],
+                'Items' => $itemList,
+                'Docs' => $docs
+            ];
+
+            // get data from item ledger repository
+            $itemLedgerOutputDataset = ErpItemLedgerRepository::getItemLedgerDetails($itemLedgerInputData, true);
+            $itemLedgerOutputDataset = $itemLedgerOutputDataset['data'];
+
+            // store invalid item data to return FE side
+            $invalidItemData = [];
+
+            // validate grv data with item ledger data set
+            foreach ($grvDetails as $grvDetail) {
+                try{
+                    // check the item is in item ledger or not (inventory items only)
+                    if (array_key_exists($grvDetail->itemPrimaryCode, $itemLedgerOutputDataset)) {
+                        // get grv item data from item ledger output data set using key value
+                        $itemLedgerData = $itemLedgerOutputDataset[$grvDetail->itemPrimaryCode];
+
+                        $itemLedgerItemTotalQty = 0;
+                        $itemLedgerItemTotalCost = 0;
+
+                        // get total qty & cost of item in item ledger
+                        foreach ($itemLedgerData as $value) {
+                            $itemLedgerItemTotalQty += $value->inOutQty;
+                            $itemLedgerItemTotalCost += $value->TotalWacLocal;
+                        }
+
+                        $grvItemQty = $grvDetail->noQty;
+                        // convert net amount to item ledger currency format
+                        $grvItemCost = (1 / $grvDetail->localCurrencyER) * $grvDetail->netAmount;
+
+                        // change decimal places
+                        $decimalPlaces = Helper::getCurrencyDecimalPlace($grvDetail->localCurrencyID);
+                        $itemLedgerItemTotalCost = round($itemLedgerItemTotalCost, $decimalPlaces);
+                        $grvItemCost = round($grvItemCost, $decimalPlaces);
+
+                        // check if grv data is match or not with item ledger data using below conditions
+                        $invalidState = false;
+                        if(($itemLedgerItemTotalQty == $grvItemQty) && ($itemLedgerItemTotalCost > $grvItemCost)) {
+                            $invalidState = true;
+                        }
+                        else if($itemLedgerItemTotalCost < $grvItemCost) {
+                            $invalidState = true;
+                        }
+                        else if($itemLedgerItemTotalQty < $grvItemQty) {
+                            $invalidState = true;
+                        }
+
+                        // if invalid state found then add to invalid item data
+                        if($invalidState) {
+                            $invalidItemData[] = [
+                                'itemCode' => $grvDetail->itemPrimaryCode,
+                                'itemDescription' => $grvDetail->itemDescription,
+                                'grvQty' => $grvItemQty,
+                                'grvValue' => $grvItemCost,
+                                'itemLedgerQty' => $itemLedgerItemTotalQty,
+                                'itemLedgerValue' => $itemLedgerItemTotalCost
+                            ];
+                        }
+                    }
+                }
+                catch (\Exception $e) {
+                    return [
                         'status' => 0,
-                        'msg' => 'You cannot '.$document.' the GRV. The GRV is already added to Supplier Invoice ',
+                        'msg' => $e->getMessage()
                     ];
                 }
+            }
 
-                if($oneDetail->itemFinanceCategoryID == 3){
-                    $isAssetAllocationExist = GRVDetails::where('grvAutoID',$input['grvAutoID'])->where('assetAllocationDoneYN', -1)->exists();
-                    if($isAssetAllocationExist){
-                        return $array = [
-                            'status' => 0,
-                            'msg' => 'You cannot '.$document.' the GRV. The GRV is already added to Asset Allocation',
-                        ];
-                    }
-                    break;
-                }
-
-                break;
-            default:
-                return $array = [
+            // return invalid item data
+            if (!empty($invalidItemData)) {
+                return [
                     'status' => 0,
-                    'msg' => 'Item Finance Category ID Not found on Detail',
+                    'msg' => 'You cannot reverse the GRV. Item not sufficient to reverse the GRV',
+                    'data' => $invalidItemData,
+                    'code' => 502
                 ];
+            }
         }
 
-        return $array = [
+        // only other items or both inventory and other items
+        if(empty($inventoryItems) && !empty($otherItems) || (!empty($inventoryItems) && !empty($otherItems))) {
+            $checkInAllocation = FixedAssetMaster::where('docOriginDocumentSystemID', 3)->where('docOriginSystemCode', $input['grvAutoID'])->first();
+            if ($checkInAllocation) {
+                return [
+                    'status' => 0,
+                    'msg' => 'You cannot '.$document.' the GRV. The GRV is already added to Asset Allocation',
+                ];
+            }
+        }
+
+        return [
             'status' => 1,
             'msg' => 'success',
         ];
