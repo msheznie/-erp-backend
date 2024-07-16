@@ -26,7 +26,7 @@ class JobInvokeAPIController extends AppBaseController
         if(empty($data)){
             $msg = 'The third party integration not available';
             $this->insertToLogTb($msg, 'error', '', '');
-            throw new Exception($msg);
+            throw new Exception($msg, 500);
         }
 
         $this->thirdParty = $data->toArray();
@@ -39,9 +39,9 @@ class JobInvokeAPIController extends AppBaseController
             $valResp = $this->commonValidations($request);
 
             if (!$valResp['status']) {
-                $this->sendError($valResp['message']);
                 $this->insertToLogTb($valResp['message'], 'error', 'Location', $this->thirdParty['company_id']);
-                return;
+
+                return $this->sendError($valResp['message'], 500);
             }
 
             $postType = $request->postType;
@@ -56,7 +56,8 @@ class JobInvokeAPIController extends AppBaseController
         } catch (\Exception $e) {
             $msg = $e->getMessage();
             $error = $msg.' Error Line No: ' . $e->getLine();
-            $this->insertToLogTb($error, 'error', 'Location', $this->thirdParty['company_id']);
+            $comId = isset($this->thirdParty['company_id'])? $this->thirdParty['company_id'] : 0;
+            $this->insertToLogTb($error, 'error', 'Location', $comId);
 
             return $this->sendError($msg, 500);
         }
@@ -68,8 +69,9 @@ class JobInvokeAPIController extends AppBaseController
             $valResp = $this->commonValidations($request);
 
             if(!$valResp['status']){
-                $this->sendError($valResp['message']);
                 $this->insertToLogTb($valResp['message'], 'error', 'Designation', $this->thirdParty['company_id']);
+
+                return $this->sendError($valResp['message'], 500);
             }
 
             $postType = $request->postType;
@@ -85,7 +87,8 @@ class JobInvokeAPIController extends AppBaseController
         } catch (\Exception $e){
             $msg = $e->getMessage();
             $error = $msg.' Error Line No: ' . $e->getLine();
-            $this->insertToLogTb($error, 'error', 'Designation', $this->thirdParty['company_id']);
+            $comId = isset($this->thirdParty['company_id'])? $this->thirdParty['company_id'] : 0;
+            $this->insertToLogTb($error, 'error', 'Designation', $comId);
 
             return $this->sendError($msg, 500);
         }
@@ -98,7 +101,8 @@ class JobInvokeAPIController extends AppBaseController
             if(!$valResp['status']){
                 $error = $valResp['message'];
                 $this->insertToLogTb($error, 'error', 'Department', $this->thirdParty['company_id']);
-                $this->sendError($error);
+
+                return $this->sendError($error, 500);
             }
 
             $postType = $request->postType;
@@ -110,7 +114,8 @@ class JobInvokeAPIController extends AppBaseController
         } catch(\Exception $e) {
             $msg = $e->getMessage();
             $error = $msg.' Error Line No: ' . $e->getLine();
-            $this->insertToLogTb($error, 'error', 'Department', $this->thirdParty['company_id']);
+            $comId = isset($this->thirdParty['company_id'])? $this->thirdParty['company_id'] : 0;
+            $this->insertToLogTb($error, 'error', 'Department', $comId);
 
             return $this->sendError($msg, 500);
         }

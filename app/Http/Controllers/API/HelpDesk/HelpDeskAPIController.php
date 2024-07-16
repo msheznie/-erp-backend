@@ -19,8 +19,9 @@ class HelpDeskAPIController extends AppBaseController
             try{
                 $this->employeeOSOS_3_0($request);
             } catch(\Exception $e) {
-                $error = 'Error Line No: ' . $e->getLine();
-                $this->insertToLogTb($error, 'error', 'Employee', $this->thirdParty['company_id']);
+                $error = $e->getMessage().' Error Line No: ' . $e->getLine();
+                $comId = isset($this->thirdParty['company_id'])? $this->thirdParty['company_id'] : 0;
+                $this->insertToLogTb($error, 'error', 'Employee', $comId);
             }
 
             DB::beginTransaction();
