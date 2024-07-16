@@ -1234,7 +1234,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 if (isset($value['item_code']) || (isset($value['item_description']) && $allowItemToTypePolicy)) {
                     $validateHeaderCode = true;
                 } else {
-                    return $this->sendError('Items cannot be uploaded, as there are null values found in excel row number: ' . ($totalItemCount + 4), 500);
+                    if (isset($value['qty']) && isset($value['estimated_unit_cost']) && isset($value['comment'])) {
+                        return $this->sendError('Items cannot be uploaded, as there are null values found in excel row number: ' . ($totalItemCount + 4), 500);
+                    }
                 }
 
                 if (isset($value['qty'])) {
@@ -1271,25 +1273,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
             }
 
-            $excelRowNumber = 4;
             foreach ($record as $key => $data) {
                 if (isset($data['estimated_unit_cost'])) {
                     if (!is_numeric($data['estimated_unit_cost'])) {
                         return $this->sendError('Records with alpha numeric values for the estimated unit cost can not be uploaded.', 500);
                     }
-            
+
                     if ($data['estimated_unit_cost'] < 0) {
                         return $this->sendError('Estimated unit cost value can not be less than zero.', 500);
                     }
                 }
-                // item categorytype validation for purchase || purchase & sales items
-                $isPurchaseItem = ItemMaster::where('primaryCode', $data['item_code'])
-                                            ->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]'])
-                                            ->first();
-                if (empty($isPurchaseItem)) {
-                    return $this->sendError('The added items in excel row number: ' . $excelRowNumber . ', Item Type should only be Purchase or Purchase & Sales', 500);
-                }
-                $excelRowNumber++;
             }
 
             if (count($record) > 0) {
@@ -1298,9 +1291,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 return $this->sendError('No Records found!', 500);
             }
 
+            if ($res['status'] === false) {
+                DB::rollBack();
+                return $this->sendError($res['message'], 500);
+            }
+
             Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();
-            return $this->sendResponse([], $res);
+            return $this->sendResponse([], $res['message']);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
