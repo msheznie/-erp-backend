@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.44.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.44.1...v10.44.2) (2024-07-17)
+
+
+### Bug Fixes
+
+* **common:** Unable to amend document after approval issue fixed [GCP-4030] ([#6429](https://github.com/pbsgears/Gears_BackEnd/issues/6429)) ([bd98acb](https://github.com/pbsgears/Gears_BackEnd/commit/bd98acbd307b7bb576561617f06f8dff9e3fd449))
+
 ## [10.44.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.44.0...v10.44.1) (2024-07-14)
 
 
