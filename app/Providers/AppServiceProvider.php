@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\helper\ExchangeSetupConfig;
 use App\Models\AssetCapitalization;
 use App\Models\AssetCapitalizationDetail;
 use App\Models\AssetDisposalMaster;
@@ -48,6 +49,13 @@ use App\Models\FinanceItemcategorySubAssigned;
 use App\Observers\FinanceItemcategorySubAssignedObserver;
 class AppServiceProvider extends ServiceProvider
 {
+
+    public function register()
+    {
+        $this->app->bind('exchangeSetupConfig', function ($app) {
+            return new ExchangeSetupConfig();
+        });
+    }
     /**
      * Bootstrap any application services.
      *

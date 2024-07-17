@@ -188,4 +188,8 @@ Route::group([], function() {
     Route::resource('exhange_setup_config', 'ExchangeSetup\ExchangeSetupConfigurationController');
 
     Route::get('exchange_setup_document/{id}/types', 'ExchangeSetup\ExchangeSetupDocumentController@getTypesOfDocument');
+    Route::post('checkDocumentExchangeRateConfigAccess', 'ExchangeSetup\ExchangeSetupConfigurationController@checkDocumentExchangeRateConfigAccess');
+    Route::post('updateDocumentExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@updateDocumentExchangeRate');
+    Route::post('setDefaultExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@setDefaultExchangeRate');
+
 });

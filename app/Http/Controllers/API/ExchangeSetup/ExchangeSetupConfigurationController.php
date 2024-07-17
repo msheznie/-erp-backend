@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\API\ExchangeSetup;
 
 use App\Http\Controllers\AppBaseController;
+use App\Services\DocumentRestrictionPolicyService;
 use App\Services\ExchangeSetup\ExchangSetupConfigurationService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Auth;
+use ExchangeSetupConfig;
 
 class ExchangeSetupConfigurationController extends AppBaseController
 {
@@ -48,6 +50,46 @@ class ExchangeSetupConfigurationController extends AppBaseController
             return $this->sendError(500,"Cannot create exchange setup configuration!");
 
         return $this->sendResponse($result,'Exchange setup configuration created');
+
+
+    }
+
+    public function checkDocumentExchangeRateConfigAccess(Request $request)
+    {
+        $input = $request->all();
+
+        $validator = \Validator::make($input, [
+            'companySystemId' => 'required|numeric',
+            'documentMasterId' => 'required|numeric',
+            'documentSystemID' => 'required|numeric'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $companyID = $input['companySystemId'];
+        $documentMasterId = $input['documentMasterId'];
+        $documentSystemID = $input['documentSystemID'];
+
+        $documentRestricationPolicyService = new DocumentRestrictionPolicyService($documentMasterId,$documentSystemID,$companyID);
+
+        $data = $documentRestricationPolicyService->checkDocumentScenario();
+        $configArray = [];
+
+        if($data)
+        {
+
+            $configArray = [
+                'scenario' => $data->scenario,
+                'message' => $data->message,
+                'enableRptCurrency' => $data->enableRptCurrency,
+                'enableLocalCurrency' => $data->enableLocalCurrency,
+                'enableBankCurrency' => $data->enableBankCurrency
+            ];
+        }
+
+        return $this->sendResponse($configArray,'data reterived successfully');
 
 
     }

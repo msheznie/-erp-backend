@@ -513,6 +513,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             return $this->sendError('Pay Supplier Invoice Master not found');
         }
 
+        $paySupplierInvoiceMaster['supplierTransCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['supplierTransCurrencyID'])->first()->CurrencyCode;
+        $paySupplierInvoiceMaster['BPVbankCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['BPVbankCurrency'])->first()->CurrencyCode;
+        $paySupplierInvoiceMaster['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['companyRptCurrencyID'])->first()->CurrencyCode;
+        $paySupplierInvoiceMaster['localCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['localCurrencyID'])->first()->CurrencyCode;
         return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'Pay Supplier Invoice Master retrieved successfully');
     }
 

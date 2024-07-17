@@ -1,0 +1,238 @@
+<?php
+
+namespace App\Services\ExchangeSetup\DocumentConfigs;
+
+use App\Classes\ExchangeSetup\AccountsPayable\PaymentVoucherExchangeSetupConfig;
+use App\enums\paymentVoucher\PaymentVoucherType;
+use App\Interfaces\DocumentExchangeSetupConfigInterface;
+use App\Models\ExchangeSetupConfiguration;
+use App\Models\ExchangeSetupDocument;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Services\ExchangeSetup\CrossExchangeRateService;
+use ExchangeSetupConfig;
+
+class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetupConfigInterface
+{
+    private $companyId;
+    private $documentMasterId;
+    private $masterRecord;
+    private $transcationCurrencyId;
+    private $localCurrencyId;
+    private $rptCurrencyId;
+    private $bankCurrencyId;
+    private $documentPolicyAccess = false;
+    private $exchangeRateDocumentConfigAccess = false;
+    private $paymentVoucherExchangeSetupConfig;
+
+    private $fieldChanged= [
+       "bankCurrency" => false,
+       "localCurrency" => false,
+       "reportingCurrency" => false
+    ];
+
+    public function __construct($companySystemId,$documentMasterId)
+    {
+        $this->companyId = $companySystemId;
+        $this->documentMasterId = $documentMasterId;
+        $this->masterRecord = PaySupplierInvoiceMaster::where('PayMasterAutoId',$documentMasterId)->first();
+        $this->paymentVoucherExchangeSetupConfig  = new PaymentVoucherExchangeSetupConfig();
+
+        if($this->masterRecord)
+        {
+            $this->transcationCurrencyId = $this->masterRecord->supplierTransCurrencyID;
+            $this->localCurrencyId = $this->masterRecord->localCurrencyID;
+            $this->rptCurrencyId = $this->masterRecord->companyRptCurrencyID;
+            $this->bankCurrencyId = $this->masterRecord->BPVbankCurrency;
+        }
+
+        $this->checkDocumentRestricationPolicyAccess();
+        $this->checkDocumentTypeExchangeSetupConfigAccess();
+        $this->checkScenario();
+
+    }
+
+    public function checkDocumentRestricationPolicyAccess()
+    {
+        $this->documentPolicyAccess = (ExchangeSetupConfig::checkPolicy($this->companyId)) ? ExchangeSetupConfig::checkPolicy($this->companyId)['policy'] : false;
+    }
+
+    public function checkDocumentTypeExchangeSetupConfigAccess()
+    {
+        if($this->documentPolicyAccess && $this->masterRecord)
+        {
+            $exchangeSetupDocument = ExchangeSetupDocument::where('documentSystemID' , $this->masterRecord->documentSystemID)->first();
+            $exchangeSetupDocumentType = $exchangeSetupDocument->types
+                                        ->where('exchangeSetupDocumentId',$exchangeSetupDocument->id)
+                                        ->where('slug',PaymentVoucherType::getSlugById($this->masterRecord->invoiceType))
+                                        ->first();
+
+            $this->exchangeRateDocumentConfigAccess = ExchangeSetupConfig::checkExchageSetupDocumentAllowERAccess($this->companyId,$exchangeSetupDocumentType->id);
+        }
+    }
+
+    public  function checkScenario()
+    {
+
+        if($this->documentPolicyAccess && $this->exchangeRateDocumentConfigAccess &&  (($this->masterRecord->directdetail->isEmpty()) && ($this->masterRecord->advancedetail->isEmpty()) && ($this->masterRecord->supplierdetail->isEmpty())))
+        {
+            if($this->transcationCurrencyId != $this->localCurrencyId)
+                $this->paymentVoucherExchangeSetupConfig->setEnableLocalCurrency(true);
+
+            if($this->transcationCurrencyId != $this->bankCurrencyId)
+                $this->paymentVoucherExchangeSetupConfig->setEnableBankCurrency(true);
+
+            if($this->transcationCurrencyId != $this->rptCurrencyId)
+                $this->paymentVoucherExchangeSetupConfig->setEnableRptCurrency(true);
+        }
+
+
+
+    }
+
+    public function checkScenarioOne()
+    {
+        /*
+         * Scenario
+         * -----------------------------------------------------------------------------
+         *
+         * Transcation currency not matching with any other currencies
+         * But Other currencies matching with each currency
+         *
+         */
+
+        // transcation currency != any other currency
+        if(!in_array($this->transcationCurrencyId,[$this->bankCurrencyId,$this->rptCurrencyId,$this->localCurrencyId]))
+        {
+            // bank currency == local currency == rpt currency
+            if(count(array_unique([$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId])) < 3 )
+            {
+                $this->paymentVoucherExchangeSetupConfig->setScenario(1);
+                $this->paymentVoucherExchangeSetupConfig->setMessage("Same exchange rate will be applied to other similar currencies");
+            }
+        }
+
+
+    }
+
+    public function checkScenarioTwo()
+    {
+
+        /*
+         * Scenario
+         * -----------------------------------------------------------------------------
+         *
+         * Transcation Currency does not match with local, reporting currency
+         * Other currencies does not match with each other currencies
+         *
+         */
+
+
+        if(!in_array($this->transcationCurrencyId,[$this->rptCurrencyId,$this->localCurrencyId]))
+        {
+            $array = [$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId];
+            if(count(array_unique($array)) > 1)
+            {
+                $this->paymentVoucherExchangeSetupConfig->setScenario(2);
+                $this->paymentVoucherExchangeSetupConfig->setMessage("Are you want to update the cross exchange for currency ?");
+            }
+        }
+
+
+    }
+
+    public function checkScenarioThree()
+    {
+
+        /*
+         *
+         * scenario
+         * -----------------------------------------------------------------------------------
+         * transcation currency not match with other currencies
+         * local currency equal to reporting currency
+         *
+         * */
+
+        // transcation currency != any other currency
+        if(!in_array($this->transcationCurrencyId,[$this->bankCurrencyId,$this->rptCurrencyId,$this->localCurrencyId]))
+        {
+
+        }
+
+
+    }
+
+    public function getDocumentExchangeRateConfigAccess()
+    {
+
+        return $this->paymentVoucherExchangeSetupConfig;
+    }
+
+    public function updateTheExchangeRateDocument($input)
+    {
+
+        $paymentVoucherMasterData = $input['exchangeRateData'];
+
+        if($input['documentCurrentExchangeRateScenario'] == 0)
+        {
+            $this->checkScenarioOne();
+
+            if($this->paymentVoucherExchangeSetupConfig->message)
+            {
+                return ['success' => false, 'message' => $this->paymentVoucherExchangeSetupConfig->message, 'scenario' => 1];
+            }
+
+
+            $this->checkScenarioTwo();
+
+            if($this->paymentVoucherExchangeSetupConfig->message)
+            {
+                return ['success' => false, 'message' => $this->paymentVoucherExchangeSetupConfig->message, 'scenario' => 2];
+            }
+            else
+            {
+                $service = new ExchangeSetupDocumentConfigurationService();
+                $result = $service->updateExchangeRate($input);
+                return $result;
+            }
+
+        }
+
+
+        if(isset($input['documentCurrentExchangeRateScenario']) && $input['documentCurrentExchangeRateScenario'] == 1)
+        {
+            $this->checkScenarioTwo();
+
+            if($this->paymentVoucherExchangeSetupConfig->message)
+            {
+                return ['success' => false, 'message' => $this->paymentVoucherExchangeSetupConfig->message, 'scenario' => 2];
+            }
+            else
+            {
+                return ['success' => false, 'message' => null, 'scenario' => 2];
+            }
+        }
+
+
+        return $this->checkConditionsOfScenarioAndUpdate($input);
+    }
+
+    public function checkConditionsOfScenarioAndUpdate($input)
+    {
+        $service = new ExchangeSetupDocumentConfigurationService();
+
+        if(isset($input['updateScenrioOne']) && $input['updateScenrioOne'])
+        {
+            $result = $service->updateSimilarCurrenciesExchangeRates($input);
+        }
+
+        if(isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'])
+        {
+            $crossExchangeRateService = new CrossExchangeRateService();
+            $crossExchangeRateService->calculateCrossExchangeRate($input);
+        }
+
+       return $result;
+    }
+
+
+}
