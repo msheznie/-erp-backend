@@ -44,6 +44,12 @@ class SME
         return empty($leaveBalanceBasedOn)? 1 : $leaveBalanceBasedOn;
     }
 
+    public static function accrualTriggerBasedOn($companyID)
+    {
+        $accrualTriggerBasedOn = SME::policy($companyID, 'MAT', 'All');
+        return empty($accrualTriggerBasedOn)? 1 : $accrualTriggerBasedOn;
+    }
+
     public static function user_info($column=null, $more_columns = []){
         $more_columns_str = '';
 

@@ -23,6 +23,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getAppearance', 'CompanyAPIController@getAppearance')->middleware(MobileAccessVerify::class);
     Route::post('postEmployeeFromPortal', 'HelpDesk\HelpDeskAPIController@postEmployee');
 
+
     Route::group(['middleware' => ['pos_api']], function (){
         Route::get('pull_tax_details', 'ClubManagement\ClubManagementAPIController@pullTaxDetails');
         Route::get('pull_bank_accounts', 'ClubManagement\ClubManagementAPIController@pullBankAccounts');
@@ -964,6 +965,7 @@ Route::group(['middleware' => ['tenantById']], function (){
     Route::group(['middleware' => ['pos_api','hrms_employee']], function () {
         Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
         Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
+        require __DIR__.'/../routes/osos_3_0.php';
     });
 });
 
@@ -1001,6 +1003,8 @@ Route::group(['prefix' => 'external'], function (){
 
 
 require __DIR__.'/../routes/hrms/jobRoutes.php';
+
+
 
 Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {

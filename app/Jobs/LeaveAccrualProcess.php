@@ -16,6 +16,7 @@ class LeaveAccrualProcess implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $dispatch_db;
+    public $debugDate;
     public $company;
     public $group;
     public $accrual_type_det;
@@ -25,7 +26,7 @@ class LeaveAccrualProcess implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($dispatch_db, $company_det, $accrual_type_det, $group)
+    public function __construct($dispatch_db, $company_det, $accrual_type_det, $group, $debugDate = null)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -37,7 +38,7 @@ class LeaveAccrualProcess implements ShouldQueue
         $this->company = $company_det;
         $this->accrual_type_det = $accrual_type_det;
         $this->group = $group;
-
+        $this->debugDate = $debugDate;
     }
 
     /**
@@ -52,14 +53,15 @@ class LeaveAccrualProcess implements ShouldQueue
 
         ['code'=> $company_code, 'name'=> $company_name] = $this->company;
 
-        $acc_des = $this->accrual_type_det['description'];
-        $leave_group = $this->group['description'];
-        $msg = "Processing the {$acc_des} | {$leave_group} (leave group) for {$company_code} | {$company_name}";
+        $accDes = $this->accrual_type_det['description'];
+        $leaveGroup = $this->group['description'];
+
+        $msg = "Processing the {$accDes} | {$leaveGroup} (leave group) for {$company_code} | {$company_name}";
         Log::info($msg . " on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         CommonJobService::db_switch( $this->dispatch_db );
-
-        $ser = new LeaveAccrualService($this->company, $this->accrual_type_det, $this->group);
+        $ser = new LeaveAccrualService($this->company, $this->accrual_type_det, $this->group, $this->debugDate);
         $ser->create_accrual();
     }
+
 }

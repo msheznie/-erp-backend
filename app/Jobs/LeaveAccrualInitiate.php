@@ -16,6 +16,7 @@ class LeaveAccrualInitiate implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $dispatch_db;
+    public $debugDate;
     protected $company_code = '';
     protected $company_name = '';
 
@@ -24,7 +25,7 @@ class LeaveAccrualInitiate implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($dispatch_db)
+    public function __construct($dispatch_db, $debugDate = null)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -33,6 +34,7 @@ class LeaveAccrualInitiate implements ShouldQueue
         }
 
         $this->dispatch_db = $dispatch_db;
+        $this->debugDate = $debugDate;
     }
 
     /**
@@ -71,28 +73,6 @@ class LeaveAccrualInitiate implements ShouldQueue
                     $ser = new LeaveAccrualService($company, $accrual_type_det, []);
                     $groups = $ser->prepare_for_accrual();
 
-
-                    /*
-                     $groups example
-
-                    $groups = [
-                        [
-                            "leaveGroupID": 2,
-                            "description": "AL22",
-                            "details": [
-                                {
-                                  "leaveGroupDetailID": 3,
-                                  "leaveGroupID": 2,
-                                  "leaveTypeID": 2,
-                                  "policyMasterID": 1,
-                                  "isDailyBasisAccrual": true,
-                                  "noOfDays": 22
-                                }
-                            ]
-                        ]
-                    ];
-                    */
-
                     Log::info(count($groups). " groups found for {$acc_type} " . $this->log_suffix(__LINE__));
 
                     if(count($groups) > 0){
@@ -103,8 +83,8 @@ class LeaveAccrualInitiate implements ShouldQueue
                             Log::info("{$acc_type} {$group['description']} (leave group) adding to process queue " . $this->log_suffix(__LINE__) );
 
                             $seconds += 30;
-                            LeaveAccrualProcess::dispatch($db, $company, $accrual_type_det, $group)->delay(now()->addSeconds($seconds));
-                            
+                            LeaveAccrualProcess::dispatch($db, $company, $accrual_type_det, $group, $this->debugDate)
+                                ->delay(now()->addSeconds($seconds));
                         }
                     }
                 }

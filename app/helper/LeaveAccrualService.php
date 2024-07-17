@@ -2,6 +2,7 @@
 
 namespace App\helper;
 
+use App\helper\SME;
 use App\Models\CompanyFinanceYear;
 use App\Models\LeaveAccrualDetail;
 use App\Models\LeaveAccrualMaster;
@@ -9,7 +10,6 @@ use App\Models\LeaveGroup;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\helper\SME;
 use App\helper\LeaveBalanceValidationHelper;
 
 
@@ -19,6 +19,7 @@ class LeaveAccrualService
     public $company_code;
     public $company_name;
     public $policy;
+    public $debugDate;
     public $dailyBasis;
     public $date;
     public $date_time;
@@ -34,7 +35,7 @@ class LeaveAccrualService
     public $month_det;
     public $accrualType;
 
-    public function __construct($company_data, $accrual_type_det, $header_data)
+    public function __construct($company_data, $accrual_type_det, $header_data, $debugDate = null)
     {
         $this->company_id = $company_data['id'];
         $this->company_code = $company_data['code'];
@@ -44,6 +45,7 @@ class LeaveAccrualService
         $this->date_time = Carbon::now();
         $this->date = $this->date_time->format('Y-m-d');
         $this->accrualType = $accrual_type_det['description'];
+        $this->debugDate = $debugDate;
 
         if($header_data){
             $this->header_data = $header_data;
@@ -108,14 +110,11 @@ class LeaveAccrualService
 
         //when preparing for the data no need to check with a master id,
         //but when creating the details we have to check this condition
-        $master_id_filter = ($this->accrualMasterID) ? " AND m.leaveaccrualMasterID != $this->accrualMasterID": '';
+        $masterIdFilter = ($this->accrualMasterID) ? " AND m.leaveaccrualMasterID != $this->accrualMasterID": '';
 
-        if($this->policy == 1){
-            $sql = $this->pending_sql_annual($str, $leaveGroupID, $master_id_filter);
-        }
-        else{ // $this->policy == 3 ( monthly )
-            $sql = $this->pending_sql_monthly($str, $leaveGroupID, $master_id_filter);
-        }
+        $sql = ($this->policy == 3)
+            ? $this->pending_sql_monthly($str, $leaveGroupID, $masterIdFilter)
+            : $this->pending_sql_annual($str, $leaveGroupID, $masterIdFilter);
 
         $emp_arr = DB::select($sql);
 
@@ -169,11 +168,9 @@ class LeaveAccrualService
 
     function pending_sql_monthly($str, $leaveGroupID, $master_id_filter): string
     {
-        $this->month_det = LeaveBalanceValidationHelper::validate_month($this->company_id,$this->date)['details'];
-
+        $accTrigDate = $this->accrualTriggerDate();
         $year = Carbon::parse( $this->date )->format('Y');
         $month = Carbon::parse( $this->date )->format('m');
-        $lastDate = $this->month_det['dateTo'];
 
         $month_date_filter = "AND `year` = {$year} AND `month` = {$month}";
 
@@ -185,7 +182,7 @@ class LeaveAccrualService
             FROM srp_employeesdetails AS emp
             JOIN srp_erp_leavegroupdetails AS gd ON gd.leaveGroupID = emp.leaveGroupID AND policyMasterID = 3             
             JOIN srp_erp_leavetype ON gd.leaveTypeID = srp_erp_leavetype.leaveTypeID 
-            WHERE Erp_companyID = {$this->company_id} AND isDischarged != 1 AND DateAssumed <= '{$lastDate}'  
+            WHERE Erp_companyID = {$this->company_id} AND isDischarged != 1 AND DateAssumed <= '{$accTrigDate}'  
             AND emp.leaveGroupID IS NOT NULL AND emp.leaveGroupID = {$leaveGroupID} AND
             (EIdNo, srp_erp_leavetype.leaveTypeID) NOT IN (
                 SELECT empID, leaveType FROM srp_erp_leaveaccrualmaster AS m
@@ -196,7 +193,31 @@ class LeaveAccrualService
     }
 
     function create_accrual(){
+        $accrualDate = $this->accrualTriggerDate();
+        if($this->debugDate) {
+            $accrualDate = $this->date;
+        }
 
+        $accrualTriggerBasedOnValues = [1 => 'First of Month', 2 => 'End of Month'];
+        if ($this->policy == 3) {
+            if($accrualDate == $this->date) {
+                $accrualTriggerBasedOn= SME::accrualTriggerBasedOn($this->company_id);
+                $policyMsg = $accrualTriggerBasedOnValues[$accrualTriggerBasedOn];
+                $this->insertToLogTb(
+                    "Monthly Accrual triggered at :  {$accrualDate} based on '{$policyMsg}' policy",
+                    'info', 'Leave Accrual Monthly', $this->company_id);
+
+                $this->createAccrualData();
+            }
+        } else {
+            $this->insertToLogTb(
+                "Annual accrual triggered at :  {$this->date}",
+                'info', 'Leave Accrual Annual', $this->company_id);
+            $this->createAccrualData();
+        }
+    }
+
+    function createAccrualData() {
         DB::beginTransaction();
         try {
 
@@ -316,11 +337,38 @@ class LeaveAccrualService
 
     }
 
+    function accrualTriggerDate() {
+        $this->month_det = LeaveBalanceValidationHelper::validate_month($this->company_id,$this->date)['details'];
+        $accrualTriggerBasedOn= SME::accrualTriggerBasedOn($this->company_id);
+        $accTrigDate = $this->month_det['dateTo'];
+        if ($accrualTriggerBasedOn != 2) {
+            $accTrigDate = $this->month_det['dateFrom'];
+        }
+
+        return $accTrigDate;
+    }
+
     function log_suffix(){
         $debugTrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1);
         $line_no = $debugTrace[0]['line'];
 
         return " $this->company_code | $this->company_name \t on file:  " . __CLASS__ ." \tline no : {$line_no}";
+    }
+
+    function insertToLogTb($logData, $type, $desc, $companyId){
+
+        $data = [
+            'company_id'=> $companyId,
+            'module'=> 'Leave Management',
+            'description'=> $desc,
+            'scenario_id'=> 0,
+            'processed_for'=> Carbon::now()->format('Y-m-d H:i:s'),
+            'logged_at'=> Carbon::now()->format('Y-m-d H:i:s'),
+            'log_type'=> $type,
+            'log_data'=> json_encode($logData),
+        ];
+
+        DB::table('job_logs')->insert($data);
     }
 
 }

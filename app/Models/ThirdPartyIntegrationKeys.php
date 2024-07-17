@@ -87,5 +87,10 @@ class ThirdPartyIntegrationKeys extends Model
         'api_key' => 'required'
     ];
 
+    public function thirdPartySystem()
+    {
+        return $this->belongsTo(ThirdPartySystems::class, 'third_party_system_id', 'id');
+    }
+
     
 }
