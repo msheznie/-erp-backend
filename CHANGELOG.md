@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.45.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.44.2...v10.45.0) (2024-07-17)
+
+
+### Features
+
+* **API:** API - Employee & Department OSOS 3.0 [GHR-1628] ([#6386](https://github.com/pbsgears/Gears_BackEnd/issues/6386)) ([0faa68a](https://github.com/pbsgears/Gears_BackEnd/commit/0faa68abcecd816a10b0a64a02e19b92d496a0e2))
+* **Attendance:** Reflecting Trip on Attendance [GHR-1579] ([#6397](https://github.com/pbsgears/Gears_BackEnd/issues/6397)) ([b42cfba](https://github.com/pbsgears/Gears_BackEnd/commit/b42cfbadfa92cf8c3da7d24171f76df908c07255))
+* **Attendance:** Reflecting Trip on Attendance [GHR-1579] ([#6400](https://github.com/pbsgears/Gears_BackEnd/issues/6400)) ([de65837](https://github.com/pbsgears/Gears_BackEnd/commit/de6583730c6cb565d5f41c0aa7178e566d8343ab))
+* **Attendance:** The system sent attendance notifications for employees who already have attendance records [GHR-1675] ([#6384](https://github.com/pbsgears/Gears_BackEnd/issues/6384)) ([445135b](https://github.com/pbsgears/Gears_BackEnd/commit/445135bfe84bc92a0ed7c5b51dd818ebd192dd8d))
+* **Leave:** Policy to trigger Monthly Accrual [GHR-1596] ([#6378](https://github.com/pbsgears/Gears_BackEnd/issues/6378)) ([b57dd1f](https://github.com/pbsgears/Gears_BackEnd/commit/b57dd1f03eefc463a74b606da09b002812af375d))
+* **OSOS 3.0:** Location OSOS 3.0 [GHR-1629] ([#6350](https://github.com/pbsgears/Gears_BackEnd/issues/6350)) ([c2a8b43](https://github.com/pbsgears/Gears_BackEnd/commit/c2a8b4336198f3f8fc9abc5432e55934f97f754c))
+* **OSOS 3.0:** Location OSOS 3.0 [GHR-1629] ([#6353](https://github.com/pbsgears/Gears_BackEnd/issues/6353)) ([efa880b](https://github.com/pbsgears/Gears_BackEnd/commit/efa880bf96f57a0d3bc57c6ffe5fbfcfd9a88cf1))
+* **OSOS_3_0:** Api key changed to external key [GHR-1630] ([#6370](https://github.com/pbsgears/Gears_BackEnd/issues/6370)) ([4ebad7b](https://github.com/pbsgears/Gears_BackEnd/commit/4ebad7ba95f65a58f780fe2414dbad5e6b93f2df))
+* **OSOS_3_0:** Designation API [GHR-1630] ([#6401](https://github.com/pbsgears/Gears_BackEnd/issues/6401)) ([aef79a3](https://github.com/pbsgears/Gears_BackEnd/commit/aef79a3200c829c49ee48ba9edd1e641e4ae5eb6))
+* **OSOS_3_O:** Designation api routes [GHR-1630] ([#6369](https://github.com/pbsgears/Gears_BackEnd/issues/6369)) ([61d7907](https://github.com/pbsgears/Gears_BackEnd/commit/61d79079795179f595090fafac205f6aea156570))
+* **OSOS_3_O:** Webhook log removed [GHR-1637] ([#6404](https://github.com/pbsgears/Gears_BackEnd/issues/6404)) ([a7ca371](https://github.com/pbsgears/Gears_BackEnd/commit/a7ca37147b42defec0aa54e9d92e71136d9c7fd6))
+
 ## [10.44.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.44.1...v10.44.2) (2024-07-17)
 
 
