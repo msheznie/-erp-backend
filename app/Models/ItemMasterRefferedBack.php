@@ -263,6 +263,7 @@ class ItemMasterRefferedBack extends Model
         'documentID',
         'primaryCompanySystemID',
         'primaryCompanyID',
+        'categoryType',
         'primaryCode',
         'secondaryItemCode',
         'barcode',

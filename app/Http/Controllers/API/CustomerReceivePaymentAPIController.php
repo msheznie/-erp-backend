@@ -3310,6 +3310,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $receivePaymentArray = $customerReceivePaymentData->toArray();
 
+        if(isset($receivePaymentArray['isFromApi'])){
+            unset($receivePaymentArray['isFromApi']);
+        }
+
+
         $storeReceiptVoucherHistory = CustomerReceivePaymentRefferedHistory::insert($receivePaymentArray);
 
         $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->get();
@@ -3321,6 +3326,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         $customerReceiveDetailArray = $customerReceivePaymentDetailRec->toArray();
+        
+        if(isset($customerReceiveDetailArray['isFromApi'])){
+            unset($customerReceiveDetailArray['isFromApi']);
+        }
 
         $storeSupplierInvoiceBookDetailHistory = CustReceivePaymentDetRefferedHistory::insert($customerReceiveDetailArray);
 
@@ -3333,6 +3342,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         $ReceivePaymentDirectDetailArray = $customerReceivePaymentDirectDetailRec->toArray();
+
+        if(isset($ReceivePaymentDirectDetailArray['isFromApi'])){
+            unset($ReceivePaymentDirectDetailArray['isFromApi']);
+        }
 
         $storeSupplierInvoiceBookDirectDetailHistory = DirectReceiptDetailsRefferedHistory::insert($ReceivePaymentDirectDetailArray);
 

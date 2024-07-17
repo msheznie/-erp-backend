@@ -1577,6 +1577,10 @@ class ItemMasterAPIController extends AppBaseController
 
         $itemArray = $item->toArray();
 
+        if(isset($itemArray['categoryTypeDecode'])){
+            unset($itemArray['categoryTypeDecode']);
+        }
+
         $storeHistory = ItemMasterRefferedBack::insert($itemArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
