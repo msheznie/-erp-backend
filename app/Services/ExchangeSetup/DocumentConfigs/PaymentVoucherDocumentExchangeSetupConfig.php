@@ -99,16 +99,28 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
          * But Other currencies matching with each currency
          *
          */
-
         // transcation currency != any other currency
-        if(!in_array($this->transcationCurrencyId,[$this->bankCurrencyId,$this->rptCurrencyId,$this->localCurrencyId]))
+//        if(!in_array($this->transcationCurrencyId,[$this->bankCurrencyId,$this->rptCurrencyId,$this->localCurrencyId]))
+//        {
+//            // bank currency == local currency == rpt currency
+//            if(count(array_unique([$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId])) >= 2 )
+//            {
+//                $this->paymentVoucherExchangeSetupConfig->setScenario(1);
+//                $this->paymentVoucherExchangeSetupConfig->setMessage("Same exchange rate will be applied to other similar currencies");
+//            }
+//        }
+
+        $array = [$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId];
+        $transId = $this->transcationCurrencyId;
+
+        $countOfOnes = count(array_filter($array, function($value) use ($transId) {
+            return $value != $transId;
+        }));
+
+        if($countOfOnes >= 2 )
         {
-            // bank currency == local currency == rpt currency
-            if(count(array_unique([$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId])) < 3 )
-            {
-                $this->paymentVoucherExchangeSetupConfig->setScenario(1);
-                $this->paymentVoucherExchangeSetupConfig->setMessage("Same exchange rate will be applied to other similar currencies");
-            }
+            $this->paymentVoucherExchangeSetupConfig->setScenario(1);
+            $this->paymentVoucherExchangeSetupConfig->setMessage("Same exchange rate will be applied to other similar currencies");
         }
 
 
@@ -201,17 +213,21 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
         if(isset($input['documentCurrentExchangeRateScenario']) && $input['documentCurrentExchangeRateScenario'] == 1)
         {
             $this->checkScenarioTwo();
-
             if($this->paymentVoucherExchangeSetupConfig->message)
             {
                 return ['success' => false, 'message' => $this->paymentVoucherExchangeSetupConfig->message, 'scenario' => 2];
             }
-            else
-            {
-                return ['success' => false, 'message' => null, 'scenario' => 2];
-            }
-        }
 
+            $service = new ExchangeSetupDocumentConfigurationService();
+            if(isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === true)
+            {
+                $result = $service->updateSimilarCurrenciesExchangeRates($input);
+                return $result;
+
+            }
+
+
+        }
 
         return $this->checkConditionsOfScenarioAndUpdate($input);
     }
@@ -220,16 +236,22 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
     {
         $service = new ExchangeSetupDocumentConfigurationService();
 
-        if(isset($input['updateScenrioOne']) && $input['updateScenrioOne'])
+        if(isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === true)
         {
             $result = $service->updateSimilarCurrenciesExchangeRates($input);
         }
 
-        if(isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'])
+        if(isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === true)
         {
             $crossExchangeRateService = new CrossExchangeRateService();
-            $crossExchangeRateService->calculateCrossExchangeRate($input);
+            $result = $crossExchangeRateService->calculateCrossExchangeRate($input);
         }
+
+        if((isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === false) && (isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === false))
+        {
+            $result = $service->updateExchangeRate($input);
+        }
+
 
        return $result;
     }
