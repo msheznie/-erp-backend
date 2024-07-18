@@ -145,6 +145,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 $glCOdes = ReportTemplateDetails::with(['gllink'  => function ($query) {
                     $query->orderBy('sortOrder', 'asc');
                   }])
+                    ->where('itemType', '!=', 3)
                     ->where('companySystemID', $uploadedCompany)
                     ->where('companyReportTemplateID', $template->companyReportTemplateID)
                     ->orderBy('sortOrder', 'asc')
