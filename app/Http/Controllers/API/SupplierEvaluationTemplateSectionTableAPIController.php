@@ -322,7 +322,16 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
                     return $this->sendError('Only General Master evaluation type can be multiple columns', 500);                                                
                     }
 
-                    SupplierEvaluationTemplateSectionTableColumn::create(['table_id' => $input['table_id'] , 'column_type' => 5 ,'column_header' => ' Score', 'is_disabled' => 1 ,'evaluationMasterType' => $evaluationMaster->type ,'evaluationMasterColumn' => $input['id'], 'evaluationMasterId' => $evaluationMaster->id]);
+                    if ($evaluationMaster->type == 1 ){
+                        $columnHeader = 'Score(Number)';
+                        $columnType = 4;
+                    }
+                    if ($evaluationMaster->type == 2 ){
+                        $columnHeader = 'Score(Rating)';
+                        $columnType = 5;
+                    }
+
+                    SupplierEvaluationTemplateSectionTableColumn::create(['table_id' => $input['table_id'] , 'column_type' => $columnType ,'column_header' => $columnHeader, 'is_disabled' => 1 ,'evaluationMasterType' => $evaluationMaster->type ,'evaluationMasterColumn' => $input['id'], 'evaluationMasterId' => $evaluationMaster->id]);
                 } 
             }
             
@@ -382,7 +391,7 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
         $evaluationTemplateSection = EvaluationTemplateSection::with([
                                         'table' => function($query) {
                                             $query->with(['column' => function($columnQuery) {
-                                                $columnQuery->with('evaluation_master');
+                                                $columnQuery->with('evaluation_master','evaluation_master_detail');
                                             }, 'row', 'formula' => function($formulaQuery) {
                                                 $formulaQuery->with('label');
                                             }]);

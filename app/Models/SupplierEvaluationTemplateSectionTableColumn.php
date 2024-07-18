@@ -88,6 +88,7 @@ class SupplierEvaluationTemplateSectionTableColumn extends Model
         'table_id',
         'column_header',
         'column_type',
+        'autoIncrementStart',
         'evaluationMasterColumn',
         'evaluationMasterId',
         'evaluationMasterType',
@@ -106,6 +107,7 @@ class SupplierEvaluationTemplateSectionTableColumn extends Model
         'table_id' => 'integer',
         'column_header' => 'string',
         'column_type' => 'integer',
+        'autoIncrementStart' => 'integer',
         'evaluationMasterColumn' => 'integer',
         'evaluationMasterId' => 'integer',
         'evaluationMasterType' => 'integer',
@@ -123,6 +125,10 @@ class SupplierEvaluationTemplateSectionTableColumn extends Model
     ];
 
     
+    public function evaluation_master_detail()
+    {
+        return $this->hasMany('App\Models\SupplierEvaluationMasterDetails', 'master_id', 'evaluationMasterId');
+    }
 
     public function evaluation_master()
     {

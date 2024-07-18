@@ -165,6 +165,7 @@ Route::group([], function() {
     Route::post('getTemplateSectionLabel', 'EvaluationTemplateSectionLabelAPIController@getTemplateSectionLabel')->name("Get template section label");
     Route::post('getTemplateSectionFormula', 'EvaluationTemplateSectionFormulaAPIController@getTemplateSectionFormula')->name("Get template section formula");
     Route::post('getTemplateSectionFormData', 'EvaluationTemplateSectionAPIController@getTemplateSectionFormData')->name("Get template section from data");
+    Route::get('getEvaluationTemplateData', 'SupplierEvaluationTemplateAPIController@getEvaluationTemplateData')->name("Get evaluation template data");
 
 
     Route::resource('supplier_evaluation_masters', 'SupplierEvaluationMastersAPIController');

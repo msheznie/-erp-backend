@@ -234,6 +234,16 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
+
+
+        /** @var SupplierEvaluationTemplateSectionTableColumn $supplierEvaluationTemplateSectionTableColumn */
+        $supplierEvaluationTemplateSectionTableColumn = $this->supplierEvaluationTemplateSectionTableColumnRepository->findWithoutFail($id);
+
+    
+        if (empty($supplierEvaluationTemplateSectionTableColumn)) {
+            return $this->sendError('Supplier Evaluation Template Section Table Column not found');
+        }
+
         if(isset($input['column_type']) && $input['column_type'] == 3){
             $input['is_disabled'] = 1; 
         }
@@ -242,19 +252,17 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
             $input['is_disabled'] = 1; 
             $scoreColumnCount = SupplierEvaluationTemplateSectionTableColumn::where('table_id', $input['table_id'])
                                                                             ->where('column_type', 1)
+                                                                            ->where('id', '!=', $input['id']) 
                                                                             ->count();
 
-            if($scoreColumnCount > 0){
-                return $this->sendError('Auto increment column can not be multiple', 500);                                                
+            if($supplierEvaluationTemplateSectionTableColumn['column_type'] == 1 && isset($input['autoIncrementStart']) && $input['autoIncrementStart'] != null){
+
+            } else {
+                if($scoreColumnCount > 0){
+                    return $this->sendError('Auto increment column can not be multiple', 500);                                                
+                }
             }
-        }
 
-        /** @var SupplierEvaluationTemplateSectionTableColumn $supplierEvaluationTemplateSectionTableColumn */
-        $supplierEvaluationTemplateSectionTableColumn = $this->supplierEvaluationTemplateSectionTableColumnRepository->findWithoutFail($id);
-
-    
-        if (empty($supplierEvaluationTemplateSectionTableColumn)) {
-            return $this->sendError('Supplier Evaluation Template Section Table Column not found');
         }
 
         $supplierEvaluationTemplateSectionTableColumn = $this->supplierEvaluationTemplateSectionTableColumnRepository->update($input, $id);
