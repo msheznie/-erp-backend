@@ -152,13 +152,17 @@ class DesignationService
     function getDesignationData()
     {
         $data = DB::table('srp_designation')
-            ->selectRaw("DesignationID as id, DesDescription as Name, '' as Description,
+            ->selectRaw("DesignationID as id, DesDescription as Name, 
+                job_description as Description,
                 CASE 
                     WHEN isDeleted = 1 THEN 2 
-                    WHEN is_active = 0 THEN 0 
-                    WHEN is_active = 1 THEN 1 
+                    WHEN is_active = 0 THEN 1 
+                    WHEN is_active = 1 THEN 0
                 END as Status, 
-                isDeleted as IsDeleted,
+                CASE 
+                    WHEN isDeleted = 1 THEN 'true'
+                    ELSE 'false'
+                END AS IsDeleted,
                 Erp_companyID as companyId")
             ->where('DesignationID', $this->id)
             ->first();

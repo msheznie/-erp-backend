@@ -156,10 +156,13 @@ class LocationService
                 '10ccca76-1657-11ee-be56-0242ac120002' as CountryId,
                 CASE 
                     WHEN is_deleted = 1 THEN 2 
-                    WHEN is_active = 0 THEN 0 
-                    WHEN is_active = 1 THEN 1 
-                END as Status, 
-                is_deleted as IsDeleted")
+                    WHEN is_active = 0 THEN 1 
+                    WHEN is_active = 1 THEN 0 
+                END as Status,
+                CASE 
+                    WHEN is_deleted = 1 THEN 'true'
+                    ELSE 'false'
+                END AS IsDeleted")
             ->where('id', $this->id)
             ->first();
 
