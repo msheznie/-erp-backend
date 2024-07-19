@@ -566,8 +566,12 @@ class BudgetConsumptionService
 			
 
 			$pendingDISIAmounts = self::pendingDirectItemSIQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
-			
-			 $pendingPrAmounts = self::pendingPurchaseRequestQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
+
+            if (in_array($budgetFormData['documentSystemID'], [1, 50, 51])) {
+                $pendingPrAmounts = self::pendingPurchaseRequestQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
+            } else {
+                $pendingPrAmounts = [];
+            }
 
 			$pendingSupplierInvoiceAmounts = self::pendingSupplierInvoiceQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
 
