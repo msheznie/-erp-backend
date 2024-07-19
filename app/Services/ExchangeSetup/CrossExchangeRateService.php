@@ -30,7 +30,7 @@ class CrossExchangeRateService
             $currencyIds = PaySupplierInvoiceMaster::find($input['payMasterAutoId'])->only('companyRptCurrencyID','localCurrencyID','BPVbankCurrency');
             $baseCurrencyExchangeId = $input['exchangeRateData']['supplierTransCurrencyID'];
 
-            if(count(array_unique($currencyIds,$baseCurrencyExchangeId)) == 2)
+            if(count(array_unique($currencyIds,$baseCurrencyExchangeId)) >= 2)
             {
                 $master = PaySupplierInvoiceMaster::find($input['payMasterAutoId']);
                 $currencyValues = PaySupplierInvoiceMaster::find($input['payMasterAutoId'])->only('BPVbankCurrency','companyRptCurrencyID','localCurrencyID');
@@ -38,17 +38,16 @@ class CrossExchangeRateService
                 $secondCurrencyExchaneRate = $master[$input['editedFiles']];
 
                 $currencyChanged = $master[$mapCurrencyExchangeRateWithId[$input['editedFiles']]];
-
-                $filterData = collect($currencyValues)->filter(function($item)  use ($currencyChanged) {
-                    return $item != $currencyChanged;
+                $filterData = collect($currencyValues)->filter(function($item)  use ($currencyChanged,$baseCurrencyExchangeId) {
+                    return ($item != $currencyChanged && $item != $baseCurrencyExchangeId);
                 });
+
 
                 foreach ($filterData as $key => $data) {
                     $currencyConversionDetail = CurrencyConversionDetail::where('masterCurrencyID', $data)
                         ->where('currencyConversioMasterID', $currencyConversionMaster->id)
                         ->where('subCurrencyID',$currencyChanged)
                         ->first();
-
                     if(array_search($key,$mapCurrencyExchangeRateWithId))
                     {
                         $master[array_search($key,$mapCurrencyExchangeRateWithId)] = round($input['exchangeRateData'][$input['editedFiles']]/ $currencyConversionDetail['conversion'],2);

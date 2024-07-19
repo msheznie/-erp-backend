@@ -34,8 +34,9 @@ class ExchangeSetupDocumentConfigurationService
 
         $paymentVoucherMaster = $input['exchangeRateData'];
         $paymentVoucherMasterOrg = PaySupplierInvoiceMaster::find($paymentVoucherMaster['PayMasterAutoId'])->only('supplierTransCurrencyER','companyRptCurrencyER','localCurrencyER','BPVbankCurrencyER');
+        $paymentVoucherMasterOrg = collect($paymentVoucherMasterOrg);
         $paymentVoucherMasterData = collect($paymentVoucherMaster)->only('supplierTransCurrencyER','companyRptCurrencyER','localCurrencyER','BPVbankCurrencyER');
-        $difference = $paymentVoucherMasterData->diff($paymentVoucherMasterOrg);
+        $difference = $paymentVoucherMasterData->diffAssoc($paymentVoucherMasterOrg);
         $master = $paymentVoucherMaster;
         if(count($difference) > 0)
         {

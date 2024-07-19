@@ -10,6 +10,7 @@ use App\Models\ExchangeSetupDocument;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Services\ExchangeSetup\CrossExchangeRateService;
 use ExchangeSetupConfig;
+use phpDocumentor\Reflection\Types\Collection;
 
 class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetupConfigInterface
 {
@@ -100,15 +101,6 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
          *
          */
         // transcation currency != any other currency
-//        if(!in_array($this->transcationCurrencyId,[$this->bankCurrencyId,$this->rptCurrencyId,$this->localCurrencyId]))
-//        {
-//            // bank currency == local currency == rpt currency
-//            if(count(array_unique([$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId])) >= 2 )
-//            {
-//                $this->paymentVoucherExchangeSetupConfig->setScenario(1);
-//                $this->paymentVoucherExchangeSetupConfig->setMessage("Same exchange rate will be applied to other similar currencies");
-//            }
-//        }
 
         $array = [$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId];
         $transId = $this->transcationCurrencyId;
@@ -117,12 +109,11 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
             return $value != $transId;
         }));
 
-        if($countOfOnes >= 2 )
+        if((count(array_unique($array)) != count($array)) && ($countOfOnes >= 2 ))
         {
             $this->paymentVoucherExchangeSetupConfig->setScenario(1);
             $this->paymentVoucherExchangeSetupConfig->setMessage("Same exchange rate will be applied to other similar currencies");
         }
-
 
     }
 
@@ -139,14 +130,20 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
          */
 
 
-        if(!in_array($this->transcationCurrencyId,[$this->rptCurrencyId,$this->localCurrencyId]))
+//        if(!in_array($this->transcationCurrencyId,[$this->rptCurrencyId,$this->localCurrencyId]))
+//        {
+//
+//        }
+
+        $array = [$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId];
+        $transcationCurrency = $this->transcationCurrencyId;
+        $array = array_filter($array,function($value) use ($transcationCurrency) {
+            return $value != $transcationCurrency;
+        });
+        if(count(array_unique($array)) > 1)
         {
-            $array = [$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId];
-            if(count(array_unique($array)) > 1)
-            {
-                $this->paymentVoucherExchangeSetupConfig->setScenario(2);
-                $this->paymentVoucherExchangeSetupConfig->setMessage("Are you want to update the cross exchange for currency ?");
-            }
+            $this->paymentVoucherExchangeSetupConfig->setScenario(2);
+            $this->paymentVoucherExchangeSetupConfig->setMessage("Are you want to update the cross exchange for currency ?");
         }
 
 
@@ -218,15 +215,6 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
                 return ['success' => false, 'message' => $this->paymentVoucherExchangeSetupConfig->message, 'scenario' => 2];
             }
 
-            $service = new ExchangeSetupDocumentConfigurationService();
-            if(isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === true)
-            {
-                $result = $service->updateSimilarCurrenciesExchangeRates($input);
-                return $result;
-
-            }
-
-
         }
 
         return $this->checkConditionsOfScenarioAndUpdate($input);
@@ -243,6 +231,14 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
 
         if(isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === true)
         {
+            $masterData = PaySupplierInvoiceMaster::find($input['exchangeRateData']['PayMasterAutoId']);
+            $inputData = $input['exchangeRateData'];
+
+            $masterData['companyRptCurrencyER'] = $inputData['companyRptCurrencyER'];
+            $masterData['localCurrencyER'] = $inputData['localCurrencyER'];
+            $masterData['BPVbankCurrencyER'] = $inputData['BPVbankCurrencyER'];
+            $masterData->save();
+            
             $crossExchangeRateService = new CrossExchangeRateService();
             $result = $crossExchangeRateService->calculateCrossExchangeRate($input);
         }
