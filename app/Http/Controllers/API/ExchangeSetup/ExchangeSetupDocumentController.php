@@ -112,7 +112,29 @@ class ExchangeSetupDocumentController extends AppBaseController
             return $this->sendError("Cannot update default exchange rate",500);
 
         return $this->sendResponse($paymentVoucherMasterOrg,"Default exchange rate updated successfully!");
+    }
 
+    public function getExchangeSetupConfigOfCompany(Request $request)
+    {
+        $input = $request->all();
 
+        $validator = \Validator::make($input, [
+            'companySystemId' => 'required',
+            'id' => 'required'
+        ]);
+
+        if ($validator->fails())
+        {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $id = $input['id'];
+        $companySystemId = $input['companySystemId'];
+
+        $exchangeDocument = ExchangeSetupDocument::find($id);
+        $documentTypes = $exchangeDocument->types;
+        $data = $this->exchangSetupConfigurationService->mapTypesWithExchangeSetupConfig($documentTypes,$companySystemId);
+
+        return $this->sendResponse($data,'Document Types Reterived Successfully!');
     }
 }

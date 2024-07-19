@@ -192,5 +192,6 @@ Route::group([], function() {
     Route::post('checkDocumentExchangeRateConfigAccess', 'ExchangeSetup\ExchangeSetupConfigurationController@checkDocumentExchangeRateConfigAccess');
     Route::post('updateDocumentExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@updateDocumentExchangeRate');
     Route::post('setDefaultExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@setDefaultExchangeRate');
+    Route::post('getExchangeSetupConfigOfCompany', 'ExchangeSetup\ExchangeSetupDocumentController@getExchangeSetupConfigOfCompany');
 
 });

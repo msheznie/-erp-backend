@@ -42,10 +42,10 @@ class ExchangSetupConfigurationService
        return $res;
     }
 
-    public static function mapTypesWithExchangeSetupConfig($documentTypes)
+    public static function mapTypesWithExchangeSetupConfig($documentTypes,$companySystemId = NULL)
     {
-        $data = $documentTypes->map(function ($type) {
-            $exchangeSetupConfiguration = ExchangeSetupConfiguration::where('companyId',1)->where('exchangeSetupDocumentTypeId',$type->id)->first();
+        $data = $documentTypes->map(function ($type) use ($companySystemId) {
+            $exchangeSetupConfiguration = ExchangeSetupConfiguration::where('companyId',$companySystemId)->where('exchangeSetupDocumentTypeId',$type->id)->first();
 
             return [
                 "id" => $type->id,
