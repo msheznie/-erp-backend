@@ -79,7 +79,6 @@ class HelpDeskAPIController extends AppBaseController
 
         if(empty($data)){
             $msg = 'The third party integration not available';
-            $this->insertToLogTb($msg, 'error', '', '');
             throw new Exception($msg);
         }
 

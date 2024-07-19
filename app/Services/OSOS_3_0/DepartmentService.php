@@ -8,7 +8,7 @@ namespace App\Services\OSOS_3_0;
  class DepartmentService{
      protected $apiExternalKey;
      protected $apiExternalUrl;
-     protected $departmentData;
+     protected $departmentData = [];
      protected $thirdPartyData;
      protected $id;
      protected $postType;
@@ -51,7 +51,8 @@ namespace App\Services\OSOS_3_0;
                  return $this->insertToLogTb($valResp['message'], 'error', 'Department', $this->companyId);
              }
 
-             $msg = "Department about to trigger: " . $this->id . ' - '. $this->departmentData['Name'];
+             $depName = ($this->postType != 'DELETE')? ' - '. $this->departmentData['Name'] : '';
+             $msg = "Department about to trigger: " . $this->id . $depName;
              $this->insertToLogTb($msg, 'info', 'Department', $this->companyId);
 
              $client = new Client();
@@ -117,19 +118,17 @@ namespace App\Services\OSOS_3_0;
             return ['status' =>false, 'message'=> $error];
         }
 
-         if (empty($this->departmentData)) {
+         if (empty($this->departmentData) && $this->postType != 'DELETE') {
              $error = 'Department not found';
              return ['status' =>false, 'message'=> $error];
          }
 
-         if($this->postType != 'POST'){
-             if(empty($this->departmentData['id'])){
-                 $error = 'Reference id not found';
-                 return ['status' =>false, 'message'=> $error];
-             }
+         if(empty($this->departmentData['id']) && $this->postType != 'POST'){
+             $error = 'Reference id not found';
+             return ['status' =>false, 'message'=> $error];
          }
 
-         if(empty($this->departmentData['Code'])){
+         if(empty($this->departmentData['Code']) && $this->postType != 'DELETE'){
              $error = 'Department code not found';
              return ['status' =>false, 'message'=> $error];
          }
@@ -150,22 +149,22 @@ namespace App\Services\OSOS_3_0;
              ->where('DepartmentMasterID', $this->id)
              ->first();
 
+         if($this->postType != "POST") {
+             $this->getReferenceId();
+             $this->departmentData['id'] = $this->masterUuId;
+         }
+
          if(empty($data)){
              return;
          }
 
-         $this->departmentData = [
+         $this->departmentData = array_merge([
              "Code" => $data->Code,
              "Name" => $data->Name,
              "Description" => $data->Description,
              "Status" => $data->Status,
-             "IsDeleted" => 0,
+             "IsDeleted" => false,
              "CompanyId" => $this->getOtherReferenceId($data->Erp_companyID, 5)
-         ];
-
-         if($this->postType != "POST"){
-             $this->getReferenceId();
-             $this->departmentData['id'] = $this->masterUuId;
-         }
+         ], $this->departmentData);
      }
  }
