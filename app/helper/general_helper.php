@@ -124,6 +124,8 @@ use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierBlock;
 use App\Models\TenderSupplierAssignee;
+
+
 class Helper
 {
     /**
@@ -151,6 +153,32 @@ class Helper
         }
         $serviceline = Models\SegmentMaster::whereIN('companySystemID', $companiesByGroup)->get();
         return $serviceline;
+    }
+
+    public static function validateJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
+    public static function handleErrorData($inputData) {
+
+        $errorMessage = $inputData;
+
+        if (self::validateJson($inputData)) {
+            $errorMessage = $inputData;
+
+            $arrayData = json_decode($inputData, true);
+
+            foreach ($arrayData as $key => $value) {
+                if (is_array($value)) {
+                    $errorMessage = $value[0];
+                } else {
+                    $errorMessage = $value;
+                }
+
+            }
+        }
+
+        return $errorMessage;
     }
 
     public static function getCompanyServicelineWithMaster($company)
@@ -4576,7 +4604,9 @@ class Helper
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
                                     }
                                     DB::commit();
-                                    return ['success' => false, 'message' => $budgetCheck['message'], 'type' => isset($budgetCheck['type']) ? $budgetCheck['type'] : ""];
+                                    if($input["documentSystemID"] != 22 || $input["isAutoCreateDocument"] != true) {
+                                        return ['success' => false, 'message' => $budgetCheck['message'], 'type' => isset($budgetCheck['type']) ? $budgetCheck['type'] : ""];
+                                    }
                                 } else {
                                     if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
                                         // update PR master table

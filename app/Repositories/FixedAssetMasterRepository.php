@@ -107,7 +107,8 @@ class FixedAssetMasterRepository extends BaseRepository
         'toolsCondition',
         'selectedforJobYN',
         'timestamp',
-        'empID'
+        'empID',
+        'assetCostingUploadID'
     ];
 
     /**

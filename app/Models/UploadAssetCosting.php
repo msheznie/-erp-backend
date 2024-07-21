@@ -15,11 +15,12 @@ class UploadAssetCosting extends Model
 
 
     public $fillable = [
-        'uploadComment',
+        'assetDescription',
         'uploadedDate',
         'uploadedBy',
         'uploadStatus',
         'counter',
+        'isCancelled',
         'companySystemID'
     ];
 
@@ -30,12 +31,12 @@ class UploadAssetCosting extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'uploadComment' => 'string',
+        'assetDescription' => 'string',
         'uploadedDate' => 'date',
         'uploadedBy' => 'string',
         'uploadStatus' => 'integer',
-        'totalInvoices' => 'integer',
         'counter' => 'integer',
+        'isCancelled' => 'integer',
         'companySystemID' => 'integer'
     ];
 
@@ -51,5 +52,10 @@ class UploadAssetCosting extends Model
     public function uploaded_by()
     {
         return $this->belongsTo('App\Models\Employee', 'uploadedBy', 'empID');
+    }
+
+    public function log()
+    {
+        return $this->belongsTo('App\models\LogUploadAssetCosting', 'id', 'assetCostingUploadID');
     }
 }

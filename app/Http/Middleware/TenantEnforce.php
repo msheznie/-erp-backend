@@ -70,6 +70,7 @@ class TenantEnforce
             'api/v1/postEmployeeFromPortal',
             'api/v1/uploadBudgets',
             'api/v1/uploadCustomerInvoice',
+            'api/v1/assetCostingUpload',
             'api/v1/create_receipts_voucher',
             'api/v1/generateARCAReportPDF',
             'api/v1/approveRecurringVoucher',

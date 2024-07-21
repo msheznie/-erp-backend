@@ -2,25 +2,63 @@
 
 namespace App\Services\GeneralLedger;
 
+use App\Exceptions\AssetCostingException;
 use App\helper\DocumentCodeGenerate;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\DepartmentMaster;
+use App\Models\DocumentApproved;
 use App\Models\FixedAssetMaster;
+use App\models\LogUploadAssetCosting;
 use App\Models\SegmentMaster;
+use App\Models\UploadAssetCosting;
 use App\Repositories\FixedAssetMasterRepository;
+use App\Traits\JsonResponseTrait;
+use App\Validations\AssetManagement\ValidateAssetCreation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class AssetCreationService extends AppBaseController
 {
+    use JsonResponseTrait;
 
     public function __construct(FixedAssetMasterRepository $fixedAssetMasterRepo)
     {
         $this->fixedAssetMasterRepository = $fixedAssetMasterRepo;
+
+    }
+
+    public function assetUploadErrorLog($errorLine, $logMessage, $assetCostingUploadID){
+
+        Log::useFiles(storage_path() . '/logs/asset_costing_bulk_insert.log');
+        Log::info('Start error log');
+
+        DB::beginTransaction();
+        try {
+            $assetLog = [
+                'isFailed' => 1,
+                'errorLine' => $errorLine,
+                'logMessage' => \Helper::handleErrorData($logMessage)
+            ];
+
+            FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->delete();
+            Log::info('Start error log1');
+            DB::commit();
+
+
+            LogUploadAssetCosting::where('assetCostingUploadID', $assetCostingUploadID)->update($assetLog);
+            UploadAssetCosting::where('id', $assetCostingUploadID)->update(['uploadStatus' => 0]);
+            DB::commit();
+        } catch (\Exception $e) {
+            Log::error('Exception caught: ' . $e->getMessage());
+            Log::error('Error Line No: ' . $e->getLine());
+            Log::error('Error File: ' . $e->getFile());
+            DB::rollBack();
+        }
     }
 
     public function assetCreation(array $input)
@@ -44,107 +82,19 @@ class AssetCreationService extends AppBaseController
 
         $input['COSTUNIT'] = floatval($input['COSTUNIT']);
 
-        if(isset($input['isCurrencySame']) && $input['isCurrencySame']==true){
+        $response = ValidateAssetCreation::validationsForAssetCreation($input);
 
-            if(isset($input['costUnitRpt'])){
-                if($input['costUnitRpt'] > 0){
-                    $input['COSTUNIT'] = $input['costUnitRpt'];
-                }
-            }
-
-            if(isset($input['accumulated_depreciation_amount_rpt'])){
-                if($input['accumulated_depreciation_amount_rpt'] > 0){
-                    $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
-                }
-            }
-
-            if(isset($input['salvage_value_rpt'])){
-                if($input['salvage_value_rpt']> 0){
-                    $input['salvage_value'] = $input['salvage_value_rpt'];
-                }
-            }
+        if ($response['status'] === false) {
+            return $this->sendJsonResponse(false, $response['message'], $response['code']);
         }
-
-        if(doubleval($input['salvage_value_rpt']) >  (doubleval($input['costUnitRpt']))) {
-            return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
-        }
-
-        if(doubleval($input['salvage_value_rpt']) < 0) {
-            return $this->sendError("Salvage value cannot be less than Zero", 500);
-        }
-
-        if($input['assetType'] == 1){
-            if(empty($input['depMonth']) || $input['depMonth'] == 0){
-                return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
-            }
-        } else {
-            if(isset($input['depMonth']) && $input['depMonth'] == ''){
-                $input['depMonth'] = 0;
-            }
-        }
-
-        if(isset($input['COSTUNIT']) && $input['COSTUNIT'] > 0 ){
-            if(isset($input['costUnitRpt']) && $input['costUnitRpt'] <= 0 ){
-                return $this->sendError('Unit Price(Rpt) can’t be Zero when Unit Price(Local) has a value',500);
-            }
-        }
-
-        if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] > 0){
-            if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] <= 0 ){
-                return $this->sendError('Acc. Depreciation(Rpt) can’t be Zero when Acc. Depreciation (Local) has a value',500);
-            }
-        }
-
-        if(isset($input['salvage_value']) && $input['salvage_value'] > 0){
-            if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] <= 0 ){
-                return $this->sendError('Residual Value(Rpt) can’t be Zero when Residual Value(Local) has a value',500);
-            }
-        }
-
-
-        if(isset($input['costUnitRpt']) && $input['costUnitRpt'] > 0 ){
-            if(isset($input['COSTUNIT']) && $input['COSTUNIT'] <= 0 ){
-                return $this->sendError('Unit Price(Local) can’t be Zero when Unit Price(Rpt) has a value',500);
-            }
-        }
-
-        if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] > 0){
-            if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] <= 0 ){
-                return $this->sendError('Acc. Depreciation(Local) can’t be Zero when Acc. Depreciation (Rpt) has a value',500);
-            }
-        }
-
-        if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] > 0){
-            if(isset($input['salvage_value']) && $input['salvage_value'] <= 0 ){
-                return $this->sendError('Residual Value(Local) can’t be Zero when Residual Value(Rpt) has a value',500);
-            }
-        }
-
 
         DB::beginTransaction();
         try {
-            $messages = [
-                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aquired',
-                'documentDate.before_or_equal' => 'Document Date cannot be greater than DEP Date',
-                'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
-                'AUDITCATOGARY.required' => 'Audit Category is required',
-            ];
-            $validator = \Validator::make($input, [
-                'dateAQ' => 'required|date',
-                'AUDITCATOGARY' => 'required',
-                'dateDEP' => 'required|date|after_or_equal:dateAQ',
-                'documentDate' => 'required|date|before_or_equal:dateDEP',
-                'faUnitSerialNo' => 'required|unique:erp_fa_asset_master',
-            ], $messages);
 
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
-            }
+            $response = ValidateAssetCreation::validationsForFields($input, $itemImgaeArr);
 
-            if (isset($input['itemPicture'])) {
-                if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
-                }
+            if ($response['status'] === false) {
+                return $this->sendJsonResponse(false, $response['message'], $response['code']);
             }
 
             $input['serviceLineSystemID'] = $input["serviceLineSystemID"];
@@ -225,12 +175,12 @@ class AssetCreationService extends AppBaseController
                     ->first();
 
                 if ($checkForDuplicateCode) {
-                    return $this->sendError("Asset code is already found.", 500);
+                    return $this->sendJsonResponse(false,"Asset code is already found.", 500);
                 }
 
                 $input["serialNo"] = null;
             } else {
-                return $this->sendError("Asset code is not configured.", 500);
+                return $this->sendJsonResponse(false,"Asset code is not configured.", 500);
                 // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
                 // $input["serialNo"] = $lastSerialNumber;
             }
@@ -280,10 +230,49 @@ class AssetCreationService extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($fixedAssetMasters, 'Fixed Asset Master saved successfully');
+            return $this->sendJsonResponse(true, 'Fixed Asset Master saved successfully', 200, $fixedAssetMasters);
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError($exception->getMessage());
+            return $this->sendJsonResponse(false,$exception->getMessage());
         }
+    }
+
+    public function assetApproval($logUploadAssetCosting, $uploadedCompany, $db){
+        $assetCostings = FixedAssetMaster::where('assetCostingUploadID', $logUploadAssetCosting->assetCostingUploadID)->where('approved', 0)->get();
+
+        foreach ($assetCostings as $assetCost) {
+            $params = array('autoID' => $assetCost->faID,
+                'company' => $uploadedCompany,
+                'document' => 22,
+                'segment' => '',
+                'category' => '',
+                'amount' => '',
+                'isAutoCreateDocument' => true
+            );
+
+            Log::info("on confirm");
+
+
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+
+                return $this->sendJsonResponse(false,$confirm['message']);
+            }
+            $documentApproveds = DocumentApproved::where('documentSystemCode', $assetCost->faID)->where('documentSystemID', 22)->get();
+            foreach ($documentApproveds as $documentApproved) {
+                $documentApproved["approvedComments"] = "Approved by System User";
+                $documentApproved["db"] = $db;
+                $documentApproved["isAutoCreateDocument"] = true;
+                $approve = \Helper::approveDocument($documentApproved);
+                if (!$approve["success"]) {
+
+                    return $this->sendJsonResponse(false,$approve['message']);
+
+                }
+            }
+
+        }
+
     }
 }

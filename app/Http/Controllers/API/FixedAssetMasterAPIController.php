@@ -19,6 +19,8 @@ use App\helper\DocumentCodeGenerate;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateFixedAssetMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetMasterAPIRequest;
+use App\Jobs\AssetCostingUpload\AssetCostingUpload;
+use App\Jobs\CustomerInvoiceUpload\CustomerInvoiceUpload;
 use App\Models\AssetFinanceCategory;
 use App\Models\AssetType;
 use App\Models\ChartOfAccount;
@@ -45,6 +47,7 @@ use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
 use App\Models\InsurancePolicyType;
 use App\Models\Location;
+use App\models\LogUploadAssetCosting;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\UploadAssetCosting;
@@ -54,6 +57,7 @@ use App\Repositories\FixedAssetCostRepository;
 use App\Repositories\FixedAssetMasterRepository;
 use App\Traits\AuditTrial;
 use App\Traits\UserActivityLogger;
+use App\Validations\AssetManagement\ValidateAssetCreation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,6 +74,7 @@ use App\Services\ValidateDocumentAmend;
 use App\Traits\AuditLogsTrait;
 use App\Models\CompanyFinanceYear;
 use App\Services\GeneralLedger\AssetCreationService;
+use PHPExcel_IOFactory;
 
 /**
  * Class FixedAssetMasterController
@@ -184,6 +189,12 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            $uploadValidation = ValidateAssetCreation::uploadValidation();
+            if ($uploadValidation['status'] === false) {
+                return $this->sendError($uploadValidation['message'], $uploadValidation['code']);
+            }
+
 
             if(isset($input['faCatID']) && empty($input['faCatID'])){
                 return $this->sendError("Main Category is required", 500);
@@ -509,7 +520,27 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        return $this->assetCreationService->assetCreation($input);
+        $uploadValidation = ValidateAssetCreation::uploadValidation();
+        if ($uploadValidation['status'] === false) {
+            return $this->sendError($uploadValidation['message'], $uploadValidation['code']);
+        }
+
+
+        $assetCreate = $this->assetCreationService->assetCreation($input);
+
+
+        if ($assetCreate['status'] === true) {
+
+            return $this->sendResponse($assetCreate['data'], 'Fixed Asset Master saved successfully');
+
+        } else {
+            if($assetCreate['code'] == null) {
+                return $this->sendError($assetCreate['message']);
+            }
+            else {
+                return $this->sendError($assetCreate['message'], $assetCreate['code']);
+            }
+        }
     }
 
 
@@ -1990,33 +2021,79 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input = $request->all();
 
             if(isset($input['assetCostingTypeID']) && $input['assetCostingTypeID'] == 2) {
+
+                if($input['assetDescription']== ''){
+                    return $this->sendError('Description is required',500);
+                }
+
+                if($input['assetExcelUpload']== null){
+                    return $this->sendError('Please Select a File',500);
+                }
+
+
                 $excelUpload = $input['assetExcelUpload'];
                 $input = array_except($request->all(), 'assetExcelUpload');
+                $input = $this->convertArrayToValue($input);
+
+                $decodeFile = base64_decode($excelUpload[0]['file']);
+                $originalFileName = $excelUpload[0]['filename'];
+                $extension = $excelUpload[0]['filetype'];
+                $size = $excelUpload[0]['size'];
+
+                $allowedExtensions = ['xlsx','xls'];
+
+                if (!in_array($extension, $allowedExtensions))
+                {
+                    return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                }
+
+                if ($size > 20000000) {
+                    return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                }
+
                 $employee = \Helper::getEmployeeInfo();
 
                 $uploadArray = array(
                     'companySystemID' => $input['companySystemID'],
-                    'uploadComment' => $input['assetDescription'],
+                    'assetDescription' => $input['assetDescription'],
                     'uploadedDate' => \Helper::currentDateTime(),
                     'uploadedBy' => $employee->empID,
                     'uploadStatus' => -1
                 );
 
-                $uploadBudget = UploadAssetCosting::create($uploadArray);
-                $input = $this->convertArrayToValue($input);
 
-                $decodeFile = base64_decode($excelUpload[0]['file']);
-                $originalFileName = $excelUpload[0]['filename'];
+                $uploadAssetCosting = UploadAssetCosting::create($uploadArray);
 
+                $uploadLogArray = array(
+                    'companySystemID' => $input['companySystemID'],
+                    'assetCostingUploadID' => $uploadAssetCosting->id,
+                );
+
+                $logUploadAssetCosting = LogUploadAssetCosting::create($uploadLogArray);
+
+
+                $db = isset($request->db) ? $request->db : "";
                 $disk = 'local';
                 Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-                $finalData = [];
-                $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-                })->first()->toArray();
-                DB::commit();
+                $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
 
-                return $uploadBudget;
+                $uploadData = ['objPHPExcel' => $objPHPExcel,
+                   'uploadAssetCosting' => $uploadAssetCosting,
+                    'logUploadAssetCosting' => $logUploadAssetCosting,
+                    'employee' => $employee,
+                    'uploadedCompany' =>  $input['companySystemID'],
+                    'auditCategory' => $input['auditCategory'],
+                    'postToGL' => $input['postToGL'],
+                    'postToGLCodeSystemID' => $input['postToGLCodeSystemID']
+                ];
+
+                AssetCostingUpload::dispatch($db, $uploadData);
+
+
+                DB::commit();
+                return $this->sendResponse([], 'Asset Costing uploaded successfully');
+
             } else {
                 $excelUpload = $input['assetExcelUpload'];
                 $input = array_except($request->all(), 'assetExcelUpload');
@@ -2139,6 +2216,32 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     }
 
+    public function cancelUploadAssetCosting(Request $request)
+    {
+        UploadAssetCosting::where('id', $request->assetCostingUploadID)->update(['isCancelled' => 1, 'uploadStatus' => -1]);
+
+        return $this->sendResponse([], 'Asset costing cancelled successfully');
+
+    }
+
+    public function deleteUploadAssetCosting(Request $request)
+    {
+        $deleteCondition = UploadAssetCosting::where('id', $request->assetCostingUploadID)->first();
+        if($deleteCondition->uploadStatus == -1){
+            return $this->sendError('Please cancel the asset costing upload');
+        }
+
+        if($deleteCondition->uploadStatus == 1){
+            return $this->sendError('Unable to delete as asset costing is already successfully uploaded');
+        }
+
+
+        UploadAssetCosting::where('id', $request->assetCostingUploadID)->delete();
+        LogUploadAssetCosting::where('assetCostingUploadID', $request->assetCostingUploadID)->delete();
+
+        return $this->sendResponse([], 'Asset costing deleted successfully');
+    }
+
     public function downloadAssetTemplate(Request $request)
     {
         $input = $request->all();
@@ -2184,7 +2287,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $uploadAssetCosting = UploadAssetCosting::where('companySystemID', $input['companyId'])->with('uploaded_by')->select('*');
+        $uploadAssetCosting = UploadAssetCosting::where('companySystemID', $input['companyId'])->with('uploaded_by','log')->select('*');
 
 
         return \DataTables::eloquent($uploadAssetCosting)
