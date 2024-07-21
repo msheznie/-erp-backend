@@ -542,7 +542,29 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->count();
         }
 
-        $remainingGLCount = $assignedGL - $linkedGL;
+        
+        if($reportTemplateMaster->reportID == 1) {
+            $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->whereHas('chartofaccount', function ($q) {
+                $q->where('catogaryBLorPL','<>', 'PL');
+            })->get();
+        }else{
+            $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->get();
+        }
+
+        $unAssignedGL = ChartOfAccount::where('isActive', 1)
+            ->where('isApproved', 1);
+
+        if($reportTemplateMaster->reportID != 3){
+            $unAssignedGL = $unAssignedGL->where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL);
+        }
+        if($linkedGL){
+            $linkedGLArray = $linkedGL->pluck('glAutoID');
+        }
+        $unAssignedGL = $unAssignedGL->whereNotIn('chartOfAccountSystemID',$linkedGLArray);
+
+
+
+        $remainingGLCount = $unAssignedGL->count();
 
         $output = ['template' => $reportTemplateDetails->toArray(), 'columns' => $reportTemplateColLink->toArray(), 'remainingGLCount' => $remainingGLCount, 'columnTemplateID' => $reportTemplateMaster->columnTemplateID];
 
