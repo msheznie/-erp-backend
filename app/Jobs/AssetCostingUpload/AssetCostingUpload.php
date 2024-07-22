@@ -10,7 +10,7 @@ use App\Models\DocumentApproved;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetMaster;
-use App\models\LogUploadAssetCosting;
+use App\Models\LogUploadAssetCosting;
 use App\Models\SegmentMaster;
 use App\Models\UploadAssetCosting;
 use App\Services\GeneralLedger\AssetCreationService;

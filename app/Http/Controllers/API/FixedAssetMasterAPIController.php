@@ -47,7 +47,7 @@ use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
 use App\Models\InsurancePolicyType;
 use App\Models\Location;
-use App\models\LogUploadAssetCosting;
+use App\Models\LogUploadAssetCosting;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\UploadAssetCosting;
