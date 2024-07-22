@@ -186,7 +186,7 @@ class EvaluationTemplateSectionAPIController extends AppBaseController
         $evaluationTemplateSectionTable = SupplierEvaluationTemplateSectionTable::where('supplier_evaluation_template_id',$templateId)
                                                                                 ->where('isConfirmed', 1)
                                                                                 ->whereHas('column', function ($query) {
-                                                                                    $query->where('column_type', 5);
+                                                                                    $query->where('column_type', 4);
                                                                                 })
                                                                                 ->get();
 

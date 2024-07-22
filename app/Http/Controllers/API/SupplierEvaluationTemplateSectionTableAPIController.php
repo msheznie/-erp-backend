@@ -12,6 +12,7 @@ use App\Repositories\EvaluationTemplateSectionFormulaRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\EvaluationTemplateSection;
+use App\Models\EvaluationTemplateSectionFormula;
 use App\Models\SupplierEvaluationMasters;
 use App\Models\SupplierEvaluationTemplate;
 use App\Models\SupplierEvaluationTemplateSectionTableColumn;
@@ -248,6 +249,13 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
                 $formulas = [];
                 foreach($inputData['table_id'] as $tableID) {
                     $sectionformulaInput['table_id'] = $tableID['id'];
+
+                    $duplicateCheckCount = EvaluationTemplateSectionFormula::where('table_id' ,$tableID['id'])
+                                                                        ->where('formulaType' ,$sectionformulaInput['formulaType'])
+                                                                        ->count();
+                    if($duplicateCheckCount > 0){
+                        return $this->sendError('Same formula type can not be multiple times for a single table' , 500);
+                    }
                     // Create the supplier evaluation template section formula
                     $evaluationTemplateSectionFormula = $this->evaluationTemplateSectionFormulaRepository->create($sectionformulaInput);
                     $formulas[] = $evaluationTemplateSectionFormula;
@@ -311,15 +319,15 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
 
                 if(isset($evaluationMaster->type) && ($evaluationMaster->type == 1 || $evaluationMaster->type == 2)){
                     $scoreColumnCount = SupplierEvaluationTemplateSectionTableColumn::where('table_id', $input['table_id'])
+                    ->where('id', '!=', $input['id'])
                     ->where('column_type', 3)
                     ->whereNotNull('evaluationMasterType')
                     ->where('evaluationMasterType', '!=', 3)
-                    ->whereNotNull('evaluationMasterColumn')
                     ->count();
 
 
                     if($scoreColumnCount > 0){
-                    return $this->sendError('Only General Master evaluation type can be multiple columns', 500);                                                
+                        return $this->sendError('Only General Master evaluation type can be multiple columns', 500);                                                
                     }
 
                     if ($evaluationMaster->type == 1 ){
@@ -586,6 +594,8 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
         }
 
         $supplierEvaluationTemplateSectionTable->delete();
+
+        $tableFormula = EvaluationTemplateSectionFormula::where('table_id', $id)->delete();
 
         return $this->sendResponse($id,'Supplier Evaluation Template Section Table deleted successfully');
 

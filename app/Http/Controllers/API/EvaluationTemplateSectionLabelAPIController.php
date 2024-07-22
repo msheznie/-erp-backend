@@ -8,6 +8,7 @@ use App\Models\EvaluationTemplateSectionLabel;
 use App\Repositories\EvaluationTemplateSectionLabelRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\EvaluationTemplateSectionFormula;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -331,6 +332,12 @@ class EvaluationTemplateSectionLabelAPIController extends AppBaseController
 
         if (empty($evaluationTemplateSectionLabel)) {
             return $this->sendError('Evaluation Template Section Label not found');
+        }
+
+        $formula = EvaluationTemplateSectionFormula::where('lable_id', $id)->first();
+
+        if ($formula) {
+            return $this->sendError('Can not delete. Label already used in formula');
         }
 
         $evaluationTemplateSectionLabel->delete();

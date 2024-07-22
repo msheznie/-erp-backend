@@ -344,6 +344,8 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
 
         $supplierEvaluationTemplateSectionTableColumn->delete();
 
-        return $this->sendResponse($id,'Supplier Evaluation Template Section Table Column deleted successfully');
+        $tableColumnData = SupplierEvaluationTemplateSectionTableColumn::where('table_id', $supplierEvaluationTemplateSectionTableColumn['table_id'])->get();
+
+        return $this->sendResponse($tableColumnData,'Supplier Evaluation Template Section Table Column deleted successfully');
     }
 }
