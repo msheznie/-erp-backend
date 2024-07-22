@@ -328,12 +328,14 @@ class GRVMasterRepository extends BaseRepository
         $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
         $grvMaster->where('documentSystemID', $input['documentId']);
         $grvMaster->with(['created_by' => function ($query) {
-        }, 'segment_by' => function ($query) {
-        }, 'location_by' => function ($query) {
-        }, 'supplier_by' => function ($query) {
-        }, 'currency_by' => function ($query) {
-        }, 'grvtype_by' => function ($query) {
-        }, 'project' => function ($query) {
+            }, 'segment_by' => function ($query) {
+            }, 'location_by' => function ($query) {
+            }, 'supplier_by' => function ($query) {
+            }, 'currency_by' => function ($query) {
+            }, 'grvtype_by' => function ($query) {
+            }, 'project' => function ($query) {
+            }, 'evaluationMaster' => function ($query) {
+                $query->where('documentCode', 'GRV');
         }]);
 
 

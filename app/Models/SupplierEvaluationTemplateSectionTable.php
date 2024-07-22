@@ -142,5 +142,10 @@ class SupplierEvaluationTemplateSectionTable extends Model
     {
         return $this->hasMany('App\Models\EvaluationTemplateSectionFormula', 'table_id', 'id');
     }
+
+    public function evaluationDetailRow()
+    {
+        return $this->hasMany('App\Models\SupplierEvaluationTableDetails', 'tableId', 'id');
+    }
     
 }
