@@ -231,6 +231,13 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
 
         if(isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === true)
         {
+            $crossExchangeRateService = new CrossExchangeRateService();
+            $result = $crossExchangeRateService->calculateCrossExchangeRate($input);
+        }
+
+
+        if((isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === false) && (isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === true))
+        {
             $masterData = PaySupplierInvoiceMaster::find($input['exchangeRateData']['PayMasterAutoId']);
             $inputData = $input['exchangeRateData'];
 
@@ -238,7 +245,7 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
             $masterData['localCurrencyER'] = $inputData['localCurrencyER'];
             $masterData['BPVbankCurrencyER'] = $inputData['BPVbankCurrencyER'];
             $masterData->save();
-            
+
             $crossExchangeRateService = new CrossExchangeRateService();
             $result = $crossExchangeRateService->calculateCrossExchangeRate($input);
         }
