@@ -153,10 +153,10 @@ class GRVMasterRepository extends BaseRepository
         // filter inventory items and other items
         foreach ($grvDetails as $grvDetail) {
             if($grvDetail->itemFinanceCategoryID == 1) {
-                $inventoryItems[] = $grvDetail;
+                $inventoryItems[] = $grvDetail->itemCode;
             }
             else {
-                $otherItems[] = $grvDetail;
+                $otherItems[] = $grvDetail->itemCode;
             }
             // create item object array
             $itemList[] = (object)['itemSystemCode' => $grvDetail->itemCode];
@@ -183,25 +183,25 @@ class GRVMasterRepository extends BaseRepository
 
         // only inventory items or both inventory and other items
         if((!empty($inventoryItems) && empty($otherItems)) || (!empty($inventoryItems) && !empty($otherItems))) {
-            $deliveryNote = DeliveryOrderDetail::with(['master' => function ($query) use ($grvMaster) {
+            $deliveryNote = DeliveryOrderDetail::whereHas('master', function ($query) use ($grvMaster) {
                 $query->where('wareHouseSystemCode', $grvMaster->grvLocation);
                 $query->where('createdDateTime', '>', $grvMaster->createdDateTime);
-            }])->whereIn('itemCodeSystem',$inventoryItems)->exists();
+            })->whereIn('itemCodeSystem',$inventoryItems)->exists();
 
-            $directItemInvoice = CustomerInvoiceItemDetails::with(['master' => function ($query) use ($grvMaster) {
+            $directItemInvoice = CustomerInvoiceItemDetails::whereHas('master', function ($query) use ($grvMaster) {
                 $query->where('wareHouseSystemCode', $grvMaster->grvLocation);
                 $query->where('createdDateAndTime', '>', $grvMaster->createdDateTime);
-            }])->whereIn('itemCodeSystem',$inventoryItems)->exists();
+            })->whereIn('itemCodeSystem',$inventoryItems)->exists();
 
-            $materialIssue = ItemIssueDetails::with(['master' => function ($query) use ($grvMaster) {
+            $materialIssue = ItemIssueDetails::whereHas('master', function ($query) use ($grvMaster) {
                 $query->where('wareHouseFrom', $grvMaster->grvLocation);
                 $query->where('createdDateTime', '>', $grvMaster->createdDateTime);
-            }])->whereIn('itemCodeSystem',$inventoryItems)->exists();
+            })->whereIn('itemCodeSystem',$inventoryItems)->exists();
 
-            $stockTransferOut = StockTransferDetails::with(['master_by' => function ($query) use ($grvMaster) {
+            $stockTransferOut = StockTransferDetails::whereHas('master_by', function ($query) use ($grvMaster) {
                 $query->where('locationFrom', $grvMaster->grvLocation);
                 $query->where('createdDateTime', '>', $grvMaster->createdDateTime);
-            }])->whereIn('itemCodeSystem',$inventoryItems)->exists();
+            })->whereIn('itemCodeSystem',$inventoryItems)->exists();
 
             if($deliveryNote || $directItemInvoice || $materialIssue || $stockTransferOut) {
                 return [
