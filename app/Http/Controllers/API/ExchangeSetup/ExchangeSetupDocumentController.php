@@ -10,7 +10,6 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Services\ExchangeSetup\DocumentConfigs\ExchangeSetupDocumentConfigurationService;
 use App\Services\ExchangeSetup\ExchangSetupConfigurationService;
 use Illuminate\Http\Request;
-use phpDocumentor\Reflection\Types\Integer;
 class ExchangeSetupDocumentController extends AppBaseController
 {
     protected $exchangSetupConfigurationService;
@@ -32,7 +31,8 @@ class ExchangeSetupDocumentController extends AppBaseController
        $data = collect($exchangeSetupDocuments)->map(function($exchangeSetupDocument)  {
            return [
                'id' => $exchangeSetupDocument->id,
-               'documentType' => ($exchangeSetupDocument->master) ? $exchangeSetupDocument->master->documentDescription : null
+               'documentType' => ($exchangeSetupDocument->master) ? $exchangeSetupDocument->master->documentDescription : null,
+               'isActive' => (Boolean) $exchangeSetupDocument->isActive
            ];
         });
        return $this->sendResponse($data,'Data reterived successfully!');
