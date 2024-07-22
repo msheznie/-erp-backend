@@ -98,13 +98,15 @@ class AssetCostingUpload implements ShouldQueue
 
                 if ($col == 'F' || $col == 'I' || $col == 'P') {
 
-                  $validateDate = ValidateAssetCreation::validateDateFormat($cellValue);
-                  if($validateDate['status'] == true){
-                      $cellValue = $validateDate['data'];
-                  } else{
-                      app(AssetCreationService::class)->assetUploadErrorLog(($row + $startRow), $validateDate['message'] . $col, $logUploadAssetCosting->assetCostingUploadID);
+                    if($col != 'P' && $cellValue != null) {
+                        $validateDate = ValidateAssetCreation::validateDateFormat($cellValue);
+                        if ($validateDate['status'] == true) {
+                            $cellValue = $validateDate['data'];
+                        } else {
+                            app(AssetCreationService::class)->assetUploadErrorLog(($row + $startRow), $validateDate['message'] . ' ' . $col, $logUploadAssetCosting->assetCostingUploadID);
 
-                  }
+                        }
+                    }
 
 
                 }

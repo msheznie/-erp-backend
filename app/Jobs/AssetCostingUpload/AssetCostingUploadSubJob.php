@@ -95,11 +95,11 @@ class AssetCostingUploadSubJob implements ShouldQueue
             $assetCostingValue = $data[0];
 
             $department = DepartmentMaster::where('DepartmentDescription', $assetCostingValue[0])->first();
-            if (empty($department)) {
+            if (isset($assetCostingValue[0]) && $assetCostingValue[0] && empty($department)) {
                 throw new AssetCostingException("Department not found", $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
             }
 
-            $segment = SegmentMaster::where('ServiceLineDes', $assetCostingValue[1])->first();
+            $segment = SegmentMaster::where('ServiceLineCode', $assetCostingValue[1])->first();
             if (empty($segment)) {
                 throw new AssetCostingException("Segment not found", $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
             }
@@ -107,14 +107,14 @@ class AssetCostingUploadSubJob implements ShouldQueue
             $company = Company::find($uploadedCompany);
 
             if($company->localCurrencyID != $company->reportingCurrency) {
-                $unitPriceLocal = $assetCostingValue[10];
-                $unitPriceRpt = $assetCostingValue[11];
-                $lclAmountLocal = $assetCostingValue[12];
-                $lclAmountRpt = $assetCostingValue[13];
+                $unitPriceLocal = $assetCostingValue[11];
+                $unitPriceRpt = $assetCostingValue[12];
+                $lclAmountLocal = $assetCostingValue[13];
+                $lclAmountRpt = $assetCostingValue[14];
                 $accumulatedDate = $assetCostingValue[15];
                 $residualLocal = $assetCostingValue[16];
                 $residualRpt = $assetCostingValue[17];
-                $depPercentage = $assetCostingValue[9];
+                $depPercentage = $assetCostingValue[10];
                 $comments = null;
                 $location = null;
                 $lastPhyDate = null;
@@ -135,20 +135,27 @@ class AssetCostingUploadSubJob implements ShouldQueue
                 if($validateDate['status'] == true){
                     $lastPhyDate = $validateDate['data'];
                 } else{
-                    throw new AssetCostingException($validateDate['message'] . 'K', $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
+                    throw new AssetCostingException($validateDate['message'] .' '. 'K', $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
 
                 }
             }
 
+            $lclAmountLocal = $lclAmountLocal ?? 0;
+            $lclAmountRpt = $lclAmountRpt ?? 0;
+            $residualLocal = $residualLocal ?? 0;
+            $residualRpt = $residualRpt ?? 0;
+            Log::info($lclAmountLocal);
+
             $mainCategory = $assetCostingValue[6];
-            $mainCategoryData = FixedAssetCategory::where('catDescription', $mainCategory)->first();
+            Log::info($mainCategory);
+            $mainCategoryData = FixedAssetCategory::where('catCode', $mainCategory)->first();
             if (empty($mainCategoryData)) {
                 throw new AssetCostingException("Main category not found", $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
             }
 
             $subCategory = $assetCostingValue[7];
 
-            $subCategoryData = FixedAssetCategorySub::where('catDescription', $subCategory)->first();
+            $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->first();
             if (empty($subCategoryData)) {
                 throw new AssetCostingException("Sub category not found", $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
             }
@@ -160,9 +167,11 @@ class AssetCostingUploadSubJob implements ShouldQueue
                 throw new AssetCostingException($validateFY['message'], $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
             }
 
-            $validateFY = ValidateAssetCreation::validateCompanyFinanceYearPeriod($uploadedCompany, $accumulatedDate);
-            if ($validateFY['status'] === false) {
-                throw new AssetCostingException($validateFY['message'], $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
+            if($accumulatedDate != null) {
+                $validateFY = ValidateAssetCreation::validateCompanyFinanceYearPeriod($uploadedCompany, $accumulatedDate);
+                if ($validateFY['status'] === false) {
+                    throw new AssetCostingException($validateFY['message'], $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
             }
 
 
