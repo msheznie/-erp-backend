@@ -56,6 +56,6 @@ class UploadAssetCosting extends Model
 
     public function log()
     {
-        return $this->belongsTo('App\models\LogUploadAssetCosting', 'id', 'assetCostingUploadID');
+        return $this->belongsTo('App\Models\LogUploadAssetCosting', 'id', 'assetCostingUploadID');
     }
 }
