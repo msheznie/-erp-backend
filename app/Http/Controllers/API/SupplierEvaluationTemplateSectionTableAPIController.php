@@ -396,8 +396,18 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
                                                 $formulaQuery->with('label');
                                             }]);
                                         }
-                                    ])->where('supplier_evaluation_template_id', $id)->get();
-        
+                                    ])->whereHas('table')->where('supplier_evaluation_template_id', $id)->get();
+
+        if(!empty($evaluationTemplateSection))
+        {
+            $evaluationTemplateSection->each(function($section) {
+                if(isset($section['table']) && !empty($section['table']['row'])){
+                    collect($section['table']['row'])->each(function($row){
+                        $row['rowData'] = $row['rowData'];
+                    });
+                }
+            });
+        }
 
         return $this->sendResponse($evaluationTemplateSection, 'Evaluation template section retrieved successfully');
 
