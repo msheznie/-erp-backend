@@ -255,7 +255,7 @@ class GRVMasterRepository extends BaseRepository
 
                         $grvItemQty = $grvDetail->noQty;
                         // convert net amount to item ledger currency format
-                        $grvItemCost = (1 / $grvDetail->localCurrencyER) * $grvDetail->netAmount;
+                        $grvItemCost = (1 / $grvDetail->localCurrencyER) * ($grvDetail->noQty * $grvDetail->unitCost);
 
                         // change decimal places
                         $decimalPlaces = Helper::getCurrencyDecimalPlace($grvDetail->localCurrencyID);
