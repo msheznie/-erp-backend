@@ -11,6 +11,7 @@ use App\Models\DocumentApproved;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetMaster;
+use App\Models\Location;
 use App\Models\SegmentMaster;
 use App\Models\UploadAssetCosting;
 use App\Services\GeneralLedger\AssetCreationService;
@@ -88,174 +89,213 @@ class AssetCostingUploadSubJob implements ShouldQueue
 
             $uploadBudgetCounter = UploadAssetCosting::find($logUploadAssetCosting->assetCostingUploadID);
 
-            $uploadCount = $uploadBudgetCounter->counter;
-            if($uploadBudgetCounter->isCancelled == 1){
-                throw new AssetCostingException("Asset Uploading Cancelled by User", $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
-            }
-            $assetCostingValue = $data[0];
+            $uploadCount = isset($uploadBudgetCounter->counter) ? $uploadBudgetCounter->counter : null;
 
-            $department = DepartmentMaster::where('DepartmentDescription', $assetCostingValue[0])->first();
-            if (isset($assetCostingValue[0]) && $assetCostingValue[0] && empty($department)) {
-                throw new AssetCostingException("Department not found", $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
-            }
+            if($uploadCount !== null) {
 
-            $segment = SegmentMaster::where('ServiceLineCode', $assetCostingValue[1])->first();
-            if (empty($segment)) {
-                throw new AssetCostingException("Segment not found", $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
-            }
+                $assetCostingValue = $data;
 
-            $company = Company::find($uploadedCompany);
+                $department = DepartmentMaster::where('DepartmentDescription', $assetCostingValue[0])->first();
+                if (isset($assetCostingValue[0]) && $assetCostingValue[0] && empty($department)) {
+                    throw new AssetCostingException("Department not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
 
-            if($company->localCurrencyID != $company->reportingCurrency) {
-                $unitPriceLocal = $assetCostingValue[11];
-                $unitPriceRpt = $assetCostingValue[12];
-                $lclAmountLocal = $assetCostingValue[13];
-                $lclAmountRpt = $assetCostingValue[14];
-                $accumulatedDate = $assetCostingValue[15];
-                $residualLocal = $assetCostingValue[16];
-                $residualRpt = $assetCostingValue[17];
-                $depPercentage = $assetCostingValue[10];
-                $comments = null;
-                $location = null;
-                $lastPhyDate = null;
-            } else {
-                $unitPriceLocal = $assetCostingValue[14];
-                $unitPriceRpt = $assetCostingValue[14];
-                $lclAmountLocal = $assetCostingValue[15];
-                $lclAmountRpt = $assetCostingValue[15];
-                $accumulatedDate = $assetCostingValue[11];
+                $segment = SegmentMaster::where('ServiceLineCode', $assetCostingValue[1])->first();
+                if (empty($segment)) {
+                    throw new AssetCostingException("Segment not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if ($assetCostingValue[3] == null) {
+                    throw new AssetCostingException("Description is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if ($assetCostingValue[4] == null) {
+                    throw new AssetCostingException("Manufacture is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                $company = Company::find($uploadedCompany);
+
+                if ($company->localCurrencyID != $company->reportingCurrency) {
+                    $unitPriceLocal = $assetCostingValue[14];
+                    $unitPriceRpt = $assetCostingValue[15];
+                    $lclAmountLocal = $assetCostingValue[16];
+                    $lclAmountRpt = $assetCostingValue[17];
+                    $accumulatedDate = $assetCostingValue[18];
+                    $residualLocal = $assetCostingValue[19];
+                    $residualRpt = $assetCostingValue[20];
+                    $isCurrencySame = false;
+                } else {
+                    $unitPriceLocal = $assetCostingValue[14];
+                    $unitPriceRpt = $assetCostingValue[14];
+                    $lclAmountLocal = $assetCostingValue[15];
+                    $lclAmountRpt = $assetCostingValue[15];
+                    $accumulatedDate = $assetCostingValue[16];
+                    $residualLocal = $assetCostingValue[17];
+                    $residualRpt = $assetCostingValue[17];
+                    $isCurrencySame = true;
+                }
+
                 $depPercentage = $assetCostingValue[13];
-                $residualLocal = $assetCostingValue[16];
-                $residualRpt = $assetCostingValue[16];
                 $comments = $assetCostingValue[8];
                 $location = $assetCostingValue[9];
                 $lastPhyDate = $assetCostingValue[10];
 
-                $validateDate = ValidateAssetCreation::validateDateFormat($lastPhyDate);
-                if($validateDate['status'] == true){
-                    $lastPhyDate = $validateDate['data'];
-                } else{
-                    throw new AssetCostingException($validateDate['message'] .' '. 'K', $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
+                if ($lastPhyDate != null) {
+                    $validateDate = ValidateAssetCreation::validateDateFormat($lastPhyDate);
+                    if ($validateDate['status'] == true) {
+                        $lastPhyDate = $validateDate['data'];
+                    } else {
+                        throw new AssetCostingException($validateDate['message'] . ' ' . 'K', $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
 
+                    }
                 }
-            }
 
-            $lclAmountLocal = $lclAmountLocal ?? 0;
-            $lclAmountRpt = $lclAmountRpt ?? 0;
-            $residualLocal = $residualLocal ?? 0;
-            $residualRpt = $residualRpt ?? 0;
-            Log::info($lclAmountLocal);
+                if ($location != null) {
+                    $location = Location::where('locationName', $location)->first();
+                    if (empty($location)) {
+                        throw new AssetCostingException("Location not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                    }
+                }
 
-            $mainCategory = $assetCostingValue[6];
-            Log::info($mainCategory);
-            $mainCategoryData = FixedAssetCategory::where('catCode', $mainCategory)->first();
-            if (empty($mainCategoryData)) {
-                throw new AssetCostingException("Main category not found", $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
-            }
+                $lclAmountLocal = $lclAmountLocal ?? 0;
+                $lclAmountRpt = $lclAmountRpt ?? 0;
+                $residualLocal = $residualLocal ?? 0;
+                $residualRpt = $residualRpt ?? 0;
+                Log::info($lclAmountLocal);
 
-            $subCategory = $assetCostingValue[7];
+                $mainCategory = $assetCostingValue[6];
+                Log::info($mainCategory);
+                $mainCategoryData = FixedAssetCategory::where('catCode', $mainCategory)->first();
+                if (empty($mainCategoryData)) {
+                    throw new AssetCostingException("Main category not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
 
-            $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->first();
-            if (empty($subCategoryData)) {
-                throw new AssetCostingException("Sub category not found", $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
-            }
+                $subCategory = $assetCostingValue[7];
 
-            Log::info($uploadedCompany);
-            Log::info($assetCostingValue[5]);
-            $validateFY = ValidateAssetCreation::validateCompanyFinanceYearPeriod($uploadedCompany, $assetCostingValue[5]);
-            if ($validateFY['status'] === false) {
-                throw new AssetCostingException($validateFY['message'], $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
-            }
+                $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->first();
+                if (empty($subCategoryData)) {
+                    throw new AssetCostingException("Sub category not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
 
-            if($accumulatedDate != null) {
-                $validateFY = ValidateAssetCreation::validateCompanyFinanceYearPeriod($uploadedCompany, $accumulatedDate);
+                Log::info($uploadedCompany);
+
+                if ($assetCostingValue[5] == null) {
+                    throw new AssetCostingException("Date Acquired is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if ($assetCostingValue[11] == null) {
+                    throw new AssetCostingException("Dep Start Date is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if ($depPercentage == null) {
+                    throw new AssetCostingException("Dep Percentage is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if ($assetCostingValue[12] == null) {
+                    throw new AssetCostingException("Life time in years is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if ($unitPriceLocal == null) {
+                    throw new AssetCostingException("Unit Price (Local) is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if ($unitPriceRpt == null) {
+                    throw new AssetCostingException("Unit Price (Rpt) is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                $validateFY = ValidateAssetCreation::validateCompanyFinanceYearPeriod($uploadedCompany, $assetCostingValue[5]);
                 if ($validateFY['status'] === false) {
                     throw new AssetCostingException($validateFY['message'], $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
-            }
 
+                if ($accumulatedDate != null) {
+                    $validateFY = ValidateAssetCreation::validateCompanyFinanceYearPeriod($uploadedCompany, $accumulatedDate);
+                    if ($validateFY['status'] === false) {
+                        throw new AssetCostingException($validateFY['message'], $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                    }
+                }
 
 
                 $assetUpload = [
-                "departmentSystemID" => $department->departmentSystemID,
-                "serviceLineSystemID" => $segment->serviceLineSystemID,
-                "assetDescription" => $assetCostingValue[3],
-                "MANUFACTURE" => $assetCostingValue[4],
-                "dateAQ" => $assetCostingValue[5],
-                "dateDEP" => $assetCostingValue[5],
-                "documentDate" => $assetCostingValue[5],
-                "depMonth" => $assetFinanceCategory->lifeTimeInYears,
-                "DEPpercentage" => $depPercentage,
-                "costUnitRpt" => $unitPriceRpt,
-                "COSTUNIT" => $unitPriceLocal,
-                "accumulated_depreciation_amount_lcl" => $lclAmountLocal,
-                "accumulated_depreciation_amount_rpt" => $lclAmountRpt,
-                "accumulated_depreciation_date" => $accumulatedDate,
-                "COMMENTS" => $comments,
-                "LOCATION" => $location,
-                "lastVerifiedDate" => $lastPhyDate,
-                "assetType" => 1,
-                "supplierIDRentedAsset" => null,
-                "AUDITCATOGARY" => $auditCategory,
-                "faCatID" => $mainCategoryData->faCatID,
-                "faSubCatID" => $subCategoryData->faCatSubID,
-                "faSubCatID2" => null,
-                "faSubCatID3" => null,
-                "costglCodeSystemID" => $assetFinanceCategory->COSTGLCODESystemID,
-                "COSTGLCODE" => $assetFinanceCategory->COSTGLCODE,
-                "COSTGLCODEdes" => $assetFinanceCategory->costaccount->AccountDescription,
-                "accdepglCodeSystemID" => $assetFinanceCategory->ACCDEPGLCODESystemID,
-                "ACCDEPGLCODE" => $assetFinanceCategory->ACCDEPGLCODE,
-                "ACCDEPGLCODEdes" => $assetFinanceCategory->accdepaccount->AccountDescription,
-                "depglCodeSystemID" => $assetFinanceCategory->DEPGLCODESystemID,
-                "DEPGLCODE" => $assetFinanceCategory->DEPGLCODE,
-                "DEPGLCODEdes" => $assetFinanceCategory->depaccount->AccountDescription,
-                "dispglCodeSystemID" => $assetFinanceCategory->DISPOGLCODESystemID,
-                "DISPOGLCODE" => $assetFinanceCategory->DISPOGLCODE,
-                "DISPOGLCODEdes" => $assetFinanceCategory->disaccount->AccountDescription,
-                "itemPicture" => null,
-                "itemImage" => null,
-                "faUnitSerialNo" => $assetCostingValue[2],
-                "confirmedYN" => null,
-                "groupTO" => null,
-                "postToGLYN" => $postToGL,
-                "postToGLCodeSystemID" => $postToGLCodeSystemID,
-                "salvage_value_rpt" => $residualRpt,
-                "salvage_value" => $residualLocal,
-                "companySystemID" => $uploadedCompany,
-                "documentSystemID" => 22,
-                "isCurrencySame" => false,
-                "assetCostingUploadID" => $logUploadAssetCosting->assetCostingUploadID
-            ];
+                    "departmentSystemID" => isset($department->departmentSystemID) ? $department->departmentSystemID : null,
+                    "serviceLineSystemID" => $segment->serviceLineSystemID,
+                    "assetDescription" => $assetCostingValue[3],
+                    "MANUFACTURE" => $assetCostingValue[4],
+                    "dateAQ" => $assetCostingValue[5],
+                    "dateDEP" => $assetCostingValue[11],
+                    "documentDate" => $assetCostingValue[5],
+                    "depMonth" => $assetCostingValue[12],
+                    "DEPpercentage" => $depPercentage,
+                    "costUnitRpt" => $unitPriceRpt,
+                    "COSTUNIT" => $unitPriceLocal,
+                    "accumulated_depreciation_amount_lcl" => $lclAmountLocal,
+                    "accumulated_depreciation_amount_rpt" => $lclAmountRpt,
+                    "accumulated_depreciation_date" => $accumulatedDate,
+                    "COMMENTS" => $comments,
+                    "LOCATION" => isset($location->locationName) ? $location->locationName : null,
+                    "lastVerifiedDate" => $lastPhyDate,
+                    "assetType" => 1,
+                    "supplierIDRentedAsset" => null,
+                    "AUDITCATOGARY" => $auditCategory,
+                    "faCatID" => $mainCategoryData->faCatID,
+                    "faSubCatID" => $subCategoryData->faCatSubID,
+                    "faSubCatID2" => null,
+                    "faSubCatID3" => null,
+                    "costglCodeSystemID" => $assetFinanceCategory->COSTGLCODESystemID,
+                    "COSTGLCODE" => $assetFinanceCategory->COSTGLCODE,
+                    "COSTGLCODEdes" => $assetFinanceCategory->costaccount->AccountDescription,
+                    "accdepglCodeSystemID" => $assetFinanceCategory->ACCDEPGLCODESystemID,
+                    "ACCDEPGLCODE" => $assetFinanceCategory->ACCDEPGLCODE,
+                    "ACCDEPGLCODEdes" => $assetFinanceCategory->accdepaccount->AccountDescription,
+                    "depglCodeSystemID" => $assetFinanceCategory->DEPGLCODESystemID,
+                    "DEPGLCODE" => $assetFinanceCategory->DEPGLCODE,
+                    "DEPGLCODEdes" => $assetFinanceCategory->depaccount->AccountDescription,
+                    "dispglCodeSystemID" => $assetFinanceCategory->DISPOGLCODESystemID,
+                    "DISPOGLCODE" => $assetFinanceCategory->DISPOGLCODE,
+                    "DISPOGLCODEdes" => $assetFinanceCategory->disaccount->AccountDescription,
+                    "itemPicture" => null,
+                    "itemImage" => null,
+                    "faUnitSerialNo" => $assetCostingValue[2],
+                    "confirmedYN" => null,
+                    "groupTO" => null,
+                    "postToGLYN" => $postToGL,
+                    "postToGLCodeSystemID" => $postToGLCodeSystemID,
+                    "salvage_value_rpt" => $residualRpt,
+                    "salvage_value" => $residualLocal,
+                    "companySystemID" => $uploadedCompany,
+                    "documentSystemID" => 22,
+                    "isCurrencySame" => $isCurrencySame,
+                    "assetCostingUploadID" => $logUploadAssetCosting->assetCostingUploadID
+                ];
 
-            $assetCreate = app(AssetCreationService::class)->assetCreation($assetUpload);
+                $assetCreate = app(AssetCreationService::class)->assetCreation($assetUpload);
 
-            if ($assetCreate['status'] === false) {
-                throw new AssetCostingException($assetCreate['message'], $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
+                if ($assetCreate['status'] === false) {
+                    throw new AssetCostingException($assetCreate['message'], $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+
+                $assetApproval = app(AssetCreationService::class)->assetApproval($logUploadAssetCosting, $uploadedCompany, $db);
+
+                if ($assetApproval['status'] === false) {
+                    throw new AssetCostingException($assetApproval['message'], $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                $uploadBudgetCounter->increment('counter');
+
+                $uploadBudgetCounter->save();
+
+                $newCounterValue = $uploadBudgetCounter->counter;
+
+                Log::info($newCounterValue);
+                Log::info('tot' . $totalRecords);
+
+                if ($newCounterValue == $totalRecords) {
+                    UploadAssetCosting::where('id', $logUploadAssetCosting->assetCostingUploadID)->update(['uploadStatus' => 1]);
+                }
+                DB::commit();
             }
 
-            Log::info("Index: ". $index);
-
-            $assetApproval = app(AssetCreationService::class)->assetApproval($logUploadAssetCosting, $uploadedCompany, $db);
-
-            if ($assetApproval['status'] === false) {
-                throw new AssetCostingException($assetApproval['message'], $logUploadAssetCosting->assetCostingUploadID,($uploadCount + $startRow));
-            }
-
-            $uploadBudgetCounter->increment('counter');
-
-            $uploadBudgetCounter->save();
-
-            $newCounterValue = $uploadBudgetCounter->counter;
-
-            Log::info($newCounterValue);
-            Log::info('tot'. $totalRecords);
-
-            if ($newCounterValue == $totalRecords) {
-                UploadAssetCosting::where('id', $logUploadAssetCosting->assetCostingUploadID)->update(['uploadStatus' => 1]);
-            }
-
-            DB::commit();
         } catch(AssetCostingException $e) {
             DB::rollback();
 

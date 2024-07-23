@@ -124,12 +124,21 @@ class AssetCostingUpload implements ShouldQueue
         $totalRecords = $rowNumber - 13;
 
 
-        $detailRows = collect($detailRows)->groupBy(6);
+        $detailRows = collect($detailRows)->chunk(100);
+
+        log::info($detailRows);
         $jobData = ['logUploadAssetCosting' => $logUploadAssetCosting, 'assetFinanceCategory' => $assetFinanceCategory, 'startRow' => $startRow, 'totalRecords' => $totalRecords];
 
         foreach($detailRows as  $data) {
+            foreach($data as  $assetData) {
+                $uploadBudget = UploadAssetCosting::find($logUploadAssetCosting->assetCostingUploadID);
 
-            AssetCostingUploadSubJob::dispatch($db, $data, $uploadData, $jobData)->onQueue('single');
+                if($uploadBudget->isCancelled != 1){
+                AssetCostingUploadSubJob::dispatch($db, $assetData, $uploadData, $jobData)->onQueue('single');
+                } else {
+                    app(AssetCreationService::class)->assetUploadErrorLog(($row + $startRow), "Asset costing upload canceled by user", $logUploadAssetCosting->assetCostingUploadID);
+                }
+            }
 
         }
 

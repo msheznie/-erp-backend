@@ -2218,7 +2218,8 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function cancelUploadAssetCosting(Request $request)
     {
-        UploadAssetCosting::where('id', $request->assetCostingUploadID)->update(['isCancelled' => 1, 'uploadStatus' => -1]);
+
+        UploadAssetCosting::where('id', $request->assetCostingUploadID)->update(['isCancelled' => 1]);
 
         return $this->sendResponse([], 'Asset costing cancelled successfully');
 
@@ -2234,6 +2235,19 @@ class FixedAssetMasterAPIController extends AppBaseController
         if($deleteCondition->uploadStatus == 1){
             return $this->sendError('Unable to delete as asset costing is already successfully uploaded');
         }
+        $createdFAs = FixedAssetMaster::where('assetCostingUploadID', $request->assetCostingUploadID)->get();
+        foreach ($createdFAs as $createdFA){
+            GeneralLedger::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
+            FixedAssetCost::where('faID', $createdFA->faID)->delete();
+            $fixedDeps = FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->get();
+            foreach ($fixedDeps as $fixedDep){
+                FixedAssetDepreciationMaster::where('depMasterAutoID', $fixedDep->depMasterAutoID)->delete();
+            }
+
+
+            FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->delete();
+        }
+        FixedAssetMaster::where('assetCostingUploadID', $request->assetCostingUploadID)->delete();
 
 
         UploadAssetCosting::where('id', $request->assetCostingUploadID)->delete();
