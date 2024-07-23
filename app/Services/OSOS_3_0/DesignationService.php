@@ -51,11 +51,15 @@ class DesignationService
             $valResp =$this->validateApiResponse();
 
             if(!$valResp['status']){
-                return $this->insertToLogTb($valResp['message'], 'error', 'Designation', $this->companyId);
+                $logData = ['message' => $valResp['message'], 'id' => $this->id ];
+                return $this->insertToLogTb($logData, 'error', 'Designation', $this->companyId);
             }
 
-            $msg = "Designation about to trigger: " . $this->id. ' - '. $this->designationData['name'];
-            $this->insertToLogTb($msg, 'info', 'Designation', $this->companyId);
+            $logData = [
+                'message' => "Designation about to trigger: " . $this->id. ' - '. $this->designationData['name'], 
+                'id' => $this->id 
+            ];
+            $this->insertToLogTb($logData, 'info', 'Designation', $this->companyId);
 
             $client = new Client();
             $headers = [
@@ -77,20 +81,21 @@ class DesignationService
                 $je = json_decode($body, true);
 
                 if(!isset($je['id'])){
-                    $msg = 'Cannot Find Reference id from response';
-                    return $this->insertToLogTb($msg, 'error', 'Designation', $this->companyId);
+                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id ];
+                    return $this->insertToLogTb($logData, 'error', 'Designation', $this->companyId);
                 }
 
                 $this->insertOrUpdateThirdPartyPivotTable($je['id']);
-                $msg = "Api Designation {$this->operation} successfully finished";
-                $this->insertToLogTb($msg, 'info', 'Designation', $this->companyId);
-                return ['status' => true, 'message' => $msg, 'code' => $statusCode];
+                $logData = ['message' => "Api Designation {$this->operation} successfully processed", 'id' => $this->id ];
+                $this->insertToLogTb($logData, 'info', 'Designation', $this->companyId);
+                return ['status' => true, 'message' => $logData['message'], 'code' => $statusCode];
 
             }
 
             if ($statusCode == 400) {
                 $msg = $res->getBody();
-                $this->capture400Err(json_decode($msg), 'Designation');
+                $logData = ['message' => json_decode($msg), 'id' => $this->id ];
+                $this->capture400Err($logData, 'Designation');
                 return ['status' => false, 'message' => $msg, 'code' => $statusCode];
             }
 
@@ -99,7 +104,8 @@ class DesignationService
             $exStatusCode = $e->getCode();
             if ($exStatusCode == 400) {
                 $msg = $e->getMessage();
-                return $this->capture400Err($msg, 'Designation');
+                $logData = ['message' => $msg, 'id' => '' ];
+                return $this->capture400Err($logData, 'Designation');
             }
 
             $msg = "Exception \n";
@@ -107,7 +113,10 @@ class DesignationService
             $msg .= "message : ".$e->getMessage()."\n";
             $msg .= "file : ".$e->getFile()."\n";
             $msg .= "line no : ".$e->getLine()."\n";
-            $this->insertToLogTb($msg, 'error', 'Designation', $this->companyId);
+
+            $logData = ['message' =>  $msg, 'id' => $this->id ];
+            $this->insertToLogTb($logData, 'error', 'Designation', $this->companyId);
+            
             return ['status' => false, 'message' => $msg, 'code' => $exStatusCode];
         }
     }

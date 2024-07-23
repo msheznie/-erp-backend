@@ -48,12 +48,15 @@ namespace App\Services\OSOS_3_0;
              $valResp =$this->validateApiResponse();
 
              if(!$valResp['status']){
-                 return $this->insertToLogTb($valResp['message'], 'error', 'Department', $this->companyId);
+                $logData = ['message' => $valResp['message'], 'id' => $this->id];
+                 return $this->insertToLogTb($logData, 'error', 'Department', $this->companyId);
              }
 
              $depName = ($this->postType != 'DELETE')? ' - '. $this->departmentData['Name'] : '';
              $msg = "Department about to trigger: " . $this->id . $depName;
-             $this->insertToLogTb($msg, 'info', 'Department', $this->companyId);
+
+             $logData = ['message' => $msg, 'id' => $this->id ];
+             $this->insertToLogTb($logData, 'info', 'Department', $this->companyId);
 
              $client = new Client();
              $headers = [
@@ -75,26 +78,32 @@ namespace App\Services\OSOS_3_0;
                  $je = json_decode($body, true);
 
                  if(!isset($je['id'])){
-                     $msg = 'Cannot Find Reference id from response';
-                     return $this->insertToLogTb($msg, 'error', 'Department', $this->companyId);
+                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id ];
+                     return $this->insertToLogTb($logData, 'error', 'Department', $this->companyId);
                  }
 
                  $this->insertOrUpdateThirdPartyPivotTable($je['id']);
-                 $msg = "Api department {$this->operation} successfully finished";
-                 return  $this->insertToLogTb($msg, 'info', 'Department', $this->companyId);
+                 $logData = [
+                     'message' => "Api department {$this->operation} successfully processed",
+                     'id' => $this->id
+                 ];
+                 $this->insertToLogTb($logData, 'info', 'Department', $this->companyId);
+                 return ['status' => true, 'message' => $logData['message'], 'code' => $statusCode];
 
              }
 
              if ($statusCode == 400) {
                  $msg = $res->getBody();
-                 return $this->capture400Err(json_decode($msg), 'Department');
+                 $logData = ['message' => json_decode($msg), 'id' => $this->id ];
+                 return $this->capture400Err($logData, 'Department');
              }
          } catch (\Exception $e) {
 
              $exStatusCode = $e->getCode();
              if ($exStatusCode == 400) {
                  $msg = $e->getMessage();
-                 return $this->capture400Err($msg, 'Department');
+                 $logData = ['message' => $msg, 'id' => $this->id ];
+                 return $this->capture400Err($logData, 'Department');
              }
 
              $msg = "Exception \n";
@@ -102,7 +111,11 @@ namespace App\Services\OSOS_3_0;
              $msg .= "message : ".$e->getMessage()."\n";;
              $msg .= "file : ".$e->getFile()."\n";;
              $msg .= "line no : ".$e->getLine()."\n";;
-             return $this->insertToLogTb($msg, 'error', 'Department', $this->companyId);
+
+             $logData = ['message' =>  $msg, 'id' => $this->id];
+             $this->insertToLogTb($logData, 'error', 'Department', $this->companyId);
+            
+            return ['status' => false, 'message' => $msg, 'code' => $exStatusCode];
          }
      }
 

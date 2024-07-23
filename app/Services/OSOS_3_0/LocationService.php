@@ -53,11 +53,15 @@ class LocationService
             $valResp = $this->validateApiResponse();
 
             if (!$valResp['status']) {
-                return $this->insertToLogTb($valResp['message'], 'error', 'Location', $this->companyId);
+                $logData = ['message' => $valResp['message'], 'id' => $this->id ];
+                return $this->insertToLogTb($logData, 'error', 'Location', $this->companyId);
             }
 
-            $msg = "Location about to trigger: " . $this->id . ' - ' . $this->locationData['name'];
-            $this->insertToLogTb($msg, 'info', 'Location', $this->companyId);
+            $logData = [
+                'message' => "Location about to trigger: " . $this->id . ' - ' . $this->locationData['name'], 
+                'id' => $this->id 
+            ];
+            $this->insertToLogTb($logData, 'info', 'Location', $this->companyId);
 
             $client = new Client();
             $headers = [
@@ -79,21 +83,22 @@ class LocationService
                 $je = json_decode($body, true);
 
                 if (!isset($je['id'])) {
-                    $msg = 'Cannot Find Reference id from response';
-                    $this->insertToLogTb($msg, 'error', 'Location', $this->companyId);
-                    return ['status' => false, 'message' => $msg, 'code' => false];
+                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id ];
+                    $this->insertToLogTb($logData, 'error', 'Location', $this->companyId);
+                    return ['status' => false, 'message' => $logData['message'], 'code' => false];
                 }
 
                 $this->insertOrUpdateThirdPartyPivotTable($je['id']);
-                $msg = "Api location {$this->operation} successfully finished";
-                $this->insertToLogTb($msg, 'info', 'Location', $this->companyId);
-                return ['status' => true, 'message' => $msg, 'code' => $statusCode];
+                $logData = ['message' => "Api location {$this->operation} successfully processed", 'id' => $this->id ];
+                $this->insertToLogTb($logData, 'info', 'Location', $this->companyId);
+                return ['status' => true, 'message' => $logData['message'], 'code' => $statusCode];
 
             }
 
             if ($statusCode == 400) {
                 $msg = $res->getBody();
-                $this->capture400Err(json_decode($msg), 'Location');
+                $logData = ['message' => json_decode($msg), 'id' => $this->id ];
+                $this->capture400Err($logData, 'Location');
                 return ['status' => false, 'message' => $msg, 'code' => $statusCode];
             }
 
@@ -102,7 +107,8 @@ class LocationService
             $exStatusCode = $e->getCode();
             if ($exStatusCode == 400) {
                 $msg = $e->getMessage();
-                return $this->capture400Err($msg, 'Location');
+                $logData = ['message' => $msg, 'id' => $this->id ];
+                return $this->capture400Err($logData, 'Location');
             }
 
             $msg = "Exception \n";
@@ -110,7 +116,10 @@ class LocationService
             $msg .= "message : " . $e->getMessage() . "\n";;
             $msg .= "file : " . $e->getFile() . "\n";;
             $msg .= "line no : " . $e->getLine() . "\n";;
-            $this->insertToLogTb($msg, 'error', 'Location', $this->companyId);
+
+            $logData = ['message' =>  $msg, 'id' => $this->id ];
+            $this->insertToLogTb($logData, 'error', 'Location', $this->companyId);
+            
             return ['status' => false, 'message' => $msg, 'code' => $exStatusCode];
         }
     }

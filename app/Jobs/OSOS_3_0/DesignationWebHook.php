@@ -2,6 +2,7 @@
 
 namespace App\Jobs\OSOS_3_0;
 use App\Services\OSOS_3_0\DesignationService;
+use App\Traits\OSOS_3_0\JobCommonFunctions;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -16,6 +17,8 @@ class DesignationWebHook implements ShouldQueue
     protected $postType;
     protected $thirdPartyData;
     protected $dataBase;
+
+    use JobCommonFunctions;
 
     public function __construct($dataBase, $postType, $id, $thirdPartyData)
     {
@@ -52,8 +55,8 @@ class DesignationWebHook implements ShouldQueue
 
         if (!in_array($statusCode, [200, 201])) {
             for ($i = 1; $i <= 3; $i++) {
-                $msg = 'API Designation attempt' . $i;
-                $this->insertToLogTb($msg, 'info', $desc, $this->thirdPartyData['company_id']);
+                $logData = ['message' => 'Api Designation attempt'. $i, 'id' => $this->id ];
+                $this->insertToLogTb($logData, 'info', $desc, $this->thirdPartyData['company_id']);
 
                 $locationService = new DesignationService(
                     $this->dataBase,

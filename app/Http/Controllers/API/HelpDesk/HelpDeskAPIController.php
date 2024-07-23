@@ -21,7 +21,8 @@ class HelpDeskAPIController extends AppBaseController
             } catch(\Exception $e) {
                 $error = $e->getMessage().' Error Line No: ' . $e->getLine();
                 $comId = isset($this->thirdParty['company_id'])? $this->thirdParty['company_id'] : 0;
-                $this->insertToLogTb($error, 'error', 'Employee', $comId);
+                $logData = ['message' => $error];
+                $this->insertToLogTb($logData, 'error', 'Employee', $comId);
             }
 
             DB::beginTransaction();
@@ -57,13 +58,13 @@ class HelpDeskAPIController extends AppBaseController
         $this->verifyIntegration();
         $valResp = $this->commonValidations($request);
         if(!$valResp['status']){
-            $error = $valResp['message'];
-            $this->insertToLogTb($error, 'error', 'Employee', $this->thirdParty['company_id']);
+            $logData = ['message' => $valResp['message']];
+            $this->insertToLogTb($logData, 'error', 'Employee', $this->thirdParty['company_id']);
         }
 
         $postType = $request->postType;
         $ids = is_array($request->employeeSystemID)? $request->employeeSystemID : [$request->employeeSystemID];
-        $db = isset($request->db) ? $request->db : "";
+        $db = $request->db ?? "";
 
         foreach ($ids as $id) {
             EmployeeWebHook::dispatch($db, $postType, $id, $this->thirdParty);

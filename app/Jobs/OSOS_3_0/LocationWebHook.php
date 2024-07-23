@@ -55,8 +55,8 @@ class LocationWebHook implements ShouldQueue
 
         if (!in_array($statusCode, [200, 201])) {
             for ($i = 1; $i <= 3; $i++) {
-                $msg = 'Api location attempt' . $i;
-                $this->insertToLogTb($msg, 'info', $desc, $this->thirdPartyData['company_id']);
+                $logData = ['message' => 'Api location attempt'. $i, 'id' => $this->id ];
+                $this->insertToLogTb($logData, 'info', $desc, $this->thirdPartyData['company_id']);
 
                 $locationService = new LocationService(
                     $this->dataBase,
