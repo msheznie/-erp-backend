@@ -290,8 +290,12 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
             TemplateSectionTableRow::create($row);
         }
 
-
-        return $this->sendResponse($supplierEvaluationTemplateSectionTableColumn->toArray(), 'SupplierEvaluationTemplateSectionTableColumn updated successfully');
+        $tableColumnData = SupplierEvaluationTemplateSectionTableColumn::where('table_id', $supplierEvaluationTemplateSectionTableColumn['table_id'])->get();
+        $data = [
+            'supplierEvaluationTemplateSectionTableColumn'=> $supplierEvaluationTemplateSectionTableColumn,
+            'tableColumnData'=> $tableColumnData,
+        ];
+        return $this->sendResponse($data, 'SupplierEvaluationTemplateSectionTableColumn updated successfully');
     }
 
     /**
@@ -343,6 +347,29 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
         }
 
         $supplierEvaluationTemplateSectionTableColumn->delete();
+
+        $tableColumnsCreate = SupplierEvaluationTemplateSectionTableColumn::where('table_id' ,$supplierEvaluationTemplateSectionTableColumn['table_id'])->get();
+
+        $deleteTableRowData = TemplateSectionTableRow::where('table_id', $supplierEvaluationTemplateSectionTableColumn['table_id'])->delete();
+
+        // Prepare row data in JSON format
+        $supplierEvaluationTemplateSectionTable = SupplierEvaluationTemplateSectionTable::where('id' ,$supplierEvaluationTemplateSectionTableColumn['table_id'])->first();
+        $tableRows = $supplierEvaluationTemplateSectionTable['table_row'];
+        
+        $row_data = [];
+        foreach ($tableColumnsCreate as $column) {
+            $column_header = $column->column_header; // Use column_header as the key
+            $row_data[] = [$column_header => null]; // Replace with actual data as needed
+        }
+        $row_data_json = json_encode($row_data);
+                    // Create a new row in the template_section_table_row table
+        $row = [
+            'table_id' => $supplierEvaluationTemplateSectionTableColumn['table_id'],
+            'rowData' => $row_data_json
+        ];
+        for ($i = 0; $i < $tableRows; $i++) {
+            TemplateSectionTableRow::create($row);
+        }
 
         $tableColumnData = SupplierEvaluationTemplateSectionTableColumn::where('table_id', $supplierEvaluationTemplateSectionTableColumn['table_id'])->get();
 
