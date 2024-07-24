@@ -65,6 +65,7 @@ use App\Models\ChartOfAccount;
 use App\Models\SalesReturn;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\SalesReturnDetail;
+use App\Services\ExchangeSetup\ExchangeSetupGlService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -1236,6 +1237,10 @@ class PaymentVoucherGlService
                     array_push($finalData, $data);
                 }
             }
+
+            $exchangeSetupGlService = new ExchangeSetupGlService();
+            $finalData = $exchangeSetupGlService->postGlEntry($finalData,$masterData,$si);
+
         }
 
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
