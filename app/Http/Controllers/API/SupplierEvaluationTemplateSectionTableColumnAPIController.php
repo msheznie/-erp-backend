@@ -346,6 +346,11 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
             return $this->sendError('Supplier Evaluation Template Section Table Column not found');
         }
 
+        $supplierEvaluationTemplateSectionTable = SupplierEvaluationTemplateSectionTable::where('id' ,$supplierEvaluationTemplateSectionTableColumn['table_id'])->first();
+        if(isset($supplierEvaluationTemplateSectionTable->table_column) && $supplierEvaluationTemplateSectionTable->table_column == 1){
+            return $this->sendError('Can not delete. Minimum 1 column should be in the table');
+        }
+
         $supplierEvaluationTemplateSectionTableColumn->delete();
 
         $tableColumnsCreate = SupplierEvaluationTemplateSectionTableColumn::where('table_id' ,$supplierEvaluationTemplateSectionTableColumn['table_id'])->get();
@@ -353,7 +358,11 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
         $deleteTableRowData = TemplateSectionTableRow::where('table_id', $supplierEvaluationTemplateSectionTableColumn['table_id'])->delete();
 
         // Prepare row data in JSON format
-        $supplierEvaluationTemplateSectionTable = SupplierEvaluationTemplateSectionTable::where('id' ,$supplierEvaluationTemplateSectionTableColumn['table_id'])->first();
+
+        $tableColumnCount = $supplierEvaluationTemplateSectionTable->table_column - 1;
+        $updateData = ['table_column' => $tableColumnCount];
+        $updateTable = SupplierEvaluationTemplateSectionTable::where('id', $supplierEvaluationTemplateSectionTableColumn['table_id'])->update($updateData);
+
         $tableRows = $supplierEvaluationTemplateSectionTable['table_row'];
         
         $row_data = [];

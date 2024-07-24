@@ -340,6 +340,11 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
                     }
 
                     SupplierEvaluationTemplateSectionTableColumn::create(['table_id' => $input['table_id'] , 'column_type' => $columnType ,'column_header' => $columnHeader, 'is_disabled' => 1 ,'evaluationMasterType' => $evaluationMaster->type ,'evaluationMasterColumn' => $input['id'], 'evaluationMasterId' => $evaluationMaster->id]);
+                    $table = SupplierEvaluationTemplateSectionTable::where('id', $input['table_id'])->first();
+
+                    $tableColumnCount = $table->table_column + 1;
+                    $updateData = ['table_column' => $tableColumnCount];
+                    $updateTable = SupplierEvaluationTemplateSectionTable::where('id', $input['table_id'])->update($updateData);
                 } 
             }
             
