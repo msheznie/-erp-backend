@@ -10,7 +10,11 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
+use App\Models\FixedAssetCost;
+use App\Models\FixedAssetDepreciationMaster;
+use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
+use App\Models\GeneralLedger;
 use App\Models\LogUploadAssetCosting;
 use App\Models\SegmentMaster;
 use App\Models\UploadAssetCosting;
@@ -45,8 +49,8 @@ class AssetCreationService extends AppBaseController
                 'logMessage' => \Helper::handleErrorData($logMessage)
             ];
 
-            FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->delete();
             Log::info('Start error log1');
+
             DB::commit();
 
 
@@ -59,6 +63,24 @@ class AssetCreationService extends AppBaseController
             Log::error('Error File: ' . $e->getFile());
             DB::rollBack();
         }
+    }
+
+    public function assetDeletion($assetCostingUploadID)
+    {
+        $createdFAs = FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->get();
+        foreach ($createdFAs as $createdFA){
+            GeneralLedger::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
+            DocumentApproved::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
+            FixedAssetCost::where('faID', $createdFA->faID)->delete();
+            $fixedDeps = FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->get();
+            foreach ($fixedDeps as $fixedDep){
+                FixedAssetDepreciationMaster::where('depMasterAutoID', $fixedDep->depMasterAutoID)->delete();
+            }
+
+
+            FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->delete();
+        }
+        FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->forceDelete();
     }
 
     public function assetCreation(array $input)

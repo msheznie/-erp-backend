@@ -2235,19 +2235,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         if($deleteCondition->uploadStatus == 1){
             return $this->sendError('Unable to delete as asset costing is already successfully uploaded');
         }
-        $createdFAs = FixedAssetMaster::where('assetCostingUploadID', $request->assetCostingUploadID)->get();
-        foreach ($createdFAs as $createdFA){
-            GeneralLedger::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
-            FixedAssetCost::where('faID', $createdFA->faID)->delete();
-            $fixedDeps = FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->get();
-            foreach ($fixedDeps as $fixedDep){
-                FixedAssetDepreciationMaster::where('depMasterAutoID', $fixedDep->depMasterAutoID)->delete();
-            }
 
-
-            FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->delete();
-        }
-        FixedAssetMaster::where('assetCostingUploadID', $request->assetCostingUploadID)->delete();
+        app(AssetCreationService::class)->assetDeletion($request->assetCostingUploadID);
 
 
         UploadAssetCosting::where('id', $request->assetCostingUploadID)->delete();

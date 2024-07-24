@@ -161,4 +161,68 @@ class ValidateAssetCreation
         }
     }
 
+
+    public static function validationsForAssetUpload($lifeTime, $depPercentage, $unitPriceLocal, $unitPriceRpt,$lclAmountLocal, $lclAmountRpt, $residualLocal, $residualRpt, $accumulatedDate){
+        if ($lifeTime < 0) {
+            return self::sendJsonResponse(false,'The Lifetime in a years should be in positive value',500);
+        }
+
+        if ($depPercentage < 0) {
+            return self::sendJsonResponse(false,'The Dep% should be in positive value',500);
+        }
+
+        if ($unitPriceLocal < 0) {
+            return self::sendJsonResponse(false,'The Unit Price (Local) should be in positive value',500);
+        }
+
+        if ($unitPriceRpt < 0) {
+            return self::sendJsonResponse(false,'The Unit Price (Rpt) should be in positive value',500);
+        }
+
+        if ($lclAmountLocal != null && $lclAmountLocal < 0) {
+            return self::sendJsonResponse(false,'The Accumulated Depreciation Amount (Local) should be in positive value',500);
+        }
+
+        if ($lclAmountRpt != null && $lclAmountRpt < 0) {
+            return self::sendJsonResponse(false,'The Accumulated Depreciation Amount (Rpt) should be in positive value',500);
+        }
+
+        if ($residualLocal != null && $residualLocal < 0) {
+            return self::sendJsonResponse(false,'The Residual Value (Local) should be in positive value',500);
+        }
+
+        if ($residualRpt != null && $residualRpt < 0) {
+            return self::sendJsonResponse(false,'The Residual Value (Rpt) should be in positive value',500);
+        }
+
+        if ($lclAmountLocal != null && $lclAmountLocal > $unitPriceLocal) {
+            return self::sendJsonResponse(false,'The Accumulated Depreciation Amount (Local) cannot be greater than Unit Cost (Local)',500);
+        }
+
+        if ($lclAmountRpt != null && $lclAmountRpt > $unitPriceRpt) {
+            return self::sendJsonResponse(false,'The Accumulated Depreciation Amount (Rpt) cannot be greater than Unit Cost (Rpt)',500);
+        }
+
+        if ($lclAmountRpt != null && ($unitPriceRpt - $lclAmountRpt) < $residualRpt) {
+            return self::sendJsonResponse(false,'The Residual value (Rpt) is greater than Net book value',500);
+        }
+
+        if ($lclAmountLocal != null && ($unitPriceLocal - $lclAmountLocal) < $residualLocal) {
+            return self::sendJsonResponse(false,'The Residual value (Local) is greater than Net book value',500);
+        }
+
+        if ($unitPriceRpt < $residualRpt) {
+            return self::sendJsonResponse(false,'The Residual value (Rpt) is greater than Unit Price (Rpt)',500);
+        }
+
+        if ($unitPriceLocal < $residualLocal) {
+            return self::sendJsonResponse(false,'The Residual value (Local) is greater than Unit Price (Local)',500);
+        }
+
+        if (($lclAmountRpt != null || $lclAmountLocal != null) && $accumulatedDate == null) {
+            return self::sendJsonResponse(false,'The Accumulated Depreciation Date is mandatory',500);
+        }
+
+    }
+
 }

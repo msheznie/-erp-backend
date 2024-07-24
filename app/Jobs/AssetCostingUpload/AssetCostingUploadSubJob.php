@@ -90,7 +90,12 @@ class AssetCostingUploadSubJob implements ShouldQueue
             $uploadBudgetCounter = UploadAssetCosting::find($logUploadAssetCosting->assetCostingUploadID);
 
             $uploadCount = isset($uploadBudgetCounter->counter) ? $uploadBudgetCounter->counter : null;
+            $cancelledStatus = isset($uploadBudgetCounter->isCancelled) ? $uploadBudgetCounter->isCancelled : null;
 
+
+            if ($cancelledStatus == 1) {
+                throw new AssetCostingException("Cancelled by User", $logUploadAssetCosting->assetCostingUploadID, 0);
+            }
             if($uploadCount !== null) {
 
                 $assetCostingValue = $data;
@@ -140,15 +145,16 @@ class AssetCostingUploadSubJob implements ShouldQueue
                 $location = $assetCostingValue[9];
                 $lastPhyDate = $assetCostingValue[10];
 
-                if ($lastPhyDate != null) {
-                    $validateDate = ValidateAssetCreation::validateDateFormat($lastPhyDate);
+                if ($accumulatedDate != null) {
+                    $validateDate = ValidateAssetCreation::validateDateFormat($accumulatedDate);
                     if ($validateDate['status'] == true) {
-                        $lastPhyDate = $validateDate['data'];
+                        $accumulatedDate = $validateDate['data'];
                     } else {
-                        throw new AssetCostingException($validateDate['message'] . ' ' . 'K', $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                        throw new AssetCostingException($validateDate['message'] . ' ' . 'S', $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
 
                     }
                 }
+
 
                 if ($location != null) {
                     $location = Location::where('locationName', $location)->first();
@@ -203,6 +209,10 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     throw new AssetCostingException("Unit Price (Rpt) is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
+                $validatePositives = ValidateAssetCreation::validationsForAssetUpload($assetCostingValue[12], $depPercentage, $unitPriceLocal, $unitPriceRpt, $lclAmountLocal, $lclAmountRpt, $residualLocal, $residualRpt, $accumulatedDate);
+                if ($validatePositives['status'] === false) {
+                    throw new AssetCostingException($validatePositives['message'], $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
                 $validateFY = ValidateAssetCreation::validateCompanyFinanceYearPeriod($uploadedCompany, $assetCostingValue[5]);
                 if ($validateFY['status'] === false) {
                     throw new AssetCostingException($validateFY['message'], $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
@@ -290,6 +300,12 @@ class AssetCostingUploadSubJob implements ShouldQueue
                 Log::info($newCounterValue);
                 Log::info('tot' . $totalRecords);
 
+                $uploadStatus = isset($uploadBudgetCounter->uploadStatus) ? $uploadBudgetCounter->uploadStatus : null;
+
+                if($uploadStatus === 0){
+                    app(AssetCreationService::class)->assetDeletion($logUploadAssetCosting->assetCostingUploadID);
+                }
+
                 if ($newCounterValue == $totalRecords) {
                     UploadAssetCosting::where('id', $logUploadAssetCosting->assetCostingUploadID)->update(['uploadStatus' => 1]);
                 }
@@ -306,6 +322,8 @@ class AssetCostingUploadSubJob implements ShouldQueue
             Log::info('on catch');
 
             app(AssetCreationService::class)->assetUploadErrorLog($excelRow, $errorMessage, $assetCostingUploadID);
+            app(AssetCreationService::class)->assetDeletion($assetCostingUploadID);
+
 
             Log::error('Error Message' . $errorMessage);
             Log::error('Asset Costing Upload ID: ' . $assetCostingUploadID);

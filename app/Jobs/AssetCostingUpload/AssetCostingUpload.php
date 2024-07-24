@@ -96,9 +96,9 @@ class AssetCostingUpload implements ShouldQueue
             for ($col = 'A'; $col <= $highestColumn; ++$col) {
                 $cellValue = $sheet->getCell($col . $row)->getValue();
 
-                if ($col == 'F' || $col == 'I' || $col == 'P') {
+                if ($col == 'F' || $col == 'L' || $col == 'K') {
 
-                    if($col != 'P' && $cellValue != null) {
+                    if($col != 'K' && $cellValue != null) {
                         $validateDate = ValidateAssetCreation::validateDateFormat($cellValue);
                         if ($validateDate['status'] == true) {
                             $cellValue = $validateDate['data'];
@@ -126,7 +126,6 @@ class AssetCostingUpload implements ShouldQueue
 
         $detailRows = collect($detailRows)->chunk(100);
 
-        log::info($detailRows);
         $jobData = ['logUploadAssetCosting' => $logUploadAssetCosting, 'assetFinanceCategory' => $assetFinanceCategory, 'startRow' => $startRow, 'totalRecords' => $totalRecords];
 
         foreach($detailRows as  $data) {
