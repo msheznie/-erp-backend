@@ -12,6 +12,7 @@
 
 namespace App\helper;
 
+use App\Models\QuotationMaster;
 use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
@@ -139,6 +140,11 @@ class QuotationAddMultipleItemsService
         }
 
         QuotationDetails::insert($itemsToUpload);
+
+        QuotationMaster::where('quotationMasterID', $quotation['quotationMasterID'])->update([
+            'isBulkItemJobRun' => 0
+        ]);
+
         Log::info($data);
         
     }

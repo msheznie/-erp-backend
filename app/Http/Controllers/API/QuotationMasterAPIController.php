@@ -2052,7 +2052,9 @@ class QuotationMasterAPIController extends AppBaseController
             }
 
             if (count($record) > 0) {
-                $db = isset($input['db']) ? $input['db'] : ""; 
+                $db = isset($input['db']) ? $input['db'] : "";
+                $masterData->isBulkItemJobRun = 1;
+                $masterData->save();
                 AddMultipleItemsToQuotation::dispatch(array_filter($finalArray),($masterData->toArray()),$db,Auth::id());
             } else {
                 return $this->sendError('No Records found!', 500);
