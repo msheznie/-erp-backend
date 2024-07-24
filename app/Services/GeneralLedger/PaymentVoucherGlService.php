@@ -77,6 +77,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use ExchangeSetupConfig;
 
 class PaymentVoucherGlService
 {
@@ -87,7 +88,7 @@ class PaymentVoucherGlService
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
         $masterData = PaySupplierInvoiceMaster::with(['bank', 'financeperiod_by', 'transactioncurrency', 'localcurrency', 'rptcurrency'])->find($masterModel["autoID"]);
-
+        $linkDocument = null;
         //get balancesheet account
         $si = PaySupplierInvoiceDetail::selectRaw("SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER")->WHERE('PayMasterAutoId', $masterModel["autoID"])->WHERE('matchingDocID', 0)->first();
 
@@ -156,10 +157,10 @@ class PaymentVoucherGlService
                     $transAmountTotal = 0;
                     $localAmountTotal = 0;
                     $rptAmountTotal = 0;
-
+                    $linkDocument = $si;
                     $masterTransAmountTotal = $si->transAmount;
-                    $masterLocalAmountTotal = $si->localAmount;
-                    $masterRptAmountTotal = $si->rptAmount;
+                    $masterLocalAmountTotal = $masterData->payAmountCompLocal;
+                    $masterRptAmountTotal = $masterData->payAmountCompRpt;
 
                     $data['serviceLineSystemID'] = 24;
                     $data['serviceLineCode'] = 'X';
@@ -172,10 +173,10 @@ class PaymentVoucherGlService
                     $data['documentTransAmount'] = \Helper::roundValue($siApData->transAmount);
                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue($siApData->localAmount);
+                    $data['documentLocalAmount'] = \Helper::roundValue($masterData->payAmountCompLocal);
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                    $data['documentRptAmount'] = \Helper::roundValue($siApData->rptAmount);
+                    $data['documentRptAmount'] = \Helper::roundValue($masterData->payAmountCompRpt);
                     $data['timestamp'] = \Helper::currentDateTime();
                     if ($siApData && $siApData->transAmount > 0) {
                         array_push($finalData, $data);
@@ -303,7 +304,6 @@ class PaymentVoucherGlService
                     $diffTrans = $transAmountTotal - $masterTransAmountTotal;
                     $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
                     $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
-
                     Log::info('Payment Voucher xxxx' . date('H:i:s'));
                     Log::info('Tras' . $diffTrans);
                     Log::info('Local' . $diffLocal);
@@ -714,6 +714,7 @@ class PaymentVoucherGlService
                                         else{
                                             $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount);
                                         }
+
                                         $convertedLocalAmount += \Helper::roundValue($data['documentLocalAmount']);
                                         $convertedRpt += \Helper::roundValue( $data['documentRptAmount']);
                                     }
@@ -930,7 +931,8 @@ class PaymentVoucherGlService
                                                 $convertedRpt += $data['documentRptAmount'];
                                             }
                                         }
-                                    } else {
+                                    }
+                                    else {
                                         $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                                         if($val->vatSubCategoryID == 3) {
                                             $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount + $val->VATAmountLocal);
@@ -1100,6 +1102,7 @@ class PaymentVoucherGlService
                     $convertedLocalAmount = 0;
                     $convertedRpt = 0;
                     $convertedTrans = 0;
+
                     if ($dp) {
                         foreach ($dp as $val) {
                             if ($isBankCheck) {
@@ -1178,7 +1181,6 @@ class PaymentVoucherGlService
                     }
                 }
 
-
                 if($exemptVatTotal) {
                     $diffTrans = $convertedTrans - $dpTotal->transAmount - $exemptVatTotal->vatAmount;
                     $diffLocal = $convertedLocalAmount - $masterLocal - $exemptVatTotal->VATAmountLocal;
@@ -1236,10 +1238,16 @@ class PaymentVoucherGlService
                     $data['timestamp'] = \Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
+
+                $linkDocument = $dp;
             }
 
-            $exchangeSetupGlService = new ExchangeSetupGlService();
-            $finalData = $exchangeSetupGlService->postGlEntry($finalData,$masterData,$si);
+            if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))
+            {
+                $exchangeSetupGlService = new ExchangeSetupGlService();
+                $finalData = $exchangeSetupGlService->postGlEntry($finalData,$masterData,$linkDocument);
+            }
+
 
         }
 

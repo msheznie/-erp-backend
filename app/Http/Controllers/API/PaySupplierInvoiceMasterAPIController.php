@@ -19,6 +19,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
+use ExchangeSetupConfig;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
@@ -1518,7 +1519,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
 
-
             /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
 
@@ -1533,7 +1533,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $supplier_id = $input['BPVsupplierID'];
             $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
-    
 
             $companySystemID = $paySupplierInvoiceMaster->companySystemID;
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
@@ -1620,14 +1619,21 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($bankAccount) {
                 $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
                 $currencyConversionDefaultMaster = \Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
-                if ($currencyConversionDefaultMaster) {
-                    $input['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                if (!isset($paySupplierInvoiceMaster->BPVbankCurrencyER)) {
+                    if($currencyConversionDefaultMaster){
+                        $input['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                    } else {
+                        $input['BPVbankCurrencyER'] = 0;
+                    }
+                }else {
+                    $input['BPVbankCurrencyER'] = $paySupplierInvoiceMaster->BPVbankCurrencyER;
                 }
+
             }else{
                 $input['BPVbankCurrency'] = 0;
                 $input['BPVbankCurrencyER'] = 0;
             }
-            
+
             $companyCurrency = \Helper::companyCurrency($companySystemID);
             if ($companyCurrency) {
                 $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
@@ -1651,7 +1657,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
 
             if ((($paySupplierInvoiceMaster->BPVbankCurrencyER != $input['BPVbankCurrencyER'] && $input['BPVbankCurrency'] == $paySupplierInvoiceMaster->BPVbankCurrency) || $paySupplierInvoiceMaster->localCurrencyER != $input['localCurrencyER'] && $input['localCurrencyID'] == $paySupplierInvoiceMaster->localCurrencyID || $paySupplierInvoiceMaster->companyRptCurrencyER != $input['companyRptCurrencyER'] && $input['companyRptCurrencyID'] == $paySupplierInvoiceMaster->companyRptCurrencyID)) {
-                
+
 
                 if ($checkErChange) {
                     $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
@@ -1835,6 +1841,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $diffTrans = $transAmountTotal - $masterTransAmountTotal;
                     $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
                     $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
+
 
                     $masterData = PaySupplierInvoiceMaster::with(['localcurrency', 'rptcurrency'])->find($paySupplierInvoiceMaster->PayMasterAutoId);
 
@@ -2569,6 +2576,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
 
                     }
+                    $exchangeAmount =\Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
+                    $input['payAmountBank'] = $exchangeAmount["defaultAmount"];
+                    $input['payAmountCompLocal'] = \Helper::roundValue($exchangeAmount["localAmount"]);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($exchangeAmount["reportingAmount"]);
                 } else {
                     $input['payAmountBank'] = 0;
                     $input['payAmountSuppTrans'] = 0;
@@ -2680,6 +2691,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             
             $input['payment_mode'] = $input['paymentMode'];
             unset($input['paymentMode']);
+
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
 
             Log::info('Cheque No:' . $input['BPVchequeNo']);
