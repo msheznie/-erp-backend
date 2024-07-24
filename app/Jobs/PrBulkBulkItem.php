@@ -106,7 +106,7 @@ class PrBulkBulkItem implements ShouldQueue
         $financeCategorySub = isset($input['financeCategorySub'])?$input['financeCategorySub']:null;
 
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-                                    return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1);
+                                    return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
                                  })->where('isActive',1)
                                  ->where('itemApprovedYN',1)
                                  ->when((isset($input['financeCategoryMaster']) && $input['financeCategoryMaster']), function($query) use ($input){

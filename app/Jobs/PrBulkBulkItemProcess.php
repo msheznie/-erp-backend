@@ -92,7 +92,7 @@ class PrBulkBulkItemProcess implements ShouldQueue
                 $itemToAdd['isMRPulled'] =  false;
     
                 $item = ItemAssigned::where('itemCodeSystem', $itemToAdd['itemCodeSystem'])
-                                    ->where('companySystemID', $companyId)
+                                    ->where('companySystemID', $companyId)->where('isAssigned', '=', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])
                                     ->first();
     
                 if ($item) {
