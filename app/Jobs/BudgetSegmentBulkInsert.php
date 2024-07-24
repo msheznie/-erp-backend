@@ -169,7 +169,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
   
 
              $notValidFinance = true;
-             $financeYear = CompanyFinanceYear::where('companySystemID', $uploadedCompany)->whereDate('bigginingDate', '=', $mysqlFormattedStartDate)->whereDate('endingDate', '=', $mysqlFormattedEndDate)->first();
+             $financeYear = CompanyFinanceYear::where('isActive', -1)->where('companySystemID', $uploadedCompany)->whereDate('bigginingDate', '=', $mysqlFormattedStartDate)->whereDate('endingDate', '=', $mysqlFormattedEndDate)->first();
              if (!isset($financeYear)) 
              {
                  $notValidFinance = false;
