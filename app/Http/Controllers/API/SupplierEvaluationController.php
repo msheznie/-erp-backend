@@ -15,6 +15,11 @@ use Illuminate\Http\Request;
 use App\Repositories\SupplierEvaluationRepository;
 use App\Http\Requests\API\CreateSupplierEvaluationAPIRequest;
 use App\Models\SupplierEvaluation;
+use App\Models\SupplierAssigned;
+use Illuminate\Support\Facades\DB;
+use App\Models\SupplierEvaluationMasterDetails;
+
+
 
 class SupplierEvaluationController extends AppBaseController
 {
@@ -158,5 +163,149 @@ class SupplierEvaluationController extends AppBaseController
     public function destroy($id)
     {
         //
+    }
+
+    function getAllSupplierEvaluations(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $input = $this->convertArrayToSelectedValue($input, array('supplierID', 'evaluationTemplate', 'evaluationType'));
+
+        $search = $request->input('search.value');
+
+        $supplier = $request['supplierID'];
+        $supplier = (array)$supplier;
+        $supplier = collect($supplier)->pluck('id');
+
+        $evaluationTemplate = $request['evaluationTemplate'];
+        $evaluationTemplate = (array)$evaluationTemplate;
+        $evaluationTemplate = collect($evaluationTemplate)->pluck('id');
+
+        $supplierEvalations = $this->SupplierEvaluationRepository->supplierEvaluationListQuery($request, $input, $search, $supplier, $evaluationTemplate);
+
+        return \DataTables::eloquent($supplierEvalations)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    function getSupplierEvaluationFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+        $supplier = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
+            ->where('companySystemID', $companyId)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->get();
+
+        $supplierEvaluation = SupplierEvaluationTemplate::where('companySystemID', $companyId)
+            ->where('is_confirmed', 1)
+            ->get();
+
+        $output = [
+            'suppliers' => $supplier,
+            'evaluationTemplates' => $supplierEvaluation
+        ];
+
+        return $this->sendResponse($output, '');
+    }
+
+    function printSupplierEvaluation(Request $request)
+    {
+        $id = $request->get('id');
+        $supplierEvaluation = SupplierEvaluation::where('id', $id)->first();
+
+        $templateMaster = SupplierEvaluationTemplate::with(['company'])->where('id', $supplierEvaluation['evaluationTemplate'])->first();
+        $templateSections = EvaluationTemplateSection::with([
+            'table' => function($query) use ($id) {
+                $query->where('isConfirmed', 1)->with(['column' => function($columnQuery) {},
+                    'evaluationDetailRow' => function($evaluationDetailRowQuery)use ($id) {
+                    $evaluationDetailRowQuery->where('evaluationId', $id);
+                }, 'formula' => function($formulaQuery) {
+                    $formulaQuery->with('label');
+                }]);
+            }
+        ])->where('supplier_evaluation_template_id', $supplierEvaluation['evaluationTemplate'])->get();
+
+        foreach ($templateSections as &$tables) {
+            if ($tables['table'] !== null) {
+                $a = 0;
+                $tableSelectedScore = 0;
+                foreach ($tables['table']['column'] as &$columns) {
+                    if ($columns['column_type'] == 3) {
+                        foreach ($tables['table']['evaluationDetailRow'] as &$evaluationDetails) {
+                            $b = 0;
+                            $row = json_decode($evaluationDetails['rowData'], true);
+                            foreach ($row as &$det) {
+                                if ($a === $b) {
+                                    $evaluationMasterDetail = SupplierEvaluationMasterDetails::where('id', $det)->first();
+                                    if ($evaluationMasterDetail) {
+                                        $det = [
+                                            $columns['column_header'] => $evaluationMasterDetail->description
+                                        ];
+                                        if ($evaluationMasterDetail->score !== null) {
+                                           $tableSelectedScore += $evaluationMasterDetail->score;
+                                        }
+                                    } else {
+                                        $det = [
+                                            $columns['column_header'] => ''
+                                        ];
+                                    }
+                                }
+                                $b++;
+                            }
+                            $evaluationDetails['rowData'] = json_encode($row);
+                            $evaluationDetails['rowDetails'] = $row;
+                        }
+                        $maxEvaluationScore = SupplierEvaluationMasterDetails::where('master_id', $columns['evaluationMasterId'])
+                            ->whereNotNull('score')
+                            ->max('score');
+                        if($maxEvaluationScore !== null) {
+                            $maxScore = $maxEvaluationScore;
+                        }
+                    }
+                    $a++;
+                }
+                $tables['table']['totalRowCount'] = count($tables['table']['evaluationDetailRow']);
+                $tables['table']['totalSelectedScore'] = $tableSelectedScore;
+                $tables['table']['selectedAverage'] = ($tableSelectedScore / $tables['table']['totalRowCount']);
+                if(isset($maxScore) && $maxScore > 0) {
+                    $tables['table']['selectedPercentage'] = ($tableSelectedScore / ($maxScore * $tables['table']['totalRowCount'])) * 100;
+                }
+            }
+        }
+
+        $templateComments = SupplierEvaluationTemplateComment::where('supplier_evaluation_template_id',$supplierEvaluation['evaluationTemplate'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $array = [
+            'evaluationMaster' => $supplierEvaluation,
+            'templateMaster' => $templateMaster,
+            'templateSections' => $templateSections,
+            'templateComments' => $templateComments
+        ];
+
+        $time = strtotime("now");
+        $fileName = 'supplier_evaluation_' . $id . '_' . $time . '.pdf';
+        $html = view('print.supplier_evaluation', $array);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 }

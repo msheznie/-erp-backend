@@ -64,4 +64,8 @@ class SupplierEvaluation extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'created_by', 'employeeSystemID');
     }
+    public function templateMaster()
+    {
+        return $this->belongsTo('App\Models\SupplierEvaluationTemplate', 'evaluationTemplate', 'id');
+    }
 }
