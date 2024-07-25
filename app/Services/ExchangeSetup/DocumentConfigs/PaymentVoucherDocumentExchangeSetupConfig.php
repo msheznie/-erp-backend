@@ -255,10 +255,7 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
         {
             $inputData = $input['exchangeRateData'];
 
-//            $masterData['companyRptCurrencyER'] = $inputData['companyRptCurrencyER'];
-//            $masterData['localCurrencyER'] = $inputData['localCurrencyER'];
-//            $masterData['BPVbankCurrencyER'] = $inputData['BPVbankCurrencyER'];
-//            $masterData->save();
+
 
             $crossExchangeRateService = new CrossExchangeRateService();
             $result = $crossExchangeRateService->calculateCrossExchangeRate($input);
@@ -266,7 +263,12 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
 
         if((isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === false) && (isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === false))
         {
-            $master = $masterData;
+            $paymentVoucherMaster = $input['exchangeRateData'];
+            $paymentVoucherMasterOrg = PaySupplierInvoiceMaster::find($paymentVoucherMaster['PayMasterAutoId'])->only('supplierTransCurrencyER','companyRptCurrencyER','localCurrencyER','BPVbankCurrencyER');
+            $paymentVoucherMasterOrg = collect($paymentVoucherMasterOrg);
+            $paymentVoucherMasterData = collect($paymentVoucherMaster)->only('supplierTransCurrencyER','companyRptCurrencyER','localCurrencyER','BPVbankCurrencyER');
+            $difference = $paymentVoucherMasterData->diffAssoc($paymentVoucherMasterOrg);
+            $master = $masterData->update($difference->toArray());
             $result =   ['success' => true, 'data' => $master, 'message' => 'Data not updated'];
         }
 
