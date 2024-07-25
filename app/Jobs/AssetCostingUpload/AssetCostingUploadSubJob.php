@@ -96,6 +96,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
             if ($cancelledStatus == 1) {
                 throw new AssetCostingException("Cancelled by User", $logUploadAssetCosting->assetCostingUploadID, 0);
             }
+
             if($uploadCount !== null) {
 
                 $assetCostingValue = $data;
@@ -198,7 +199,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                 }
 
                 if ($assetCostingValue[12] == null) {
-                    throw new AssetCostingException("Life time in years is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                    $assetCostingValue[12] = $assetFinanceCategory->lifeTimeInYears;
                 }
 
                 if ($unitPriceLocal == null) {
@@ -242,7 +243,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     "accumulated_depreciation_amount_rpt" => $lclAmountRpt,
                     "accumulated_depreciation_date" => $accumulatedDate,
                     "COMMENTS" => $comments,
-                    "LOCATION" => isset($location->locationName) ? $location->locationName : null,
+                    "LOCATION" => isset($location->locationID) ? $location->locationID : null,
                     "lastVerifiedDate" => $lastPhyDate,
                     "assetType" => 1,
                     "supplierIDRentedAsset" => null,

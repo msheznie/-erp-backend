@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\DocumentApproved;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -26,14 +27,16 @@ class CreateAccumulatedDepreciation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $assetAutoID;
+    protected $database;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($assetAutoID)
+    public function __construct($assetAutoID, $database)
     {
         $this->assetAutoID = $assetAutoID;
+        $this->database = $database;
     }
 
     /**
@@ -43,11 +46,11 @@ class CreateAccumulatedDepreciation implements ShouldQueue
      */
     public function handle()
     {
-
      
         Log::useFiles(storage_path() . '/logs/accumulated_dep_job.log');
 
         try {
+
             $faMaster = FixedAssetMaster::where('faID',$this->assetAutoID)->first();
 
             $accumulated_date = $faMaster->accumulated_depreciation_date;
@@ -242,7 +245,6 @@ class CreateAccumulatedDepreciation implements ShouldQueue
 
 
                                         //cost
-
                                     }
 
                                 }
@@ -250,6 +252,38 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             } else {
                                 Log::error('asset not found');
                             }
+
+                            //Asset Dep auto approval for uploaded documents
+                            if($faMaster->assetCostingUploadID != null){
+                                $params = array('autoID' => $faDepMaster->depMasterAutoID,
+                                    'company' => $faDepMaster->companySystemID,
+                                    'document' => 23,
+                                    'segment' => '',
+                                    'category' => '',
+                                    'amount' => '',
+                                    'isAutoCreateDocument' => true
+                                );
+
+                                Log::info("on confirm depreciation");
+
+
+
+                                $confirm = \Helper::confirmDocument($params);
+                                if (!$confirm["success"]) {
+                                    Log::error($confirm['message']);
+                                }
+                                $documentApproveds = DocumentApproved::where('documentSystemCode', $faDepMaster->depMasterAutoID)->where('documentSystemID', 23)->get();
+                                foreach ($documentApproveds as $documentApproved) {
+                                    $documentApproved["approvedComments"] = "Approved by System User";
+                                    $documentApproved["db"] = $this->database;
+                                    $documentApproved["isAutoCreateDocument"] = true;
+                                    $approve = \Helper::approveDocument($documentApproved);
+                                    if (!$approve["success"]) {
+                                        Log::error($approve['message']);
+                                    }
+                                }
+                            }
+
 
 
                         } else {
@@ -265,6 +299,8 @@ class CreateAccumulatedDepreciation implements ShouldQueue
             } else {
                 Log::error('Accumulated Amount is less than zero');
             }
+
+
         } catch (\Exception $e) {
             Log::error($this->failed($e));
         }  

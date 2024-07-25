@@ -2362,7 +2362,7 @@ class Helper
                             if ($input["documentSystemID"] == 22) {
 
 
-                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"]);
+                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database);
                             }
                             //
 
@@ -5218,7 +5218,7 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 22) {
-                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"]);
+                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"], $dataBase);
                             }
                             
                         

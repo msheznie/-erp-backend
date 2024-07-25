@@ -75,6 +75,7 @@ class AssetCreationService extends AppBaseController
             $fixedDeps = FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->get();
             foreach ($fixedDeps as $fixedDep){
                 FixedAssetDepreciationMaster::where('depMasterAutoID', $fixedDep->depMasterAutoID)->delete();
+                GeneralLedger::where('documentSystemID', 23)->where('documentSystemCode', $fixedDep->depMasterAutoID)->delete();
             }
 
 

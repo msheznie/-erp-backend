@@ -2219,7 +2219,8 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function cancelUploadAssetCosting(Request $request)
     {
 
-        UploadAssetCosting::where('id', $request->assetCostingUploadID)->update(['isCancelled' => 1]);
+        UploadAssetCosting::where('id', $request->assetCostingUploadID)->update(['isCancelled' => 1, 'uploadStatus' => 0]);
+        app(AssetCreationService::class)->assetDeletion($request->assetCostingUploadID);
 
         return $this->sendResponse([], 'Asset costing cancelled successfully');
 

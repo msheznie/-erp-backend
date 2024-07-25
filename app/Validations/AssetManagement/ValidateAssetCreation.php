@@ -195,6 +195,16 @@ class ValidateAssetCreation
             return self::sendJsonResponse(false,'The Residual Value (Rpt) should be in positive value',500);
         }
 
+
+
+        if ($residualLocal != null && $lclAmountLocal != null && $residualLocal > $lclAmountLocal) {
+            return self::sendJsonResponse(false,'The Residual Value (Local) cannot be greater than the Accumulated Depreciation Amount (Local)',500);
+        }
+
+        if ($residualRpt != null && $lclAmountRpt != null && $residualRpt > $lclAmountRpt) {
+            return self::sendJsonResponse(false,'The Residual Value (Local) cannot be greater than the Accumulated Depreciation Amount (Local)',500);
+        }
+
         if ($lclAmountLocal != null && $lclAmountLocal > $unitPriceLocal) {
             return self::sendJsonResponse(false,'The Accumulated Depreciation Amount (Local) cannot be greater than Unit Cost (Local)',500);
         }

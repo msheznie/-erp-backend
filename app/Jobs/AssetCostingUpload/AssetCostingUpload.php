@@ -123,6 +123,10 @@ class AssetCostingUpload implements ShouldQueue
 
         $totalRecords = $rowNumber - 13;
 
+        if($totalRecords == 0){
+            app(AssetCreationService::class)->assetUploadErrorLog(($row + $startRow), "No records found", $logUploadAssetCosting->assetCostingUploadID);
+        }
+
 
         $detailRows = collect($detailRows)->chunk(100);
 
