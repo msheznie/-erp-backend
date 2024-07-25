@@ -223,13 +223,15 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
     public function checkConditionsOfScenarioAndUpdate($input)
     {
         $service = new ExchangeSetupDocumentConfigurationService();
+        $masterData = PaySupplierInvoiceMaster::find($input['exchangeRateData']['PayMasterAutoId']);
 
         if(isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === true)
         {
             $result = $service->updateSimilarCurrenciesExchangeRates($input);
         }
 
-        if(isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === true)
+
+        if((isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === true) && (isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === true))
         {
             $crossExchangeRateService = new CrossExchangeRateService();
             $result = $crossExchangeRateService->calculateCrossExchangeRate($input);
@@ -238,13 +240,12 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
 
         if((isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === false) && (isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === true))
         {
-            $masterData = PaySupplierInvoiceMaster::find($input['exchangeRateData']['PayMasterAutoId']);
             $inputData = $input['exchangeRateData'];
 
-            $masterData['companyRptCurrencyER'] = $inputData['companyRptCurrencyER'];
-            $masterData['localCurrencyER'] = $inputData['localCurrencyER'];
-            $masterData['BPVbankCurrencyER'] = $inputData['BPVbankCurrencyER'];
-            $masterData->save();
+//            $masterData['companyRptCurrencyER'] = $inputData['companyRptCurrencyER'];
+//            $masterData['localCurrencyER'] = $inputData['localCurrencyER'];
+//            $masterData['BPVbankCurrencyER'] = $inputData['BPVbankCurrencyER'];
+//            $masterData->save();
 
             $crossExchangeRateService = new CrossExchangeRateService();
             $result = $crossExchangeRateService->calculateCrossExchangeRate($input);
@@ -252,7 +253,8 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
 
         if((isset($input['updateScenrioOne']) && $input['updateScenrioOne'] === false) && (isset($input['updateScenrioTwo']) && $input['updateScenrioTwo'] === false))
         {
-            $result = $service->updateExchangeRate($input);
+            $master = $masterData;
+            $result =   ['success' => true, 'data' => $master, 'message' => 'Data not updated'];
         }
 
 
