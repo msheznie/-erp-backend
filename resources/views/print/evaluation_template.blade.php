@@ -1,3 +1,4 @@
+
 <html>
 <head>
     <title>Supplier Evaluation Template</title>
@@ -152,34 +153,24 @@
                     @endif
                 </td>
                 <td valign="top" style="width: 50%">
-                    
                     <br>
                     <span style="font-weight: bold"> {{ $evaluationTemplate->user_text?$evaluationTemplate->user_text:'' }}</span>
                     <br>
                 </td>
             </tr>
         </table>
+    
 
         <table style="width: 100%" class="table_height">
             <tr style="width: 100%">
-                <td valign="top" style="width: 25%">
+                <td valign="top" style="width: 40%">
                     <br>
-                    <span style="font-weight: bold"> Supplier Code</span>
-                    <br>
-                </td>
-                <td valign="top" style="width: 25%">
-                    <br>
-                    <span style="font-weight: bold"> :</span>
+                    <span> <b>Supplier Code:</b> </span>
                     <br>
                 </td>
-                <td valign="top" style="width: 25%">
+                <td valign="top" style="width: 50%">
                     <br>
-                    <span style="font-weight: bold"> Supplier Name</span>
-                    <br>
-                </td>
-                <td valign="top" style="width: 25%">
-                    <br>
-                    <span style="font-weight: bold"> :</span>
+                    <span> <b>Supplier Name:</b> </span>
                     <br>
                 </td>
             </tr>
@@ -189,7 +180,7 @@
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
               <br>
               <br>
-              <div>
+              <div style="text-align: justify;">
                 {{ $evaluationTemplate->initial_instruction }}
               </div>
             </div>
@@ -205,11 +196,11 @@
                             <span class="section-name">
                                 <b>{{ $sectionsData['table']['table_name'] }}</b>
                             </span>
-                            <table class="table table-hover table-striped custom-table table-bordered">
+                            <table class="table table-hover table-striped custom-table table-bordered" cellpadding="5px" autosize="1" width="100%" style="overflow: wrap">
                                 <thead>
                                     <tr class="table-header">
                                         @foreach($sectionsData['table']['column'] as $column)
-                                            <th>{{ $column['column_header'] }}</th>
+                                            <th style="min-width: 128px; !important">{{ $column['column_header'] }}</th>
                                         @endforeach
                                     </tr>
                                 </thead>
@@ -218,15 +209,15 @@
                                         <tr>
                                             @foreach($row['rowData'] as $colIndex => $cell)
                                                 @if(isset($sectionsData['table']['column'][$colIndex]))
-                                                    <td>
+                                                    <td style="min-width: 128px; !important">
                                                         @foreach($cell as $key => $value)
                                                             @switch($sectionsData['table']['column'][$colIndex]['column_type'])
                                                                 @case(1)
-                                                                    <span>{{ $rowIndex + 1 }}</span>
+                                                                    <span> &nbsp;{{ $sectionsData['table']['column'][$colIndex]->autoIncrementStart + $rowIndex}}</span>
                                                                     @break
         
                                                                 @case(2)
-                                                                    <span>{{ $value }}</span>
+                                                                    <span> &nbsp;{{ $value }}</span>
                                                                     @break
         
                                                                 @case(3)
@@ -245,22 +236,23 @@
                                     @endforeach
                                 </tbody>
                             </table>
-                            @if($sectionsData['table']['formula'])
+                            @if(isset($sectionsData['table']['formula']))
                                 <div class="container mt-5">
-                                    <table class="table table-borderless">
-                                        <thead>
-                                            @foreach($sectionsData['table']['formula'] as $data)
-                                                <tr>
-                                                    <th style="text-align: left;">{{ $data['label']['labelName'] }}</th>
-                                                    <th style="text-align: right;" @if($data['formulaType'] == 1) @endif></th>
-                                                    <th style="text-align: right;" @if($data['formulaType'] == 2) @endif></th>
-                                                    <th style="text-align: right;" @if($data['formulaType'] == 3)> % @endif</th>
-                                                </tr>
+
+                                    @foreach($sectionsData['table']['formula'] as $data)
+                                                <table class="table table-borderless" style="width: 100%; table-layout: fixed;">
+                                                        <tr>
+                                                            <th style="text-align: left;">@if($data->label) {{ $data->label->labelName}} @endif</th>
+                                                            <th style="text-align: left;">@if($data->label)  @endif</th>
+                                                        </tr>
+                                                    
+                                                </table>
                                             @endforeach
-                                        </thead>
-                                    </table>
+
                                 </div>
                             @endif
+                            <br>
+                            <br>
                         @endif
                     </div>
                 @endforeach
