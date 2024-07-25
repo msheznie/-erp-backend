@@ -183,11 +183,24 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
 
         if($input['documentCurrentExchangeRateScenario'] == 0)
         {
-            $this->checkScenarioOne();
+            $mapCurrencyRateWithIdArray = [
+                "companyRptCurrencyER" => "companyRptCurrencyID",
+                "localCurrencyER" => "localCurrencyID",
+                "BPVbankCurrencyER" => "BPVbankCurrency",
+            ];
 
-            if($this->paymentVoucherExchangeSetupConfig->message)
-            {
-                return ['success' => false, 'message' => $this->paymentVoucherExchangeSetupConfig->message, 'scenario' => 1];
+            $array = [$this->bankCurrencyId,$this->localCurrencyId,$this->rptCurrencyId];
+            $currencyChangedId = $paymentVoucherMasterData[$mapCurrencyRateWithIdArray[$input['editedFiles']]];
+            $count = collect($array)->filter(function($value) use ($currencyChangedId){
+                return $value == $currencyChangedId;
+            })->count();
+
+            if($count > 1) {
+                $this->checkScenarioOne();
+                if($this->paymentVoucherExchangeSetupConfig->message)
+                {
+                    return ['success' => false, 'message' => $this->paymentVoucherExchangeSetupConfig->message, 'scenario' => 1];
+                }
             }
 
 
@@ -207,7 +220,7 @@ class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetup
         }
 
 
-        if(isset($input['documentCurrentExchangeRateScenario']) && $input['documentCurrentExchangeRateScenario'] == 1)
+        if(isset($input['documentCurrentExchangeRateScenario']) && $input['documentCurrentExchangeRateScenario'] == 1 && (isset($input['updateScenrioOne']) && $input['updateScenrioOne']))
         {
             $this->checkScenarioTwo();
             if($this->paymentVoucherExchangeSetupConfig->message)
