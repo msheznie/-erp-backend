@@ -151,7 +151,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     if ($validateDate['status'] == true) {
                         $accumulatedDate = $validateDate['data'];
                     } else {
-                        throw new AssetCostingException($validateDate['message'] . ' ' . 'S', $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                        throw new AssetCostingException($validateDate['message'] . ' ' . 'Accumulated Depreciation Date', $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
 
                     }
                 }
@@ -192,6 +192,10 @@ class AssetCostingUploadSubJob implements ShouldQueue
 
                 if ($assetCostingValue[11] == null) {
                     throw new AssetCostingException("Dep Start Date is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if($assetCostingValue[11] > $assetCostingValue[5]){
+                    throw new AssetCostingException("Dep Start Date cannot be greater than Date Acquired", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
                 if ($depPercentage == null) {
