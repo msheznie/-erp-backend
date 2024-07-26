@@ -194,8 +194,8 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     throw new AssetCostingException("Dep Start Date is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
-                if($assetCostingValue[11] > $assetCostingValue[5]){
-                    throw new AssetCostingException("Dep Start Date cannot be greater than Date Acquired", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                if($assetCostingValue[11] < $assetCostingValue[5]){
+                    throw new AssetCostingException("Date Acquired cannot be greater than Dep Start Date ", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
                 if ($depPercentage == null) {
