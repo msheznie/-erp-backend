@@ -129,7 +129,11 @@ class PrBulkBulkItem implements ShouldQueue
                                     });
                                 }
         
-        $count = $itemMasters->count();   
+        $count = $itemMasters->count();
+
+         if($count == 0){
+             PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
+         }
 
         $chunkDataSizeCounts = ceil($count / $chunkSize);
         for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {

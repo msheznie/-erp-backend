@@ -124,7 +124,7 @@ class PrBulkBulkItemQuery implements ShouldQueue
                     PrBulkBulkItemProcess::dispatch($db, $output, $companyId, $budgetYear,$chunkDataSizeCounts,$requestID)->onQueue('single');
                 } else {
 
-                    PurchaseRequest::where('purchaseRequestID', $requestID)->update(['isBulkItemJobRun' => 0]);           
+                    PurchaseRequest::where('purchaseRequestID', $requestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
                  }
             
             

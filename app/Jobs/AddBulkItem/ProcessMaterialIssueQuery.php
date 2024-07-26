@@ -120,8 +120,7 @@ class ProcessMaterialIssueQuery implements ShouldQueue
                 if (count($output) > 0) {
                     ProcessMaterialIssueBulk::dispatch($db, $output, $companyId, $empID, $employeeSystemID,$chunkDataSizeCounts,$requestID)->onQueue('single');
                 } else {
-
-                    ItemIssueMaster::where('itemIssueAutoID', $requestID)->update(['isBulkItemJobRun' => 0]);           
+                    ItemIssueMaster::where('itemIssueAutoID', $requestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
                  }
             
             

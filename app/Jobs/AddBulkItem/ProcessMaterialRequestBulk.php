@@ -60,7 +60,7 @@ class ProcessMaterialRequestBulk implements ShouldQueue
             $requestMaster = MaterielRequest::find($requestID);
             foreach ($output as $value) {
                 $res = MaterialRequestService::validateMaterialRequestItem($value['itemCodeSystem'], $companyId, $requestID);
-                            
+
                 if ($res['status']) {
                     MaterialRequestService::saveMaterialRequestItem($value['itemCodeSystem'], $companyId, $requestID, $empID, $employeeSystemID);
                 } else {
@@ -78,7 +78,7 @@ class ProcessMaterialRequestBulk implements ShouldQueue
 
             if ($newCounterValue == $chunkDataSizeCounts) {
 
-                MaterielRequest::where('RequestID', $requestID)->update(['isBulkItemJobRun' => 0]);
+                MaterielRequest::where('RequestID', $requestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
             }
             DB::commit();
         }

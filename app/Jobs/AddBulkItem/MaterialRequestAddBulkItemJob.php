@@ -2,6 +2,7 @@
 
 namespace App\Jobs\AddBulkItem;
 
+use App\Models\ItemIssueMaster;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -94,6 +95,10 @@ class MaterialRequestAddBulkItemJob implements ShouldQueue
                                         });
                                     }
             $count = $itemMasters->count();
+
+            if($count == 0){
+                MaterielRequest::where('RequestID',  $input['RequestID'])->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
+            }
                         
             $invalidItems = [];
             $chunkDataSizeCounts = ceil($count / $chunkSize);

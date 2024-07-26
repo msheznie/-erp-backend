@@ -93,8 +93,12 @@ class ItemIssueBulkItemsJob implements ShouldQueue
                                         });
                                     }
                                   
-            $count = $itemMasters->count();   
-            
+            $count = $itemMasters->count();
+
+            if($count == 0){
+                ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
+            }
+
             $chunkDataSizeCounts = ceil($count / $chunkSize);
             for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
                 ProcessMaterialIssueQuery::dispatch($i, $db, $companyId, $financeCategoryMaster,$financeCategorySub,$input['itemIssueAutoID'],$chunkDataSizeCounts,$input['empID'], $input['employeeSystemID'],$isSearched,$searchVal)->onQueue('single');

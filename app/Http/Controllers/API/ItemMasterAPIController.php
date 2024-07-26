@@ -1788,6 +1788,9 @@ class ItemMasterAPIController extends AppBaseController
             });
         })->when((isset($input['RequestID']) && $input['RequestID'] > 0), function($query) use ($input) {
                 $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+                $query->whereDoesntHave('material_request_details', function($query) use ($input) {
+                    $query->where('RequestID', $input['RequestID']);
+                });
         })->when((isset($input['itemIssueAutoID']) && $input['itemIssueAutoID'] > 0), function($query) use ($input) {
             $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
             $query->whereDoesntHave('material_issue_details', function($query) use ($input) {

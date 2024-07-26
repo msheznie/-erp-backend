@@ -217,7 +217,7 @@ class PrBulkBulkItemProcess implements ShouldQueue
 
         if ($newCounterValue == $chunkDataSizeCounts) {
  
-            PurchaseRequest::where('purchaseRequestID', $requestID)->update(['isBulkItemJobRun' => 0]);            
+            PurchaseRequest::where('purchaseRequestID', $requestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
         }
 
 

@@ -47,6 +47,7 @@ class ProcessMaterialIssueBulk implements ShouldQueue
      */
     public function handle()
     {
+
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
 
@@ -61,7 +62,6 @@ class ProcessMaterialIssueBulk implements ShouldQueue
             $requestMaster = ItemIssueMaster::find($requestID);
             foreach ($output as $value) {
                 $res = MaterialRequestService::validateMaterialIssueItem($value['itemCodeSystem'], $companyId, $requestID);
-                            
                 if ($res['status']) {
                     MaterialRequestService::saveMaterialIssueItem($value['itemCodeSystem'], $companyId, $requestID, $empID, $employeeSystemID);
                 } else {
@@ -78,8 +78,7 @@ class ProcessMaterialIssueBulk implements ShouldQueue
             $newCounterValue = $requestMaster->counter;
 
             if ($newCounterValue == $chunkDataSizeCounts) {
-
-                ItemIssueMaster::where('itemIssueAutoID', $requestID)->update(['isBulkItemJobRun' => 0]);         
+                ItemIssueMaster::where('itemIssueAutoID', $requestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
             }
             DB::commit();
         }

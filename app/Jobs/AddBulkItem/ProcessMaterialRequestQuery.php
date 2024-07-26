@@ -113,13 +113,13 @@ class ProcessMaterialRequestQuery implements ShouldQueue
 
                     $output = $itemMasters
                                 ->get()
-                                ->toArray();                   
-                        
+                                ->toArray();
+                                     
                 if (count($output) > 0) {
                     ProcessMaterialRequestBulk::dispatch($db, $output, $companyId, $empID, $employeeSystemID,$chunkDataSizeCounts,$requestID)->onQueue('single');
                 } else {
 
-                    MaterielRequest::where('RequestID', $requestID)->update(['isBulkItemJobRun' => 0]);               
+                    MaterielRequest::where('RequestID', $requestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
                  }
             
             
