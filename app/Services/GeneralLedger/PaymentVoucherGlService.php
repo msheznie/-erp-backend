@@ -200,7 +200,8 @@ class PaymentVoucherGlService
                         array_push($finalData, $data);
                     }
 
-                    if ($masterData->BPVbankCurrency == $masterData->supplierTransCurrencyID) {
+                    if (ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))
+                    {
                         $transAmountTotal = $si->transAmount;
                         $localAmountTotal = $si->localAmount;
                         $rptAmountTotal = $si->rptAmount;
@@ -1191,6 +1192,7 @@ class PaymentVoucherGlService
                     $diffLocal = $convertedLocalAmount - $masterLocal;
                     $diffRpt = $convertedRpt - $masterRpt;
                 }
+
                 if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
 
                     $company = Company::find($masterData->companySystemID);
