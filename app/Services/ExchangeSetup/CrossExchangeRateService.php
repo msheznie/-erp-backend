@@ -43,6 +43,7 @@ class CrossExchangeRateService
                 });
 
 
+                $arrayToUpdate = array();
                 foreach ($filterData as $key => $data) {
                     $currencyConversionDetail = CurrencyConversionDetail::where('masterCurrencyID', $data)
                         ->where('currencyConversioMasterID', $currencyConversionMaster->id)
@@ -50,10 +51,14 @@ class CrossExchangeRateService
                         ->first();
                     if(array_search($key,$mapCurrencyExchangeRateWithId))
                     {
-                        $master[array_search($key,$mapCurrencyExchangeRateWithId)] = round($input['exchangeRateData'][$input['editedFiles']]/ $currencyConversionDetail['conversion'],2);
-                        $master->save();
+                        $arrayToUpdate[array_search($key,$mapCurrencyExchangeRateWithId)] = round($input['exchangeRateData'][$input['editedFiles']]/ $currencyConversionDetail['conversion'],2);
                     }
                 };
+
+                $arrayToUpdate[$input['editedFiles']] = $input['exchangeRateData'][$input['editedFiles']];
+
+                $master->update($arrayToUpdate);
+
             }
 
             return ['success' => true, 'data' => '', 'message' => 'Data updated successfully'];
