@@ -310,9 +310,7 @@ class PaymentVoucherGlService
                     Log::info('Local' . $diffLocal);
                     Log::info('Rpt' . $diffRpt);
 
-
                     if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
-
                         $company = Company::find($masterData->companySystemID);
 
                         $exchangeGainServiceLine = SegmentMaster::where('companySystemID', $masterData->companySystemID)
@@ -340,15 +338,10 @@ class PaymentVoucherGlService
                         $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
 
-                        if ($diffTrans > 0 || $diffLocal > 0 || $diffRpt > 0) {
-                            $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans));
-                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal));
-                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt));
-                        } else {
-                            $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * -1;
-                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * -1;
-                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * -1;
-                        }
+                        $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * ($diffTrans > 0 ? 1 : -1);
+                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * ($diffLocal > 0 ? 1 : -1);
+                        $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * ($diffRpt > 0 ? 1 : -1);
+
 
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
