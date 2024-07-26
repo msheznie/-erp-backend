@@ -1664,7 +1664,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     return $this->sendError($erMessage, 500, ['type' => 'erChange']);
                 } else {
-                    unset($input['BPVbankCurrencyER']);
                     unset($input['localCurrencyER']);
                     unset($input['companyRptCurrencyER']);
                     //PaySupplierInvoiceMaster::where('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->update(['BPVbankCurrencyER' => $input['BPVbankCurrencyER'], 'localCurrencyER' => $input['localCurrencyER'], 'companyRptCurrencyER' => $input['companyRptCurrencyER']]);
