@@ -284,7 +284,8 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
         $validateTableColumn = SupplierEvaluationTemplateSectionTableColumn::where('table_id', $input['id'])
                                                                                     ->where(function($query) {
                                                                                         $query->whereNull('column_type')
-                                                                                            ->orWhereNull('column_header');
+                                                                                            ->orWhereNull('column_header')
+                                                                                            ->orWhere('column_type', 0);
                                                                                     })
                                                                                     ->count();
     
