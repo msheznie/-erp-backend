@@ -200,7 +200,7 @@ class PaymentVoucherGlService
                         array_push($finalData, $data);
                     }
 
-                    if (ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))
+                    if (ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData) &&  ExchangeSetupConfig::checkExchangeRateChangedOnDocumnentLevel($masterData))
                     {
                         $transAmountTotal = $si->transAmount;
                         $localAmountTotal = $si->localAmount;
@@ -341,7 +341,6 @@ class PaymentVoucherGlService
                         $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * ($diffTrans > 0 ? 1 : -1);
                         $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * ($diffLocal > 0 ? 1 : -1);
                         $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * ($diffRpt > 0 ? 1 : -1);
-
 
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;

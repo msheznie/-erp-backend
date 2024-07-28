@@ -93,7 +93,7 @@ class ExchangeSetupConfig
         $paymentVoucherMasterOrg['BPVbankCurrencyER'] = $currencyRateBank['transToDocER'];
         $paymentVoucherMasterOrg = collect($paymentVoucherMasterOrg);
 
-        if(count($masterExchangeRates->diffAssoc($paymentVoucherMasterOrg)) > 0);
+        if(count($masterExchangeRates->diffAssoc($paymentVoucherMasterOrg)) > 0)
         {
             return true;
         }
