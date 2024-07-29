@@ -83,11 +83,11 @@ class AssetCostingUploadSubJob implements ShouldQueue
         $uploadedCompany = $uploadData['uploadedCompany'];
         $postToGL = $uploadData['postToGL'];
         $postToGLCodeSystemID = $uploadData['postToGLCodeSystemID'];
+        $uploadBudgetCounter = UploadAssetCosting::find($logUploadAssetCosting->assetCostingUploadID);
 
         DB::beginTransaction();
         try {
 
-            $uploadBudgetCounter = UploadAssetCosting::find($logUploadAssetCosting->assetCostingUploadID);
 
             $uploadCount = isset($uploadBudgetCounter->counter) ? $uploadBudgetCounter->counter : null;
             $cancelledStatus = isset($uploadBudgetCounter->isCancelled) ? $uploadBudgetCounter->isCancelled : null;
@@ -182,6 +182,11 @@ class AssetCostingUploadSubJob implements ShouldQueue
                 $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->first();
                 if (empty($subCategoryData)) {
                     throw new AssetCostingException("Sub category not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->where('faCatID', $mainCategoryData->faCatID)->first();
+                if (empty($subCategoryData)) {
+                    throw new AssetCostingException("The Main Category and Subcategory Code are different", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
                 Log::info($uploadedCompany);
@@ -305,11 +310,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                 Log::info($newCounterValue);
                 Log::info('tot' . $totalRecords);
 
-                $uploadStatus = isset($uploadBudgetCounter->uploadStatus) ? $uploadBudgetCounter->uploadStatus : null;
 
-                if($uploadStatus === 0){
-                    app(AssetCreationService::class)->assetDeletion($logUploadAssetCosting->assetCostingUploadID);
-                }
 
                 if ($newCounterValue == $totalRecords) {
                     UploadAssetCosting::where('id', $logUploadAssetCosting->assetCostingUploadID)->update(['uploadStatus' => 1]);
@@ -334,6 +335,13 @@ class AssetCostingUploadSubJob implements ShouldQueue
             Log::error('Asset Costing Upload ID: ' . $assetCostingUploadID);
             Log::error('Excel Row: ' . $excelRow);
 
+        }
+
+        $uploadStatus = isset($uploadBudgetCounter->uploadStatus) ? $uploadBudgetCounter->uploadStatus : null;
+
+        if($uploadStatus === 0){
+            Log::info('Cancelled - job');
+            app(AssetCreationService::class)->assetDeletion($logUploadAssetCosting->assetCostingUploadID);
         }
     }
 }
