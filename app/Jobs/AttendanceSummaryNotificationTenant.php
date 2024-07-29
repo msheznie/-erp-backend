@@ -48,8 +48,6 @@ class AttendanceSummaryNotificationTenant implements ShouldQueue
         
         $logSlug = ($this->isDailyBasis)? "Daily": "Weekly";
 
-             . __CLASS__ ." \tline no :".__LINE__);
-        
         $scenarioId = ($this->isDailyBasis)? 16: 17;
         $setupData = NotificationService::getActiveCompanyByScenario($scenarioId);
         if(count( $setupData ) == 0){

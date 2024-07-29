@@ -49,9 +49,6 @@ class LeaveCarryForwardCompany implements ShouldQueue
 
         CommonJobService::db_switch($this->dispatchDb);
 
-        company {$this->company['code']} - {$this->company['name']} 
-        \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
-
         try {
 
             $ser = new LeaveCarryForwardComputationService($this->company);

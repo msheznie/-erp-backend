@@ -54,8 +54,6 @@ class AttendanceSummaryNotificationCompany implements ShouldQueue
 
         $logSlug = ($this->isDailyBasis)? "Daily": "Weekly";
 
-             . __CLASS__ ." \tline no :".__LINE__);
-        
         $now = Carbon::now();
         $date = $now->format('Y-m-d');    
         
