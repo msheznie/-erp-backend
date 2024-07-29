@@ -186,7 +186,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
 
                 $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->where('faCatID', $mainCategoryData->faCatID)->first();
                 if (empty($subCategoryData)) {
-                    throw new AssetCostingException("The Main Category and Subcategory Code are different", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                    throw new AssetCostingException("The subcategory code is not associated with the main category", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
                 Log::info($uploadedCompany);
@@ -341,6 +341,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
 
         if($uploadStatus === 0){
             Log::info('Cancelled - job');
+
             app(AssetCreationService::class)->assetDeletion($logUploadAssetCosting->assetCostingUploadID);
         }
     }
