@@ -1572,7 +1572,7 @@ class BudgetConsumptionService
 		$finalPending = [];
 		foreach ($groupedPending as $key => $value) {
 			$temp['companySystemID'] = $value[0]['companySystemID'];
-			$temp['serviceLineSystemID'] = $value[0]['purchase_request']['companySystemID'];
+			$temp['serviceLineSystemID'] = $value[0]['purchase_request']['serviceLineSystemID'];
 			$temp[$budgetRelationName] = $value[0][$budgetRelationName];
 			$temp['localAmt'] = collect($value)->sum('localAmt');
 			$temp['rptAmt'] = collect($value)->sum('rptAmt');
