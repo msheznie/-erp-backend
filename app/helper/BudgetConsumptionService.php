@@ -1571,12 +1571,12 @@ class BudgetConsumptionService
 
 		$finalPending = [];
 		foreach ($groupedPending as $key => $value) {
-			$temp['companySystemID'] = $value[0]['companySystemID'];
-			$temp['serviceLineSystemID'] = $value[0]['purchase_request']['serviceLineSystemID'];
-			$temp[$budgetRelationName] = $value[0][$budgetRelationName];
+			$temp['companySystemID'] = isset($value[0]['companySystemID']) ? $value[0]['companySystemID']: null;
+			$temp['serviceLineSystemID'] = isset($value[0]['purchase_request']['serviceLineSystemID']) ? $value[0]['purchase_request']['serviceLineSystemID']: null;
+			$temp[$budgetRelationName] = isset($value[0][$budgetRelationName]) ? $value[0][$budgetRelationName]: null;
 			$temp['localAmt'] = collect($value)->sum('localAmt');
 			$temp['rptAmt'] = collect($value)->sum('rptAmt');
-			$temp[$budgetFormData['glColumnName']] = $value[0][$budgetFormData['glColumnName']];
+			$temp[$budgetFormData['glColumnName']] = isset($value[0][$budgetFormData['glColumnName']]) ? $value[0][$budgetFormData['glColumnName']]: null;
 
 			$finalPending[] = $temp;
 		}
