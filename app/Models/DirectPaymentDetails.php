@@ -338,7 +338,8 @@ class DirectPaymentDetails extends Model
         'toCompanyRptCurrencyER',
         'toCompanyRptCurrencyAmount',
         'timeStamp',
-        'detail_project_id'
+        'detail_project_id',
+        'contractID'
     ];
 
     /**
@@ -395,7 +396,8 @@ class DirectPaymentDetails extends Model
         'toCompanyRptCurrencyID' => 'integer',
         'toCompanyRptCurrencyER' => 'float',
         'toCompanyRptCurrencyAmount' => 'float',
-        'detail_project_id' => 'integer'
+        'detail_project_id' => 'integer',
+        'contractID' => 'string'
     ];
 
     /**

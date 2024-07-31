@@ -3334,7 +3334,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         $customerReceiveDetailArray = $customerReceivePaymentDetailRec->toArray();
-        
+
         if(isset($customerReceiveDetailArray['isFromApi'])){
             unset($customerReceiveDetailArray['isFromApi']);
         }

@@ -3231,6 +3231,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
 
+            $contractEnablePolicy = Helper::checkPolicy($companyId, 93);
 
             $output = array(
                 'financialYears' => $financialYears,
@@ -3258,7 +3259,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'isProjectBase' => $isProject_base,
                 'isVATEligible' => $isVATEligible,
                 'projects' => $projects,
-                'payeeAll' => $payeeAll
+                'payeeAll' => $payeeAll,
+                'contractEnablePolicy' => $contractEnablePolicy
             );
         }
 

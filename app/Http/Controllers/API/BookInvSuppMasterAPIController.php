@@ -2314,7 +2314,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                         ->get();
         $whtTypes = Tax::where('companySystemID',$companyId)->where('taxCategory',3)->where('isActive',1)->get();
 
-  
+        $contractEnablePolicy = Helper::checkPolicy($companyId, 93);
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -2337,7 +2337,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isProjectBase' => $isProject_base,
             'projects' => $projects,
             'employeeAllocatePolicy' => ($employeeAllocate && $employeeAllocate->isYesNO == 1) ? true : false,
-            'whtTypes' => $whtTypes
+            'whtTypes' => $whtTypes,
+            'contractEnablePolicy' => $contractEnablePolicy
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

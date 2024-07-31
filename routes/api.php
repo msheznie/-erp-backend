@@ -80,6 +80,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/navigation/navigationRoutes.php';
             require __DIR__.'/../routes/groupReport/groupReportRoutes.php';
             require __DIR__.'/../routes/generalLedger/generalLedgerRoutes.php';
+            require __DIR__.'/../routes/thirdParty/thirdPartyRoutes.php';
 
             Route::post('downloadCITemplate', 'CustomerInvoiceDirectAPIController@downloadCITemplate')->name("Download ci template");
             Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");

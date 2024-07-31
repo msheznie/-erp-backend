@@ -184,7 +184,8 @@ class DirectInvoiceDetails extends Model
         'detail_project_id',
         'whtApplicable',
         'whtAmount',
-        'whtEdited'
+        'whtEdited',
+        'contractID'
     ];
 
     /**
@@ -228,7 +229,8 @@ class DirectInvoiceDetails extends Model
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
         'netAmountRpt' => 'float',
-        'detail_project_id' => 'integer'
+        'detail_project_id' => 'integer',
+        'contractID' => 'string'
     ];
 
     /**
