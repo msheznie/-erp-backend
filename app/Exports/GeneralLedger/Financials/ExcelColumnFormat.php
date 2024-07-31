@@ -161,7 +161,7 @@ class ExcelColumnFormat
         $reportColumns = ReportTemplateColumns::select(['shortCode','type'])->get();
         $excelExportColumn = [];
         $data = (isset($data['columnData'])) ? $data['columnData'][0] : $data;
-        $count = 0;
+        $count = $index;
 
         $collection_data = collect($data);
         $collection_data->put('CYM1-005',0);
@@ -193,27 +193,17 @@ class ExcelColumnFormat
                         5 - Percentage
                     */
 
-                    switch ($columnDetail->type)
-                    {
-                        case 1 :
-                            $excelExportColumn[chr($index)] = \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
-                            break;
-                        case 2 :
-                            $excelExportColumn[chr($index)] =  \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
-                            break;
-                        case 3 :
-                            $excelExportColumn[chr($index)] = \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
-                            break;
-                        case 4 :
-                            $excelExportColumn[chr($index)] =  \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
-                            break;
-                        case 5 :
-                            $excelExportColumn[chr($index)] = \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
-                            break;
-                        default :
-                            $excelExportColumn[chr($index)] = \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
-                            break;
+                    $columns = [];
+                    $start = $start;
+                    $end = 'ZZ'; // Adjust as needed
+                    $current = $start;
+
+                    while ($current != $end) {
+                        $columns[$current] = \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
+                        $current++;
                     }
+
+                    return $columns;
 
                     $index++;
                 }
