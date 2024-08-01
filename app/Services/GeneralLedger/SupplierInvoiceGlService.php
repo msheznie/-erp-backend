@@ -933,11 +933,11 @@ class SupplierInvoiceGlService
                         $data['documentLocalAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
                         $data['documentRptAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
 
-                        if ($retentionPercentage > 0 && $masterData->documentType != 4) {
-                            $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
-                            $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
-                            $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
-                        }
+                        // if ($retentionPercentage > 0 && $masterData->documentType != 4) {
+                        //     $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
+                        //     $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
+                        //     $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
+                        // }
 
                         array_push($finalData, $data);
 
@@ -968,11 +968,11 @@ class SupplierInvoiceGlService
                                 $data['documentLocalAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
                                 $data['documentRptAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
 
-                                if ($retentionPercentage > 0 && $masterData->documentType != 4) {
-                                    $data['documentTransAmount'] = $data['documentTransAmount'] * ($retentionPercentage / 100);
-                                    $data['documentLocalAmount'] = $data['documentLocalAmount'] * ($retentionPercentage / 100);
-                                    $data['documentRptAmount'] = $data['documentRptAmount'] * ($retentionPercentage / 100);
-                                }
+                                // if ($retentionPercentage > 0 && $masterData->documentType != 4) {
+                                //     $data['documentTransAmount'] = $data['documentTransAmount'] * ($retentionPercentage / 100);
+                                //     $data['documentLocalAmount'] = $data['documentLocalAmount'] * ($retentionPercentage / 100);
+                                //     $data['documentRptAmount'] = $data['documentRptAmount'] * ($retentionPercentage / 100);
+                                // }
 
                                 array_push($finalData, $data);
 
@@ -1087,11 +1087,11 @@ class SupplierInvoiceGlService
                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal)) * -1;
                             $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt)) * -1;
 
-                            if ($retentionPercentage > 0 && $masterData->documentType == 1) {
-                                $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
-                                $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
-                                $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
-                            }
+                            // if ($retentionPercentage > 0 && $masterData->documentType == 1) {
+                            //     $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
+                            //     $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
+                            //     $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
+                            // }
 
                             array_push($finalData, $data);
 
