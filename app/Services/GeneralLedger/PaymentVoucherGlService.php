@@ -466,7 +466,7 @@ class PaymentVoucherGlService
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
 
-                    if($isMasterExchangeRateChanged)
+                    if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))
                     {
                         $data['documentLocalAmount'] = \Helper::roundValue($ap->transAmount/ $masterData->localCurrencyER);
                         $data['documentRptAmount'] = \Helper::roundValue($ap->transAmount/ $masterData->companyRptCurrencyER);
@@ -493,7 +493,7 @@ class PaymentVoucherGlService
                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
                     $data['timestamp'] = \Helper::currentDateTime();
 
-                    if($isMasterExchangeRateChanged)
+                    if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))
                     {
                         $data['documentLocalAmount'] = \Helper::roundValue($ap->transAmount/ $masterData->localCurrencyER) * -1;
                         $data['documentRptAmount'] = \Helper::roundValue($ap->transAmount/ $masterData->companyRptCurrencyER) * -1;
@@ -524,7 +524,7 @@ class PaymentVoucherGlService
                                 $data['documentLocalAmount'] = \Helper::roundValue($ap->VATAmountLocalTotal) * -1;
                                 $data['documentRptAmount'] = \Helper::roundValue($ap->VATAmountRptTotal) * -1;
 
-                                if($isMasterExchangeRateChanged)
+                                if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))
                                 {
                                     $data['documentLocalAmount'] = \Helper::roundValue($ap->VATAmountTotal/$masterData->localCurrencyER) * -1;
                                     $data['documentRptAmount'] = \Helper::roundValue($ap->VATAmountTotal/$masterData->companyRptCurrencyER) * -1;
@@ -552,7 +552,7 @@ class PaymentVoucherGlService
                                 $data['documentLocalAmount'] = \Helper::roundValue($ap->VATAmountLocalTotal);
                                 $data['documentRptAmount'] = \Helper::roundValue($ap->VATAmountRptTotal);
 
-                                if($isMasterExchangeRateChanged)
+                                if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))
                                 {
                                     $data['documentLocalAmount'] = \Helper::roundValue($ap->VATAmountTotal/$masterData->localCurrencyER);
                                     $data['documentRptAmount'] = \Helper::roundValue($ap->VATAmountTotal/$masterData->companyRptCurrencyER);
