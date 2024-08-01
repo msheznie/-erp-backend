@@ -27,6 +27,7 @@ Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
         Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
+        Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
     });
 });
 
@@ -40,7 +41,6 @@ Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
 Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
 Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
 Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
-Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
 Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
 Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');

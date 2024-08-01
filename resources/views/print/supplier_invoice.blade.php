@@ -310,25 +310,27 @@
 
     <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
- 
-            <div>
-                <span style="font-size: 18px">
-                    @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
-                        Booking Invoice
-                    @endif
-                    @if($masterdata->documentType == 1)
-                        Direct Invoice Voucher
-                    @endif
-                     @if($masterdata->documentType == 4)
-                        Employee Direct Invoice
-                    @endif
-                    @if($masterdata->documentType == 3)
-                        Supplier Item Invoice Voucher
-                    @endif
-                </span>
-            </div>
+            <td>
+                <div>
+                    <span style="font-size: 18px">
+                        @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
+                            Booking Invoice
+                        @endif
+                        @if($masterdata->documentType == 1)
+                            Direct Invoice Voucher
+                        @endif
+                        @if($masterdata->documentType == 4)
+                            Employee Direct Invoice
+                        @endif
+                        @if($masterdata->documentType == 3)
+                            Supplier Item Invoice Voucher
+                        @endif
+                    </span>
+                </div>
+            </td>
         </tr>
     </table>
+    
     <br>
     <br>
 

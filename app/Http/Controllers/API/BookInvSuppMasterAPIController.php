@@ -2975,11 +2975,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $time = strtotime("now");
         $fileName = 'supplier_invoice_' . $id . '_' . $time . '.pdf';
+        
         $html = view('print.supplier_invoice', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        // $pdf = \App::make('dompdf.wrapper');
+        // $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        // return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+
+        // $html = view('print.APMC_customer_invoice', $order);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public function supplierInvoiceCancel(Request $request)
