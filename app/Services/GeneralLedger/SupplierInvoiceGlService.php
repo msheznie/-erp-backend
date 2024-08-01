@@ -1069,6 +1069,14 @@ class SupplierInvoiceGlService
                             ->where('companySystemID', $masterData->companySystemID)
                             ->first();
 
+                        if ($masterData->rcmActivated == 1) {
+                            $exemptExpenseDetails = TaxService::processSIExemptVatDirectInvoice($masterModel["autoID"]);
+
+                            $taxTrans = $taxTrans - $exemptExpenseDetails->VATAmount;
+                            $taxLocal = $taxLocal - $exemptExpenseDetails->VATAmountLocal;
+                            $taxRpt = $taxRpt - $exemptExpenseDetails->VATAmountRpt;
+                        }
+
                         if (!empty($chartOfAccountData)) {
                             $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
                             $data['glCode'] = $chartOfAccountData->AccountCode;
