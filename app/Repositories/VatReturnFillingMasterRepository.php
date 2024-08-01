@@ -356,7 +356,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
             case 20: // Purchases (except import of goods) - 6 (a)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category','supplier_invoice' => function($q) {
                                                         $q->with(['employee']);
-                                                  }])
+                                                  }, 'payment_voucher'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
                                                   ->where(function($q) use ($companyCountry){
@@ -371,7 +371,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                         })
                                                         ->where('rcmApplicableYN', 0);
                                                     });
-                                                    
+
                                                   })
                                                   ->whereNotNull('inputVATGlAccountID')
                                                   ->when($forUpdate == false, function($query) {
@@ -389,10 +389,14 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                               $query->where('returnFilledDetailID', $returnFilledDetailID);
                                                             });
                                                   })
-                                                  ->where('documentSystemID', 11)
-                                                    ->whereHas('supplier_invoice', function($query) {
-                                                        $query->whereIn('documentType', [0,1,2,3,4]);
-                                                    })
+                                                  ->whereIn('documentSystemID', [11,4])
+                                                    ->where(function ($query) {
+                                                        $query->whereHas('supplier_invoice', function($query) {
+                                                            $query->whereIn('documentType', [0,1,2,3,4]);
+                                                        })->orWhereHas('payment_voucher', function($query) {
+                                                            $query->whereIn('invoiceType', [3,5]);
+                                                        });
+                                                  })
                                                   ->when(('supplier_invoice.documentType' == 1 || 'supplier_invoice.documentType' == 3),function($query) {
                                                         $query->whereHas('supplier_invoice_details', function($query) {
                                                             $query->whereHas('grv_detail', function($query) {
