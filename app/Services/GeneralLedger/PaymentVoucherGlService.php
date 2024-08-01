@@ -65,6 +65,7 @@ use App\Models\ChartOfAccount;
 use App\Models\SalesReturn;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\SalesReturnDetail;
+use App\Models\TaxVatCategories;
 use App\Services\ExchangeSetup\ExchangeSetupGlService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -583,6 +584,10 @@ class PaymentVoucherGlService
                    $tax->rptAmount = ($tax->transAmount/$masterData->companyRptCurrencyER);
                }
 
+                $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                    $query->where('companySystemID', $masterData->companySystemID);
+                })->where('isActive', 1)->first();
+
                 $isVATEligible = TaxService::checkCompanyVATEligible($masterData->companySystemID);
 
                 if ($isVATEligible == 1) {
@@ -646,7 +651,7 @@ class PaymentVoucherGlService
                                     if ($isBankCheck) {
                                         //calculate local amount
                                         if ($val->bankCurrencyID == $val->localCurrencyID) {
-                                            if($val->vatSubCategoryID == 3) {
+                                            if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                 $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal));
                                             }
                                             else{
@@ -658,7 +663,7 @@ class PaymentVoucherGlService
                                             $data['documentLocalCurrencyER'] = $conversion->conversion;
                                             if ($conversion->conversion > 1) {
                                                 if ($conversion->conversion > 1) {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) / $conversion->conversion);
                                                     }
                                                     else{
@@ -666,7 +671,7 @@ class PaymentVoucherGlService
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
                                                     }
                                                 } else {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
 
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) * $conversion->conversion);
                                                     }
@@ -677,14 +682,14 @@ class PaymentVoucherGlService
                                                 $convertedLocalAmount += $data['documentLocalAmount'];
                                             } else {
                                                 if ($conversion->conversion > 1) {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) * $conversion->conversion);
                                                     }
                                                     else{
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
                                                     }
                                                 } else {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) / $conversion->conversion);
                                                     }
                                                     else{
@@ -697,7 +702,7 @@ class PaymentVoucherGlService
 
                                         //calculate reporting amount
                                         if ($val->bankCurrencyID == $val->reportingCurrencyID) {
-                                            if($val->vatSubCategoryID == 3) {
+                                            if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                 $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt));
                                             }
                                             else{
@@ -709,14 +714,14 @@ class PaymentVoucherGlService
                                             $data['documentRptCurrencyER'] = $conversion->conversion;
                                             if ($conversion->conversion > 1) {
                                                 if ($conversion->conversion > 1) {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) / $conversion->conversion);
                                                     }
                                                     else{
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
                                                     }
                                                 } else {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) * $conversion->conversion);
                                                     }
                                                     else{
@@ -726,14 +731,14 @@ class PaymentVoucherGlService
                                                 $convertedRpt += $data['documentRptAmount'];
                                             } else {
                                                 if ($conversion->conversion > 1) {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) * $conversion->conversion);
                                                     }
                                                     else{
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
                                                     }
                                                 } else {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) / $conversion->conversion);
                                                     }
                                                     else{
@@ -745,14 +750,14 @@ class PaymentVoucherGlService
                                         }
                                     } else {
                                         $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                                        if($val->vatSubCategoryID == 3) {
+                                        if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                             $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount + $val->VATAmountLocal);
                                         }
                                         else{
                                             $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
                                         }
                                         $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                                        if($val->vatSubCategoryID == 3) {
+                                        if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                             $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount + $val->VATAmountRpt);
                                         }
                                         else{
@@ -772,7 +777,7 @@ class PaymentVoucherGlService
                                     $data['documentNarration'] = $val->comments;
                                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                                    if($val->vatSubCategoryID == 3) {
+                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                         $data['documentTransAmount'] = \Helper::roundValue($val->transAmount + $val->vatAmount);
                                     }
                                     else{
@@ -878,7 +883,7 @@ class PaymentVoucherGlService
                                     if ($isBankCheck) {
                                         //calculate local amount
                                         if ($val->bankCurrencyID == $val->localCurrencyID) {
-                                            if($val->vatSubCategoryID == 3) {
+                                            if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                 $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal));
                                             }
                                             else{
@@ -890,7 +895,7 @@ class PaymentVoucherGlService
                                             $data['documentLocalCurrencyER'] = $conversion->conversion;
                                             if ($conversion->conversion > 1) {
                                                 if ($conversion->conversion > 1) {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) / $conversion->conversion);
                                                     }
                                                     else{
@@ -898,7 +903,7 @@ class PaymentVoucherGlService
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
                                                     }
                                                 } else {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
 
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) * $conversion->conversion);
                                                     }
@@ -909,14 +914,14 @@ class PaymentVoucherGlService
                                                 $convertedLocalAmount += $data['documentLocalAmount'];
                                             } else {
                                                 if ($conversion->conversion > 1) {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) * $conversion->conversion);
                                                     }
                                                     else{
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
                                                     }
                                                 } else {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) / $conversion->conversion);
                                                     }
                                                     else{
@@ -929,7 +934,7 @@ class PaymentVoucherGlService
 
                                         //calculate reporting amount
                                         if ($val->bankCurrencyID == $val->reportingCurrencyID) {
-                                            if($val->vatSubCategoryID == 3) {
+                                            if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                 $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt));
                                             }
                                             else{
@@ -941,14 +946,14 @@ class PaymentVoucherGlService
                                             $data['documentRptCurrencyER'] = $conversion->conversion;
                                             if ($conversion->conversion > 1) {
                                                 if ($conversion->conversion > 1) {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) / $conversion->conversion);
                                                     }
                                                     else{
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
                                                     }
                                                 } else {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) * $conversion->conversion);
                                                     }
                                                     else{
@@ -958,14 +963,14 @@ class PaymentVoucherGlService
                                                 $convertedRpt += $data['documentRptAmount'];
                                             } else {
                                                 if ($conversion->conversion > 1) {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) * $conversion->conversion);
                                                     }
                                                     else{
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
                                                     }
                                                 } else {
-                                                    if($val->vatSubCategoryID == 3) {
+                                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                                         $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) / $conversion->conversion);
                                                     }
                                                     else{
@@ -978,14 +983,14 @@ class PaymentVoucherGlService
                                     }
                                     else {
                                         $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                                        if($val->vatSubCategoryID == 3) {
+                                        if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                             $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount + $val->VATAmountLocal);
                                         }
                                         else{
                                             $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
                                         }
                                         $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                                        if($val->vatSubCategoryID == 3) {
+                                        if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                             $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount + $val->VATAmountRpt);
                                         }
                                         else{
@@ -1004,7 +1009,7 @@ class PaymentVoucherGlService
                                     $data['documentNarration'] = $val->comments;
                                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                                    if($val->vatSubCategoryID == 3) {
+                                    if($val->vatSubCategoryID == 3 && $expenseCOA->recordType == 2) {
                                         $data['documentTransAmount'] = \Helper::roundValue($val->transAmount + $val->vatAmount);
                                     }
                                     else{
@@ -1019,6 +1024,8 @@ class PaymentVoucherGlService
                             }
 
                         }
+
+
                     }
                     else{
                         $masterLocal = $masterData->payAmountCompLocal;
@@ -1225,7 +1232,25 @@ class PaymentVoucherGlService
                     }
                 }
 
-                if($exemptVatTotal) {
+
+                if(!empty($exemptVatTotal) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1 && $exemptVatTotal->vatAmount > 0){
+                    $exemptVatTrans = $exemptVatTotal->vatAmount;
+                    $exemptVATLocal = $exemptVatTotal->VATAmountLocal;
+                    $exemptVatRpt = $exemptVatTotal->VATAmountRpt;
+
+                    $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
+                    $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
+                    $data['glCode'] = $chartOfAccountData->AccountCode;
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['documentTransAmount'] = $exemptVatTrans;
+                    $data['documentLocalAmount'] = $exemptVATLocal;
+                    $data['documentRptAmount'] = $exemptVatRpt;
+                    $data['timestamp'] = \Helper::currentDateTime();
+                    array_push($finalData, $data);
+                }
+
+                if($exemptVatTotal && $expenseCOA->recordType == 2) {
                     $diffTrans = $convertedTrans - $dpTotal->transAmount - $exemptVatTotal->vatAmount;
                     $diffLocal = $convertedLocalAmount - $masterLocal - $exemptVatTotal->VATAmountLocal;
                     $diffRpt = $convertedRpt - $masterRpt - $exemptVatTotal->VATAmountRpt;
