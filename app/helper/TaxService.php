@@ -1498,13 +1498,15 @@ class TaxService
         return $siVATCategoryDetails;
     }
 
-    public static function checkSIExpenseVatDirectInvoice($directInvoiceDetailsID){
+    public static function checkSIExpenseVatDirectInvoice($directInvoiceAutoID, $chartOfAccountSystemID, $serviceLineSystemID){
 
         $siVATCategoryDetails = DirectInvoiceDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
             ->whereNotNull('vatSubCategoryID')
             ->where('vatSubCategoryID', '>', 0)
             ->join('erp_tax_vat_sub_categories', 'erp_directinvoicedetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-            ->where('directInvoiceDetailsID', $directInvoiceDetailsID)
+            ->where('directInvoiceAutoID', $directInvoiceAutoID)
+            ->where('chartOfAccountSystemID', $chartOfAccountSystemID)
+            ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
             ->first();
 

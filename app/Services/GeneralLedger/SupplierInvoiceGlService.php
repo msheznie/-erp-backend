@@ -635,7 +635,7 @@ class SupplierInvoiceGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentNarration'] = $val->comments;
 
-                        $exemptExpenseDIDetails = TaxService::checkSIExpenseVatDirectInvoice($val->directInvoiceDetailsID);
+                        $exemptExpenseDIDetails = TaxService::checkSIExpenseVatDirectInvoice($masterModel["autoID"], $data['chartOfAccountSystemID'], $data['serviceLineSystemID']);
                         $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                             $query->where('companySystemID', $masterData->companySystemID);
                         })->where('isActive', 1)->first();
