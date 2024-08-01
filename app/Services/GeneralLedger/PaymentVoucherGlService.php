@@ -547,6 +547,12 @@ class PaymentVoucherGlService
                     ->groupBy('documentSystemCode')
                     ->first();
 
+               if($isMasterExchangeRateChanged)
+               {
+                   $tax->localAmount = ($tax->transAmount/$masterData->localCurrencyER);
+                   $tax->rptAmount = ($tax->transAmount/$masterData->companyRptCurrencyER);
+               }
+
                 $isVATEligible = TaxService::checkCompanyVATEligible($masterData->companySystemID);
 
                 if ($isVATEligible == 1) {
