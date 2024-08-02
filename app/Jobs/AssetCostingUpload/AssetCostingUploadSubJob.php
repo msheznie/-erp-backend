@@ -211,11 +211,11 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     $assetCostingValue[12] = $assetFinanceCategory->lifeTimeInYears;
                 }
 
-                if ($unitPriceLocal == null) {
+                if ($unitPriceLocal === null || $unitPriceLocal === '') {
                     throw new AssetCostingException("Unit Price (Local) is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
-                if ($unitPriceRpt == null) {
+                if ($unitPriceRpt === null || $unitPriceRpt === '') {
                     throw new AssetCostingException("Unit Price (Rpt) is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
