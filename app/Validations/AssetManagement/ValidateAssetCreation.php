@@ -162,7 +162,7 @@ class ValidateAssetCreation
     }
 
 
-    public static function validationsForAssetUpload($lifeTime, $depPercentage, $unitPriceLocal, $unitPriceRpt,$lclAmountLocal, $lclAmountRpt, $residualLocal, $residualRpt, $accumulatedDate){
+    public static function validationsForAssetUpload($lifeTime, $depPercentage, $unitPriceLocal, $unitPriceRpt,$lclAmountLocal, $lclAmountRpt, $residualLocal, $residualRpt, $accumulatedDate, $depDate){
         if ($lifeTime < 0) {
             return self::sendJsonResponse(false,'The Lifetime in a years should be in positive value',500);
         }
@@ -231,6 +231,10 @@ class ValidateAssetCreation
 
         if (($lclAmountRpt != null || $lclAmountLocal != null) && $accumulatedDate == null) {
             return self::sendJsonResponse(false,'The Accumulated Depreciation Date is mandatory',500);
+        }
+
+        if ($accumulatedDate != null && ($depDate > $accumulatedDate)) {
+            return self::sendJsonResponse(false,'Accumulated Depreciation Date should greater than Dep Start Date',500);
         }
 
     }

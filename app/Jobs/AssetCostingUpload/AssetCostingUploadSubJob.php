@@ -219,7 +219,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     throw new AssetCostingException("Unit Price (Rpt) is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
-                $validatePositives = ValidateAssetCreation::validationsForAssetUpload($assetCostingValue[12], $depPercentage, $unitPriceLocal, $unitPriceRpt, $lclAmountLocal, $lclAmountRpt, $residualLocal, $residualRpt, $accumulatedDate);
+                $validatePositives = ValidateAssetCreation::validationsForAssetUpload($assetCostingValue[12], $depPercentage, $unitPriceLocal, $unitPriceRpt, $lclAmountLocal, $lclAmountRpt, $residualLocal, $residualRpt, $accumulatedDate, $assetCostingValue[11]);
                 if ($validatePositives['status'] === false) {
                     throw new AssetCostingException($validatePositives['message'], $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
