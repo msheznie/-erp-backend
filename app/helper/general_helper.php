@@ -124,7 +124,7 @@ use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierBlock;
 use App\Models\TenderSupplierAssignee;
-
+use ExchangeSetupConfig;
 
 class Helper
 {
@@ -7456,6 +7456,7 @@ class Helper
         if ($pvMaster->invoiceType == 3) {
             Log::info('started');
             Log::info($pvMaster->PayMasterAutoId);
+            Log::info($pvMaster->expenseClaimOrPettyCash);
             $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->get();
             if (count($dpdetails) > 0) {
                 if ($pvMaster->expenseClaimOrPettyCash == 6 || $pvMaster->expenseClaimOrPettyCash == 7) {
@@ -7644,6 +7645,30 @@ class Helper
                             $receivePayment['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
                             $receivePayment['companyRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
                             $receivePayment['receivedAmount'] = $val->bankAmount;
+
+                            if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($pvMaster))
+                            {
+                                $receivePayment['localCurrencyID'] = $val->localCurrency;
+                                $receivePayment['localCurrencyER'] = $pvMaster->localCurrencyER;
+                                $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
+                                $receivePayment['companyRptCurrencyER'] = $pvMaster->comRptCurrencyER;
+                                $receivePayment['bankAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
+                                if($pvMaster->localCurrencyID == $pvMaster->supplierTransCurrencyID)
+                                {
+                                    $receivePayment['localAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
+                                }else {
+                                    $receivePayment['localAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->localCurrencyER);
+                                }
+
+                                if($pvMaster->companyRptCurrencyID == $pvMaster->supplierTransCurrencyID)
+                                {
+                                    $receivePayment['companyRptAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
+                                }else {
+                                    $receivePayment['companyRptAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->comRptCurrencyER);
+                                }
+
+                                $receivePayment['receivedAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
+                            }
 
                             $receivePayment['confirmedYN'] = 1;
                             $receivePayment['confirmedByEmpSystemID'] = $pvMaster->confirmedByEmpSystemID;
