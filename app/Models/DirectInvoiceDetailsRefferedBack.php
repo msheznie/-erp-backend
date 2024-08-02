@@ -194,7 +194,8 @@ class DirectInvoiceDetailsRefferedBack extends Model
         'whtApplicable',
         'whtAmount',
         'whtEdited',
-        'contractID'
+        'contractID',
+        'contractDescription'
     ];
 
     /**
@@ -234,7 +235,8 @@ class DirectInvoiceDetailsRefferedBack extends Model
         'netAmountLocal' => 'float',
         'netAmountRpt' => 'float',
         'detail_project_id' => 'integer',
-        'contractID' => 'string'
+        'contractID' => 'string',
+        'contractDescription' => 'string'
     ];
 
     /**

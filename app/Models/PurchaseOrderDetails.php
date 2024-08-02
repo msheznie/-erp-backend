@@ -203,7 +203,8 @@ class PurchaseOrderDetails extends Model
         'altUnit',
         'altUnitValue',
         'detail_project_id',
-        'contractID'
+        'contractID',
+        'contractDescription'
     ];
 
     /**
@@ -302,7 +303,8 @@ class PurchaseOrderDetails extends Model
         'altUnit'  => 'integer',
         'altUnitValue'  => 'float',
         'detail_project_id' => 'integer',
-        'contractID' => 'string'
+        'contractID' => 'string',
+        'contractDescription' => 'string'
     ];
 
     /**
