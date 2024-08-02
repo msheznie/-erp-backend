@@ -33,7 +33,7 @@ class ThirdPartyAPIController extends AppBaseController
 
                         $response = $client->request('GET', $url, [
                             'headers' => [
-                                'Authorization' => $thirdPartyIntegrationKey->api_external_key,
+                                'Authorization' => 'CM_ERP '.$thirdPartyIntegrationKey->api_external_key,
                                 'Content-Type' => 'application/json',
                                 'Accept' => 'application/json'
                             ],
