@@ -1071,10 +1071,11 @@ class SupplierInvoiceGlService
 
                         if ($masterData->rcmActivated == 1) {
                             $exemptExpenseDetails = TaxService::processSIExemptVatDirectInvoice($masterModel["autoID"]);
-
-                            $taxTrans = $taxTrans - $exemptExpenseDetails->VATAmount;
-                            $taxLocal = $taxLocal - $exemptExpenseDetails->VATAmountLocal;
-                            $taxRpt = $taxRpt - $exemptExpenseDetails->VATAmountRpt;
+                            if(!empty($exemptExpenseDetails)) {
+                                $taxTrans = $taxTrans - $exemptExpenseDetails->VATAmount;
+                                $taxLocal = $taxLocal - $exemptExpenseDetails->VATAmountLocal;
+                                $taxRpt = $taxRpt - $exemptExpenseDetails->VATAmountRpt;
+                            }
                         }
 
                         if (!empty($chartOfAccountData)) {
