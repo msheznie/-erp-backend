@@ -519,7 +519,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     count($input['itemPrimaryCodes']) > 0
                 ) {
 
-                    $prd->whereHas('podetail', function ($pod) use ($from, $to, $documentSearch) {
+                    $prd->with(['podetail'=> function ($pod) use ($from, $to, $documentSearch) {
                         return $pod->whereHas('order', function ($po) use ($from, $to, $documentSearch) {
                             return $po->where('poConfirmedYN', 1)
                                 ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
@@ -542,7 +542,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                 return $q->whereIn('goodsRecievedYN', [0, 1])
                                          ->where('manuallyClosed',0);
                             });
-                    })
+                    }])
                         ->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
                             return $q->whereIn('itemCode', $itemPrimaryCodes);
                         });
@@ -581,7 +581,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     request('documentId') == 2 ||
                     count(request('itemPrimaryCodes')) > 0, function ($q) use ($from, $to, $documentSearch) {
 
-                    $q->whereHas('podetail', function ($q) use ($from, $to, $documentSearch) {
+                    $q->with(['podetail' => function ($q) use ($from, $to, $documentSearch) {
 
                         $q->when(request('date_by') == 'approvedDate' || request('documentId') == 2, function ($q) use ($from, $to, $documentSearch) {
                                 return $q->whereHas('order', function ($q) use ($from, $to, $documentSearch) {
@@ -605,7 +605,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                 return $q->whereIn('goodsRecievedYN', [0, 1])
                                           ->where('manuallyClosed',0);
                             });
-                    });
+                    }]);
 
                 })
                     ->with(['uom', 'podetail' => function ($q) use ($from, $to, $documentSearch) {
