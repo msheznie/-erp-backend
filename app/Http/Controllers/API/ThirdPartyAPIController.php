@@ -45,7 +45,7 @@ class ThirdPartyAPIController extends AppBaseController
                         return $this->sendResponse([], '');
                     }
                 } catch (\Exception $e) {
-                    return $this->sendError('Failed to get supplier contracts');
+                    return $this->sendResponse([], '');
                 }
             }
             else {
