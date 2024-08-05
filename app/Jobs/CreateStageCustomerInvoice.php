@@ -242,7 +242,6 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 );
             }
 
-            Log::info('API Return call back starting');
 
             if($api_external_key != null && $api_external_url != null) {
 
@@ -259,9 +258,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 ]);
                 $json = $res->getBody();
 
-                Log::info('API guzzle: ' . $json);
             }
-            Log::info('API Return call back ending');
 
 
             foreach ($stagCustomerInvoices as $dt) {
@@ -276,7 +273,6 @@ class CreateStageCustomerInvoice implements ShouldQueue
 
 
                 $confirm = \Helper::confirmDocumentForApi($params);
-                Log::info($confirm);
 
                 $documentApproveds = DocumentApproved::where('documentSystemCode', $dt['custInvoiceDirectAutoID'])->where('documentSystemID', 20)->get();
                 foreach ($documentApproveds as $documentApproved) {
@@ -300,10 +296,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 StageCustomerInvoice::truncate();
                 StageCustomerInvoiceItemDetails::truncate();
                 StageCustomerInvoiceDirectDetail::truncate();
-                Log::info('Error Line No: ' . $e->getLine());
-                Log::info('Error Line No: ' . $e->getFile());
-                Log::info($e->getMessage());
-                Log::info('---- GL  End with Error-----' . date('H:i:s'));
+                Log::error($e->getMessage());
             }
 
 

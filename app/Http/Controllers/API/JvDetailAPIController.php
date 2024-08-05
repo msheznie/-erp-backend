@@ -1084,15 +1084,37 @@ GROUP BY
         }
 
         $formattedDate = Carbon::parse($jvMasterData->JVdate)->format('M Y');
+        if(!strpos(JvMaster::find($jvMasterAutoId)->JVNarration,'Accrual for the month of'))
+        {
+            $narration = (JvMaster::find($jvMasterAutoId)) ? 'PO Accrual for the month of '.$formattedDate.' ^ ('.JvMaster::find($jvMasterAutoId)->JVNarration.')' : null;
+        }else {
+            $data = $this->explodeByFirst('- ',JvMaster::find($jvMasterAutoId)->JVNarration);
+            if(!empty($data))
+                $narration = 'PO Accrual for the month of '.$formattedDate.' - '.$data[1];
+        }
 
         //updating JV master
         $updateJvMaster = JvMaster::find($jvMasterAutoId)
             ->update([
-                'JVNarration' => 'PO Accrual for the month of '.$formattedDate
+                'JVNarration' => $narration
             ]);
 
         return $this->sendResponse('', 'JV Details saved successfully');
 
+    }
+
+    function explodeByFirst($delimiter, $string)
+    {
+        $pos = strpos($string, $delimiter);
+
+        if ($pos === false) {
+            return [$string];
+        }
+
+        $beforeDelimiter = substr($string, 0, $pos);
+        $afterDelimiter = substr($string, $pos + strlen($delimiter));
+
+        return [$beforeDelimiter, $afterDelimiter];
     }
 
 

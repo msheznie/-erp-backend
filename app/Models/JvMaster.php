@@ -379,6 +379,11 @@ class JvMaster extends Model
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'jvMasterAutoId');
     }
 
+    public function getJVNarrationAttribute($value)
+    {
+        return str_replace('^','-',$value);
+    }
+
     public function setJVdateAttribute($value)
     {
         $this->attributes['JVdate'] = Helper::dateAddTime($value);

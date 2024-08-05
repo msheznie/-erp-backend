@@ -73,6 +73,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use PHPExcel_IOFactory;
 use App\Models\FixedAssetMaster;
+use App\Models\logUploadBudget;
 
 /**
  * Class BudgetMasterController
@@ -4471,8 +4472,12 @@ class BudgetMasterAPIController extends AppBaseController
             ->where('itemType', '!=', 3)
             ->get();
 
-        $glMasters = ReportTemplateDetails::where('companySystemID', $templateData['companySystemID'])->where('companyReportTemplateID', $templateMasterID)->where('masterID', null)->where('itemType', '!=', 3)->orderBy('sortOrder', 'asc')->get();
-
+        $glMasters = ReportTemplateDetails::where('companySystemID', $templateData['companySystemID'])
+                                          ->where('companyReportTemplateID', $templateMasterID)
+                                          ->where('masterID', null)
+                                          ->where('itemType', '!=', 3)
+                                          ->orderBy('sortOrder', 'asc')
+                                          ->get();
 
         function buildTree($elements, $parentId = null) {
             $branch = array();
@@ -4520,8 +4525,6 @@ class BudgetMasterAPIController extends AppBaseController
         sortTree($tree);
         $sortedFlat = flattenTree($tree);
 
-
-
         $templateMaster = ReportTemplate::find($templateMasterID);
         $financeYearMaster = CompanyFinanceYear::find($companyFinanceYearID);
 
@@ -4540,8 +4543,6 @@ class BudgetMasterAPIController extends AppBaseController
         if($segments->isEmpty()){
             return $this->sendError('The budget for all segments has already been uploaded');
         }
-
-
 
         $output = array(
             'segments' => $segments,
@@ -4603,7 +4604,6 @@ class BudgetMasterAPIController extends AppBaseController
 
         $uploadBudget = UploadBudgets::create($uploadArray);
 
-
         $db = isset($request->db) ? $request->db : "";
 
         $disk = 'local';
@@ -4634,7 +4634,7 @@ class BudgetMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $uploadBudgets = UploadBudgets::where('companySystemID', $input['companyId'])->with('uploaded_by')->select('*');
+        $uploadBudgets = UploadBudgets::where('companySystemID', $input['companyId'])->with(['uploaded_by','log'])->select('*');
 
 
         return \DataTables::eloquent($uploadBudgets)

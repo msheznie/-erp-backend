@@ -55,7 +55,6 @@ class TravelRequestNotificationJob implements ShouldQueue
         if (empty($this->dbName)) {
             Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);            
         } else {
-            Log::info("Job triggered");
             CommonJobService::db_switch($this->dbName);
             $obj = new TravelRequestNotificationService($this->companyId, $this->id,$this->tripMaster,$this->tripRequestBookings);
             $obj->execute();

@@ -13,6 +13,7 @@ use App\Models\BookInvSuppMaster;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
 use App\Models\CurrencyConversion;
+use App\Models\CurrencyMaster;
 use App\Models\POSGLEntries;
 use App\Models\StockCount;
 use App\Models\StockCountDetail;
@@ -564,6 +565,7 @@ class CustomerInvoiceGlService
 
             $segmentWiseDetail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID', 'clientContractID')->get();
 
+            $currencyConversion = CurrencyMaster::where('currencyID', $segmentWiseDetail[0]->invoiceAmountCurrency)->first();
             
             $data['companySystemID'] = $masterData->companySystemID;
             $data['companyID'] = $masterData->companyID;
@@ -626,14 +628,14 @@ class CustomerInvoiceGlService
 
                     $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
                     $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                    $data['documentTransAmount'] = $item->invoiceAmount + $item->VATAmountTotal;
+                    $data['documentTransAmount'] = round($item->invoiceAmount + $item->VATAmountTotal,$currencyConversion->DecimalPlaces);
                     $data['documentLocalCurrencyID'] = $item->localCurrency;
 
                     $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                    $data['documentLocalAmount'] = $item->localAmount + $item->VATAmountLocalTotal;
+                    $data['documentLocalAmount'] = $item->localAmount + ((1 / $item->localCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces)));
                     $data['documentRptCurrencyID'] = $item->comRptCurrency;
                     $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                    $data['documentRptAmount'] = $item->comRptAmount + $item->VATAmountRptTotal;
+                    $data['documentRptAmount'] = $item->comRptAmount + + ((1 / $item->comRptCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces)));
                     
                     array_push($finalData, $data);
                 }
@@ -738,14 +740,14 @@ class CustomerInvoiceGlService
                                 $data['documentNarration'] = "";
                                 $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
                                 $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                                $data['documentTransAmount'] = $item->VATAmountTotal * -1;
+                                $data['documentTransAmount'] = round($item->VATAmountTotal * -1, $currencyConversion->DecimalPlaces);
                                 $data['documentLocalCurrencyID'] = $item->localCurrency;
 
                                 $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                                $data['documentLocalAmount'] = $item->VATAmountLocalTotal * -1;
+                                $data['documentLocalAmount'] = (1 / $item->localCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces) * -1);
                                 $data['documentRptCurrencyID'] = $item->comRptCurrency;
                                 $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                                $data['documentRptAmount'] = $item->VATAmountRptTotal * -1;
+                                $data['documentRptAmount'] = (1 / $item->comRptCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces) * -1);
                                 
                                 array_push($finalData, $data);
                                 $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];

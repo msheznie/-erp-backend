@@ -344,17 +344,16 @@ class DeliveryAppoinmentGRV implements ShouldQueue
 
                     DB::commit();
     
-                    Log::info('delivert appoinment grv completed... : ');
                 }
                 else
                 {
-                    Log::info('From Company Finance period not found, date : ');
+                    Log::error('From Company Finance period not found, date : ');
                     
                 }
     
             }
             else{
-                Log::info('From Company Finance Year not found, date3 : ');
+                Log::error('From Company Finance Year not found, date3 : ');
             }
 
 

@@ -65,7 +65,6 @@ class AttendanceDayEndPullingInitiate implements ShouldQueue
             $seconds += 30;
 
             $msg = "Company id  {$companyId} added to the queue in {$this->dispatchDb} DB ( {$this->attDate} )";
-            Log::info("$msg \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
             AttendanceDayEndPulling::dispatch($this->dispatchDb, $companyId, $this->attDate)
                 ->delay(now()->addSeconds($seconds));

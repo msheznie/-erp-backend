@@ -152,4 +152,9 @@ class SupplierEvaluationTemplate extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
+
+    public function section()
+    {
+        return $this->belongsTo('App\Models\EvaluationTemplateSection', 'id', 'supplier_evaluation_template_id');
+    }
 }

@@ -1753,6 +1753,8 @@ class ProcumentOrderAPIController extends AppBaseController
             $projects = ErpProjectMaster::where('companySystemID', $companyId)->get();
         }
 
+        $contractEnablePolicy = Helper::checkPolicy($companyId, 93);
+
         $output = array(
             'segments' => $segments,
             'category' => $po_category,
@@ -1780,6 +1782,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'isEEOSSPolicy' => $hasEEOSSPolicy,
             'isProjectBase' => $isProject_base,
             'projects' => $projects,
+            'contractEnablePolicy' => $contractEnablePolicy
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

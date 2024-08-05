@@ -184,7 +184,6 @@ class CreateCustomerInvoice implements ShouldQueue
                     $customerInvoiceData['createdUserID'] = $dpMaster->confimedByEmpID;
                     $customerInvoiceData['createdPcID'] = $dpMaster->modifiedPc;
                     $customerInvoiceData['createdDateAndTime'] = NOW();
-                    Log::info($customerInvoiceData);
                     $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
 
                     $interComAssetDisposal = [
@@ -248,7 +247,6 @@ class CreateCustomerInvoice implements ShouldQueue
                             $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail);
                             $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmountDetail);
                             $cusInvoiceDetails['unitCost'] = \Helper::roundValue($localAmountDetail);
-                            Log::info($cusInvoiceDetails);
                             $customerInvoiceDet = $customerInvoiceDetailRep->create($cusInvoiceDetails);
                         }
                     }
@@ -262,14 +260,13 @@ class CreateCustomerInvoice implements ShouldQueue
                     $grvInsert = CreateDirectGRV::dispatch($dpMaster2);
 
                     DB::commit();
-                    Log::info('Customer invoice created successfully');
                 }
                 else {
-                    Log::info('From Company Finance Period not found, date : '. $dpMaster->disposalDocumentDate);
-                    Log::info('From Company Finance Year Id : '. $fromCompanyFinanceYear->companyFinanceYearID);
+                    Log::error('From Company Finance Period not found, date : '. $dpMaster->disposalDocumentDate);
+                    Log::error('From Company Finance Year Id : '. $fromCompanyFinanceYear->companyFinanceYearID);
                 }
             }else {
-                Log::info('From Company Finance Year not found, date : '. $dpMaster->disposalDocumentDate);
+                Log::error('From Company Finance Year not found, date : '. $dpMaster->disposalDocumentDate);
             }
         } catch
         (\Exception $e) {

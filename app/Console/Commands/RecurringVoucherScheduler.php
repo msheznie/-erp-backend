@@ -42,7 +42,6 @@ class RecurringVoucherScheduler extends Command
     {
         Log::useFiles( CommonJobService::get_specific_log_file('recurring-voucher') );
 
-        Log::info("Recurring voucher job scheduler started  . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){

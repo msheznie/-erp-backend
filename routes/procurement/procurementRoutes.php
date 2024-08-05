@@ -220,3 +220,9 @@ Route::group([], function() {
 
     Route::resource('addresses', 'AddressAPIController');
 });
+
+//Supplier Evaluation
+Route::group([], function() {
+    Route::post('getAllSupplierEvaluationsList', 'SupplierEvaluationController@getAllSupplierEvaluations')->name('Get all supplier evaluations');
+    Route::get('getSupplierEvaluationFormData', 'SupplierEvaluationController@getSupplierEvaluationFormData')->name("Get supplier evaluation form data");
+});

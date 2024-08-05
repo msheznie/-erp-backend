@@ -33,6 +33,7 @@ use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\PurchaseOrderDetails;
 use App\Models\BudgetConsumedData;
+use App\Models\SupplierEvaluationTemplate;
 use App\Models\TaxVatCategories;
 use App\Models\ErpItemLedger;
 use App\Models\Taxdetail;
@@ -1154,6 +1155,14 @@ class GRVMasterAPIController extends AppBaseController
 
         $grvMaster = $this->gRVMasterRepository->grvListQuery($request,$input,$search,$grvLocation, $serviceLineSystemID, $projectID);
 
+        $policySuplierEvaluation = CompanyPolicyMaster::where('companyPolicyCategoryID', 92)
+            ->where('companySystemID', $input['companyId'])->first();
+        $supplierEvaluationEnabled = 0;
+
+        if(!empty($policySuplierEvaluation)) {
+            $supplierEvaluationEnabled = $policySuplierEvaluation->isYesNO;
+        }
+
         $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
             ->where('companySystemID', $input['companyId'])->first();
 
@@ -1165,6 +1174,7 @@ class GRVMasterAPIController extends AppBaseController
 
         return \DataTables::eloquent($grvMaster)
             ->addColumn('Actions', $policy)
+            ->addColumn('SupplierEvaluationPolicy', $supplierEvaluationEnabled)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1971,16 +1981,15 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
     public function reverseGRVPreCheck(Request $request)
     {
         $input = $request->all();
+
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input, 'reversal');
+
         if ($isEligible['status'] == 0) {
-            $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '') ? $isEligible['msg'] : 'GRV Not Eligible for reversal';
-            return $this->sendError($errorMsg, 500);
-        }
-
-        $isExistBSI = PurchaseReturnDetails::where('grvAutoID',$input['grvAutoID'])->exists();
-
-        if ($isExistBSI) {
-            return $this->sendError("You cannot reverse the GRV. The GRV is already added to Purchase Return", 500);
+            return $this->sendError(
+                $isEligible['msg'],
+                $isEligible['code'] ?? 500,
+                $isEligible['data'] ?? array('type' => '')
+            );
         }
 
         return $this->sendResponse([], 'GRV Eligible for reversal');
@@ -2398,5 +2407,16 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             ->first();
     }
 
+    public function getDeliveryEvaluationTemplates(Request $request)
+    {
+        $companyId = $request['companyId'];
+        $deliveryEvaluations = SupplierEvaluationTemplate::where('companySystemID',$companyId)
+                            ->WHERE('template_type', 1)
+                            ->WHERE('is_active', 1)
+                            ->WHERE('is_confirmed', 1)
+                            ->get();
+        return $this->sendResponse($deliveryEvaluations, 'Record retrieved successfully');
+
+    }
 
 }

@@ -54,7 +54,6 @@ class SupplierStatementJob implements ShouldQueue
         $input = $this->inputData;
 
         Log::useFiles(storage_path() . '/logs/supplier_statement_sent.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
 
         CommonJobService::db_switch($db);
 
@@ -62,7 +61,6 @@ class SupplierStatementJob implements ShouldQueue
         $pdf = \App::make('dompdf.wrapper');
         $path = public_path().'/uploads/emailAttachment';
 
-        Log::info('path - '.$path);
         if (!file_exists($path)) {
             File::makeDirectory($path, 0777, true, true);
         }

@@ -46,7 +46,6 @@ class NotificationInitiate implements ShouldQueue
         $active_scenarios = NotificationService::all_active_scenarios();
 
         if(count($active_scenarios) == 0){
-            Log::info("Active notification scenarios not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
 
 
@@ -54,7 +53,6 @@ class NotificationInitiate implements ShouldQueue
             $id = $scenario->id;
             $description = $scenario->scenarioDescription;
 
-            Log::info("{$description} added to queue . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
             NotificationScenario::dispatch($this->dispatch_db, $id, $description);
         }

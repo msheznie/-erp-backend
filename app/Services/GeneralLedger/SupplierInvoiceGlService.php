@@ -274,7 +274,7 @@ class SupplierInvoiceGlService
                             $retentionLocal = $data['documentLocalAmount'] * ($retentionPercentage / 100);
                             $retentionRpt = $data['documentRptAmount'] * ($retentionPercentage / 100);
                         }
-                    } else if ($masterData->documentType == 0) {
+                    } else if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
                         $totalVATAmount = 0;
                         $totalVATAmountLocal = 0;
@@ -348,7 +348,7 @@ class SupplierInvoiceGlService
                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                    if ($masterData->documentType == 0) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
 
                             $data['documentTransAmount'] = $retentionTransWithoutVat;
@@ -592,27 +592,28 @@ class SupplierInvoiceGlService
                     }
                 }
             } else {
-
+                if ($masterData->rcmActivated != 1) {
                 $exemptExpenseDetails = TaxService::processSIExemptVatDirectInvoice($masterModel["autoID"]);
                 $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                     $query->where('companySystemID', $masterData->companySystemID);
                 })->where('isActive', 1)->first();
 
-                if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
-                    $exemptVatTrans = $exemptExpenseDetails->VATAmount;
-                    $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
-                    $exemptVatRpt = $exemptExpenseDetails->VATAmountRpt;
+                    if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null) {
+                        $exemptVatTrans = $exemptExpenseDetails->VATAmount;
+                        $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
+                        $exemptVatRpt = $exemptExpenseDetails->VATAmountRpt;
 
-                    $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
-                    $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
-                    $data['glCode'] = $chartOfAccountData->AccountCode;
-                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                    $data['documentTransAmount'] = $exemptVatTrans;
-                    $data['documentLocalAmount'] = $exemptVATLocal;
-                    $data['documentRptAmount'] = $exemptVatRpt;
-                    $data['timestamp'] = \Helper::currentDateTime();
-                    array_push($finalData, $data);
+                        $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
+                        $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
+                        $data['glCode'] = $chartOfAccountData->AccountCode;
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                        $data['documentTransAmount'] = $exemptVatTrans;
+                        $data['documentLocalAmount'] = $exemptVATLocal;
+                        $data['documentRptAmount'] = $exemptVatRpt;
+                        $data['timestamp'] = \Helper::currentDateTime();
+                        array_push($finalData, $data);
+                    }
                 }
 
 
@@ -635,7 +636,7 @@ class SupplierInvoiceGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentNarration'] = $val->comments;
 
-                        $exemptExpenseDIDetails = TaxService::checkSIExpenseVatDirectInvoice($val->directInvoiceDetailsID);
+                        $exemptExpenseDIDetails = TaxService::checkSIExpenseVatDirectInvoice($masterModel["autoID"], $data['chartOfAccountSystemID'], $data['serviceLineSystemID']);
                         $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                             $query->where('companySystemID', $masterData->companySystemID);
                         })->where('isActive', 1)->first();
@@ -1067,6 +1068,15 @@ class SupplierInvoiceGlService
                         $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxOutputVAT->outputVatGLAccountAutoID)
                             ->where('companySystemID', $masterData->companySystemID)
                             ->first();
+
+                        if ($masterData->rcmActivated == 1) {
+                            $exemptExpenseDetails = TaxService::processSIExemptVatDirectInvoice($masterModel["autoID"]);
+                            if(!empty($exemptExpenseDetails)) {
+                                $taxTrans = $taxTrans - $exemptExpenseDetails->VATAmount;
+                                $taxLocal = $taxLocal - $exemptExpenseDetails->VATAmountLocal;
+                                $taxRpt = $taxRpt - $exemptExpenseDetails->VATAmountRpt;
+                            }
+                        }
 
                         if (!empty($chartOfAccountData)) {
                             $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;

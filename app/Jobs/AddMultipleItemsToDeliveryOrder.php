@@ -34,7 +34,6 @@ class AddMultipleItemsToDeliveryOrder implements ShouldQueue
      */
     public function __construct($record,$deliveryOrder,$db,$authID)
     {
-        Log::info('Add Mutiple Items to quotation Started in Constructor - DB'.$db);
 
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');

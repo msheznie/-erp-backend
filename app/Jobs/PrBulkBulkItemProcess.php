@@ -55,7 +55,6 @@ class PrBulkBulkItemProcess implements ShouldQueue
     {
         $db = $this->dispatch_db;
         Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
         CommonJobService::db_switch($db);
 
         $companyId = $this->companyId;
@@ -93,7 +92,7 @@ class PrBulkBulkItemProcess implements ShouldQueue
                 $itemToAdd['isMRPulled'] =  false;
     
                 $item = ItemAssigned::where('itemCodeSystem', $itemToAdd['itemCodeSystem'])
-                                    ->where('companySystemID', $companyId)
+                                    ->where('companySystemID', $companyId)->where('isAssigned', '=', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])
                                     ->first();
     
                 if ($item) {
@@ -218,16 +217,14 @@ class PrBulkBulkItemProcess implements ShouldQueue
 
         if ($newCounterValue == $chunkDataSizeCounts) {
  
-            PurchaseRequest::where('purchaseRequestID', $requestID)->update(['isBulkItemJobRun' => 0]);            
+            PurchaseRequest::where('purchaseRequestID', $requestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
         }
 
 
-        Log::info('succefully added PR items');
         DB::commit();
         } catch (\Exception $exception) {
             DB::rollBack();
             Log::error('Error');
-            Log::info('Error Line No: ' . $exception->getLine());
             Log::error($exception->getMessage());
         }
     }

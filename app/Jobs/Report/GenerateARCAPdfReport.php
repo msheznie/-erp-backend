@@ -36,10 +36,8 @@ class GenerateARCAPdfReport implements ShouldQueue
     public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath,$aging)
     {
         if(env('IS_MULTI_TENANCY',false)){
-            Log::info('databse switch...11');
             self::onConnection('database_main');
         }else{
-            Log::info('databse switch...22');
             self::onConnection('database');
         }
         $this->dispatch_db = $dispatch_db;
@@ -59,7 +57,6 @@ class GenerateARCAPdfReport implements ShouldQueue
      */
     public function handle()
     {
-        Log::info('gennerate job start');
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
         ini_set('memory_limit', -1);
         Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
@@ -72,7 +69,6 @@ class GenerateARCAPdfReport implements ShouldQueue
 
         $count = $this->reportCount;
         CommonJobService::db_switch($db);
-        Log::info('database switch success');
         $checkIsGroup = Company::find($request->companySystemID);
         $companyLogo = $checkIsGroup->logo_url;
 
@@ -110,7 +106,6 @@ class GenerateARCAPdfReport implements ShouldQueue
         
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
-                Log::info('pdf rendered summary');
             }
             elseif ($request->reportTypeID == 'CAD')
             {
@@ -151,7 +146,6 @@ class GenerateARCAPdfReport implements ShouldQueue
 
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
-                Log::info('pdf rendered detail');
             }
 
             $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
@@ -160,8 +154,6 @@ class GenerateARCAPdfReport implements ShouldQueue
 
             $result = Storage::disk('local_public')->put($path, $pdf_content);
             $files = File::files(public_path($rootPaths));
-            Log::info('count files : '.count($files));
-            Log::info('outputChunkCount : '.$outputChunkCount);
             if (count($files) == $outputChunkCount) {
                 $fromDate = new Carbon($request->fromDate);
                 $fromDate = $fromDate->format('Y-m-d');

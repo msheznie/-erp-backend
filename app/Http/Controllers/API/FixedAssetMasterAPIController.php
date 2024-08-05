@@ -19,6 +19,8 @@ use App\helper\DocumentCodeGenerate;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateFixedAssetMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetMasterAPIRequest;
+use App\Jobs\AssetCostingUpload\AssetCostingUpload;
+use App\Jobs\CustomerInvoiceUpload\CustomerInvoiceUpload;
 use App\Models\AssetFinanceCategory;
 use App\Models\AssetType;
 use App\Models\ChartOfAccount;
@@ -45,14 +47,17 @@ use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
 use App\Models\InsurancePolicyType;
 use App\Models\Location;
+use App\Models\LogUploadAssetCosting;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
+use App\Models\UploadAssetCosting;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetCostRepository;
 use App\Repositories\FixedAssetMasterRepository;
 use App\Traits\AuditTrial;
 use App\Traits\UserActivityLogger;
+use App\Validations\AssetManagement\ValidateAssetCreation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +73,8 @@ use App\helper\CreateExcel;
 use App\Services\ValidateDocumentAmend;
 use App\Traits\AuditLogsTrait;
 use App\Models\CompanyFinanceYear;
+use App\Services\GeneralLedger\AssetCreationService;
+use PHPExcel_IOFactory;
 
 /**
  * Class FixedAssetMasterController
@@ -78,12 +85,14 @@ class FixedAssetMasterAPIController extends AppBaseController
     /** @var  FixedAssetMasterRepository */
     private $fixedAssetMasterRepository;
     private $fixedAssetCostRepository;
+    protected $assetCreationService;
     use AuditLogsTrait;
 
-    public function __construct(FixedAssetMasterRepository $fixedAssetMasterRepo, FixedAssetCostRepository $fixedAssetCostRepo)
+    public function __construct(FixedAssetMasterRepository $fixedAssetMasterRepo, FixedAssetCostRepository $fixedAssetCostRepo, AssetCreationService $assetCreationService)
     {
         $this->fixedAssetMasterRepository = $fixedAssetMasterRepo;
         $this->fixedAssetCostRepository = $fixedAssetCostRepo;
+        $this->assetCreationService = $assetCreationService;
     }
 
     /**
@@ -180,6 +189,12 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            $uploadValidation = ValidateAssetCreation::uploadValidation();
+            if ($uploadValidation['status'] === false) {
+                return $this->sendError($uploadValidation['message'], $uploadValidation['code']);
+            }
+
 
             if(isset($input['faCatID']) && empty($input['faCatID'])){
                 return $this->sendError("Main Category is required", 500);
@@ -503,271 +518,28 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function create(CreateFixedAssetMasterAPIRequest $request)
     {
-
-       
         $input = $request->all();
-        $itemImgaeArr = $input['itemImage'];
-        $itemPicture = $input['itemPicture'];
-        $input = array_except($request->all(), 'itemImage');    
-        $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
 
-        // if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )
-        // {
-        //     $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
-        //     if($is_pending_job_exist > 0)
-        //     {
-        //         return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
-
-        //     }
-
-        // }
-        $input = $this->convertArrayToValue($input);
-        
-        $input['COSTUNIT'] = floatval($input['COSTUNIT']);
-
-        if(isset($input['isCurrencySame']) && $input['isCurrencySame']==true){
-
-            if(isset($input['costUnitRpt'])){
-                if($input['costUnitRpt'] > 0){
-                    $input['COSTUNIT'] = $input['costUnitRpt'];
-                }
-            }
-
-            if(isset($input['accumulated_depreciation_amount_rpt'])){
-                if($input['accumulated_depreciation_amount_rpt'] > 0){
-                    $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
-                }
-            }
-
-            if(isset($input['salvage_value_rpt'])){
-                if($input['salvage_value_rpt']> 0){
-                    $input['salvage_value'] = $input['salvage_value_rpt'];
-                }
-            }
-        }
-        
-        if(doubleval($input['salvage_value_rpt']) >  (doubleval($input['costUnitRpt']))) {
-            return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+        $uploadValidation = ValidateAssetCreation::uploadValidation();
+        if ($uploadValidation['status'] === false) {
+            return $this->sendError($uploadValidation['message'], $uploadValidation['code']);
         }
 
-        if(doubleval($input['salvage_value_rpt']) < 0) {
-            return $this->sendError("Salvage value cannot be less than Zero", 500);
-        }
 
-        if($input['assetType'] == 1){
-            if(empty($input['depMonth']) || $input['depMonth'] == 0){
-                return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
-            }
+        $assetCreate = $this->assetCreationService->assetCreation($input);
+
+
+        if ($assetCreate['status'] === true) {
+
+            return $this->sendResponse($assetCreate['data'], 'Fixed Asset Master saved successfully');
+
         } else {
-            if(isset($input['depMonth']) && $input['depMonth'] == ''){
-                $input['depMonth'] = 0;
+            if($assetCreate['code'] == null) {
+                return $this->sendError($assetCreate['message']);
             }
-        }
-
-        if(isset($input['COSTUNIT']) && $input['COSTUNIT'] > 0 ){
-            if(isset($input['costUnitRpt']) && $input['costUnitRpt'] <= 0 ){
-                return $this->sendError('Unit Price(Rpt) can’t be Zero when Unit Price(Local) has a value',500);
+            else {
+                return $this->sendError($assetCreate['message'], $assetCreate['code']);
             }
-        }
-
-        if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] > 0){
-            if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] <= 0 ){
-                return $this->sendError('Acc. Depreciation(Rpt) can’t be Zero when Acc. Depreciation (Local) has a value',500);
-            }
-        }
-
-        if(isset($input['salvage_value']) && $input['salvage_value'] > 0){
-            if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] <= 0 ){
-                return $this->sendError('Residual Value(Rpt) can’t be Zero when Residual Value(Local) has a value',500);
-            }
-        }
-
-
-        if(isset($input['costUnitRpt']) && $input['costUnitRpt'] > 0 ){
-            if(isset($input['COSTUNIT']) && $input['COSTUNIT'] <= 0 ){
-                return $this->sendError('Unit Price(Local) can’t be Zero when Unit Price(Rpt) has a value',500);
-            }
-        }
-
-        if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] > 0){
-            if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] <= 0 ){
-                return $this->sendError('Acc. Depreciation(Local) can’t be Zero when Acc. Depreciation (Rpt) has a value',500);
-            }
-        }
-
-        if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] > 0){
-            if(isset($input['salvage_value']) && $input['salvage_value'] <= 0 ){
-                return $this->sendError('Residual Value(Local) can’t be Zero when Residual Value(Rpt) has a value',500);
-            }
-        }
-
-        
-        DB::beginTransaction();
-        try {
-            $messages = [
-                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aquired',
-                'documentDate.before_or_equal' => 'Document Date cannot be greater than DEP Date',
-                'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
-                'AUDITCATOGARY.required' => 'Audit Category is required',
-            ];
-            $validator = \Validator::make($request->all(), [
-                'dateAQ' => 'required|date',
-                'AUDITCATOGARY' => 'required',
-                'dateDEP' => 'required|date|after_or_equal:dateAQ',
-                'documentDate' => 'required|date|before_or_equal:dateDEP',
-                'faUnitSerialNo' => 'required|unique:erp_fa_asset_master',
-            ], $messages);
-
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
-            }
-
-            if (isset($input['itemPicture'])) {
-                if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
-                }
-            }
-
-            $input['serviceLineSystemID'] = $input["serviceLineSystemID"];
-            $segment = SegmentMaster::find($input['serviceLineSystemID']);
-            if ($segment) {
-                $input['serviceLineCode'] = $segment->ServiceLineCode;
-            }
-
-            $company = Company::find($input['companySystemID']);
-            if ($company) {
-                $input['companyID'] = $company->CompanyID;
-            }
-
-            $department = DepartmentMaster::find($input['departmentSystemID']);
-            if ($department) {
-                $input['departmentID'] = $department->DepartmentID;
-            }
-
-            if (isset($input['postToGLYN'])) {
-                if ($input['postToGLYN']) {
-                    $chartOfAccount = ChartOfAccount::find($input['postToGLCodeSystemID']);
-                    if (!empty($chartOfAccount)) {
-                        $input['postToGLCode'] = $chartOfAccount->AccountCode;
-                    }
-                    $input['postToGLYN'] = 1;
-                } else {
-                    $input['postToGLYN'] = 0;
-                }
-            } else {
-                $input['postToGLYN'] = 0;
-            }
-
-            $input["documentSystemID"] = 22;
-            $input["documentID"] = 'FA';
-
-            if (isset($input['dateAQ'])) {
-                if ($input['dateAQ']) {
-                    $input['dateAQ'] = new Carbon($input['dateAQ']);
-                }
-            }
-
-            if (isset($input['dateDEP'])) {
-                if ($input['dateDEP']) {
-                    $input['dateDEP'] = new Carbon($input['dateDEP']);
-                }
-            }
-
-            if (isset($input['accumulated_depreciation_date'])) {
-                if ($input['accumulated_depreciation_date']) {
-                    $input['accumulated_depreciation_date'] = new Carbon($input['accumulated_depreciation_date']);
-                }
-            }
-
-            if (isset($input['lastVerifiedDate'])) {
-                if ($input['lastVerifiedDate']) {
-                    $input['lastVerifiedDate'] = new Carbon($input['lastVerifiedDate']);
-                }
-            }
-
-            if (isset($input['documentDate'])) {
-                if ($input['documentDate']) {
-                    $input['documentDate'] = new Carbon($input['documentDate']);
-                }
-            }
-
-            $lastSerialNumber = 1;
-            $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
-            if ($lastSerial) {
-                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-            }
-
-            $auditCategory = isset($input['AUDITCATOGARY']) ? $input['AUDITCATOGARY'] : null;
-            $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID'],$input['faCatID'],$input['faSubCatID']);
-            if ($documentCodeData['status']) {
-                $documentCode = $documentCodeData['documentCode'];
-                $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
-                $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
-                                                         ->first();
-
-                if ($checkForDuplicateCode) {
-                    return $this->sendError("Asset code is already found.", 500);
-                }
-
-                $input["serialNo"] = null;
-            } else {
-                return $this->sendError("Asset code is not configured.", 500);
-                // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-                // $input["serialNo"] = $lastSerialNumber;
-            }
-
-            $input["faCode"] = $documentCode;
-            $input["faBarcode"] = $documentCode;
-
-            if(isset($input['isCurrencySame']) && $input['isCurrencySame'] == true) {
-                if ($input['costUnitRpt']) {
-                    $input['COSTUNIT'] = $input['costUnitRpt'];
-                }
-                if ($input['salvage_value_rpt']) {
-                    $input['salvage_value'] = $input['salvage_value_rpt'];
-                }
-                if ($input['accumulated_depreciation_amount_rpt']) {
-                    $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
-                }
-            }
-
-
-            $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-            $input['createdDateAndTime'] = date('Y-m-d H:i:s');
-            unset($input['itemPicture']);
-
-
- 
-           $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
-
-            if ($itemPicture) {
-                $decodeFile = base64_decode($itemImgaeArr[0]['file']);
-                $extension = $itemImgaeArr[0]['filetype'];
-                $data['itemPicture'] = $input['companyID'] . '_' . $input["documentID"] . '_' . $fixedAssetMasters['faID'] . '.' . $extension;
-
-                $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
-                $awsPolicy = Helper::checkPolicy($input['companySystemID'], 50);
-
-                if ($awsPolicy) {
-                    $path = $input['companyID']. '/G_ERP/' .$input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
-                } else {
-                    $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
-                }
-                $data['itemPath'] = $path;
-                Storage::disk($disk)->put($path, $decodeFile);
-                $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
-            }
-
- 
-
-
-            DB::commit();
-            return $this->sendResponse($fixedAssetMasters, 'Fixed Asset Master saved successfully');
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            return $this->sendError($exception->getMessage());
         }
     }
 
@@ -1301,6 +1073,16 @@ class FixedAssetMasterAPIController extends AppBaseController
         $fixedAssetMaster->delete();
 
         return $this->sendResponse($id, 'Fixed Asset Master deleted successfully');
+    }
+
+    public function getAssetCostingUploadData(){
+        $assetFinanceCategory = AssetFinanceCategory::all();
+
+        foreach($assetFinanceCategory as $asf) {
+            $asf->financeCatDescription = htmlspecialchars_decode($asf->financeCatDescription);
+        }
+
+        return $this->sendResponse($assetFinanceCategory, 'Record retrieved successfully');
     }
 
 
@@ -2237,117 +2019,195 @@ class FixedAssetMasterAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input = $request->all();
-            $excelUpload = $input['assetExcelUpload'];
-            $input = array_except($request->all(), 'assetExcelUpload');
-            $input = $this->convertArrayToValue($input);
 
-            $decodeFile = base64_decode($excelUpload[0]['file']);
-            $originalFileName = $excelUpload[0]['filename'];
+            if(isset($input['assetCostingTypeID']) && $input['assetCostingTypeID'] == 2) {
 
-            $disk = 'local';
-            Storage::disk($disk)->put($originalFileName, $decodeFile);
-
-            $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->first()->toArray();
-
-            if (count($formatChk) > 0) {
-                if (!isset($formatChk['asset_description']) || !isset($formatChk['serial_no'])) {
-                    return $this->sendError('Uploaded data format is invalid', 500);
-                }
-            }
-
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('asset_description', 'serial_no'))->get()->toArray();
-
-            $uploadSerialNumber = array_filter(collect($record)->pluck('serial_no')->toArray());
-            $uploadSerialNumberUnique = array_unique($uploadSerialNumber);
-
-            $fixedAsset = FixedAssetMaster::ofCompany([$input['companySystemID']])->pluck('faUnitSerialNo')->toArray();
-
-            if (count($record) > 0) {
-                // check for duplicate serial number in db
-                $chkDuplicateAssetInDB = array_intersect($fixedAsset,$uploadSerialNumber);
-
-                // check for duplicate serial number in uploaded asset
-                if ((count($uploadSerialNumber) != count($uploadSerialNumberUnique)) || count($chkDuplicateAssetInDB) > 0) {
-                    return $this->sendError('The uploaded assets has duplicate serial numbers, please check and re-upload', 500);
+                if($input['assetDescription']== ''){
+                    return $this->sendError('Description is required',500);
                 }
 
-                $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
-                if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                if($input['assetExcelUpload']== null){
+                    return $this->sendError('Please Select a File',500);
                 }
 
-                $department = DepartmentMaster::find($input['departmentSystemID']);
-                if ($department) {
-                    $input['departmentID'] = $department->DepartmentID;
+
+                $excelUpload = $input['assetExcelUpload'];
+                $input = array_except($request->all(), 'assetExcelUpload');
+                $input = $this->convertArrayToValue($input);
+
+                $decodeFile = base64_decode($excelUpload[0]['file']);
+                $originalFileName = $excelUpload[0]['filename'];
+                $extension = $excelUpload[0]['filetype'];
+                $size = $excelUpload[0]['size'];
+
+                $allowedExtensions = ['xlsx','xls'];
+
+                if (!in_array($extension, $allowedExtensions))
+                {
+                    return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
                 }
 
-                $segment = SegmentMaster::find($input['serviceLineSystemID']);
-                if ($segment) {
-                    $input['serviceLineCode'] = $segment->ServiceLineCode;
+                if ($size > 20000000) {
+                    return $this->sendError('The maximum size allow to upload is 20 MB',500);
                 }
 
-                $company = Company::find($input['companySystemID']);
-                if ($company) {
-                    $input['companyID'] = $company->CompanyID;
-                }
+                $employee = \Helper::getEmployeeInfo();
 
-                foreach ($record as $val) {
-                    if (isset($val['asset_description']) || isset($val['serial_no'])) {
-                        $data = [];
-                        $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-                        $data['assetDescription'] = $val['asset_description'];
-                        $data['faUnitSerialNo'] = $val['serial_no'];
-                        $data['serialNo'] = $lastSerialNumber;
-                        $data['faCode'] = $documentCode;
-                        $data['supplierIDRentedAsset'] = $input['supplierID'];
-                        $data['faCatID'] = $input['faCatID'];
-                        $data['faSubCatID'] = $input['faSubCatID'];
-                        $data['faSubCatID2'] = $input['faSubCatID2'];
-                        $data['faSubCatID3'] = $input['faSubCatID3'];
-                        $data['faSubCatID3'] = $input['faSubCatID3'];
-                        $data['documentID'] = 'FA';
-                        $data['documentSystemID'] = 22;
-                        $data['companySystemID'] = $input['companySystemID'];
-                        $data['companyID'] = $input['companyID'];
-                        $data['serviceLineSystemID'] = $input['serviceLineSystemID'];
-                        $data['serviceLineCode'] = $input['serviceLineCode'];
-                        $data['departmentSystemID'] = $input['departmentSystemID'];
-                        $data['departmentID'] = $input['departmentID'];
-                        $data['dateAQ'] = NOW();
-                        $data['MANUFACTURE'] = '-';
-                        $data['assetType'] = 2;
-                        $data['confirmedYN'] = 1;
-                        $data['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
-                        $data['confirmedByEmpID'] = \Helper::getEmployeeID();
-                        $data['confirmedDate'] = NOW();
-                        $data['approved'] = -1;
-                        $data['approvedDate'] = NOW();
-                        $data['postedDate'] = NOW();
-                        $data['approvedByUserID'] = \Helper::getEmployeeID();
-                        $data['approvedByUserSystemID'] = \Helper::getEmployeeSystemID();
-                        $data['createdPcID'] = gethostname();
-                        $data['createdUserID'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                        $data['timestamp'] = NOW();
-                        $finalData[] = $data;
-                        $lastSerialNumber++;
+                $uploadArray = array(
+                    'companySystemID' => $input['companySystemID'],
+                    'assetDescription' => $input['assetDescription'],
+                    'uploadedDate' => \Helper::currentDateTime(),
+                    'uploadedBy' => $employee->empID,
+                    'uploadStatus' => -1
+                );
+
+
+                $uploadAssetCosting = UploadAssetCosting::create($uploadArray);
+
+                $uploadLogArray = array(
+                    'companySystemID' => $input['companySystemID'],
+                    'assetCostingUploadID' => $uploadAssetCosting->id,
+                );
+
+                $logUploadAssetCosting = LogUploadAssetCosting::create($uploadLogArray);
+
+
+                $db = isset($request->db) ? $request->db : "";
+                $disk = 'local';
+                Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+                $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+
+                $uploadData = ['objPHPExcel' => $objPHPExcel,
+                   'uploadAssetCosting' => $uploadAssetCosting,
+                    'logUploadAssetCosting' => $logUploadAssetCosting,
+                    'employee' => $employee,
+                    'uploadedCompany' =>  $input['companySystemID'],
+                    'auditCategory' => $input['auditCategory'],
+                    'postToGL' => $input['postToGL'],
+                    'postToGLCodeSystemID' => $input['postToGLCodeSystemID']
+                ];
+
+                AssetCostingUpload::dispatch($db, $uploadData);
+
+
+                DB::commit();
+                return $this->sendResponse([], 'Asset Costing uploaded successfully');
+
+            } else {
+                $excelUpload = $input['assetExcelUpload'];
+                $input = array_except($request->all(), 'assetExcelUpload');
+
+                $input = $this->convertArrayToValue($input);
+
+                $decodeFile = base64_decode($excelUpload[0]['file']);
+                $originalFileName = $excelUpload[0]['filename'];
+
+                $disk = 'local';
+                Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+                $finalData = [];
+                $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+                })->first()->toArray();
+
+                if (count($formatChk) > 0) {
+                    if (!isset($formatChk['asset_description']) || !isset($formatChk['serial_no'])) {
+                        return $this->sendError('Uploaded data format is invalid', 500);
                     }
                 }
-            } else {
-                return $this->sendError('No Records found!', 500);
-            }
 
-            if (count($finalData) > 0) {
-                foreach (array_chunk($finalData, 500) as $t) {
-                    FixedAssetMaster::insert($t);
+                $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+                })->select(array('asset_description', 'serial_no'))->get()->toArray();
+
+                $uploadSerialNumber = array_filter(collect($record)->pluck('serial_no')->toArray());
+                $uploadSerialNumberUnique = array_unique($uploadSerialNumber);
+
+                $fixedAsset = FixedAssetMaster::ofCompany([$input['companySystemID']])->pluck('faUnitSerialNo')->toArray();
+
+                if (count($record) > 0) {
+                    // check for duplicate serial number in db
+                    $chkDuplicateAssetInDB = array_intersect($fixedAsset, $uploadSerialNumber);
+
+                    // check for duplicate serial number in uploaded asset
+                    if ((count($uploadSerialNumber) != count($uploadSerialNumberUnique)) || count($chkDuplicateAssetInDB) > 0) {
+                        return $this->sendError('The uploaded assets has duplicate serial numbers, please check and re-upload', 500);
+                    }
+
+                    $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
+                    if ($lastSerial) {
+                        $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                    }
+
+                    $department = DepartmentMaster::find($input['departmentSystemID']);
+                    if ($department) {
+                        $input['departmentID'] = $department->DepartmentID;
+                    }
+
+                    $segment = SegmentMaster::find($input['serviceLineSystemID']);
+                    if ($segment) {
+                        $input['serviceLineCode'] = $segment->ServiceLineCode;
+                    }
+
+                    $company = Company::find($input['companySystemID']);
+                    if ($company) {
+                        $input['companyID'] = $company->CompanyID;
+                    }
+
+                    foreach ($record as $val) {
+                        if (isset($val['asset_description']) || isset($val['serial_no'])) {
+                            $data = [];
+                            $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                            $data['assetDescription'] = $val['asset_description'];
+                            $data['faUnitSerialNo'] = $val['serial_no'];
+                            $data['serialNo'] = $lastSerialNumber;
+                            $data['faCode'] = $documentCode;
+                            $data['supplierIDRentedAsset'] = $input['supplierID'];
+                            $data['faCatID'] = $input['faCatID'];
+                            $data['faSubCatID'] = $input['faSubCatID'];
+                            $data['faSubCatID2'] = $input['faSubCatID2'];
+                            $data['faSubCatID3'] = $input['faSubCatID3'];
+                            $data['faSubCatID3'] = $input['faSubCatID3'];
+                            $data['documentID'] = 'FA';
+                            $data['documentSystemID'] = 22;
+                            $data['companySystemID'] = $input['companySystemID'];
+                            $data['companyID'] = $input['companyID'];
+                            $data['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                            $data['serviceLineCode'] = $input['serviceLineCode'];
+                            $data['departmentSystemID'] = $input['departmentSystemID'];
+                            $data['departmentID'] = $input['departmentID'];
+                            $data['dateAQ'] = NOW();
+                            $data['MANUFACTURE'] = '-';
+                            $data['assetType'] = 2;
+                            $data['confirmedYN'] = 1;
+                            $data['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+                            $data['confirmedByEmpID'] = \Helper::getEmployeeID();
+                            $data['confirmedDate'] = NOW();
+                            $data['approved'] = -1;
+                            $data['approvedDate'] = NOW();
+                            $data['postedDate'] = NOW();
+                            $data['approvedByUserID'] = \Helper::getEmployeeID();
+                            $data['approvedByUserSystemID'] = \Helper::getEmployeeSystemID();
+                            $data['createdPcID'] = gethostname();
+                            $data['createdUserID'] = \Helper::getEmployeeID();
+                            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                            $data['timestamp'] = NOW();
+                            $finalData[] = $data;
+                            $lastSerialNumber++;
+                        }
+                    }
+                } else {
+                    return $this->sendError('No Records found!', 500);
                 }
+
+                if (count($finalData) > 0) {
+                    foreach (array_chunk($finalData, 500) as $t) {
+                        FixedAssetMaster::insert($t);
+                    }
+                }
+                Storage::disk($disk)->delete('app/' . $originalFileName);
+                DB::commit();
+                return $this->sendResponse([], 'Assets uploaded successfully');
             }
-            Storage::disk($disk)->delete('app/' . $originalFileName);
-            DB::commit();
-            return $this->sendResponse([], 'Assets uploaded successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -2356,15 +2216,95 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     }
 
+    public function cancelUploadAssetCosting(Request $request)
+    {
+
+        UploadAssetCosting::where('id', $request->assetCostingUploadID)->update(['isCancelled' => 1, 'uploadStatus' => 0]);
+        app(AssetCreationService::class)->assetDeletion($request->assetCostingUploadID);
+
+        return $this->sendResponse([], 'Asset costing cancelled successfully');
+
+    }
+
+    public function deleteUploadAssetCosting(Request $request)
+    {
+        $deleteCondition = UploadAssetCosting::where('id', $request->assetCostingUploadID)->first();
+        if($deleteCondition->uploadStatus == -1){
+            return $this->sendError('Please cancel the asset costing upload');
+        }
+
+        if($deleteCondition->uploadStatus == 1){
+            return $this->sendError('Unable to delete as asset costing is already successfully uploaded');
+        }
+
+        app(AssetCreationService::class)->assetDeletion($request->assetCostingUploadID);
+
+
+        UploadAssetCosting::where('id', $request->assetCostingUploadID)->delete();
+        LogUploadAssetCosting::where('assetCostingUploadID', $request->assetCostingUploadID)->delete();
+
+        return $this->sendResponse([], 'Asset costing deleted successfully');
+    }
+
     public function downloadAssetTemplate(Request $request)
     {
         $input = $request->all();
         $disk = Helper::policyWiseDisk($input['companySystemID']);
-        if ($exists = Storage::disk($disk)->exists('asset_master_template/asset_upload_template.xlsx')) {
-            return Storage::disk($disk)->download('asset_master_template/asset_upload_template.xlsx', 'asset_upload_template.xlsx');
+        $companyMaster = Company::find($input['companySystemID']);
+
+        if($input['type'] == 1){
+            if (Storage::disk($disk)->exists('asset_master_template/asset_upload_template.xlsx')) {
+                return Storage::disk($disk)->download('asset_master_template/asset_upload_template.xlsx', 'asset_upload_template.xlsx');
+            } else {
+                return $this->errorMessageForAttachments();
+            }
         } else {
-            return $this->sendError('Attachments not found', 500);
+            if(!empty($companyMaster)) {
+                if ($companyMaster->localCurrencyID == $companyMaster->reportingCurrency) {
+                    if (Storage::disk($disk)->exists('asset_master_template/same_currency_own_asset_upload_template.xlsx')) {
+                        return Storage::disk($disk)->download('asset_master_template/same_currency_own_asset_upload_template.xlsx', 'same_currency_own_asset_upload_template.xlsx');
+                    } else {
+                        return $this->errorMessageForAttachments();
+                    }
+                } else {
+                    if (Storage::disk($disk)->exists('asset_master_template/own_asset_upload_template.xlsx')) {
+                        return Storage::disk($disk)->download('asset_master_template/own_asset_upload_template.xlsx', 'own_asset_upload_template.xlsx');
+                    } else {
+                        return $this->errorMessageForAttachments();
+                    }
+                }
+            }
         }
+    }
+
+    function errorMessageForAttachments(){
+        return $this->sendError('Attachments not found', 500);
+    }
+
+    public function getAssetCostingUploads(Request $request) {
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $uploadAssetCosting = UploadAssetCosting::where('companySystemID', $input['companyId'])->with('uploaded_by','log')->select('*');
+
+
+        return \DataTables::eloquent($uploadAssetCosting)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
     public function exportAssetMaster(Request $request){

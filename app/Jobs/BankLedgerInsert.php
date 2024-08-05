@@ -223,7 +223,6 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                                 $data['createdPcID'] = gethostname();
                                 $data['timestamp'] = NOW();
-                                Log::info($data);
                                 array_push($finalData, $data);
                             }
                         }
@@ -395,13 +394,11 @@ class BankLedgerInsert implements ShouldQueue
                         Log::warning('Document ID not found ' . date('H:i:s'));
                 }
                 if ($finalData) {
-                    Log::info($finalData);
                     //$bankLedgerInsert = BankLedger::insert($finalData);
                     foreach ($finalData as $data)
                     {
                         BankLedger::create($data);
                     }
-                    Log::info('Successfully inserted to bank ledger table ' . date('H:i:s'));
                     DB::commit();
                 }
             } catch (\Exception $e) {

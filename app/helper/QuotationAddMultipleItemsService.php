@@ -12,6 +12,7 @@
 
 namespace App\helper;
 
+use App\Models\QuotationMaster;
 use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
@@ -94,7 +95,7 @@ class QuotationAddMultipleItemsService
                     $currencyConversionDefault = \Helper::currencyConversion($quotation['companySystemID'], $quotation['customerCurrencyID'], $quotation['customerCurrencyID'], $quotation['transactionAmount']);
 
                     $data['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
-                    $data['wacValueLocal'] = $itemAssigned->wacValueLocal;
+                    $data['wacValueLocal'] = $itemAssigned?$itemAssigned->wacValueLocal:0;
 
 
 
@@ -139,6 +140,11 @@ class QuotationAddMultipleItemsService
         }
 
         QuotationDetails::insert($itemsToUpload);
+
+        QuotationMaster::where('quotationMasterID', $quotation['quotationMasterID'])->update([
+            'isBulkItemJobRun' => 0
+        ]);
+
         Log::info($data);
         
     }

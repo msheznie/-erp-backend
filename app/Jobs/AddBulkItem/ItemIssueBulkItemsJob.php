@@ -54,7 +54,6 @@ class ItemIssueBulkItemsJob implements ShouldQueue
         $db = $this->dispatch_db;
 
         Log::useFiles(storage_path() . '/logs/item_issue_bulk_items.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
 
         CommonJobService::db_switch($db);
         $input = $this->data;
@@ -71,7 +70,7 @@ class ItemIssueBulkItemsJob implements ShouldQueue
             $financeCategorySub = isset($input['financeCategorySub'])?$input['financeCategorySub']:null;
 
             $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-                                        return $query->where('companySystemID', '=', $companyId);
+                                        return $query->where('companySystemID', '=', $companyId)->where('isAssigned', '=', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
                                      })->where('isActive',1)
                                      ->where('itemApprovedYN',1)
                                      ->when((isset($input['financeCategoryMaster']) && $input['financeCategoryMaster']), function($query) use ($input){
@@ -94,11 +93,14 @@ class ItemIssueBulkItemsJob implements ShouldQueue
                                         });
                                     }
                                   
-            $count = $itemMasters->count();   
-            
+            $count = $itemMasters->count();
+
+            if($count == 0){
+                ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
+            }
+
             $chunkDataSizeCounts = ceil($count / $chunkSize);
             for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
-                Log::info('started '.$i);
                 ProcessMaterialIssueQuery::dispatch($i, $db, $companyId, $financeCategoryMaster,$financeCategorySub,$input['itemIssueAutoID'],$chunkDataSizeCounts,$input['empID'], $input['employeeSystemID'],$isSearched,$searchVal)->onQueue('single');
             }
 
@@ -119,7 +121,6 @@ class ItemIssueBulkItemsJob implements ShouldQueue
 
             // ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->update(['isBulkItemJobRun' => 0]);
             
-            Log::info('Successfully completed');
 
             DB::commit();
         } catch (\Exception $exception) {

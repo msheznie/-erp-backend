@@ -141,7 +141,6 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                     $supplierInvoiceData['createdUserID'] = $grvMaster->grvConfirmedByName;
                     $supplierInvoiceData['createdPcID'] = gethostname();
                     $bookInvSuppMaster = $bookInvSuppMasterRepo->create($supplierInvoiceData);
-                    Log::info($bookInvSuppMaster);
                     // supplier Invoice master end
 
                     if (!empty($bookInvSuppMaster)) {
@@ -174,7 +173,6 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                         $supplierInvoiceDetail['timesReferred'] = 0;
                         $supplierInvoiceDetail['timeStamp'] = $today;
                         $bookInvSuppDet = $bookInvSuppDetRepo->create($supplierInvoiceDetail);
-                        Log::info($bookInvSuppDet);
                     }
 
                     $masterModel = ['documentSystemID' => 11, 'autoID' => $bookInvSuppMaster->bookingSuppMasInvAutoID, 'companySystemID' => $bookInvSuppMaster->companySystemID, 'employeeSystemID' => $bookInvSuppMaster->confirmedByEmpSystemID];

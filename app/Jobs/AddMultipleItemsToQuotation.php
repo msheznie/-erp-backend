@@ -34,7 +34,6 @@ class AddMultipleItemsToQuotation implements ShouldQueue
      */
     public function __construct($record,$quotation,$db,$authID)
     {
-        Log::info('Add Mutiple Items to quotation Started in Constructor - DB'.$db);
 
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -56,7 +55,6 @@ class AddMultipleItemsToQuotation implements ShouldQueue
     public function handle()
     {
         $db = $this->db;
-        Log::info('DB switched'.$db);
 
         CommonJobService::db_switch($db);
         QuotationAddMultipleItemsService::addMultipleItems($this->record,$this->quotation, $this->db,$this->authID);

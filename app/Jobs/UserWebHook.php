@@ -75,7 +75,6 @@ class UserWebHook implements ShouldQueue
 
                     $employees->mobile_no = isset($srpEmployee->EpMobile) ? $srpEmployee->EpMobile: null;
                     $employees->lang_short_code = ($employeeLanguage && $employeeLanguage->language) ? $employeeLanguage->language->languageShortCode : null;
-                    Log::info("Test: " . $employees);
 
                     $client = new Client();
                     $headers = [
@@ -87,7 +86,6 @@ class UserWebHook implements ShouldQueue
                         'json' => $employees
                     ]);
                     $json = $res->getBody();
-                    Log::info("Json out: " . $json);
 
                     DB::commit();
                 }
@@ -96,10 +94,7 @@ class UserWebHook implements ShouldQueue
         } catch (\Exception $e)
         {
             DB::rollback();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
+            Log::error($e->getMessage());
         }
     }
 }

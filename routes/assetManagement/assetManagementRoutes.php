@@ -11,6 +11,7 @@ Route::group([], function(){
     Route::post('getCostingApprovalByUser', 'FixedAssetMasterAPIController@getCostingApprovalByUser')->name("Get asset costing pending for approval");
     Route::post('getCostingApprovedByUser', 'FixedAssetMasterAPIController@getCostingApprovedByUser')->name("Get asset costing approved");
     Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData')->name("Get asset form data");
+    Route::get('getAssetCostingUploadData', 'FixedAssetMasterAPIController@getAssetCostingUploadData')->name("Get asset costing upload data");
     Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID')->name("Get asset id");
     Route::post('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat')->name("Get asset sub category");
     Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts')->name("Get post gl account");
@@ -77,13 +78,15 @@ Route::group([], function(){
     Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset')->name("Get Capitilization Fixed Asset");
     Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create')->name("Create Fixed Asset Costing");
     Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate')->name("Download Asset Template");
-    Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload')->name("Asset Costing Upload");
     Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster')->name("Get Asset Costing Master");
     Route::resource('asset_warranties', 'AssetWarrantyAPIController');
     Route::post('getWarranty', 'AssetWarrantyAPIController@getWarranty')->name("Get asset warranty");
     Route::post('getAssetAttributes', 'FixedAssetMasterAPIController@assetAttributes')->name("Get asset attributes");
     Route::post('updateAttribute', 'FixedAssetMasterAPIController@updateAttribute')->name("Update asset attribute");
     Route::post('updateActionAttribute', 'FixedAssetMasterAPIController@updateActionAttribute')->name("Update asset attribute");
+    Route::post('getAssetCostingUploads', 'FixedAssetMasterAPIController@getAssetCostingUploads')->name("Get asset costing uploads");
+    Route::post('cancelUploadAssetCosting', 'FixedAssetMasterAPIController@cancelUploadAssetCosting')->name("Cancel upload asset costing");
+    Route::post('deleteUploadAssetCosting', 'FixedAssetMasterAPIController@deleteUploadAssetCosting')->name("Delete upload asset costing");
 
 
     Route::post('assetCostAttributesUpdate', 'ErpAttributesAPIController@assetCostAttributesUpdate')->name('Asset cost attributes update');
@@ -91,7 +94,6 @@ Route::group([], function(){
     Route::get('getAttributesDataFormData', 'FinanceItemCategoryMasterAPIController@getAttributesDataFormData')->name('Get attributes data form data');
     Route::post('getAssetCostAttributesData', 'FinanceItemCategoryMasterAPIController@getAssetCostAttributesData')->name('Get asset cost attributes data');
     Route::post('getAttributesDropdownData', 'ErpAttributesDropdownAPIController@getAttributesDropdownData');
-
 
 });
 

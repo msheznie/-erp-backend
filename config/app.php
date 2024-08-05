@@ -243,7 +243,8 @@ return [
         //'PDF' => Barryvdh\DomPDF\Facade::class,
         'PDF' => Seguce92\DomPDF\Facade::class,
         'FCM'      => LaravelFCM\Facades\FCM::class,
-        'FCMGroup' => LaravelFCM\Facades\FCMGroup::class
+        'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
+        'ExchangeSetupConfig' => App\Facades\ExchangeSetupConfigFacade::class
     ],
 
 ];

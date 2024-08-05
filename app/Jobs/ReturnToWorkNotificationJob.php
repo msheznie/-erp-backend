@@ -56,7 +56,6 @@ class ReturnToWorkNotificationJob implements ShouldQueue
             Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
            
         } else {            
-            Log::info("Job triggered");
 
             CommonJobService::db_switch($this->dbName);
             $obj = new ReturnToWorkNotificationService($this->companyId, $this->id, $this->masterDetails);

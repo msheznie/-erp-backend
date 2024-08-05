@@ -21,8 +21,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-
-
+use App\Models\logUploadBudget;
+use Exception;
 class BudgetSegmentBulkInsert implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -58,7 +58,6 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
         DB::beginTransaction();
         try {
-            Log::info('Budget Segment Bulk Insert Started');
 
             $uploadBudget = $uploadData['uploadBudget'];
             $employee = $uploadData['employee'];
@@ -66,7 +65,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $uploadedCompany = $uploadData['uploadedCompany'];
 
             $worksheet = $objPHPExcel->getActiveSheet();
-
+            $highestRow = $worksheet->getHighestRow();
             $header = $worksheet->toArray();
 
             $templateName = $header[0][1];
@@ -76,117 +75,202 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $segments = $header[7];
             $segments = array_slice($segments, 4);
 
-            $dates = explode(" - ", $financialYear);
-
-            $startDate = $dates[0];
-            $endDate = $dates[1];
-
-            list($day, $month, $year) = explode("/", $startDate);
-            $mysqlFormattedStartDate = "{$year}-{$month}-{$day}";
-
-            list($day, $month, $year) = explode("/", $endDate);
-            $mysqlFormattedEndDate = "{$year}-{$month}-{$day}";
-
-            list($startDay, $startMonth, $startYear) = explode("/", $startDate);
-
-            $year = $startYear;
-            $month = $startMonth;
-
-            $template = ReportTemplate::where('description', $templateName)->where('companySystemID', $uploadedCompany)->first();
-
-            $worksheet->removeRow(1, 7);
-
-            $data = $worksheet->toArray();
-
-            $data = array_filter(collect($data)->toArray());
-
-            $keys = $data[0];
-
-            array_shift($data);
-
-            $result = [];
-
-            foreach ($data as $row) {
-                $rowAssoc = array_combine($keys, $row);
-                $result[] = $rowAssoc;
-            }
-
-            $financeYear = CompanyFinanceYear::where('companySystemID', $template->companySystemID)->whereDate('bigginingDate', '=', $mysqlFormattedStartDate)->whereDate('endingDate', '=', $mysqlFormattedEndDate)->first();
-
-            $budgetExists = BudgetMaster::where('templateMasterID', $template->companyReportTemplateID)->where('companyFinanceYearID', $financeYear->companyFinanceYearID)->get();
-
-            $segmentDes = [];
-            foreach ($budgetExists as $budgetExist) {
-                $segmentMaster = SegmentMaster::find($budgetExist->serviceLineSystemID);
-
-                $segmentDes[] = $segmentMaster->ServiceLineDes;
-            }
-
-            $segments = array_filter($segments, function ($segment) use ($segmentDes) {
-                return !in_array($segment, $segmentDes);
-            });
-
-            $totalSegments = count($segments);
-            Log::info('Total Segments: ' . $totalSegments);
-
-            if($uploadedCompany != $template->companySystemID){
-                Log::info('Uploaded company is different from the template company');
-
-                $webPushData = [
-                    'title' => "Upload Budget Failed",
-                    'body' => "",
-                    'url' => "general-ledger/budget-upload",
-                    'path' => "",
-                ];
-
-               WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
-
-                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+            $notValidFinance = true;
+            if (!preg_match("/^\d{2}\/\d{2}\/\d{4} - \d{2}\/\d{2}\/\d{4}$/", $financialYear)) {
+                $notValidFinance = false;
+                $msg = 'The financial year format not correct';
+                $this->failed($uploadedCompany,$uploadBudget->id,$msg,1);
             } else {
 
-                foreach ($segments as $segment) {
 
-                    $subData = ['segment' => $segment,
-                        'template' => $template,
-                        'employee' => $employee,
-                        'result' => $result,
-                        'financeYear' => $financeYear,
-                        'year' => $year,
-                        'month' => $month,
-                        'notification' => $notification,
-                        'uploadBudget' => $uploadBudget,
-                        'currency' => $currency,
-                        'totalSegments' => $totalSegments
-                    ];
-                    BudgetSegmentSubJobs::dispatch($db, $subData)->onQueue('single');
+                $dates = explode(" - ", $financialYear);
+
+                $startDate = $dates[0];
+                $endDate = $dates[1];
+
+                list($day, $month, $year) = explode("/", $startDate);
+                $mysqlFormattedStartDate = "{$year}-{$month}-{$day}";
+
+                list($day, $month, $year) = explode("/", $endDate);
+                $mysqlFormattedEndDate = "{$year}-{$month}-{$day}";
+
+                list($startDay, $startMonth, $startYear) = explode("/", $startDate);
+
+
+                $year = $startYear;
+                $month = $startMonth;
+                $nonEmptyRowCount = 0;
+                foreach ($header as $row) {
+                    if ($this->isRowNotEmpty($row)) {
+                        $nonEmptyRowCount++;
+                    }
+                }
+
+
+                $notValidSegment = true;
+                foreach ($segments as $segment) {
+                    $segemntInfo = SegmentMaster::where('ServiceLineDes', $segment)->first();
+                    if (!isset($segemntInfo)) {
+                        $notValidSegment = false;
+                        $result = $this->failed($uploadedCompany, $uploadBudget->id, "The segment " . $segment . " does not exist", 8);
+                        if ($result) {
+                            continue;
+                        }
+                    }
+
+                }
+
+
+                $row1 = 9;
+                $notValidCode = true;
+                for ($row1 = 9; $row1 <= $highestRow; $row1++) {
+                    $cellValue = $worksheet->getCell('C' . $row1)->getValue();
+                    $gl_codes = ChartOfAccount::where('AccountCode', $cellValue)->first();
+                    if (!isset($gl_codes)) {
+                        $notValidCode = false;
+                        $result = $this->failed($uploadedCompany, $uploadBudget->id, "The GL code " . $cellValue . " is not available in the COA", $row1);
+                        if ($result) {
+                            continue;
+                        }
+                    }
+
+                }
+                $notValidTemplate = true;
+                $template = ReportTemplate::where('description', $templateName)->where('companySystemID', $uploadedCompany)->first();
+                if (!isset($template)) {
+                    $notValidTemplate = false;
+                    $this->failed($uploadedCompany, $uploadBudget->id, "Template name is not matching with existing templates", 1);
+                }
+
+
+                $financeYear = CompanyFinanceYear::where('isActive', -1)->where('companySystemID', $uploadedCompany)->whereDate('bigginingDate', '=', $mysqlFormattedStartDate)->whereDate('endingDate', '=', $mysqlFormattedEndDate)->first();
+                if (!isset($financeYear)) {
+                    $notValidFinance = false;
+                    $finDate = $mysqlFormattedStartDate . ' - ' . $mysqlFormattedEndDate;
+                    $msg = 'The financial year ' . $finDate . ' is not active/format not correct';
+                    $this->failed($uploadedCompany, $uploadBudget->id, $msg, 1);
+                }
+
+
+                $notValidLine = true;
+                if ($notValidTemplate) {
+                    $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) {
+                        $query->orderBy('sortOrder', 'asc');
+                    }])
+                        ->where('itemType', '!=', 3)
+                        ->where('companySystemID', $uploadedCompany)
+                        ->where('companyReportTemplateID', $template->companyReportTemplateID)
+                        ->orderBy('sortOrder', 'asc')
+                        ->get();
+
+                    $glCOdesSorted = collect($glCOdes);
+                    $count = 0;
+                    foreach ($glCOdesSorted->values()->all() as $det) {
+                        $count = $count + count($det->gllink);
+
+                    }
+
+                    $assetCount = $count + 6;
+                    if ($nonEmptyRowCount != $assetCount) {
+                        $notValidLine = false;
+                        $this->failed($uploadedCompany, $uploadBudget->id, "Some rows have been deleted from the template", $highestRow);
+                    }
+                }
+
+
+                if ($notValidCode && $notValidSegment && $notValidTemplate && $notValidLine && $notValidFinance) {
+
+                    $worksheet->removeRow(1, 7);
+
+                    $data = $worksheet->toArray();
+
+                    $data = array_filter(collect($data)->toArray());
+
+                    $keys = $data[0];
+
+                    array_shift($data);
+
+                    $result = [];
+
+                    foreach ($data as $row) {
+                        $rowAssoc = array_combine($keys, $row);
+                        $result[] = $rowAssoc;
+                    }
+
+
+                    $budgetExists = BudgetMaster::where('templateMasterID', $template->companyReportTemplateID)->where('companyFinanceYearID', $financeYear->companyFinanceYearID)->get();
+
+                    $segmentDes = [];
+                    foreach ($budgetExists as $budgetExist) {
+                        $segmentMaster = SegmentMaster::find($budgetExist->serviceLineSystemID);
+
+                        $segmentDes[] = $segmentMaster->ServiceLineDes;
+                    }
+
+                    $segments = array_filter($segments, function ($segment) use ($segmentDes) {
+                        return !in_array($segment, $segmentDes);
+                    });
+
+                    $totalSegments = count($segments);
+
+                    if ($uploadedCompany != $template->companySystemID) {
+                        Log::error('Uploaded company is different from the template company');
+
+                        $webPushData = [
+                            'title' => "Upload Budget Failed",
+                            'body' => "",
+                            'url' => "general-ledger/budget-upload",
+                            'path' => "",
+                        ];
+
+                        WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
+                        $this->failed($uploadedCompany, $uploadBudget->id, "Uploaded company is different from the template company", "");
+
+                    } else {
+
+                        foreach ($segments as $segment) {
+
+                            $subData = ['segment' => $segment,
+                                'template' => $template,
+                                'employee' => $employee,
+                                'result' => $result,
+                                'financeYear' => $financeYear,
+                                'year' => $year,
+                                'month' => $month,
+                                'notification' => $notification,
+                                'uploadBudget' => $uploadBudget,
+                                'currency' => $currency,
+                                'totalSegments' => $totalSegments
+                            ];
+                            BudgetSegmentSubJobs::dispatch($db, $subData)->onQueue('single');
+
+                        }
+                    }
+
+                    if ($totalSegments == 0) {
+                        Log::error('Zero segments available');
+
+                        $webPushData = [
+                            'title' => "Upload Budget Failed",
+                            'body' => "",
+                            'url' => "general-ledger/budget-upload",
+                            'path' => "",
+                        ];
+
+                        WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
+                        $this->failed($uploadedCompany, $uploadBudget->id, "Zero segments available", "");
+
+                    }
 
                 }
             }
-
-            if($totalSegments == 0){
-                Log::info('Zero segments available');
-
-                $webPushData = [
-                    'title' => "Upload Budget Failed",
-                    'body' => "",
-                    'url' => "general-ledger/budget-upload",
-                    'path' => "",
-                ];
-
-               WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
-
-                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
-
-            }
+  
 
             DB::commit();
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- Budget Segment Bulk Insert Error-----' . date('H:i:s'));
+            Log::error($e->getMessage());
             DB::beginTransaction();
             $webPushData = [
                 'title' => "Upload Budget Failed",
@@ -197,12 +281,41 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
            WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
             try {
-                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+             
+                $this->failed($uploadedCompany,$uploadBudget->id,"Undefined error in upload",$e->getLine());
                 DB::commit();
             } catch (\Exception $e){
-                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+                $this->failed($uploadedCompany,$uploadBudget->id,"Undefined error in upload",$e->getLine());
                 DB::commit();
             }
         }
+    }
+
+
+    public function failed($comapny,$budgetID,$msg,$line)
+    {
+        UploadBudgets::where('id', $budgetID)->update(['uploadStatus' => 0]);
+
+        $uploadLogArray = array(
+            'companySystemID' => $comapny,
+            'bugdet_upload_id' => $budgetID,
+            'is_failed' => 1,
+            'error_line' => $line,
+            'log_message' => $msg
+        );
+
+        $logUploadBudget= logUploadBudget::create($uploadLogArray);
+
+      return true;;
+    }
+
+        private function isRowNotEmpty(array $row): bool
+    {
+        foreach ($row as $cell) {
+            if (!is_null($cell) && trim($cell) !== '') {
+                return true;
+            }
+        }
+        return false;
     }
 }

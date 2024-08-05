@@ -9,6 +9,7 @@ use App\Models\SupplierEvaluationMasters;
 use App\Repositories\SupplierEvaluationMastersRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\SupplierEvaluationTemplateSectionTableColumn;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -279,6 +280,11 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
             return $this->sendError('Supplier Evaluation Masters not found');
         }
 
+        $columnCounts = SupplierEvaluationTemplateSectionTableColumn::where('evaluationMasterId',$supplierEvaluationMasters['id'])->count();
+        if($columnCounts > 0){
+            return $this->sendError('Can not edit!. Supplier evaluation master is used in supplier evaluation template');
+        }
+
         $supplierEvaluationMasters = $this->supplierEvaluationMastersRepository->update($input, $id);
 
         return $this->sendResponse($supplierEvaluationMasters->toArray(), 'Supplier Evaluation Masters updated successfully');
@@ -330,6 +336,11 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
 
         if (empty($supplierEvaluationMasters)) {
             return $this->sendError('Supplier Evaluation Masters not found');
+        }
+
+        $columnCounts = SupplierEvaluationTemplateSectionTableColumn::where('evaluationMasterId',$supplierEvaluationMasters['id'])->count();
+        if($columnCounts > 0){
+            return $this->sendError('Can not delete!. Supplier evaluation master is used in supplier evaluation template');
         }
 
         $supplierEvaluationMasters->delete();

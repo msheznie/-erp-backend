@@ -34,7 +34,6 @@ class BudgetCutOffNotificationJob implements ShouldQueue
             self::onConnection('database');
         }
         $this->dispatch_db = $dispatch_db;
-        Log::info('Budget cutoff JOB construct'.$this->dispatch_db);
     }
 
     /**
@@ -44,7 +43,6 @@ class BudgetCutOffNotificationJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::info('Budget cutoff JOB started');
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
 

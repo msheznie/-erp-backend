@@ -501,6 +501,9 @@ class TaxLedgerDetail extends Model
         return $this->belongsTo('App\Models\BookInvSuppMaster',['documentMasterAutoID','documentSystemID','companySystemID'], ['bookingSuppMasInvAutoID','documentSystemID','companySystemID']);
     }
 
+    public function payment_voucher(){
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster',['documentMasterAutoID','documentSystemID','companySystemID'], ['PayMasterAutoId','documentSystemID','companySystemID']);
+    }
     public function supplier_invoice_details(){
         return $this->belongsTo('App\Models\SupplierInvoiceItemDetail','documentDetailID', 'id');
     } 

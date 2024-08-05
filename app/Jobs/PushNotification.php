@@ -63,7 +63,6 @@ class PushNotification implements ShouldQueue
         }
 
         Log::useFiles(storage_path() . '/logs/push_notification_created.log');
-        Log::info('Successfully start push_notification_created' . date('H:i:s'));
 
         if ($this->sendPushNotification) {
             $optionBuilder = new OptionsBuilder();
@@ -101,7 +100,6 @@ class PushNotification implements ShouldQueue
                     'body' => $description,
                     'payload' => $payLoadData
                 ];
-                Log::info("------------ push notification added data (IOS)---------");
 
                 $notificationBuilder = new PayloadNotificationBuilder($notification_title);
                 $notificationBuilder->setBody($description)
@@ -115,15 +113,13 @@ class PushNotification implements ShouldQueue
                 $data = $dataBuilder->build();
                 
                 $downstreamResponse = FCM::sendTo($iosTokens, $option, $notification, $data);
-                Log::info("------------ push notification sent ... ---------");
                 $resp = [
                     $downstreamResponse->numberSuccess(),
                     $downstreamResponse->numberFailure(),
                     $downstreamResponse->numberModification(),
                 ];
-                Log::info(json_encode($resp));
             } else {
-                Log::info("IOS FCM token not found");
+                Log::error("IOS FCM token not found");
             }
 
             if (!empty($androidTokens)) {
@@ -133,7 +129,6 @@ class PushNotification implements ShouldQueue
                     'body' => $description,
                     'data' => $payLoadData
                 ];
-                Log::info("------------ push notification added data (ANDROID)---------");
 
                 $notificationBuilder2 = new PayloadNotificationBuilder($notification_title);
                 $notificationBuilder2->setBody($description)
@@ -146,18 +141,15 @@ class PushNotification implements ShouldQueue
                 $notification = $notificationBuilder2->build();
                 $data2 = $dataBuilder2->build();
                 $downstreamResponse = FCM::sendTo($androidTokens, $option, null, $data2);
-                Log::info("------------ push notification sent ... ---------");
                 $resp = [
                     $downstreamResponse->numberSuccess(),
                     $downstreamResponse->numberFailure(),
                     $downstreamResponse->numberModification(),
                 ];
-                Log::info(json_encode($resp));
             } else {
-                Log::info("ANDROID FCM token not found");
+                Log::error("ANDROID FCM token not found");
             }
         }
-        Log::info("------------ push notification end ---------");
     }
 
     public function failed($exception)

@@ -777,7 +777,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     $tempArray["localER"] = $companyCurrencyConversion['trasToLocER'];
 
                     $tempArray["comRptCurrencyID"] = $company->reportingCurrency;
-                    $tempArray["comRptER"] = $companyCurrencyConversion['trasToRptER'];
+                    $tempArray["comRptER"] =  $companyCurrencyConversion['trasToRptER'];
 
                     unset($tempArray['isChecked']);
                     unset($tempArray['DecimalPlaces']);
@@ -836,7 +836,6 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
 
                         $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
-
                         $this->updatePVDetail($paySupplierInvoiceMaster,$input['PayMasterAutoId']);
 
                         $advancePayment = PoAdvancePayment::find($new['poAdvPaymentID']);
@@ -961,9 +960,9 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                 'supplierDefaultCurrencyID' => $paySupplierInvoiceMaster->supplierDefCurrencyID,
                 'supplierDefaultCurrencyER' => $paySupplierInvoiceMaster->supplierDefCurrencyER,
                 'localCurrencyID' => $paySupplierInvoiceMaster->localCurrencyID,
-                'localER' => $paySupplierInvoiceMaster->localCurrencyER,
+//                'localER' => $paySupplierInvoiceMaster->localCurrencyER,
                 'comRptCurrencyID' => $paySupplierInvoiceMaster->companyRptCurrencyID,
-                'comRptER' => $paySupplierInvoiceMaster->companyRptCurrencyER,
+//                'comRptER' => $paySupplierInvoiceMaster->companyRptCurrencyER,
                 ]);
 
             $conversion = \Helper::convertAmountToLocalRpt(201, $payment->advancePaymentDetailAutoID, $payment->paymentAmount);
@@ -1010,7 +1009,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $masterArray['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
             $currencyConversionDefaultMaster = \Helper::currencyConversion($companyId, $paysupplierMaster->supplierTransCurrencyID, $bankAccount->accountCurrencyID, 0);
             if ($currencyConversionDefaultMaster) {
-                $masterArray['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                $masterArray['BPVbankCurrencyER'] =  ($paysupplierMaster->BPVbankCurrencyER) ?? $currencyConversionDefaultMaster['transToDocER'];
             }
         }
 
@@ -1022,8 +1021,8 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $masterArray['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
             $companyCurrencyConversion = \Helper::currencyConversion($companyId, $paysupplierMaster->supplierTransCurrencyID, $paysupplierMaster->supplierTransCurrencyID, 0);
             if ($companyCurrencyConversion) {
-                $masterArray['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $masterArray['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $masterArray['localCurrencyER'] = ($paysupplierMaster->localCurrencyER) ?? $companyCurrencyConversion['trasToLocER'];
+                $masterArray['companyRptCurrencyER'] = ($paysupplierMaster->companyRptCurrencyER) ?? $companyCurrencyConversion['trasToRptER'];
             }
         }
 

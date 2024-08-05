@@ -25,6 +25,8 @@
 
 namespace App\Http\Controllers\API;
 use App\helper\Helper;
+use App\Models\ItemMaster;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 use App\helper\TaxService;
@@ -74,7 +76,6 @@ use Illuminate\Support\Facades\File;
 use App\Jobs\AddMultipleItemsToQuotation;
 use Carbon\Carbon;
 use Response;
-use Auth;
 use App\Jobs\DocumentAttachments\SoSentToCustomerJob;
 
 /**
@@ -1953,7 +1954,7 @@ class QuotationMasterAPIController extends AppBaseController
             $totalRecords = count(collect($formatChk)->toArray());
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
-            $uniqueData = collect($uniqueData)->unique('item_code')->toArray();
+            $uniqueData = collect($uniqueData)->toArray();
             $validateHeaderCode = false;
             $validateHeaderQty = false;
             $validateHeaderPrice = false;
@@ -2021,31 +2022,46 @@ class QuotationMasterAPIController extends AppBaseController
 
             $finalArray = [];
             $count = 0;
-            $uniqueData =  collect($uniqueData)->unique('item_code')->toArray();
+            // Starting 2 mean, first data line in Excel without header line
+            $errorLine = 2;
+            $errorLineNumbers = [];
+            $uniqueData =  collect($uniqueData)->toArray();
 
             foreach($uniqueData as $finalRecords) {
                  if((is_numeric($finalRecords['qty']) && $finalRecords['qty'] != 0)  &&  (is_numeric($finalRecords['sales_price']) && $finalRecords['sales_price'] != 0) &&  (is_numeric($finalRecords['discount']) && $finalRecords['discount'] < $finalRecords['sales_price']) && (is_numeric($finalRecords['vat']) && $finalRecords['vat'] <= 100)) {
-                     $exists_item = QuotationDetails::where('quotationMasterID',$masterData->quotationMasterID)->where('itemSystemCode',$finalRecords['item_code'])->first();
- 
-                     if(!$exists_item) {
-                     $count++;
-                    array_push($finalArray,$finalRecords);
-                    }
+                     // check if the item is available or not
+                     $itemMasterData = ItemMaster::where('primaryCode', $finalRecords['item_code'])->first();
+                     if($itemMasterData) {
+                         // get item category type
+                         $itemCategoryType = (array) json_decode($itemMasterData->categoryType);
+                         // check item category type is only purchase type
+                         if((count($itemCategoryType) == 1) && ($itemCategoryType[0]->id == 1)){
+                             $errorLineNumbers[] = $errorLine;
+                         }
+                         else {
+                             $exists_item = QuotationDetails::where('quotationMasterID',$masterData->quotationMasterID)->where('itemSystemCode',$finalRecords['item_code'])->first();
 
-                }           
+                             if(!$exists_item) {
+                                 $count++;
+                                 array_push($finalArray,$finalRecords);
+                             }
+                         }
+                     }
+                 }
+                 $errorLine++;
             }
 
-
-
             if (count($record) > 0) {
-                $db = isset($input['db']) ? $input['db'] : ""; 
+                $db = isset($input['db']) ? $input['db'] : "";
+                $masterData->isBulkItemJobRun = 1;
+                $masterData->save();
                 AddMultipleItemsToQuotation::dispatch(array_filter($finalArray),($masterData->toArray()),$db,Auth::id());
             } else {
                 return $this->sendError('No Records found!', 500);
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Out of '.$totalRecords.', '.$count.'Items uploaded Successfully!!');
+            return $this->sendResponse($errorLineNumbers, 'Out of '.$totalRecords.', '.$count.' Items uploaded Successfully!!');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

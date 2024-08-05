@@ -61,7 +61,6 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
 
         $companyList = $companyList->toArray();
 
-        Log::info("Leave carry forward computation initiated on {$db} \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
 
         
         /* Switch back to main DB */

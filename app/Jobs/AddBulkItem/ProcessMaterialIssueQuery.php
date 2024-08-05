@@ -88,7 +88,7 @@ class ProcessMaterialIssueQuery implements ShouldQueue
             $searchVal = $this->searchVal;
 
             $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-                                        return $query->where('companySystemID', '=', $companyId);
+                                        return $query->where('companySystemID', '=', $companyId)->where('isAssigned', '=', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
                                      })->where('isActive',1)
                                      ->where('itemApprovedYN',1)
                                      ->when((isset($financeCategoryMaster) && $financeCategoryMaster), function($query) use ($financeCategoryMaster){
@@ -102,7 +102,6 @@ class ProcessMaterialIssueQuery implements ShouldQueue
                                      })
                                      ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
                                      ->orderBy('itemCodeSystem', 'desc')
-                                     ->skip(($page - 1) * $perPage) 
                                      ->take($perPage);
 
                                      if ($isSearched) {
@@ -121,8 +120,7 @@ class ProcessMaterialIssueQuery implements ShouldQueue
                 if (count($output) > 0) {
                     ProcessMaterialIssueBulk::dispatch($db, $output, $companyId, $empID, $employeeSystemID,$chunkDataSizeCounts,$requestID)->onQueue('single');
                 } else {
-
-                    ItemIssueMaster::where('itemIssueAutoID', $requestID)->update(['isBulkItemJobRun' => 0]);           
+                    ItemIssueMaster::where('itemIssueAutoID', $requestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
                  }
             
             
@@ -131,9 +129,6 @@ class ProcessMaterialIssueQuery implements ShouldQueue
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info($e->getMessage());
-            Log::info('---- Dep  End with Error-----' . date('H:i:s'));
         }
     }
 

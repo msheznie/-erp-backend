@@ -72,7 +72,6 @@ class BudgetSegmentSubJobs implements ShouldQueue
             $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
             $segmentCount = $uploadBudgetCounter->counter;
 
-            Log::info($segment.' count - '. $segmentCount);
 
             $segmentMaster = SegmentMaster::where('ServiceLineDes', $segment)->first();
 
@@ -130,7 +129,6 @@ class BudgetSegmentSubJobs implements ShouldQueue
                         $startYear = $year;
                         for ($i = 1; $i <= 12; $i++) {
                             if($startMonth == 13){
-                                Log::info('M- '.$startMonth);
                                 $startMonth = 1;
                                 $startYear = $startYear + 1;
                             }
@@ -205,12 +203,10 @@ class BudgetSegmentSubJobs implements ShouldQueue
                     'url' => "general-ledger/budget-upload",
                     'path' => "",
                 ];
-                Log::info('Budget Segment Bulk Insert Completed Successfully '. $totalSegments);
 
                WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $this->db);
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
             }
-            Log::info($segment . ' Completed Successfully. Count- ' . $segmentCount);
 
             DB::commit();
 
@@ -218,10 +214,6 @@ class BudgetSegmentSubJobs implements ShouldQueue
         catch (\Exception $e){
             DB::rollback();
             Log::error($this->failed($e));
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- Budget Segment Sub Job End with Error-----' . date('H:i:s'));
 
            //  $webPushData = [
            //      'title' => "Upload Budget Failed",
@@ -233,9 +225,12 @@ class BudgetSegmentSubJobs implements ShouldQueue
            // WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $this->db);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+                $this->logUpdate($template->companySystemID,$uploadBudget->id, $e->getMessage(),$e->getLine());
                 DB::commit();
             } catch (\Exception $e){
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+                $this->logUpdate($template->companySystemID,$uploadBudget->id, $e->getMessage(),$e->getLine());
+  
                 DB::commit();
             }
         }
@@ -244,5 +239,21 @@ class BudgetSegmentSubJobs implements ShouldQueue
     public function failed($exception)
     {
         return $exception->getMessage();
+    }
+
+    public function logUpdate($comapny,$budgetID,$msg,$line)
+    {
+    
+        $uploadLogArray = array(
+            'companySystemID' => $comapny,
+            'bugdet_upload_id' => $budgetID,
+            'is_failed' => 1,
+            'error_line' => $line,
+            'log_message' => $msg
+        );
+
+        $logUploadBudget= logUploadBudget::create($uploadLogArray);
+
+      return true;
     }
 }

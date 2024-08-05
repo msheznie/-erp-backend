@@ -38,6 +38,7 @@ use App\Repositories\PurchaseRequestRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
@@ -1199,9 +1200,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-            $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $filePath = Storage::disk($disk)->path($originalFileName);
+            $spreadsheet = IOFactory::load($filePath);
+
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $sheet->removeRow(1, 2);
+
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save($filePath);
+            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -1221,11 +1229,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 }
             }
 
-
             foreach ($uniqueData as $key => $value) {
 
                 if (isset($value['item_code']) || (isset($value['item_description']) && $allowItemToTypePolicy)) {
                     $validateHeaderCode = true;
+                } else {
+                    if (isset($value['qty']) && isset($value['estimated_unit_cost']) && isset($value['comment'])) {
+                        return $this->sendError('Items cannot be uploaded, as there are null values found in excel row number: ' . ($totalItemCount + 4), 500);
+                    }
                 }
 
                 if (isset($value['qty'])) {
@@ -1267,13 +1278,12 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     if (!is_numeric($data['estimated_unit_cost'])) {
                         return $this->sendError('Records with alpha numeric values for the estimated unit cost can not be uploaded.', 500);
                     }
-            
+
                     if ($data['estimated_unit_cost'] < 0) {
                         return $this->sendError('Estimated unit cost value can not be less than zero.', 500);
                     }
                 }
             }
-            
 
             if (count($record) > 0) {
                 $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount,$this->segmentAllocatedItemRepository);            
@@ -1281,9 +1291,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 return $this->sendError('No Records found!', 500);
             }
 
+            if ($res['status'] === false) {
+                DB::rollBack();
+                return $this->sendError($res['message'], 500);
+            }
+
             Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();
-            return $this->sendResponse([], $res);
+            return $this->sendResponse([], $res['message']);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

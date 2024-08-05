@@ -44,15 +44,11 @@ class LeaveCarryForwardComputatuionScheduler extends Command
         Log::useFiles(CommonJobService::get_specific_log_file('leave-carry-forward'));
         $tenants = CommonJobService::tenant_list();
         if (count($tenants) == 0) {
-            Log::info("Tenant details not found. \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
             return;
         }
 
         foreach ($tenants as $tenant) {
             $tenant_database = $tenant->database;
-
-            Log::info("{$tenant_database} DB added to queue for leave carry forward computation initiate . \t on file: "
-                . __CLASS__ . " \tline no :" . __LINE__);
 
             LeaveCarryForwardComputationInitiate::dispatch($tenant_database);
         }

@@ -240,12 +240,56 @@ class CustomerReceivePaymentGlService
 
 
                         $data['documentTransAmount'] = (\Helper::roundValue(($valueRe->receiveAmountTrans + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                        $data['documentLocalAmount'] = (\Helper::roundValue(($valueRe->receiveAmountLocal + (isset($directAmountBank->localAmount) ? $directAmountBank->localAmount : 0))));
-                        $data['documentRptAmount'] = (\Helper::roundValue(($valueRe->receiveAmountRpt + (isset($directAmountBank->rptAmount) ? $directAmountBank->rptAmount : 0))));
+                        $data['documentLocalAmount'] = (\Helper::roundValue((1 / $masterData->localCurrencyER) * ($valueRe->receiveAmountTrans + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                        $data['documentRptAmount'] = (\Helper::roundValue((1 / $masterData->companyRptCurrencyER) * ($valueRe->receiveAmountTrans + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
                         $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
                         $data['serviceLineCode'] =  $valueRe->serviceLineCode;
                         array_push($finalData, $data);
                     }
+
+                    // exchange gain or loss
+
+                    $oldAmountLocal = round(abs($masterData->localAmount) / 100, 7) * 100;
+                    $newAmountLocal = round(1 / $masterData->localCurrencyER, 7) * abs($masterData->receivedAmount);
+                    $balanceLocal = $oldAmountLocal - $newAmountLocal;
+
+                    $oldAmountRpt = round(abs($masterData->companyRptAmount) / 100, 7) * 100;
+                    $newAmountRpt = round(1 / $masterData->companyRptCurrencyER, 7) * abs($masterData->receivedAmount);
+                    $balanceRpt = $oldAmountRpt - $newAmountRpt;
+
+                    if(($balanceLocal != 0) || ($balanceRpt != 0)) {
+                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
+                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                        $data['documentTransCurrencyID'] = $masterData->bankCurrency;
+                        $data['documentTransCurrencyER'] = $masterData->bankCurrencyER;
+                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                        $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                        $data['timestamp'] = \Helper::currentDateTime();
+
+                        $data['documentTransAmount'] = 0;
+
+                        if ($balanceLocal > 0) {
+                            $data['documentLocalAmount'] = \Helper::roundValue($balanceLocal);
+                        } else {
+                            $data['documentLocalAmount'] = \Helper::roundValue($balanceLocal);
+                        }
+
+                        if ($balanceRpt > 0) {
+                            $data['documentRptAmount'] = \Helper::roundValue($balanceRpt);
+                        } else {
+                            $data['documentRptAmount'] = \Helper::roundValue($balanceRpt);
+                        }
+
+                        $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                        $data['serviceLineCode'] =  $valueRe->serviceLineCode;
+                        array_push($finalData, $data);
+                    }
+
+                    // exchange gain or loss end
 
                     $directReceiptsBySegmentsData = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
                                                                 ->WHERE('directReceiptAutoID', $masterModel["autoID"])

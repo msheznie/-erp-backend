@@ -8,6 +8,7 @@ use App\Models\CustomerMaster;
 use App\Models\SupplierCategory;
 use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierCategoryICVSub;
+use App\Models\SupplierCritical;
 use App\Models\SupplierGroup;
 use App\Models\SupplierImportance;
 use App\Models\suppliernature;
@@ -194,6 +195,12 @@ class SupplierMasterAuditService
             }
             if($auditData['previosValue']['isBlocked'] != $auditData['newValue']['isBlocked']) {
                 $modifiedData[] = ['amended_field' => "blocked", 'previous_value' => ($auditData['previosValue']['isBlocked']==1) ? 'yes' : 'no', 'new_value' => ($auditData['newValue']['isBlocked'] == 1) ? 'yes' : 'no'];
+            }
+
+            if($auditData['previosValue']['isCriticalYN'] != $auditData['newValue']['isCriticalYN']) {
+                $newCriticalYN = SupplierCritical::where('suppliercriticalID',$auditData['newValue']['isCriticalYN'])->first();
+                $previousCriticalYN = SupplierCritical::where('suppliercriticalID',$auditData['previosValue']['isCriticalYN'])->first();
+                $modifiedData[] = ['amended_field' => "is_critical", 'previous_value' => ($previousCriticalYN) ? $previousCriticalYN->description: '', 'new_value' => ($newCriticalYN) ? $newCriticalYN->description : ''];
             }
 
         }

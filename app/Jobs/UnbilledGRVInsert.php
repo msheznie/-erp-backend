@@ -70,7 +70,6 @@ class UnbilledGRVInsert implements ShouldQueue
                 
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::info($e->getMessage());
                 Log::error('Error occurred when updating to unbilled grv table' . date('H:i:s'));
                 JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $e->getMessage(), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
             }

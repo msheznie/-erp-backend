@@ -819,6 +819,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
         }
 
+        if ($input['documentType'] == 13) {
+            if($masterHeaderSumTrans == abs($customerReceivePayment->receivedAmount)) {
+                $input['bankCurrencyER'] = $customerReceivePayment->bankCurrencyER;
+                $input['localCurrencyER'] = $customerReceivePayment->localCurrencyER;
+                $input['companyRptCurrencyER'] = $customerReceivePayment->companyRptCurrencyER;
+            }
+        }
+
         $itemExistArray = array();
         $error_count = 0;
 
@@ -3326,7 +3334,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         $customerReceiveDetailArray = $customerReceivePaymentDetailRec->toArray();
-        
+
         if(isset($customerReceiveDetailArray['isFromApi'])){
             unset($customerReceiveDetailArray['isFromApi']);
         }
@@ -3828,6 +3836,36 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
         
         return ['status' => true];
+    }
+
+    public function checkConversionRateIsUpdate(Request $request) {
+
+        $request->validate([
+            'documentID' => 'required',
+            'companyID' => 'required'
+        ]);
+
+        $input = $request->all();
+
+        $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($input['documentID']);
+
+        if (empty($customerReceivePayment)) {
+            return $this->sendError('Receipt Voucher not found');
+        }
+
+        $currencyConversion = Helper::currencyConversion($input['companyID'], $customerReceivePayment->custTransactionCurrencyID, $customerReceivePayment->bankCurrency, 0);
+        if(($customerReceivePayment->bankCurrencyER != $currencyConversion['transToDocER']) || ($customerReceivePayment->localCurrencyER != $currencyConversion['trasToLocER']) || ($customerReceivePayment->companyRptCurrencyER != $currencyConversion['trasToRptER'])) {
+            $data['isShowWarning'] = 1;
+            $data['message'] = "The exchange rates are updated as follows,<br><br>".
+                "Previous rates Bank ER ".$customerReceivePayment->bankCurrencyER." | Local ER ".$customerReceivePayment->localCurrencyER." | Reporting ER ".$customerReceivePayment->companyRptCurrencyER."<br><br>".
+                "Current rates Bank ER ".$currencyConversion['transToDocER']." | Local ER ".$currencyConversion['trasToLocER']." | Reporting ER ".$currencyConversion['trasToRptER']."<br><br>".
+                "Are you sure you want to proceed?";
+            return $this->sendResponse($data, "Conversion rates changed");
+        }
+        else {
+            $data['isShowWarning'] = 0;
+            return $this->sendResponse($data, "Conversion rates not change");
+        }
     }
 
 }

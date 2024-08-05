@@ -60,9 +60,8 @@ class ProcessMaterialRequestBulk implements ShouldQueue
             $requestMaster = MaterielRequest::find($requestID);
             foreach ($output as $value) {
                 $res = MaterialRequestService::validateMaterialRequestItem($value['itemCodeSystem'], $companyId, $requestID);
-                            
+
                 if ($res['status']) {
-                    Log::info($value['itemCodeSystem']. " - inserted success");
                     MaterialRequestService::saveMaterialRequestItem($value['itemCodeSystem'], $companyId, $requestID, $empID, $employeeSystemID);
                 } else {
                     $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $res['message']];
@@ -79,16 +78,13 @@ class ProcessMaterialRequestBulk implements ShouldQueue
 
             if ($newCounterValue == $chunkDataSizeCounts) {
 
-                MaterielRequest::where('RequestID', $requestID)->update(['isBulkItemJobRun' => 0]);
+                MaterielRequest::where('RequestID', $requestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
             }
             DB::commit();
         }
         catch (\Exception $e){
             DB::rollback();
             Log::error($this->failed($e));
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info($e->getMessage());
-            Log::info('---- Dep  End with Error-----' . date('H:i:s'));
         }
 
 

@@ -63,7 +63,6 @@ class ReOrderItemPR implements ShouldQueue
             self::onConnection('database');
         }
         $this->dispatch_db = $dispatch_db;
-        Log::info('Re Order Item PR JOB construct'.$this->dispatch_db);
     }
 
     /**
@@ -73,7 +72,6 @@ class ReOrderItemPR implements ShouldQueue
      */
     public function handle(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepository, SegmentAllocatedItemRepository $segmentAllocatedItemRepository, PurchaseRequestRepository $purchaseRequestRepository, UserRepository $userRepository, ItemMasterRepository $itemMasterRepository)
     {
-        Log::info('Re Order Item PR JOB started');
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
 
@@ -527,7 +525,7 @@ class ReOrderItemPR implements ShouldQueue
                             if ($item_count_obj > 0) {
                                 if ($succes_item == 0) {
                                     $new_purchaseRequests->delete();
-                                    Log::info('Cannot copy this purchase request. Because all the items included in this document are pulled from pending PR/PO documents');
+                                    Log::error('Cannot copy this purchase request. Because all the items included in this document are pulled from pending PR/PO documents');
                                 } else {
 
                                     foreach ($valid_items as $valid_item) {
@@ -555,20 +553,18 @@ class ReOrderItemPR implements ShouldQueue
                                     $body = 'Purchase Request ' . $new_purchaseRequests->purchaseRequestCode . ' has been created for ROL reached items.';
                                     $subject = 'Purchase Request Creation';
                                     if (count($com_assign_scenarios) == 0) {
-                                        Log::info('Notification Company Scenario not exist');
+                                        Log::error('Notification Company Scenario not exist');
                                     } else {
                                         $scenario_des = $com_assign_scenarios[0]->notification_scenario->scenarioDescription;
 
-                                        Log::info('------------ Successfully start ' . $scenario_des . ' Service ' . date('H:i:s') .  ' ------------');
 
                                         foreach ($com_assign_scenarios as $compAssignScenario) {
                                             $companyIDFromScenario = $compAssignScenario->companyID;
 
                                             if ($companyIDFromScenario == $companyID) {
-                                                Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
 
                                                 if (count($compAssignScenario->notification_day_setup) == 0) {
-                                                    Log::info('Notification day setup not exist');
+                                                    Log::error('Notification day setup not exist');
                                                     continue;
                                                 }
 
@@ -578,7 +574,7 @@ class ReOrderItemPR implements ShouldQueue
 
                                                     $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
                                                     if (count($notificationUserSettings['email']) == 0) {
-                                                        Log::info("User setup not found for scenario {$scenario_des}");
+                                                        Log::error("User setup not found for scenario {$scenario_des}");
                                                         continue;
                                                     }
 

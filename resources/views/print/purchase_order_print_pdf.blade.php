@@ -107,14 +107,13 @@
 
     .footer {
         bottom: 0;
-        height: 40px;
+        height: 152px;
     }
 
     .footer {
         width: 100%;
         text-align: center;
         position: fixed;
-        font-size: 10px;
         padding-top: -20px;
     }
 

@@ -124,6 +124,8 @@ use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierBlock;
 use App\Models\TenderSupplierAssignee;
+use ExchangeSetupConfig;
+
 class Helper
 {
     /**
@@ -151,6 +153,32 @@ class Helper
         }
         $serviceline = Models\SegmentMaster::whereIN('companySystemID', $companiesByGroup)->get();
         return $serviceline;
+    }
+
+    public static function validateJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
+    public static function handleErrorData($inputData) {
+
+        $errorMessage = $inputData;
+
+        if (self::validateJson($inputData)) {
+            $errorMessage = $inputData;
+
+            $arrayData = json_decode($inputData, true);
+
+            foreach ($arrayData as $key => $value) {
+                if (is_array($value)) {
+                    $errorMessage = $value[0];
+                } else {
+                    $errorMessage = $value;
+                }
+
+            }
+        }
+
+        return $errorMessage;
     }
 
     public static function getCompanyServicelineWithMaster($company)
@@ -2334,7 +2362,7 @@ class Helper
                             if ($input["documentSystemID"] == 22) {
 
 
-                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"]);
+                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database);
                             }
                             //
 
@@ -4576,7 +4604,9 @@ class Helper
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
                                     }
                                     DB::commit();
-                                    return ['success' => false, 'message' => $budgetCheck['message'], 'type' => isset($budgetCheck['type']) ? $budgetCheck['type'] : ""];
+                                    if($input["documentSystemID"] != 22 || $input["isAutoCreateDocument"] != true) {
+                                        return ['success' => false, 'message' => $budgetCheck['message'], 'type' => isset($budgetCheck['type']) ? $budgetCheck['type'] : ""];
+                                    }
                                 } else {
                                     if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
                                         // update PR master table
@@ -5188,7 +5218,7 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 22) {
-                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"]);
+                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"], $dataBase);
                             }
                             
                         
@@ -7426,6 +7456,7 @@ class Helper
         if ($pvMaster->invoiceType == 3) {
             Log::info('started');
             Log::info($pvMaster->PayMasterAutoId);
+            Log::info($pvMaster->expenseClaimOrPettyCash);
             $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->get();
             if (count($dpdetails) > 0) {
                 if ($pvMaster->expenseClaimOrPettyCash == 6 || $pvMaster->expenseClaimOrPettyCash == 7) {
@@ -7614,6 +7645,30 @@ class Helper
                             $receivePayment['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
                             $receivePayment['companyRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
                             $receivePayment['receivedAmount'] = $val->bankAmount;
+
+                            if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($pvMaster))
+                            {
+                                $receivePayment['localCurrencyID'] = $val->localCurrency;
+                                $receivePayment['localCurrencyER'] = $pvMaster->localCurrencyER;
+                                $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
+                                $receivePayment['companyRptCurrencyER'] = $pvMaster->comRptCurrencyER;
+                                $receivePayment['bankAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
+                                if($pvMaster->localCurrencyID == $pvMaster->supplierTransCurrencyID)
+                                {
+                                    $receivePayment['localAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
+                                }else {
+                                    $receivePayment['localAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->localCurrencyER);
+                                }
+
+                                if($pvMaster->companyRptCurrencyID == $pvMaster->supplierTransCurrencyID)
+                                {
+                                    $receivePayment['companyRptAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
+                                }else {
+                                    $receivePayment['companyRptAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->comRptCurrencyER);
+                                }
+
+                                $receivePayment['receivedAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
+                            }
 
                             $receivePayment['confirmedYN'] = 1;
                             $receivePayment['confirmedByEmpSystemID'] = $pvMaster->confirmedByEmpSystemID;

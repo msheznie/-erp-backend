@@ -65,7 +65,6 @@ class CreateStockReceive implements ShouldQueue
         if (!empty($stMaster)) {
             DB::beginTransaction();
             try {
-                Log::info('Successfully start  stock_receive' . date('H:i:s'));
                 $today = date('Y-m-d H:i:s');
                 $stDetails = StockTransferDetails::where("stockTransferAutoID", $stMaster->stockTransferAutoID)->get();
 
@@ -247,9 +246,6 @@ class CreateStockReceive implements ShouldQueue
                         $customerInvoiceDetailPL = $customerInvoiceDetailRep->create($glPL);
                         $customerInvoiceDetailBS = $customerInvoiceDetailRep->create($glBS);
 
-                        Log::info($customerInvoice);
-                        Log::info($customerInvoiceDetailPL);
-                        Log::info($customerInvoiceDetailBS);
 
                         $costGoodData = StockTransferDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,financeitemcategorysubassigned.financeGLcodePLSystemID,financeitemcategorysubassigned.financeGLcodePL,localCurrencyID,reportingCurrencyID")->WHERE('stockTransferAutoID', $stMaster->stockTransferAutoID)
                                                             ->join('financeitemcategorysubassigned', 'financeitemcategorysubassigned.itemCategorySubID', '=', 'erp_stocktransferdetails.itemFinanceCategorySubID')
@@ -348,7 +344,6 @@ class CreateStockReceive implements ShouldQueue
                                 $glCost['comRptAmount'] = abs($costValue->rptAmount) * -1;
 
                                 $customerInvoiceDetailCost = $customerInvoiceDetailRep->create($glCost);
-                                Log::info($customerInvoiceDetailCost);
 
 
                                 $glCostData['chartOfAccountSystemID'] = $costValue->financeGLcodePLSystemID;
@@ -424,7 +419,6 @@ class CreateStockReceive implements ShouldQueue
 
                             $accountsReceivableLedger = $accountsReceivableLedgerRep->create($arLedger);
 
-                            Log::info($accountsReceivableLedger);
                             // ARL End
                         }
 
@@ -544,7 +538,6 @@ class CreateStockReceive implements ShouldQueue
                                     // return $this->sendError("Cost is not updated", 500);
                                 } else {
                                     $srdItem = $stockReceiveDetailsRepo->create($item);
-                                    Log::info($srdItem);
                                     $stDetail = StockTransferDetails::where('stockTransferDetailsID', $new['stockTransferDetailsID'])->first();
                                     $stDetail->addedToRecieved = -1;
                                     $stDetail->stockRecieved = -1;
@@ -567,7 +560,6 @@ class CreateStockReceive implements ShouldQueue
                             $resST = InterCompanyStockTransfer::create($interCompanySTData);
 
 
-                            Log::info('Successfully created  stock_receive' . date('H:i:s'));
                         }
                     }
                 } else if ($stMaster->interCompanyTransferYN == 0 && $stMaster->approved == -1) {
@@ -578,7 +570,6 @@ class CreateStockReceive implements ShouldQueue
                         ->first();
 
                     if (!empty($checkPolicy)) {
-                        Log::info('Policy Enabled' . date('H:i:s'));
 
                         $stockReceive = new StockReceive();
                         $stockReceive->documentSystemID = 10;
@@ -695,7 +686,6 @@ class CreateStockReceive implements ShouldQueue
                                 // return $this->sendError("Cost is not updated", 500);
                             } else {
                                 $srdItem = $stockReceiveDetailsRepo->create($item);
-                                Log::info($srdItem);
                                 $stDetail = StockTransferDetails::where('stockTransferDetailsID', $new['stockTransferDetailsID'])->first();
                                 $stDetail->addedToRecieved = -1;
                                 $stDetail->stockRecieved = -1;
@@ -713,8 +703,6 @@ class CreateStockReceive implements ShouldQueue
                                                      ->orderBy('rollLevelOrder','desc')
                                                      ->first();
 
-                        Log::info('Approval Data' . date('H:i:s'));
-                        Log::info($approval);
 
                         if(!empty($approval)){
                             $approval->documentSystemCode = $stockReceive->stockReceiveAutoID;
@@ -722,7 +710,6 @@ class CreateStockReceive implements ShouldQueue
                             $approval->documentID = $stockReceive->documentID;
                             unset($approval->documentApprovedID);
                             DocumentApproved::insert($approval->toArray());
-                            Log::info($approval);
 
                             $masterData = ['documentSystemID' => $stockReceive->documentSystemID,
                                 'autoID' => $stockReceive->stockReceiveAutoID,
@@ -734,10 +721,9 @@ class CreateStockReceive implements ShouldQueue
                             //$jobSI = CreateSupplierInvoice::dispatch($stockReceive);
                         }
 
-                        Log::info('Successfully created  stock_receive' . date('H:i:s'));
 
                     } else {
-                        Log::info('Policy Disabled' . date('H:i:s'));
+                        Log::error('Policy Disabled' . date('H:i:s'));
                     }
                 }
                 DB::commit();

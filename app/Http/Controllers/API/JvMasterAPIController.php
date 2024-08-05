@@ -419,16 +419,16 @@ class JvMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var JvMaster $jvMaster */
-        $jvMaster = $this->jvMasterRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by', 'transactioncurrency', 'financeperiod_by' => function ($query) {
+        $jvMaster = JvMaster::with(['created_by', 'confirmed_by', 'company', 'modified_by', 'transactioncurrency', 'financeperiod_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        }])->find($id);
 
         if (empty($jvMaster)) {
             return $this->sendError('Jv Master not found');
         }
-
+        $jvMaster->JVNarration = $jvMaster->JVNarration;
         return $this->sendResponse($jvMaster->toArray(), 'Jv Master retrieved successfully');
     }
 
@@ -1003,6 +1003,9 @@ class JvMasterAPIController extends AppBaseController
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('JVNarration', function ($row) {
+                return $row->JVNarration;
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1030,6 +1033,7 @@ class JvMasterAPIController extends AppBaseController
             return $this->sendError('Jv Master not found');
         }
 
+        $jvMasterData->JVNarration = $jvMasterData->JVNarration;
         $companyId = $jvMasterData->companySystemID;
         $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
                         ->where('companySystemID', $companyId)

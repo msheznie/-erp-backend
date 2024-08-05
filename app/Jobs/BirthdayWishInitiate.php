@@ -58,7 +58,6 @@ class BirthdayWishInitiate implements ShouldQueue
 
         $company_list = $company_list->toArray();
 
-        Log::info("Birthday wish job initiated on {$db} \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
 
         foreach ($company_list as $company) {
             $ser = new BirthdayWishService($company);

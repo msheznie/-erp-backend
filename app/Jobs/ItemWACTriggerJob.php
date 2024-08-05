@@ -83,16 +83,10 @@ class ItemWACTriggerJob implements ShouldQueue
                 ]);
                 $json = $res->getBody();
 
-                Log::info('API guzzle: ' . $json);
             }
-            Log::info('API Triggering Completed');
         }
         catch (\Exception $e){
             Log::error($this->failed($e));
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- Item Wac Trigger End with Error-----' . date('H:i:s'));
         }
 
     }

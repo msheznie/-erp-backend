@@ -109,7 +109,6 @@ class ResetFinaceSubCategoryValuesInAllDocuments implements ShouldQueue
 
             }
 
-            Log::info($query);
         }
         
     }

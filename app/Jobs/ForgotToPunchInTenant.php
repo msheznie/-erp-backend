@@ -49,7 +49,6 @@ class ForgotToPunchInTenant implements ShouldQueue
         
         $logSlug = ($this->isPunchOut)? "punch out": "";
 
-        Log::info("{$logSlug} job initiated on {$this->tenantDb} DB. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         
         $setupData = NotificationService::getActiveCompanyByScenario(15);
         if(count( $setupData ) == 0){

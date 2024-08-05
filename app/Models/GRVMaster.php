@@ -420,4 +420,9 @@ class GRVMaster extends Model
         return $q->leftJoin('suppliermaster as '.$as,$as.'.supplierCodeSystem','erp_grvmaster.'.$column)
         ->addSelect($as.".supplierName as ".$columnAs);
     }
+
+    public function evaluationMaster()
+    {
+        return $this->belongsTo('App\Models\SupplierEvaluation', 'grvAutoID', 'documentId');
+    }
 }

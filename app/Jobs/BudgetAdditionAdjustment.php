@@ -58,13 +58,10 @@ class BudgetAdditionAdjustment implements ShouldQueue
             }
 
             try {
-                Log::info('Successfully start  budget_addition_adjustment' . date('H:i:s'));
-                Log::info($budgetAddition);
                 foreach ($budgetAddition->detail as $item) {
                     $conversion  = 1;
                    // $templateDetail = TemplatesDetails::find($item['templateDetailID']);
                     $templateDetail = ChartOfAccount::find($item['chartOfAccountSystemID']);
-                    Log::info('Control Account System ID ' .$templateDetail->controlAccountsSystemID );
                     if(!empty($templateDetail) && $templateDetail->controlAccountsSystemID == 2){
                         $conversion = -1;
                     }
@@ -111,12 +108,6 @@ class BudgetAdditionAdjustment implements ShouldQueue
 
                     $TotalCount = count($BudgetDetails); 
 
-                    Log::info('Budget Details Total Count ' .$TotalCount);
-                    Log::info('serviceLineSystemID ' .$item['serviceLineSystemID']);
-                    Log::info('chartOfAccountID ' .$item['chartOfAccountSystemID']);
-                    Log::info('Year ' .$budgetAddition->year);
-                    Log::info('month ' . date("m"));
-                    Log::info('conversion ' .  $conversion);
                     $budgetmasterID = null;
                     if($TotalCount > 0){
                         $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$TotalCount),$reportingDecimalPlaces);
@@ -124,8 +115,6 @@ class BudgetAdditionAdjustment implements ShouldQueue
 
                         $count = 1;
                         foreach ($BudgetDetails as $BudgetDetailVal){
-                            Log::info('budjetAmtLocal conversion ' .  ((($BudgetDetailVal['budjetAmtLocal'] * $conversion)  + $toAddAmountLocal) * $conversion));
-                            Log::info('To Amount Local ' .  $toAddAmountLocal);
                             $budgetmasterID = $BudgetDetailVal['budgetmasterID'];
 
                             if (count($BudgetDetails) == $count) {
@@ -151,7 +140,6 @@ class BudgetAdditionAdjustment implements ShouldQueue
                     ->whereYear('bigginingDate', '=', $budgetAddition->year)
                     ->first();
                 
-                    Log::info('budgetmasterID ' .  $budgetmasterID);
                 $financeYearId = 0; 
                 
                 if (!empty($companyFinanceYear)) {
@@ -183,7 +171,6 @@ class BudgetAdditionAdjustment implements ShouldQueue
                 $budgetAdjustmentRepo->create($Adjustment);
                 
             }
-                Log::info('Successfully end  budget_addition_adjustment' . date('H:i:s'));
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
@@ -191,7 +178,7 @@ class BudgetAdditionAdjustment implements ShouldQueue
             }
         
         } else {
-            Log::info('Error' . date('H:i:s'));
+            Log::error('Budget Addition not found' . date('H:i:s'));
         }
     }
 

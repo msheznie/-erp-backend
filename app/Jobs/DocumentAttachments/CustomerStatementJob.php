@@ -61,7 +61,6 @@ class CustomerStatementJob implements ShouldQueue
         $companySystemID = $this->input;
 
         Log::useFiles(storage_path() . '/logs/payment_released_to_supplier.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
 
         CommonJobService::db_switch($db);
 

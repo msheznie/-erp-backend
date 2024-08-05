@@ -54,7 +54,6 @@ class ForgotToPunchInCompany implements ShouldQueue
 
         $logSlug = ($this->isPunchOut)? "punch out": "";
 
-        Log::info("{$logSlug} job process started on {$this->companyName} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         
         $now = Carbon::now();
         $date = $now->format('Y-m-d');

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\ItemMaster;
 use App\Models\PurchaseRequestDetails;
 use App\Models\ItemAssigned;
 use App\Models\PurchaseRequest;
@@ -86,6 +87,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
 
     public function storePrDetails($prDetailsArray, $purchaseRequestID, $totalItemsToUpload, $segmentAllocatedItemRepository)
     {
+        $excelRowNumber = 4;
         $successCount = 0;
         $duplicateCount = 0;
         $notFoundCount = 0;
@@ -115,12 +117,22 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                     }
                 }
 
+                if (!$allowItemToTypePolicy) {
+                    // item categorytype validation for purchase || purchase & sales items
+                    $isPurchaseItem = ItemMaster::where('primaryCode', $input['item_code'])
+                        ->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])
+                        ->first();
+                    if (empty($isPurchaseItem)) {
+                        return ['status' => false, 'message' => 'The added items in excel row number: ' . $excelRowNumber . ', Item Type should only be Purchase or Purchase & Sales'];
+                    }
+                }
 
                 if ((isset($input['item_code']) && !$allowItemToTypePolicy) || $allowItemToTypePolicy) {
                     $item = false;
                     if (isset($input['item_code'])) {
                         $item = ItemAssigned::where('itemPrimaryCode', $input['item_code'])
                                         ->where('companySystemID', $companySystemID)
+                                        ->where('isActive', 1)
                                         ->first();
                     }
 
@@ -156,10 +168,10 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                         }
 
                         $requestedQty = $input['qty'];
-                        $reorderQty = ItemAssigned::where('itemPrimaryCode', $input['item_code'])->where('companySystemID', $companySystemID)->sum('rolQuantity');
+//                        $reorderQty = ItemAssigned::where('itemPrimaryCode', $input['item_code'])->where('companySystemID', $companySystemID)->sum('rolQuantity');
                         $itemFinanceCategoryID = $insertData['itemFinanceCategoryID'];
-                        $requestAndReorderTotal = $requestedQty + $reorderQty;
-                        if($$insertData['quantityInHand'] > $requestAndReorderTotal && $itemFinanceCategoryID==1){
+                        $requestAndReorderTotal = $requestedQty;
+                        if($insertData['quantityInHand'] > $requestAndReorderTotal && $itemFinanceCategoryID==1){
                             $insertData['is_eligible_mr'] = 1;
                         } else {
                             $insertData['is_eligible_mr'] = 0;
@@ -181,7 +193,8 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                             $segmentAllocatedItem = $segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
         
                             if (!$segmentAllocatedItem['status']) {
-                                return $this->sendError($segmentAllocatedItem['message']);
+                                return ['status' => false, 'message' => $segmentAllocatedItem['message']];
+                               // return $this->sendError($segmentAllocatedItem['message']);
                             }
                         }
 
@@ -500,7 +513,8 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                                     $segmentAllocatedItem = $segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
                 
                                     if (!$segmentAllocatedItem['status']) {
-                                        return $this->sendError($segmentAllocatedItem['message']);
+                                        return ['status' => false, 'message' => $segmentAllocatedItem['message']];
+                                        //return $this->sendError($segmentAllocatedItem['message']);
                                     }
                                 }
 
@@ -523,6 +537,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                 }
 
             }
+            $excelRowNumber++;
         }
      
         $notUploadCountUnique = sizeof(array_unique($notUploadCount));
@@ -550,6 +565,6 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                         
         }
 
-        return $message;
+        return ['status' => true, 'message' => $message];
     }
 }

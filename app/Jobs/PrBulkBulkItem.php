@@ -58,7 +58,6 @@ class PrBulkBulkItem implements ShouldQueue
     {
         $db = $this->dispatch_db;
         Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
-        Log::info('---- Job  Start-----' . date('H:i:s'));
         CommonJobService::db_switch($db);
 
         $input = $this->data;
@@ -107,7 +106,7 @@ class PrBulkBulkItem implements ShouldQueue
         $financeCategorySub = isset($input['financeCategorySub'])?$input['financeCategorySub']:null;
 
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-                                    return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1);
+                                    return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
                                  })->where('isActive',1)
                                  ->where('itemApprovedYN',1)
                                  ->when((isset($input['financeCategoryMaster']) && $input['financeCategoryMaster']), function($query) use ($input){
@@ -130,16 +129,18 @@ class PrBulkBulkItem implements ShouldQueue
                                     });
                                 }
         
-        $count = $itemMasters->count();   
+        $count = $itemMasters->count();
+
+         if($count == 0){
+             PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
+         }
 
         $chunkDataSizeCounts = ceil($count / $chunkSize);
         for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
-            Log::info('started '.$i);
             PrBulkBulkItemQuery::dispatch($i, $db, $companyId, $financeCategoryMaster,$financeCategorySub,$input['purchaseRequestID'],$chunkDataSizeCounts,$isSearched,$searchVal,$budgetYear)->onQueue('single');
         }
                                 
                                 
-        Log::info('succefully added PR items');
         DB::commit();
         } catch (\Exception $exception) {
             DB::rollBack();

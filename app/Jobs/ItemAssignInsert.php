@@ -53,7 +53,6 @@ round(sum(inOutQty),2) * if(round(sum(inOutQty),2)=0,0,round((sum((inOutQty*wacR
                     ->where('fromDamagedTransactionYN', 0)
                     ->whereIN('itemSystemCode', $masterModel['items'])
                     ->groupBy('companySystemID','itemSystemCode')->get();
-                Log::info($itemLedgerRec);
                 if ($itemLedgerRec) {
                     foreach ($itemLedgerRec as $val) {
                         if ($val->inOutQty == 0) {
@@ -75,10 +74,9 @@ round(sum(inOutQty),2) * if(round(sum(inOutQty),2)=0,0,round((sum((inOutQty*wacR
                         }
                     }
                     DB::commit();
-                    Log::info('Successfully updated to item assign table ' . date('H:i:s'));
                 }else{
                     DB::rollback();
-                    Log::info('No records found in itemledger ' . date('H:i:s'));
+                    Log::error('No records found in itemledger ' . date('H:i:s'));
                 }
             } catch (\Exception $e) {
                 DB::rollback();

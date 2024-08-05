@@ -80,6 +80,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/navigation/navigationRoutes.php';
             require __DIR__.'/../routes/groupReport/groupReportRoutes.php';
             require __DIR__.'/../routes/generalLedger/generalLedgerRoutes.php';
+            require __DIR__.'/../routes/thirdParty/thirdPartyRoutes.php';
 
             Route::post('downloadCITemplate', 'CustomerInvoiceDirectAPIController@downloadCITemplate')->name("Download ci template");
             Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");
@@ -106,6 +107,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
                 Route::group(['middleware' => 'max_execution_limit'], function () {
                     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
                     Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
+                    Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload')->name("Asset Costing Upload");
+
                     Route::post('uploadCustomerInvoice', 'CustomerInvoiceDirectAPIController@uploadCustomerInvoice')->name("Upload customer invoice");
                     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');

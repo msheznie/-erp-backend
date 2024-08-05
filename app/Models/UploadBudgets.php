@@ -66,4 +66,9 @@ class UploadBudgets extends Model
         return $this->belongsTo('App\Models\Employee', 'uploadedBy', 'empID');
     }
 
+    public function log()
+    {
+        return $this->hasMany('App\Models\logUploadBudget', 'bugdet_upload_id', 'id');
+    }
+
 }

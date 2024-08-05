@@ -68,19 +68,36 @@ class LeaveAccrualInitiate implements ShouldQueue
 
                 foreach ($service_types as $accrual_type_det){
                     $acc_type = $accrual_type_det['description'];
-                    Log::info("Checking data for {$acc_type} process on " . $this->log_suffix(__LINE__));
 
                     $ser = new LeaveAccrualService($company, $accrual_type_det, []);
                     $groups = $ser->prepare_for_accrual();
 
-                    Log::info(count($groups). " groups found for {$acc_type} " . $this->log_suffix(__LINE__));
+                    /*
+                     $groups example
+
+                    $groups = [
+                        [
+                            "leaveGroupID": 2,
+                            "description": "AL22",
+                            "details": [
+                                {
+                                  "leaveGroupDetailID": 3,
+                                  "leaveGroupID": 2,
+                                  "leaveTypeID": 2,
+                                  "policyMasterID": 1,
+                                  "isDailyBasisAccrual": true,
+                                  "noOfDays": 22
+                                }
+                            ]
+                        ]
+                    ];
+                    */
 
                     if(count($groups) > 0){
                         
                         foreach ($groups as $group){
                             $group = array_only($group, ['leaveGroupID', 'description']);
 
-                            Log::info("{$acc_type} {$group['description']} (leave group) adding to process queue " . $this->log_suffix(__LINE__) );
 
                             $seconds += 30;
                             LeaveAccrualProcess::dispatch($db, $company, $accrual_type_det, $group, $this->debugDate)

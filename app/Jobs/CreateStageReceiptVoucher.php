@@ -222,7 +222,6 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 );
             }
 
-            Log::info('API Return call back starting');
 
             if($api_external_key != null && $api_external_url != null) {
 
@@ -239,9 +238,7 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 ]);
                 $json = $res->getBody();
 
-                Log::info('API guzzle: ' . $json);
             }
-            Log::info('API Return call back ending');
 
 
             foreach ($stagCustomerPayments as $dt) {
@@ -256,7 +253,6 @@ class CreateStageReceiptVoucher implements ShouldQueue
 
 
                 $confirm = \Helper::confirmDocumentForApi($params);
-                Log::info($confirm);
 
                 $documentApproveds = DocumentApproved::where('documentSystemCode', $dt['custReceivePaymentAutoID'])->where('documentSystemID', 21)->get();
                 foreach ($documentApproveds as $documentApproved) {
@@ -280,10 +276,7 @@ class CreateStageReceiptVoucher implements ShouldQueue
             StageCustomerReceivePayment::truncate();
             StageCustomerReceivePaymentDetail::truncate();
             StageDirectReceiptDetail::truncate();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
+            Log::error($e->getMessage());
         }
     }
 }

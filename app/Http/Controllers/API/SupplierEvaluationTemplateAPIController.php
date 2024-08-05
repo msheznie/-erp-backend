@@ -8,6 +8,9 @@ use App\Models\SupplierEvaluationTemplate;
 use App\Repositories\SupplierEvaluationTemplateRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\EvaluationTemplateSection;
+use App\Models\SupplierEvaluationTemplateComment;
+use App\Models\SupplierEvaluationTemplateSectionTable;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -196,19 +199,21 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
                 $query->where('template_name', 'LIKE', "%{$search}%");
             });
         }
-
-        return \DataTables::eloquent($supplierEvaluationMasters)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->make(true);
+        $supplierEvaluationMasters = $supplierEvaluationMasters->orderBy('id', $sort);
+        $lastItem = SupplierEvaluationTemplate::where('companySystemID', $companyID)->max('id');
+        $data = $supplierEvaluationMasters->get();
+    
+        foreach ($data as $item) {
+            $item->isLastItem = ($item->id == $lastItem) ? 1 : 0;
+        }
+    
+        return \DataTables::of($data)
+        ->addColumn('Actions', function ($row) {
+            return 'Actions'; // Define how the Actions column should be populated
+        })
+        ->addIndexColumn()
+        ->with('orderCondition', $sort)
+        ->make(true);
     }
 
     /**
@@ -270,11 +275,10 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if(isset($input['company']) && $input['company']){
-            unset ($input['company']);
-        }
+        $input = array_except($input, ['company']);
         
         $input = $this->convertArrayToValue($input);
+
 
         /** @var SupplierEvaluationTemplate $supplierEvaluationTemplate */
         $supplierEvaluationTemplate = $this->supplierEvaluationTemplateRepository->findWithoutFail($id);
@@ -283,9 +287,123 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
             return $this->sendError('Supplier Evaluation Template not found');
         }
 
+        if($supplierEvaluationTemplate['is_confirmed'] == 0 && $input['is_confirmed'] == 1){
+
+            if($supplierEvaluationTemplate['initial_instruction'] == null || $supplierEvaluationTemplate['user_text'] == null ){
+                return $this->sendError('Input fields in header can not be empty');
+            }
+
+            $commentCount = SupplierEvaluationTemplateComment::where('supplier_evaluation_template_id',$supplierEvaluationTemplate['id'])->count();
+            if($commentCount == 0){
+                return $this->sendError('Please add atleast one comment in comment section');
+            }
+
+            $evaluationTemplateSectionTable = SupplierEvaluationTemplateSectionTable::with(['column' ,'row'])
+                                                                                    ->where('supplier_evaluation_template_id', $id)
+                                                                                    ->where('isConfirmed', 1)
+                                                                                    ->get();
+
+            foreach ($evaluationTemplateSectionTable as $section) {
+                foreach ($section->column as $column) {
+                    if ($column->column_type == 2) {
+                        foreach ($section->row as $row) {
+                            $rowData = $row->rowData;
+                            if (is_string($rowData)) {
+                                $rowData = json_decode($rowData, true);
+                            }
+                            
+                            if (is_array($rowData)) {
+                                foreach ($rowData as $dataItem) {
+                                    if (array_key_exists($column->column_header, $dataItem) && $dataItem[$column->column_header] === null) {
+                                        return $this->sendError('Section table text fields can not be empty');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        
+
+        }
+
         $supplierEvaluationTemplate = $this->supplierEvaluationTemplateRepository->update($input, $id);
 
         return $this->sendResponse($supplierEvaluationTemplate->toArray(), 'SupplierEvaluationTemplate updated successfully');
+    }
+
+    public function getEvaluationTemplateData(Request $request)  {
+        $input = $request->all();
+        $id = $input['id'];
+
+        $evaluationTemplate = SupplierEvaluationTemplate::with(['company'])->where('id', $id)->first();
+        $evaluationTemplateComment = SupplierEvaluationTemplateComment::where('supplier_evaluation_template_id', $id)->get();
+
+        $evaluationTemplateSection = EvaluationTemplateSection::with([
+                                        'table' => function($query) {
+                                            $query->with(['column' => function($columnQuery) {
+                                                $columnQuery->with('evaluation_master');
+                                            }, 'row', 'formula' => function($formulaQuery) {
+                                                $formulaQuery->with('label');
+                                            }]);
+                                        }
+                                    ])->where('supplier_evaluation_template_id', $id)->get();
+        
+        $data = [
+            'evaluationTemplate' => $evaluationTemplate,
+            'evaluationTemplateComment' => $evaluationTemplateComment,
+            'evaluationTemplateSection' => $evaluationTemplateSection,
+        ];
+
+        return $this->sendResponse($data, 'Evaluation template retrieved successfully');
+
+    }
+
+    public function printEvaluationTemplate(Request $request)
+    {
+        $id = $request->get('id');
+
+
+        
+        $evaluationTemplate = SupplierEvaluationTemplate::with(['company'])->where('id', $id)->first();
+
+        if (empty($evaluationTemplate)) {
+            return $this->sendError('Evalution template not found');
+        }
+
+        $evaluationTemplateComment = SupplierEvaluationTemplateComment::where('supplier_evaluation_template_id', $id)->get();
+
+        $evaluationTemplateSection = EvaluationTemplateSection::with([
+                                        'table' => function($query) {
+                                            $query->with(['column' => function($columnQuery) {
+                                                $columnQuery->with('evaluation_master');
+                                            }, 'row', 'formula' => function($formulaQuery) {
+                                                $formulaQuery->with('label');
+                                            }]);
+                                        }
+                                    ])->where('supplier_evaluation_template_id', $id)->get();
+
+                
+                            
+        
+        $array = [
+            'evaluationTemplate' => $evaluationTemplate,
+            'evaluationTemplateComment' => $evaluationTemplateComment,
+            'evaluationTemplateSection' => $evaluationTemplateSection,
+        ];
+
+
+
+
+        $time = strtotime("now");
+        $fileName = 'evaluation_template_' . $id . '_' . $time . '.pdf';
+
+        $html = view('print.evaluation_template', $array);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     /**

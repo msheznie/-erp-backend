@@ -617,7 +617,9 @@ class PurchaseOrderDetailsRefferedHistory extends Model
         'madeLocallyYN',
         'altUnit',
         'altUnitValue',
-        'detail_project_id'
+        'detail_project_id',
+        'contractID',
+        'contractDescription'
     ];
 
     /**
@@ -718,7 +720,9 @@ class PurchaseOrderDetailsRefferedHistory extends Model
         'madeLocallyYN' => 'integer',
         'altUnit'  => 'integer',
         'altUnitValue'  => 'float',
-        'detail_project_id' => 'integer'
+        'detail_project_id' => 'integer',
+        'contractID' => 'string',
+        'contractDescription' => 'string'
     ];
 
     /**

@@ -25,6 +25,7 @@ Route::group([], function(){
     Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
     Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
 
+
     Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy')->name("Get all report templates for copy");
     Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory')->name("Add template sub category");
     Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate')->name("Get all report templates");
@@ -156,10 +157,41 @@ Route::group([], function() {
     Route::post('getAllSupplierEvaluationTemplates', 'SupplierEvaluationTemplateAPIController@getAllSupplierEvaluationTemplates')->name("Get all supplier evaluation masters");
     Route::post('getAllSupplierEvaluationMasters', 'SupplierEvaluationMastersAPIController@getAllSupplierEvaluationMasters')->name("Get all supplier evaluation masters");
     Route::post('getAllSupplierEvaluationDetails', 'SupplierEvaluationMasterDetailsAPIController@getAllSupplierEvaluationDetails')->name("Get all supplier evaluation masters");
+    Route::post('addMasterColumns', 'SupplierEvaluationTemplateSectionTableAPIController@addMasterColumns')->name("Create evaluation master columns");
+    Route::post('confirmTable', 'SupplierEvaluationTemplateSectionTableAPIController@confirmTable')->name("Confirm section table");
+    Route::get('sectionTableData', 'SupplierEvaluationTemplateSectionTableAPIController@sectionTableData')->name("Get section table data");
+    Route::post('updateRow', 'TemplateSectionTableRowAPIController@updateRow')->name("Update row data");
+    Route::get('getEvaluationMasters', 'SupplierEvaluationMastersAPIController@index')->name("Get evaluation masters");
+    Route::post('getTemplateSectionLabel', 'EvaluationTemplateSectionLabelAPIController@getTemplateSectionLabel')->name("Get template section label");
+    Route::post('getTemplateSectionFormula', 'EvaluationTemplateSectionFormulaAPIController@getTemplateSectionFormula')->name("Get template section formula");
+    Route::post('getTemplateSectionFormData', 'EvaluationTemplateSectionAPIController@getTemplateSectionFormData')->name("Get template section from data");
+    Route::get('getEvaluationTemplateData', 'SupplierEvaluationTemplateAPIController@getEvaluationTemplateData')->name("Get evaluation template data");
+
 
     Route::resource('supplier_evaluation_masters', 'SupplierEvaluationMastersAPIController');
-
     Route::resource('evaluation_master_details', 'SupplierEvaluationMasterDetailsAPIController');
     Route::resource('supplier_evaluation_templates', 'SupplierEvaluationTemplateAPIController');
     Route::resource('evaluation_template_comments', 'SupplierEvaluationTemplateCommentAPIController');
+    Route::resource('template_section_tables', 'SupplierEvaluationTemplateSectionTableAPIController');
+    Route::resource('template_section_table_columns', 'SupplierEvaluationTemplateSectionTableColumnAPIController');
+    Route::resource('template_section_table_rows', 'TemplateSectionTableRowAPIController');
+    Route::resource('evaluation_template_sections', 'EvaluationTemplateSectionAPIController');
+    Route::resource('template_section_labels', 'EvaluationTemplateSectionLabelAPIController');
+    Route::resource('template_section_formulas', 'EvaluationTemplateSectionFormulaAPIController');
+
+});
+
+// Exchange setup Configurations
+
+Route::group([], function() {
+    Route::resource('exchange_setup_document', 'ExchangeSetup\ExchangeSetupDocumentController');
+    Route::resource('exchange_setup_document_type', 'ExchangeSetup\ExchangeSetupDocumentTypeController');
+    Route::resource('exhange_setup_config', 'ExchangeSetup\ExchangeSetupConfigurationController');
+
+    Route::get('exchange_setup_document/{id}/types', 'ExchangeSetup\ExchangeSetupDocumentController@getTypesOfDocument');
+    Route::post('checkDocumentExchangeRateConfigAccess', 'ExchangeSetup\ExchangeSetupConfigurationController@checkDocumentExchangeRateConfigAccess');
+    Route::post('updateDocumentExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@updateDocumentExchangeRate');
+    Route::post('setDefaultExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@setDefaultExchangeRate');
+    Route::post('getExchangeSetupConfigOfCompany', 'ExchangeSetup\ExchangeSetupDocumentController@getExchangeSetupConfigOfCompany');
+
 });

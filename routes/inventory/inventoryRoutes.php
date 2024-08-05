@@ -85,6 +85,10 @@ Route::group([], function () {
     Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze')->name("Grv Markup finalyze");
     Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO')->name("Store GRV Details From PO");
     Route::post('storeGRVDetailsFromPR', 'GRVDetailsAPIController@storeGRVDetailsFromPR')->name("Store GRV Details From PR");
+
+    Route::get('getDeliveryEvaluationTemplates', 'GRVMasterAPIController@getDeliveryEvaluationTemplates')->name("Get Evaluation Templates For GRV");
+    Route::post('updateEvaluationDetails', 'SupplierEvaluationTableDetailsAPIController@updateEvaluationDetails')->name("Update Evaluation Details");
+    Route::resource('supplier_evaluation', 'SupplierEvaluationController');
 });
 
 

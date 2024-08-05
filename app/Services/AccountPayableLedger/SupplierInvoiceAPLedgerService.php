@@ -178,7 +178,7 @@ class SupplierInvoiceAPLedgerService
 
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
-                    if ($masterData->documentType == 0) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
 
                             $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);

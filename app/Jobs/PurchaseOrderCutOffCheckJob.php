@@ -50,7 +50,6 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
         $this->valueData = $valueData;
         $this->emailData = $emailData;
         $this->companyIDFromScenarios = $companyIDFromScenarios;
-        Log::info('Budget cutoff JOB construct'.$this->dispatch_db);
     }
 
     /**
@@ -124,8 +123,6 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
         if ($poCutOffData) {
             $poCutOffData->jobCount = $poCutOffData->jobCount + 1;
             $poCutOffData->save();
-            Log::info('Budget cutoff JOB count'.$poCutOffData->jobCount);
-            Log::info('Budget cutoff PO count'.$poCutOffData->poCount);
             if ($poCutOffData->jobCount == $poCutOffData->poCount) {
                 $cutOffPos = PoCutoffJobData::all();
 

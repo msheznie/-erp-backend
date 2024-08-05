@@ -60,8 +60,6 @@ class BudgetAdjustment implements ShouldQueue
             }
 
             try {
-                Log::info('Successfully start  budget_adjustment' . date('H:i:s'));
-                Log::info($budgetTransfer);
 
                 foreach ($budgetTransfer->detail as $item) {
 
@@ -154,7 +152,6 @@ class BudgetAdjustment implements ShouldQueue
                         'modifiedUserID' => $budgetTransfer->modifiedUser
                     );
                      $auditTrailRepo->create($auditTrail);
-                    //Log::info($auditTrail);
 
                     // Audit Trail Insert End
 
@@ -199,8 +196,6 @@ class BudgetAdjustment implements ShouldQueue
                         }
                     }
 
-                    Log::info('fromBudgetDetails' . $fromTotalCount );
-                    Log::info($fromBudgetDetails);
 
                     $toTotalBudgetDetails = Budjetdetails::where('companySystemID', $budgetTransfer->companySystemID)
                                                         ->where('serviceLineSystemID', $item['toServiceLineSystemID'])
@@ -241,8 +236,6 @@ class BudgetAdjustment implements ShouldQueue
                         }
                     }
 
-                    //Log::info('toTotalBudgetDetails - ' . $toTotalCount);
-                    //Log::info($toTotalBudgetDetails);
 
                     //End update From Budget in budget details
 
@@ -289,11 +282,7 @@ class BudgetAdjustment implements ShouldQueue
                         $toAdjustment['adjustmedLocalAmount'] = $item['adjustmentAmountLocal'];
                         $toAdjustment['adjustmentRptAmount'] = $item['adjustmentAmountRpt'];
                     }
-                    //Log::info('fromAdjustment');
-                    //Log::info($fromAdjustment);
 
-                    //Log::info('toAdjustment');
-                    //Log::info($toAdjustment);
 
                     if($item['isFromContingency'] == 0){
                         $budgetAdjustmentRepo->create($fromAdjustment);
@@ -304,14 +293,13 @@ class BudgetAdjustment implements ShouldQueue
 
                 }
 
-                Log::info('Successfully end  budget_adjustment' . date('H:i:s'));
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
             }
         } else {
-            Log::info('Error' . date('H:i:s'));
+            Log::error('Budget Transfer not found' . date('H:i:s'));
         }
     }
 
