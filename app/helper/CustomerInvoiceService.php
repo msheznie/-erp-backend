@@ -437,11 +437,25 @@ class CustomerInvoiceService
 
             $directInvoiceHeader = $CustomerInvoiceService->createDirectInvoiceHeader($DirectInvoiceHeaderData);
 
+            $enableProject = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $uploadedCompany)
+            ->first();
+            
             if ($directInvoiceHeader['status']) {
                 foreach ($ciData as $deatilKey => $value) {
                     //DETAIL LEVEL DATA
                     $glCode = $value[11]; //mandatory
-                    $project = $value[12];  
+
+                    if($enableProject){
+                        $policy = $enableProject->isYesNO;
+                        if($policy == 1){
+                            $project = $value[12];  
+
+                        } else {
+                            $project = null;  
+                        }
+                    }
+                    
                     $segment = $value[13];  //mandatory
                     $detailComments = $value[14];
                     $UOM = $value[15]; //mandatory
