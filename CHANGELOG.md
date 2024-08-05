@@ -1,5 +1,57 @@
 # Changelog
 
+## [10.46.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.45.0...v10.46.0) (2024-08-05)
+
+
+### Features
+
+* **accounts payable:** bank ledger values should equal as GL entries bank values in PV [GCP-4159] ([#6536](https://github.com/pbsgears/Gears_BackEnd/issues/6536)) ([9c88dfc](https://github.com/pbsgears/Gears_BackEnd/commit/9c88dfcc37daf5facfad2a54954c20d68abebafb))
+* **accounts payable:** Enable exchange rate edit option in payment voucher [GCP-3869] ([#6433](https://github.com/pbsgears/Gears_BackEnd/issues/6433)) ([373c259](https://github.com/pbsgears/Gears_BackEnd/commit/373c259fdd99a511167a54e411eab11aecf116b9))
+* **accounts payable:** gain or loss entry based on exchange setup configuration [GCP-3870] ([a98f887](https://github.com/pbsgears/Gears_BackEnd/commit/a98f88705c59828e0740fa378d80e38104eeedf9))
+* **accounts payable:** gain or loss GL entry based on exchange setup configuration [GCP-3870] ([#6474](https://github.com/pbsgears/Gears_BackEnd/issues/6474)) ([4ebc2b7](https://github.com/pbsgears/Gears_BackEnd/commit/4ebc2b74698d0d38179d3419148c7a4d0e154863))
+* **accounts payable:** when update similar currencies if click on cancel do not update [GCP-4095] ([#6478](https://github.com/pbsgears/Gears_BackEnd/issues/6478)) ([9532187](https://github.com/pbsgears/Gears_BackEnd/commit/9532187ff6ee698d2a319d2ecdc047a302802843))
+* **accounts receivable:** Exchange gain or loss configuration in Customer Invoice Receipt [GCP-2082] ([#6371](https://github.com/pbsgears/Gears_BackEnd/issues/6371)) ([4eeae43](https://github.com/pbsgears/Gears_BackEnd/commit/4eeae4338bb8d80113a26406f038315072d2f131))
+* **asset management:** barcode company name update [GCP-3956Temp] ([bfe479d](https://github.com/pbsgears/Gears_BackEnd/commit/bfe479dfb44584a3aa1d17c1584085f443d42dc3))
+* **asset management:** barcode company name update [GCP-3956Temp1] ([223d256](https://github.com/pbsgears/Gears_BackEnd/commit/223d2565cf75565c5a3d9f8a5397dd1f25cc092d))
+* **asset management:** Implemented asset costing bulk upload with validations [GCP-3830] ([#6450](https://github.com/pbsgears/Gears_BackEnd/issues/6450)) ([b090f73](https://github.com/pbsgears/Gears_BackEnd/commit/b090f739d6bf5d4324cfd8668ff008a769d3def5))
+* **asset management:** Restructuring of asset bulk upload as per different upload formats [GCP-3828] ([#6368](https://github.com/pbsgears/Gears_BackEnd/issues/6368)) ([a77a571](https://github.com/pbsgears/Gears_BackEnd/commit/a77a571af7277bb90e72a37019bd10df22fbd49c))
+* **asset management:** Restructuring of asset bulk upload to handle own and third party assets separately [GCP-3829] ([#6396](https://github.com/pbsgears/Gears_BackEnd/issues/6396)) ([e7a8c00](https://github.com/pbsgears/Gears_BackEnd/commit/e7a8c00a221873995b79cf7485cac0a172401aeb))
+* **common:** Amendmend issues fixed [GCP-4030] ([b17bf83](https://github.com/pbsgears/Gears_BackEnd/commit/b17bf83ba97eee60c0e94f71bcdaf6e3e572cf87))
+* **common:** Attachment upload error message for AWS return errors [GCP-3981]  ([#6387](https://github.com/pbsgears/Gears_BackEnd/issues/6387)) ([d833326](https://github.com/pbsgears/Gears_BackEnd/commit/d833326a95a62854a46a4051a24f2e5accf8f80f))
+* **common:** Implement contract selection dropdown in supplier invoice, payment voucher & purchase order [GCP-3915] ([#6509](https://github.com/pbsgears/Gears_BackEnd/issues/6509)) ([eb2821a](https://github.com/pbsgears/Gears_BackEnd/commit/eb2821a62cdf52003ac3e21a0631ff95fd47de0b))
+* **common:** increase digital stamp size in print documents [GCP-4083] ([#6534](https://github.com/pbsgears/Gears_BackEnd/issues/6534)) ([e1ba439](https://github.com/pbsgears/Gears_BackEnd/commit/e1ba439c2ff9ddb2bb01104f88a530f523573618))
+* **configuration:** exchange setup disable documents [GCP-4073] ([#6464](https://github.com/pbsgears/Gears_BackEnd/issues/6464)) ([3f48d36](https://github.com/pbsgears/Gears_BackEnd/commit/3f48d36560fe59787a2d2a51c3c1201d6dfe4bb9))
+* **configuration:** Fixed small issues in Supplier evaluation [GCP-4060] ([#6454](https://github.com/pbsgears/Gears_BackEnd/issues/6454)) ([f494b7c](https://github.com/pbsgears/Gears_BackEnd/commit/f494b7ca207fccf89cc2af75e0496eecfbe986c8))
+* **configuration:** Implemented functionalities for exchange rate setup configuration [GCP-2471] ([#6355](https://github.com/pbsgears/Gears_BackEnd/issues/6355)) ([fc72bd7](https://github.com/pbsgears/Gears_BackEnd/commit/fc72bd74c57b6e3b7195e135b912bc2386b9efbc))
+* **configuration:** Print preview & pdf in evaluation template [GCP-4053] ([#6480](https://github.com/pbsgears/Gears_BackEnd/issues/6480)) ([d50e2ce](https://github.com/pbsgears/Gears_BackEnd/commit/d50e2cea3c790b50ebb634e5b9553c966259ff77))
+* **configuration:** Supplier evaluation template configuration section part functionalities created [GCP-3861] ([#6377](https://github.com/pbsgears/Gears_BackEnd/issues/6377)) ([7fd746e](https://github.com/pbsgears/Gears_BackEnd/commit/7fd746ee31c3913d43a07f3e524478f6235f7798))
+* **general ledger:** Implemented direct PV and advance PV to VAT return filling [GCP-4033] ([#6524](https://github.com/pbsgears/Gears_BackEnd/issues/6524)) ([4c9f9d5](https://github.com/pbsgears/Gears_BackEnd/commit/4c9f9d51c2be61fe120d3166b8fb28f20c972f4a))
+* **general ledger:** Include exempt VAT type in VAT ledger and VAT reports [GCP-3716] ([#6359](https://github.com/pbsgears/Gears_BackEnd/issues/6359)) ([3e46d64](https://github.com/pbsgears/Gears_BackEnd/commit/3e46d64be2fa7c587fc160b0459e91acac64fa3f))
+* **general ledger:** po Accural jv doesn't show user comment after pull details [GCP-3458] ([#6425](https://github.com/pbsgears/Gears_BackEnd/issues/6425)) ([0158bb7](https://github.com/pbsgears/Gears_BackEnd/commit/0158bb75538efded16e622b287ef22481e0171bd))
+* **general ledger:** Validations to be added to budget bulk upload [GCP-2123] ([#6391](https://github.com/pbsgears/Gears_BackEnd/issues/6391)) ([dc19c5b](https://github.com/pbsgears/Gears_BackEnd/commit/dc19c5b8ef8a185138f4771af879dec32f8da8a0))
+* **inventory:** Added GRV item validation when review GRV document [GCP-3879] ([#6422](https://github.com/pbsgears/Gears_BackEnd/issues/6422)) ([09ff6db](https://github.com/pbsgears/Gears_BackEnd/commit/09ff6db78419182db26606a0b5276205da70ecaa))
+* **inventory:** Added supplier evaluation create option in GRV [GCP-3714] ([#6463](https://github.com/pbsgears/Gears_BackEnd/issues/6463)) ([05c3084](https://github.com/pbsgears/Gears_BackEnd/commit/05c30848a2191d34afdc45af6fd9379985971f5c))
+* **inventory:** excluded tax amount when compare GRV with Item ledger [GCP-4047] ([#6453](https://github.com/pbsgears/Gears_BackEnd/issues/6453)) ([4f2bcd8](https://github.com/pbsgears/Gears_BackEnd/commit/4f2bcd8ff8818807311cb197a7fb3d946ad543d4))
+* **procurement:** Created supplier evaluation navigation [GCP-3715] ([#6479](https://github.com/pbsgears/Gears_BackEnd/issues/6479)) ([971c2a4](https://github.com/pbsgears/Gears_BackEnd/commit/971c2a43eae8b653b95018400e91dadb35ebd2ff))
+* **procurement:** Implemented budget consumption for fixed assets in PR print preview [GCP-1446] ([#6360](https://github.com/pbsgears/Gears_BackEnd/issues/6360)) ([336ecf9](https://github.com/pbsgears/Gears_BackEnd/commit/336ecf9215e9997ab6279a3f7f573f1dcbdf8fdd))
+* **procurement:** Pending document consumption logic changed for both fixed and inventory items [GCP-4010] ([#6421](https://github.com/pbsgears/Gears_BackEnd/issues/6421)) ([65c12f5](https://github.com/pbsgears/Gears_BackEnd/commit/65c12f5cd68f8732495b83b2e19f777153acd88a))
+* **procurement:** PR excel upload modified to upload purchase or purchase and sales items only [GCP-3520] ([#6366](https://github.com/pbsgears/Gears_BackEnd/issues/6366)) ([fdf27fa](https://github.com/pbsgears/Gears_BackEnd/commit/fdf27fac641acef7b38a5b1d6996af27e44c27a3))
+* **procurement:** Validation added for excel uploading inactive unapproved unassigned items in PR [GCP-3986] ([#6393](https://github.com/pbsgears/Gears_BackEnd/issues/6393)) ([e6511ca](https://github.com/pbsgears/Gears_BackEnd/commit/e6511cae229c76eb13a4dba2de54b507338b96d5))
+* **system admin:** Amend & add to log isCritical field in supplier master [GCP-3867] ([#6446](https://github.com/pbsgears/Gears_BackEnd/issues/6446)) ([608ac78](https://github.com/pbsgears/Gears_BackEnd/commit/608ac788723c3ca13ac6862ee0912ecccf883511))
+
+
+### Bug Fixes
+
+* **accounts payable:** Fixed supplier GL entries when exempt vat is applied [GCP-4124] ([#6514](https://github.com/pbsgears/Gears_BackEnd/issues/6514)) ([c45232a](https://github.com/pbsgears/Gears_BackEnd/commit/c45232aaffb278b2f7714b7f0428da728a5c639b))
+* **accounts payable:** supplier invoice entries of retention scenario is corrected [GCP-3839] ([#6334](https://github.com/pbsgears/Gears_BackEnd/issues/6334)) ([ef66e79](https://github.com/pbsgears/Gears_BackEnd/commit/ef66e79e36fcab2567ed4fcba925f73a0b0288da))
+* **accounts receivable:** customer invoice GL entry round off calculation [GCP-3842] ([#6452](https://github.com/pbsgears/Gears_BackEnd/issues/6452)) ([435335e](https://github.com/pbsgears/Gears_BackEnd/commit/435335e31b07903488e9660617f87169fb3f5edc))
+* **common:** Amendmend issues fixed [GCP-4030] ([2361156](https://github.com/pbsgears/Gears_BackEnd/commit/2361156fdeda72230334bfc8b8fb645f3966afde))
+* **common:** Amendmend issues fixed [GCP-4030] ([02fc385](https://github.com/pbsgears/Gears_BackEnd/commit/02fc3856058d8a319603cf1045edb6b56ca28c2c))
+* **configuration:** Showing the correct count of unlinked GL [GCP-3579] ([#6449](https://github.com/pbsgears/Gears_BackEnd/issues/6449)) ([c25ba12](https://github.com/pbsgears/Gears_BackEnd/commit/c25ba1244ae129aaa29f5f30524027bdf2f4845c))
+* **general ledger:** fianancial report when configured to mutiple columns excel not [GCP-4149] ([#6511](https://github.com/pbsgears/Gears_BackEnd/issues/6511)) ([dc710e0](https://github.com/pbsgears/Gears_BackEnd/commit/dc710e0c51f237585ee84aa1970e53a48e2b9abb))
+* **general ledger:** Fixed to show even when gl codes levels are more than two [GCP-3992] ([#6394](https://github.com/pbsgears/Gears_BackEnd/issues/6394)) ([7a55f79](https://github.com/pbsgears/Gears_BackEnd/commit/7a55f794fe6883f4fc594c5e67dcb955ce153b90))
+* **sales & marketing:** sales order excel upload not working [GCP-3597] ([#6367](https://github.com/pbsgears/Gears_BackEnd/issues/6367)) ([340f2fc](https://github.com/pbsgears/Gears_BackEnd/commit/340f2fcb4e304eec51562b1f70abde4c8117beb1))
+
 ## [10.45.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.44.2...v10.45.0) (2024-07-17)
 
 
