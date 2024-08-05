@@ -29,7 +29,7 @@ class ThirdPartyAPIController extends AppBaseController
                     try {
                         $client = new Client();
 
-                        $url = $thirdPartyIntegrationKey->api_external_url.'get_contract_data?supplierId='.$data['supplierId'];
+                        $url = $thirdPartyIntegrationKey->api_external_url.'/get_contract_data?supplierId='.$data['supplierId'];
 
                         $response = $client->request('GET', $url, [
                             'headers' => [
