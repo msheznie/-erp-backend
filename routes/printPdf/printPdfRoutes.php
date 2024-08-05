@@ -66,3 +66,4 @@ Route::post('SupplierScheduleWiseExportReport', 'BidSubmissionMasterAPIControlle
 
 Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
 Route::get('printRecurringVoucher', 'RecurringVoucherSetupAPIController@printRecurringVoucher');
+Route::get('printChartOfAccount', 'ChartOfAccountAPIController@printChartOfAccount');
