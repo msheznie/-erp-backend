@@ -17,6 +17,7 @@ use App\Services\AuditLog\ErpAttributeAuditService;
 use App\Services\AuditLog\CustomerMasterAuditService;
 use App\Services\AuditLog\ItemMasterAuditService;
 use App\Services\AuditLog\AssetCostAuditService;
+use App\Services\AuditLog\SegmentMasterAuditService;
 use App\Services\AuditLog\SupplierMasterAuditService;
 use Illuminate\Support\Facades\Log;
 
@@ -116,6 +117,9 @@ class AuditLogJob implements ShouldQueue
                 break;
             case 'erp_fa_asset_master':
                 $data = AssetCostAuditService::process($auditData);
+                break;
+            case 'serviceline':
+                $data = SegmentMasterAuditService::process($auditData);
                 break;
             default:
                 // code...

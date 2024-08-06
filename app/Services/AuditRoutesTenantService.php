@@ -22,7 +22,9 @@ class AuditRoutesTenantService
             'api/v1/asset_finance_categories/{asset_finance_category}',
             'api/v1/gl-config-scenario-details/{gl_config_scenario_detail}',
             'api/v1/asset_disposal_types/{asset_disposal_type}',
-            'api/v1/fixed_asset_masters/{fixed_asset_master}'
+            'api/v1/fixed_asset_masters/{fixed_asset_master}',
+            'api/v1/updateSegmentMaster',
+            'api/v1/segment/masters/{master}'
         ];
 
         return $lokiTenantRoutes;
