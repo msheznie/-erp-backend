@@ -614,7 +614,7 @@ class TaxService
 
         return $grvVATCategories;
     }
-    
+
     public static function processGrvVAT($grvAutoID)
     {
         $checkGrvVATCategories = GRVDetails::selectRaw('vatSubCategoryID, erp_tax_vat_sub_categories.subCatgeoryType as vatSubCategoryType')
