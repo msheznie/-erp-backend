@@ -7675,6 +7675,9 @@ GROUP BY
             $prevMonth2 = Carbon::parse($currentMonth)->subMonth(2)->format('Y-m');
             $LCurrentMonth = Carbon::parse($toDate)->subYear()->format('Y-m');
             $LYear = Carbon::parse($toDate)->subYear()->format('Y');
+            $LYear1 = Carbon::parse($toDate)->subYear(2)->format('Y');
+            $LYear2 = Carbon::parse($toDate)->subYear(3)->format('Y');
+            $LYear3 = Carbon::parse($toDate)->subYear(4)->format('Y');
             $LPrevMonth = Carbon::parse($LCurrentMonth)->subMonth()->format('Y-m');
             $LPrevMonth2 = Carbon::parse($LCurrentMonth)->subMonth(2)->format('Y-m');
             foreach ($currentYearPeriod as $val) {
@@ -7793,6 +7796,89 @@ GROUP BY
                     }
                     $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;
                 }
+
+                if ($val->shortCode == 'CY-2') {
+                    if ($request->accountType == 2) {
+                        
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear(2)->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->subYear(2)->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($toDate)->subYear(2)->format('Y-m-d');
+                            $fromDate = Carbon::parse($fromDate)->subYear(2)->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear(2)->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear1;
+                }
+
+                if ($val->shortCode == 'CY-3') {
+                    if ($request->accountType == 2) {
+                        
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear(3)->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->subYear(3)->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($toDate)->subYear(3)->format('Y-m-d');
+                            $fromDate = Carbon::parse($fromDate)->subYear(3)->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear(3)->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear2;
+                }
+
+                if ($val->shortCode == 'CY-4') {
+                    if ($request->accountType == 2) {
+                        
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear(4)->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->subYear(4)->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($toDate)->subYear(4)->format('Y-m-d');
+                            $fromDate = Carbon::parse($fromDate)->subYear(4)->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear(4)->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear3;
+                }
+
+
                 if ($val->shortCode == 'BCM') {
 
                     if ($changeSelect) {
@@ -7866,7 +7952,7 @@ GROUP BY
                         // if column has a formula value decoding process is done here
                         $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false, 1);
                     }
-                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CMB') {
+                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CY-2' || $val->shortCode == 'CY-3' || $val->shortCode == 'CY-4' || $val->shortCode == 'CMB') {
                     $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                 } else {
                     $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
@@ -7954,7 +8040,7 @@ GROUP BY
                         $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
                         $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true, 2);
                     }
-                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CMB') {
+                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CY-2' || $val->shortCode == 'CY-3' || $val->shortCode == 'CY-4' || $val->shortCode == 'CMB') {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                     $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode], 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
