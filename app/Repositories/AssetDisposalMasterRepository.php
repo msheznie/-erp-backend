@@ -36,6 +36,7 @@ class AssetDisposalMasterRepository extends BaseRepository
         'disposalDocumentCode',
         'disposalDocumentDate',
         'narration',
+        'vatRegisteredYN',
         'confirmedYN',
         'confimedByEmpSystemID',
         'confimedByEmpID',

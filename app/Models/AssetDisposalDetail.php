@@ -169,6 +169,11 @@ class AssetDisposalDetail extends Model
         'revenuePercentage',
         'sellingPriceLocal',
         'sellingPriceRpt',
+        'vatPercentage',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
+        'vatAmount',
+        'sellingTotal',
         'timestamp'
     ];
 

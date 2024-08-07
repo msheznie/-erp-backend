@@ -517,6 +517,16 @@ class GRVMasterAPIController extends AppBaseController
 
 
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
+            if ($gRVMaster->grvTypeID == 1) {
+                $grvVatDetails = GRVDetails::where('grvAutoID', $input['grvAutoID'])->get();
+                foreach ($grvVatDetails as $grvVatDetail) {
+                    if ($grvVatDetail->VATAmount > 0) {
+                        if ($grvVatDetail->vatMasterCategoryID == null || $grvVatDetail->vatSubCategoryID == null) {
+                            return $this->sendError("Please assign a vat category to this item (or) setup a default vat category");
+                        }
+                    }
+                }
+            }
 
             if($gRVMaster->grvTypeID == 2)
             {          
@@ -542,6 +552,8 @@ class GRVMasterAPIController extends AppBaseController
                     }
 
                 }
+
+
 
                 if(count($poInfo) > 0)
                 {

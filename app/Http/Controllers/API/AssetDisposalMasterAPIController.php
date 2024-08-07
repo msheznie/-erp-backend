@@ -12,6 +12,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateAssetDisposalMasterAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalMasterAPIRequest;
 use App\Models\AssetDisposalDetail;
@@ -38,6 +39,7 @@ use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
+use App\Models\TaxVatCategories;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\AssetDisposalMasterRepository;
@@ -202,6 +204,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
         $company = Company::find($input['companySystemID']);
         if ($company) {
             $input['companyID'] = $company->CompanyID;
+            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
         }
 
         $toCompany = Company::find($input['toCompanySystemID']);
@@ -401,6 +404,17 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 } else {
                     $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
                     $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+                }
+
+                if($assetDisposalMaster->vatRegisteredYN == 1 && $assetDisposalMaster->disposalType == 1 && $toCompany->vatRegisteredYN != 1){
+                    return $this->sendError("Company" .$toCompany->CompanyName. "is not registered for VAT", 500, ['type' => 'confirm']);
+                }
+
+                if($assetDisposalMaster->vatRegisteredYN == 1 && $assetDisposalMaster->disposalType == 1 && $toCompany->vatRegisteredYN == 1){
+                    $vatSubCategories = TaxVatCategories::where('isActive', 1)->first();
+                    if(empty($vatSubCategories)){
+                        return $this->sendError("Vat Not configured in company " .$toCompany->CompanyName, 500, ['type' => 'confirm']);
+                    }
                 }
 
                 $inputParam = $input;

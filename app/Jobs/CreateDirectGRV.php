@@ -248,6 +248,15 @@ class CreateDirectGRV implements ShouldQueue
                             $directGRVDet['landingCost_TransCur'] = \Helper::roundValue($comRptAmountDetail);
                             $directGRVDet['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
 
+                            $directGRVDet['vatRegisteredYN'] = $dpMaster->vatRegisteredYN;
+
+                            $currencyVat = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $val->vatAmount);
+
+                            $directGRVDet['VATPercentage'] = $val->sellingPriceRpt;
+                            $directGRVDet['VATAmount'] = \Helper::roundValue($val->vatAmount);
+                            $directGRVDet['VATAmountLocal'] = $currencyVat['localAmount'];
+                            $directGRVDet['VATAmountRpt'] = $currencyVat['reportingAmount'];
+
                             $directGRVDet['createdPcID'] = gethostname();
                             $directGRVDet['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
                             $directGRVDet['createdUserID'] = $dpMaster->confimedByEmpID;

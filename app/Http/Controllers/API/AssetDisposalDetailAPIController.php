@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateAssetDisposalDetailAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalDetailAPIRequest;
 use App\Models\AssetDisposalDetail;
@@ -315,6 +316,16 @@ class AssetDisposalDetailAPIController extends AppBaseController
         if (empty($disposalMaster)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_master')]));
         }
+        if($disposalMaster->vatRegisteredYN == 1 && ($disposalMaster->disposalType == 1 || $disposalMaster->disposalType == 6)) {
+            if($input['vatMasterCategoryID'] == $assetDisposalDetail->vatMasterCategoryID) {
+                $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($disposalMaster->documentSystemID, $disposalMaster->companySystemID, $id, $input);
+
+                if (!$validateVATCategories['status']) {
+                    return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vatIssue'));
+                }
+            }
+        }
+
 
         if($input['isFromAssign']) {
             if ($disposalMaster->disposalType == 1) {
