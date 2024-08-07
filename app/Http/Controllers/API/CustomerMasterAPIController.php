@@ -48,6 +48,7 @@ use App\Models\SupplierImportance;
 use App\Models\SupplierType;
 use App\Models\suppliernature;
 use App\Repositories\CustomerMasterRepository;
+use App\Services\API\CustomerMasterAPIService;
 use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -472,10 +473,6 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
-   
-        if($input['custGLAccountSystemID'] == $input['custUnbilledAccountSystemID'] ){
-            return $this->sendError('Receivable account and unbilled account cannot be same. Please select different chart of accounts.');
-        }
        
         if (isset($input['gl_account'])) {
             unset($input['gl_account']);
@@ -496,14 +493,6 @@ class CustomerMasterAPIController extends AppBaseController
             }
         }
 
-        if($input['custUnbilledAccountSystemID'] == 0){
-            return $this->sendError('Unbilled Receivable Account field is required.');
-        }
-
-        if($input['custAdvanceAccountSystemID'] == 0){
-            return $this->sendError('Advance Account field is required.');
-        }
-
         if(isset($input['customer_registration_no']) && $input['customer_registration_no']){
             if(!$input['customer_registration_expiry_date']){
                 return $this->sendError('Registration expiry date is required.');
@@ -513,43 +502,6 @@ class CustomerMasterAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
-        $empName = $user->employee['empName'];
-
-
-
-        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
-        if (!$validatorResult['success']) {
-            return $this->sendError($validatorResult['message']);
-        }
-
-        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
-
-        if ($company) {
-            $input['primaryCompanyID'] = $company->CompanyID;
-        }
-
-
-        if (array_key_exists('custGLAccountSystemID', $input)) {
-            $financePL = ChartOfAccount::where('chartOfAccountSystemID', $input['custGLAccountSystemID'])->first();
-            if ($financePL) {
-                $input['custGLaccount'] = $financePL->AccountCode;
-            }
-        }
-
-        if (array_key_exists('custUnbilledAccountSystemID', $input)) {
-            $unbilled = ChartOfAccount::where('chartOfAccountSystemID', $input['custUnbilledAccountSystemID'])->first();
-            if ($unbilled) {
-                $input['custUnbilledAccount'] = $unbilled->AccountCode;
-            }
-        }
-
-
-        if (array_key_exists('custAdvanceAccountSystemID', $input)) {
-            $unbilled = ChartOfAccount::where('chartOfAccountSystemID', $input['custAdvanceAccountSystemID'])->first();
-            if ($unbilled) {
-                $input['custAdvanceAccount'] = $unbilled->AccountCode;
-            }
-        }
 
         $commonValidorMessages = [
             'customerCountry.required' => 'Country field is required.',
@@ -564,10 +516,6 @@ class CustomerMasterAPIController extends AppBaseController
 
         if ($commonValidator->fails()) {
             return $this->sendError($commonValidator->messages(), 422);
-        }
-
-        if($input['customerCountry']==0 || $input['customerCountry']==''){
-            return $this->sendError('Country field is required',500);
         }
 
         if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
@@ -589,194 +537,61 @@ class CustomerMasterAPIController extends AppBaseController
             $linkedCompany = Company::find($input['companyLinkedToSystemID']);
 
             $input['companyLinkedTo'] = ($linkedCompany) ? $linkedCompany->CompanyID : null; 
-        } else {
+        }
+        else {
             $input['companyLinkedTo'] = null;
             $input['companyLinkedToSystemID'] = null;
         }
 
-        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
-        $db = isset($input['db']) ? $input['db'] : '';
+        $input['isAutoCreateDocument'] = false;
 
-        if(isset($input['tenant_uuid']) ){
-            unset($input['tenant_uuid']);
+        $validation = CustomerMasterAPIService::validateCustomerMasterData($input);
+        if(!$validation['status']) {
+            return $this->sendError(
+                $validation['message'],
+                $validation['code'] ?? 404
+            );
         }
 
-        if(isset($input['db']) ){
-            unset($input['db']);
-        }
+        $input = CustomerMasterAPIService::setCustomerMasterData($input);
+        $input['isAutoCreateDocument'] = false;
         
         if (array_key_exists('customerCodeSystem', $input)) {
+            $input['tenant_uuid'] = $input['tenant_uuid'] ?? 'local';
+            $input['db'] = $input['db'] ?? '';
+            $input['empID'] = $empId;
 
-            if($input['isCustomerActive'] == 0)
-            {
-                $Quatation = [];
-                $Delivery = [];
-                $ItemIssue = [];
-                $MatDoc = [];
-                $Recived = [];
-                $Credit = [];
-                $CustomerInvoice = [];
-                $SalesReturn = [];
-
-                $quatation = QuotationMaster::where('customerSystemCode',$input['customerCodeSystem'])->where('approvedYN',0);
-
-                if($quatation->count() > 0)
-                {
-                    $Quatation =  $quatation->pluck('quotationCode')->toArray();
-                }
-
-                $delivery = DeliveryOrder::where('customerID',$input['customerCodeSystem'])->where('approvedYN',0);
-
-                if($delivery->count() > 0)
-                {
-                    $Delivery =  $delivery->pluck('deliveryOrderCode')->toArray();
-                }
-
-                $salesReturn = SalesReturn::where('customerID',$input['customerCodeSystem'])->where('approvedYN',0);
-
-                if($salesReturn->count() > 0)
-                {
-                    $SalesReturn =  $salesReturn->pluck('salesReturnCode')->toArray();
-                }
-
-                $customerInvoice = CustomerInvoice::where('customerID',$input['customerCodeSystem'])->where('approved',0);
-
-                if($customerInvoice->count() > 0)
-                {
-                    $CustomerInvoice =  $customerInvoice->pluck('bookingInvCode')->toArray();
-                }
-
-                $credit = CreditNote::where('customerID', $input['customerCodeSystem'])->where('approved',0);
-
-                if($credit->count() > 0)
-                {
-                    $Credit =  $credit->pluck('creditNoteCode')->toArray();
-                }
-
-
-                $recived = CustomerReceivePayment::where('customerID', $input['customerCodeSystem'])->where('approved',0);
-
-                if($recived->count() > 0)
-                {
-                    $Recived =  $recived->pluck('custPaymentReceiveCode')->toArray();
-                }
-
-                $matDoc = MatchDocumentMaster::where('BPVsupplierID',$input['customerCodeSystem'])->where('approved',0);
-
-                if($matDoc->count() > 0)
-                {
-                    $MatDoc =  $matDoc->pluck('matchingDocCode')->toArray();
-                }
-
-                $itemIssue = ItemIssueMaster::where('customerSystemID',$input['customerCodeSystem'])->where('approved',0);
-
-                if($itemIssue->count() > 0)
-                {
-                    $ItemIssue =  $itemIssue->pluck('itemIssueCode')->toArray();
-                }
-
-
-                $mergedArray = array_merge($Quatation,$Delivery,$ItemIssue, $MatDoc, $Recived,$Credit,$CustomerInvoice,$SalesReturn);
-                if(count($mergedArray) > 0)
-                {
-                    return $this->sendError('The selected customer has already been pulled into the document.',500,['type' => 'customerBlock','data' =>$mergedArray]);
-        
-                }
-
-
-            }
-            $customerMasters = CustomerMaster::where('customerCodeSystem', $input['customerCodeSystem'])->first();
-
-            if (empty($customerMasters)) {
-                return $this->sendError('customer not found');
-            }
-            $customerMasterOld = $customerMasters->toArray();
-            if($customerMasters->approvedYN){
-                $employee = Helper::getEmployeeInfo();
-                //check policy 5
-                $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],5);
-                $customerId = $customerMasters->customerCodeSystem;
-                if($policy){
-                    $validorMessages = [
-                        'creditDays.required' => 'Credit Period field is required.',
-                        'creditDays.numeric' => 'Credit Period field is required.'
-                    ];
-                    $validator = \Validator::make($input, [
-                        'creditDays' => 'required|numeric',
-                    ],$validorMessages);
-
-                    if ($validator->fails()) {
-                        return $this->sendError($validator->messages(), 422);
-                    }
-
-                    $previosValue = $customerMasters->toArray();
-                    $newValue = $input;
-
-                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']), $customerId);
-                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
-                    // user activity log table
-
-                    if($customerMasters){
-                        $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
-                        $modified_array = array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
-
-                        // update in to user log table
-                        foreach ($old_array as $key => $old){
-                            if($old != $modified_array[$key]){
-                                $description = $employee->empName." Updated customer (".$customerMasters->CutomerCode.") from ".$old." To ".$modified_array[$key]."";
-                               // UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$customerMasters->documentSystemID,$customerMasters->primaryCompanySystemID,$customerMasters->supplierCodeSystem,$description,$modified_array[$key],$old,$key);
-                            }
-                        }
-                    }
-
-                    $this->auditLog($db, $input['customerCodeSystem'],$uuid, "customermaster", $input['CutomerCode']." has updated", "U", $newValue, $previosValue);
-
-                    
-                    return $this->sendResponse($customerMasters, 'Customer Master updated successfully');
-                }
-                return $this->sendError('Customer Master is already approved , You cannot update.',500);
+            $customerMaster = CustomerMasterAPIService::updateCustomerMaster($input);
+        }
+        else {
+            if(isset($input['tenant_uuid']) ){
+                unset($input['tenant_uuid']);
             }
 
-
-            if ($customerMasters->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-                $params = array('autoID' => $input['customerCodeSystem'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-                $confirm = \Helper::confirmDocument($params);
-                if (!$confirm["success"]) {
-                    return $this->sendError($confirm["message"], 500);
-                }
+            if(isset($input['db']) ){
+                unset($input['db']);
             }
 
-            foreach ($input as $key => $value) {
-                $customerMasters->$key = $value;
-            }
-
-            $customerMasters->modifiedPc = gethostname();
-            $customerMasters->modifiedUser = $empId;
-            $customerMasters->save();
-        } else {
-
-            $document = DocumentMaster::where('documentID', 'CUSTM')->first();
-            $input['documentSystemID'] = $document->documentSystemID;
-            $input['documentID'] = $document->documentID;
-
-            $lastCustomer = CustomerMaster::orderBy('customerCodeSystem', 'DESC')->first();
-            $lastSerialOrder = 1;
-            if(!empty($lastCustomer)){
-                $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
-            }
-
-            $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
-
-            $input['lastSerialOrder'] = $lastSerialOrder;
-            $input['CutomerCode'] = $customerCode;
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = $empId;
-            $input['isCustomerActive'] = 1;
-       
-            $customerMasters = $this->customerMasterRepository->create($input);
+
+            $customerMaster = CustomerMasterAPIService::storeCustomerMasterFromAPI($input);
         }
 
-        return $this->sendResponse($customerMasters->toArray(), 'Customer Master saved successfully');
+        if ($customerMaster['status']) {
+            return $this->sendResponse(
+                $customerMaster['data'],
+                $customerMaster['message']
+            );
+        }
+        else{
+            return $this->sendError(
+                $customerMaster['message'],
+                $customerMaster['code'] ?? 404,
+                $customerMaster['type'] ?? array('type' => '')
+            );
+        }
+
     }
 
 
