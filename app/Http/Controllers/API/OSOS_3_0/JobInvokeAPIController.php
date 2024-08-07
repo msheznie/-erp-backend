@@ -25,7 +25,6 @@ class JobInvokeAPIController extends AppBaseController
 
         if(empty($data)){
             $msg = 'The third party integration not available';
-            $this->insertToLogTb($msg, 'error', '', '');
             throw new Exception($msg, 500);
         }
 
@@ -39,25 +38,28 @@ class JobInvokeAPIController extends AppBaseController
             $valResp = $this->commonValidations($request);
 
             if (!$valResp['status']) {
-                $this->insertToLogTb($valResp['message'], 'error', 'Location', $this->thirdParty['company_id']);
+                $logData = ['message' => $valResp['message'] ];
+                $this->insertToLogTb($logData, 'error', 'Location', $this->thirdParty['company_id']);
 
                 return $this->sendError($valResp['message'], 500);
             }
 
             $postType = $request->postType;
-            $id = $request->locationId;
-
+            $ids =is_array($request->locationId) ? $request->locationId : [$request->locationId];
             $db = isset($request->db) ? $request->db : "";
 
-            LocationWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+            foreach ($ids as $id) {
+                LocationWebHook::dispatch($db, $postType, $id, $this->thirdParty); 
+            }
 
             return $this->sendResponse([], 'OSOS 3.0 location triggered success');
 
         } catch (\Exception $e) {
             $msg = $e->getMessage();
             $error = $msg.' Error Line No: ' . $e->getLine();
-            $comId = isset($this->thirdParty['company_id'])? $this->thirdParty['company_id'] : 0;
-            $this->insertToLogTb($error, 'error', 'Location', $comId);
+            $comId = $this->thirdParty['company_id'] ?? 0;
+            $logData = ['message' => $error ];
+            $this->insertToLogTb($logData, 'error', 'Location', $comId);
 
             return $this->sendError($msg, 500);
         }
@@ -69,7 +71,8 @@ class JobInvokeAPIController extends AppBaseController
             $valResp = $this->commonValidations($request);
 
             if(!$valResp['status']){
-                $this->insertToLogTb($valResp['message'], 'error', 'Designation', $this->thirdParty['company_id']);
+                $logData = ['message' => $valResp['message'] ];
+                $this->insertToLogTb($logData, 'error', 'Designation', $this->thirdParty['company_id']);
 
                 return $this->sendError($valResp['message'], 500);
             }
@@ -87,8 +90,9 @@ class JobInvokeAPIController extends AppBaseController
         } catch (\Exception $e){
             $msg = $e->getMessage();
             $error = $msg.' Error Line No: ' . $e->getLine();
-            $comId = isset($this->thirdParty['company_id'])? $this->thirdParty['company_id'] : 0;
-            $this->insertToLogTb($error, 'error', 'Designation', $comId);
+            $comId = $this->thirdParty['company_id'] ?? 0;
+            $logData = ['message' => $error];
+            $this->insertToLogTb($logData, 'error', 'Designation', $comId);
 
             return $this->sendError($msg, 500);
         }
@@ -99,23 +103,27 @@ class JobInvokeAPIController extends AppBaseController
             $this->verifyIntegration();
             $valResp = $this->commonValidations($request);
             if(!$valResp['status']){
-                $error = $valResp['message'];
-                $this->insertToLogTb($error, 'error', 'Department', $this->thirdParty['company_id']);
+                $logData = ['message' => $valResp['message']];
+                $this->insertToLogTb($logData , 'error', 'Department', $this->thirdParty['company_id']);
 
-                return $this->sendError($error, 500);
+                return $this->sendError($valResp['message'], 500);
             }
 
             $postType = $request->postType;
-            $id = $request->departmentId;
+            $ids =is_array($request->departmentId) ? $request->departmentId : [$request->departmentId];
             $db = isset($request->db) ? $request->db : "";
-            DepartmentWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+
+            foreach ($ids as $id) {
+                DepartmentWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+            }
 
             return $this->sendResponse([], 'OSOS 3.0 department triggered');
         } catch(\Exception $e) {
             $msg = $e->getMessage();
             $error = $msg.' Error Line No: ' . $e->getLine();
-            $comId = isset($this->thirdParty['company_id'])? $this->thirdParty['company_id'] : 0;
-            $this->insertToLogTb($error, 'error', 'Department', $comId);
+            $comId = $this->thirdParty['company_id'] ?? 0;
+            $logData = ['message' => $error];
+            $this->insertToLogTb($logData, 'error', 'Department', $comId);
 
             return $this->sendError($msg, 500);
         }

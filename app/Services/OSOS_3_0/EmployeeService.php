@@ -48,11 +48,16 @@ namespace App\Services\OSOS_3_0;
              $valResp =$this->validateApiResponse();
 
              if(!$valResp['status']){
-                 return $this->insertToLogTb($valResp['message'], 'error', 'Employee', $this->companyId);
+                $logData = ['message' => $valResp['message'], 'id' => $this->id ];
+                 return $this->insertToLogTb($logData, 'error', 'Employee', $this->companyId);
              }
 
-             $msg = "Employee about to trigger: " . $this->id . ' - '. $this->employeeData['Name'];
-             $this->insertToLogTb($msg, 'info', 'Employee', $this->companyId);
+             $logData = [
+                'message' => "Employee about to trigger: " . $this->id . ' - '. $this->employeeData['Name'], 
+                'id' => $this->id 
+             ];
+
+             $this->insertToLogTb($logData, 'info', 'Employee', $this->companyId);
 
              $client = new Client();
              $headers = [
@@ -74,34 +79,41 @@ namespace App\Services\OSOS_3_0;
                  $je = json_decode($body, true);
 
                  if(!isset($je['id'])){
-                     $msg = 'Cannot Find Reference id from response';
-                     return $this->insertToLogTb($msg, 'error', 'Employee', $this->companyId);
+                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id ];
+                     return $this->insertToLogTb($logData, 'error', 'Employee', $this->companyId);
                  }
 
                  $this->insertOrUpdateThirdPartyPivotTable($je['id']);
-                 $msg = "Api employee {$this->operation} successfully finished";
-                 return  $this->insertToLogTb($msg, 'info', 'Employee', $this->companyId);
+                 $logData = ['message' => "Api employee {$this->operation} successfully processed", 'id' => $this->id ];
+                 $this->insertToLogTb($logData, 'info', 'Employee', $this->companyId);
+                 return ['status' => true, 'message' => $logData['message'], 'code' => $statusCode];
 
              }
 
              if ($statusCode == 400) {
                  $msg = $res->getBody();
-                 return $this->capture400Err(json_decode($msg), 'Employee');
+                 $logData = ['message' => json_decode($msg), 'id' => $this->id];
+                 return $this->capture400Err($logData, 'Employee');
              }
          } catch (\Exception $e) {
 
              $exStatusCode = $e->getCode();
              if ($exStatusCode == 400) {
                  $msg = $e->getMessage();
-                 return $this->capture400Err($msg, 'Employee');
+                 $logData = ['message' => $msg, 'id' => $this->id ];
+                 return $this->capture400Err($logData, 'Employee');
              }
 
              $msg = "Exception \n";
-             $msg .= "operation : ".$this->operation."\n";;
-             $msg .= "message : ".$e->getMessage()."\n";;
+             $msg .= "operation : ".$this->operation."\n";
+             $msg .= "message : ".$e->getMessage()."\n";
              $msg .= "file : ".$e->getFile()."\n";;
-             $msg .= "line no : ".$e->getLine()."\n";;
-             return $this->insertToLogTb($msg, 'error', 'Employee', $this->companyId);
+             $msg .= "line no : ".$e->getLine()."\n";
+
+             $logData = ['message' =>  $msg, 'id' => $this->id ];
+             $this->insertToLogTb($logData, 'error', 'Employee', $this->companyId);
+
+             return ['status' => false, 'message' => $msg, 'code' => $exStatusCode];
          }
      }
 
