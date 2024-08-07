@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\Classes\Common\MemberStateOfTheGCC;
 use App\helper\Helper;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -398,5 +399,14 @@ class SupplierMaster extends Model
     }
     public function Supplier_registration_link(){
         return $this->belongsTo('App\Models\SupplierRegistrationLink','supplierCodeSystem','supplier_master_id');
+    }
+
+    public function scopeSubjectToGCC($query)
+    {
+        return $query->whereIn('countryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
+    }
+    public function scopeOutsideOfGCC($query)
+    {
+        return $query->whereNotIn('countryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
     }
 }

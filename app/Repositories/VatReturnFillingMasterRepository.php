@@ -64,7 +64,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
                     ->whereHas('customer', function($query) use ($companyCountry){
-                        $query->where('customerCountry', $companyCountry);
+                        $query->where('customerCountry', 1); // oman based customers
                     })
                     ->whereIn('documentSystemID',[20,87])
                     ->whereNotNull('outputVatGLAccountID')
@@ -87,7 +87,10 @@ class VatReturnFillingMasterRepository extends BaseRepository
                         $query->whereHas('type', function($query) {
                             $query->where('id', 1);
                         });
-                    });
+                    })
+                    ->orWhereHas('creditNode', function ($query) {
+                        $query->where('isVATApplicable', true)->selectRaw('*, -VATAmountLocal as VATAmountLocal, -VATAmount as VATAmount');
+                    });;
 
 
                 $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
@@ -158,12 +161,43 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                 $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
                 break;
+            case 9 : // Purchases from the GCC subject to Reverse Charge Mechanism - 2 (a)
+                $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
+                    ->whereDate('documentDate', '<=', $date)
+                    ->where('companySystemID', $companySystemID)
+                    ->whereHas('supplier', function($query) use ($companyCountry){
+                        $query->subjectToGCC();
+                    })
+                    ->where('rcmApplicableYN', 1)
+                    ->whereNotNull('inputVATGlAccountID')
+                    ->when($forUpdate == false, function($query) {
+                        $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
+                            ->whereNull('returnFilledDetailID');
+                    })
+                    ->when($forUpdate == true && $confirmedYN == 0, function($query) use ($returnFilledDetailID){
+                        $query->where(function($query) use ($returnFilledDetailID) {
+                            $query->whereNull('returnFilledDetailID')
+                                ->orWhere('returnFilledDetailID', $returnFilledDetailID);
+                        });
+                    })
+                    ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
+                        $query->where(function($query) use ($returnFilledDetailID) {
+                            $query->where('returnFilledDetailID', $returnFilledDetailID);
+                        });
+                    })
+                    ->orWhereHas('payment_voucher', function ($query) {
+                        $query->whereIn('invoiceType',[3,5]);
+                    });
+
+
+                $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
+                break;
             case 10: // Purchases from outside of GCC subject to Reverse Charge Mechanism - 2 (b)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
                     ->whereHas('supplier', function($query) use ($companyCountry){
-                        $query->where('supplierCountryID', '!=', $companyCountry);
+                        $query->outsideOfGCC();
                     })
                     ->where('rcmApplicableYN', 1)
                     ->whereNotNull('inputVATGlAccountID')
@@ -190,6 +224,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     ->where('documentSystemID', 11)
                     ->whereHas('supplier_invoice', function($query) {
                         $query->where('documentType', 0);
+                    })
+                    ->orWhereHas('payment_voucher', function ($query) {
+                        $query->whereIn('invoiceType',[3,5]);
                     });
 
 
@@ -210,7 +247,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     ->where(function($query) {
                         $query->where(function($query) {
                             $query->whereHas('customer_invoice', function($query) {
-                                $query->whereIn('isPerforma', [2,3,4,5]);
+                                $query->whereIn('isPerforma', [0,2,3,4,5]);
                             })
                                 ->where('documentSystemID', 20)
                                 ->whereHas('customer_invoice_details', function($query) {
@@ -362,16 +399,15 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                   ->where(function($q) use ($companyCountry){
                                                     $q->where(function($q)  use ($companyCountry){
                                                         $q->whereHas('supplier', function($query) use ($companyCountry){
-                                                            $query->where('supplierCountryID',$companyCountry);
+                                                            $query->where('supplierCountryID',1); // oman suppliers
                                                         });
-                                                    })
-                                                    ->orWhere(function($q)  use ($companyCountry){
-                                                        $q->whereHas('supplier', function($query) use ($companyCountry){
-                                                            $query->where('supplierCountryID', '!=', $companyCountry);
-                                                        })
-                                                        ->where('rcmApplicableYN', 0);
                                                     });
-
+//                                                    ->orWhere(function($q)  use ($companyCountry){
+//                                                        $q->whereHas('supplier', function($query) use ($companyCountry){
+//                                                            $query->where('supplierCountryID', '!=', $companyCountry);
+//                                                        })
+//                                                        ->where('rcmApplicableYN', 0);
+//                                                    });
                                                   })
                                                   ->whereNotNull('inputVATGlAccountID')
                                                   ->when($forUpdate == false, function($query) {
@@ -389,12 +425,14 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                               $query->where('returnFilledDetailID', $returnFilledDetailID);
                                                             });
                                                   })
-                                                  ->whereIn('documentSystemID', [11,4])
+                                                  ->whereIn('documentSystemID', [11,4,15])
                                                     ->where(function ($query) {
                                                         $query->whereHas('supplier_invoice', function($query) {
                                                             $query->whereIn('documentType', [0,1,2,3,4]);
                                                         })->orWhereHas('payment_voucher', function($query) {
                                                             $query->whereIn('invoiceType', [3,5]);
+                                                        })->orWhereHas('debitNode', function ($query) {
+                                                            $query->where('isVATApplicable', true)->selectRaw('*, -VATAmountLocal as VATAmountLocal, -VATAmount as VATAmount');
                                                         });
                                                   })
                                                   ->when(('supplier_invoice.documentType' == 1 || 'supplier_invoice.documentType' == 3),function($query) {
@@ -441,6 +479,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                   ->whereHas('supplier_invoice', function($query) {
                                                         $query->whereIn('documentType', [0,1,2,3,4]);
                                                   })
+                                                 ->orWhereHas('payment_voucher',function($query) use($companyCountry) {
+                                                     $query->whereIn('invoiceType',[3,5]);
+                                                 })
                                                 ->when(('supplier_invoice.documentType' == 1 || 'supplier_invoice.documentType' == 3),function($query) {
                                                     $query->whereHas('supplier_invoice_details', function($query) {
                                                         $query->whereHas('grv_detail', function($query) {
