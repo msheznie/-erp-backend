@@ -1,5 +1,18 @@
 # Changelog
 
+## [10.47.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.46.0...v10.47.0) (2024-08-07)
+
+
+### Features
+
+* **OSOS_3_O:** API Initial Data push [GHR-1723] ([#6460](https://github.com/pbsgears/Gears_BackEnd/issues/6460)) ([6774ba3](https://github.com/pbsgears/Gears_BackEnd/commit/6774ba37799173ebf85497386755eb29869cfa70))
+
+
+### Bug Fixes
+
+* **API:** Fixed an issue in Department delete [GHR-1735] ([#6443](https://github.com/pbsgears/Gears_BackEnd/issues/6443)) ([43f2500](https://github.com/pbsgears/Gears_BackEnd/commit/43f25002ccf9c954bc3164263beaf61ef817997b))
+* **OSOS_3_0:** OSOS 3.o Integration - Issues in Location, Designation[GHR-1734] ([#6440](https://github.com/pbsgears/Gears_BackEnd/issues/6440)) ([1aa386d](https://github.com/pbsgears/Gears_BackEnd/commit/1aa386d836ac98a5546967ec2b56263b8a4cb30d))
+
 ## [10.46.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.45.0...v10.46.0) (2024-08-05)
 
 
