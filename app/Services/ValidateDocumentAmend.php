@@ -102,6 +102,21 @@ class ValidateDocumentAmend
                         }
                     }
                 break;
+            case 15: // DN - Debit Note
+                    $debitNoteMasterData = DebitNote::find($documentAutoId);
+                    if($debitNoteMasterData){
+                        $financePeriod = CompanyFinancePeriod::where('companyFinancePeriodID',$debitNoteMasterData->companyFinancePeriodID)->first();
+                        if($financePeriod){
+                            if($financePeriod->isActive == 0 || $financePeriod->isCurrent == 0){
+                                $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
+                                $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
+
+                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                return ['status' => false,'message'=>$message];
+                            }
+                        }
+                    }
+                break;
             default:
                 return ['status' => false,'message'=>'Document ID not found'];
 
@@ -333,6 +348,21 @@ class ValidateDocumentAmend
                     $jvMaster = JvMaster::find($documentAutoId);
                     if($jvMaster){
                         $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$jvMaster->companyFinanceYearID)->first();
+                        if($financeYear){
+                            if($financeYear->isActive == 0 || $financeYear->isCurrent == 0){
+                                $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
+                                $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
+
+                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                return ['status' => false,'message'=>$message];
+                            }
+                        }
+                    }
+                break;
+            case 15: // DN - Debit Note
+                    $debitNoteMasterData = DebitNote::find($documentAutoId);
+                    if($debitNoteMasterData){
+                        $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$debitNoteMasterData->companyFinanceYearID)->first();
                         if($financeYear){
                             if($financeYear->isActive == 0 || $financeYear->isCurrent == 0){
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
