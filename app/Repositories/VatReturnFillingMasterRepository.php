@@ -89,7 +89,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                         });
                     })
                     ->orWhereHas('creditNode', function ($query) {
-                        $query->where('isVATApplicable', true)->selectRaw('*, -VATAmountLocal as VATAmountLocal, -VATAmount as VATAmount');
+                        $query->where('isVATApplicable', true)->select('*')->selectRaw('(-VATAmountLocal) as VATAmountLocal,(-VATAmount) as VATAmount');
                     });;
 
 
@@ -432,7 +432,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                         })->orWhereHas('payment_voucher', function($query) {
                                                             $query->whereIn('invoiceType', [3,5]);
                                                         })->orWhereHas('debitNode', function ($query) {
-                                                            $query->where('isVATApplicable', true)->selectRaw('*, -VATAmountLocal as VATAmountLocal, -VATAmount as VATAmount');
+                                                            $query->where('isVATApplicable', true)->select('*')->selectRaw('(-VATAmountLocal) as VATAmountLocal, (-VATAmount) as VATAmount');
                                                         });
                                                   })
                                                   ->when(('supplier_invoice.documentType' == 1 || 'supplier_invoice.documentType' == 3),function($query) {
