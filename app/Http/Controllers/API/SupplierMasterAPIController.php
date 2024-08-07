@@ -2493,6 +2493,9 @@ class SupplierMasterAPIController extends AppBaseController
     public function validateSupplier(Request $request)
     {
         $input = $request->all();
+        if (!isset($input['supplierId'])) {
+            return $this->sendError('Supplier id not found');
+        }
         $supplier_id = $input['supplierId'];
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($supplier_id);
 
