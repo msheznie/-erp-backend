@@ -533,8 +533,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
                                               ->where('templateDetailID', $reportTemplateLinks->templateDetailID)
                                               ->first();
 
-            if ($checkLinkInBudget) {
-                 return $this->sendError('This chart Of Account cannot be deleted, since the Chart Of Account has been pulled to budget');
+            if ($checkLinkInBudget && $input['isBudgetCreated']) {
+                 return $this->sendError('The Chart of Accounts has been pulled into the budget. If you change the Template Category for the GL code, it may cause mismatches in the budget values during preview ,Are you sure you want to change the Template Category?', 500,['type' => 'budgetExist']);
             }
 
             $reportTemplateLinks->delete();
