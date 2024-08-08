@@ -291,7 +291,7 @@ class AssetRequestAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $AssetRequestMaster = AssetRequest::with(['employee','employeeApproved'])->where('company_id', $companyID)->where('approved_yn',1);
+        $AssetRequestMaster = AssetRequest::with(['employee','employeeApproved'])->where('company_id', $companyID)->where('request_company_id', $companyID)->where('approved_yn',1);
 
         $search = $request->input('search.value');
         if ($search) {
