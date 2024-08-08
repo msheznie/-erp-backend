@@ -74,6 +74,11 @@
             height: 0;
             overflow: visible;
         }
+
+        .watermarkText {
+            color: #dedede !important;
+            font-size: 30px;
+        }
     </style>
 </head>
 <body>
@@ -98,7 +103,7 @@
 
     <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-            <td style="text-align: center; font-weight: bold">
+            <td style="text-align: left; font-weight: bold">
                 <div>
                     <span style="font-size: 18px">Chart Of Account</span>
                 </div>
@@ -274,6 +279,36 @@
                         </td>
                     </tr>
                 </table>
+            </td>
+        </tr>
+    </table>
+
+    <table style="  height: 1000px;
+                    opacity: 0.6;
+                    left: 0;
+                    transform-origin: 20% 20%;
+                    z-index: 1000;
+                    position: fixed;
+                    width: 100%;
+                    height: 100%;
+                    padding-top: 31%; margin-bottom: -10%;">
+        <tr>
+            <td width="20%">
+
+            </td>
+            <td width="60%" style="text-align: center; font-weight: bold !important;">
+                        <span class="watermarkText" style="font-weight: bold; ">
+                            <h3 style=" font-size: 24.5px;
+                                        margin-bottom: 0.1rem;
+                                        font-weight: 500;
+                                        line-height: 1.2;
+                                        color: inherit;">
+                                Confirmed & Not Approved <br> Draft Copy
+                            </h3>
+                        </span>
+            </td>
+            <td width="20%">
+
             </td>
         </tr>
     </table>
