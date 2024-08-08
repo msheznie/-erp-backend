@@ -448,22 +448,20 @@ class CustomerInvoiceService
 
                     if($enableProject){
                         $policy = $enableProject->isYesNO;
-                        if($policy == 1){
-                            $project = $value[12];  
-
-                        } else {
-                            $project = null;  
-                        }
+                        
+                        $project = ($policy) ? $value[12] : null;
+                        $segment = ($policy) ? $value[13] : $value[12];  // mandatory
+                        $detailComments = ($policy) ? $value[14] : $value[13];
+                        $UOM = ($policy) ? $value[15] : $value[14]; // mandatory
+                        $Qty = ($policy) ? $value[16] : $value[15]; // mandatory
+                        $salesPrice = ($policy) ? $value[17] : $value[16]; // mandatory
+                        $discountAmount = ($policy) ? $value[18] : $value[17];
+                        $vatAmount = ($policy) ? $value[19] : $value[18];
+                        $excelRow = ($policy ) ? $value[20] : $value[19];
+                         
                     }
                     
-                    $segment = $value[13];  //mandatory
-                    $detailComments = $value[14];
-                    $UOM = $value[15]; //mandatory
-                    $Qty = $value[16]; //mandatory
-                    $salesPrice = $value[17]; //mandatory
-                    $discountAmount = $value[18]; 
-                    $vatAmount = $value[19];
-                    $excelRow = $value[20];
+
 
 
                     if($glCode == null){
