@@ -341,7 +341,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_master')]));
         }
         if($disposalMaster->vatRegisteredYN == 1 && ($disposalMaster->disposalType == 1 || $disposalMaster->disposalType == 6)) {
-            if(isset($input['vatMasterCategoryID']) && $input['vatMasterCategoryID'] == $assetDisposalDetail->vatMasterCategoryID) {
+            if($input['isFromAssign'] == 0 && $input['vatMasterCategoryID'] == $assetDisposalDetail->vatMasterCategoryID) {
                 $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($disposalMaster->documentSystemID, $disposalMaster->companySystemID, $id, $input);
 
                 if (!$validateVATCategories['status']) {

@@ -407,7 +407,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 }
 
                 if($assetDisposalMaster->vatRegisteredYN == 1 && $assetDisposalMaster->disposalType == 1 && $toCompany->vatRegisteredYN != 1){
-                    return $this->sendError("Company" .$toCompany->CompanyName. "is not registered for VAT", 500, ['type' => 'confirm']);
+                    return $this->sendError("Company " .$toCompany->CompanyName. " is not registered for VAT", 500, ['type' => 'confirm']);
                 }
 
                 if($assetDisposalMaster->vatRegisteredYN == 1 && $assetDisposalMaster->disposalType == 1 && $toCompany->vatRegisteredYN == 1){
