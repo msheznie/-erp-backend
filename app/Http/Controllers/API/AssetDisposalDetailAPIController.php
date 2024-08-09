@@ -10,6 +10,7 @@ use App\Models\AssetDisposalMaster;
 use App\Models\FixedAssetMaster;
 use App\Models\ItemAssigned;
 use App\Repositories\AssetDisposalDetailRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -140,6 +141,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
                 if ($new['isChecked']) {
                     $depAmountLocal = 0;
                     $depAmountRpt = 0;
+                    $lastDepDate = null;
                     if (count($new['depperiod_by']) > 0) {
                         $depAmountLocal = $new['depperiod_by'][0]['depAmountLocal'];
                     } else {
@@ -149,6 +151,9 @@ class AssetDisposalDetailAPIController extends AppBaseController
                         $depAmountRpt = $new['depperiod_by'][0]['depAmountRpt'];
                     } else {
                         $depAmountRpt = 0;
+                    }
+                    if(count($new['depperiod_period']) > 0) {
+                        $lastDepDate = $new['depperiod_period'][0]['depForFYperiodEndDate'];
                     }
                     count($new['depperiod_by']) > 0 ? $new['depperiod_by'][0]['depAmountRpt'] : 0;
                     $tempArray["assetdisposalMasterAutoID"] = $input["assetdisposalMasterAutoID"];
@@ -161,6 +166,9 @@ class AssetDisposalDetailAPIController extends AppBaseController
                     $tempArray["faCode"] = $new["faCode"];
                     $tempArray["faUnitSerialNo"] = $new["faUnitSerialNo"];
                     $tempArray["assetDescription"] = $new["assetDescription"];
+                    $tempArray["condition"] = $new['condition'] ?? null;
+                    $tempArray["depMonth"] = $new['depMonth'] ?? null;
+                    $tempArray["lastDepDate"] = $lastDepDate? new Carbon($lastDepDate): null;
                     $tempArray["COSTUNIT"] = $new["COSTUNIT"];
                     $tempArray["costUnitRpt"] = $new["costUnitRpt"];
                     $tempArray["depAmountLocal"] = $depAmountLocal;

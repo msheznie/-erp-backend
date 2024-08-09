@@ -797,10 +797,17 @@ class AssetDisposalMasterAPIController extends AppBaseController
         }
 
         $assets = FixedAssetMaster::selectRaw('*,false as isChecked')->with(['depperiod_by' => function ($query) use ($input) {
-            $query->selectRaw('IFNULL(SUM(depAmountRpt),0) as depAmountRpt,IFNULL(SUM(depAmountLocal),0) as depAmountLocal,faID');
-            $query->where('companySystemID', $input['companySystemID']);
-            $query->groupBy('faID');
-        }])->isDisposed()->ofCompany([$input['companySystemID']])->isSelectedForDisposal()->isApproved();
+                $query->selectRaw('IFNULL(SUM(depAmountRpt),0) as depAmountRpt,IFNULL(SUM(depAmountLocal),0) as depAmountLocal,faID');
+                $query->where('companySystemID', $input['companySystemID']);
+                $query->groupBy('faID');
+            },
+            'depperiod_period' => function ($query) use ($input) {
+                $query->selectRaw('DATE_FORMAT(depForFYperiodEndDate, "%d-%m-%Y") as depForFYperiodEndDate,faID');
+                $query->where('companySystemID', $input['companySystemID']);
+                $query->orderByRaw("STR_TO_DATE(depMonthYear, '%m/%Y') DESC")
+                    ->first();
+            }])
+            ->isDisposed()->ofCompany([$input['companySystemID']])->isSelectedForDisposal()->isApproved();
 
         $search = $request->input('search.value');
 
