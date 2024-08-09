@@ -174,6 +174,10 @@ class AssetDisposalDetailAPIController extends AppBaseController
                     $tempArray["DISPOGLCODESystemID"] = $new["dispglCodeSystemID"];
                     $tempArray["DISPOGLCODE"] = $new["DISPOGLCODE"];
 
+
+
+
+
                     if($assetDisposalMaster->disposalType == 1 || $assetDisposalMaster->disposalType == 6){
                         $tempArray["revenuePercentage"] = $assetDisposalMaster->revenuePercentage;
                         if($tempArray["netBookValueRpt"] || $tempArray["netBookValueLocal"]){
@@ -185,9 +189,21 @@ class AssetDisposalDetailAPIController extends AppBaseController
                         }else{
                             $tempArray["revenuePercentage"] = 0;
                         }
+                        $isVATEligible = TaxService::checkCompanyVATEligible($new['companySystemID']);
+
+                        if ($isVATEligible) {
+                            $defaultVAT = TaxService::getDefaultVAT($new['companySystemID'], null, 0);
+
+                            $tempArray["vatSubCategoryID"] = $defaultVAT['vatSubCategoryID'];
+                            $tempArray["vatPercentage"] = $defaultVAT['percentage'];
+                            $tempArray["vatMasterCategoryID"] = $defaultVAT['vatMasterCategoryID'];
+                            $tempArray["vatAmount"] = $defaultVAT['percentage'] / 100;
+                            $tempArray["sellingTotal"] = $tempArray["sellingPriceRpt"] + $tempArray['vatAmount'];
+                        }
                     }else{
                         $tempArray["revenuePercentage"] = 0;
                     }
+
 
                     $this->assetDisposalDetailRepository->create($tempArray);
                      FixedAssetMaster::find($new["faID"])
@@ -317,7 +333,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_master')]));
         }
         if($disposalMaster->vatRegisteredYN == 1 && ($disposalMaster->disposalType == 1 || $disposalMaster->disposalType == 6)) {
-            if($input['vatMasterCategoryID'] == $assetDisposalDetail->vatMasterCategoryID) {
+            if(isset($input['vatMasterCategoryID']) && $input['vatMasterCategoryID'] == $assetDisposalDetail->vatMasterCategoryID) {
                 $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($disposalMaster->documentSystemID, $disposalMaster->companySystemID, $id, $input);
 
                 if (!$validateVATCategories['status']) {

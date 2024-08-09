@@ -413,7 +413,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 if($assetDisposalMaster->vatRegisteredYN == 1 && $assetDisposalMaster->disposalType == 1 && $toCompany->vatRegisteredYN == 1){
                     $vatSubCategories = TaxVatCategories::where('isActive', 1)->first();
                     if(empty($vatSubCategories)){
-                        return $this->sendError("Vat Not configured in company " .$toCompany->CompanyName, 500, ['type' => 'confirm']);
+                        return $this->sendError("VAT not configured in company " .$toCompany->CompanyName, 500, ['type' => 'confirm']);
                     }
                 }
 
