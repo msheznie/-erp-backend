@@ -586,63 +586,30 @@ class TaxService
         return $grvVATCategories;
     }
 
-    public static function processGrvExpenseDetail($grvAutoID, $financeGLcodebBSSystemID){
+    public static function processGrvExpenseDetail($grvDetailsID){
 
         $grvVATCategories = GRVDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID,
         SUM(CASE 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmount * noQty * exempt_vat_portion / 100 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmount * noQty 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmount * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmount 
             ELSE 0
         END) as VATAmount,
         SUM(CASE 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountLocal * noQty * exempt_vat_portion / 100 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountLocal * noQty  
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountLocal * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountLocal  
             ELSE 0
         END) as VATAmountLocal,
         SUM(CASE 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountRpt * noQty * exempt_vat_portion / 100 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountRpt * noQty  
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountRpt * exempt_vat_portion / 100 
+            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountRpt  
             ELSE 0
         END) as VATAmountRpt,
         exempt_vat_portion,
         erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
             ->whereNotNull('vatSubCategoryID')
             ->join('erp_tax_vat_sub_categories', 'erp_grvdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-            ->where('erp_grvdetails.grvAutoID', $grvAutoID)
-            ->where('erp_grvdetails.financeGLcodebBSSystemID', $financeGLcodebBSSystemID)
+            ->where('erp_grvdetails.grvDetailsID', $grvDetailsID)
             ->whereIn('erp_tax_vat_sub_categories.subCatgeoryType', [1,3])
-            ->groupBy('erp_grvdetails.grvAutoID')
-            ->first();
-
-        return $grvVATCategories;
-    }
-
-    public static function processGrvExpenseDetailForPL($grvAutoID, $financeGLcodePLSystemID){
-
-        $grvVATCategories = GRVDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, financeGLcodebBSSystemID,
-        SUM(CASE 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmount * noQty * exempt_vat_portion / 100 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmount * noQty 
-            ELSE 0
-        END) as VATAmount,
-        SUM(CASE 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountLocal * noQty * exempt_vat_portion / 100 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountLocal * noQty  
-            ELSE 0
-        END) as VATAmountLocal,
-        SUM(CASE 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountRpt * noQty * exempt_vat_portion / 100 
-            WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountRpt * noQty  
-            ELSE 0
-        END) as VATAmountRpt,
-        exempt_vat_portion,
-        erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
-            ->whereNotNull('vatSubCategoryID')
-            ->join('erp_tax_vat_sub_categories', 'erp_grvdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-            ->where('erp_grvdetails.grvAutoID', $grvAutoID)
-            ->where('erp_grvdetails.financeGLcodePLSystemID', $financeGLcodePLSystemID)
-            ->whereIn('erp_tax_vat_sub_categories.subCatgeoryType', [1,3])
-            ->groupBy('erp_grvdetails.grvAutoID')
             ->first();
 
         return $grvVATCategories;

@@ -319,31 +319,16 @@ class GrvGlService
                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
-                    $exemptExpenseDetails = TaxService::processGrvExpenseDetail($masterModel["autoID"],  $data['chartOfAccountSystemID']);
-                    $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
-                        $query->where('companySystemID', $masterData->companySystemID);
-                    })->where('isActive', 1)->first();
 
-                    if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
-                            $exemptVatTrans = $exemptExpenseDetails->VATAmount;
-                            $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
-                            $exemptVatRpt = $exemptExpenseDetails->VATAmountRpt;
-
-                    } else {
-                        $exemptVatTrans = 0;
-                        $exemptVATLocal = 0;
-                        $exemptVatRpt = 0;
-                    }
-
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + $transBSVAT + $exemptVATTransAmount - $exemptVatTrans);
+                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + $transBSVAT + $exemptVATTransAmount);
 
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] =  \Helper::roundValue(ABS($val->localAmount) + $localBSVAT + $exemptVATLocalAmount - $exemptVATLocal);
+                    $data['documentLocalAmount'] =  \Helper::roundValue(ABS($val->localAmount) + $localBSVAT + $exemptVATLocalAmount);
 
                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->companyReportingER;
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + $rptBSVAT + $exemptVATRptAmount - $exemptVatRpt);
+                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + $rptBSVAT + $exemptVATRptAmount);
                     $data['timestamp'] = \Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
@@ -367,31 +352,16 @@ class GrvGlService
                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
-                    $exemptExpenseDetails = TaxService::processGrvExpenseDetailForPL($masterModel["autoID"],  $data['chartOfAccountSystemID']);
-                    $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
-                        $query->where('companySystemID', $masterData->companySystemID);
-                    })->where('isActive', 1)->first();
 
-                    if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
-                        $exemptVatTrans = $exemptExpenseDetails->VATAmount;
-                        $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
-                        $exemptVatRpt = $exemptExpenseDetails->VATAmountRpt;
-
-                    } else {
-                        $exemptVatTrans = 0;
-                        $exemptVATLocal = 0;
-                        $exemptVatRpt = 0;
-                    }
-
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + $transPLVAT + $exemptVATTransAmount - $exemptVatTrans);
+                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + $transPLVAT + $exemptVATTransAmount);
 
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) + $localPLVAT + $exemptVATLocalAmount - $exemptVATLocal);
+                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) + $localPLVAT + $exemptVATLocalAmount);
 
                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->companyReportingER;
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + $rptPLVAT + $exemptVATRptAmount - $exemptVatRpt);
+                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + $rptPLVAT + $exemptVATRptAmount);
                     $data['timestamp'] = \Helper::currentDateTime();
                     array_push($finalData, $data);
                 }

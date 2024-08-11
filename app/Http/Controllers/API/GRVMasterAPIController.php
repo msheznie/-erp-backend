@@ -745,9 +745,26 @@ class GRVMasterAPIController extends AppBaseController
                     $updateGRVDetail_log_detail->logisticsCharges_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur);
                     $updateGRVDetail_log_detail->logisticsChargest_RptCur = \Helper::roundValue($logisticsChargest_RptCur);
 
-                    $updateGRVDetail_log_detail->landingCost_TransCur = \Helper::roundValue($logisticsCharges_TransCur) + $row['GRVcostPerUnitSupTransCur'];
-                    $updateGRVDetail_log_detail->landingCost_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur) + $row['GRVcostPerUnitLocalCur'];
-                    $updateGRVDetail_log_detail->landingCost_RptCur = \Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'];
+                    $exemptExpenseDetails = TaxService::processGrvExpenseDetail($row['grvDetailsID']);
+                    $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($row) {
+                        $query->where('companySystemID', $row['companySystemID']);
+                    })->where('isActive', 1)->first();
+
+
+                    if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
+                        $exemptVatTrans = $exemptExpenseDetails->VATAmount;
+                        $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
+                        $exemptVatRpt = $exemptExpenseDetails->VATAmountRpt;
+                    } else {
+                        $exemptVatTrans = 0;
+                        $exemptVATLocal = 0;
+                        $exemptVatRpt = 0;
+                    }
+
+
+                    $updateGRVDetail_log_detail->landingCost_TransCur = \Helper::roundValue($logisticsCharges_TransCur) + $row['GRVcostPerUnitSupTransCur'] - $exemptVatTrans;
+                    $updateGRVDetail_log_detail->landingCost_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur) + $row['GRVcostPerUnitLocalCur'] - $exemptVATLocal;
+                    $updateGRVDetail_log_detail->landingCost_RptCur = \Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'] - $exemptVatRpt;
 
                     $updateGRVDetail_log_detail->save();
 
