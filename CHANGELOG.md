@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.47.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.47.0...v10.47.1) (2024-08-11)
+
+
+### Bug Fixes
+
+* **procurement:** Incorrect amounts in item ledger and fixed asset allocation in exempt vat scenarios fixed [GCP-4183] ([#6577](https://github.com/pbsgears/Gears_BackEnd/issues/6577)) ([0df75b1](https://github.com/pbsgears/Gears_BackEnd/commit/0df75b1822908c47f6e2ea5168e64e908cfa4644))
+
 ## [10.47.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.46.0...v10.47.0) (2024-08-07)
 
 
