@@ -7805,8 +7805,8 @@ GROUP BY
                             $toDate = Carbon::parse($period->dateTo)->subYear(2)->format('Y-m-d');
                         }
                         else if ($request->dateType == 1) {
-                            $toDate = Carbon::parse($toDate)->subYear(2)->format('Y-m-d');
-                            $fromDate = Carbon::parse($fromDate)->subYear(2)->format('Y-m-d');
+                            $toDate = Carbon::parse($request->toDate)->subYear(2)->format('Y-m-d');
+                            $fromDate = Carbon::parse($request->fromDate)->subYear(2)->format('Y-m-d');
                         }
 
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
@@ -7832,8 +7832,8 @@ GROUP BY
                             $toDate = Carbon::parse($period->dateTo)->subYear(3)->format('Y-m-d');
                         }
                         else if ($request->dateType == 1) {
-                            $toDate = Carbon::parse($toDate)->subYear(3)->format('Y-m-d');
-                            $fromDate = Carbon::parse($fromDate)->subYear(3)->format('Y-m-d');
+                            $toDate = Carbon::parse($request->toDate)->subYear(3)->format('Y-m-d');
+                            $fromDate = Carbon::parse($request->fromDate)->subYear(3)->format('Y-m-d');
                         }
 
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
@@ -7859,8 +7859,8 @@ GROUP BY
                             $toDate = Carbon::parse($period->dateTo)->subYear(4)->format('Y-m-d');
                         }
                         else if ($request->dateType == 1) {
-                            $toDate = Carbon::parse($toDate)->subYear(4)->format('Y-m-d');
-                            $fromDate = Carbon::parse($fromDate)->subYear(4)->format('Y-m-d');
+                            $toDate = Carbon::parse($request->toDate)->subYear(4)->format('Y-m-d');
+                            $fromDate = Carbon::parse($request->fromDate)->subYear(4)->format('Y-m-d');
                         }
 
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
