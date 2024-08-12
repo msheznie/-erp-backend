@@ -70,6 +70,7 @@ use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
 use App\Models\SupplierMaster;
 use App\Models\SystemConfigurationAttributes;
+use App\Models\TaxVatCategories;
 use App\Models\TenderMaster;
 use App\Models\User;
 use App\Models\DebitNote;
@@ -4558,6 +4559,8 @@ class Helper
                 }
 
                 if($input["documentSystemID"] == 41){
+
+
                     if($input['disposalType'] == 1){
                         $month = explode('-',$input['FYPeriodDateFrom']);
                         $financePeriodCheck = Models\CompanyFinancePeriod::where('departmentSystemID',4)->where('companyFinanceYearID',$input['companyFinanceYearID'])->whereMonth('dateFrom', $month[1])->first();
@@ -4575,6 +4578,25 @@ class Helper
 
                         if(!$checkApprovalAccess){
                             return ['success' => false, 'message' => 'The user does not have approval access to the customer invoice'];
+                        }
+
+                        $assetDisposalMaster = Models\AssetDisposalMaster::find($input["documentSystemCode"]);
+
+                        if(!empty($assetDisposalMaster)) {
+                            $toCompany = Company::find($assetDisposalMaster->toCompanySystemID);
+
+                            if ($assetDisposalMaster->vatRegisteredYN == 1 && $toCompany->vatRegisteredYN != 1) {
+                                return ['success' => false, 'message' => 'Company ' . $toCompany->CompanyName . ' is not registered for VAT'];
+                            }
+
+                            if ($assetDisposalMaster->vatRegisteredYN == 1 && $toCompany->vatRegisteredYN == 1) {
+                                $vatSubCategories = Models\Tax::where('companySystemID', $assetDisposalMaster->toCompanySystemID)->whereHas('vat_categories', function ($q) {
+                                    $q->where('isActive', 1);
+                                })->where('isActive', 1)->first();
+                                if (empty($vatSubCategories)) {
+                                    return ['success' => false, 'message' => 'VAT not configured in company ' . $toCompany->CompanyName];
+                                }
+                            }
                         }
                     }
                 }
