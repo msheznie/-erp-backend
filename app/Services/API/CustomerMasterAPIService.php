@@ -51,6 +51,31 @@ class CustomerMasterAPIService
                 'message' => "Advance Account field is required."
             ];
         }
+        else{
+            $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $data['custAdvanceAccountSystemID'])
+                ->where('controllAccountYN', '=', 1)
+                ->whereHas('chartofaccount_assigned', function($query) use ($data) {
+                    $query->where('companySystemID', $data['company_id'])
+                        ->where('isAssigned', -1)
+                        ->where('isActive', 1);
+                })
+                ->where(function($q){
+                    $q->where('controlAccountsSystemID',3)
+                        ->orWhere('controlAccountsSystemID',4)
+                        ->orWhere('controlAccountsSystemID',5);
+                })
+                ->where('catogaryBLorPL', '=', 'BS')
+                ->where('isApproved',1)
+                ->where('isActive',1)
+                ->exists();
+
+            if(!$chartOfAccount){
+                return [
+                    'status' => false,
+                    'message' => "Advance Account is not valid."
+                ];
+            }
+        }
 
         $validatorResult = Helper::checkCompanyForMasters($data['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
