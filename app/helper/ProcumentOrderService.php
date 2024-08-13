@@ -57,6 +57,8 @@ class ProcumentOrderService
         //$valiatedItems = self::validateItem($items,$purchaseOrder,$authID);
         $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
         $procumentOrder->upload_job_status = 0;
+        $procumentOrder->successDetailsCount = 0;
+        $procumentOrder->excelRowCount = 0;
         $procumentOrder->save();
 
         if (!empty($valiatedItems['itemDetails'])) {
@@ -72,6 +74,7 @@ class ProcumentOrderService
         $procumentOrder->upload_job_status = 1;
         $procumentOrder->isBulkItemJobRun = 0;
         $procumentOrder->successDetailsCount = $valiatedItems['successCount'];
+        $procumentOrder->excelRowCount = $valiatedItems['excelRowCount'];
         $procumentOrder->save();
     }
 
@@ -208,7 +211,7 @@ class ProcumentOrderService
     {
         $rowNumber = 2;
         $validationErrorMsg = $validatedItemsArray = [];
-        $successCount = 0;
+        $successCount = $excelRowCount = 0;
 
         foreach ($excelRows as $rowData) {
             $isValidationError = 0;
@@ -393,12 +396,14 @@ class ProcumentOrderService
                 $successCount += 1;
             }
             $rowNumber++;
+            $excelRowCount++;
         }
 
         $data = [
             'itemDetails' => $validatedItemsArray,
             'errorLog' => $validationErrorMsg,
-            'successCount' => $successCount
+            'successCount' => $successCount,
+            'excelRowCount' => $excelRowCount
         ];
         return $data;
     }

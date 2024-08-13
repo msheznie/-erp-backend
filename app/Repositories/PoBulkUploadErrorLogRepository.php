@@ -45,11 +45,15 @@ class PoBulkUploadErrorLogRepository extends BaseRepository
             ->pluck('successDetailsCount')
             ->first();
 
+        $excelRowCount = ProcumentOrder::where('purchaseOrderID', trim($poId))
+            ->pluck('excelRowCount')
+            ->first();
+
         $error = [
             'errorRecordCount' => $errorCount,
             'successRecordCount' => $successCount,
             'errorDetails' => $details,
-            'totalRecords' => ($errorCount + $successCount)
+            'totalRecords' => $excelRowCount
         ];
 
         return $error;
