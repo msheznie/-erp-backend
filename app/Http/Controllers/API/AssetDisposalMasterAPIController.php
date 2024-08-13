@@ -1316,6 +1316,9 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     $customerInvoice->canceledByEmpID = $employee->empID;
                     $customerInvoice->canceledByEmpName = $employee->empFullName;
                     $customerInvoice->customerInvoiceNo = null;
+                    $customerInvoice->bookingAmountTrans = 0;
+                    $customerInvoice->bookingAmountLocal = 0;
+                    $customerInvoice->bookingAmountRpt = 0;
                     $customerInvoice->save();
 
                     AuditTrial::createAuditTrial($customerInvoice->documentSystemiD,$customerInvoice->custInvoiceDirectAutoID,$input['returnComment'],'Cancelled');
@@ -1361,7 +1364,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
                 if(empty($checkReceiptVoucherAvailable)) {
                     return $this->sendError(
-                        'An auto-generated customer invoice exists for this disposal. The system will cancel the customer invoice.',
+                        'An auto-generated customer invoice exists for this disposal. The system will cancel the customer invoice.<br><br>Are you sure you want to return back to amend this?',
                         404,
                         array('type' => 0)
                     );
