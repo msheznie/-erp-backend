@@ -486,7 +486,7 @@ class SMECompany extends Model
         'company_secondary_logo' => 'string',
         'company_default_currencyID' => 'integer',
         'company_default_currency' => 'string',
-        'company_default_decimal' => 'boolean',
+        'company_default_decimal' => 'integer',
         'company_reporting_currencyID' => 'integer',
         'company_reporting_currency' => 'string',
         'company_reporting_decimal' => 'boolean',

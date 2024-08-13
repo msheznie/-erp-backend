@@ -47,6 +47,7 @@ use App\Models\ExpenseAssetAllocation;
 use App\Models\ExpenseEmployeeAllocation;
 use App\Models\ServiceLine;
 use App\Models\SrpEmployeeDetails;
+use App\Models\SMECompany;
 
 /**
  * Class DirectPaymentDetailsController
@@ -903,6 +904,8 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             ->with(['currency','segment','category','local_currency'])
             ->get();
 
+        $CompanyCurrency = SMECompany::where('company_id', $expenseClaim->companyID)->select('company_default_decimal')->first();
+
         foreach ($expenseClaimDetails as $detail) {
 
             $emp = Employee::with(['details'])->find($expenseClaim->clamiedByNameSystemID);
@@ -922,6 +925,9 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 $detail->transactionCurrencyID, $detail->companyLocalCurrencyID, $detail->companyLocalAmount,
                 $paySupplierInvoiceMaster->BPVAccount);
 
+            $currencyConversion = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID, $detail->transactionCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $detail->transactionAmount);
+            $expenceClaimAmount = round($currencyConversion['localAmount'],$CompanyCurrency->company_default_decimal);
+
             $temData = array(
                 'directPaymentAutoID' => $paySupplierInvoiceMaster->PayMasterAutoId,
                 'companySystemID' => $detail['companyID'],
@@ -940,8 +946,8 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 'supplierTransER' => 1,
                 'DPAmountCurrency' => $detail->companyLocalCurrencyID,
                 'DPAmountCurrencyER' => 1,
-                'DPAmount' => $detail->transactionAmount,
-                'netAmount' => $detail->transactionAmount,
+                'DPAmount' => $expenceClaimAmount,
+                'netAmount' => $expenceClaimAmount,
                 'bankAmount' => \Helper::roundValue($currencyConvert['bankAmount']),
                 'bankCurrencyID' => $paySupplierInvoiceMaster->supplierTransCurrencyID,
                 'bankCurrencyER' =>  $currencyConvert['transToBankER'],
