@@ -215,6 +215,9 @@ class ProcumentOrderService
             if (!array_key_exists('no_qty',$rowData) || is_null($rowData['no_qty'])) {
                 $validationErrorMsg[] = 'The item Qty has not been updated for Excel row: ' . $rowNumber;
                 $isValidationError = 1;
+            } else if (!is_numeric($rowData['no_qty'])) {
+                $validationErrorMsg[] = 'The quantity should be a numeric value for Excel row: ' . $rowNumber;
+                $isValidationError = 1;
             } else if ($rowData['no_qty'] < 0) {
                 $validationErrorMsg[] = 'The quantity should be a positive value for Excel row: ' . $rowNumber;
                 $isValidationError = 1;
@@ -223,7 +226,10 @@ class ProcumentOrderService
             if (!array_key_exists('unit_cost',$rowData) || is_null($rowData['unit_cost'])) {
                 $validationErrorMsg[] = 'The Unit Cost has not been updated for Excel row: ' . $rowNumber;
                 $isValidationError = 1;
-            } else if ($rowData['unit_cost'] < 0) {
+            } else if (!is_numeric($rowData['unit_cost'])) {
+                $validationErrorMsg[] = 'The Unit cost should be a numeric value for Excel row: ' . $rowNumber;
+                $isValidationError = 1;
+            } if ($rowData['unit_cost'] < 0) {
                 $validationErrorMsg[] = 'The Unit cost should be a positive value for Excel row: ' . $rowNumber;
                 $isValidationError = 1;
             }
@@ -232,12 +238,18 @@ class ProcumentOrderService
                 if($rowData['dis_percentage'] < 0 || $rowData['dis_percentage'] > 100) {
                     $validationErrorMsg[] = 'The Dis Percentage value should be between 0 - 100 for Excel row: ' . $rowNumber;
                     $isValidationError = 1;
+                } else if (!is_numeric($rowData['dis_percentage'])) {
+                    $validationErrorMsg[] = 'The Dis Percentage should be a numeric value for Excel row: ' . $rowNumber;
+                    $isValidationError = 1;
                 }
             }
 
             if (array_key_exists('vat_percentage',$rowData) && $rowData['vat_percentage'] !== null) {
                 if($rowData['vat_percentage'] < 0 || $rowData['vat_percentage'] > 100) {
                     $validationErrorMsg[] = 'The VAT Percentage value should be between 0 - 100 for Excel row: ' . $rowNumber;
+                    $isValidationError = 1;
+                } else if (!is_numeric($rowData['vat_percentage'])) {
+                    $validationErrorMsg[] = 'The VAT Percentage should be a numeric value for Excel row: ' . $rowNumber;
                     $isValidationError = 1;
                 }
             }
@@ -307,7 +319,7 @@ class ProcumentOrderService
                     if (array_key_exists('dis_percentage',$rowData) && $rowData['dis_percentage'] !== null) {
                         $item['discountPercentage'] = $rowData['dis_percentage'];
                         if ($rowData['dis_percentage'] > 0) {
-                            $discountAmount = ($item['unitCost'] / $rowData['dis_percentage']) * 100;
+                            $discountAmount = ($item['unitCost'] / 100) * $rowData['dis_percentage'];
                             $item['discountAmount'] = \Helper::roundValue($discountAmount);
                         }
                     }
