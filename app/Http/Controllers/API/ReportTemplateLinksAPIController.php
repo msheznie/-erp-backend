@@ -29,6 +29,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ChartOfAccountDependency;
 use Illuminate\Support\Facades\DB;
+use App\Models\BudgetMaster;
 
 /**
  * Class ReportTemplateLinksController
@@ -358,9 +359,12 @@ class ReportTemplateLinksAPIController extends AppBaseController
             return $this->sendError('Report Template Links not found');
         }
 
-        $checkLinkInBudget = Budjetdetails::where('chartOfAccountID', $reportTemplateLinks->glAutoID)
-                                          ->where('templateDetailID', $reportTemplateLinks->templateDetailID)
-                                          ->first();
+        // $checkLinkInBudget = Budjetdetails::where('chartOfAccountID', $reportTemplateLinks->glAutoID)
+        //                                   ->where('templateDetailID', $reportTemplateLinks->templateDetailID)
+        //                                   ->first();
+
+        $templateMasterID = $reportTemplateLinks->templateMasterID;
+        $checkLinkInBudget = BudgetMaster::where('templateMasterID',$templateMasterID)->first();
 
         if ($checkLinkInBudget) {
              return $this->sendError('This chart Of Account cannot be deleted, since the Chart Of Account has been pulled to budget');
@@ -428,13 +432,16 @@ class ReportTemplateLinksAPIController extends AppBaseController
     {
         $input = $request->all();
         $glCodes = ReportTemplateLinks::where('templateDetailID',$request->templateDetailID)
-                                      ->get()
-                                      ->pluck('glAutoID')
-                                      ->toArray();
+                                      ->first();
+                                    //   ->get()
+                                    //   ->pluck('glAutoID')
+                                    //   ->toArray();
 
-        $checkLinkInBudget = Budjetdetails::whereIn('chartOfAccountID', $glCodes)
-                                          ->where('templateDetailID', $request->templateDetailID)
-                                          ->first();
+        // $checkLinkInBudget = Budjetdetails::whereIn('chartOfAccountID', $glCodes)
+        //                                   ->where('templateDetailID', $request->templateDetailID)
+        //                                   ->first();
+        $templateMasterID = $glCodes->templateMasterID;
+        $checkLinkInBudget = BudgetMaster::where('templateMasterID',$templateMasterID)->first();
 
         if ($checkLinkInBudget) {
              return $this->sendError('Chart Of Accounts of this category cannot be deleted, since some of the Chart Of Accounts have been pulled to budget');
@@ -529,10 +536,11 @@ class ReportTemplateLinksAPIController extends AppBaseController
                 return $this->sendError('Report Template Links not found');
             }
 
-            $checkLinkInBudget = Budjetdetails::where('chartOfAccountID', $reportTemplateLinks->glAutoID)
-                                              ->where('templateDetailID', $reportTemplateLinks->templateDetailID)
-                                              ->first();
-
+            // $checkLinkInBudget = Budjetdetails::where('chartOfAccountID', $reportTemplateLinks->glAutoID)
+            //                                   ->where('templateDetailID', $reportTemplateLinks->templateDetailID)
+            //                                   ->first();
+            $templateMasterID = $reportTemplateLinks->templateMasterID;
+            $checkLinkInBudget = BudgetMaster::where('templateMasterID',$templateMasterID)->first();
             if ($checkLinkInBudget && $input['isBudgetCreated']) {
                  return $this->sendError('The Chart of Accounts has been pulled into the budget. If you change the Template Category for the GL code, it may cause mismatches in the budget values during preview ,Are you sure you want to change the Template Category?', 500,['type' => 'budgetExist']);
             }
