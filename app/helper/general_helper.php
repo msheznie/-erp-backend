@@ -9441,7 +9441,8 @@ class Helper
           $vatTot += doubleval($supplierItems[$i]->VATAmount) * doubleval($supplierItems[$i]->noQty);
         }
 
-        $totalNet = $tot + $vatTot;
+        $totalVat = $bookInvSuppMaster->rcmActivated ? 0 : $vatTot;
+        $totalNet = $tot + $totalVat;
         $retentionAmount = $totalNet * $bookInvSuppMaster->retentionPercentage/100;
         $decimalPlaces = 3;
         $currency = CurrencyMaster::select('DecimalPlaces')->where('currencyID',$bookInvSuppMaster->localCurrencyID)->first();
