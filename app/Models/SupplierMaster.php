@@ -409,4 +409,9 @@ class SupplierMaster extends Model
     {
         return $query->whereNotIn('countryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
     }
+
+    public function scopeIsActive()
+    {
+        return $this->isActive;
+    }
 }

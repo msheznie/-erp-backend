@@ -442,6 +442,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $results = VatReturnFillingMaster::whereIn('companySystemID', $subCompanies);
 
+
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -453,7 +454,6 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $results = $results->selectRaw('*, CASE WHEN serialNo = (SELECT MAX(serialNo) FROM vat_return_filling_master WHERE companySystemID IN ('.implode(',', $subCompanies).')) THEN 1 ELSE 0 END AS isLast');
 
-
         return \DataTables::of($results)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -463,6 +463,24 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->addColumn('balanceAmount', function ($row) {
+                return ($row->filled_master_categories) ? $row->filled_master_categories->where('categoryID',24)->first()->filled_details->where('vatReturnFillingSubCatgeoryID',27)->first()->taxAmount : 0;
+            })
+            ->addColumn('isGenerateDebitNote', function ($row) {
+                $balanceAmount = $row->filled_master_categories->where('categoryID',24)->first()->filled_details->where('vatReturnFillingSubCatgeoryID',27)->first()->taxAmount;
+                if($balanceAmount > 0)
+                    return false;
+                return true;
+            })
+            ->addColumn('isDocumentGenerated', function ($row) {
+                return (boolean) !is_null($row->masterDocumentAutoID);
+            })
+            ->addColumn('generateDocumentCode', function ($row) {
+                return  ($row->invoice) ? $row->invoice->bookingInvCode : null;
+            })
+            ->addColumn('isPrvDocGenDoc', function ($row) {
+                return  ($row->scopeIsPreviousVRFHasDocument()) ?? null;
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }

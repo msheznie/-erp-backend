@@ -221,7 +221,7 @@ class CompanyFinancePeriod extends Model
     }
 
     public static function activeFinancePeriod($company, $departmentSystemID, $date){
-        return CompanyFinancePeriod::selectRaw("companySystemID, DATE(dateFrom) AS startDate, DATE(dateTo) AS endDate")
+        return CompanyFinancePeriod::selectRaw("companySystemID, DATE(dateFrom) AS startDate, DATE(dateTo) AS endDate,companyFinancePeriodID")
             ->where('companySystemID', $company)
             ->where('departmentSystemID', $departmentSystemID)
             ->where('isActive', -1)

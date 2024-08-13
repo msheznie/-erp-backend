@@ -437,6 +437,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
         },'direct_customer_invoice' => function($query) {
             $query->select('custInvoiceDirectAutoID','bookingInvCode');
+        },'vrfDocument' => function($query) {
+            $query->where('masterDocumentTypeID',11);
         }])->findWithoutFail($id);
 
         if (empty($bookInvSuppMaster)) {
