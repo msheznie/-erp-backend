@@ -479,7 +479,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                 return  ($row->invoice) ? $row->invoice->bookingInvCode : null;
             })
             ->addColumn('isPrvDocGenDoc', function ($row) {
-                return  ($row->scopeIsPreviousVRFHasDocument()) ?? null;
+                return  ($row->isPreviousVRFHasDocument()) ?? null;
             })
             ->with('orderCondition', $sort)
             ->make(true);
