@@ -14,6 +14,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class ErpAttributesDropdownController
@@ -24,6 +25,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
 {
     /** @var  ErpAttributesDropdownRepository */
     private $erpAttributesDropdownRepository;
+    use AuditLogsTrait;
 
     public function __construct(ErpAttributesDropdownRepository $erpAttributesDropdownRepo)
     {
@@ -86,6 +88,9 @@ class ErpAttributesDropdownAPIController extends AppBaseController
            
             $attributes = ErpAttributesDropdown::create($input);
 
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+            $this->auditLog($db, $attributes['attributes_id'], $uuid, "erp_attributes", "Attribute dropdown value " . $input['description']. " has been created", "C", $input, [], 22, 'erp_fa_asset_master');
             
         DB::commit();
         return $this->sendResponse([], 'New Record Added Successfully');
@@ -358,6 +363,10 @@ class ErpAttributesDropdownAPIController extends AppBaseController
                 return $this->sendError('Selected attribute drop down value have already been used for an asset', 500);
             }
         $erpAttributesDropdown->delete();
+
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+        $this->auditLog($db, $erpAttributesDropdown->attributes_id, $uuid, "erp_attributes", "Attribute dropdown value " . $erpAttributesDropdown->description . " has been deleted", "D", [], $erpAttributesDropdown->toArray(), 22, 'erp_fa_asset_master');
 
         return $this->sendResponse([],'Erp Attributes Dropdown deleted successfully');
     }

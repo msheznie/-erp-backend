@@ -86,6 +86,9 @@ class LokiService
             case 'serviceline':
                 $table = 'serviceline';
                 break;
+            case 'asset_costing_attributes':
+                $table = 'erp_attributes';
+                break;
             default:
                 $table = null;
                 break;

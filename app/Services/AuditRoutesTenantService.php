@@ -24,7 +24,11 @@ class AuditRoutesTenantService
             'api/v1/asset_disposal_types/{asset_disposal_type}',
             'api/v1/fixed_asset_masters/{fixed_asset_master}',
             'api/v1/updateSegmentMaster',
-            'api/v1/segment/masters/{master}'
+            'api/v1/segment/masters/{master}',
+            'api/v1/addDropdownData',
+            'api/v1/dropdownValuesUpdate',
+            'api/v1/erp_attributes_dropdowns/{erp_attributes_dropdown}',
+            'api/v1/assetCostAttributesUpdate'
         ];
 
         return $lokiTenantRoutes;

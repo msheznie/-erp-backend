@@ -297,6 +297,10 @@ class ErpAttributesAPIController extends AppBaseController
             $db = isset($input['db']) ? $input['db'] : '';
 
             $this->auditLog($db, $id,$uuid, "erp_attributes", "Attribute ".$erpAttributes->description." has deleted", "D", [], $erpAttributes->toArray(), $erpAttributes->document_master_id, 'financeitemcategorysub');
+        } else {
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+            $this->auditLog($db, $id, $uuid, "erp_attributes", "Attribute " . $erpAttributes->description . " has been deleted", "D", [], $erpAttributes->toArray(), 22, 'erp_fa_asset_master');
         }
 
 
@@ -424,6 +428,20 @@ class ErpAttributesAPIController extends AppBaseController
             $inactivatedAt = null;
         }
 
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
+
+        if(isset($input['field_type']) ){
+            unset($input['field_type']);
+        }
 
         $updateData = [
             'description' => $input['description'],
@@ -435,6 +453,11 @@ class ErpAttributesAPIController extends AppBaseController
         $attributesUpdate = ErpAttributes::where('id', $id)
         ->update($updateData);
 
+        $previousValue = $erpAttributes->toArray();
+        $newValue = $input;
+
+        $this->auditLog($db, $id, $uuid, "erp_attributes", "Attribute " . $erpAttributes->description . " has been updated", "U", $newValue, $previousValue, 22, 'erp_fa_asset_master');
+        
         $documentMasterID = isset($input['document_master_id']) ? $input['document_master_id']: null;
         $isActive = isset($input['is_active']) ? $input['is_active']: null;
 
@@ -490,12 +513,28 @@ class ErpAttributesAPIController extends AppBaseController
              
         }
 
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
+
         $updateData = [
             'description' => $input['description'],
             'color' => $input['color']
         ];
         $dropdownValuesUpdate = ErpAttributesDropdown::where('id', $id)
         ->update($updateData);
+
+        $previousValue = $dropdownValues->toArray();
+        $newValue = $input;
+
+        $this->auditLog($db, $dropdownValues->attributes_id, $uuid, "erp_attributes", "Attribute dropdown value " . $dropdownValues->description . " has been updated", "U", $newValue, $previousValue, 22, 'erp_fa_asset_master');
 
         return $this->sendResponse($dropdownValuesUpdate, 'Erp Attributes updated successfully');
 
