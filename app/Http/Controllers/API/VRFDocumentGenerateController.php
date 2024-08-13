@@ -31,7 +31,7 @@ class VRFDocumentGenerateController extends AppBaseController
         if($vatReturnFillingMaster->isDocumentGenerated())
             return $this->sendError("Supplier Invoice/Debit Note  generated for VAT return filing document",400,array('type' => 2));
 
-        if(!$isGenerateDebitNote)
+        if($isGenerateDebitNote)
         {
             $result = $this->generateDebitNote($vatReturnFillingMaster);
             $msg = "Debit Note generated successfully";
