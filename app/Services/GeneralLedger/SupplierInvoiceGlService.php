@@ -933,11 +933,11 @@ class SupplierInvoiceGlService
                         $data['documentLocalAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
                         $data['documentRptAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
 
-                        // if ($retentionPercentage > 0 && $masterData->documentType != 4) {
-                        //     $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
-                        //     $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
-                        //     $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
-                        // }
+                        if ($retentionPercentage > 0 && $masterData->documentType != 4 && !$masterData->rcmActivated) {
+                            $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
+                            $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
+                            $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
+                        }
 
                         array_push($finalData, $data);
 
