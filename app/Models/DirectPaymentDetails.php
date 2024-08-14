@@ -440,4 +440,9 @@ class DirectPaymentDetails extends Model
     {
         return $this->belongsTo('App\Models\ErpProjectMaster', 'detail_project_id', 'id');
     }
+
+    public function vatSubCategories()
+    {
+        return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID', 'taxVatSubCategoriesAutoID');
+    }
 }
