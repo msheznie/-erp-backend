@@ -271,7 +271,12 @@ class ProcumentOrderService
                 $validationErrorMsg[] = 'The item code has not been updated for Excel row: ' . $rowNumber;
                 $isValidationError = 1;
             } else {
-                $categoryType = ItemMaster::where('primaryCode', trim($rowData['item_code']))
+                $companyId = $purchaseOrder['companySystemID'];
+                $categoryType = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
+                        return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1);
+                    })->where('isActive',1)
+                    ->where('itemApprovedYN',1)
+                    ->where('primaryCode', trim($rowData['item_code']))
                     ->pluck('categoryType')
                     ->first();
 
@@ -340,7 +345,7 @@ class ProcumentOrderService
                         $item['VATPercentage'] = $rowData['vat_percentage'];
 
                         if ($rowData['vat_percentage'] > 0) {
-                            $item['VATAmount'] = (($item['unitCost'] / 100) * $rowData['vat_percentage']);
+                            $item['VATAmount'] = ((($item['unitCost'] - $item['discountAmount']) / 100) * $rowData['vat_percentage']);
 
                             $currencyConversionVAT = \Helper::currencyConversion($purchaseOrder['companySystemID'], $purchaseOrder['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, $item['VATAmount']);
                             $item['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
