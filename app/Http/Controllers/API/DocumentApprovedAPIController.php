@@ -468,8 +468,8 @@ FROM
 	AND erp_debitnote.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_debitnote.confirmedYN = 1 
 	AND erp_debitnote.approved = -1
-	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_debitnote.supplierID
-	INNER JOIN currencymaster ON currencymaster.currencyID = erp_debitnote.supplierTransactionCurrencyID 
+	LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_debitnote.supplierID
+	LEFT JOIN currencymaster ON currencymaster.currencyID = erp_debitnote.supplierTransactionCurrencyID 
 WHERE
 	erp_documentapproved.approvedYN = -1
 	AND erp_documentapproved.rejectedYN = 0 
@@ -1842,8 +1842,8 @@ FROM
 	AND erp_debitnote.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_debitnote.confirmedYN = 1 
 	AND erp_debitnote.approved = 0
-	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_debitnote.supplierID
-	INNER JOIN currencymaster ON currencymaster.currencyID = erp_debitnote.supplierTransactionCurrencyID 
+	LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_debitnote.supplierID
+	LEFT JOIN currencymaster ON currencymaster.currencyID = erp_debitnote.supplierTransactionCurrencyID 
 WHERE
 	erp_documentapproved.approvedYN = 0
 	AND erp_documentapproved.rejectedYN = 0 
