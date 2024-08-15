@@ -286,9 +286,9 @@ class CreateCustomerThirdPartyInvoice
                         ];
     
     
-                        $disposalDetail = AssetDisposalDetail::selectRaw('netBookValueLocal, netBookValueRpt, COSTUNIT, depAmountLocal, costUnitRpt, depAmountRpt, serviceLineSystemID, ServiceLineCode, vatPercentage, vatMasterCategoryID, vatSubCategoryID, vatAmount, if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100))) as localAmountDetail, if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100))) as comRptAmountDetail, sellingPriceLocal, sellingPriceRpt')->OfMaster($sourceModel['assetdisposalMasterAutoID'])->get();
+                        $disposalDetails = AssetDisposalDetail::selectRaw('netBookValueLocal, netBookValueRpt, COSTUNIT, depAmountLocal, costUnitRpt, depAmountRpt, serviceLineSystemID, ServiceLineCode, vatPercentage, vatMasterCategoryID, vatSubCategoryID, vatAmount, if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100))) as localAmountDetail, if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100))) as comRptAmountDetail, sellingPriceLocal, sellingPriceRpt')->OfMaster($sourceModel['assetdisposalMasterAutoID'])->get();
                         $segment = AssetDisposalDetail::OfMaster($sourceModel['assetdisposalMasterAutoID'])->first();
-                        if ($disposalDetail) {
+                        foreach ($disposalDetails as $disposalDetail) {
                            $accID = SystemGlCodeScenarioDetail::getGlByScenario($companySystemId, $sourceModel['documentSystemID'], "asset-disposal-inter-company-sales");
                             $comment = "INV Created by -Sold to 3rd. Party Disposal - ".$sourceModel['disposalDocumentCode'];
                        
@@ -373,6 +373,7 @@ class CreateCustomerThirdPartyInvoice
                                 $dataset['approvedComments'] = "Created from Disposal";
 
                                 $dataset['db'] = $db;
+
 
                                 $approveDocument = \Helper::approveDocument($dataset);
 
