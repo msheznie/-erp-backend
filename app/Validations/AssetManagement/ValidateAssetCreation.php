@@ -129,20 +129,23 @@ class ValidateAssetCreation
     }
 
     public static function validateCompanyFinanceYearPeriod($companySystemID, $date){
+        try {
+            $date = Carbon::createFromFormat('m/d/Y', $date);
 
-        $date = Carbon::createFromFormat('m/d/Y', $date);
+            $date = $date->format('Y-m-d');
 
-        $date = $date->format('Y-m-d');
+            $financeYear = CompanyFinanceYear::where('companySystemID', $companySystemID)->where('bigginingDate', "<=", $date)->where('endingDate', ">=", $date)->first();
+            $financePeriod = CompanyFinancePeriod::where('companySystemID', $companySystemID)->where('departmentSystemID', 9)->where('dateFrom', "<=", $date)->where('dateTo', ">=", $date)->first();
 
-        $financeYear = CompanyFinanceYear::where('companySystemID', $companySystemID)->where('bigginingDate', "<=", $date)->where('endingDate', ">=", $date)->first();
-        $financePeriod = CompanyFinancePeriod::where('companySystemID', $companySystemID)->where('departmentSystemID', 9)->where('dateFrom', "<=", $date)->where('dateTo', ">=", $date)->first();
+            if(empty($financeYear)){
+                return self::sendJsonResponse(false,"Asset costing not within the finance year", 500);
+            }
 
-        if(empty($financeYear)){
-            return self::sendJsonResponse(false,"Asset costing not within the finance year", 500);
-        }
-
-        if(empty($financePeriod)){
-            return self::sendJsonResponse(false,"Asset costing not within the finance period", 500);
+            if(empty($financePeriod)){
+                return self::sendJsonResponse(false,"Asset costing not within the finance period", 500);
+            }
+        } catch(\Exception $e){
+            return self::sendJsonResponse(false,$e->getMessage(), 500);
         }
     }
 
