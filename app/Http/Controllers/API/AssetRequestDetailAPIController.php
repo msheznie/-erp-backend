@@ -308,10 +308,10 @@ class AssetRequestDetailAPIController extends AppBaseController
         $query = "SELECT id, document_code, (requesedQty.qtyRequested - IFNULL(transferedQTY.transferedQty,0)) as qty 
         FROM erp_fa_fa_asset_request
         LEFT JOIN 
-        (SELECT erp_fa_fa_asset_request_id as reqMasterID, SUM(qty) as qtyRequested FROM `erp_fa_fa_asset_request_details` WHERE company_id = $companyID 
+        (SELECT erp_fa_fa_asset_request_id as reqMasterID, SUM(qty) as qtyRequested FROM `erp_fa_fa_asset_request_details` WHERE request_company_id = $companyID 
         GROUP BY erp_fa_fa_asset_request_id  ) as requesedQty ON requesedQty.reqMasterID = erp_fa_fa_asset_request.id 
         LEFT JOIN (SELECT erp_fa_fa_asset_request_id AS MasterID, COUNT( id ) AS transferedQty FROM `erp_fa_fa_asset_transfer_details` WHERE company_id = $companyID  GROUP BY erp_fa_fa_asset_request_id) as transferedQTY ON transferedQTY.MasterID = erp_fa_fa_asset_request.id 
-        WHERE $typeCondtion company_id = $companyID AND approved_yn = 1 AND request_company_id = $companyID  HAVING qty > 0";
+        WHERE $typeCondtion  approved_yn = 1 AND request_company_id = $companyID  HAVING qty > 0";
         $assetRequestMaster =DB::select($query);
 
          /* AssetRequest::where('company_id', $companyID)->where('approved_yn', 1)->get(); */
@@ -328,7 +328,7 @@ class AssetRequestDetailAPIController extends AppBaseController
         LEFT JOIN (SELECT erp_fa_fa_asset_request_detail_id as requestDetailID, count(id) as qtyTransfer FROM `erp_fa_fa_asset_transfer_details` 
         WHERE erp_fa_fa_asset_request_id = $assetRequestMasterID
         GROUP BY erp_fa_fa_asset_request_detail_id) transferedQty ON transferedQty.requestDetailID = erp_fa_fa_asset_request_details.id
-        WHERE company_id = $companyID AND erp_fa_fa_asset_request_id = $assetRequestMasterID HAVING qty > 0");
+        WHERE request_company_id = $companyID AND erp_fa_fa_asset_request_id = $assetRequestMasterID HAVING qty > 0");
 
         $allowItemToTypePolicy = false;
         $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 75)
