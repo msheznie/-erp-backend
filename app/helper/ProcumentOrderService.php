@@ -232,7 +232,7 @@ class ProcumentOrderService
             } else if (!is_numeric($rowData['unit_cost'])) {
                 $validationErrorMsg[] = 'The Unit cost should be a numeric value for Excel row: ' . $rowNumber;
                 $isValidationError = 1;
-            } if ($rowData['unit_cost'] < 0) {
+            }else if ($rowData['unit_cost'] < 0) {
                 $validationErrorMsg[] = 'The Unit cost should be a positive value for Excel row: ' . $rowNumber;
                 $isValidationError = 1;
             }
