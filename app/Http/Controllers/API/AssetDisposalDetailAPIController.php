@@ -190,7 +190,12 @@ class AssetDisposalDetailAPIController extends AppBaseController
                         $tempArray["revenuePercentage"] = $assetDisposalMaster->revenuePercentage;
                         if($tempArray["netBookValueRpt"] || $tempArray["netBookValueLocal"]){
                             $tempArray["sellingPriceRpt"] = \Helper::roundValue(($tempArray["netBookValueRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
-                            $tempArray["sellingPriceLocal"] = \Helper::roundValue(($tempArray["netBookValueLocal"] * (100 + $tempArray["revenuePercentage"]))/100);
+
+                            $companyCurrency = \Helper::companyCurrency($tempArray["companySystemID"]);
+                            $currencyConversion = \Helper::currencyConversion($tempArray["companySystemID"], $companyCurrency->reportingCurrency, $companyCurrency->reportingCurrency, $tempArray['sellingPriceRpt']);
+
+                            $tempArray["sellingPriceLocal"] = \Helper::roundValue($currencyConversion['localAmount']);
+
                         }else if($tempArray["costUnitRpt"] || $tempArray["COSTUNIT"]){
                             $tempArray["sellingPriceRpt"] = \Helper::roundValue(($tempArray["costUnitRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
                             $tempArray["sellingPriceLocal"] = \Helper::roundValue(($tempArray["COSTUNIT"] * (100 + $tempArray["revenuePercentage"]))/100);
@@ -205,7 +210,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
                             $tempArray["vatSubCategoryID"] = $defaultVAT['vatSubCategoryID'];
                             $tempArray["vatPercentage"] = $defaultVAT['percentage'];
                             $tempArray["vatMasterCategoryID"] = $defaultVAT['vatMasterCategoryID'];
-                            $tempArray["vatAmount"] = $defaultVAT['percentage'] / 100;
+                            $tempArray["vatAmount"] = $tempArray["sellingPriceRpt"] * $defaultVAT['percentage'] / 100;
                             $tempArray["sellingTotal"] = $tempArray["sellingPriceRpt"] + $tempArray['vatAmount'];
                         }
                     }else{
