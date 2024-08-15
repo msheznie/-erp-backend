@@ -60,6 +60,7 @@ class BankLedgerInsert implements ShouldQueue
                         if ($masterData->financeperiod_by->isActive == -1) {
                             $masterDocumentDate = $masterData->BPVdate;
                         }
+
                         if (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) {
                             $masterDocumentDate = Carbon::parse($masterModel['pdcDate']);
 
@@ -123,10 +124,10 @@ class BankLedgerInsert implements ShouldQueue
                             $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompLocal) * -1 : $masterData->payAmountCompLocal;
                             $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompRpt) * -1 : $masterData->payAmountCompRpt;
                         } else {
-                            $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountBank)) * -1 : $masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountBank);
+                            $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->BPVbankCurrencyER))) * -1 : $masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->BPVbankCurrencyER));
                             $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?($masterData->payAmountSuppTrans + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmount)) * -1 : $masterData->payAmountSuppTrans + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmount);
-                            $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountLocal)) * -1 : $masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountLocal);
-                            $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountRpt)) * -1 : $masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountRpt);
+                            $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->localCurrencyER))) * -1 : $masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->localCurrencyER));
+                            $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->companyRptCurrencyER))) * -1 : $masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->companyRptCurrencyER));
                         }
 
 
