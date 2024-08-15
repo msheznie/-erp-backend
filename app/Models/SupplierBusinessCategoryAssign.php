@@ -80,5 +80,8 @@ class SupplierBusinessCategoryAssign extends Model
         'timestamp' => 'required'
     ];
 
+    public function categoryMaster(){
+        return $this->hasOne('App\Models\SupplierCategoryMaster', 'supCategoryMasterID','supCategoryMasterID');
+    }
     
 }

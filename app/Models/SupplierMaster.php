@@ -279,6 +279,10 @@ class SupplierMaster extends Model
         
     ];
 
+    public function supplier_business_category(){
+        return $this->hasMany('App\Models\SupplierBusinessCategoryAssign','supplierID','supplierCodeSystem');
+    }
+
     public function currency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'currency', 'currencyID');

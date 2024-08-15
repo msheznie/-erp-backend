@@ -189,6 +189,10 @@ class SupplierAssigned extends Model
         
     ];
 
+    public function supplier_business_category(){
+        return $this->hasMany('App\Models\SupplierBusinessCategoryAssign','supplierID','supplierCodeSystem');
+    }
+
     public function categoryMaster(){
         return $this->hasOne('App\Models\SupplierCategoryMaster', 'supCategoryMasterID','supCategoryMasterID');
     }

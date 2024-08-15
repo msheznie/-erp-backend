@@ -228,6 +228,8 @@ class CompanyAPIController extends AppBaseController
 
         $whtTypes = Tax::where('companySystemID',$selectedCompanyId)->where('taxCategory',3)->where('isActive',1)->get();
 
+        $businessCategories = SupplierCategoryMaster::where('isActive',1)->get();
+
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,
             'assetAndLiaAccount' => $assetAndLiabilityAccount,
@@ -251,6 +253,7 @@ class CompanyAPIController extends AppBaseController
             'hasSupplierGeneratePolicy'=> $hasSupplierGeneratePolicy,
             'discountsChartOfAccounts' => $discountsChartOfAccounts,
             'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccountCOA,
+            'businessCategories' => $businessCategories,
             'whtTypes' => $whtTypes
         );
 
