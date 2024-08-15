@@ -206,6 +206,11 @@ class VatReturnFillingMaster extends Model
         return $this->belongsTo('App\Models\BookInvSuppMaster','masterDocumentAutoID','bookingSuppMasInvAutoID');
     }
 
+    public function debitNote()
+    {
+        return $this->belongsTo('App\Models\DebitNote', 'masterDocumentAutoID','debitNoteAutoID');
+    }
+
     public function scopeGeneratedDocument()
     {
 
@@ -236,8 +241,12 @@ class VatReturnFillingMaster extends Model
     public function scopeIsPreviousVRFHasDocument()
     {
         $prvVatReturnFillingMaster = VatReturnFillingMaster::where('id','<',$this->id)->where('approvedYN',-1)->where('companySystemID', $this->companySystemID)->orderBy('id','desc')->first();
-
-        return isset($prvVatReturnFillingMaster) && !is_null($prvVatReturnFillingMaster->masterDocumentAutoID);
+        if(isset($prvVatReturnFillingMaster))
+        {
+            return isset($prvVatReturnFillingMaster) && !is_null($prvVatReturnFillingMaster->masterDocumentAutoID);
+        }else {
+            return true;
+        }
     }
 
 }

@@ -55,6 +55,7 @@ class SupplierInvoice
     {
         $this->master->documentSystemID = 11;
         $this->master->documentID = "SI";
+        $this->master->whtApplicable = false;
     }
 
     public function setDateDetails($date)
@@ -81,7 +82,7 @@ class SupplierInvoice
         if(!($companyFinanceYear->bigginingDate <= $this->master->supplierInvoiceDate) && ($this->master->supplierInvoiceDate <= $companyFinanceYear->endingDate))
             throw new \Exception("Document date not within the financial year");
 
-        $companyFinancePeriod = CompanyFinancePeriod::activeFinancePeriod($this->companySystemID,1,$this->master->supplierInvoiceDate);
+        $companyFinancePeriod = CompanyFinancePeriod::activeAndCurrentFinancePeriod($this->companySystemID,1,$this->master->supplierInvoiceDate);
 
         if (!$companyFinancePeriod)
             throw  new \Exception("Financial period not created or not active");

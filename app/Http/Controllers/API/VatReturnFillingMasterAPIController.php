@@ -476,10 +476,10 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                 return (boolean) !is_null($row->masterDocumentAutoID);
             })
             ->addColumn('generateDocumentCode', function ($row) {
-                return  ($row->invoice) ? $row->invoice->bookingInvCode : null;
+                return  ($row->isGenerateDebitNote) ? $row->invoice->bookingInvCode : ($row->debitNote) ? $row->debitNote->debitNoteCode : null;
             })
             ->addColumn('isPrvDocGenDoc', function ($row) {
-                return  ($row->isPreviousVRFHasDocument()) ?? null;
+                return  ($row->isPreviousVRFHasDocument()) ?? false;
             })
             ->with('orderCondition', $sort)
             ->make(true);

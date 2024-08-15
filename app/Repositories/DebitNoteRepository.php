@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\DebitNote;
+use http\Exception\InvalidArgumentException;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -79,6 +80,21 @@ class DebitNoteRepository extends BaseRepository
     public function model()
     {
         return DebitNote::class;
+    }
+
+    public function store(DebitNote $debitNote)
+    {
+        if($debitNote instanceof  DebitNote)
+        {
+            return DebitNote::create($debitNote->toArray());
+        }
+
+        if(is_array($debitNote))
+        {
+            return DebitNote::create($debitNote);
+        }
+
+        throw new InvalidArgumentException("Invalid Arguements");
     }
 
     public function getAudit($id)

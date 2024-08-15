@@ -186,7 +186,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                         });
                     })
                     ->orWhereHas('payment_voucher', function ($query) {
-                        $query->whereIn('invoiceType',[3,5]);
+                        $query->whereIn('invoiceType',[3,5])->where('rcmActivated',1);
                     });
 
 
@@ -226,7 +226,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                         $query->where('documentType', 0);
                     })
                     ->orWhereHas('payment_voucher', function ($query) {
-                        $query->whereIn('invoiceType',[3,5]);
+                        $query->whereIn('invoiceType',[3,5])->where('rcmActivated',1);
                     });
 
 
@@ -480,7 +480,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                         $query->whereIn('documentType', [0,1,2,3,4]);
                                                   })
                                                  ->orWhereHas('payment_voucher',function($query) use($companyCountry) {
-                                                     $query->whereIn('invoiceType',[3,5]);
+                                                     $query->whereIn('invoiceType',[3,5])->where('rcmActivated',0);
                                                  })
                                                 ->when(('supplier_invoice.documentType' == 1 || 'supplier_invoice.documentType' == 3),function($query) {
                                                     $query->whereHas('supplier_invoice_details', function($query) {

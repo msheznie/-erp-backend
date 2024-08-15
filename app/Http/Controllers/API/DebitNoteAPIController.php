@@ -451,6 +451,8 @@ class DebitNoteAPIController extends AppBaseController
             $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,DecimalPlaces,currencyID');
+        },'vrfDocument' => function($query) {
+            $query->where('masterDocumentTypeID',15);
         }])->findWithoutFail($id);
 
         if (empty($debitNote)) {

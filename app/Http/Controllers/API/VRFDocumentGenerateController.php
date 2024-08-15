@@ -4,10 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Classes\AccountsPayable\SupplierDirectInvoiceDetails;
 use App\Classes\AccountsPayable\SupplierInvoice;
+use App\Commands\AddDebitNoteDetails;
+use App\Commands\CreateDebitNote;
 use App\enums\accountsPayable\SupplierInvoiceType;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\VRF\GenerateDocumentApiRequest;
 use App\Models\Company;
+use App\Models\DebitNote;
+use App\Models\DebitNoteDetails;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\Tax;
@@ -15,28 +19,37 @@ use App\Models\VatReturnFillingMaster;
 use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Artisan;
+use mysql_xdevapi\Exception;
 
 class VRFDocumentGenerateController extends AppBaseController
 {
+    public $db;
     public function store(GenerateDocumentApiRequest $request)
     {
         $input = $request->only(['VRFId','companySystemId','isGenerateDebitNote','confirmGenDocWithoutPrevGen']);
         $VRFId = $input['VRFId'];
+        $this->db = isset($request->db) ? $request->db : "";
         $isGenerateDebitNote = (bool) $input['isGenerateDebitNote'];
         $vatReturnFillingMaster = VatReturnFillingMaster::find($VRFId,['returnFillingCode','date','companySystemID','masterDocumentAutoID','masterDocumentTypeID','id']);
 
-        if($vatReturnFillingMaster->isPreviousVRFHasDocument())
-            return $this->sendError("In the previous VAT return filing, the related supplier invoice/debit note has not been generated. Are you sure you want to proceed?",400,array('type' => 1));
+//        if($vatReturnFillingMaster->isPreviousVRFHasDocument())
+//            return $this->sendError("In the previous VAT return filing, the related supplier invoice/debit note has not been generated. Are you sure you want to proceed?",400,array('type' => 1));
 
         if($vatReturnFillingMaster->isDocumentGenerated())
             return $this->sendError("Supplier Invoice/Debit Note  generated for VAT return filing document",400,array('type' => 2));
 
+        $tax = Tax::where('taxCategory',2)->where('isActive',true)->where('isDefault',true)->first();
+
+        if(!isset($tax->authorityAutoID))
+            return ['success' => false , "message" => "The supplier is not assigned in the tax setup (tax authority)"];
+
         if($isGenerateDebitNote)
         {
-            $result = $this->generateDebitNote($vatReturnFillingMaster);
+            $result = $this->generateDebitNote($vatReturnFillingMaster,$tax);
             $msg = "Debit Note generated successfully";
         }else {
-            $result = $this->generateSupplierInvoice($vatReturnFillingMaster);
+            $result = $this->generateSupplierInvoice($vatReturnFillingMaster,$tax);
             $msg = "Supplier Invoice generated successfully";
         }
 
@@ -47,12 +60,8 @@ class VRFDocumentGenerateController extends AppBaseController
         return $result;
     }
 
-    public function generateSupplierInvoice(VatReturnFillingMaster $request)
+    public function generateSupplierInvoice(VatReturnFillingMaster $request,$tax)
     {
-        $tax = Tax::where('taxCategory',2)->where('isActive',true)->where('isDefault',true)->first();
-
-        if(!isset($tax->authorityAutoID))
-            return ['success' => false , "message" => "The supplier is not assigned in the tax setup (tax authority)"];
 
         try {
             $supplierInvoice = new SupplierInvoice(
@@ -72,7 +81,6 @@ class VRFDocumentGenerateController extends AppBaseController
 
             switch ($storeSupplierInvoice['data']['documentType']) {
                 case SupplierInvoiceType::SUPPLIER_DIRECT_INVOICE :
-                    $data = array();
                     $glAccounts= [
                         'InputVATGLAccount','OutputVATGLAccount'
                     ];
@@ -81,8 +89,9 @@ class VRFDocumentGenerateController extends AppBaseController
                         $details = new SupplierDirectInvoiceDetails($storeSupplierInvoice['data']);
                         $details->setVATReturnFillingMaster($request);
                         $details->setGlAccountDetails($glAccountType);
-                        $details->setAmount($details->getAmount());
                         $details->setCurrenciesAndExchagneRate();
+                        $details->setAmount($details->getAmount());
+                        $details->setAdditionalDetatils();
                         $details->details->save();
                     }
                     $storeSupplierInvoice['data']->updateBookingAmount(abs($supplierInvoice->getBookingAmount($request)));
@@ -102,14 +111,54 @@ class VRFDocumentGenerateController extends AppBaseController
 
     }
 
-    public function generateDebitNote(VatReturnFillingMaster  $request)
+    public function generateDebitNote(VatReturnFillingMaster  $request, $tax)
     {
-        throw new \Exception("Debit Note Generatation not yet implemented, only supplier invoice generation implemented!");
+        $data = new \App\Classes\AccountsPayable\DebitNote(
+            $request->companySystemID,
+            $request->date
+        );
+        $data->setSupplierDetails($tax->authorityAutoID);
+        $data->setSystemCreatedUserDetails();
+
+        if(!isset($data->master) && $data->master instanceof  DebitNote)
+            throw  new \Exception("Data not found!");
+
+        $debitNote = new CreateDebitNote($data->master);
+        $storeDebitNote = $debitNote->execute();
+
+        if(!$storeDebitNote)
+            throw new Exception("Cannot create debit not from VRF!");
+
+        $glAccounts= [
+            'InputVATGLAccount','OutputVATGLAccount'
+        ];
+        foreach ($glAccounts as $glAccountType)
+        {
+            $newDetails = new \App\Classes\AccountsPayable\DebitNoteDetails($storeDebitNote);
+            $newDetails->setVATReturnFillingMaster($request);
+            $newDetails->setGlAccountDetails($glAccountType);
+            $newDetails->setCurrenciesAndExchagneRate();
+            $newDetails->setAmount($newDetails->getAmount());
+            $newDetails->setDefaultValues();
+            $newDetails->setAdditionalDetatils();
+
+            $newDetails->details->save();
+        }
+
+        $storeDebitNote->updateNetAmount(abs($data->getNetAmount($request)));
+
+        $confirmDoc = ($this->confirmDocument($storeDebitNote));
+        if(isset($confirmDoc['success']) && $confirmDoc['success'])
+        {
+            $request->attachGeneratedDocument($storeDebitNote->getKey(),15);
+            return $confirmDoc;
+        }
+
     }
 
     public function confirmDocument($master)
     {
-        $autoID = $master->bookingSuppMasInvAutoID;
+        $autoID = $master->getKey();
         $params = array('autoID' => $autoID,
             'company' => $master->companySystemID,
             'document' => $master->documentSystemID,
@@ -123,6 +172,7 @@ class VRFDocumentGenerateController extends AppBaseController
         );
 
         $confirmation = \Helper::confirmDocument($params);
+
         if($confirmation['success'])
         {
             return $this->approveDocument($master);
@@ -133,9 +183,10 @@ class VRFDocumentGenerateController extends AppBaseController
 
     public function approveDocument($master)
     {
-        $documentApproveds = DocumentApproved::where('documentSystemCode', $master->bookingSuppMasInvAutoID)->where('documentSystemID', $master->documentSystemID)->get();
+        $documentApproveds = DocumentApproved::where('documentSystemCode', $master->getKey())->where('documentSystemID', $master->documentSystemID)->get();
         foreach ($documentApproveds as $documentApproved) {
-            $documentApproved["approvedComments"] = "Generated Customer Invoice through API";
+            $documentApproved["db"] = $this->db;
+            $documentApproved["approvedComments"] = "System Auto Generated";
             $documentApproved["db"] = "gears-erp-gutech";
             $documentApproved['empID'] = $master->createdUserSystemID;
             $documentApproved['documentSystemID'] = $master->documentSystemID;
@@ -145,8 +196,7 @@ class VRFDocumentGenerateController extends AppBaseController
             $documentApproved['isCheckPrivilages'] = false;
 
 
-            $approval = \Helper::approveDocument($documentApproved);
-
+            $approval = \Helper::approveDocumentForApi($documentApproved);
             if(!$approval['success'])
                 throw new \Exception($approval['message']);
 

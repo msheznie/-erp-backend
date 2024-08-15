@@ -543,4 +543,22 @@ class DebitNote extends Model
         return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_debitnote.'.$column)
         ->addSelect($as.".CompanyName as ".$columnAs);
     }
+
+    public function vrfDocument()
+    {
+        return $this->hasOne('App\Models\VatReturnFillingMaster', 'masterDocumentAutoID', 'debitNoteAutoID');
+    }
+
+    public function updateNetAmount($amount)
+    {
+        $currencyConversionDire = \Helper::currencyConversion($this->companySystemID, $this->supplierTransactionCurrencyID, $this->supplierTransactionCurrencyID, $amount);
+
+        $this->netAmount = abs($amount);
+        $this->netAmountLocal =  abs(\Helper::roundValue($currencyConversionDire['localAmount']));
+        $this->netAmountRpt =  abs(\Helper::roundValue($currencyConversionDire['reportingAmount']));
+        $this->debitAmountTrans = abs($amount);
+        $this->debitAmountLocal =  abs(\Helper::roundValue($currencyConversionDire['localAmount']));
+        $this->debitAmountRpt =  abs(\Helper::roundValue($currencyConversionDire['reportingAmount']));
+        $this->save();
+    }
 }
