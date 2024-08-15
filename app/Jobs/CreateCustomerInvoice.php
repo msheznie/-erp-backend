@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AssetDisposalDetail;
+use App\Models\AssetDisposalType;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
@@ -167,13 +168,13 @@ class CreateCustomerInvoice implements ShouldQueue
                         foreach ($disposalDetail as $val) {
                             $localAmount += $val->localAmountDetail;
                             $comRptAmount += $val->comRptAmountDetail;
-                            $vatAmount += $val->vatAmount;
-                            $vatAmountLocal += $val->vatAmount / $companyCurrencyConversion['trasToLocER'];
-                            $vatAmountRpt += $val->vatAmount / $companyCurrencyConversion['trasToRptER'];
+                            $vatAmount += $val->vatAmount * $companyCurrencyConversion['trasToRptER'];
+                            $vatAmountLocal += ($val->vatAmount * $companyCurrencyConversion['trasToRptER']) / $companyCurrencyConversion['trasToLocER'];
+                            $vatAmountRpt += $val->vatAmount;
                         }
                     }
 
-                    $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount + $vatAmount);
+                    $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount + $vatAmountLocal);
                     $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount + $vatAmountLocal);
                     $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount + $vatAmountRpt);
                     $customerInvoiceData['vatRegisteredYN'] = $dpMaster->vatRegisteredYN;
@@ -207,7 +208,9 @@ class CreateCustomerInvoice implements ShouldQueue
 
                     if ($disposalDetail) {
                         $accID = SystemGlCodeScenarioDetail::getGlByScenario($dpMaster->companySystemID, $dpMaster->documentSystemID, "asset-disposal-inter-company-sales");
-                        $chartofAccount = ChartOfAccount::find($accID);
+
+                        $disposalType = AssetDisposalType::where('disposalTypesID',1)->first();
+                        $chartofAccount = ChartOfAccount::find($disposalType->chartOfAccountID);
                         $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
                         foreach ($disposalDetail as $val) {
                             $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
@@ -217,7 +220,7 @@ class CreateCustomerInvoice implements ShouldQueue
                             if ($customer) {
                                 $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
                             }
-                            $cusInvoiceDetails['glSystemID'] = $accID;
+                            $cusInvoiceDetails['glSystemID'] = $chartofAccount->chartOfAccountSystemID;
                             $cusInvoiceDetails['glCode'] = $chartofAccount->AccountCode;
                             $cusInvoiceDetails['glCodeDes'] = $chartofAccount->AccountDescription;
                             $cusInvoiceDetails['accountType'] = $chartofAccount->catogaryBLorPL;
@@ -234,8 +237,8 @@ class CreateCustomerInvoice implements ShouldQueue
                             $cusInvoiceDetails['contractID'] = 159;
                             $cusInvoiceDetails['performaMasterID'] = 0;
 
-                            $localAmountDetail = $val->sellingPriceLocal + ($val->vatAmount / $companyCurrencyConversion['trasToLocER']);
-                            $comRptAmountDetail = $val->sellingPriceRpt + ($val->vatAmount /  $companyCurrencyConversion['trasToRptER']);
+                            $localAmountDetail = $val->sellingPriceLocal + (($val->vatAmount * $companyCurrencyConversion['trasToRptER']) / $companyCurrencyConversion['trasToLocER']);
+                            $comRptAmountDetail = $val->sellingPriceRpt + $val->vatAmount;
 
                             /*$localAmountDetail = $val->localAmountDetail;
                             $comRptAmountDetail = $val->comRptAmountDetail;*/
@@ -253,14 +256,15 @@ class CreateCustomerInvoice implements ShouldQueue
 
                             $cusInvoiceDetails['vatMasterCategoryID'] = $val->vatMasterCategoryID;
                             $cusInvoiceDetails['vatSubCategoryID'] = $val->vatSubCategoryID;
-                            $cusInvoiceDetails['VATPercentage'] = $val->vatPercentage;
-                            $cusInvoiceDetails['VATAmount'] = $val->vatAmount;
-                            $cusInvoiceDetails['VATAmountLocal'] = $val->vatAmount / $companyCurrencyConversion['trasToLocER'];
-                            $cusInvoiceDetails['VATAmountRpt'] = $val->vatAmount /  $companyCurrencyConversion['trasToRptER'];
-                            $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmountDetail + ($val->vatAmount / $companyCurrencyConversion['trasToLocER']));
-                            $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail + ($val->vatAmount /  $companyCurrencyConversion['trasToRptER']));
-                            $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmountDetail + $val->vatAmount);
-                            $cusInvoiceDetails['unitCost'] = \Helper::roundValue($localAmountDetail + $val->vatAmount);
+                            $cusInvoiceDetails['VATPercentage'] = ($val->vatAmount / $val->sellingPriceRpt) * 100;
+                            $cusInvoiceDetails['VATAmount'] = $val->vatAmount * $companyCurrencyConversion['trasToRptER'];
+                            $cusInvoiceDetails['VATAmountLocal'] = $val->vatAmount * $companyCurrencyConversion['trasToRptER'] / $companyCurrencyConversion['trasToLocER'];
+                            $cusInvoiceDetails['VATAmountRpt'] = $val->vatAmount;
+                            $cusInvoiceDetails['salesPrice'] = \Helper::roundValue($localAmountDetail);
+                            $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmountDetail);
+                            $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail);
+                            $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmountDetail);
+                            $cusInvoiceDetails['unitCost'] = \Helper::roundValue($localAmountDetail);
                             $customerInvoiceDet = $customerInvoiceDetailRep->create($cusInvoiceDetails);
                         }
                     }

@@ -226,11 +226,17 @@ class CreateCustomerThirdPartyInvoice
     
                         $localAmount = 0;
                         $comRptAmount = 0;
+                        $vatAmount = 0;
+                        $vatAmountLocal = 0;
+                        $vatAmountRpt = 0;
     
                         if (count($disposalDetail) > 0) {
                             foreach ($disposalDetail as $val) {
                                 $localAmount += $val->localAmountDetail;
                                 $comRptAmount += $val->comRptAmountDetail;
+                                $vatAmount += $val->vatAmount * $companyCurrencyConversion['trasToRptER'];
+                                $vatAmountLocal += ($val->vatAmount * $companyCurrencyConversion['trasToRptER']) / $companyCurrencyConversion['trasToLocER'];
+                                $vatAmountRpt += $val->vatAmount;
                             }
                         }
 
@@ -251,9 +257,11 @@ class CreateCustomerThirdPartyInvoice
             
                     }
                         $systemUser = UserTypeService::getSystemEmployee();
-                        $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
-                        $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
-                        $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
+                        $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount + $vatAmountLocal);
+                        $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount + $vatAmountLocal);
+                        $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount + $vatAmountRpt);
+                        $customerInvoiceData['vatRegisteredYN'] = $sourceModel->vatRegisteredYN;
+                        $customerInvoiceData['customerVATEligible'] = $sourceModel->vatRegisteredYN;
                         $customerInvoiceData['postedDate'] = NOW();
                         $customerInvoiceData['isPerforma'] = 0;
                         $customerInvoiceData['documentType'] = 11;
@@ -275,9 +283,7 @@ class CreateCustomerThirdPartyInvoice
                         ];
     
     
-                        $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
-                            SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, 
-                            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail,SUM(sellingPriceLocal) as sellingPriceLocal,SUM(sellingPriceRpt) as sellingPriceRpt')->OfMaster($sourceModel['assetdisposalMasterAutoID'])->first();
+                        $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, vatPercentage, vatMasterCategoryID, vatSubCategoryID, vatAmount, SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail,SUM(sellingPriceLocal) as sellingPriceLocal,SUM(sellingPriceRpt) as sellingPriceRpt')->OfMaster($sourceModel['assetdisposalMasterAutoID'])->first();
                         $segment = AssetDisposalDetail::OfMaster($sourceModel['assetdisposalMasterAutoID'])->first();
                         if ($disposalDetail) {
                            $accID = SystemGlCodeScenarioDetail::getGlByScenario($companySystemId, $sourceModel['documentSystemID'], "asset-disposal-inter-company-sales");
@@ -310,10 +316,15 @@ class CreateCustomerThirdPartyInvoice
                                 $cusInvoiceDetails['contractID'] = 159;
                                 $cusInvoiceDetails['performaMasterID'] = 0;
     
-                                $localAmountDetail = $disposalDetail->sellingPriceLocal;
-                                $comRptAmountDetail = $disposalDetail->sellingPriceRpt;
-                                
-               
+                                $localAmountDetail = $disposalDetail->sellingPriceLocal + (($disposalDetail->vatAmount * $companyCurrencyConversion['trasToRptER']) / $companyCurrencyConversion['trasToLocER']);
+                                $comRptAmountDetail = $disposalDetail->sellingPriceRpt + $disposalDetail->vatAmount;
+
+                                $cusInvoiceDetails['vatMasterCategoryID'] = $disposalDetail->vatMasterCategoryID;
+                                $cusInvoiceDetails['vatSubCategoryID'] = $disposalDetail->vatSubCategoryID;
+                                $cusInvoiceDetails['VATPercentage'] = ($disposalDetail->vatAmount / $disposalDetail->sellingPriceRpt) * 100;
+                                $cusInvoiceDetails['VATAmount'] = $disposalDetail->vatAmount * $companyCurrencyConversion['trasToRptER'];
+                                $cusInvoiceDetails['VATAmountLocal'] = $disposalDetail->vatAmount * $companyCurrencyConversion['trasToRptER'] / $companyCurrencyConversion['trasToLocER'];
+                                $cusInvoiceDetails['VATAmountRpt'] = $disposalDetail->vatAmount;
                                 $cusInvoiceDetails['salesPrice'] = \Helper::roundValue($localAmountDetail);
                                 $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmountDetail);
                                 $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail);
