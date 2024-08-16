@@ -22,6 +22,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use ExchangeSetupConfig;
 
 class BankLedgerInsert implements ShouldQueue
 {
@@ -64,12 +65,21 @@ class BankLedgerInsert implements ShouldQueue
                         if (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) {
                             $masterDocumentDate = Carbon::parse($masterModel['pdcDate']);
 
-                            $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $masterModel['pdcAmount']);
+                            if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))
+                            {
+                                $masterData->payAmountBank = $masterModel['pdcAmount'];
+                                $masterData->payAmountSuppTrans = $masterModel['pdcAmount'];
+                                $masterData->payAmountCompLocal = ($masterModel['pdcAmount']/$masterData->localCurrencyER);
+                                $masterData->payAmountCompRpt = ($masterModel['pdcAmount']/$masterData->companyRptCurrencyER);
+                            }else {
+                                $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $masterModel['pdcAmount']);
 
-                            $masterData->payAmountBank = $masterModel['pdcAmount'];
-                            $masterData->payAmountSuppTrans = $masterModel['pdcAmount'];
-                            $masterData->payAmountCompLocal = $currencyConvertionData['localAmount'];
-                            $masterData->payAmountCompRpt = $currencyConvertionData['reportingAmount'];
+                                $masterData->payAmountBank = $masterModel['pdcAmount'];
+                                $masterData->payAmountSuppTrans = $masterModel['pdcAmount'];
+                                $masterData->payAmountCompLocal = $currencyConvertionData['localAmount'];
+                                $masterData->payAmountCompRpt = $currencyConvertionData['reportingAmount'];
+                            }
+
                         }
                         $retationVATAmount = 0;
                         $retentionLocalVatAmount = 0;
