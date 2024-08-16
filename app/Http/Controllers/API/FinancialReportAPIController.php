@@ -204,10 +204,14 @@ class FinancialReportAPIController extends AppBaseController
         $input = count($groupCompanySystemID) > 0 ? $groupCompanySystemID[0] : [];
         $companiesData = [];
         if (isset($input['companySystemID'])) {
-            $companies = Company::where('companySystemID', $input['companySystemID'])->with(['accosiate_jv_companies'])->first();
-
+            $companies = Company::where('companySystemID', $input['companySystemID'])->with(['accosiate_jv_companies', 'subsidiary_companies'])->first();
+            
             if ($companies && count($companies->accosiate_jv_companies) > 0) {
                 $this->getSubAssociateJvCompanies($companies->accosiate_jv_companies);
+            }
+
+            if ($companies && count($companies->subsidiary_companies) > 0) {
+                $this->getSubSubsidaryCompanies($companies->subsidiary_companies);
             }
 
             $companiesData = Company::whereIn('companySystemID', $this->accJvCompanies)->get();
@@ -225,6 +229,19 @@ class FinancialReportAPIController extends AppBaseController
 
             if ($companies && count($companies->accosiate_jv_companies) > 0) {
                 $this->getSubAssociateJvCompanies($companies->accosiate_jv_companies);
+            } 
+        }
+    }
+
+    public function getSubSubsidaryCompanies($subsidiary_companies)
+    {
+        foreach ($subsidiary_companies as $key => $value) {
+            $this->accJvCompanies[] = $value->companySystemID;
+
+            $companies = Company::where('companySystemID', $value->companySystemID)->with(['subsidiary_companies'])->whereHas('subsidiary_companies')->first();
+
+            if ($companies && count($companies->subsidiary_companies) > 0) {
+                $this->getSubSubsidaryCompanies($companies->subsidiary_companies);
             } 
         }
     }
