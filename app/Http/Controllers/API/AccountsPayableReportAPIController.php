@@ -4909,7 +4909,10 @@ class AccountsPayableReportAPIController extends AppBaseController
             IF
                 ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
                 round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
-                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount 
+                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount,
+                finalUnbilled.pendingBSISystemId AS pendingBSISystemCode,
+                finalUnbilled.pendingBSICode AS pendingBSICode,
+                finalUnbilled.pendingBSISystemCode AS pendingBSISystemId
             FROM
                 (
             SELECT
@@ -4928,7 +4931,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                 SupplierForGeneralLedger.primarySupplierCode AS supplierCode,
                 SupplierForGeneralLedger.supplierName AS supplierName,
                 MatchedGRVAndInvoice.totLocalAmount1 AS matchedLocalAmount,
-                MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount 
+                MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount,
+                pendingBSI.pendingBSISystemId,
+                pendingBSI.pendingBSICode,
+                pendingBSI.pendingBSISystemCode
             FROM
                 erp_generalledger
                 LEFT JOIN erp_grvmaster ON erp_generalledger.companySystemID = erp_grvmaster.companySystemID 
@@ -4943,70 +4949,99 @@ class AccountsPayableReportAPIController extends AppBaseController
                 LEFT JOIN suppliermaster AS SupplierForGeneralLedger ON erp_generalledger.supplierCodeSystem = SupplierForGeneralLedger.supplierCodeSystem
                 LEFT JOIN (
                 (
-            SELECT
-                erp_bookinvsuppdet.companySystemID,
-                3 AS documentSystemID,
-                erp_bookinvsuppdet.grvAutoID AS documentSystemCode,
-                grvGL.documentCode,
-                SUM( erp_bookinvsuppdet.totLocalAmount ) AS totLocalAmount1,
-                SUM( erp_bookinvsuppdet.totRptAmount ) AS totRptAmount1 
-            FROM
-                erp_bookinvsuppdet
-                INNER JOIN (
-            SELECT
-                companySystemID,
-                documentSystemID,
-                documentSystemCode,
-                documentCode 
-            FROM
-                erp_generalledger 
-            WHERE
-                erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
-                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '" 
-                AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                AND erp_generalledger.documentSystemID = 11 
-            GROUP BY
-                companySystemID,
-                documentSystemID,
-                documentSystemCode 
-                ) AS grvGL ON grvGL.companySystemID = erp_bookinvsuppdet.companySystemID 
-                AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
-            GROUP BY
-                erp_bookinvsuppdet.companySystemID,
-                erp_bookinvsuppdet.grvAutoID 
+                    SELECT
+                        erp_bookinvsuppdet.companySystemID,
+                        3 AS documentSystemID,
+                        erp_bookinvsuppdet.grvAutoID AS documentSystemCode,
+                        grvGL.documentCode,
+                        SUM( erp_bookinvsuppdet.totLocalAmount ) AS totLocalAmount1,
+                        SUM( erp_bookinvsuppdet.totRptAmount ) AS totRptAmount1 
+                    FROM
+                        erp_bookinvsuppdet
+                        INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+                        INNER JOIN (
+                            SELECT
+                                companySystemID,
+                                documentSystemID,
+                                documentSystemCode,
+                                documentCode 
+                            FROM
+                                erp_generalledger 
+                            WHERE
+                                erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '" 
+                                AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                AND erp_generalledger.documentSystemID = 11 
+                            GROUP BY
+                                companySystemID,
+                                documentSystemID,
+                                documentSystemCode 
+                        ) AS grvGL ON grvGL.companySystemID = erp_bookinvsuppdet.companySystemID 
+                        AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+                    WHERE
+                        erp_bookinvsuppmaster.approved = -1
+                    GROUP BY
+                        erp_bookinvsuppdet.companySystemID,
+                        erp_bookinvsuppdet.grvAutoID 
                 ) UNION ALL
                 (
-            SELECT
-                erp_bookinvsuppdet.companySystemID,
-                11 AS documentSystemID,
-                erp_bookinvsuppdet.bookingSuppMasInvAutoID AS documentSystemCode,
-                BsiGL.documentCode,
-                SUM( erp_bookinvsuppdet.totLocalAmount * - 1 ) AS totLocalAmount1,
-                SUM( erp_bookinvsuppdet.totRptAmount * - 1 ) AS totRptAmount1 
-            FROM
-                erp_bookinvsuppdet
-                INNER JOIN (
-            SELECT
-                companySystemID,
-                documentSystemID,
-                documentSystemCode,
-                documentCode 
-            FROM
-                erp_generalledger 
-            WHERE
-                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
-                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
-                AND erp_generalledger.documentSystemID = 11 
-                ) AS BsiGL ON BsiGL.companySystemID = erp_bookinvsuppdet.companySystemID 
-                AND BsiGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
-            GROUP BY
-                erp_bookinvsuppdet.companySystemID,
-                erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+                    SELECT
+                        erp_bookinvsuppdet.companySystemID,
+                        11 AS documentSystemID,
+                        erp_bookinvsuppdet.bookingSuppMasInvAutoID AS documentSystemCode,
+                        BsiGL.documentCode,
+                        SUM( erp_bookinvsuppdet.totLocalAmount * - 1 ) AS totLocalAmount1,
+                        SUM( erp_bookinvsuppdet.totRptAmount * - 1 ) AS totRptAmount1 
+                    FROM
+                        erp_bookinvsuppdet
+                        INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+                        INNER JOIN (
+                                SELECT
+                                    companySystemID,
+                                    documentSystemID,
+                                    documentSystemCode,
+                                    documentCode 
+                                FROM
+                                    erp_generalledger 
+                                WHERE
+                                    erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                    AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                                    AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+                                    AND erp_generalledger.documentSystemID = 11 
+                        ) AS BsiGL ON BsiGL.companySystemID = erp_bookinvsuppdet.companySystemID 
+                        AND BsiGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+                    WHERE
+                        erp_bookinvsuppmaster.approved = -1
+                    GROUP BY
+                        erp_bookinvsuppdet.companySystemID,
+                        erp_bookinvsuppdet.bookingSuppMasInvAutoID 
                 ) 
                 ) AS MatchedGRVAndInvoice ON erp_generalledger.companySystemID = MatchedGRVAndInvoice.companySystemID 
                 AND erp_generalledger.documentSystemID = MatchedGRVAndInvoice.documentSystemID 
                 AND erp_generalledger.documentSystemCode = MatchedGRVAndInvoice.documentSystemCode 
+                
+                LEFT JOIN (
+                    SELECT
+                        erp_bookinvsuppdet.companySystemID,
+                        3 AS documentSystemID,
+                        erp_bookinvsuppdet.grvAutoID AS documentSystemCode,
+                        erp_bookinvsuppmaster.documentID,
+                        erp_bookinvsuppmaster.bookingInvCode AS pendingBSICode,
+                        erp_bookinvsuppmaster.bookingSuppMasInvAutoID AS pendingBSISystemId,
+                        11 AS pendingBSISystemCode,
+                        SUM( erp_bookinvsuppdet.totLocalAmount *- 1 ) AS totLocalAmount1,
+                        SUM( erp_bookinvsuppdet.totRptAmount *- 1 ) AS totRptAmount1 
+                    FROM
+                        erp_bookinvsuppdet
+                        INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+                    WHERE
+                        erp_bookinvsuppmaster.approved = 0 
+                    GROUP BY
+                        erp_bookinvsuppdet.companySystemID,
+                        erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+                ) AS pendingBSI ON erp_generalledger.companySystemID = pendingBSI.companySystemID 
+                AND erp_generalledger.documentSystemID = pendingBSI.documentSystemID 
+                AND erp_generalledger.documentSystemCode = pendingBSI.documentSystemCode
             WHERE
                 erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
@@ -5046,9 +5081,25 @@ class AccountsPayableReportAPIController extends AppBaseController
         $results = \DB::select($qry);
 
         foreach ($results as $index => $result) {
-            $result->matchedLocalAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totLocalAmount');
+            $result->matchedLocalAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
+                                                                $query->where('approved', -1);
+                                                            }])->where('grvAutoID', $result->documentSystemCode)
+                                                            ->where('companySystemID', $result->companySystemID)
+                                                            ->where('supplierID', $result->supplierID)
+                                                            ->whereHas('suppinvmaster', function($query){
+                                                                $query->where('approved', -1);
+                                                            })
+                                                            ->sum('totLocalAmount');
 
-            $result->matchedRptAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totRptAmount');
+            $result->matchedRptAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
+                                            $query->where('approved', -1);
+                                        }])->where('grvAutoID', $result->documentSystemCode)
+                                        ->where('companySystemID', $result->companySystemID)
+                                        ->where('supplierID', $result->supplierID)
+                                        ->whereHas('suppinvmaster', function($query){
+                                            $query->where('approved', -1);
+                                        })
+                                        ->sum('totRptAmount');
 
 
             $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;
@@ -5109,12 +5160,15 @@ class AccountsPayableReportAPIController extends AppBaseController
                 INNER JOIN currencymaster ON erp_unbilledgrvgroupby.supplierTransactionCurrencyID = currencymaster.currencyID 
                 INNER JOIN currencymaster AS currencymaster_1 ON erp_unbilledgrvgroupby.companyReportingCurrencyID = currencymaster_1.currencyID 
                 LEFT JOIN (
-                                SELECT erp_bookinvsuppdet.unbilledgrvAutoID,
-                                Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount,
-                                Sum(erp_bookinvsuppdet.totRptAmount) AS SumOftotRptAmount
-                                FROM erp_bookinvsuppdet
-                                GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID
-            ) AS logisticGRV_BookingDetails	ON erp_unbilledgrvgroupby.unbilledgrvAutoID = logisticGRV_BookingDetails.unbilledgrvAutoID 
+                    SELECT erp_bookinvsuppdet.unbilledgrvAutoID,
+                            Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount,
+                            Sum(erp_bookinvsuppdet.totRptAmount) AS SumOftotRptAmount
+                    FROM 
+                        erp_bookinvsuppdet                                
+                    INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+                    WHERE erp_bookinvsuppmaster.approved = -1
+                    GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID
+                ) AS logisticGRV_BookingDetails	ON erp_unbilledgrvgroupby.unbilledgrvAutoID = logisticGRV_BookingDetails.unbilledgrvAutoID 
             WHERE
                 erp_grvmaster.grvConfirmedYN = 1
                 AND erp_grvmaster.approved =- 1  
@@ -5124,7 +5178,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 AND erp_grvmaster.companySystemID IN (' . join(',', $companyID) . ')
                 AND STR_TO_DATE( DATE_FORMAT( erp_grvmaster.grvDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
                 AND erp_unbilledgrvgroupby.supplierID IN (' . join(',', $supplierSystemID) . ')
-                GROUP BY
+            GROUP BY
                 erp_unbilledgrvgroupby.unbilledgrvAutoID,
                 erp_grvmaster.grvAutoID,
                 erp_grvmaster.companySystemID;';
@@ -5246,6 +5300,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 SUM( erp_bookinvsuppdet.totRptAmount ) AS totRptAmount1 
             FROM
                 erp_bookinvsuppdet
+                INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
                 INNER JOIN (
             SELECT
                 companySystemID,
@@ -5265,6 +5320,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 documentSystemCode 
                 ) AS grvGL ON grvGL.companySystemID = erp_bookinvsuppdet.companySystemID 
                 AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            WHERE
+                erp_bookinvsuppmaster.approved = -1
             GROUP BY
                 erp_bookinvsuppdet.companySystemID,
                 erp_bookinvsuppdet.grvAutoID 
@@ -5279,6 +5336,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 SUM( erp_bookinvsuppdet.totRptAmount * - 1 ) AS totRptAmount1 
             FROM
                 erp_bookinvsuppdet
+                INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID                
                 INNER JOIN (
             SELECT
                 companySystemID,
@@ -5294,6 +5352,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 AND erp_generalledger.documentSystemID = 11 
                 ) AS BsiGL ON BsiGL.companySystemID = erp_bookinvsuppdet.companySystemID 
                 AND BsiGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            WHERE
+                erp_bookinvsuppmaster.approved = -1
             GROUP BY
                 erp_bookinvsuppdet.companySystemID,
                 erp_bookinvsuppdet.bookingSuppMasInvAutoID 
@@ -5340,9 +5400,25 @@ class AccountsPayableReportAPIController extends AppBaseController
         $results = \DB::select($qry);
 
         foreach ($results as $index => $result) {
-            $result->matchedLocalAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totLocalAmount');
+            $result->matchedLocalAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
+                        $query->where('approved', -1);
+                    }])->where('grvAutoID', $result->documentSystemCode)
+                    ->where('companySystemID', $result->companySystemID)
+                    ->where('supplierID', $result->supplierID)
+                    ->whereHas('suppinvmaster', function($query){
+                        $query->where('approved', -1);
+                    })
+                    ->sum('totLocalAmount');
 
-            $result->matchedRptAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totRptAmount');
+            $result->matchedRptAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
+                        $query->where('approved', -1);
+                    }])->where('grvAutoID', $result->documentSystemCode)
+                    ->where('companySystemID', $result->companySystemID)
+                    ->where('supplierID', $result->supplierID)
+                    ->whereHas('suppinvmaster', function($query){
+                        $query->where('approved', -1);
+                    })
+                    ->sum('totRptAmount');
 
 
             $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;
@@ -5493,6 +5569,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 SUM( erp_bookinvsuppdet.totRptAmount ) AS totRptAmount1 
             FROM
                 erp_bookinvsuppdet
+            INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
                 INNER JOIN (
             SELECT
                 companySystemID,
@@ -5512,6 +5589,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 documentSystemCode 
                 ) AS grvGL ON grvGL.companySystemID = erp_bookinvsuppdet.companySystemID 
                 AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            WHERE
+                erp_bookinvsuppmaster.approved = -1
             GROUP BY
                 erp_bookinvsuppdet.companySystemID,
                 erp_bookinvsuppdet.grvAutoID 
@@ -5526,6 +5605,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 SUM( erp_bookinvsuppdet.totRptAmount * - 1 ) AS totRptAmount1 
             FROM
                 erp_bookinvsuppdet
+            INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
                 INNER JOIN (
             SELECT
                 companySystemID,
@@ -5541,6 +5621,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 AND erp_generalledger.documentSystemID = 11 
                 ) AS BsiGL ON BsiGL.companySystemID = erp_bookinvsuppdet.companySystemID 
                 AND BsiGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            WHERE
+                erp_bookinvsuppmaster.approved = -1
             GROUP BY
                 erp_bookinvsuppdet.companySystemID,
                 erp_bookinvsuppdet.bookingSuppMasInvAutoID 
@@ -5587,9 +5669,25 @@ class AccountsPayableReportAPIController extends AppBaseController
         $results = \DB::select($qry);
 
         foreach ($results as $index => $result) {
-            $result->matchedLocalAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totLocalAmount');
+            $result->matchedLocalAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
+                        $query->where('approved', -1);
+                    }])->where('grvAutoID', $result->documentSystemCode)
+                    ->where('companySystemID', $result->companySystemID)
+                    ->where('supplierID', $result->supplierID)
+                    ->whereHas('suppinvmaster', function($query){
+                        $query->where('approved', -1);
+                    })
+                    ->sum('totLocalAmount');
 
-            $result->matchedRptAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totRptAmount');
+            $result->matchedRptAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
+                        $query->where('approved', -1);
+                    }])->where('grvAutoID', $result->documentSystemCode)
+                    ->where('companySystemID', $result->companySystemID)
+                    ->where('supplierID', $result->supplierID)
+                    ->whereHas('suppinvmaster', function($query){
+                        $query->where('approved', -1);
+                    })
+                    ->sum('totRptAmount');
 
 
             $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;

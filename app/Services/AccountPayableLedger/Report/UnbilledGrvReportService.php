@@ -25,6 +25,7 @@ class UnbilledGrvReportService
                 $objUnbilledGrvDetailsReport->setSupplierName($val->supplierName);
                 $objUnbilledGrvDetailsReport->setDocNumber($val->documentCode);
                 $objUnbilledGrvDetailsReport->setDocDate($val->documentDate);
+                $objUnbilledGrvDetailsReport->setPendingSICode($val->pendingBSICode);
                 $objUnbilledGrvDetailsReport->setDocValueLocalCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmount, CurrencyService::getCurrencyDecimalPlace($val->documentLocalCurrencyID))));
                 $objUnbilledGrvDetailsReport->setMatachedValueLocalCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->matchedLocalAmount, CurrencyService::getCurrencyDecimalPlace($val->documentLocalCurrencyID))));
                 $objUnbilledGrvDetailsReport->setBalanceLocalCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->balanceLocalAmount, CurrencyService::getCurrencyDecimalPlace($val->documentLocalCurrencyID))));
