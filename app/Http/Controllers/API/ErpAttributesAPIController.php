@@ -271,8 +271,9 @@ class ErpAttributesAPIController extends AppBaseController
      *      )
      * )
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
+        $input = $request->all();
         /** @var ErpAttributes $erpAttributes */
         $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
 

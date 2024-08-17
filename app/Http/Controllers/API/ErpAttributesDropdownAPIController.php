@@ -339,8 +339,9 @@ class ErpAttributesDropdownAPIController extends AppBaseController
      *      )
      * )
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
+        $input = $request->all();
         /** @var ErpAttributesDropdown $erpAttributesDropdown */
         $erpAttributesDropdown = $this->erpAttributesDropdownRepository->findWithoutFail($id);
 

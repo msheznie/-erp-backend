@@ -208,8 +208,10 @@ class SegmentMasterAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
+        $input = $request->all();
+        
         /** @var SegmentMaster $segmentMaster */
         $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->with(['sub_levels'])->find($id);
         $previousValue = $segmentMaster->toArray();
