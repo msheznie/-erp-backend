@@ -15,15 +15,15 @@ class ExcelColumnFormat
     private static $parentNodeID = 0;
     public  static function getExcelColumnFormat($reportData,$reportID)
     {
-       $excelColumnFormat = [];
-       $totalAdditionalColumn = 0;
-       self::$parentNode = $reportData;
-
+        $excelColumnFormat = [];
+        $totalAdditionalColumn = 0;
+        self::$parentNode = $reportData;
         if($reportID == "FCT")
         {
             self::countDetailObjectsFCT($reportData);
             if(self::$mxCount > $totalAdditionalColumn)
-                $totalAdditionalColumn = self::$mxCount;
+                $totalAdditionalColumn = self::$mxCount + 1;
+
         }else {
             foreach ($reportData as $rpt)
             {
@@ -47,8 +47,6 @@ class ExcelColumnFormat
             }
         }
 
-
-
         if(empty($excelColumnFormat))
             $excelColumnFormat =  self::convertToExcelColumn($reportData->first(),$reportID,$totalAdditionalColumn);
 
@@ -59,60 +57,36 @@ class ExcelColumnFormat
     private static function countDetailObjectsFCT($collection,$count = 0)
     {
 
-
-        foreach ($collection as $key => $collect)
+        foreach ($collection as $key => $node)
         {
 
-            if(isset($collect->detID) && $collect->masterID == null)
+            if(is_null($node->masterID))
             {
-                $count = 0; //
-                self::$parentNodeID = $collect->detID;
-            }
-
-
-            if(isset($collect->masterID) && $collect->masterID == self::$parentNodeID)
-            {
-                $count = 1;
-            }
-
-
-
-            if(isset($collect->detID))
-            {
-
-
-                if(isset($collect->glCodes) && $collect->glCodes->isNotEmpty())
+                $parentNode = $node;
+                if(isset($parentNode->detail) && $parentNode->detail->isNotEmpty())
                 {
                     $count++;
-                    self::countDetailObjectsFCT($collect->glCodes,$count);
-                }else if(isset($collect->detail) && $collect->detail->isNotEmpty()) {
-                    $count++;
-                    self::countDetailObjectsFCT($collect->detail,$count);
-                } else{
 
-                    // item type 3 means the total
-                    if(isset($collect->itemType) && ($collect->itemType == 3))
+                    if($key > 0)
                     {
-                        if($collect->isFinalLevel  && isset($collection[$key-1]))
+                        $prvNode = $collection[$key-1];
+                        if($prvNode->masterID == $node->masterID)
                         {
-                            $count = $count++;
-                        }
-                    }else {
-                        if($collect->isFinalLevel)
-                        {
-                            $count++;
-                        }else {
-                            $count = 0;
-
+                            $count=0;
                         }
                     }
-
+                    self::countDetailObjectsFCT($node->detail,$count);
                 }
 
-                if($count > self::$mxCount)
-                    self::$mxCount = $count;
-            }else {
-                $count++;
+                if(isset($parentNode->glCodes) && $parentNode->glCodes->isNotEmpty())
+                {
+                    $count++;
+                }
+            }
+
+            if($count > self::$mxCount)
+            {
+                self::$mxCount = $count;
             }
 
         }
