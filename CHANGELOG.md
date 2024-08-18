@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.47.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.47.1...v10.47.2) (2024-08-18)
+
+
+### Bug Fixes
+
+* **general ledger:** pL report not exprting from finanical report issue fixed [GCP-4288] ([#6612](https://github.com/pbsgears/Gears_BackEnd/issues/6612)) ([8b30e8a](https://github.com/pbsgears/Gears_BackEnd/commit/8b30e8aca24b63385c75eee1300e26e05816e1be))
+
 ## [10.47.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.47.0...v10.47.1) (2024-08-11)
 
 
