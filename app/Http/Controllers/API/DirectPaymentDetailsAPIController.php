@@ -925,8 +925,8 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 $detail->transactionCurrencyID, $detail->companyLocalCurrencyID, $detail->companyLocalAmount,
                 $paySupplierInvoiceMaster->BPVAccount);
 
-            $currencyConversion = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID, $detail->transactionCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $detail->transactionAmount);
-            $expenceClaimAmount = round($currencyConversion['localAmount'],$CompanyCurrency->company_default_decimal);
+            $currencyConversion = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID, $detail->companyLocalCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $detail->companyLocalAmount);
+            $expenceClaimAmount = round($currencyConversion['documentAmount'],$CompanyCurrency->company_default_decimal);
 
             $temData = array(
                 'directPaymentAutoID' => $paySupplierInvoiceMaster->PayMasterAutoId,
@@ -956,7 +956,8 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 'localAmount' => $detail->companyLocalAmount,
                 'comRptCurrency' => $detail->companyReportingCurrencyID,
                 'comRptCurrencyER' => $currencyConvert['trasToRptER'],
-                'comRptAmount' => \Helper::roundValue($currencyConvert['reportingAmount'])
+                'comRptAmount' => \Helper::roundValue($currencyConvert['reportingAmount']),
+                'expense_claim_er' => $paySupplierInvoiceMaster->BPVbankCurrencyER
                 );
 
             $this->directPaymentDetailsRepository->create($temData);

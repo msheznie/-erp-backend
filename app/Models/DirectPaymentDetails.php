@@ -340,7 +340,8 @@ class DirectPaymentDetails extends Model
         'timeStamp',
         'detail_project_id',
         'contractID',
-        'contractDescription'
+        'contractDescription',
+        'expense_claim_er'
     ];
 
     /**
