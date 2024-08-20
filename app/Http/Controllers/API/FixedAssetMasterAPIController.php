@@ -2484,7 +2484,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $documentAutoId = $id;
             $documentSystemID = $masterData->documentSystemID;
             if($masterData->approved == -1){
-                if($masterData->assetType != 2 || ($masterData->assetType == 1 && $masterData->postToGLYN == 1)){
+                if($masterData->assetType != 2 && ($masterData->assetType == 1 && $masterData->postToGLYN == 1)){
                     $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
                     if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
                         if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
