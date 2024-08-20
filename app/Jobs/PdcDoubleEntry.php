@@ -339,8 +339,8 @@ class PdcDoubleEntry implements ShouldQueue
 
                             if ($masterData->invoiceType == 3) { //Direct Payment
                                 if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData)) {
-                                    $masterLocal = ($masterModel['pdcAmount']/$masterData->localCurrencyER);
-                                    $masterRpt = ($masterModel['pdcAmount']/$masterData->companyRptCurrencyER);
+                                    $masterLocal = ($pdcData['amount']/$masterData->localCurrencyER);
+                                    $masterRpt = ($pdcData['amount']/$masterData->companyRptCurrencyER);
                                 }else {
                                     $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
                                     $masterLocal = $currencyConvertionData['localAmount'];
