@@ -157,19 +157,21 @@ class CreateCustomerInvoice implements ShouldQueue
 
                     $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, vatAmount, serviceLineSystemID, ServiceLineCode, 
             SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, 
-            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('assetDisposalDetailAutoID')->get();
+            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail, sellingPriceLocal, sellingPriceRpt')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('assetDisposalDetailAutoID')->get();
 
                     $localAmount = 0;
                     $comRptAmount = 0;
                     $vatAmountLocal = 0;
                     $vatAmountRpt = 0;
+                    $vatAmount = 0;
 
                     if (count($disposalDetail) > 0) {
                         foreach ($disposalDetail as $val) {
-                            $localAmount += $val->localAmountDetail;
-                            $comRptAmount += $val->comRptAmountDetail;
+                            $localAmount += $val->sellingPriceLocal;
+                            $comRptAmount += $val->sellingPriceRpt;
                             $vatAmountLocal += ($val->vatAmount * $companyCurrencyConversion['trasToRptER']) / $companyCurrencyConversion['trasToLocER'];
                             $vatAmountRpt += $val->vatAmount;
+                            $vatAmount += $val->vatAmount * $companyCurrencyConversion['trasToRptER'];
                         }
                     }
 
@@ -177,7 +179,7 @@ class CreateCustomerInvoice implements ShouldQueue
                     $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
                     $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
                     $customerInvoiceData['VATPercentage'] = \Helper::roundValue($vatAmountLocal / $localAmount * 100);
-                    $customerInvoiceData['VATAmount'] = \Helper::roundValue($vatAmountLocal);
+                    $customerInvoiceData['VATAmount'] = \Helper::roundValue($vatAmount);
                     $customerInvoiceData['VATAmountLocal'] = \Helper::roundValue($vatAmountLocal);
                     $customerInvoiceData['VATAmountRpt'] = \Helper::roundValue($vatAmountRpt);
                     $customerInvoiceData['vatRegisteredYN'] = $dpMaster->vatRegisteredYN;

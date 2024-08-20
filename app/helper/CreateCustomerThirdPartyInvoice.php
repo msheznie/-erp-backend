@@ -223,7 +223,7 @@ class CreateCustomerThirdPartyInvoice
     
                         $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
                         SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, 
-                        SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail')->OfMaster($sourceModel['assetdisposalMasterAutoID'])->groupBy('assetDisposalDetailAutoID')->get();
+                        SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail, sellingPriceLocal, sellingPriceRpt')->OfMaster($sourceModel['assetdisposalMasterAutoID'])->groupBy('assetDisposalDetailAutoID')->get();
     
                         $localAmount = 0;
                         $comRptAmount = 0;
@@ -232,8 +232,8 @@ class CreateCustomerThirdPartyInvoice
     
                         if (count($disposalDetail) > 0) {
                             foreach ($disposalDetail as $val) {
-                                $localAmount += $val->localAmountDetail;
-                                $comRptAmount += $val->comRptAmountDetail;
+                                $localAmount += $val->sellingPriceLocal;
+                                $comRptAmount += $val->sellingPriceRpt;
                                 $vatAmountLocal += ($val->vatAmount * $companyCurrencyConversion['trasToRptER']) / $companyCurrencyConversion['trasToLocER'];
                                 $vatAmountRpt += $val->vatAmount;
                             }
