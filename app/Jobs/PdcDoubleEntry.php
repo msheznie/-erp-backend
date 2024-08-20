@@ -76,7 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\BankLedgerInsert;
 use App\Jobs\TaxLedgerInsert;
-
+use ExchangeSetupConfig;
 class PdcDoubleEntry implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
