@@ -31,6 +31,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentReferedHistory;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\ItemMaster;
 use App\Models\Company;
 use App\Models\FinanceItemCategoryMaster;
@@ -39,6 +40,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\FixedAssetCategory;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
+use App\Models\ItemMasterCategoryType;
 use App\Models\ItemMasterRefferedBack;
 use App\Models\SupplierCatalogMaster;
 use App\Models\TaxVatCategories;
@@ -141,8 +143,11 @@ class ItemMasterAPIController extends AppBaseController
         $runningSerialOrder = $financeCategoryMaster->lastSerialOrder;
         $code = $financeCategoryMaster->itemCodeDef;
         $count = $financeCategoryMaster->numberOfDigits;
+
         $createdItems = array();
+
         DB::beginTransaction();
+
         try {
             foreach ($input['items'] as $item) {
 
@@ -182,10 +187,17 @@ class ItemMasterAPIController extends AppBaseController
                 $item['primaryCompanyID'] = $company->CompanyID;
                 $item['primaryCompanySystemID'] = $input['primaryCompanySystemID'];
                 $item['financeCategoryMaster'] = $input['financeCategoryMaster'];
-                $itemType = isset($item['itemType']) ? $item['itemType'] : null;
-                $item['categoryType'] = json_encode($itemType);
+
+                $itemType = $item['itemType'];
 
                 $itemMaster = $this->itemMasterRepository->create($item);
+
+                foreach ($itemType as $key => $value) {
+                    $itemMasterCategoryType = new ItemMasterCategoryType();
+                    $itemMasterCategoryType->itemCodeSystem = $itemMaster->itemCodeSystem;
+                    $itemMasterCategoryType->categoryTypeID = $value['id'];
+                    $itemMasterCategoryType->save();
+                }
 
                 if ($input['itemConfirmedYN'] == true) {
                     $params = array('autoID' => $itemMaster->itemCodeSystem, 'company' => $item["primaryCompanySystemID"], 'document' => $item["documentSystemID"]);
@@ -208,7 +220,6 @@ class ItemMasterAPIController extends AppBaseController
         } catch (\Exception $e) {
             DB::rollBack();
         }
-
     }
 
     /**
@@ -237,7 +248,6 @@ class ItemMasterAPIController extends AppBaseController
 
         $itemMasters = ($this->getAllItemsQry($input, $search, $financeCategorySub));
 
-
         return \DataTables::eloquent($itemMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -255,7 +265,6 @@ class ItemMasterAPIController extends AppBaseController
 
     public function exportItemMaster(Request $request)
     {
-
         $input = $request->all();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -263,8 +272,8 @@ class ItemMasterAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $search = $request->input('search.value');
 
+        $search = $request->input('search.value');
 
         $financeCategorySub = $request['financeCategorySub'];
         $financeCategorySub = (array)$financeCategorySub;
@@ -272,15 +281,13 @@ class ItemMasterAPIController extends AppBaseController
 
         $items = ($this->getAllItemsQry($input, $search, $financeCategorySub))->orderBy('itemCodeSystem', $sort)->get();
 
-//        return $items;
-
         $type = $request->get('type');
         if ($items) {
             $x = 0;
             foreach ($items as $val) {
                 $itemTypes = [];
-                foreach ($val['categoryTypeDecode'] as $type) {
-                    $itemTypes[] = $type['itemName'];
+                foreach ($val['item_category_type'] as $type) {
+                    $itemTypes[] = $type['category_type_master']['name'];
                 }
                 $itemTypesString = implode(', ', $itemTypes);
                 $data[$x]['Item Code'] = $val['primaryCode'];
@@ -374,12 +381,18 @@ class ItemMasterAPIController extends AppBaseController
                         ->with(['finance_gl_code_bs', 'finance_gl_code_pl'])
                         ->groupBy('itemCategorySubID');
 
-                    if (isset($itemType[0]['id']) && $itemType[0]['id'] == 2) {
-                        $subCategories = $subCategories->whereIn('categoryType', ['[{"id":2,"itemName":"Sale"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->get();
+                    $itemType = collect($itemType);
+
+                    if (isset($itemType->first()['id']) && ($itemType->first()['id'] == 2)) {
+                        $subCategories = $subCategories->whereHas('finance_item_category_type', function ($query) {
+                            $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems());
+                        })->get();
                     }
 
-                    if (isset($itemType[0]['id']) && $itemType[0]['id'] == 1) {
-                        $subCategories = $subCategories->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->get();
+                    if (isset($itemType->first()['id']) && $itemType->first()['id'] == 1) {
+                        $subCategories = $subCategories->whereHas('finance_item_category_type', function ($query) {
+                            $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                        })->get();
                     }
                 }
             } else {
@@ -407,7 +420,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
 
-        $itemMasters = ItemMaster::with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory']);
+        $itemMasters = ItemMaster::with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory', 'item_category_type']);
         //->whereIn('primaryCompanySystemID',$childCompanies);
 
         if (array_key_exists('financeCategoryMaster', $input)) {
@@ -450,18 +463,10 @@ class ItemMasterAPIController extends AppBaseController
         $itemType = isset($input['categoryType']) ? $input['categoryType']: null;
 
         if (is_array($itemType)){
-            if (count($itemType) > 1) {
-                    $itemMasters = $itemMasters->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
-            }
-            if (count($itemType) < 2) {
-                if (isset($itemType[0]['id']) && $itemType[0]['id'] == 2) {
-                    $itemMasters = $itemMasters->whereIn('categoryType', ['[{"id":2,"itemName":"Sale"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
-                }
-
-                if (isset($itemType[0]['id']) && $itemType[0]['id'] == 1) {
-                    $itemMasters = $itemMasters->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
-                }
-            }
+            $categoryTypeID = collect($itemType)->pluck('id');
+            $itemMasters = $itemMasters->whereHas('item_category_type', function ($query) use ($categoryTypeID) {
+                $query->whereIn('categoryTypeID', $categoryTypeID);
+            });
         }
 
         return $itemMasters;
@@ -498,7 +503,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $empID = \Helper::getEmployeeSystemID();
         $search = $request->input('search.value');
-        $itemMasters = DB::table('erp_documentapproved')->select( 'employeesdepartments.approvalDeligated','itemmaster.*', 'erp_documentapproved.documentApprovedID', 'financeitemcategorymaster.categoryDescription as financeitemcategorydescription', 'financeitemcategorysub.categoryDescription as financeitemcategorysubdescription', 'units.UnitShortCode', 'rollLevelOrder', 'financeGLcodePL', 'approvalLevelID', 'documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+        $itemMasters = DB::table('erp_documentapproved')->select( 'employeesdepartments.approvalDeligated','itemmaster.*', 'erp_documentapproved.documentApprovedID', 'financeitemcategorymaster.categoryDescription as financeitemcategorydescription', 'financeitemcategorysub.categoryDescription as financeitemcategorysubdescription', 'units.UnitShortCode', 'rollLevelOrder', 'financeGLcodePL', 'approvalLevelID', 'documentSystemCode', DB::raw('GROUP_CONCAT(item_category_type_master.name SEPARATOR ", ") as category_descriptions'))->join('employeesdepartments', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
@@ -521,13 +526,16 @@ class ItemMasterAPIController extends AppBaseController
                         });
                     });
             })
+            ->leftJoin('item_master_category_types', 'itemmaster.itemCodeSystem', '=', 'item_master_category_types.itemCodeSystem')
+            ->leftJoin('item_category_type_master', 'item_master_category_types.categoryTypeID', '=', 'item_category_type_master.id')
             ->leftJoin('units', 'UnitID', '=', 'unit')
             ->leftJoin('financeitemcategorymaster', 'itemCategoryID', '=', 'financeCategoryMaster')
             ->leftJoin('financeitemcategorysub', 'itemCategorySubID', '=', 'financeCategorySub')
             ->where('erp_documentapproved.approvedYN', 0)
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 57)
-            ->whereIn('erp_documentapproved.companySystemID', $companyID);
+            ->whereIn('erp_documentapproved.companySystemID', $companyID)
+            ->groupBy('itemmaster.itemCodeSystem');
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
 
@@ -544,10 +552,6 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $itemMasters = $itemMasters->get();
-
-        foreach ($itemMasters as $itemMaster){
-            $itemMaster->categoryTypeDecode = json_decode($itemMaster->categoryType);
-        }
 
         return \DataTables::of($itemMasters)
             ->addIndexColumn()
@@ -590,7 +594,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
 
-        $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
+        $warehouse = WarehouseMaster::find($warehouseSystemCode);
 
         if(!empty($warehouse)){
             $selectedCompanyId = $warehouse->companySystemID;
@@ -673,6 +677,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $assetFinanceCategory = AssetFinanceCategory::all();
 
+        $categoryTypeData = ItemCategoryTypeMaster::all();
 
         $output = array('companiesByGroup' => $companiesByGroup,
             'fixedAssetCategory' => $fixedAssetCategory,
@@ -687,7 +692,8 @@ class ItemMasterAPIController extends AppBaseController
             'vatSubCategory' => $vatSubCategory,
             'masterCompany' => $masterCompany,
             'isPosIntegrated' => $isPosIntegrated,
-            'isSubItemEnabled' => $isSubItemEnabled
+            'isSubItemEnabled' => $isSubItemEnabled,
+            'categoryTypeData' => $categoryTypeData
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -746,18 +752,17 @@ class ItemMasterAPIController extends AppBaseController
 
     public function store(CreateItemMasterAPIRequest $request)
     {
-
-
-       
         $input = $request->all();
-       
 
         $imageData = (array)($input['images']);
 
-
-        $categoryType = isset($input['categoryType']) ? $input['categoryType'] : null;
-
-        $input['categoryType'] = json_encode($categoryType);
+        if(isset($input['categoryType'])) {
+            $categoryTypes = $input['categoryType'];
+            unset($input['categoryType']);
+        }
+        else {
+            $categoryTypes = '';
+        }
 
         $input = $this->convertArrayToValue($input);
 
@@ -765,8 +770,7 @@ class ItemMasterAPIController extends AppBaseController
         $itemCategorySubExpirystatus = FinanceItemcategorySub::select('expiryYN')
                                         ->where('itemCategorySubID', $financeCategorySubID)->first();
 
-       // $input['expiryYN'] = $itemCategorySubExpirystatus->expiryYN;
-
+        // $input['expiryYN'] = $itemCategorySubExpirystatus->expiryYN;
 
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $input['isPOSItem'] = isset($input['isPOSItem']) ? $input['isPOSItem'] : 0;
@@ -788,7 +792,6 @@ class ItemMasterAPIController extends AppBaseController
         if ($input['isPOSItem'] == 1) {
             $ruleArray = array_merge($ruleArray, ['sellingCost' => 'required|numeric|min:0.001']);
         }
-
 
         $validator = \Validator::make($input, $ruleArray, $messages);
 
@@ -818,11 +821,10 @@ class ItemMasterAPIController extends AppBaseController
         $input['runningSerialOrder'] = $runningSerialOrder;
         $input['primaryCode'] = $primaryCode;
         $input['primaryItemCode'] = $code;
+
         if(!(isset($input['barcode']) && $input['barcode'] != null)){
             $input['barcode'] = $primaryCode;
         }
-
-
 
         if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] != 3) {
             $input['faFinanceCatID'] = null;
@@ -856,42 +858,39 @@ class ItemMasterAPIController extends AppBaseController
             $input['itemApprovedComment'] = '';
         }
 
-
-
-
         $itemMasters = $this->itemMasterRepository->create($input);
-        
+
+        foreach ($categoryTypes as $categoryType) {
+            $itemCategoryType = new ItemMasterCategoryType();
+            $itemCategoryType->itemCodeSystem = $itemMasters['itemCodeSystem'];
+            $itemCategoryType->categoryTypeID = $categoryType['id'];
+            $itemCategoryType->save();
+        }
+
         $count = 0;
         $image_path = [];
-        
 
         $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
 
-    
         foreach($imageData as $key=>$val)
         {
-                   
-                   $path_dir['path'] = '';
-                    $t=time();
-                    $tem = substr($t,5);
-                    $valtt = $this->quickRandom();
-                    $random_words = $itemMasters['itemCodeSystem'].'_'.$valtt.'_'.$tem;
-                    //$base_path = 'item/'.$itemMasters['itemCodeSystem'].'/'.$count.'/';
-                    if (Helper::checkPolicy($input['primaryCompanySystemID'], 50)) {
-                        $base_path = $input['primaryCompanySystemID'].'/G_ERP/item-master/images/'.$itemMasters['itemCodeSystem'] . '/';
-                    }   
-                    else
-                    {
+            $path_dir['path'] = '';
+            $t=time();
+            $tem = substr($t,5);
+            $valtt = $this->quickRandom();
+            $random_words = $itemMasters['itemCodeSystem'].'_'.$valtt.'_'.$tem;
+            //$base_path = 'item/'.$itemMasters['itemCodeSystem'].'/'.$count.'/';
+            if (Helper::checkPolicy($input['primaryCompanySystemID'], 50)) {
+                $base_path = $input['primaryCompanySystemID'].'/G_ERP/item-master/images/'.$itemMasters['itemCodeSystem'] . '/';
+            }
+            else
+            {
+                $base_path = 'item-master/images/'.$itemMasters['itemCodeSystem'] . '/';
+            }
 
-                        $base_path = 'item-master/images/'.$itemMasters['itemCodeSystem'] . '/';
-                    }
-                   
-
-                    $path_dir['path'] = $this->storeImage($val, $random_words, $base_path,$disk);
-                    array_push($image_path,$path_dir);
+            $path_dir['path'] = $this->storeImage($val, $random_words, $base_path,$disk);
+            array_push($image_path,$path_dir);
         }
-        
-
 
         if($imageData == null || empty($imageData))
         {
@@ -903,8 +902,6 @@ class ItemMasterAPIController extends AppBaseController
         }
         
         $this->itemMasterRepository->update(['itemPicture' => $pic['pic']], $itemMasters['itemCodeSystem']);
-
-
 
         $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
         $financeCategoryMaster->modifiedPc = gethostname();
@@ -952,41 +949,32 @@ class ItemMasterAPIController extends AppBaseController
 
     public function updateItemMaster(Request $request)
     {
-
-        
-
         $input = $request->all();
+
         $id = $input['itemCodeSystem'];
         $imageData = $input['item_path'];
         $remove_items = $input['remove_items'];
-        $categoryType = json_encode($input['categoryTypeDecode']);
+        $categoryType = $input['categoryType'];
+
         unset($input['item_path']);
         unset($input['specification']);
         unset($input['remove_items']);
-        unset($input['categoryType']);
 
-        if(isset($input['categoryTypeDecode']) && empty($input['categoryTypeDecode'])){
+        if(isset($input['categoryType']) && empty($input['categoryType'])){
             return $this->sendError('Please select Item Type');
         }
-        unset($input['categoryTypeDecode']);
+        unset($input['categoryType']);
 
         $input = array_except($input,['finance_sub_category','company','specification','final_approved_by']);
-
-
 
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
-        $input['categoryType'] = $categoryType;
-
-       
-
 
         unset($input['final_approved_by']);
-        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
+        $itemMaster = ItemMaster::with('item_category_type')->where("itemCodeSystem", $id)->first();
         $pic_item = $itemMaster->itemPicture;
-  
   
         if (empty($itemMaster)) {
             return $this->sendError('Item Master not found');
@@ -1001,8 +989,6 @@ class ItemMasterAPIController extends AppBaseController
                 }
             }
         }
-
-
 
         if(isset($input['financeCategorySub']) && empty($input['financeCategorySub'])){
             return $this->sendError('Please select Finance Sub Category');
@@ -1022,16 +1008,12 @@ class ItemMasterAPIController extends AppBaseController
                 return $this->sendError('Main Item field is required.');
             }
         }
-
-
              
         $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
-
  
         $count = 0;
         $image_path = [];
         $path_dir['path'] = '';
-
        
         if($remove_items != null || !empty($remove_items))
         {
@@ -1041,24 +1023,18 @@ class ItemMasterAPIController extends AppBaseController
              
             }
         }
-
-
       
         if($imageData != null || !empty($imageData))
         {
             foreach($imageData as $key=>$val)
-            {   
-               
+            {
                 $path_dir['path'] = '';
                  if (preg_match('/^https/', $val['path']))
-                 {  
-
+                 {
                     $path_dir['path'] = $val['db_path'];
                  }
                  else
                  {
-                   
-
                     $t=time();
                     $tem = substr($t,5);
                     $valtt = $this->quickRandom();
@@ -1068,25 +1044,16 @@ class ItemMasterAPIController extends AppBaseController
                     }   
                     else
                     {
-    
                         $base_path = 'item-master/images/'.$id . '/';
                     }
-                   
-    
                     $path_dir['path'] = $this->storeImage($val['path'], $random_words, $base_path,$disk);
                  }
-        
-    
   
                 array_push($image_path,$path_dir);                   
             }
 
-          
-
-
             $itemMaster->itemPicture = json_encode($image_path);
         }
-
 
         $previosValue = $itemMaster->toArray();
         $newValue = $input;
@@ -1102,7 +1069,6 @@ class ItemMasterAPIController extends AppBaseController
             unset($input['db']);
         }
 
-
         if($itemMaster->itemApprovedYN == 1){
             //check policy 9
             $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],9);
@@ -1111,7 +1077,6 @@ class ItemMasterAPIController extends AppBaseController
                 $input['itemPicture'] = $itemMaster->itemPicture;
                 $itemMaster->itemUrl = $input['itemUrl'];
                 $itemMaster->isActive = $input['isActive'];
-                $itemMaster->categoryType = $categoryType;
                 $itemMaster->isSubItem = $input['isSubItem'];
                 $itemMaster->mainItemID = $input['mainItemID'];
                 $itemMaster->itemPicture = $input['itemPicture'];
@@ -1123,9 +1088,16 @@ class ItemMasterAPIController extends AppBaseController
                 $itemMaster->barcode = $input['barcode'];
                 $itemMaster->secondaryItemCode = $input['secondaryItemCode'];
 
-
                 $itemMaster->save();
 
+                ItemMasterCategoryType::where('itemCodeSystem', $id)->delete();
+
+                foreach ($categoryType as $key => $value) {
+                    $itemMasterCategoryType = new ItemMasterCategoryType();
+                    $itemMasterCategoryType->itemCodeSystem = $id;
+                    $itemMasterCategoryType->categoryTypeID = $value['id'];
+                    $itemMasterCategoryType->save();
+                }
 
                 $this->auditLog($db, $input['itemCodeSystem'],$uuid, "itemmaster", $newValue['primaryCode']." has updated", "U", $newValue, $previosValue);
            
@@ -1133,7 +1105,6 @@ class ItemMasterAPIController extends AppBaseController
                     'itemUrl' => $input['itemUrl'],
                     'isActive' => $input['isActive'],
                     'pos_type' => $input['pos_type'],
-                    'categoryType' => $categoryType,
                     'itemDescription' => $input['itemDescription'],
                     'financeCategorySub' => $input['financeCategorySub'],
                     'itemUnitOfMeasure' => $input['unit'],
@@ -1145,14 +1116,12 @@ class ItemMasterAPIController extends AppBaseController
                 ItemAssigned::where('itemCodeSystem', $id)->update($updateData);
                 $old_array = array_only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture','pos_type']);
                 $modified_array = array_only($input,['itemUrl', 'isActive', 'itemPicture','pos_type']);
-      
             
                 // update in to user log table
                 foreach ($old_array as $key => $old){
                     if($old != $modified_array[$key]){
                         $description = $employee->empName." Updated item master (".$itemMaster->itemCodeSystem.") from ".$old." To ".$modified_array[$key]."";
                         UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$itemMaster->documentSystemID,$itemMaster->primaryCompanySystemID,$itemMaster->itemCodeSystem,$description,$modified_array[$key],$old,$key);
-                      
                     }
                 }
 
@@ -1207,8 +1176,10 @@ class ItemMasterAPIController extends AppBaseController
                 return $this->sendError('The Finance Sub Category field is required.', 500);
             }
         }
+
+        unset($input['item_category_type']);
         
-        $afterConfirm = array('secondaryItemCode', 'categoryType', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit', 'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type','isSubItem','mainItemID');
+        $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit', 'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type','isSubItem','mainItemID');
                        
         foreach ($input as $key => $value) {
             if ($itemMaster->itemConfirmedYN == 1) {
@@ -1223,12 +1194,19 @@ class ItemMasterAPIController extends AppBaseController
                
             }
         }
-        
-
     
         $itemMaster->save();
-        return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully d');
 
+        ItemMasterCategoryType::where('itemCodeSystem', $id)->delete();
+
+        foreach ($categoryType as $key => $value) {
+            $itemMasterCategoryType = new ItemMasterCategoryType();
+            $itemMasterCategoryType->itemCodeSystem = $id;
+            $itemMasterCategoryType->categoryTypeID = $value['id'];
+            $itemMasterCategoryType->save();
+        }
+
+        return $this->sendResponse($itemMaster->refresh()->toArray(), 'Itemmaster updated successfully d');
     }
 
     /**
@@ -1341,7 +1319,7 @@ class ItemMasterAPIController extends AppBaseController
     {
         /** @var ItemMaster $itemMaster */
         //$itemMaster = $this->itemMasterRepository->findWithoutFail($id);
-        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['company','specification','finalApprovedBy','financeSubCategory'=> function($q){
+        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['company','specification','finalApprovedBy','item_category_type','financeSubCategory'=> function($q){
             $q->with(['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue']);
         }])->first();
 
@@ -1577,10 +1555,6 @@ class ItemMasterAPIController extends AppBaseController
 
         $itemArray = $item->toArray();
 
-        if(isset($itemArray['categoryTypeDecode'])){
-            unset($itemArray['categoryTypeDecode']);
-        }
-
         $storeHistory = ItemMasterRefferedBack::insert($itemArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
@@ -1769,12 +1743,16 @@ class ItemMasterAPIController extends AppBaseController
             return $query->where('companySystemID', '=', $companyId)->where('isAssigned', '=', -1);
         })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
         ->when((isset($input['PurchaseRequestID']) && $input['PurchaseRequestID'] > 0), function($query) use ($input) {
-            $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+            $query->whereHas('item_category_type', function ($query) {
+                        $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                    });
             $query->whereDoesntHave('purchase_request_details', function($query) use ($input) {
                 $query->where('purchaseRequestID', $input['PurchaseRequestID']);
             });
         })->when((isset($input['purchaseOrderID']) && $input['purchaseOrderID'] > 0), function($query) use ($input) {
-            $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+            $query->whereHas('item_category_type', function ($query) {
+                        $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                    });
             $query->whereDoesntHave('purchase_order_details', function($query) use ($input) {
                 $query->where('purchaseOrderMasterID', $input['purchaseOrderID']);
             });
@@ -1783,12 +1761,16 @@ class ItemMasterAPIController extends AppBaseController
                 $query->where('requestDetailsID', $input['materialReqeuestID']);
             });
         })->when((isset($input['RequestID']) && $input['RequestID'] > 0), function($query) use ($input) {
-                $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+                $query->whereHas('item_category_type', function ($query) {
+                        $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                    });
                 $query->whereDoesntHave('material_request_details', function($query) use ($input) {
                     $query->where('RequestID', $input['RequestID']);
                 });
         })->when((isset($input['itemIssueAutoID']) && $input['itemIssueAutoID'] > 0), function($query) use ($input) {
-            $query->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+            $query->whereHas('item_category_type', function ($query) {
+                        $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                    });
             $query->whereDoesntHave('material_issue_details', function($query) use ($input) {
                 $query->where('itemIssueAutoID', $input['itemIssueAutoID']);
             });

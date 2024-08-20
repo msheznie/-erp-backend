@@ -21,6 +21,8 @@ use App\Models\ErpItemLedger;
 use App\Models\AssetFinanceCategory;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\GRVDetails;
+use App\Models\ItemMasterCategoryType;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\SegmentAllocatedItem;
 use App\Models\ItemAssigned;
 use App\Models\SupplierCurrency;
@@ -277,16 +279,14 @@ class ProcumentOrderService
                     })->where('isActive',1)
                     ->where('itemApprovedYN',1)
                     ->where('primaryCode', trim($rowData['item_code']))
-                    ->pluck('categoryType')
                     ->first();
 
                 if ($categoryType) {
-                    $purchaseCategoryTypes = [
-                        '[{"id":1,"itemName":"Purchase"}]',
-                        '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]',
-                        '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'
-                    ];
-                    if (!in_array($categoryType, $purchaseCategoryTypes)) {
+                    $checkTheCategoryType = ItemMasterCategoryType::whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems())
+                                                                  ->where('itemCodeSystem', $categoryType->itemCodeSystem)
+                                                                  ->first();
+
+                    if (!$checkTheCategoryType) {
                         $validationErrorMsg[] = 'The inventory items added should only be of Item Type: Purchase or Purchase & Sales for Excel row: ' . $rowNumber;
                         $isValidationError = 1;
                     }

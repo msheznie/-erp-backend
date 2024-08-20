@@ -68,7 +68,6 @@ class ItemMaster extends Model
 
 
     protected $dates = ['deleted_at'];
-    protected $appends = ['categoryTypeDecode'];
 
 
     public $fillable = [
@@ -78,7 +77,6 @@ class ItemMaster extends Model
         'documentID',
         'primaryCompanySystemID',
         'primaryCompanyID',
-        'categoryType',
         'primaryCode',
         'secondaryItemCode',
         'barcode',
@@ -198,11 +196,6 @@ class ItemMaster extends Model
         //'secondaryItemCode' => 'unique:itemmaster,secondaryItemCode',
     ];
 
-    public function getCategoryTypeDecodeAttribute()
-    {
-        return json_decode($this->categoryType, true);
-    }
-
     public function company() {
         return $this->belongsTo('App\Models\Company','primaryCompanySystemID','companySystemID');
     }
@@ -287,5 +280,9 @@ class ItemMaster extends Model
     public function material_issue_details()
     {
         return $this->belongsTo('App\Models\ItemIssueDetails', 'itemCodeSystem', 'itemCodeSystem');
+    }
+
+    public function item_category_type() {
+        return $this->hasMany('App\Models\ItemMasterCategoryType','itemCodeSystem','itemCodeSystem');
     }
 }

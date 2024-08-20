@@ -355,7 +355,6 @@ Route::group([], function () {
 // Items
 Route::group([], function () {
     Route::resource('item/assigneds', 'ItemAssignedAPIController', ['names' => 'Item assigned']);
-    Route::resource('item/masters', 'ItemMasterAPIController',['names' => 'Item master']);
     Route::resource('warehouse_items', 'WarehouseItemsAPIController');
     Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
     Route::resource('item_serials', 'ItemSerialAPIController');

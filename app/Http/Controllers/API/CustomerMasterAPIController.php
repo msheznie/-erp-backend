@@ -28,7 +28,9 @@ use App\Http\Requests\API\UpdateCustomerMasterAPIRequest;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerMaster;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\Company;
+use App\Models\ItemMasterCategoryType;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\CountryMaster;
 use App\Models\CustomerMasterCategory;
@@ -2565,9 +2567,17 @@ class CustomerMasterAPIController extends AppBaseController
                                     array_push($item_error['Item Type'], 'line number '.$count.' Item Type should only have the values S, P and SP');
                                 } else {
                                     if (isset($value['finance_sub_category']) && $value['item_type'] == 'S') {
-                                        $subCat = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])->whereIn('categoryType', ['[{"id":2,"itemName":"Sale"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->first();
+                                        $subCat = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])
+                                                                        ->whereHas('finance_item_category_type', function($query) {
+                                                                            $query->where('categoryTypeID', ItemCategoryTypeMaster::salesItems());
+                                                                        })
+                                                                        ->first();
                                     } else if (isset($value['finance_sub_category']) && $value['item_type'] == 'P') {
-                                        $subCat = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]', '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]', '[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->first();
+                                        $subCat = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])
+                                                                        ->whereHas('finance_item_category_type', function($query) {
+                                                                            $query->where('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                                                                        })
+                                                                        ->first();
                                     } else {
                                         $subCat = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])->first();
                                     }
@@ -2789,11 +2799,11 @@ class CustomerMasterAPIController extends AppBaseController
                         {
 
                             if($value['item_type'] == 'S'){
-                                $item_data['categoryType'] = '[{"id":2,"itemName":"Sale"}]';
+                                $item_data['categoryType'] = ItemCategoryTypeMaster::salesItems();
                             } elseif ($value['item_type'] == 'P') {
-                                $item_data['categoryType'] = '[{"id":1,"itemName":"Purchase"}]';
+                                $item_data['categoryType'] = ItemCategoryTypeMaster::purchaseItems();
                             } elseif ($value['item_type'] == 'SP') {
-                                $item_data['categoryType'] = '[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]';
+                                $item_data['categoryType'] = ItemCategoryTypeMaster::allItemTypes();
                             }
                         }
 
@@ -2856,9 +2866,22 @@ class CustomerMasterAPIController extends AppBaseController
 
                             if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse && !$notValid)
                             {
-                             
+                                if(isset($item_data['categoryType'])) {
+                                    $itemCategoryTypeData = $item_data['categoryType'];
+                                    unset($item_data['categoryType']);
+                                }
+                                else{
+                                    $itemCategoryTypeData = [];
+                                }
                        
-                                $itemMasters = $this->itemMasterRepository->create($item_data);
+                                $itemMaster = $this->itemMasterRepository->create($item_data);
+
+                                foreach ($itemCategoryTypeData as $categoryTypeData) {
+                                    $itemMasterCategoryType = new ItemMasterCategoryType();
+                                    $itemMasterCategoryType->itemCodeSystem = $itemMaster->itemCodeSystem;
+                                    $itemMasterCategoryType->categoryTypeID = $categoryTypeData;
+                                    $itemMasterCategoryType->save();
+                                }
         
                                 $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
                                 $financeCategoryMaster->modifiedPc = gethostname();

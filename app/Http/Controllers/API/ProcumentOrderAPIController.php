@@ -66,6 +66,7 @@ use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\BudgetConsumedData;
 use App\Models\CompanyDigitalStamp;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\TaxVatCategories;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -1826,7 +1827,10 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
-        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)
+                             ->whereHas('item_category_type', function ($query) {
+                                $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                            });
 
 
         if ($policy == 0 && $financeCategoryId != 0) {

@@ -75,7 +75,6 @@ class ItemAssigned extends Model
         'itemUrl',
         'companySystemID',
         'companyID',
-        'categoryType',
         'maximunQty',
         'minimumQty',
         'rolQuantity',
@@ -207,5 +206,9 @@ class ItemAssigned extends Model
 
     public function item_master(){
         return $this->belongsTo('App\Models\ItemMaster', 'itemCodeSystem', 'itemCodeSystem');
+    }
+
+    public function item_category_type(){
+        return $this->hasMany('App\Models\ItemMasterCategoryType','itemCodeSystem','itemCodeSystem');
     }
 }

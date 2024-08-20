@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\ItemMaster;
 use App\Models\PurchaseRequestDetails;
 use App\Models\ItemAssigned;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\PurchaseRequest;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ProcumentOrder;
@@ -120,7 +121,9 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                 if (!$allowItemToTypePolicy) {
                     // item categorytype validation for purchase || purchase & sales items
                     $isPurchaseItem = ItemMaster::where('primaryCode', $input['item_code'])
-                        ->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])
+                        ->whereHas('item_category_type', function($query) {
+                            $query->where('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                        })
                         ->first();
                     if (empty($isPurchaseItem)) {
                         return ['status' => false, 'message' => 'The added items in excel row number: ' . $excelRowNumber . ', Item Type should only be Purchase or Purchase & Sales'];

@@ -52,7 +52,6 @@ class FinanceItemcategorySubAssigned extends Model
         'mainItemCategoryID',
         'itemCategorySubID',
         'categoryDescription',
-        'categoryType',
         'financeGLcodebBSSystemID',
         'financeGLcodebBS',
         'financeGLcodePLSystemID',
@@ -134,6 +133,10 @@ class FinanceItemcategorySubAssigned extends Model
 
     public function finance_item_category_sub(){
         return $this->belongsTo('App\Models\FinanceItemCategorySub','itemCategorySubID','itemCategorySubID');
+    }
+
+    public function finance_item_category_type(){
+        return $this->hasMany('App\Models\FinanceItemCategoryTypes','itemCategorySubID','itemCategorySubID');
     }
 
 }

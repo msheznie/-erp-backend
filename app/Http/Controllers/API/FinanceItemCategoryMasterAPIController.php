@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateFinanceItemCategoryMasterAPIRequest;
 use App\Http\Requests\API\UpdateFinanceItemCategoryMasterAPIRequest;
 use App\Models\ChartOfAccount;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\YesNoSelection;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\FinanceItemCategorySub;
@@ -129,10 +130,8 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         }
 
         $financeItemCategorySub = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
-                                                         ->with(['finance_item_category_master','finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue','cogs_gl_code_pl'])
+                                                         ->with(['finance_item_category_master','finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue','cogs_gl_code_pl','finance_item_category_type'])
                                                          ->select('financeitemcategorysub.*');
-
-
 
         $search = $request->input('search.value');
         if($search){
@@ -150,10 +149,6 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
                     });
             });
         }
-
-
-
-
 
         return \DataTables::eloquent($financeItemCategorySub)
             ->order(function ($query) use ($input) {
@@ -194,11 +189,14 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
         $fieldTypes = ErpAttributesFieldType::all();
 
+        $itemCategoryTypes = ItemCategoryTypeMaster::all();
+
         $output = array('mainCategories' => $mainCategories,
             'chartOfAccount' => $chartOfAccount,
             'expenseChartOfAccount' => $expenseChartOfAccount,
             'yesNoSelection' => $yesNoSelection,
             'fieldTypes' => $fieldTypes,
+            'itemCategoryTypes' => $itemCategoryTypes
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

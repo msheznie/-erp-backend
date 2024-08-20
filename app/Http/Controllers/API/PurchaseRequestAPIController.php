@@ -62,6 +62,7 @@ use App\Models\Priority;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequestReferred;
 use App\Models\SegmentMaster;
@@ -166,7 +167,10 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)
+                             ->whereHas('item_category_type', function ($query) {
+                                    $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                                });
 
 
         if ($policy == 0 && $financeCategoryId != 0) {

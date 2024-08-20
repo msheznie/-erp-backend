@@ -66,6 +66,7 @@ use App\Models\ErpProjectMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\UnbilledGRV;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\WarehouseBinLocation;
@@ -1853,7 +1854,9 @@ class GRVMasterAPIController extends AppBaseController
         $items = ItemAssigned::where('companySystemID', $companyID)
                              ->where('isActive', 1)
                              ->where('isAssigned', -1)
-                             ->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])
+                             ->whereHas('item_category_type', function ($query) {
+                                $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                             })
                              ->when((isset($input['fixedAsset']) && $input['fixedAsset'] == 0), function($query) {
                                 $query->whereIn('financeCategoryMaster', [1,2,4]);
                              });

@@ -19,6 +19,7 @@ use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\DocumentSubProduct;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\ItemSerial;
 use App\Models\PurchaseOrderDetails;
 use App\Models\DeliveryOrder;
@@ -1332,7 +1333,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $items = ItemAssigned::where('companySystemID', $companyId)
                     ->where('isActive', 1)->where('isAssigned', -1)
                     ->whereIn('financeCategoryMaster', $categories)
-                    ->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode','itemCodeSystem']);
+                    ->whereHas('item_category_type', function ($query) {
+                        $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems());
+                    })
+                    ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode','itemCodeSystem']);
 
                 if (array_key_exists('search', $input)) {
                     $search = $input['search'];
