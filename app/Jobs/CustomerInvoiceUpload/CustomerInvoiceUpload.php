@@ -67,7 +67,6 @@ class CustomerInvoiceUpload implements ShouldQueue
         CommonJobService::db_switch($db);
         Log::useFiles(storage_path().'/logs/customer_invoice_bulk_insert.log');
            
-
         $uploadCustomerInvoice = $uploadData['uploadCustomerInvoice'];
         $logUploadCustomerInvoice = $uploadData['logUploadCustomerInvoice'];
 
