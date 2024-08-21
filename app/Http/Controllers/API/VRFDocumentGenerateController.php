@@ -187,6 +187,7 @@ class VRFDocumentGenerateController extends AppBaseController
         $approveData = DocumentAutoApproveService::getAutoApproveParams( $master->documentSystemID,  $master->getKey());
         $approveData['approvedComments'] = "System auto generated";
         $approveData['supplierPrimaryCode'] = $master->supplierID;
+        $approveData['db'] = $this->db;
         $approval = \Helper::approveDocument($approveData);
             if(!$approval['success'])
                 throw new \Exception($approval['message']);
