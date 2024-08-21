@@ -228,6 +228,7 @@ class SupplierMasterAPIController extends AppBaseController
             $currency = "";
             $country = "";
             $businessCategory = "";
+            $businessSubCategory = "";
             if (count($val['supplierCurrency']) > 0) {
                 if ($val['supplierCurrency'][0]['currencyMaster']) {
                     $currency = $val['supplierCurrency'][0]['currencyMaster']['CurrencyCode'];
@@ -250,6 +251,18 @@ class SupplierMasterAPIController extends AppBaseController
                     }
                     $businessCategory = implode(',  ', $businessCategories);
                 }
+
+                if (!empty($val['supplier_sub_business_category'])) {
+                    $businessSubCategories = [];
+                
+                    foreach ($val['supplier_sub_business_category'] as $categorySubAssign) {
+                        if (!empty($categorySubAssign['categoryMaster'])) {
+                            $categoryMaster = $categorySubAssign['categoryMaster'];
+                            $businessSubCategories[] = $categoryMaster['categoryCode'] . '|' . $categoryMaster['categoryName'];
+                        }
+                    }
+                    $businessSubCategory = implode(',  ', $businessSubCategories);
+                }
             } else {
                 if (!empty($val['master']['supplier_business_category'])) {
                     $businessCategories = [];
@@ -262,10 +275,23 @@ class SupplierMasterAPIController extends AppBaseController
                     }
                     $businessCategory = implode(',  ', $businessCategories);
                 }
+
+                if (!empty($val['master']['supplier_sub_business_category'])) {
+                    $businessSubCategories = [];
+                
+                    foreach ($val['master']['supplier_sub_business_category'] as $categorySubAssign) {
+                        if (!empty($categorySubAssign['categoryMaster'])) {
+                            $categoryMaster = $categorySubAssign['categoryMaster'];
+                            $businessSubCategories[] = $categoryMaster['categoryCode'] . '|' . $categoryMaster['categoryName'];
+                        }
+                    }
+                    $businessSubCategory = implode(',  ', $businessSubCategories);
+                }
             }
 
             $data[$x]['Country'] = $country;
             $data[$x]['Supplier Business Category'] = $businessCategory;
+            $data[$x]['Supplier Business Sub Category'] = $businessSubCategory;
             $data[$x]['Category'] = ($val->categoryMaster!=null && isset($val->categoryMaster->categoryDescription))?$val->categoryMaster->categoryDescription:'-';
             $data[$x]['Currency'] = $currency;
             $data[$x]['Address'] = $val->address;
@@ -367,6 +393,8 @@ class SupplierMasterAPIController extends AppBaseController
                     ->with(['currencyMaster']);
             }, 'supplier_business_category' => function ($query) {
                 $query->with(['categoryMaster']);
+            }, 'supplier_sub_business_category' => function ($query) {
+                $query->with(['categoryMaster']);
             }]);
         } else {
             //by_company
@@ -375,6 +403,9 @@ class SupplierMasterAPIController extends AppBaseController
                     ->with(['currencyMaster']);
             }, 'master' => function ($query) {
                 $query->with(['supplier_business_category' => function ($query) {
+                    $query->with(['categoryMaster']);
+                }]);
+                $query->with(['supplier_sub_business_category' => function ($query) {
                     $query->with(['categoryMaster']);
                 }]);
             }])->whereIn('CompanySystemID', $childCompanies)->where('isAssigned', -1);
