@@ -394,21 +394,6 @@ class FixedAssetMasterAPIController extends AppBaseController
                             foreach ($qtyRange as $key => $qty) {
                                 // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
 
-                                $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID'],$input['faCatID'],$input['faSubCatID']);
-                                
-                                if ($documentCodeData['status']) {
-                                    $documentCode = $documentCodeData['documentCode'];
-                                    $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
-                                    $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
-                                                                             ->first();
-
-                                    if ($checkForDuplicateCode) {
-                                        return $this->sendError("Asset code is already found.", 500);
-                                    }
-
-                                } else {
-                                    return $this->sendError("Asset code is not configured.", 500);
-                                }
                                 if ($qty <= $assetSerialNoCount) {
                                     if ($input['assetSerialNo'][$key]['faUnitSerialNo']) {
                                         $input["faUnitSerialNo"] = $input['assetSerialNo'][$key]['faUnitSerialNo'];
