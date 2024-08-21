@@ -801,10 +801,9 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 $query->groupBy('faID');
             },
             'depperiod_period' => function ($query) use ($input) {
-                $query->selectRaw('DATE_FORMAT(depForFYperiodEndDate, "%d-%m-%Y") as depForFYperiodEndDate,faID');
+                $query->selectRaw('DATE_FORMAT(MAX(depForFYperiodEndDate), "%d-%m-%Y") as depForFYperiodEndDate, faID');
                 $query->where('companySystemID', $input['companySystemID']);
-                $query->orderByRaw("STR_TO_DATE(depMonthYear, '%m/%Y') DESC")
-                    ->first();
+                $query->groupBy('faID');
             }])
             ->isDisposed()->ofCompany([$input['companySystemID']])->isSelectedForDisposal()->isApproved();
 
