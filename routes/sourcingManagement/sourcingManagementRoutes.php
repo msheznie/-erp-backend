@@ -25,7 +25,6 @@ Route::group([], function(){
     Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig')->name("Remove criteria config");
     Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore')->name("Update criteria score");
     Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig')->name("Add evaluation criteria config");
-    
-    
+    Route::post('getTenderBitsDoc', 'DocumentAttachmentsAPIController@getTenderBitsDoc')->name('Get Tender Bits Documents');
 });
 

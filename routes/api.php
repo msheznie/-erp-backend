@@ -844,15 +844,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('srp_erp_pay_shift_masters', 'SrpErpPayShiftMasterAPIController');
 
-            Route::post('getEvaluationCriteriaDropDowns', 'EvaluationCriteriaDetailsAPIController@getEvaluationCriteriaDropDowns');
-            Route::post('addEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@addEvaluationCriteria');
-            Route::post('getEvaluationCriteriaDetails', 'EvaluationCriteriaDetailsAPIController@getEvaluationCriteriaDetails');
-            Route::post('deleteEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@deleteEvaluationCriteria');
-            Route::post('getEvaluationDetailById', 'EvaluationCriteriaDetailsAPIController@getEvaluationDetailById');
-            Route::post('editEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@editEvaluationCriteria');
-            Route::post('validateWeightage', 'EvaluationCriteriaDetailsAPIController@validateWeightage');
-            Route::post('validateWeightageEdit', 'EvaluationCriteriaDetailsAPIController@validateWeightageEdit');
-
             Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
             Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
             Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
@@ -945,7 +936,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
-    Route::post('getTenderBitsDoc', 'DocumentAttachmentsAPIController@getTenderBitsDoc');
     Route::post('getConsolidatedDataAttachment', 'DocumentAttachmentsAPIController@getConsolidatedDataAttachment');
 
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
