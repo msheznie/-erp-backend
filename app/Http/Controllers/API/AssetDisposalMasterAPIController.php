@@ -50,6 +50,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\AssetDisposalMasterRepository;
 use App\Repositories\VatReturnFillingMasterRepository;
+use App\Services\API\CustomerInvoiceAPIService;
 use App\Services\UserTypeService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -1318,7 +1319,13 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     $customerInvoice->bookingAmountTrans = 0;
                     $customerInvoice->bookingAmountLocal = 0;
                     $customerInvoice->bookingAmountRpt = 0;
+
                     $customerInvoice->save();
+
+                    $resVat = CustomerInvoiceAPIService::updateTotalVAT($customerInvoice->custInvoiceDirectAutoID);
+                    if (!$resVat['status']) {
+                        return $this->sendError($resVat['message']);
+                    }
 
                     AuditTrial::createAuditTrial($customerInvoice->documentSystemiD,$customerInvoice->custInvoiceDirectAutoID,$input['returnComment'],'Cancelled');
                 }

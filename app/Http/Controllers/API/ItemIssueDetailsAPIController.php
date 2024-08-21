@@ -1330,11 +1330,12 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if (array_key_exists('issueType', $input)) {
 
             if ($input['issueType'] == 1) {
+                $itemType = (isset($input['itemType']) && ($input['itemType'] == 2)) ? ItemCategoryTypeMaster::salesItems() : ItemCategoryTypeMaster::purchaseItems();
                 $items = ItemAssigned::where('companySystemID', $companyId)
                     ->where('isActive', 1)->where('isAssigned', -1)
                     ->whereIn('financeCategoryMaster', $categories)
-                    ->whereHas('item_category_type', function ($query) {
-                        $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems());
+                    ->whereHas('item_category_type', function ($query) use ($itemType) {
+                        $query->whereIn('categoryTypeID', $itemType);
                     })
                     ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode','itemCodeSystem']);
 

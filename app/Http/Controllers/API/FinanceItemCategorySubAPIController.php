@@ -646,11 +646,11 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
             $itemCategorySubUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->update($masterData);
 
-            FinanceItemCategoryTypes::where('itemCategorySubID', $itemCategorySubUpdate->itemCategorySubID)->delete();
+            FinanceItemCategoryTypes::where('itemCategorySubID', $input['itemCategorySubID'])->delete();
 
             foreach ($categoryTypeNew as $key => $value) {
                 $financeItemCategoryType = new FinanceItemCategoryTypes();
-                $financeItemCategoryType->itemCategorySubID = $itemCategorySubUpdate->itemCategorySubID;
+                $financeItemCategoryType->itemCategorySubID = $input['itemCategorySubID'];
                 $financeItemCategoryType->categoryTypeID = $value['id'];
                 $financeItemCategoryType->save();
             }

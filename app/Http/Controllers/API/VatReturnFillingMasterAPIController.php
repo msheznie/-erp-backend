@@ -507,7 +507,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $results = $res;
 
         $search = $request->input('search.value');
-        if ($search) {
+        if ($search && is_object($results)) {
             $search = str_replace("\\", "\\\\", $search);
             $results = $results->where(function ($query) use ($search) {
                 $query->where('documentNumber', 'LIKE', "%{$search}%")
