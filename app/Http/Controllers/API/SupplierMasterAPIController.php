@@ -258,7 +258,7 @@ class SupplierMasterAPIController extends AppBaseController
                     foreach ($val['supplier_sub_business_category'] as $categorySubAssign) {
                         if (!empty($categorySubAssign['categoryMaster'])) {
                             $categoryMaster = $categorySubAssign['categoryMaster'];
-                            $businessSubCategories[] = $categoryMaster['categoryCode'] . '|' . $categoryMaster['categoryName'];
+                            $businessSubCategories[] = $categoryMaster['subCategoryCode'] . '|' . $categoryMaster['categoryName'];
                         }
                     }
                     $businessSubCategory = implode(',  ', $businessSubCategories);
@@ -282,7 +282,7 @@ class SupplierMasterAPIController extends AppBaseController
                     foreach ($val['master']['supplier_sub_business_category'] as $categorySubAssign) {
                         if (!empty($categorySubAssign['categoryMaster'])) {
                             $categoryMaster = $categorySubAssign['categoryMaster'];
-                            $businessSubCategories[] = $categoryMaster['categoryCode'] . '|' . $categoryMaster['categoryName'];
+                            $businessSubCategories[] = $categoryMaster['subCategoryCode'] . '|' . $categoryMaster['categoryName'];
                         }
                     }
                     $businessSubCategory = implode(',  ', $businessSubCategories);
