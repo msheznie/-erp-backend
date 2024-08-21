@@ -63,7 +63,7 @@ class SupplierSubCategoryAssign extends Model
         
     ];
     public function categoryMaster(){
-        return $this->hasOne('App\Models\suppliercategorysub', 'supCategorySubID','supSubCategoryID');
+        return $this->hasOne('App\Models\SupplierCategorySub', 'supCategorySubID','supSubCategoryID');
     }
     
 }
