@@ -127,8 +127,8 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     $lclAmountLocal = $assetCostingValue[16];
                     $lclAmountRpt = $assetCostingValue[17];
                     $accumulatedDate = $assetCostingValue[18];
-                    $residualLocal = $assetCostingValue[19];
-                    $residualRpt = $assetCostingValue[20];
+                    $residualLocal = isset($assetCostingValue[19]) ? $assetCostingValue[19] : null;
+                    $residualRpt = isset($assetCostingValue[20]) ? $assetCostingValue[20]: null;
                     $isCurrencySame = false;
                 } else {
                     $unitPriceLocal = $assetCostingValue[14];
