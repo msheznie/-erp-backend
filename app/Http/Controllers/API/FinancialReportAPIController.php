@@ -1445,13 +1445,15 @@ class FinancialReportAPIController extends AppBaseController
                     $shareHolderCYTDAmount = 0;
                     $NCICYTDAmount = 0;
 
-                    foreach ($netProfitColumnData as $key => $value) {
-                        $company = Company::where('CompanyID', $key)->first();
-                        $CYTTDAmount = isset($value[$companyWiseDataArray['CYYTDColumnKey']]) ? $value[$companyWiseDataArray['CYYTDColumnKey']] : 0;
+                    if(!empty($netProfitColumnData) && is_array($netProfitColumnData)) {
+                        foreach ($netProfitColumnData as $key => $value) {
+                            $company = Company::where('CompanyID', $key)->first();
+                            $CYTTDAmount = isset($value[$companyWiseDataArray['CYYTDColumnKey']]) ? $value[$companyWiseDataArray['CYYTDColumnKey']] : 0;
 
-                        if ($company) {
-                            $shareHolderCYTDAmount += $CYTTDAmount * ($company->holding_percentage / 100);
-                            $NCICYTDAmount += $CYTTDAmount * (1 - ($company->holding_percentage / 100));
+                            if ($company) {
+                                $shareHolderCYTDAmount += $CYTTDAmount * ($company->holding_percentage / 100);
+                                $NCICYTDAmount += $CYTTDAmount * (1 - ($company->holding_percentage / 100));
+                            }
                         }
                     }
 
