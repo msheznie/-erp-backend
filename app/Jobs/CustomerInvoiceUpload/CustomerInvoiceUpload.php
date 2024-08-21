@@ -99,6 +99,9 @@ class CustomerInvoiceUpload implements ShouldQueue
                         $cellValue = sprintf('%02d/%02d/%04d', $month, $day, $year);
                     }
                 }
+                if ($col == 'G') {
+                    $cellValue = (int)$cellValue;
+                }
 
                 $rowData[] = $cellValue;
             }
