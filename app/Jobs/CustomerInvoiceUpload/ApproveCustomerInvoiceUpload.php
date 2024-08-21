@@ -12,6 +12,7 @@ use App\Models\DocumentApproved;
 use App\Models\UploadCustomerInvoice;
 use App\Models\CustomerInvoiceUploadDetail;
 use App\helper\CommonJobService;
+use App\Models\LogUploadCustomerInvoice;
 
 class ApproveCustomerInvoiceUpload implements ShouldQueue
 {
