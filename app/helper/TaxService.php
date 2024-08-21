@@ -301,6 +301,7 @@ class TaxService
                         }
                     }
                 }
+                break;
             case 41:
                 if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
                     $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
