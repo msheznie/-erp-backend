@@ -7,6 +7,7 @@ use App\Http\Requests\API\CreateAssetDisposalDetailAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalDetailAPIRequest;
 use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
+use App\Models\Company;
 use App\Models\FixedAssetMaster;
 use App\Models\ItemAssigned;
 use App\Repositories\AssetDisposalDetailRepository;
@@ -203,8 +204,9 @@ class AssetDisposalDetailAPIController extends AppBaseController
                             $tempArray["revenuePercentage"] = 0;
                         }
                         $isVATEligible = TaxService::checkCompanyVATEligible($new['companySystemID']);
+                        $company = Company::find($new['companySystemID']);
 
-                        if ($isVATEligible) {
+                        if ($isVATEligible && $company->vatRegisteredYN == 1) {
                             $defaultVAT = TaxService::getDefaultVAT($new['companySystemID'], null, 0);
 
                             $tempArray["vatSubCategoryID"] = $defaultVAT['vatSubCategoryID'];
