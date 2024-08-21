@@ -163,7 +163,6 @@ class CreateCustomerInvoice implements ShouldQueue
                     $comRptAmount = 0;
                     $vatAmountLocal = 0;
                     $vatAmountRpt = 0;
-                    $vatAmount = 0;
 
                     if (count($disposalDetail) > 0) {
                         foreach ($disposalDetail as $val) {
@@ -171,7 +170,6 @@ class CreateCustomerInvoice implements ShouldQueue
                             $comRptAmount += $val->sellingPriceRpt;
                             $vatAmountLocal += ($val->vatAmount * $companyCurrencyConversion['trasToRptER']) / $companyCurrencyConversion['trasToLocER'];
                             $vatAmountRpt += $val->vatAmount;
-                            $vatAmount += $val->vatAmount * $companyCurrencyConversion['trasToRptER'];
                         }
                     }
 
@@ -179,7 +177,7 @@ class CreateCustomerInvoice implements ShouldQueue
                     $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
                     $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
                     $customerInvoiceData['VATPercentage'] = \Helper::roundValue($vatAmountLocal / $localAmount * 100);
-                    $customerInvoiceData['VATAmount'] = \Helper::roundValue($vatAmount);
+                    $customerInvoiceData['VATAmount'] = \Helper::roundValue($vatAmountLocal);
                     $customerInvoiceData['VATAmountLocal'] = \Helper::roundValue($vatAmountLocal);
                     $customerInvoiceData['VATAmountRpt'] = \Helper::roundValue($vatAmountRpt);
                     $customerInvoiceData['vatRegisteredYN'] = $dpMaster->vatRegisteredYN;
