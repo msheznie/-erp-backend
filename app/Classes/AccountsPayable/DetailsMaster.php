@@ -63,6 +63,10 @@ class DetailsMaster
             ->where('isDefault',true)
             ->where('isActive',true)
             ->first();
+
+        if(!isset($taxMaster))
+            throw new \Exception("Tax Master details not found");
+
         $vatReturnFillingCategoryDetails = $this->vatReturnFillingMaster->filled_master_categories->where('categoryID',24)->first()->filled_details;
         if(!isset($vatReturnFillingCategoryDetails))
             throw new \Exception("VAT return filling details amount not found!");
@@ -83,7 +87,7 @@ class DetailsMaster
         if(!isset($chartOfAccount))
             throw new \Exception("Chart of account configuration not found");
 
-        $this->amount = ($glAccountType == "InputVATGLAccount") ? ($detailsVAT->pluck('taxAmount')->first()) : $detailsVAT->pluck('taxAmount')->first();
+        $this->amount =$detailsVAT->pluck('taxAmount')->first();
         $this->details->chartOfAccountSystemID = $chartOfAccount->chartOfAccountSystemID;
         $this->details->glCode = $chartOfAccount->AccountCode;
         $this->details->glCodeDes = $chartOfAccount->AccountDescription;

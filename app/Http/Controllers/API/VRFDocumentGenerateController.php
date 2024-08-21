@@ -16,6 +16,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\Tax;
 use App\Models\VatReturnFillingMaster;
+use App\Services\DocumentAutoApproveService;
 use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -94,7 +95,7 @@ class VRFDocumentGenerateController extends AppBaseController
                         $details->setAdditionalDetatils();
                         $details->details->save();
                     }
-                    $storeSupplierInvoice['data']->updateBookingAmount(abs($supplierInvoice->getBookingAmount($request)));
+                    $storeSupplierInvoice['data']->updateBookingAmount(($supplierInvoice->getBookingAmount($request)));
                     $confirmDoc = ($this->confirmDocument($storeSupplierInvoice['data']));
 
                     if(isset($confirmDoc['success']) && $confirmDoc['success'])
@@ -141,10 +142,8 @@ class VRFDocumentGenerateController extends AppBaseController
             $newDetails->setAmount($newDetails->getAmount());
             $newDetails->setDefaultValues();
             $newDetails->setAdditionalDetatils();
-
             $newDetails->details->save();
         }
-
         $storeDebitNote->updateNetAmount(abs($data->getNetAmount($request)));
 
         $confirmDoc = ($this->confirmDocument($storeDebitNote));
@@ -168,7 +167,8 @@ class VRFDocumentGenerateController extends AppBaseController
             'receipt' => true,
             'sendMail' => false,
             'sendNotication' => false,
-            'employee_id' =>  $master->createdUserSystemID
+            'employee_id' =>  $master->createdUserSystemID,
+            'isAutoCreateDocument' => true
         );
 
         $confirmation = \Helper::confirmDocument($params);
@@ -183,24 +183,15 @@ class VRFDocumentGenerateController extends AppBaseController
 
     public function approveDocument($master)
     {
-        $documentApproveds = DocumentApproved::where('documentSystemCode', $master->getKey())->where('documentSystemID', $master->documentSystemID)->get();
-        foreach ($documentApproveds as $documentApproved) {
-            $documentApproved["db"] = $this->db;
-            $documentApproved["approvedComments"] = "System Auto Generated";
-            $documentApproved["db"] = "gears-erp-gutech";
-            $documentApproved['empID'] = $master->createdUserSystemID;
-            $documentApproved['documentSystemID'] = $master->documentSystemID;
-            $documentApproved['approvedDate'] = $master->approvedDate;
-            $documentApproved['sendMail'] = false;
-            $documentApproved['sendNotication'] = false;
-            $documentApproved['isCheckPrivilages'] = false;
 
-
-            $approval = \Helper::approveDocumentForApi($documentApproved);
+        $approveData = DocumentAutoApproveService::getAutoApproveParams( $master->documentSystemID,  $master->getKey());
+        $approveData['approvedComments'] = "System auto generated";
+        $approveData['supplierPrimaryCode'] = $master->supplierID;
+        $approval = \Helper::approveDocument($approveData);
             if(!$approval['success'])
                 throw new \Exception($approval['message']);
 
-        }
+
 
         return ['success' => true , 'message' => 'Document successfully approved'];
 

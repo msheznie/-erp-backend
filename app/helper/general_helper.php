@@ -3257,49 +3257,50 @@ class Helper
                             // get approval rolls
                             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
 
-                            if ($isSegmentWise) {
-                                if (array_key_exists('segment', $params)) {
+                                if ($isSegmentWise) {
+                                    if (array_key_exists('segment', $params)) {
 
-                                    if ($params["segment"]) {
-                                        $approvalLevel->where('serviceLineSystemID', $params["segment"]);
-                                        $approvalLevel->where('serviceLineWise', 1);
+                                        if ($params["segment"]) {
+                                            $approvalLevel->where('serviceLineSystemID', $params["segment"]);
+                                            $approvalLevel->where('serviceLineWise', 1);
+                                        } else {
+                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        }
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => 'Serviceline parameters are missing'];
                                     }
-                                } else {
-                                    return ['success' => false, 'message' => 'Serviceline parameters are missing'];
                                 }
-                            }
 
-                            if ($isCategoryWise) {
-                                if (array_key_exists('category', $params)) {
-                                    if ($params["category"]) {
-                                        $approvalLevel->where('categoryID', $params["category"]);
-                                        $approvalLevel->where('isCategoryWiseApproval', -1);
+                                if ($isCategoryWise) {
+                                    if (array_key_exists('category', $params)) {
+                                        if ($params["category"]) {
+                                            $approvalLevel->where('categoryID', $params["category"]);
+                                            $approvalLevel->where('isCategoryWiseApproval', -1);
+                                        } else {
+                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        }
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => 'Category parameter are missing'];
                                     }
-                                } else {
-                                    return ['success' => false, 'message' => 'Category parameter are missing'];
                                 }
-                            }
 
-                            if ($isValueWise) {
-                                if (array_key_exists('amount', $params)) {
-                                    if ($params["amount"] >= 0) {
-                                        $amount = $params["amount"];
-                                        $approvalLevel->where(function ($query) use ($amount) {
-                                            $query->where('valueFrom', '<=', $amount);
-                                            $query->where('valueTo', '>=', $amount);
-                                        });
-                                        $approvalLevel->where('valueWise', 1);
+                                if ($isValueWise) {
+                                    if (array_key_exists('amount', $params)) {
+                                        if ($params["amount"] >= 0) {
+                                            $amount = $params["amount"];
+                                            $approvalLevel->where(function ($query) use ($amount) {
+                                                $query->where('valueFrom', '<=', $amount);
+                                                $query->where('valueTo', '>=', $amount);
+                                            });
+                                            $approvalLevel->where('valueWise', 1);
+                                        } else {
+                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        }
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => 'Amount parameter are missing'];
                                     }
-                                } else {
-                                    return ['success' => false, 'message' => 'Amount parameter are missing'];
                                 }
-                            }
+
 
                             $output = $approvalLevel->first();
                             
@@ -4723,7 +4724,6 @@ class Helper
 
 
                             if($input["documentSystemID"] == 15){
-
                                 $debitNoteMaster  = DebitNote::find($input["documentSystemCode"]);
                                 if ($debitNoteMaster && $debitNoteMaster->supplierID > 0) {
 

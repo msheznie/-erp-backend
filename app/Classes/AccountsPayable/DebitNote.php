@@ -57,21 +57,67 @@ class DebitNote
 
     public function setFiananicalYearDetails()
     {
-        $companyFinanceYear = CompanyFinanceYear::where('companySystemID', $this->master->companySystemID)
-            ->where('isActive', -1)
-            ->where('isCurrent', -1)
-            ->first();
+        $companyFinanceYear = CompanyFinanceYear::where('companySystemID', $this->master->companySystemID)->where('bigginingDate', "<=", $this->master->debitNoteDate)->where('endingDate', ">=", $this->master->debitNoteDate)->first();
 
-        if (!$companyFinanceYear)
-            throw new \Exception("Company Finanical year not found or not active");
+        if($this->master->debitNoteDate->year == Carbon::now()->year)
+        {
+
+            if ($companyFinanceYear)
+            {
+                if($companyFinanceYear->isActive != -1)
+                {
+                    throw new \Exception("The finance year is not active");
+                }
+
+                if($companyFinanceYear->isCurrent != -1)
+                {
+                    throw new \Exception("The finance year is not current.");
+                }
+            }else {
+                throw new \Exception("Company Finanical year not found");
+            }
+
+        }else {
+
+            if ($companyFinanceYear)
+            {
+                if($companyFinanceYear->isActive != -1)
+                {
+                    throw new \Exception("The finance year is not active");
+                }
+            }else {
+                throw new \Exception("Company Finanical year not found or not active");
+            }
+        }
+
 
         if(!($companyFinanceYear->bigginingDate <= $this->master->debitNoteDate) && ($this->master->debitNoteDate <= $companyFinanceYear->endingDate))
             throw new \Exception("Document date not within the financial year");
 
-        $companyFinancePeriod = CompanyFinancePeriod::activeFinancePeriod($this->companySystemID,1,$this->master->debitNoteDate);
+        $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $this->companySystemID)->where('departmentSystemID', 1)->where('dateFrom', "<=", $this->master->debitNoteDate)->where('dateTo', ">=", $this->master->debitNoteDate)->first();
 
-        if (!$companyFinancePeriod)
-            throw  new \Exception("Financial period not created or not active");
+        if(!$companyFinancePeriod)
+            throw  new \Exception("Financial period not found");
+
+        if($this->master->debitNoteDate->month == Carbon::now()->month)
+        {
+            if($companyFinancePeriod->isActive != -1)
+            {
+                throw new \Exception("The finance period is not active");
+            }
+
+            if($companyFinancePeriod->isCurrent != -1)
+            {
+                throw new \Exception("The finance period is not current.");
+            }
+        }else {
+            if($companyFinancePeriod->isActive != -1)
+            {
+                throw new \Exception("The finance period is not active");
+            }
+
+        }
+
 
         $this->master->companyFinanceYearID = $companyFinanceYear->companyFinanceYearID;
         $this->master->FYBiggin = $companyFinanceYear->bigginingDate;

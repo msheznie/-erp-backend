@@ -29,19 +29,58 @@ class SupplierDirectInvoiceDetails extends DetailsMaster
     }
 
 
+
+    public function setGlAccountDetails($glAccountType)
+    {
+        $this->glAccountType = $glAccountType;
+        $taxMaster = Tax::where('companySystemID',$this->master->companySystemID)
+            ->where('taxCategory',2)
+            ->where('isDefault',true)
+            ->where('isActive',true)
+            ->first();
+
+        if(!isset($taxMaster))
+            throw new \Exception("Tax Master details not found");
+
+        $vatReturnFillingCategoryDetails = $this->vatReturnFillingMaster->filled_master_categories->where('categoryID',24)->first()->filled_details;
+        if(!isset($vatReturnFillingCategoryDetails))
+            throw new \Exception("VAT return filling details amount not found!");
+
+        if($glAccountType != "InputVATGLAccount")
+        {
+            $chartOfAccountID = $taxMaster->outputVatGLAccountAutoID;
+            $detailsVAT = $vatReturnFillingCategoryDetails
+                ->where('vatReturnFillingSubCatgeoryID',25);
+
+        }else {
+            $chartOfAccountID = $taxMaster->inputVatGLAccountAutoID;
+
+            $detailsVAT = $vatReturnFillingCategoryDetails
+                ->where('vatReturnFillingSubCatgeoryID',26);
+        }
+
+        $chartOfAccount = ChartOfAccount::find($chartOfAccountID);
+        if(!isset($chartOfAccount))
+            throw new \Exception("Chart of account configuration not found");
+
+        $this->amount =$detailsVAT->pluck('taxAmount')->first();
+        $this->details->chartOfAccountSystemID = $chartOfAccount->chartOfAccountSystemID;
+        $this->details->glCode = $chartOfAccount->AccountCode;
+        $this->details->glCodeDes = $chartOfAccount->AccountDescription;
+    }
     public function setAmount(float $amount)
     {
         $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $this->details->localCurrencyER, $this->details->localCurrencyER, $amount);
 
-        if($this->glAccountType == "InputVATGLAccount")
+        if($this->glAccountType == "OutputVATGLAccount")
         {
-            $this->details->localAmount = ABS($amount) * -1;
-            $this->details->DIAmount = ABS($amount) * -1;
-            $this->details->comRptAmount = ABS($companyCurrencyConversion['reportingAmount']) * -1;
+            $this->details->localAmount = ABS($amount);
+            $this->details->DIAmount = ABS($amount);
+            $this->details->comRptAmount = ABS($companyCurrencyConversion['reportingAmount']);
         }else {
-            $this->details->localAmount = abs($amount);
-            $this->details->DIAmount = abs($amount);
-            $this->details->comRptAmount = abs($companyCurrencyConversion['reportingAmount']);
+            $this->details->localAmount = abs($amount)  * -1;
+            $this->details->DIAmount = abs($amount) * -1;
+            $this->details->comRptAmount = abs($companyCurrencyConversion['reportingAmount']) * -1;
         }
 
 

@@ -203,7 +203,6 @@ class SupplierInvoiceGlService
                 $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
             } else if ($masterData->documentType == 3) { // check if it is supplier item invoice
                 $directItemCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->item_details[0]->netAmountTotal);
-
                 $data['documentTransAmount'] = \Helper::roundValue($masterData->item_details[0]->netAmountTotal + $masterData->item_details[0]->totalVATAmount + $poInvoiceDirectTransExtCharge) * -1;
                 $data['documentLocalAmount'] = \Helper::roundValue($directItemCurrencyConversion['localAmount'] + $masterData->item_details[0]->totalVATAmountLocal + $poInvoiceDirectLocalExtCharge) * -1;
                 $data['documentRptAmount'] = \Helper::roundValue($directItemCurrencyConversion['reportingAmount'] + $masterData->item_details[0]->totalVATAmountRpt + $poInvoiceDirectRptExtCharge) * -1;
@@ -237,7 +236,6 @@ class SupplierInvoiceGlService
             $whtFullAmount = 0;
             $whtFullAmountLocal = 0;
             $whtFullAmountRpt = 0;
-
 
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
@@ -432,13 +430,13 @@ class SupplierInvoiceGlService
                         $data['documentNarration'] = $val->comments;
                         $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $val->supplierTransactionER;
-                        $data['documentTransAmount'] = \Helper::roundValue(($val->transAmount));
+                        $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
                         $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                        $data['documentLocalAmount'] = \Helper::roundValue(($val->localAmount));
+                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
                         $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                         $data['documentRptCurrencyER'] = $val->companyReportingER;
-                        $data['documentRptAmount'] = \Helper::roundValue(($val->rptAmount));
+                        $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
                         $data['timestamp'] = \Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
