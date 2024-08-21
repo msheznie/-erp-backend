@@ -7069,15 +7069,31 @@ class Helper
             } else {
                 if ($trasToRptER > $trasToTransER) {
                     if ($trasToRptER > 1) {
-                        $reportingAmount = $transactionAmount / $trasToRptER;
+                        if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
+                            $reportingAmount = $transactionAmount / $trasToRptER;
+                        } else {
+                            $reportingAmount = 0; 
+                        }
                     } else {
-                        $reportingAmount = $transactionAmount * $trasToRptER;
+                        if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
+                            $reportingAmount = $transactionAmount * $trasToRptER;
+                        } else {
+                            $reportingAmount = 0; 
+                        }
                     }
                 } else {
                     if ($trasToRptER > 1) {
-                        $reportingAmount = $transactionAmount * $trasToRptER;
+                        if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
+                            $reportingAmount = $transactionAmount / $trasToRptER;
+                        } else {
+                            $reportingAmount = 0; 
+                        }
                     } else {
-                        $reportingAmount = $transactionAmount / $trasToRptER;
+                        if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
+                            $reportingAmount = $transactionAmount * $trasToRptER;
+                        } else {
+                            $reportingAmount = 0; 
+                        }
                     }
                 }
             }
