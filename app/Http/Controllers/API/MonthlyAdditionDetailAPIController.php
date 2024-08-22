@@ -425,7 +425,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $voucher_id = $input['voucher_id'];
         $expenseClaim = ExpenseClaimMaster::find($id);
 
-        $voucher = PaySupplierInvoiceMaster::select('PayMasterAutoId','supplierTransCurrencyID')->find($voucher_id);
+        $voucher = PaySupplierInvoiceMaster::select('PayMasterAutoId','supplierTransCurrencyID')->with('transactioncurrency')->find($voucher_id);
 
         if (empty($expenseClaim)) {
             return $this->sendError('Expense Claim not found');
@@ -444,6 +444,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                 $currencyConversion = \Helper::currencyConversion($expenseClaim->companyID, $det->companyLocalCurrencyID, $voucher->supplierTransCurrencyID, $det->companyLocalAmount);
 
                 $det['expence_claim_amount'] = round($currencyConversion['documentAmount'],$data->company_default_decimal);
+                $det['voucher_currency'] = $voucher->transactioncurrency->CurrencyCode;
             }
 
         return $this->sendResponse($expenseClaimDetails, 'Expense Claim Details retrieved successfully');
