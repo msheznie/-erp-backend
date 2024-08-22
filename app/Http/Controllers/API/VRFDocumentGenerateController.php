@@ -115,45 +115,50 @@ class VRFDocumentGenerateController extends AppBaseController
 
     public function generateDebitNote(VatReturnFillingMaster  $request, $tax)
     {
-        $data = new \App\Classes\AccountsPayable\DebitNote(
-            $request->companySystemID,
-            $request->date,
-            $request->returnFillingCode
-        );
-        $data->setSupplierDetails($tax->authorityAutoID);
-        $data->setSystemCreatedUserDetails();
+        try {
+            $data = new \App\Classes\AccountsPayable\DebitNote(
+                $request->companySystemID,
+                $request->date,
+                $request->returnFillingCode
+            );
+            $data->setSupplierDetails($tax->authorityAutoID);
+            $data->setSystemCreatedUserDetails();
 
-        if(!isset($data->master) && $data->master instanceof  DebitNote)
-            throw  new \Exception("Data not found!");
+            if(!isset($data->master) && $data->master instanceof  DebitNote)
+                throw  new \Exception("Data not found!");
 
-        $debitNote = new CreateDebitNote($data->master);
-        $storeDebitNote = $debitNote->execute();
+            $debitNote = new CreateDebitNote($data->master);
+            $storeDebitNote = $debitNote->execute();
 
-        if(!$storeDebitNote)
-            throw new Exception("Cannot create debit not from VRF!");
+            if(!$storeDebitNote)
+                throw new Exception("Cannot create debit not from VRF!");
 
-        $glAccounts= [
-            'InputVATGLAccount','OutputVATGLAccount'
-        ];
-        foreach ($glAccounts as $glAccountType)
+            $glAccounts= [
+                'InputVATGLAccount','OutputVATGLAccount'
+            ];
+            foreach ($glAccounts as $glAccountType)
+            {
+                $newDetails = new \App\Classes\AccountsPayable\DebitNoteDetails($storeDebitNote);
+                $newDetails->setVATReturnFillingMaster($request);
+                $newDetails->setGlAccountDetails($glAccountType);
+                $newDetails->setCurrenciesAndExchagneRate();
+                $newDetails->setAmount($newDetails->getAmount());
+                $newDetails->setDefaultValues();
+                $newDetails->setAdditionalDetatils();
+
+                $newDetails->details->save();
+            }
+            $storeDebitNote->updateNetAmount(abs($data->getNetAmount($request)));
+
+            $confirmDoc = ($this->confirmDocument($storeDebitNote));
+            if(isset($confirmDoc['success']) && $confirmDoc['success'])
+            {
+                $request->attachGeneratedDocument($storeDebitNote->getKey(),15);
+                return $confirmDoc;
+            }
+        }catch (\Exception $exception)
         {
-            $newDetails = new \App\Classes\AccountsPayable\DebitNoteDetails($storeDebitNote);
-            $newDetails->setVATReturnFillingMaster($request);
-            $newDetails->setGlAccountDetails($glAccountType);
-            $newDetails->setCurrenciesAndExchagneRate();
-            $newDetails->setAmount($newDetails->getAmount());
-            $newDetails->setDefaultValues();
-            $newDetails->setAdditionalDetatils();
-
-            $newDetails->details->save();
-        }
-        $storeDebitNote->updateNetAmount(abs($data->getNetAmount($request)));
-
-        $confirmDoc = ($this->confirmDocument($storeDebitNote));
-        if(isset($confirmDoc['success']) && $confirmDoc['success'])
-        {
-            $request->attachGeneratedDocument($storeDebitNote->getKey(),15);
-            return $confirmDoc;
+            return ['success' => false, 'message' => $exception->getMessage()];
         }
 
     }
@@ -192,8 +197,9 @@ class VRFDocumentGenerateController extends AppBaseController
         $approveData['supplierPrimaryCode'] = $master->supplierID;
         $approveData['db'] = $this->db;
         $approval = \Helper::approveDocument($approveData);
-            if(!$approval['success'])
-                throw new \Exception($approval['message']);
+
+        if(!$approval['success'])
+            throw new \Exception($approval['message']);
 
 
 
