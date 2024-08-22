@@ -100,7 +100,7 @@ class CustomerInvoiceUpload implements ShouldQueue
                     }
                 }
                 if ($col == 'G') {
-                    $cellValue = (int)$cellValue;
+                    $cellValue = (string)$cellValue; 
                 }
 
                 $rowData[] = $cellValue;
