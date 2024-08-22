@@ -93,11 +93,12 @@ class VatReturnFillingMasterRepository extends BaseRepository
                         $query->where('isVATApplicable', true);
                     })
                     ->select('*')
-                    ->addSelect(DB::raw('CASE WHEN documentSystemID = 19 THEN (-1) * VATAmountLocal ELSE VATAmountLocal END AS VATAmountLocal'))
-                    ->addSelect(DB::raw('CASE WHEN documentSystemID = 19 THEN (-1) * taxableAmountLocal ELSE taxableAmountLocal END AS taxableAmountLocal'));
+                    ->addSelect(DB::raw('CASE WHEN documentSystemID = 19 THEN ROUND((-1) * VATAmountLocal,3) ELSE ROUND(VATAmountLocal,3) END AS VATAmountLocal'))
+                    ->addSelect(DB::raw('CASE WHEN documentSystemID = 19 THEN ROUND((-1) * taxableAmountLocal,3) ELSE ROUND(taxableAmountLocal,3) END AS taxableAmountLocal'));
 
 
                 $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
+
                 break;
             case 3://Supplies of goods/ services taxed @0% - 1 (b)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
@@ -186,11 +187,11 @@ class VatReturnFillingMasterRepository extends BaseRepository
                             $query->where('returnFilledDetailID', $returnFilledDetailID);
                         });
                     })
-                    ->whereHas('supplier', function($query) use ($companyCountry){
-                        $query->subjectToGCC();
-                    })
-                    ->orWhereHas('payment_voucher', function ($query) {
+                    ->WhereHas('payment_voucher', function ($query) {
                         $query->whereIn('invoiceType',[3,5])->where('rcmActivated',1);
+                    })
+                    ->orWhereHas('supplier', function($query) use ($companyCountry){
+                        $query->subjectToGCC();
                     });
 
 
@@ -240,9 +241,6 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
-                    ->whereHas('customer', function($query) use ($companyCountry){
-                        $query->where('customerCountry', '!=',$companyCountry);
-                    })
                     ->whereNotNull('outputVatGLAccountID')
                     ->when($forUpdate == false, function($query) {
                         $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
@@ -280,6 +278,8 @@ class VatReturnFillingMasterRepository extends BaseRepository
                         $query->whereHas('type', function($query) {
                             $query->whereIn('id', [1,2]);
                         });
+                    })->whereHas('customer', function($query) use ($companyCountry){
+                        $query->where('customerCountry', '!=',$companyCountry);
                     });
 
 
@@ -433,12 +433,12 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                             });
                                                         });
                                                   })
-                                                    ->orWhereHas('supplier', function($query) use ($companyCountry){
+                                                    ->whereHas('supplier', function($query) use ($companyCountry){
                                                         $query->where('supplierCountryID', 1);
                                                     })
                                                  ->select('*')
-                                                 ->addSelect(DB::raw('CASE WHEN documentSystemID = 15 THEN (-1) * VATAmountLocal ELSE VATAmountLocal END AS VATAmountLocal'))
-                                                 ->addSelect(DB::raw('CASE WHEN documentSystemID = 15 THEN (-1) * taxableAmountLocal ELSE taxableAmountLocal END AS taxableAmountLocal'));
+                                                 ->addSelect(DB::raw('CASE WHEN documentSystemID = 15 THEN ROUND((-1) * VATAmountLocal,3) ELSE ROUND(VATAmountLocal,3) END AS VATAmountLocal'))
+                                                 ->addSelect(DB::raw('CASE WHEN documentSystemID = 15 THEN ROUND((-1) * taxableAmountLocal,3) ELSE ROUND(taxableAmountLocal,3) END AS taxableAmountLocal'));
 
 
 
@@ -470,7 +470,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                   })
                                                   ->where('addVATonPO', 0)
                                                   ->whereHas('sub_category', function($query) {
-                                                        $query->whereHas('type', function($query) { 
+                                                        $query->whereHas('type', function($query) {
                                                             $query->where('id', 1);
                                                         });
                                                   })

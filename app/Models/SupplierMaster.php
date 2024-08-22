@@ -411,11 +411,11 @@ class SupplierMaster extends Model
 
     public function scopeSubjectToGCC($query)
     {
-        return $query->whereIn('countryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
+        return $query->whereIn('supplierCountryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
     }
     public function scopeOutsideOfGCC($query)
     {
-        return $query->whereNotIn('countryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
+        return $query->whereNotIn('supplierCountryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
     }
 
     public function scopeIsActive()
