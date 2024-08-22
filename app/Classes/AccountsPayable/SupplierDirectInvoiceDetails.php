@@ -28,6 +28,26 @@ class SupplierDirectInvoiceDetails extends DetailsMaster
 
     }
 
+    public function setDefaultValues()
+    {
+
+        $segments = Company::find($this->master->companySystemID)
+            ->segments()
+            ->where('isPublic',true)
+            ->select('serviceLineMasterCode', 'serviceLineSystemID')
+            ->first();
+
+        $this->details->serviceLineSystemID = ($segments) ? $segments->serviceLineSystemID : null;
+        $this->details->serviceLineCode = ($segments) ? $segments->serviceLineMasterCode : null;
+        $this->details->detail_project_id = null;
+        $this->details->comments = $this->master->comments;
+        $this->details->VATPercentage = 0;
+        $this->details->VATAmount =0;
+        $this->details->VATAmountLocal =0;
+        $this->details->VATAmountRpt =0;
+    }
+
+
 
 
     public function setGlAccountDetails($glAccountType)
@@ -77,10 +97,19 @@ class SupplierDirectInvoiceDetails extends DetailsMaster
             $this->details->localAmount = ABS($amount);
             $this->details->DIAmount = ABS($amount);
             $this->details->comRptAmount = ABS($companyCurrencyConversion['reportingAmount']);
+            $this->details->VATPercentage = 0;
+            $this->details->netAmount = ABS($amount);
+            $this->details->netAmountLocal = ABS($amount);
+            $this->details->netAmountRpt = ABS($companyCurrencyConversion['reportingAmount']);
         }else {
             $this->details->localAmount = abs($amount)  * -1;
             $this->details->DIAmount = abs($amount) * -1;
             $this->details->comRptAmount = abs($companyCurrencyConversion['reportingAmount']) * -1;
+            $this->details->VATPercentage = 0;
+            $this->details->netAmount = ABS($amount) * -1;
+            $this->details->netAmountLocal = ABS($amount) * -1;
+            $this->details->netAmountRpt = ABS($companyCurrencyConversion['reportingAmount']) * -1;
+
         }
 
 

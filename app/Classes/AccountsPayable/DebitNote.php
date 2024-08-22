@@ -15,10 +15,12 @@ class DebitNote
 
     public $master;
     public $companySystemID;
-    public function __construct($companySystemID,$documentDate)
+    public $code;
+    public function __construct($companySystemID,$documentDate,$code)
     {
         $this->master = new \App\Models\DebitNote();
         $this->companySystemID = $companySystemID;
+        $this->code = $code;
         $this->setCompanyDetails();
         $this->setDocumentDetails();
         $this->setDateDetails($documentDate);
@@ -137,7 +139,7 @@ class DebitNote
 
 
         if (!isset($supplierAssignedDetail))
-            throw new \Exception("Supplier assigned details not found");
+            throw new \Exception("Supplier GL accounts details not found");
 
 
         $supplier = SupplierMaster::find($supplierId);
@@ -209,7 +211,7 @@ class DebitNote
     {
         if(is_null($comment))
         {
-            $this->master->comments = "DB created BY VAT return filling ".$this->master->debitNoteCode;
+            $this->master->comments = "DN created BY VAT return filling ".$this->code;
         }else {
             $this->master->comments = $comment;
         }

@@ -208,7 +208,7 @@ class SupplierInvoice
 
 
         if (!isset($supplierAssignedDetail))
-            throw new \Exception("Supplier assigned details not found");
+            throw new \Exception("Supplier GL accounts details not found");
 
 
         $supplier = SupplierMaster::find($supplierId);

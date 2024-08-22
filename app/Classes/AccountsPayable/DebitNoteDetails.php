@@ -17,6 +17,25 @@ class DebitNoteDetails extends DetailsMaster
         $this->details->debitNoteAutoID = $this->master->debitNoteAutoID;
     }
 
+    public function setDefaultValues()
+    {
+
+        $segments = Company::find($this->master->companySystemID)
+            ->segments()
+            ->where('isPublic',true)
+            ->select('serviceLineMasterCode', 'serviceLineSystemID')
+            ->first();
+
+        $this->details->serviceLineSystemID = ($segments) ? $segments->serviceLineSystemID : null;
+        $this->details->serviceLineCode = ($segments) ? $segments->serviceLineMasterCode : null;
+        $this->details->detail_project_id = null;
+        $this->details->comments = $this->master->comments;
+        $this->details->VATPercentage = 0;
+        $this->details->VATAmount =0;
+        $this->details->VATAmountLocal =0;
+        $this->details->VATAmountRpt =0;
+    }
+
     public function setAdditionalDetatils()
     {
         $this->details->detail_project_id = 0;

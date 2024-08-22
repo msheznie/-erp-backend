@@ -43,7 +43,7 @@ class VRFDocumentGenerateController extends AppBaseController
         $tax = Tax::where('taxCategory',2)->where('isActive',true)->where('isDefault',true)->first();
 
         if(!isset($tax->authorityAutoID))
-            return ['success' => false , "message" => "The supplier is not assigned in the tax setup (tax authority)"];
+            return  $this->sendError("The supplier is not assigned in the tax setup (tax authority)",500);
 
         if($isGenerateDebitNote)
         {
@@ -93,6 +93,7 @@ class VRFDocumentGenerateController extends AppBaseController
                         $details->setCurrenciesAndExchagneRate();
                         $details->setAmount($details->getAmount());
                         $details->setAdditionalDetatils();
+                        $details->setDefaultValues();
                         $details->details->save();
                     }
                     $storeSupplierInvoice['data']->updateBookingAmount(($supplierInvoice->getBookingAmount($request)));
@@ -116,7 +117,8 @@ class VRFDocumentGenerateController extends AppBaseController
     {
         $data = new \App\Classes\AccountsPayable\DebitNote(
             $request->companySystemID,
-            $request->date
+            $request->date,
+            $request->returnFillingCode
         );
         $data->setSupplierDetails($tax->authorityAutoID);
         $data->setSystemCreatedUserDetails();
@@ -142,6 +144,7 @@ class VRFDocumentGenerateController extends AppBaseController
             $newDetails->setAmount($newDetails->getAmount());
             $newDetails->setDefaultValues();
             $newDetails->setAdditionalDetatils();
+
             $newDetails->details->save();
         }
         $storeDebitNote->updateNetAmount(abs($data->getNetAmount($request)));
