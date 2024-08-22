@@ -2465,23 +2465,25 @@ class CustomerInvoiceAPIService extends AppBaseController
             ];
         }
 
-        if($vatCategories->applicableOn == 1){
-            if (isset($input["VATAmount"]) && isset($input['salesPrice']) && $input['VATAmount'] > $input['salesPrice']) {
-                return [
-                    'status' => false,
-                    'type' => array('type' => 'VATAmountError'),
-                    'message' => 'Vat Amount cannot be greater than sales price'
-                ];
+        if(!empty($vatCategories)) {
+            if ($vatCategories->applicableOn == 1) {
+                if (isset($input["VATAmount"]) && isset($input['salesPrice']) && $input['VATAmount'] > $input['salesPrice']) {
+                    return [
+                        'status' => false,
+                        'type' => array('type' => 'VATAmountError'),
+                        'message' => 'Vat Amount cannot be greater than sales price'
+                    ];
+                }
             }
-        }
 
-        if($vatCategories->applicableOn == 2){
-            if (isset($input["VATAmount"]) && isset($input['sellingCostAfterMargin']) && $input['VATAmount'] > $input['sellingCostAfterMargin']) {
-                return [
-                    'status' => false,
-                    'type' => array('type' => 'VATAmountError'),
-                    'message' => 'Vat Amount cannot be greater than unit price'
-                ];
+            if ($vatCategories->applicableOn == 2) {
+                if (isset($input["VATAmount"]) && isset($input['sellingCostAfterMargin']) && $input['VATAmount'] > $input['sellingCostAfterMargin']) {
+                    return [
+                        'status' => false,
+                        'type' => array('type' => 'VATAmountError'),
+                        'message' => 'Vat Amount cannot be greater than unit price'
+                    ];
+                }
             }
         }
 
