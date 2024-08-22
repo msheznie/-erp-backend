@@ -67,18 +67,6 @@ class ItemFinanceCategoryAuditService
                         } else if ($field == "trackingType") {
                             $newValue = $fieldMappingsTracking[$value['new_value']] ?? $value['new_value'];
                             $oldValue = $fieldMappingsTracking[$value['old_value']] ?? $value['old_value'];
-                        } else if ($field == "categoryType"){
-
-                            $data = json_decode($oldValue, true);
-                            if($data != null) {
-                                $itemNames = array_column($data, 'itemName');
-                                $oldValue = implode(", ", $itemNames);
-                            }
-                            $data = json_decode($newValue, true);
-                            if($data != null) {
-                                $itemNames = array_column($data, 'itemName');
-                                $newValue = implode(", ", $itemNames);
-                            }
                         }
                     }
 

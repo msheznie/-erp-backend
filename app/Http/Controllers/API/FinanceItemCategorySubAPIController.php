@@ -634,15 +634,20 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             'financeGLcodeRevenue' => $input['financeGLcodeRevenue'],
             'modifiedPc' => $input['modifiedPc'],
             'modifiedUser' => $input['modifiedUser'],
+            'categoryType' => implode(',', $categoryTypeNew->pluck('itemName')->toArray())
         ];
 
 
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
         $db = isset($input['db']) ? $input['db'] : '';
         $newValue = $masterData;
+
+        if(isset($masterData['categoryType'])) {
+            unset($masterData['categoryType']);
+        }
         
         if (isset($input['itemCategorySubID'])){
-            $originalData = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
+            $originalData = FinanceItemCategorySub::with('finance_item_category_type')->where('itemCategorySubID', $input['itemCategorySubID'])->first();
 
             $itemCategorySubUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->update($masterData);
 
@@ -656,7 +661,16 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             }
 
             $previosValue = $originalData->toArray();
+            $previousCategoryType = [];
+            foreach ($originalData['finance_item_category_type'] as $key => $value) {
+                $previousCategoryType[] = $value['category_type_master']['name'];
+            }
 
+            $previosValue['categoryType'] = implode(',', $previousCategoryType);
+
+            if(isset($previosValue['finance_item_category_type'])) {
+                unset($previosValue['finance_item_category_type']);
+            }
 
             unset($masterData['itemCategoryID'],$masterData['trackingType'],$masterData['modifiedPc'],$masterData['modifiedUser']);
             $financeItemcategorySubAssigned  = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
