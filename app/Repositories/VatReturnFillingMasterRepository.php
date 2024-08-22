@@ -186,11 +186,11 @@ class VatReturnFillingMasterRepository extends BaseRepository
                             $query->where('returnFilledDetailID', $returnFilledDetailID);
                         });
                     })
-                    ->whereHas('payment_voucher', function ($query) {
-                        $query->whereIn('invoiceType',[3,5])->where('rcmActivated',1);
-                    })
                     ->whereHas('supplier', function($query) use ($companyCountry){
                         $query->subjectToGCC();
+                    })
+                    ->orWhereHas('payment_voucher', function ($query) {
+                        $query->whereIn('invoiceType',[3,5])->where('rcmActivated',1);
                     });
 
 
@@ -433,7 +433,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                             });
                                                         });
                                                   })
-                                                    ->whereHas('supplier', function($query) use ($companyCountry){
+                                                    ->orWhereHas('supplier', function($query) use ($companyCountry){
                                                         $query->where('supplierCountryID', 1);
                                                     })
                                                  ->select('*')
