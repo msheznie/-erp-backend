@@ -15,6 +15,7 @@ use App\Models\FixedAssetMaster;
 use App\Models\GeneralLedger;
 use App\Models\GRVMaster;
 use App\Models\JvMaster;
+use App\Models\MatchDocumentMaster;
 use App\Models\MaterielRequest;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\TaxLedgerDetail;
@@ -23,7 +24,7 @@ use Carbon\Carbon;
 
 class ValidateDocumentAmend
 {
-    public static function validateFinancePeriod($documentAutoId,$documentSystemID)
+    public static function validateFinancePeriod($documentAutoId,$documentSystemID, $matchingMasterID = null)
 	{
         switch ($documentSystemID) {
             case 11: // SI - Supplier Invoice
@@ -43,7 +44,11 @@ class ValidateDocumentAmend
                     }
                 break;
             case 4: // Payment Voucher
-                    $PaySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($documentAutoId);
+                    if($matchingMasterID !== null){
+                        $PaySupplierInvoiceMaster = MatchDocumentMaster::find($matchingMasterID);
+                    } else {
+                        $PaySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($documentAutoId);
+                    }
                     if($PaySupplierInvoiceMaster){
                         $financePeriod = CompanyFinancePeriod::where('companyFinancePeriodID',$PaySupplierInvoiceMaster->companyFinancePeriodID)->first();
                         if($financePeriod){
@@ -73,7 +78,11 @@ class ValidateDocumentAmend
                     }
                 break;
             case 21: // Receipt Voucher
-                    $receiptVoucherMaster = CustomerReceivePayment::find($documentAutoId);
+                    if($matchingMasterID !== null){
+                        $receiptVoucherMaster = MatchDocumentMaster::find($matchingMasterID);
+                    } else {
+                        $receiptVoucherMaster = CustomerReceivePayment::find($documentAutoId);
+                    }
                     if($receiptVoucherMaster){
                         $financePeriod = CompanyFinancePeriod::where('companyFinancePeriodID',$receiptVoucherMaster->companyFinancePeriodID)->first();
                         if($financePeriod){
@@ -103,7 +112,11 @@ class ValidateDocumentAmend
                     }
                 break;
             case 15: // DN - Debit Note
-                    $debitNoteMasterData = DebitNote::find($documentAutoId);
+                    if($matchingMasterID !== null){
+                        $debitNoteMasterData = MatchDocumentMaster::find($matchingMasterID);
+                    } else {
+                        $debitNoteMasterData = DebitNote::find($documentAutoId);
+                    }
                     if($debitNoteMasterData){
                         $financePeriod = CompanyFinancePeriod::where('companyFinancePeriodID',$debitNoteMasterData->companyFinancePeriodID)->first();
                         if($financePeriod){
@@ -118,7 +131,11 @@ class ValidateDocumentAmend
                     }
                 break;
             case 19: // CN - Credit Note
-                    $creditNoteMasterData = CreditNote::find($documentAutoId);
+                    if($matchingMasterID !== null){
+                        $creditNoteMasterData = MatchDocumentMaster::find($matchingMasterID);
+                    } else {
+                        $creditNoteMasterData = CreditNote::find($documentAutoId);
+                    }
                     if($creditNoteMasterData){
                         $financePeriod = CompanyFinancePeriod::where('companyFinancePeriodID',$creditNoteMasterData->companyFinancePeriodID)->first();
                         if($financePeriod){
@@ -295,7 +312,7 @@ class ValidateDocumentAmend
         return ['status' => true];
 	}
 
-    public static function validateFinanceYear($documentAutoId,$documentSystemID)
+    public static function validateFinanceYear($documentAutoId,$documentSystemID, $matchingMasterID = null)
 	{
         switch ($documentSystemID) {
             case 20: // Customer Invoice
@@ -314,7 +331,11 @@ class ValidateDocumentAmend
                     }
                 break;
             case 21: // Receipt Voucher
-                    $receiptVoucherMaster = CustomerReceivePayment::find($documentAutoId);
+                    if($matchingMasterID !== null){
+                        $receiptVoucherMaster = MatchDocumentMaster::find($matchingMasterID);
+                    } else {
+                        $receiptVoucherMaster = CustomerReceivePayment::find($documentAutoId);
+                    }
                     if($receiptVoucherMaster){
                         $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$receiptVoucherMaster->companyFinanceYearID)->first();
                         if($financeYear){
@@ -329,7 +350,11 @@ class ValidateDocumentAmend
                     }
                 break;
             case 4: // Payment Voucher
-                    $PaySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($documentAutoId);
+                    if($matchingMasterID !== null){
+                        $PaySupplierInvoiceMaster = MatchDocumentMaster::find($matchingMasterID);
+                    } else {
+                        $PaySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($documentAutoId);
+                    }
                     if($PaySupplierInvoiceMaster){
                         $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$PaySupplierInvoiceMaster->companyFinanceYearID)->first();
                         if($financeYear){
@@ -375,7 +400,11 @@ class ValidateDocumentAmend
                     }
                 break;
             case 15: // DN - Debit Note
-                    $debitNoteMasterData = DebitNote::find($documentAutoId);
+                    if($matchingMasterID !== null){
+                        $debitNoteMasterData = MatchDocumentMaster::find($matchingMasterID);
+                    } else {
+                        $debitNoteMasterData = DebitNote::find($documentAutoId);
+                    }
                     if($debitNoteMasterData){
                         $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$debitNoteMasterData->companyFinanceYearID)->first();
                         if($financeYear){
@@ -390,7 +419,11 @@ class ValidateDocumentAmend
                     }
                 break;
             case 19: // CN - Credit Note
-                    $creditNoteMasterData = CreditNote::find($documentAutoId);
+                    if($matchingMasterID !== null){
+                        $creditNoteMasterData = MatchDocumentMaster::find($matchingMasterID);
+                    } else {
+                        $creditNoteMasterData = CreditNote::find($documentAutoId);
+                    }
                     if($creditNoteMasterData){
                         $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$creditNoteMasterData->companyFinanceYearID)->first();
                         if($financeYear){
