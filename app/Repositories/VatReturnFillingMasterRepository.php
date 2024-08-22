@@ -187,10 +187,11 @@ class VatReturnFillingMasterRepository extends BaseRepository
                             $query->where('returnFilledDetailID', $returnFilledDetailID);
                         });
                     })
-                    ->WhereHas('payment_voucher', function ($query) {
+                    ->whereIn('documentSystemID', [4])
+                    ->orWhereHas('payment_voucher', function ($query) {
                         $query->whereIn('invoiceType',[3,5])->where('rcmActivated',1);
                     })
-                    ->orWhereHas('supplier', function($query) use ($companyCountry){
+                    ->whereHas('supplier', function($query) use ($companyCountry){
                         $query->subjectToGCC();
                     });
 
@@ -223,7 +224,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                             $query->where('itemFinanceCategoryID', 2);
                         });
                     })
-                    ->where('documentSystemID', 11)
+                    ->whereIn('documentSystemID', [11,4])
                     ->whereHas('supplier_invoice', function($query) {
                         $query->where('documentType', 0);
                     })
@@ -252,7 +253,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                 $query->whereIn('isPerforma', [0,2,3,4,5]);
                             })
                                 ->where('documentSystemID', 20)
-                                ->whereHas('customer_invoice_details', function($query) {
+                                ->orWhereHas('customer_invoice_details', function($query) {
                                     $query->whereIn('itemFinanceCategoryID', [1,2,4]);
                                 });
                         })
