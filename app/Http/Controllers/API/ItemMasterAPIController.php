@@ -1056,7 +1056,18 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $previosValue = $itemMaster->toArray();
+        $previousCategoryType = [];
+        foreach ($itemMaster['item_category_type'] as $itemCategoryType) {
+            $previousCategoryType[] = $itemCategoryType['category_type_master']['name'];
+        }
+        $previosValue['categoryType'] = implode(',', $previousCategoryType);
+
         $newValue = $input;
+        $newCategoryType = [];
+        foreach ($categoryType as $itemCategoryType) {
+            $newCategoryType[] = $itemCategoryType['itemName'];
+        }
+        $newValue['categoryType'] = implode(',', $newCategoryType);
 
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
         $db = isset($input['db']) ? $input['db'] : '';
