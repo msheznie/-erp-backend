@@ -41,8 +41,7 @@ class VRFDocumentGenerateController extends AppBaseController
             return $this->sendError("Supplier Invoice/Debit Note  generated for VAT return filing document",400,array('type' => 2));
 
         $tax = Tax::where('taxCategory',2)->where('isActive',true)->where('isDefault',true)->first();
-
-        if(!isset($tax->authorityAutoID))
+        if(empty($tax->authorityAutoID))
             return  $this->sendError("The supplier is not assigned in the tax setup (tax authority)",500);
 
         if($isGenerateDebitNote)
