@@ -8,6 +8,7 @@ use App\Models\VatReturnFillingDetail;
 use App\Models\VatReturnFillingCategory;
 use App\Models\Company;
 use InfyOm\Generator\Common\BaseRepository;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class VatReturnFillingMasterRepository
@@ -66,7 +67,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     ->whereHas('customer', function($query) use ($companyCountry){
                         $query->where('customerCountry', 1); // oman based customers
                     })
-                    ->whereIn('documentSystemID',[20,87])
+                    ->whereIn('documentSystemID',[20,87,19])
                     ->whereNotNull('outputVatGLAccountID')
                     ->when($forUpdate == false, function($query) {
                         $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
@@ -89,8 +90,11 @@ class VatReturnFillingMasterRepository extends BaseRepository
                         });
                     })
                     ->orWhereHas('creditNode', function ($query) {
-                        $query->where('isVATApplicable', true)->select('*')->selectRaw('(-VATAmountLocal) as VATAmountLocal,(-VATAmount) as VATAmount');
-                    });;
+                        $query->where('isVATApplicable', true);
+                    })
+                    ->select('*')
+                    ->addSelect(DB::raw('CASE WHEN documentSystemID = 19 THEN (-1) * VATAmountLocal ELSE VATAmountLocal END AS VATAmountLocal'))
+                    ->addSelect(DB::raw('CASE WHEN documentSystemID = 19 THEN (-1) * taxableAmountLocal ELSE taxableAmountLocal END AS taxableAmountLocal'));
 
 
                 $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
@@ -165,9 +169,6 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
-                    ->whereHas('supplier', function($query) use ($companyCountry){
-                        $query->subjectToGCC();
-                    })
                     ->where('rcmApplicableYN', 1)
                     ->whereNotNull('inputVATGlAccountID')
                     ->when($forUpdate == false, function($query) {
@@ -185,8 +186,11 @@ class VatReturnFillingMasterRepository extends BaseRepository
                             $query->where('returnFilledDetailID', $returnFilledDetailID);
                         });
                     })
-                    ->orWhereHas('payment_voucher', function ($query) {
+                    ->whereHas('payment_voucher', function ($query) {
                         $query->whereIn('invoiceType',[3,5])->where('rcmActivated',1);
+                    })
+                    ->whereHas('supplier', function($query) use ($companyCountry){
+                        $query->subjectToGCC();
                     });
 
 
@@ -196,9 +200,6 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
-                    ->whereHas('supplier', function($query) use ($companyCountry){
-                        $query->outsideOfGCC();
-                    })
                     ->where('rcmApplicableYN', 1)
                     ->whereNotNull('inputVATGlAccountID')
                     ->when($forUpdate == false, function($query) {
@@ -227,6 +228,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     })
                     ->orWhereHas('payment_voucher', function ($query) {
                         $query->whereIn('invoiceType',[3,5])->where('rcmActivated',1);
+                    })
+                    ->whereHas('supplier', function($query) use ($companyCountry){
+                        $query->outsideOfGCC();
                     });
 
 
@@ -396,19 +400,6 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                   }, 'payment_voucher'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
-                                                  ->where(function($q) use ($companyCountry){
-                                                    $q->where(function($q)  use ($companyCountry){
-                                                        $q->whereHas('supplier', function($query) use ($companyCountry){
-                                                            $query->where('supplierCountryID',1); // oman suppliers
-                                                        });
-                                                    });
-//                                                    ->orWhere(function($q)  use ($companyCountry){
-//                                                        $q->whereHas('supplier', function($query) use ($companyCountry){
-//                                                            $query->where('supplierCountryID', '!=', $companyCountry);
-//                                                        })
-//                                                        ->where('rcmApplicableYN', 0);
-//                                                    });
-                                                  })
                                                   ->whereNotNull('inputVATGlAccountID')
                                                   ->when($forUpdate == false, function($query) {
                                                         $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
@@ -432,7 +423,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                         })->orWhereHas('payment_voucher', function($query) {
                                                             $query->whereIn('invoiceType', [3,5]);
                                                         })->orWhereHas('debitNode', function ($query) {
-                                                            $query->where('isVATApplicable', true)->select('*')->selectRaw('(-VATAmountLocal) as VATAmountLocal, (-VATAmount) as VATAmount');
+                                                            $query->where('isVATApplicable', true);
                                                         });
                                                   })
                                                   ->when(('supplier_invoice.documentType' == 1 || 'supplier_invoice.documentType' == 3),function($query) {
@@ -441,7 +432,15 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                                 $query->where('itemFinanceCategoryID','!=',3);
                                                             });
                                                         });
-                                                  });
+                                                  })
+                                                    ->whereHas('supplier', function($query) use ($companyCountry){
+                                                        $query->where('supplierCountryID', 1);
+                                                    })
+                                                 ->select('*')
+                                                 ->addSelect(DB::raw('CASE WHEN documentSystemID = 15 THEN (-1) * VATAmountLocal ELSE VATAmountLocal END AS VATAmountLocal'))
+                                                 ->addSelect(DB::raw('CASE WHEN documentSystemID = 15 THEN (-1) * taxableAmountLocal ELSE taxableAmountLocal END AS taxableAmountLocal'));
+
+
 
 
                 $taxLedgerDetail = ($isCollection) ? $taxLedgerDetailData->get() : $taxLedgerDetailData;
