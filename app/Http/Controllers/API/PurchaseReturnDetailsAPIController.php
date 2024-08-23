@@ -25,6 +25,7 @@ use App\Models\PurchaseReturn;
 use App\Models\GRVDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\StockTransfer;
+use App\Models\TaxVatCategories;
 use App\Repositories\PurchaseReturnDetailsRepository;
 use App\Repositories\PurchaseReturnRepository;
 use Illuminate\Http\Request;
@@ -735,15 +736,29 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $item['localCurrencyID'] = $new['localCurrencyID'];
                 $item['localCurrencyER'] = $new['localCurrencyER'];
 
-                $item['GRVcostPerUnitLocalCur'] = $new['GRVcostPerUnitLocalCur'];
-                $item['GRVcostPerUnitSupDefaultCur'] = $new['GRVcostPerUnitSupDefaultCur'];
-                $item['GRVcostPerUnitSupTransCur'] = $new['GRVcostPerUnitSupTransCur'];
-                $item['GRVcostPerUnitComRptCur'] = $new['GRVcostPerUnitComRptCur'];
+                $expenseCOA = TaxVatCategories::with(['tax'])->where('taxVatSubCategoriesAutoID', $new['vatSubCategoryID'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($purchaseReturn) {
+                    $query->where('companySystemID', $purchaseReturn->companySystemID);
+                })->where('isActive', 1)->first();
 
+                if(!empty($expenseCOA) && $expenseCOA->recordType == 1){
+                    $item['GRVcostPerUnitLocalCur'] = $new['GRVcostPerUnitLocalCur'] - $new['VATAmountLocal'];
+                    $item['GRVcostPerUnitSupDefaultCur'] = $new['GRVcostPerUnitSupDefaultCur'] - ($new['VATAmount']/$new['supplierDefaultER']);
+                    $item['GRVcostPerUnitSupTransCur'] = $new['GRVcostPerUnitSupTransCur'] - $new['VATAmount'];
+                    $item['GRVcostPerUnitComRptCur'] = $new['GRVcostPerUnitComRptCur'] - $new['VATAmountRpt'];
 
-                $item['netAmount'] = $new['rnoQty'] * $new['GRVcostPerUnitSupTransCur'];
-                $item['netAmountLocal'] = $new['rnoQty'] * $new['GRVcostPerUnitLocalCur'];
-                $item['netAmountRpt'] = $new['rnoQty'] * $new['GRVcostPerUnitComRptCur'];
+                    $item['netAmount'] = $new['rnoQty'] * ($new['GRVcostPerUnitSupTransCur'] - $new['VATAmount']);
+                    $item['netAmountLocal'] = $new['rnoQty'] * ($new['GRVcostPerUnitLocalCur'] - $new['VATAmountLocal']);
+                    $item['netAmountRpt'] = $new['rnoQty'] * ($new['GRVcostPerUnitComRptCur'] - $new['VATAmountRpt']);
+                } else {
+                    $item['GRVcostPerUnitLocalCur'] = $new['GRVcostPerUnitLocalCur'];
+                    $item['GRVcostPerUnitSupDefaultCur'] = $new['GRVcostPerUnitSupDefaultCur'];
+                    $item['GRVcostPerUnitSupTransCur'] = $new['GRVcostPerUnitSupTransCur'];
+                    $item['GRVcostPerUnitComRptCur'] = $new['GRVcostPerUnitComRptCur'];
+
+                    $item['netAmount'] = $new['rnoQty'] * $new['GRVcostPerUnitSupTransCur'];
+                    $item['netAmountLocal'] = $new['rnoQty'] * $new['GRVcostPerUnitLocalCur'];
+                    $item['netAmountRpt'] = $new['rnoQty'] * $new['GRVcostPerUnitComRptCur'];
+                }
 
 
                 $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];

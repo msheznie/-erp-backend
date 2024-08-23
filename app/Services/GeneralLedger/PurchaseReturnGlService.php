@@ -169,13 +169,21 @@ class PurchaseReturnGlService
 
             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
             $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
-            $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->transAmount + $transVATAmount  : $masterData->details[0]->transAmount - $exemptVATTransAmount));
+            if(!empty($exemptVatTotal) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1 && $exemptVatTotal->vatAmount > 0){
+                $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transAmount + $exemptVATTransAmount);
+                $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localAmount + $exemptVATLocalAmount);
+                $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptAmount + $exemptVATRptAmount);
+            } else {
+                $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->transAmount + $transVATAmount : $masterData->details[0]->transAmount - $exemptVATTransAmount));
+                $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->localAmount + $localVATAmount : $masterData->details[0]->localAmount - $exemptVATLocalAmount));
+                $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->rptAmount + $rptVATAmount : $masterData->details[0]->rptAmount - $exemptVATRptAmount));
+            }
             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-            $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->localAmount + $localVATAmount : $masterData->details[0]->localAmount - $exemptVATLocalAmount));
+
             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-            $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->rptAmount + $rptVATAmount : $masterData->details[0]->rptAmount - $exemptVATRptAmount));
+
             $data['holdingShareholder'] = null;
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;
