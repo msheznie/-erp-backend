@@ -141,11 +141,10 @@ class DebitNote
 
         if (!isset($supplierAssignedDetail))
             throw new \Exception("Supplier GL accounts details not found");
-
-        if(empty($supplierAssignedDetail->liabilityAccountSysemID))
-            throw new \Exception("Liabilty Account not selected for tax authority in supplier master");
-
+        
         $supplier = SupplierMaster::find($supplierId);
+        if(empty($supplier->liabilityAccountSysemID))
+            throw new \Exception("Liabilty Account not selected for tax authority in supplier master");
         $supplierTranscationCurrency = $supplier->supplierCurrency->first()->supplierCurrencyID;
         $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $supplierTranscationCurrency, $supplierTranscationCurrency, 0);
 
