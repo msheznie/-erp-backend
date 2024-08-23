@@ -41,6 +41,17 @@ class VRFDocumentGenerateController extends AppBaseController
             return $this->sendError("Supplier Invoice/Debit Note  generated for VAT return filing document",400,array('type' => 2));
 
         $tax = Tax::where('taxCategory',2)->where('isActive',true)->where('isDefault',true)->first();
+
+
+        if(empty($tax->inputVatGLAccountAutoID) && empty($tax->outputVatGLAccountAutoID))
+            return  $this->sendError("Input & Output VAT GL Account not configured in the tax setup",500);
+
+        if(empty($tax->inputVatGLAccountAutoID))
+            return  $this->sendError("Input VAT GL Account not configured in the tax setup",500);
+
+        if(empty($tax->outputVatGLAccountAutoID))
+            return  $this->sendError("Output VAT GL Account not configured in the tax setup",500);
+
         if(empty($tax->authorityAutoID))
             return  $this->sendError("The supplier is not assigned in the tax setup (tax authority)",500);
 
