@@ -6295,9 +6295,12 @@ class Helper
                             {
                                 $subjectName = $document->documentDescription . ' ' . $sourceModel->CustomerName;
                                 $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $sourceModel->CustomerName . '</b>';
-                            }else if($input["document_system_id"] == 108){
+                            }
+                            else if(!empty($input["document_system_id"]) && $input["document_system_id"] == 108)
+                            {
                                     $subjectName = 'Tender ' . $currentApproved->documentCode;
-                            } else
+                            }
+                            else
                             {
                                 $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                                 $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
