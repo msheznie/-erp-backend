@@ -3872,7 +3872,14 @@ ORDER BY
 				
                 if (round($DebitNoteMasterExData->debitAmountTrans - $totalAmountPayEx->supplierPaymentAmount, 2) == 0) {
 
-                     if ((round($DebitNoteMasterExData->debitAmountLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($DebitNoteMasterExData->debitAmountRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
+                    if ((round($DebitNoteMasterExData->debitAmountLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($DebitNoteMasterExData->debitAmountRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
+
+                        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
+                        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                                return $this->sendError($validatePendingGlPost['message']);
+                            }
+                        }
 
                         $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID, $matchingMasterID);
                         if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
@@ -3887,8 +3894,38 @@ ORDER BY
                                 return $this->sendError($validateFinancePeriod['message']);
                             }
                         }
-                     }
-                }
+                    } else {
+
+                            $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID, $matchingMasterID);
+                            if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
+                                if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
+                                    return $this->sendError($validateFinanceYear['message']);
+                                }
+                            }
+                            
+                            $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID, $matchingMasterID);
+                            if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+                                if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
+                                    return $this->sendError($validateFinancePeriod['message']);
+                                }
+                            }
+                    }
+
+                }  else {
+                        $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID, $matchingMasterID);
+                        if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
+                            if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
+                                return $this->sendError($validateFinanceYear['message']);
+                            }
+                        }
+                        
+                        $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID, $matchingMasterID);
+                        if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+                            if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
+                                return $this->sendError($validateFinancePeriod['message']);
+                            }
+                        }
+                    }
             } else {
                 $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
                 if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
