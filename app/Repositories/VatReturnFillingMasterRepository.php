@@ -640,8 +640,8 @@ class VatReturnFillingMasterRepository extends BaseRepository
     public function updateVatReturnFillingDetails($returnFilledDetailID){
         $taxDetail = TaxLedgerDetail::where('returnFilledDetailID', $returnFilledDetailID)->get();
 
-        $taxAmount = collect($taxDetail)->sum('VATAmountLocal');
-        $taxableAmount = collect($taxDetail)->sum('taxableAmountLocal');
+        $taxAmount = collect($taxDetail)->whereNotIn('documentSystemID',[19,15])->sum('VATAmountLocal') - collect($taxDetail)->whereIn('documentSystemID',[19,15])->sum('VATAmountLocal');
+        $taxableAmount = collect($taxDetail)->whereNotIn('documentSystemID',[19,15])->sum('taxableAmountLocal') - collect($taxDetail)->whereIn('documentSystemID',[19,15])->sum('taxableAmountLocal');
 
         $fillingDetail = VatReturnFillingDetail::find($returnFilledDetailID);
 
