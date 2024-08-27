@@ -52,10 +52,25 @@ class CustomerMasterAPIService
             ];
         }
         else{
+
+            $companyID = null;
+            if(isset($data['primaryCompanySystemID'])) {
+                $companyID = $data['primaryCompanySystemID'];
+            }
+            elseif (isset($data['company_id'])) {
+                $companyID = $data['company_id'];
+            }
+            else {
+                return [
+                    'status' => false,
+                    'message' => "Company ID is required."
+                ];
+            }
+
             $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $data['custAdvanceAccountSystemID'])
                 ->where('controllAccountYN', '=', 1)
-                ->whereHas('chartofaccount_assigned', function($query) use ($data) {
-                    $query->where('companySystemID', $data['company_id'])
+                ->whereHas('chartofaccount_assigned', function($query) use ($companyID) {
+                    $query->where('companySystemID', $companyID)
                         ->where('isAssigned', -1)
                         ->where('isActive', 1);
                 })
