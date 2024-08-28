@@ -28,6 +28,7 @@ Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
         Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
         Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
+        Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
     });
 });
 
@@ -46,7 +47,6 @@ Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
 
 
-Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
 Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
 Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
 Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
