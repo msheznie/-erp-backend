@@ -215,7 +215,11 @@ class SupplierInvoice
         if(empty($supplier->liabilityAccountSysemID))
             throw new \Exception("Liabilty Account not selected for tax authority in supplier master");
 
-        $supplierTranscationCurrency = $supplier->supplierCurrency->first()->supplierCurrencyID;
+
+        if(empty($supplier->supplierCurrency->first()))
+            throw new \Exception("Supplier transaction currency details not found");
+
+        $supplierTranscationCurrency = $supplier->supplierCurrency->first()->currencyMaster->currencyID;
         $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $supplierTranscationCurrency, $supplierTranscationCurrency, 0);
 
 
