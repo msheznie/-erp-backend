@@ -1103,8 +1103,8 @@ WHERE
         $date = new Carbon($input['date']);
         $date = $date->format('Y-m-d');
 
-        $from_date =  ((new Carbon($input['date']))->format('d/m/Y'));
-        $to_date =  ((new Carbon($input['date']))->format('d/m/Y'));
+        $from_date =  $input['date'];
+        $to_date =  $input['date'];
 
         $selectedCompanyId = $request->companySystemID;
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);

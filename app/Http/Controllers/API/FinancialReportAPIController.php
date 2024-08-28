@@ -2992,8 +2992,8 @@ class FinancialReportAPIController extends AppBaseController
 
          
                 $company_name = $companyCurrency->CompanyName;
-                $to_date = \Helper::dateFormat($request->toDate);
-                $from_date = \Helper::dateFormat($request->fromDate);
+                $to_date = $request->toDate;
+                $from_date = $request->fromDate;
                 if ($reportTypeID == 'FTBM') {
                     $title = 'Financial Trial Balance Month Wise';
                     if ($request->currencyID == 1) {
