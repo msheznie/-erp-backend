@@ -569,6 +569,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             /*customer reciept*/
             $detail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->get();
 
+            $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+            if(!empty($customer)) {
+                $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
+                $input['customerGLCode'] = $customer->custGLaccount;
+                $input['custAdvanceAccountSystemID'] = $customer->custAdvanceAccountSystemID;
+                $input['custAdvanceAccount'] = $customer->custAdvanceAccount;
+            }
             if ($input['customerID'] != $customerReceivePayment->customerID) {
 
                 if (count($detail) > 0) {
@@ -1446,7 +1453,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         return $this->sendResponse($input, 'Receipt Voucher updated successfully');
     }
-
 
     public function updateCurrency($id, UpdateCustomerReceivePaymentAPIRequest $request)
     {
