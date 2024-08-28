@@ -138,7 +138,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
 
-        if(isset($input['itemCode'])) {
+        if(isset($input['itemCode']['id'])) {
                 $item = ItemAssigned::where('itemCodeSystem', $input['itemCode']['id'])
                 ->where('companySystemID', $companySystemID)
                 ->first();
@@ -149,9 +149,8 @@ class QuotationDetailsAPIController extends AppBaseController
             ->first();
         }
 
-        $category = $item->financeCategoryMaster;
 
-        $category = $item->financeCategoryMaster;
+        $category = isset($item->financeCategoryMaster) ? $item->financeCategoryMaster: null;
 
         if($input['itemAutoID']) {
             $itemExist = QuotationDetails::where('itemAutoID', $input['itemAutoID'])
@@ -594,7 +593,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = $request->all();
         $quotationMasterID = $input['quotationMasterID'];
 
-        $items = QuotationDetails::join('units','UnitID','unitOfMeasureID')->where('quotationMasterID', $quotationMasterID)
+        $items = QuotationDetails::leftjoin('units','UnitID','unitOfMeasureID')->where('quotationMasterID', $quotationMasterID)
               ->skip($input['skip'])->take($input['limit'])->get();
 
         $index = $input['skip'] + 1;
