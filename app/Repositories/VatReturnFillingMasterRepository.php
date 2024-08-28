@@ -450,9 +450,6 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category','supplier_invoice'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
-                                                  ->whereHas('supplier', function($query) use ($companyCountry){
-                                                      $query->where('supplierCountryID', '!=',$companyCountry);
-                                                  })
                                                   ->whereNotNull('inputVATGlAccountID')
                                                   ->when($forUpdate == false, function($query) {
                                                         $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
@@ -488,6 +485,9 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                             $query->where('itemFinanceCategoryID','!=',3);
                                                         });
                                                     });
+                                                })
+                                                ->whereHas('supplier', function($query) use ($companyCountry){
+                                                    $query->where('supplierCountryID', '!=',$companyCountry);
                                                 });
 
 
