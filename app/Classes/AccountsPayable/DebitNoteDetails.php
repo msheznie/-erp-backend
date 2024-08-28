@@ -87,7 +87,7 @@ class DebitNoteDetails extends DetailsMaster
 
     public function setAmount(float $amount)
     {
-        $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $this->details->localCurrencyER, $this->details->localCurrencyER, $amount);
+        $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $this->master->localCurrencyID, $this->master->localCurrencyID, $amount);
 
         if($this->glAccountType == "InputVATGLAccount")
         {
