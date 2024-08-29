@@ -1244,7 +1244,7 @@ WHERE
             $query->with('employee')
                 ->where('documentSystemID', 71);
         }, 'company','customer','transaction_currency','detail'=> function($query){
-            $query->with(['uom_issuing','quotation']);
+            $query->with(['uom_issuing','quotation','item_by']);
         }])->findWithoutFail($id);
 
 
