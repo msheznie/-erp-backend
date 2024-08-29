@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateEvaluationCriteriaScoreConfigAPIRequest;
 use App\Http\Requests\API\UpdateEvaluationCriteriaScoreConfigAPIRequest;
 use App\Models\EvaluationCriteriaDetails;
+use App\Models\EvaluationCriteriaMasterDetails;
 use App\Models\EvaluationCriteriaScoreConfig;
 use App\Repositories\EvaluationCriteriaScoreConfigRepository;
 use Illuminate\Http\Request;
@@ -395,7 +396,7 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
                     }
                     $ans['max_value'] = $max_value;
                     $ans['min_value'] = $min_value;
-                    EvaluationCriteriaDetails::where('id',$ScoreConfig['criteria_detail_id'])->update($ans);
+                    EvaluationCriteriaMasterDetails::where('id',$ScoreConfig['criteria_detail_id'])->update($ans);
                     $x++;
                 }
 

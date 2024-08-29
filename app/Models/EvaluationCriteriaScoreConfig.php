@@ -99,5 +99,12 @@ class EvaluationCriteriaScoreConfig extends Model
         
     ];
 
+    public static function getEvalScore($id)
+    {
+        return self::select('id','criteria_detail_id','label','score')
+        ->where('criteria_detail_id', $id)
+        ->get();
+    }
+
     
 }

@@ -2807,8 +2807,9 @@ class SRMService
                     ];
                 }
             }
-            $result = ($push['score']/$criteriaDetail['max_value'])*$criteriaDetail['weightage'];
 
+            $result = ($push['score']/$criteriaDetail['max_value'])*$criteriaDetail['weightage'];
+            
             $att['bid_master_id'] = $push['bid_master_id'];
             $att['evaluation_detail_id'] = $push['evaluation_detail_id'];
             $att['score'] = $push['score'];

@@ -298,6 +298,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
     public function addEvaluationCriteria(Request $request)
     {
+
         $input = $this->convertArrayToSelectedValue($request->all(), array('critera_type_id', 'answer_type_id'));
         $employee = \Helper::getEmployeeInfo();
         $is_final_level = 0;
@@ -311,7 +312,6 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $idArray = array_map(function ($item) {
                 return $item['id'];
             }, $input['selectedData']);
-
             return $this->pullFromMasterEvaluationCriteria($request, $idArray, $input['tenderMasterId']);
 
         } else {
@@ -426,7 +426,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
                                 $ans['max_value'] = $maxAns;
                                 $ans['min_value'] = $minAns;
-                                EvaluationCriteriaDetails::where('id',$result['id'])->update($ans);
+                                EvaluationCriteriaMasterDetails::where('id',$result['id'])->update($ans);
                                 $x++;
                             }
                         }else{
@@ -456,7 +456,6 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
         // Initialize the parent-child mapping
         $parentMap = [];
-
         try {
             foreach ($results as $result) {
                 $this->insertCriteriaDetail($result, $input, $employee, $tenderId, $parentMap);
@@ -508,24 +507,51 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
         $criteriaDetail = EvaluationCriteriaDetails::create($data);
 
-        if ($result->is_final_level == 1 && $result->critera_type_id == 2) {
+
+        if ($result->is_final_level == 1 && $result->critera_type_id == 2)
+        {
+            if (in_array($result->answer_type_id, [2, 4])) {
+                $this->createScoreConfig($result, $criteriaDetail, $employee);
+            }
+        }
+
+        /*if ($result->is_final_level == 1 && $result->critera_type_id == 2) {
             if($result->answer_type_id == 2 ){
-                EvaluationCriteriaScoreConfig::where('criteria_detail_id', $result['id'])->delete();
-                $datayes['criteria_detail_id'] = $result['id'];
+               // EvaluationCriteriaScoreConfig::where('criteria_detail_id', $result['id'])->delete();
+                $datayes['criteria_detail_id'] = $criteriaDetail->id;
                 $datayes['label'] = 'Yes';
                 $datayes['score'] = $result->max_value;
                 $datayes['created_by'] = $employee->employeeSystemID;
                 EvaluationCriteriaScoreConfig::create($datayes);
 
-                $datano['criteria_detail_id'] = $result['id'];
+                $datano['criteria_detail_id'] = $criteriaDetail->id;
                 $datano['label'] = 'No';
                 $datano['score'] = $result->min_value;
                 $datano['created_by'] = $employee->employeeSystemID;
                 EvaluationCriteriaScoreConfig::create($datano);
             }
 
-            EvaluationCriteriaScoreConfig::where('criteria_detail_id', $result->id)->update(['criteria_detail_id' => $criteriaDetail->id]);
-        }
+            if($result->answer_type_id == 4)
+            {
+                $getEvalCriteriaScore = EvaluationCriteriaScoreConfig::getEvalScore($result['id']);
+
+                if(!empty($getEvalCriteriaScore))
+                {
+                    foreach ($getEvalCriteriaScore as $key => $value)
+                    {
+                        $datano['criteria_detail_id'] = $criteriaDetail->id;
+                        $datano['label'] = $value['label'];
+                        $datano['score']= $value['score'];
+                        $datano['created_by'] = $employee->employeeSystemID;
+                        EvaluationCriteriaScoreConfig::create($datano);
+                    }
+                }
+
+
+            }
+
+            //EvaluationCriteriaScoreConfig::where('criteria_detail_id', null)->update(['criteria_detail_id' => $criteriaDetail->id]);
+        }*/
 
         if ($criteriaDetail) {
             $parentMap[$result->id] = $criteriaDetail->id;
@@ -573,6 +599,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 return ['success' => false, 'message' => 'Description cannot be duplicated'];
             }
         }
+
 
         DB::beginTransaction();
         try {
@@ -627,6 +654,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 }
 
                 if($is_final_level == 1 && $input['critera_type_id'] == 2 && ($input['answer_type_id'] == 4 || $input['answer_type_id'] == 5) ){
+
                     if(count($input['selectedData'])>0){
                         $minAns = 0;
                         $maxAns = 0;
@@ -652,7 +680,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
                             $ans['max_value'] = $maxAns;
                             $ans['min_value'] = $minAns;
-                            EvaluationCriteriaDetails::where('id',$result['id'])->update($ans);
+                            EvaluationCriteriaMasterDetails::where('id',$result['id'])->update($ans);
                             $x++;
                         }
                     }else{
@@ -1222,5 +1250,32 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         }
 
+    }
+
+    private function createScoreConfig($result, $criteriaDetail, $employee)
+    {
+        if ($result->answer_type_id == 2) {
+            $scores = [
+                ['label' => 'Yes', 'score' => $result->max_value],
+                ['label' => 'No', 'score' => $result->min_value],
+            ];
+        }
+        elseif ($result->answer_type_id == 4)
+        {
+            $scores = EvaluationCriteriaScoreConfig::getEvalScore($result['id']);
+        }
+        else
+        {
+            return;
+        }
+
+        foreach ($scores as $score) {
+            EvaluationCriteriaScoreConfig::create([
+                'criteria_detail_id' => $criteriaDetail->id,
+                'label' => $score['label'],
+                'score' => $score['score'],
+                'created_by' => $employee->employeeSystemID,
+            ]);
+        }
     }
 }
