@@ -61,7 +61,7 @@ class EvaluationCriteriaScoreConfig extends Model
 {
 
     public $table = 'srm_evaluation_criteria_score_config';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -98,16 +98,16 @@ class EvaluationCriteriaScoreConfig extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public static function getEvalScore($id, $fromTender)
     {
         return self::select('id','criteria_detail_id','label','score')
-        ->where('fromTender', $fromTender)
-        ->where('criteria_detail_id', $id)
-        ->get();
+            ->where('fromTender', 0)
+            ->where('criteria_detail_id', $id)
+            ->get();
     }
 
-    
+
 }
