@@ -925,7 +925,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 $detail->transactionCurrencyID, $detail->companyLocalCurrencyID, $detail->companyLocalAmount,
                 $paySupplierInvoiceMaster->BPVAccount);
 
-            $currencyConversion = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID, $detail->companyLocalCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $detail->companyLocalAmount);
+            $currencyConversion = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID, $detail->transactionCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $detail->transactionAmount);
             $expenceClaimAmount = round($currencyConversion['documentAmount'],$CompanyCurrency->company_default_decimal);
 
             $temData = array(

@@ -441,7 +441,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
 
             foreach($expenseClaimDetails as &$det)
             {
-                $currencyConversion = \Helper::currencyConversion($expenseClaim->companyID, $det->companyLocalCurrencyID, $voucher->supplierTransCurrencyID, $det->companyLocalAmount);
+                $currencyConversion = \Helper::currencyConversion($expenseClaim->companyID, $det->transactionCurrencyID, $voucher->supplierTransCurrencyID, $det->transactionAmount);
 
                 $det['expence_claim_amount'] = round($currencyConversion['documentAmount'],$data->company_default_decimal);
                 $det['voucher_currency'] = $voucher->transactioncurrency->CurrencyCode;

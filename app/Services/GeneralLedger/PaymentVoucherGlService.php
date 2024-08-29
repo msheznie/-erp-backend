@@ -1106,12 +1106,12 @@ class PaymentVoucherGlService
                                         }
                                     }
                                 } else {
-                                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
-                                    $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount);
-                                    $convertedLocalAmount += \Helper::roundValue($val->localAmount);
-                                    $convertedRpt += \Helper::roundValue($val->rptAmount);
+                                    $data['documentLocalCurrencyER'] =  $masterData->expenseClaimOrPettyCash == 1?$masterData->localCurrencyER:$val->localCurrencyER;
+                                    $data['documentLocalAmount'] =  $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($masterLocal) :\Helper::roundValue($val->localAmount);
+                                    $data['documentRptCurrencyER'] = $masterData->expenseClaimOrPettyCash == 1? $masterData->companyRptCurrencyER: $val->reportingCurrencyER;
+                                    $data['documentRptAmount'] = $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($masterRpt) : \Helper::roundValue($val->rptAmount);
+                                    $convertedLocalAmount += $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($masterLocal) :\Helper::roundValue($val->localAmount);
+                                    $convertedRpt += $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($masterRpt) : \Helper::roundValue($val->rptAmount);
                                 }
 
                                 $data['serviceLineSystemID'] = $val->serviceLineSystemID;
@@ -1121,14 +1121,15 @@ class PaymentVoucherGlService
                                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                 $data['documentNarration'] = $val->comments;
-                                $data['documentTransCurrencyID'] = $val->transCurrencyID;
-                                $data['documentTransCurrencyER'] = $val->transCurrencyER;
+                                $data['documentTransCurrencyID'] = $masterData->expenseClaimOrPettyCash == 1?$masterData->supplierTransCurrencyID: $val->transCurrencyID;
+                                $data['documentTransCurrencyER'] = $masterData->expenseClaimOrPettyCash == 1?$masterData->supplierTransCurrencyER: $val->transCurrencyER;
                                 $data['documentTransAmount'] = \Helper::roundValue($val->transAmount);
                                 $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                 $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                                 $data['timestamp'] = \Helper::currentDateTime();
                                 $convertedTrans += \Helper::roundValue($val->transAmount);
                                 array_push($finalData, $data);
+ 
                             }
                         }
                     }
