@@ -297,7 +297,7 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
             $result = EvaluationCriteriaScoreConfig::where('id',$input['id'])->delete();
             if($result) {
                 $criteriaConfig = EvaluationCriteriaScoreConfig::where('fromTender',$fromTender)
-                ->where('criteria_detail_id',$input['criteria_detail_id'])
+                    ->where('criteria_detail_id',$input['criteria_detail_id'])
                     ->get();
                 foreach ($criteriaConfig as $val){
                     if($x==1){
@@ -345,8 +345,9 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
             $drop['created_by'] = $employee->employeeSystemID;
             $result = EvaluationCriteriaScoreConfig::create($drop);
             if($result){
+
                 $criteriaConfig = EvaluationCriteriaScoreConfig::where('fromTender',$fromTender)
-                ->where('criteria_detail_id',$input['criteria_detail_id'])->get();
+                    ->where('criteria_detail_id',$input['criteria_detail_id'])->get();
 
                 foreach ($criteriaConfig as $val){
                     if($x==1){
