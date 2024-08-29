@@ -1273,7 +1273,6 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
     }
 
-
     private function createScoreConfig($result, $criteriaDetail, $employee, $fromTender)
     {
         if ($result->answer_type_id == 2) {
