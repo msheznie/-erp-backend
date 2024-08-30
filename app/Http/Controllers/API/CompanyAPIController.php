@@ -1001,6 +1001,17 @@ class CompanyAPIController extends AppBaseController
             ->orderBy('AccountDescription', 'asc')
             ->get();
 
+        $controlAccountBalanceGlCOA = ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->whereHas('chartofaccount_assigned', function($query) use ($selectedCompanyId) {
+                $query->where('companySystemID', $selectedCompanyId)
+                    ->where('isAssigned', -1)
+                    ->where('isActive', 1);
+            })
+            ->where('isApproved',1)
+            ->where('isActive',1)
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
 
         $output = array(
             'liabilityAccountsCOA' => $liabilityAccountsCOA,
@@ -1008,6 +1019,7 @@ class CompanyAPIController extends AppBaseController
             'discountsChartOfAccounts' => $discountsChartOfAccounts,
             'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccount,
             'liabilityAccount' => $liabilityAccount,
+            'controlAccountBalanceGlCOA' => $controlAccountBalanceGlCOA,
             'assetAndLiabilityAccount' => $assetAndLiabilityAccount
 
         );
