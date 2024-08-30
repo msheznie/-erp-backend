@@ -290,13 +290,15 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
         $min_value = 0;
         $max_value = 0;
         $x=1;
-        $fromTender = $input['from_tender'] ?? false;
+        $fromTender = $input['fromTender'] ?? false;
         $model = $fromTender ? EvaluationCriteriaDetails::class : EvaluationCriteriaMasterDetails::class;
         DB::beginTransaction();
         try {
             $result = EvaluationCriteriaScoreConfig::where('id',$input['id'])->delete();
             if($result) {
-                $criteriaConfig = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['criteria_detail_id'])->get();
+                $criteriaConfig = EvaluationCriteriaScoreConfig::where('fromTender',$fromTender)
+                ->where('criteria_detail_id',$input['criteria_detail_id'])
+                    ->get();
                 foreach ($criteriaConfig as $val){
                     if($x==1){
                         $min_value = $val['score'];
@@ -339,10 +341,12 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
             $drop['criteria_detail_id'] = $input['criteria_detail_id'];
             $drop['label'] = $input['label'];
             $drop['score'] = $input['score'];
+            $drop['fromTender'] = $fromTender;
             $drop['created_by'] = $employee->employeeSystemID;
             $result = EvaluationCriteriaScoreConfig::create($drop);
             if($result){
-                $criteriaConfig = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['criteria_detail_id'])->get();
+                $criteriaConfig = EvaluationCriteriaScoreConfig::where('fromTender',$fromTender)
+                ->where('criteria_detail_id',$input['criteria_detail_id'])->get();
 
                 foreach ($criteriaConfig as $val){
                     if($x==1){

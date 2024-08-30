@@ -2295,7 +2295,7 @@ class SRMService
         $critera_type_id = 1;
         $bidMasterId = (sizeof($arr) > 0) ? $arr[1] : null;
         $negotiation = $negotiationStatus;
-
+        $fromTender = 1;
         if(!$negotiationStatus){
             $tenderId = $request->input('extra.tenderId');
             $critera_type_id = $request->input('extra.critera_type_id');
@@ -2309,16 +2309,24 @@ class SRMService
             $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
         }
 
-        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
+        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config' => function ($q)  use ($fromTender){
+            $q->where('fromTender',$fromTender);
+        }, 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
             $q->where('bid_master_id', $bidMasterId);
-        }, 'child' => function ($q) use ($bidMasterId) {
-            $q->with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
+        }, 'child' => function ($q) use ($bidMasterId ,$fromTender) {
+            $q->with(['evaluation_criteria_score_config' => function ($q) use ($fromTender){
+                $q->where('fromTender',$fromTender);
+            }, 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
                 $q->where('bid_master_id', $bidMasterId);
-            }, 'child' => function ($q) use ($bidMasterId) {
-                $q->with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
+            }, 'child' => function ($q) use ($bidMasterId ,$fromTender) {
+                $q->with(['evaluation_criteria_score_config' => function ($q) use ($fromTender) {
+                    $q->where('fromTender',$fromTender);
+                }, 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
                     $q->where('bid_master_id', $bidMasterId);
-                }, 'child' => function ($q) use ($bidMasterId) {
-                    $q->with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
+                }, 'child' => function ($q) use ($bidMasterId, $fromTender) {
+                    $q->with(['evaluation_criteria_score_config' => function ($q) use ($fromTender) {
+                        $q->where('fromTender',$fromTender);
+                    }, 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
                         $q->where('bid_master_id', $bidMasterId);
                     }]);
                 }]);

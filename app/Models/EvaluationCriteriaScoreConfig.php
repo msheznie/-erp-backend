@@ -71,6 +71,7 @@ class EvaluationCriteriaScoreConfig extends Model
     public $fillable = [
         'criteria_detail_id',
         'label',
+        'fromTender',
         'score',
         'created_by',
         'updated_by'
@@ -87,7 +88,8 @@ class EvaluationCriteriaScoreConfig extends Model
         'label' => 'string',
         'score' => 'float',
         'created_by' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'fromTender'=> 'integer'
     ];
 
     /**
