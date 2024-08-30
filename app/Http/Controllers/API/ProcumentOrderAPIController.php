@@ -152,6 +152,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\ERPAssetTransfer;
@@ -8947,8 +8948,17 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $filePath = Storage::disk($disk)->path($originalFileName);
+            $spreadsheet = IOFactory::load($filePath);
+
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $sheet->removeRow(1, 6);
+
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save($filePath);
+
+            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -8967,8 +8977,17 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             $excelHeaders = array_keys(array_merge(...$uniqueData));
-            $templateHeaders = ['item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no'];
+            $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $purchaseOrder->companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();
+            if ($isProject_base) {
+                $templateHeaders = ['item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no'];
+            } else {
+                $templateHeaders = ['item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'client_ref_no'];
+            }
             $unexpectedHeader = array_diff($excelHeaders, $templateHeaders);
+
             if ($unexpectedHeader) {
                 return $this->sendError('Upload failed due to changes made in the Excel template', 500);
             }
