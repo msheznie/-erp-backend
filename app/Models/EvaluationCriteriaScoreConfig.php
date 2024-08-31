@@ -108,4 +108,6 @@ class EvaluationCriteriaScoreConfig extends Model
             ->where('criteria_detail_id', $id)
             ->get();
     }
+
+
 }
