@@ -1282,7 +1282,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         }
         elseif ($result->answer_type_id == 4)
         {
-            $scores = EvaluationCriteriaScoreConfig::getEvalScore($result['id']);
+            $scores = EvaluationCriteriaScoreConfig::getEvalScore($result['id'], $fromTender);
         }
         else
         {
