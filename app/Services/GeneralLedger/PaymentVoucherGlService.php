@@ -1048,7 +1048,7 @@ class PaymentVoucherGlService
                         $data['documentLocalAmount'] = \Helper::roundValue($masterLocal) * -1;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['documentRptAmount'] = \Helper::roundValue($masterRpt) * -1;
+                        $data['documentRptAmount'] = $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($dpTotal->transAmount/$masterData->companyRptCurrencyER) * -1:\Helper::roundValue($masterRpt) * -1;
                         $data['timestamp'] = \Helper::currentDateTime();
                         array_push($finalData, $data);
 
@@ -1107,11 +1107,11 @@ class PaymentVoucherGlService
                                     }
                                 } else {
                                     $data['documentLocalCurrencyER'] =  $masterData->expenseClaimOrPettyCash == 1?$masterData->localCurrencyER:$val->localCurrencyER;
-                                    $data['documentLocalAmount'] =  $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($masterLocal) :\Helper::roundValue($val->localAmount);
+                                    $data['documentLocalAmount'] =  $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($val->transAmount/$masterData->localCurrencyER) :\Helper::roundValue($val->localAmount);
                                     $data['documentRptCurrencyER'] = $masterData->expenseClaimOrPettyCash == 1? $masterData->companyRptCurrencyER: $val->reportingCurrencyER;
-                                    $data['documentRptAmount'] = $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($masterRpt) : \Helper::roundValue($val->rptAmount);
-                                    $convertedLocalAmount += $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($masterLocal) :\Helper::roundValue($val->localAmount);
-                                    $convertedRpt += $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($masterRpt) : \Helper::roundValue($val->rptAmount);
+                                    $data['documentRptAmount'] = $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($val->transAmount/$masterData->companyRptCurrencyER) : \Helper::roundValue($val->rptAmount);
+                                    $convertedLocalAmount += $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($val->transAmount/$masterData->localCurrencyER) :\Helper::roundValue($val->localAmount);
+                                    $convertedRpt += $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($val->transAmount/$masterData->companyRptCurrencyER) : \Helper::roundValue($val->rptAmount);
                                 }
 
                                 $data['serviceLineSystemID'] = $val->serviceLineSystemID;
@@ -1255,15 +1255,30 @@ class PaymentVoucherGlService
                     array_push($finalData, $data);
                 }
 
+                if($masterData->expenseClaimOrPettyCash == 1)
+                {
+                    $masterRpt1 =  \Helper::roundValue($dpTotal->transAmount/$masterData->companyRptCurrencyER);
+                    $diffRptAmount = \Helper::roundValue($convertedRpt) - \Helper::roundValue($masterRpt1);
+                    $tolerance = 1e-6; 
+                        if (abs($diffRptAmount) < $tolerance) {
+                            $diffRptAmount = 0;
+                        }
+                }
+                else
+                {
+                    $diffRptAmount = $convertedRpt - $masterRpt;
+                }
+               
+
                 if($exemptVatTotal && $expenseCOA->recordType == 2) {
                     $diffTrans = $convertedTrans - $dpTotal->transAmount - $exemptVatTotal->vatAmount;
                     $diffLocal = $convertedLocalAmount - $masterLocal - $exemptVatTotal->VATAmountLocal;
-                    $diffRpt = $convertedRpt - $masterRpt - $exemptVatTotal->VATAmountRpt;
+                    $diffRpt = $diffRptAmount - $exemptVatTotal->VATAmountRpt;
                 }
                 else{
                     $diffTrans = $convertedTrans - $dpTotal->transAmount;
                     $diffLocal = $convertedLocalAmount - $masterLocal;
-                    $diffRpt = $convertedRpt - $masterRpt;
+                    $diffRpt = $diffRptAmount;
                 }
 
                 if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
