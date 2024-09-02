@@ -134,15 +134,15 @@ class ValidateAssetCreation
 
             $date = $date->format('Y-m-d');
 
-            $financeYear = CompanyFinanceYear::where('companySystemID', $companySystemID)->where('bigginingDate', "<=", $date)->where('endingDate', ">=", $date)->first();
-            $financePeriod = CompanyFinancePeriod::where('companySystemID', $companySystemID)->where('departmentSystemID', 9)->where('dateFrom', "<=", $date)->where('dateTo', ">=", $date)->first();
+            $financeYear = CompanyFinanceYear::where('companySystemID', $companySystemID)->where('bigginingDate', "<=", $date)->where('endingDate', ">=", $date)->where('isActive', -1)->first();
+            $financePeriod = CompanyFinancePeriod::where('companySystemID', $companySystemID)->where('departmentSystemID', 9)->where('dateFrom', "<=", $date)->where('dateTo', ">=", $date)->where('isActive', -1)->first();
 
             if(empty($financeYear)){
-                return self::sendJsonResponse(false,"Asset costing not within the finance year", 500);
+                return self::sendJsonResponse(false,"Finance year not activated", 500);
             }
 
             if(empty($financePeriod)){
-                return self::sendJsonResponse(false,"Asset costing not within the finance period", 500);
+                return self::sendJsonResponse(false,"Finance period not activated", 500);
             }
         } catch(\Exception $e){
             return self::sendJsonResponse(false,$e->getMessage(), 500);

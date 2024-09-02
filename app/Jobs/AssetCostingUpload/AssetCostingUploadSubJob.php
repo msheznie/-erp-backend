@@ -80,9 +80,10 @@ class AssetCostingUploadSubJob implements ShouldQueue
         $assetFinanceCategory = $jobData['assetFinanceCategory'];
         $totalRecords = $jobData['totalRecords'];
         $auditCategory = $uploadData['auditCategory'];
+        $assetCostingTypeID = $uploadData['assetCostingTypeID'];
         $uploadedCompany = $uploadData['uploadedCompany'];
-        $postToGL = $uploadData['postToGL'];
-        $postToGLCodeSystemID = $uploadData['postToGLCodeSystemID'];
+        $postToGL = isset($uploadData['postToGL']) ? $uploadData['postToGL']: null;
+        $postToGLCodeSystemID = isset($uploadData['postToGLCodeSystemID']) ? $uploadData['postToGLCodeSystemID']: null;
         $uploadBudgetCounter = UploadAssetCosting::find($logUploadAssetCosting->assetCostingUploadID);
 
         DB::beginTransaction();
@@ -254,7 +255,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     "COMMENTS" => $comments,
                     "LOCATION" => isset($location->locationID) ? $location->locationID : null,
                     "lastVerifiedDate" => $lastPhyDate,
-                    "assetType" => 1,
+                    "assetType" => $assetCostingTypeID,
                     "supplierIDRentedAsset" => null,
                     "AUDITCATOGARY" => $auditCategory,
                     "faCatID" => $mainCategoryData->faCatID,
