@@ -1658,9 +1658,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if ((($paySupplierInvoiceMaster->BPVbankCurrencyER != $input['BPVbankCurrencyER'] && $input['BPVbankCurrency'] == $paySupplierInvoiceMaster->BPVbankCurrency) || $paySupplierInvoiceMaster->localCurrencyER != $input['localCurrencyER'] && $input['localCurrencyID'] == $paySupplierInvoiceMaster->localCurrencyID || $paySupplierInvoiceMaster->companyRptCurrencyER != $input['companyRptCurrencyER'] && $input['companyRptCurrencyID'] == $paySupplierInvoiceMaster->companyRptCurrencyID)) {
 
-
-                if ($checkErChange) {
-                    $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
+                if ($checkErChange && $input['confirmedYN'] == 1) {
+                    if(($input['BPVbankCurrencyEROld'] != $paySupplierInvoiceMaster->BPVbankCurrencyER) || ($input['localCurrencyEROld'] != $paySupplierInvoiceMaster->localCurrencyER) || ($input['companyRptCurrencyEROld'] != $paySupplierInvoiceMaster->companyRptCurrencyER))
+                    {
+                        $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$input['BPVbankCurrencyEROld']." | Local ER ".$input['localCurrencyEROld']." | Reporting ER ".$input['companyRptCurrencyEROld']."</p><p style='font-size: medium;'>Current rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p>Are you sure you want to proceed ?</p>";
+                    }else {
+                        $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
+                    }
 
                     return $this->sendError($erMessage, 500, ['type' => 'erChange']);
                 } else {
