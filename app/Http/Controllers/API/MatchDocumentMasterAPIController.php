@@ -2582,6 +2582,73 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                         }
 
                                 }
+
+                                $finalTransAmount = $finalLocalAmount = $finalRptAmount = [];
+
+                                foreach ($finalData as $key => $value) {
+                                    $temp = $value['documentTransAmount'];
+                                    if($temp > 0){
+                                        $finalTransAmount[0] = $finalTransAmount[0] ?? 0 + abs($temp);
+                                    }
+                                    else {
+                                        $finalTransAmount[1] = $finalTransAmount[1] ?? 0 + abs($temp);
+                                    }
+
+                                    $temp = $value['documentLocalAmount'];
+                                    if($temp > 0){
+                                        $finalLocalAmount[0] = $finalLocalAmount[0] ?? 0 + abs($temp);
+                                    }
+                                    else {
+                                        $finalLocalAmount[1] = $finalLocalAmount[1] ?? 0 + abs($temp);
+                                    }
+
+                                    $temp = $value['documentRptAmount'];
+                                    if($temp > 0){
+                                        $finalRptAmount[0] = $finalRptAmount[0] ?? 0 + abs($temp);
+                                    }
+                                    else {
+                                        $finalRptAmount[1] = $finalRptAmount[1] ?? 0 + abs($temp);
+                                    }
+                                }
+
+                                $finalTransAmount[3] = $finalTransAmount[0] - $finalTransAmount[1];
+                                $finalTransAmount[3] = ($finalTransAmount[0] < $finalTransAmount[1]) ? abs($finalTransAmount[3]) : (abs($finalTransAmount[3]) * -1);
+
+                                $finalLocalAmount[3] = $finalLocalAmount[0] - $finalLocalAmount[1];
+                                $finalLocalAmount[3] = ($finalLocalAmount[0] < $finalLocalAmount[1]) ? abs($finalLocalAmount[3]) : (abs($finalLocalAmount[3]) * -1);
+
+                                $finalRptAmount[3] = $finalRptAmount[0] - $finalRptAmount[1];
+                                $finalRptAmount[3] = ($finalRptAmount[0] < $finalRptAmount[1]) ? abs($finalRptAmount[3]) : (abs($finalRptAmount[3]) * -1);
+
+                                if(($finalTransAmount[3] != 0) || ($finalLocalAmount[3] != 0) || ($finalRptAmount[3] != 0)){
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($finalTransAmount[3]);
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] =\Helper::roundValue($finalLocalAmount[3]);
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($finalRptAmount[3]);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    if(isset($advReceipt)) {
+                                        $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $advReceipt->serviceLineCode;
+                                    }
+                                    elseif (isset($directReceipt)) {
+                                        $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $directReceipt->serviceLineCode;
+                                    }
+                                    else {
+                                        $data['serviceLineSystemID'] = '';
+                                        $data['serviceLineCode'] = '';
+                                    }
+                                    array_push($finalData, $data);
+                                }
                                 
                                 foreach ($finalData as $data) {
                                 GeneralLedger::create($data);
