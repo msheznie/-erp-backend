@@ -1062,8 +1062,8 @@ class PurchaseReturnAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $purchaseReturnMaster = $purchaseReturnMaster->where(function ($query) use ($search) {
-                $query->where('purchaseReturnCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comment', 'LIKE', "%{$search}%");
+                $query->where('purchaseReturnCode', 'LIKE', "%{$search}%");
+                    // ->orWhere('comment', 'LIKE', "%{$search}%");
             });
         }
 
@@ -1156,8 +1156,8 @@ class PurchaseReturnAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $purchaseReturnMaster = $purchaseReturnMaster->where(function ($query) use ($search) {
-                $query->where('purchaseReturnCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comment', 'LIKE', "%{$search}%");
+                $query->where('purchaseReturnCode', 'LIKE', "%{$search}%");
+                   // ->orWhere('comment', 'LIKE', "%{$search}%");
             });
         }
 

@@ -195,6 +195,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                                 if ($detailRes) {
                                     if(isset($res['data']['linkedTaxLedgerDetails']) && count($res['data']['linkedTaxLedgerDetails']) > 0) {
                                         $updateVATDetail = TaxLedgerDetail::whereIn('id', $res['data']['linkedTaxLedgerDetails'])
+                                                            ->whereNull('returnFilledDetailID')
                                                             ->update(['returnFilledDetailID' => $detailRes->id]);
                                     }
                                 }
@@ -442,6 +443,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $results = VatReturnFillingMaster::whereIn('companySystemID', $subCompanies);
 
+
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -453,7 +455,6 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $results = $results->selectRaw('*, CASE WHEN serialNo = (SELECT MAX(serialNo) FROM vat_return_filling_master WHERE companySystemID IN ('.implode(',', $subCompanies).')) THEN 1 ELSE 0 END AS isLast');
 
-
         return \DataTables::of($results)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -463,6 +464,28 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->addColumn('balanceAmount', function ($row) {
+                return ($row->filled_master_categories) ? $row->filled_master_categories->where('categoryID',24)->first()->filled_details->where('vatReturnFillingSubCatgeoryID',27)->first()->taxAmount : 0;
+            })
+            ->addColumn('isGenerateDebitNote', function ($row) {
+                $balanceAmount = $row->filled_master_categories->where('categoryID',24)->first()->filled_details->where('vatReturnFillingSubCatgeoryID',27)->first()->taxAmount;
+                if($balanceAmount > 0)
+                    return false;
+                return true;
+            })
+            ->addColumn('isDocumentGenerated', function ($row) {
+                return (boolean) !is_null($row->masterDocumentAutoID);
+            })
+            ->addColumn('generateDocumentCode', function ($row) {
+                if($row->masterDocumentTypeID == 15) {
+                     return ($row->debitNote) ? $row->debitNote->debitNoteCode : null;
+                 }else {
+                     return ($row->invoice) ? $row->invoice->bookingInvCode: null;
+                 }
+            })
+            ->addColumn('isPrvDocGenDoc', function ($row) {
+                return  ($row->isPreviousVRFHasDocument()) ?? false;
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }
@@ -485,7 +508,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $results = $res;
 
         $search = $request->input('search.value');
-        if ($search) {
+        if ($search && is_object($results)) {
             $search = str_replace("\\", "\\\\", $search);
             $results = $results->where(function ($query) use ($search) {
                 $query->where('documentNumber', 'LIKE', "%{$search}%")

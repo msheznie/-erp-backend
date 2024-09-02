@@ -1243,7 +1243,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyID'];
 
-        $toEmployeeList = Employee::where('empCompanySystemID',$companyID)->where('discharegedYN','!=',-1)->whereHas('hr_emp', function($q){
+        $toEmployeeList = Employee::where('discharegedYN','!=',-1)->whereHas('hr_emp', function($q){
             $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
         })->get();
 

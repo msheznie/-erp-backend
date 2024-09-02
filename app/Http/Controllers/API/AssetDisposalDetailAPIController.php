@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateAssetDisposalDetailAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalDetailAPIRequest;
 use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
+use App\Models\Company;
 use App\Models\FixedAssetMaster;
 use App\Models\ItemAssigned;
 use App\Repositories\AssetDisposalDetailRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -139,6 +142,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
                 if ($new['isChecked']) {
                     $depAmountLocal = 0;
                     $depAmountRpt = 0;
+                    $lastDepDate = null;
                     if (count($new['depperiod_by']) > 0) {
                         $depAmountLocal = $new['depperiod_by'][0]['depAmountLocal'];
                     } else {
@@ -148,6 +152,9 @@ class AssetDisposalDetailAPIController extends AppBaseController
                         $depAmountRpt = $new['depperiod_by'][0]['depAmountRpt'];
                     } else {
                         $depAmountRpt = 0;
+                    }
+                    if(count($new['depperiod_period']) > 0) {
+                        $lastDepDate = $new['depperiod_period'][0]['depForFYperiodEndDate'];
                     }
                     count($new['depperiod_by']) > 0 ? $new['depperiod_by'][0]['depAmountRpt'] : 0;
                     $tempArray["assetdisposalMasterAutoID"] = $input["assetdisposalMasterAutoID"];
@@ -160,6 +167,9 @@ class AssetDisposalDetailAPIController extends AppBaseController
                     $tempArray["faCode"] = $new["faCode"];
                     $tempArray["faUnitSerialNo"] = $new["faUnitSerialNo"];
                     $tempArray["assetDescription"] = $new["assetDescription"];
+                    $tempArray["condition"] = $new['condition'] ?? null;
+                    $tempArray["depMonth"] = $new['depMonth'] ?? null;
+                    $tempArray["lastDepDate"] = $lastDepDate? new Carbon($lastDepDate): null;
                     $tempArray["COSTUNIT"] = $new["COSTUNIT"];
                     $tempArray["costUnitRpt"] = $new["costUnitRpt"];
                     $tempArray["depAmountLocal"] = $depAmountLocal;
@@ -173,20 +183,42 @@ class AssetDisposalDetailAPIController extends AppBaseController
                     $tempArray["DISPOGLCODESystemID"] = $new["dispglCodeSystemID"];
                     $tempArray["DISPOGLCODE"] = $new["DISPOGLCODE"];
 
+
+
+
+
                     if($assetDisposalMaster->disposalType == 1 || $assetDisposalMaster->disposalType == 6){
                         $tempArray["revenuePercentage"] = $assetDisposalMaster->revenuePercentage;
                         if($tempArray["netBookValueRpt"] || $tempArray["netBookValueLocal"]){
                             $tempArray["sellingPriceRpt"] = \Helper::roundValue(($tempArray["netBookValueRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
-                            $tempArray["sellingPriceLocal"] = \Helper::roundValue(($tempArray["netBookValueLocal"] * (100 + $tempArray["revenuePercentage"]))/100);
+
+                            $companyCurrency = \Helper::companyCurrency($tempArray["companySystemID"]);
+                            $currencyConversion = \Helper::currencyConversion($tempArray["companySystemID"], $companyCurrency->reportingCurrency, $companyCurrency->reportingCurrency, $tempArray['sellingPriceRpt']);
+
+                            $tempArray["sellingPriceLocal"] = \Helper::roundValue($currencyConversion['localAmount']);
+
                         }else if($tempArray["costUnitRpt"] || $tempArray["COSTUNIT"]){
                             $tempArray["sellingPriceRpt"] = \Helper::roundValue(($tempArray["costUnitRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
                             $tempArray["sellingPriceLocal"] = \Helper::roundValue(($tempArray["COSTUNIT"] * (100 + $tempArray["revenuePercentage"]))/100);
                         }else{
                             $tempArray["revenuePercentage"] = 0;
                         }
+                        $isVATEligible = TaxService::checkCompanyVATEligible($new['companySystemID']);
+                        $company = Company::find($new['companySystemID']);
+
+                        if ($isVATEligible && $company->vatRegisteredYN == 1) {
+                            $defaultVAT = TaxService::getDefaultVAT($new['companySystemID'], null, 0);
+
+                            $tempArray["vatSubCategoryID"] = $defaultVAT['vatSubCategoryID'];
+                            $tempArray["vatPercentage"] = $defaultVAT['percentage'];
+                            $tempArray["vatMasterCategoryID"] = $defaultVAT['vatMasterCategoryID'];
+                            $tempArray["vatAmount"] = $tempArray["sellingPriceRpt"] * $defaultVAT['percentage'] / 100;
+                            $tempArray["sellingTotal"] = $tempArray["sellingPriceRpt"] + $tempArray['vatAmount'];
+                        }
                     }else{
                         $tempArray["revenuePercentage"] = 0;
                     }
+
 
                     $this->assetDisposalDetailRepository->create($tempArray);
                      FixedAssetMaster::find($new["faID"])
@@ -315,6 +347,16 @@ class AssetDisposalDetailAPIController extends AppBaseController
         if (empty($disposalMaster)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_master')]));
         }
+        if($disposalMaster->vatRegisteredYN == 1 && ($disposalMaster->disposalType == 1 || $disposalMaster->disposalType == 6)) {
+            if($input['isFromAssign'] == 0 && $input['vatMasterCategoryID'] == $assetDisposalDetail->vatMasterCategoryID) {
+                $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($disposalMaster->documentSystemID, $disposalMaster->companySystemID, $id, $input);
+
+                if (!$validateVATCategories['status']) {
+                    return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vatIssue'));
+                }
+            }
+        }
+
 
         if($input['isFromAssign']) {
             if ($disposalMaster->disposalType == 1) {

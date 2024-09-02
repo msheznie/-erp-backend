@@ -118,6 +118,8 @@ Route::group([], function() {
     Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit')->name('Procurement order audit');
     Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail')->name('Get logistic print detail');
     Route::get('procumentOrderTotals', 'ProcumentOrderAPIController@procumentOrderTotals')->name('Procurement order totals');
+    Route::get('getItemBulkUploadError', 'PoBulkUploadErrorLogAPIController@getItemBulkUploadError')->name('Procurement order totals');
+
     Route::put('poConfigDescriptionUpdate/{id}', 'ProcumentOrderAPIController@poConfigDescriptionUpdate')->name('Update purchase order configuration description');
 
     Route::post('updatePoConfigSelection', 'ProcumentOrderAPIController@updatePoConfigSelection')->name('Update po config selection for print');
@@ -156,6 +158,7 @@ Route::group([], function() {
     Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail')->name('Purchase order statuses send email');
     Route::post('purchaseOrderValidateItem', 'PurchaseOrderDetailsAPIController@purchaseOrderValidateItem')->name('Procurement order validate item');
     Route::post('purchaseOrderDetailsAddAllItems', 'PurchaseOrderDetailsAPIController@purchaseOrderDetailsAddAllItems')->name('Procurement order add all item');
+    Route::post('deletePoItemUploadErrorLog/{id}', 'PoBulkUploadErrorLogAPIController@deletePoItemUploadErrorLog');
 
     Route::resource('po_detail_expected_delivery_dates', 'PoDetailExpectedDeliveryDateAPIController');
     Route::resource('procurement-order', 'ProcumentOrderAPIController');
@@ -168,7 +171,7 @@ Route::group([], function() {
     Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
     Route::resource('purchase_order_statuses', 'PurchaseOrderStatusAPIController');
     Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
-    
+
 });
 
 //Report Open Requests

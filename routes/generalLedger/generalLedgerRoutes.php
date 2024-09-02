@@ -212,6 +212,7 @@ Route::group([], function(){
     Route::post('updateVatReturnFillingDetails', 'VatReturnFillingMasterAPIController@updateVatReturnFillingDetails')->name('Update VAT Return filling');
     Route::post('vatReturnFillingReopen', 'VatReturnFillingMasterAPIController@vatReturnFillingReopen')->name('VAT Return filling reopen');
     Route::post('getVRFAmend', 'VatReturnFillingMasterAPIController@getVRFAmend')->name('Get VRF Amend');
+    Route::post('generateDocumentAgainstVRF', 'VRFDocumentGenerateController@store')->name('Get Document Against VRF');
 
     // contiungency Budget
 

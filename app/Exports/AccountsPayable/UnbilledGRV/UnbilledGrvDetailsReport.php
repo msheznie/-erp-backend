@@ -10,6 +10,7 @@ class UnbilledGrvDetailsReport
     public $supplierCode;
     public $supplierName;
     public $docNumber;
+    public $pendingSICode;
     public $docDate;
     public $docValueLocalCurrency;
     public $matachedValueLocalCurrency;
@@ -25,13 +26,13 @@ class UnbilledGrvDetailsReport
     public function getCloumnFormat()
     {
         return [
-            'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'F' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
 
 
 
@@ -43,6 +44,7 @@ class UnbilledGrvDetailsReport
             'Supplier Code',
             'Supplier Name',
             'Doc Number',
+            'Supplier Invoice (Pending)',
             'Doc Date',
             'Doc Value (Local Currency)',
             'Matched Value (Local Currency)',
@@ -83,6 +85,14 @@ class UnbilledGrvDetailsReport
     public function setDocNumber($docNumber): void
     {
         $this->docNumber = $docNumber;
+    }
+
+    /**
+     * @param mixed $pendingSICode
+     */
+    public function setPendingSICode($pendingSICode): void
+    {
+        $this->pendingSICode = $pendingSICode;
     }
 
     /**

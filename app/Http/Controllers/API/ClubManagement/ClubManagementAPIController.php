@@ -32,6 +32,7 @@ use App\Repositories\CustomerMasterRepository;
 use App\Models\StageCustomerReceivePayment;
 use App\Models\StageCustomerReceivePaymentDetail;
 use App\Models\StageDirectReceiptDetail;
+use App\Services\API\CustomerMasterAPIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -537,160 +538,64 @@ class ClubManagementAPIController extends AppBaseController
         }
     }
 
-    public function createCustomerMaster(CreateCustomerMasterRequest  $request){
-        DB::beginTransaction();
-        try {
+    public function createCustomerMaster(Request $request){
         $input = $request->all();
 
-            $commonValidorMessages = [
-                'customerCountry.required' => 'Country field is required.',
-                'custUnbilledAccountSystemID.required' => 'Unbilled Receivable Account field is required.',
-                'custGLAccountSystemID.required' => 'Control Account field is required.',
-                'customerShortCode.required' => 'Customer Short Code field is required.',
-                'CustomerName.required' => 'Customer Name field is required.',
-                'customerCategoryID.required' => 'Customer Category field is required.',
-                'ReportTitle.required' => 'Report Title field is required.',
-            ];
+        $commonValidorMessages = [
+            'customerCountry.required' => 'Country field is required.',
+            'custUnbilledAccountSystemID.required' => 'Unbilled Receivable Account field is required.',
+            'custGLAccountSystemID.required' => 'Control Account field is required.',
+            'custAdvanceAccountSystemID.required' => 'Advance Account field is required.',
+            'customerShortCode.required' => 'Customer Short Code field is required.',
+            'CustomerName.required' => 'Customer Name field is required.',
+            'customerCategoryID.required' => 'Customer Category field is required.',
+            'ReportTitle.required' => 'Report Title field is required.',
+        ];
 
-            $commonValidator = \Validator::make($input, [
-                'customerCountry' => 'required',
-                'custUnbilledAccountSystemID' => 'required',
-                'custGLAccountSystemID' => 'required',
-                'customerShortCode' => 'required',
-                'CustomerName' => 'required',
-                'customerCategoryID' => 'required',
-                'ReportTitle' => 'required'
-            ], $commonValidorMessages);
+        $commonValidator = \Validator::make($input, [
+            'customerCountry' => 'required',
+            'custUnbilledAccountSystemID' => 'required',
+            'custGLAccountSystemID' => 'required',
+            'custAdvanceAccountSystemID' => 'required',
+            'customerShortCode' => 'required',
+            'CustomerName' => 'required',
+            'customerCategoryID' => 'required',
+            'ReportTitle' => 'required'
+        ], $commonValidorMessages);
 
-            if ($commonValidator->fails()) {
-                return $this->sendError($commonValidator->messages(), 422);
-            }
+        if ($commonValidator->fails()) {
+            return $this->sendError($commonValidator->messages(), 422);
+        }
+
         $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
 
-        if($input['custGLAccountSystemID'] == $input['custUnbilledAccountSystemID'] ){
-           return $this->sendError('Receivable account and unbilled account cannot be same. Please select different chart of accounts.');
-        }
-
-        if($input['custUnbilledAccountSystemID'] == 0){
-            return $this->sendError('Unbilled Receivable Account field is required.');
-        }
-        if(isset($request->company_id)){
+        if(isset($request->company_id)) {
             $input['primaryCompanySystemID'] = $request->company_id;
-        }else{
+        }
+        else {
             return $this->sendError('Company System ID not found.');
         }
 
+        $duplicateCustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
 
-        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
-        if (!$validatorResult['success']) {
-            return $this->sendError($validatorResult['message']);
-        }
-
-        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
-
-        if ($company) {
-            $input['primaryCompanyID'] = $company->CompanyID;
-        }
-
-
-        if (array_key_exists('custGLAccountSystemID', $input)) {
-            $financePL = ChartOfAccount::where('chartOfAccountSystemID', $input['custGLAccountSystemID'])->first();
-            if ($financePL) {
-                $input['custGLaccount'] = $financePL->AccountCode;
-            }
-        }
-
-        if (array_key_exists('custUnbilledAccountSystemID', $input)) {
-            $unbilled = ChartOfAccount::where('chartOfAccountSystemID', $input['custUnbilledAccountSystemID'])->first();
-            if ($unbilled) {
-                $input['custUnbilledAccount'] = $unbilled->AccountCode;
-            }
-        }
-
-
-
-        if($input['customerCountry']==0 || $input['customerCountry']==''){
-            return $this->sendError('Country field is required',500);
-        }
-
-        $document = DocumentMaster::where('documentID', 'CUSTM')->first();
-        $input['documentSystemID'] = $document->documentSystemID;
-        $input['documentID'] = $document->documentID;
-
-        $lastCustomer = CustomerMaster::orderBy('customerCodeSystem', 'DESC')->first();
-        $lastSerialOrder = 1;
-        if(!empty($lastCustomer)){
-            $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
-        }
-
-//        $duplicateCustomerName = CustomerMaster::where('CustomerName', $input['CustomerName'])->first();
-//
-//        if($duplicateCustomerName){
-//            return $this->sendError('Customer name already exists.' ,500);
-//        }
-//
-//        $duplicateReportTitle = CustomerMaster::where('ReportTitle', $input['ReportTitle'])->first();
-//
-//        if($duplicateReportTitle){
-//            return $this->sendError('Report tittle already exists.' ,500);
-//        }
-
-        $duplicatecustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
-
-        if($duplicatecustomerShortCode){
+        if($duplicateCustomerShortCode){
             return $this->sendError('Secondary code already exists.' ,500);
         }
 
-        $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
-
-        $input['lastSerialOrder'] = $lastSerialOrder;
-        $input['CutomerCode'] = $customerCode;
-        $input['isCustomerActive'] = 1;
-   
-        $customerMasters = $this->customerMasterRepository->create($input);
         Log::useFiles(storage_path().'/logs/laravel.log');
-            CustomerCurrency::create(['customerCodeSystem' => $customerMasters->customerCodeSystem,
-                'customerCode' => $customerMasters->CutomerCode,
-                'currencyID' => 1,
-                'isDefault' => -1,
-                'isAssigned' => -1,
-                'createdBy' => "8888"
-            ]);
 
+        $input['isAutoCreateDocument'] = true;
 
-            $params = array('autoID' => $customerMasters->customerCodeSystem,
-                'company' => $customerMasters->primaryCompanySystemID,
-                'document' => $customerMasters->documentSystemID,
-                'segment' => '',
-                'category' => '',
-                'amount' => ''
+        $customerMaster = CustomerMasterAPIService::storeCustomerMasterFromAPI($input);
+
+        if(!$customerMaster['status']){
+            return $this->sendError(
+                $customerMaster['message'],
+                $customerMaster['code'] ?? 404
             );
-
-
-            \Helper::confirmDocumentForApi($params);
-            $db = isset($request->db) ? $request->db : "";
-
-            $documentApproveds = DocumentApproved::where('documentSystemCode', $customerMasters->customerCodeSystem)->where('documentSystemID', $customerMasters->documentSystemID)->get();
-            foreach ($documentApproveds as $documentApproved) {
-                $documentApproved["approvedComments"] = "Generated Customer Invoice through Club Management System";
-                $documentApproved["db"] = $db;
-                \Helper::approveDocumentForApi($documentApproved);
-            }
-
-            DB::commit();
-            return $this->sendResponse($customerMasters->toArray(), 'Customer Master created successfully');
-
-        }
-        catch(\Exception $e){
-            DB::rollback();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error File: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
-            return $this->sendError($e->getMessage(),500);
         }
 
-
+        return $this->sendResponse($customerMaster['data']->toArray(), 'Customer Master created successfully');
     }
 
     public function createCustomerCategory(Request $request){

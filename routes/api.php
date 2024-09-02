@@ -177,6 +177,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('erp_attributes_field_types', 'ErpAttributesFieldTypeAPIController');
 
+            Route::resource('item_category_type_masters', 'ItemCategoryTypeMasterAPIController');
+            Route::resource('finance_item_category_types', 'FinanceItemCategoryTypesAPIController');
             /** Company Navigation Menu access*/
 
             Route::resource('company_navigation_menuses', 'CompanyNavigationMenusAPIController');
@@ -1032,7 +1034,6 @@ if (env("LOG_ENABLE", false)) {
 }       
 
 });
-
 /*
  * End external related routes
  */

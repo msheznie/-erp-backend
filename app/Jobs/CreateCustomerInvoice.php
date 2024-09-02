@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AssetDisposalDetail;
+use App\Models\AssetDisposalType;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
@@ -14,6 +15,7 @@ use App\Models\InterCompanyAssetDisposal;
 use App\Models\SegmentMaster;
 use App\Repositories\CustomerInvoiceDirectDetailRepository;
 use App\Repositories\CustomerInvoiceDirectRepository;
+use App\Services\API\CustomerInvoiceAPIService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -153,23 +155,33 @@ class CreateCustomerInvoice implements ShouldQueue
                     $customerInvoiceData['custTransactionCurrencyID'] = $fromCompany->localCurrencyID;
                     $customerInvoiceData['custTransactionCurrencyER'] = 1;
 
-                    $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
+                    $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, vatAmount, serviceLineSystemID, ServiceLineCode, 
             SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, 
-            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('assetDisposalDetailAutoID')->get();
+            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail, sellingPriceLocal, sellingPriceRpt')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('assetDisposalDetailAutoID')->get();
 
                     $localAmount = 0;
                     $comRptAmount = 0;
+                    $vatAmountLocal = 0;
+                    $vatAmountRpt = 0;
 
                     if (count($disposalDetail) > 0) {
                         foreach ($disposalDetail as $val) {
-                            $localAmount += $val->localAmountDetail;
-                            $comRptAmount += $val->comRptAmountDetail;
+                            $localAmount += $val->sellingPriceLocal;
+                            $comRptAmount += $val->sellingPriceRpt;
+                            $vatAmountLocal += ($val->vatAmount * $companyCurrencyConversion['trasToRptER']) / $companyCurrencyConversion['trasToLocER'];
+                            $vatAmountRpt += $val->vatAmount;
                         }
                     }
 
                     $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
                     $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
                     $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
+                    $customerInvoiceData['VATPercentage'] = \Helper::roundValue($vatAmountLocal / $localAmount * 100);
+                    $customerInvoiceData['VATAmount'] = \Helper::roundValue($vatAmountLocal);
+                    $customerInvoiceData['VATAmountLocal'] = \Helper::roundValue($vatAmountLocal);
+                    $customerInvoiceData['VATAmountRpt'] = \Helper::roundValue($vatAmountRpt);
+                    $customerInvoiceData['vatRegisteredYN'] = $dpMaster->vatRegisteredYN;
+                    $customerInvoiceData['customerVATEligible'] = $dpMaster->vatRegisteredYN;
                     $customerInvoiceData['confirmedYN'] = 1;
                     $customerInvoiceData['confirmedByEmpSystemID'] = $dpMaster->confimedByEmpSystemID;
                     $customerInvoiceData['confirmedByEmpID'] = $dpMaster->confimedByEmpID;
@@ -193,13 +205,15 @@ class CreateCustomerInvoice implements ShouldQueue
 
                     InterCompanyAssetDisposal::create($interComAssetDisposal);
 
-                    $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
-            SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, 
-            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail,SUM(sellingPriceLocal) as sellingPriceLocal,SUM(sellingPriceRpt) as sellingPriceRpt')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('serviceLineSystemID')->get();
+                    $disposalDetail = AssetDisposalDetail::selectRaw('netBookValueLocal, netBookValueRpt, COSTUNIT, depAmountLocal, costUnitRpt, depAmountRpt, serviceLineSystemID, ServiceLineCode, 
+            if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100))) as localAmountDetail, 
+            if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100))) as comRptAmountDetail, vatPercentage, vatMasterCategoryID, vatSubCategoryID, vatAmount, sellingPriceLocal, sellingPriceRpt')->OfMaster($dpMaster->assetdisposalMasterAutoID)->get();
 
                     if ($disposalDetail) {
                         $accID = SystemGlCodeScenarioDetail::getGlByScenario($dpMaster->companySystemID, $dpMaster->documentSystemID, "asset-disposal-inter-company-sales");
-                        $chartofAccount = ChartOfAccount::find($accID);
+
+                        $disposalType = AssetDisposalType::where('disposalTypesID',1)->first();
+                        $chartofAccount = ChartOfAccount::find($disposalType->chartOfAccountID);
                         $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
                         foreach ($disposalDetail as $val) {
                             $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
@@ -209,7 +223,7 @@ class CreateCustomerInvoice implements ShouldQueue
                             if ($customer) {
                                 $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
                             }
-                            $cusInvoiceDetails['glSystemID'] = $accID;
+                            $cusInvoiceDetails['glSystemID'] = $chartofAccount->chartOfAccountSystemID;
                             $cusInvoiceDetails['glCode'] = $chartofAccount->AccountCode;
                             $cusInvoiceDetails['glCodeDes'] = $chartofAccount->AccountDescription;
                             $cusInvoiceDetails['accountType'] = $chartofAccount->catogaryBLorPL;
@@ -243,6 +257,13 @@ class CreateCustomerInvoice implements ShouldQueue
                                 $comRptAmountDetail = ($val->netBookValueRpt + (($val->netBookValueRpt) * ($dpMaster->revenuePercentage / 100)));
                             }*/
 
+                            $cusInvoiceDetails['vatMasterCategoryID'] = $val->vatMasterCategoryID;
+                            $cusInvoiceDetails['vatSubCategoryID'] = $val->vatSubCategoryID;
+                            $cusInvoiceDetails['VATPercentage'] = $val->vatPercentage;
+                            $cusInvoiceDetails['VATAmount'] = $val->vatAmount * $companyCurrencyConversion['trasToRptER'];
+                            $cusInvoiceDetails['VATAmountLocal'] = $val->vatAmount * $companyCurrencyConversion['trasToRptER'] / $companyCurrencyConversion['trasToLocER'];
+                            $cusInvoiceDetails['VATAmountRpt'] = $val->vatAmount;
+                            $cusInvoiceDetails['salesPrice'] = \Helper::roundValue($localAmountDetail);
                             $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmountDetail);
                             $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail);
                             $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmountDetail);
@@ -253,6 +274,8 @@ class CreateCustomerInvoice implements ShouldQueue
 
                     $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confimedByEmpSystemID];
                     $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel, $this->dataBase);
+
+                    $resVat =  CustomerInvoiceAPIService::updateTotalVAT($customerInvoice->custInvoiceDirectAutoID);
 
 
                     $dpMaster2['invoiceCode'] = $bookingInvCode;

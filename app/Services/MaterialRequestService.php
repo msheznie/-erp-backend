@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\ProcumentOrder;
 use App\Models\ItemAssigned;
 use App\Models\PurchaseOrderDetails;
@@ -49,8 +50,12 @@ class MaterialRequestService
 
 
         $item = ItemAssigned::where('itemCodeSystem', $itemCode)
-                            ->where('companySystemID', $companySystemID)->where('isAssigned', '=', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])
-                            ->first();
+            ->where('companySystemID', $companySystemID)
+            ->where('isAssigned', '=', -1)
+            ->whereHas('item_category_type', function ($q) {
+                $q->whereIn('categoryTypeID',ItemCategoryTypeMaster::purchaseItems());
+            })
+            ->first();
 
         if (empty($item)) {
             if (!$allowItemToTypePolicy) {
@@ -123,8 +128,12 @@ class MaterialRequestService
         }
 
         $item = ItemAssigned::where('itemCodeSystem', $itemCode)
-                            ->where('companySystemID', $companySystemID)->where('isAssigned', '=', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])
-                            ->first();
+            ->where('companySystemID', $companySystemID)
+            ->where('isAssigned', '=', -1)
+            ->whereHas('item_category_type', function ($q) {
+                $q->whereIn('categoryTypeID',ItemCategoryTypeMaster::purchaseItems());
+            })
+            ->first();
 
         if (empty($item)) {
             if (!$allowItemToTypePolicy) {
@@ -245,8 +254,12 @@ class MaterialRequestService
         $itemIssue = ItemIssueMaster::where('itemIssueAutoID', $itemIssueAutoID)->first();
 
         $item = ItemAssigned::where('itemCodeSystem', $itemCode)
-                            ->where('companySystemID', $companySystemID)->where('isAssigned', '=', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])
-                            ->first();
+            ->where('companySystemID', $companySystemID)
+            ->where('isAssigned', '=', -1)
+            ->whereHas('item_category_type', function ($q) {
+                $q->whereIn('categoryTypeID',ItemCategoryTypeMaster::purchaseItems());
+            })
+            ->first();
 
         if (empty($item)) {
             return ['status' => false, 'message' => 'Item not found'];
@@ -486,9 +499,13 @@ class MaterialRequestService
     { 
         $itemIssue = ItemIssueMaster::where('itemIssueAutoID', $itemIssueAutoID)->first();
 
-        $item = ItemAssigned::where('itemCodeSystem', $itemCode)->where('isAssigned', '=', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]'])
-        ->where('companySystemID', $companySystemID)
-        ->first();
+        $item = ItemAssigned::where('itemCodeSystem', $itemCode)
+            ->where('isAssigned', '=', -1)
+            ->whereHas('item_category_type', function ($q) {
+                $q->whereIn('categoryTypeID',ItemCategoryTypeMaster::purchaseItems());
+            })
+            ->where('companySystemID', $companySystemID)
+            ->first();
 
         $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $itemIssueAutoID)->first();
         $company = Company::where('companySystemID', $companySystemID)->first();

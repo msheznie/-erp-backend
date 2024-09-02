@@ -4,6 +4,7 @@
 namespace App\helper;
 
 
+use App\Models\AssetDisposalDetail;
 use App\Models\Company;
 use App\Models\CustomerAssigned;
 use App\Models\GRVDetails;
@@ -300,7 +301,27 @@ class TaxService
                         }
                     }
                 }
+                break;
+            case 41:
+                if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
+                    $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
+                    $vatSubCategoryID = $updateData['vatSubCategoryID'];
+                } else {
+                    if ($updateData['vatAmount'] > 0 || $updateData['vatPercentage'] > 0) {
+                        $vatDetails = self::getVATDetailsByItem($companySystemID, $updateData['itemCode']);
 
+                        if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
+                            return ['status' => false, 'message' => "Please assign a vat category to this item (or) setup a default vat category"];
+                        }
+
+                        $vatMasterCategoryID = $vatDetails['vatMasterCategoryID'];
+                        $vatSubCategoryID = $vatDetails['vatSubCategoryID'];
+
+                    }
+                }
+                AssetDisposalDetail::where('assetDisposalDetailAutoID', $documentDetailID)->update(['vatMasterCategoryID' => $vatMasterCategoryID, 'vatSubCategoryID' => $vatSubCategoryID]);
+
+                break;
                 // if ($documentType == 2) {
                 //       SupplierInvoiceDirectItem::where('id', $documentDetailID)->update(['vatMasterCategoryID' => $vatMasterCategoryID, 'vatSubCategoryID' => $vatSubCategoryID]);
                 // }      

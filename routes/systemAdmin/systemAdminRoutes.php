@@ -88,6 +88,7 @@ Route::group([], function(){
 	Route::get('getReportTemplatesByCategory', 'ReportTemplateAPIController@getReportTemplatesByCategory')->name("Chart of account report templates by category");
 	Route::get('getAssignedReportTemplatesByGl', 'ReportTemplateAPIController@getAssignedReportTemplatesByGl')->name("Chart of account assigned report templates by gl");
 	Route::get('isBank/{id}', 'ChartOfAccountAPIController@isBank')->name("Chart of account is bank");
+	Route::get('getChartOfAccount/{id}', 'ChartOfAccountAPIController@getChartOfAccountDetails')->name("Get Chart of Account");
 
 	Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount')->name("Chart of account");
     Route::post('exportChartOfAccounts', 'ChartOfAccountAPIController@exportChartOfAccounts')->name("Chart of account Export");
@@ -185,6 +186,8 @@ Route::group([], function() {
 //item-master
 Route::group([], function() {
     Route::resource('item/masters', 'ItemMasterAPIController',['names' => 'Item master']);
+    Route::resource('item_master_category_types', 'ItemMasterCategoryTypeAPIController');
+
     Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster')->name('Get all items from master');
     Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany')->name('Get assigned items for company');
     Route::post('validateItemAmend', 'ItemMasterAPIController@validateItemAmend')->name('Validate item amend');

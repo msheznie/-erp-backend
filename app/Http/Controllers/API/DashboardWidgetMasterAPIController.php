@@ -1213,8 +1213,8 @@ GROUP BY
                                                                         })
                                                                         ->sum('comRptAmount');
 
-                    $value->currentYearPercentage = ($value->currentYearValue / $currentYearTotalSales) * 100;
-                    $value->previousYearPercentage = ($value->previousYearValue / $previousYearTotalSales) * 100;
+                    $value->previousYearPercentage = ($previousYearTotalSales != 0) ? ($value->previousYearValue / $previousYearTotalSales) * 100 : 0;
+                    $value->previousYearPercentage = ($currentYearTotalSales != 0) ? ($value->currentYearValue / $currentYearTotalSales) * 100 : 0;
                 }
                 
 

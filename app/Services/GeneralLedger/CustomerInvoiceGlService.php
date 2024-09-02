@@ -93,8 +93,14 @@ class CustomerInvoiceGlService
             $empID = Employee::find($masterModel['employeeSystemID']);
         }
         $masterData = CustomerInvoiceDirect::with(['finance_period_by'])->find($masterModel["autoID"]);
-        $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
+        if(!empty($masterData)) {
+            $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
+        } else {
+            $errorMsg['status'] = false;
+            $errorMsg['error']['message'] = 'Customer invoice not found, date: ' . date('H:i:s');
 
+            return $errorMsg;
+        }
         $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
 
         if (!$validatePostedDate['status']) {

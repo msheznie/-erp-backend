@@ -9,6 +9,10 @@ class CurrencyService
 {
     public static function getCurrencyDecimalPlace($currencyID):int {
         $currencyObj = CurrencyMaster::select('DecimalPlaces')->where('currencyID',$currencyID)->first();
+        if(!isset($currencyObj))
+        {
+            return 2;
+        }
         return $currencyObj->DecimalPlaces;
     }
 

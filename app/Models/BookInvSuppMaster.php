@@ -611,10 +611,24 @@ class BookInvSuppMaster extends Model
         ->addSelect($as.".supplierName as ".$columnAs);
     }
 
-        public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
     {
         return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_bookinvsuppmaster.'.$column)
         ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function vrfDocument()
+    {
+        return $this->hasOne('App\Models\VatReturnFillingMaster', 'masterDocumentAutoID', 'bookingSuppMasInvAutoID');
+    }
+    public function updateBookingAmount($amount)
+    {
+        $totatlDirectItemTrans = $amount;
+        $currencyConversionDire = \Helper::currencyConversion($this->companySystemID, $this->supplierTransactionCurrencyID, $this->supplierTransactionCurrencyID, $totatlDirectItemTrans);
+        $this->bookingAmountTrans = abs(\Helper::roundValue($totatlDirectItemTrans));
+        $this->bookingAmountLocal = abs(\Helper::roundValue($currencyConversionDire['localAmount']));
+        $this->bookingAmountRpt = abs(\Helper::roundValue($currencyConversionDire['reportingAmount']));
+        $this->save();
     }
 
 }

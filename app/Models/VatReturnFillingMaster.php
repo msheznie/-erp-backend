@@ -149,7 +149,9 @@ class VatReturnFillingMaster extends Model
         'approvedEmpID',
         'refferedBackYN',
         'timesReferred',
-        'RollLevForApp_curr'
+        'RollLevForApp_curr',
+        'masterDocumentAutoID',
+        'masterDocumentTypeID' // document master ID
     ];
 
     /**
@@ -176,7 +178,9 @@ class VatReturnFillingMaster extends Model
         'approvedEmpID' => 'string',
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
-        'RollLevForApp_curr' => 'integer'
+        'RollLevForApp_curr' => 'integer',
+        'masterDocumentAutoID' => 'integer',
+        'masterDocumentTypeID' => 'integer'
     ];
 
     /**
@@ -196,4 +200,53 @@ class VatReturnFillingMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
     }
+
+    public function invoice()
+    {
+        return $this->belongsTo('App\Models\BookInvSuppMaster','masterDocumentAutoID','bookingSuppMasInvAutoID');
+    }
+
+    public function debitNote()
+    {
+        return $this->belongsTo('App\Models\DebitNote', 'masterDocumentAutoID','debitNoteAutoID');
+    }
+
+    public function scopeGeneratedDocument()
+    {
+
+        switch ($this->masterDocumentTypeID)
+        {
+            case 11 :
+                return $this->belongsTo('App\Models\BookInvSuppMaster', 'masterDocumentAutoID','bookingSuppMasInvAutoID');
+                break;
+            case 15:
+                return $this->belongsTo('App\Models\DebitNote', 'masterDocumentAutoID','debitNoteAutoID');
+                break;
+
+        }
+    }
+
+    public function attachGeneratedDocument($documentMasterID, $documentTypeID)
+    {
+        $this->masterDocumentAutoID = $documentMasterID;
+        $this->masterDocumentTypeID = $documentTypeID;
+        $this->save();
+    }
+
+    public function scopeIsDocumentGenerated()
+    {
+        return VatReturnFillingMaster::where('id',$this->id)->whereNotNull('masterDocumentAutoID')->exists();
+    }
+
+    public function scopeIsPreviousVRFHasDocument()
+    {
+        $prvVatReturnFillingMaster = VatReturnFillingMaster::where('id','<',$this->id)->where('approvedYN',-1)->where('companySystemID', $this->companySystemID)->orderBy('id','desc')->first();
+        if(isset($prvVatReturnFillingMaster))
+        {
+            return isset($prvVatReturnFillingMaster) && !is_null($prvVatReturnFillingMaster->masterDocumentAutoID);
+        }else {
+            return true;
+        }
+    }
+
 }

@@ -60,6 +60,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class SegmentMasterController
@@ -71,6 +72,8 @@ class SegmentMasterAPIController extends AppBaseController
     /** @var  SegmentMasterRepository */
     private $segmentMasterRepository;
     private $userRepository;
+    use AuditLogsTrait;
+
     public function __construct(SegmentMasterRepository $segmentMasterRepo, UserRepository $userRepo)
     {
         $this->segmentMasterRepository = $segmentMasterRepo;
@@ -205,10 +208,13 @@ class SegmentMasterAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
+        $input = $request->all();
+        
         /** @var SegmentMaster $segmentMaster */
         $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->with(['sub_levels'])->find($id);
+        $previousValue = $segmentMaster->toArray();
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
@@ -285,6 +291,12 @@ class SegmentMasterAPIController extends AppBaseController
 
             $segmentMaster->isDeleted = 1;
             $segmentMaster->save();
+
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+
+            $this->auditLog($db, $id,$uuid, "serviceline", "Segment master ".$segmentMaster->ServiceLineDes." has been deleted", "D", [], $previousValue);
+
             DB::commit();
             return $this->sendResponse($id, 'Segment Master deleted successfully');
 
@@ -723,6 +735,8 @@ class SegmentMasterAPIController extends AppBaseController
             return $this->sendError("Segment not found", 500);
         }
 
+        $previousValue = $segmentMaster->toArray();
+
         if(isset($input['companySystemID']))
         {
             $input['companyID'] = $this->getCompanyById($input['companySystemID']);
@@ -802,6 +816,19 @@ class SegmentMasterAPIController extends AppBaseController
 
         }
 
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        unset($input['companySystemID']);
+
+        if(array_key_exists('tenant_uuid', $input)){
+            unset($input['tenant_uuid']);
+        }
+
+        if(array_key_exists('db', $input)){
+            unset($input['db']);
+        }
+
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
         $empId = $user->employee['empID'];
@@ -813,6 +840,8 @@ class SegmentMasterAPIController extends AppBaseController
         $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
                                       ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                                       ->update($data);
+
+        $this->auditLog($db, $input['serviceLineSystemID'],$uuid, "serviceline", "Segment master ".$input['ServiceLineDes']." has been updated", "U", $data, $previousValue);
 
         return $this->sendResponse($segmentMaster, 'Segment master updated successfully');
     }

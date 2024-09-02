@@ -33,7 +33,8 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Distributions\F;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\SMECompany;
 /**
  * Class MonthlyAdditionDetailController
  * @package App\Http\Controllers\API
@@ -421,18 +422,30 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
+        $voucher_id = $input['voucher_id'];
         $expenseClaim = ExpenseClaimMaster::find($id);
 
+        $voucher = PaySupplierInvoiceMaster::select('PayMasterAutoId','supplierTransCurrencyID')->with('transactioncurrency')->find($voucher_id);
 
         if (empty($expenseClaim)) {
             return $this->sendError('Expense Claim not found');
         }
+
+        $data = SMECompany::where('company_id', $expenseClaim->companyID)->select('company_default_decimal')->first();
 
         $expenseClaimDetails = ExpenseClaimDetailsMaster::where('companyID', $expenseClaim->companyID)
             ->where('expenseClaimMasterAutoID', $id)
             //->where('currencyID', $monthlyAddition->currency)
             ->with(['currency','local_currency','category'])
             ->get();
+
+            foreach($expenseClaimDetails as &$det)
+            {
+                $currencyConversion = \Helper::currencyConversion($expenseClaim->companyID, $det->transactionCurrencyID, $voucher->supplierTransCurrencyID, $det->transactionAmount);
+
+                $det['expence_claim_amount'] = round($currencyConversion['documentAmount'],$det->transactionCurrencyDecimalPlaces);
+                $det['voucher_currency'] = $voucher->transactioncurrency->CurrencyCode;
+            }
 
         return $this->sendResponse($expenseClaimDetails, 'Expense Claim Details retrieved successfully');
     }

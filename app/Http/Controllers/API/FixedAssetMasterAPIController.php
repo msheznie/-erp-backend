@@ -394,21 +394,6 @@ class FixedAssetMasterAPIController extends AppBaseController
                             foreach ($qtyRange as $key => $qty) {
                                 // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
 
-                                $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID'],$input['faCatID'],$input['faSubCatID']);
-                                
-                                if ($documentCodeData['status']) {
-                                    $documentCode = $documentCodeData['documentCode'];
-                                    $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
-                                    $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
-                                                                             ->first();
-
-                                    if ($checkForDuplicateCode) {
-                                        return $this->sendError("Asset code is already found.", 500);
-                                    }
-
-                                } else {
-                                    return $this->sendError("Asset code is not configured.", 500);
-                                }
                                 if ($qty <= $assetSerialNoCount) {
                                     if ($input['assetSerialNo'][$key]['faUnitSerialNo']) {
                                         $input["faUnitSerialNo"] = $input['assetSerialNo'][$key]['faUnitSerialNo'];
@@ -2484,10 +2469,12 @@ class FixedAssetMasterAPIController extends AppBaseController
             $documentAutoId = $id;
             $documentSystemID = $masterData->documentSystemID;
             if($masterData->approved == -1){
-                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
-                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                        return $this->sendError($validatePendingGlPost['message']);
+                if($masterData->assetType != 2 && ($masterData->assetType == 1 && $masterData->postToGLYN == 1)){
+                    $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
+                    if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                        if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                            return $this->sendError($validatePendingGlPost['message']);
+                        }
                     }
                 }
             }

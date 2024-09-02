@@ -70,6 +70,7 @@ use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
 use App\Models\SupplierMaster;
 use App\Models\SystemConfigurationAttributes;
+use App\Models\TaxVatCategories;
 use App\Models\TenderMaster;
 use App\Models\User;
 use App\Models\DebitNote;
@@ -3256,49 +3257,50 @@ class Helper
                             // get approval rolls
                             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
 
-                            if ($isSegmentWise) {
-                                if (array_key_exists('segment', $params)) {
+                                if ($isSegmentWise) {
+                                    if (array_key_exists('segment', $params)) {
 
-                                    if ($params["segment"]) {
-                                        $approvalLevel->where('serviceLineSystemID', $params["segment"]);
-                                        $approvalLevel->where('serviceLineWise', 1);
+                                        if ($params["segment"]) {
+                                            $approvalLevel->where('serviceLineSystemID', $params["segment"]);
+                                            $approvalLevel->where('serviceLineWise', 1);
+                                        } else {
+                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        }
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => 'Serviceline parameters are missing'];
                                     }
-                                } else {
-                                    return ['success' => false, 'message' => 'Serviceline parameters are missing'];
                                 }
-                            }
 
-                            if ($isCategoryWise) {
-                                if (array_key_exists('category', $params)) {
-                                    if ($params["category"]) {
-                                        $approvalLevel->where('categoryID', $params["category"]);
-                                        $approvalLevel->where('isCategoryWiseApproval', -1);
+                                if ($isCategoryWise) {
+                                    if (array_key_exists('category', $params)) {
+                                        if ($params["category"]) {
+                                            $approvalLevel->where('categoryID', $params["category"]);
+                                            $approvalLevel->where('isCategoryWiseApproval', -1);
+                                        } else {
+                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        }
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => 'Category parameter are missing'];
                                     }
-                                } else {
-                                    return ['success' => false, 'message' => 'Category parameter are missing'];
                                 }
-                            }
 
-                            if ($isValueWise) {
-                                if (array_key_exists('amount', $params)) {
-                                    if ($params["amount"] >= 0) {
-                                        $amount = $params["amount"];
-                                        $approvalLevel->where(function ($query) use ($amount) {
-                                            $query->where('valueFrom', '<=', $amount);
-                                            $query->where('valueTo', '>=', $amount);
-                                        });
-                                        $approvalLevel->where('valueWise', 1);
+                                if ($isValueWise) {
+                                    if (array_key_exists('amount', $params)) {
+                                        if ($params["amount"] >= 0) {
+                                            $amount = $params["amount"];
+                                            $approvalLevel->where(function ($query) use ($amount) {
+                                                $query->where('valueFrom', '<=', $amount);
+                                                $query->where('valueTo', '>=', $amount);
+                                            });
+                                            $approvalLevel->where('valueWise', 1);
+                                        } else {
+                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        }
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => 'Amount parameter are missing'];
                                     }
-                                } else {
-                                    return ['success' => false, 'message' => 'Amount parameter are missing'];
                                 }
-                            }
+
 
                             $output = $approvalLevel->first();
                             
@@ -4558,6 +4560,8 @@ class Helper
                 }
 
                 if($input["documentSystemID"] == 41){
+
+
                     if($input['disposalType'] == 1){
                         $month = explode('-',$input['FYPeriodDateFrom']);
                         $financePeriodCheck = Models\CompanyFinancePeriod::where('departmentSystemID',4)->where('companyFinanceYearID',$input['companyFinanceYearID'])->whereMonth('dateFrom', $month[1])->first();
@@ -4575,6 +4579,25 @@ class Helper
 
                         if(!$checkApprovalAccess){
                             return ['success' => false, 'message' => 'The user does not have approval access to the customer invoice'];
+                        }
+
+                        $assetDisposalMaster = Models\AssetDisposalMaster::find($input["documentSystemCode"]);
+
+                        if(!empty($assetDisposalMaster)) {
+                            $toCompany = Company::find($assetDisposalMaster->toCompanySystemID);
+
+                            if ($assetDisposalMaster->vatRegisteredYN == 1 && $toCompany->vatRegisteredYN != 1) {
+                                return ['success' => false, 'message' => 'Company ' . $toCompany->CompanyName . ' is not registered for VAT'];
+                            }
+
+                            if ($assetDisposalMaster->vatRegisteredYN == 1 && $toCompany->vatRegisteredYN == 1) {
+                                $vatSubCategories = Models\Tax::where('companySystemID', $assetDisposalMaster->toCompanySystemID)->whereHas('vat_categories', function ($q) {
+                                    $q->where('isActive', 1);
+                                })->where('isActive', 1)->first();
+                                if (empty($vatSubCategories)) {
+                                    return ['success' => false, 'message' => 'VAT not configured in company ' . $toCompany->CompanyName];
+                                }
+                            }
                         }
                     }
                 }
@@ -4701,7 +4724,6 @@ class Helper
 
 
                             if($input["documentSystemID"] == 15){
-
                                 $debitNoteMaster  = DebitNote::find($input["documentSystemCode"]);
                                 if ($debitNoteMaster && $debitNoteMaster->supplierID > 0) {
 
@@ -4911,7 +4933,7 @@ class Helper
                             $masterDataDEO = ['documentSystemID' => $docApproved->documentSystemID, 'id' => $docApproved->id, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
-                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,categoryType,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
+                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
                                 $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
                             }
 
@@ -7047,15 +7069,31 @@ class Helper
             } else {
                 if ($trasToRptER > $trasToTransER) {
                     if ($trasToRptER > 1) {
-                        $reportingAmount = $transactionAmount / $trasToRptER;
+                        if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
+                            $reportingAmount = $transactionAmount / $trasToRptER;
+                        } else {
+                            $reportingAmount = 0; 
+                        }
                     } else {
-                        $reportingAmount = $transactionAmount * $trasToRptER;
+                        if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
+                            $reportingAmount = $transactionAmount * $trasToRptER;
+                        } else {
+                            $reportingAmount = 0; 
+                        }
                     }
                 } else {
                     if ($trasToRptER > 1) {
-                        $reportingAmount = $transactionAmount * $trasToRptER;
+                        if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
+                            $reportingAmount = $transactionAmount / $trasToRptER;
+                        } else {
+                            $reportingAmount = 0; 
+                        }
                     } else {
-                        $reportingAmount = $transactionAmount / $trasToRptER;
+                        if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
+                            $reportingAmount = $transactionAmount * $trasToRptER;
+                        } else {
+                            $reportingAmount = 0; 
+                        }
                     }
                 }
             }
@@ -7664,7 +7702,12 @@ class Helper
                                 {
                                     $receivePayment['companyRptAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
                                 }else {
-                                    $receivePayment['companyRptAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->comRptCurrencyER);
+                                    if(isset($pvMaster->comRptCurrencyER))
+                                    {
+                                        $receivePayment['companyRptAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->comRptCurrencyER);
+                                    }else {
+                                        $receivePayment['companyRptAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount));
+                                    }
                                 }
 
                                 $receivePayment['receivedAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
@@ -9419,7 +9462,8 @@ class Helper
           $vatTot += doubleval($supplierItems[$i]->VATAmount) * doubleval($supplierItems[$i]->noQty);
         }
 
-        $totalNet = $tot + $vatTot;
+        $totalVat = $bookInvSuppMaster->rcmActivated ? 0 : $vatTot;
+        $totalNet = $tot + $totalVat;
         $retentionAmount = $totalNet * $bookInvSuppMaster->retentionPercentage/100;
         $decimalPlaces = 3;
         $currency = CurrencyMaster::select('DecimalPlaces')->where('currencyID',$bookInvSuppMaster->localCurrencyID)->first();

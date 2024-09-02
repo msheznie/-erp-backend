@@ -1067,6 +1067,26 @@ class ChartOfAccountAPIController extends AppBaseController
             return $this->sendResponse(array(), $reopen["message"]);
         }
     }
+    public function getChartOfAccountDetails($id)
+    {
+        $chartOfAccount = $this->chartOfAccountRepository->with(['primaryCompany', 'controlAccount', 'allocation', 'accountType', 'templateCategoryDetails'])->findWithoutFail($id);
 
-
+        return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account retrieved successfully');
+    }
+    public function printChartOfAccount(Request $request)
+    {
+        $id = $request->get('id');
+        $chartOfAccount = $this->chartOfAccountRepository->with(['primaryCompany', 'controlAccount', 'allocation', 'accountType', 'templateCategoryDetails'])->findWithoutFail($id);
+        $array = [
+            'chartOfAccount' => $chartOfAccount
+        ];
+        $time = strtotime("now");
+        $fileName = 'chart_of_account_' . $id . '_' . $time . '.pdf';
+        $html = view('print.chart_of_account', $array);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
+    }
 }

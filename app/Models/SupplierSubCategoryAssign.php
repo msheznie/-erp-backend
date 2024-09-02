@@ -62,6 +62,8 @@ class SupplierSubCategoryAssign extends Model
     public static $rules = [
         
     ];
-
+    public function categoryMaster(){
+        return $this->hasOne('App\Models\SupplierCategorySub', 'supCategorySubID','supSubCategoryID');
+    }
     
 }

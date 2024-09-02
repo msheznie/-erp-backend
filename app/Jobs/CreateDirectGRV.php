@@ -163,6 +163,7 @@ class CreateDirectGRV implements ShouldQueue
                     $directGRV['FromCompanyID'] = $dpMaster->companyID;
                     $directGRV['FromCompanySystemID'] = $dpMaster->companySystemID;
                     $directGRV['grvDoRefNo'] = $invoiceCode;
+                    $directGRV['vatRegisteredYN'] = $dpMaster->vatRegisteredYN;
 
                     $directGRV['createdPcID'] = gethostname();
                     $directGRV['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
@@ -219,7 +220,7 @@ class CreateDirectGRV implements ShouldQueue
                             $comRptAmountDetail = $val->sellingPriceRpt;
 
                             $directGRVDet['unitCost'] = $comRptAmountDetail;
-                            $directGRVDet['netAmount'] = $comRptAmountDetail;
+                            $directGRVDet['netAmount'] = $comRptAmountDetail + $val->vatAmount;
                             $directGRVDet['comment'] = $val->faCode;
                             if ($supplierCurrency) {
                                 $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
@@ -240,13 +241,24 @@ class CreateDirectGRV implements ShouldQueue
                             $directGRVDet['localCurrencyID'] = $grvMaster['localCurrencyID'];
                             $directGRVDet['localCurrencyER'] = $grvMaster['localCurrencyER'];
 
-                            $directGRVDet['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
-                            $directGRVDet['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount']);
-                            $directGRVDet['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($comRptAmountDetail);
-                            $directGRVDet['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
-                            $directGRVDet['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount']);
-                            $directGRVDet['landingCost_TransCur'] = \Helper::roundValue($comRptAmountDetail);
-                            $directGRVDet['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
+                            $currencyVat = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $val->vatAmount);
+
+                            $directGRVDet['VATPercentage'] = $val->vatPercentage;
+                            $directGRVDet['VATAmount'] = \Helper::roundValue($val->vatAmount);
+                            $directGRVDet['VATAmountLocal'] = $currencyVat['localAmount'];
+                            $directGRVDet['VATAmountRpt'] = $currencyVat['reportingAmount'];
+
+                            $directGRVDet['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount'] + $currencyVat['localAmount']);
+                            $directGRVDet['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount'] + $directGRVDet['VATAmount']);
+                            $directGRVDet['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($comRptAmountDetail + $currencyVat['reportingAmount']);
+                            $directGRVDet['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount'] + $currencyVat['reportingAmount']);
+                            $directGRVDet['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount'] + $currencyVat['localAmount']);
+                            $directGRVDet['landingCost_TransCur'] = \Helper::roundValue($comRptAmountDetail + $currencyVat['reportingAmount']);
+                            $directGRVDet['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount'] + $currencyVat['reportingAmount']);
+
+                            $directGRVDet['vatRegisteredYN'] = $dpMaster->vatRegisteredYN;
+
+
 
                             $directGRVDet['createdPcID'] = gethostname();
                             $directGRVDet['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;

@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\Classes\Common\MemberStateOfTheGCC;
 use App\helper\Helper;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -278,6 +279,14 @@ class SupplierMaster extends Model
         
     ];
 
+    public function supplier_business_category(){
+        return $this->hasMany('App\Models\SupplierBusinessCategoryAssign','supplierID','supplierCodeSystem');
+    }
+
+    public function supplier_sub_business_category(){
+        return $this->hasMany('App\Models\SupplierSubCategoryAssign','supplierID','supplierCodeSystem');
+    }
+
     public function currency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'currency', 'currencyID');
@@ -398,5 +407,19 @@ class SupplierMaster extends Model
     }
     public function Supplier_registration_link(){
         return $this->belongsTo('App\Models\SupplierRegistrationLink','supplierCodeSystem','supplier_master_id');
+    }
+
+    public function scopeSubjectToGCC($query)
+    {
+        return $query->whereIn('supplierCountryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
+    }
+    public function scopeOutsideOfGCC($query)
+    {
+        return $query->whereNotIn('supplierCountryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
+    }
+
+    public function scopeIsActive()
+    {
+        return $this->isActive;
     }
 }

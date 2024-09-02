@@ -637,6 +637,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         $_post['rigNo'] = $input['rigNo'];
         $_post['PONumber'] = $input['PONumber'];
         $_post['customerGRVAutoID'] = $input['customerGRVAutoID'];
+        $_post['isPerforma'] = $input['isPerforma'];
 
         if (isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']) {
             $checkGrv = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $id)
@@ -2464,23 +2465,25 @@ class CustomerInvoiceAPIService extends AppBaseController
             ];
         }
 
-        if($vatCategories->applicableOn == 1){
-            if (isset($input["VATAmount"]) && isset($input['salesPrice']) && $input['VATAmount'] > $input['salesPrice']) {
-                return [
-                    'status' => false,
-                    'type' => array('type' => 'VATAmountError'),
-                    'message' => 'Vat Amount cannot be greater than sales price'
-                ];
+        if(!empty($vatCategories)) {
+            if ($vatCategories->applicableOn == 1) {
+                if (isset($input["VATAmount"]) && isset($input['salesPrice']) && $input['VATAmount'] > $input['salesPrice']) {
+                    return [
+                        'status' => false,
+                        'type' => array('type' => 'VATAmountError'),
+                        'message' => 'Vat Amount cannot be greater than sales price'
+                    ];
+                }
             }
-        }
 
-        if($vatCategories->applicableOn == 2){
-            if (isset($input["VATAmount"]) && isset($input['sellingCostAfterMargin']) && $input['VATAmount'] > $input['sellingCostAfterMargin']) {
-                return [
-                    'status' => false,
-                    'type' => array('type' => 'VATAmountError'),
-                    'message' => 'Vat Amount cannot be greater than unit price'
-                ];
+            if ($vatCategories->applicableOn == 2) {
+                if (isset($input["VATAmount"]) && isset($input['sellingCostAfterMargin']) && $input['VATAmount'] > $input['sellingCostAfterMargin']) {
+                    return [
+                        'status' => false,
+                        'type' => array('type' => 'VATAmountError'),
+                        'message' => 'Vat Amount cannot be greater than unit price'
+                    ];
+                }
             }
         }
 

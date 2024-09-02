@@ -105,6 +105,7 @@ Route::group([], function(){
     Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
     Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail')->name("Get Disposal Details");
     Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal')->name("Get Asset from Disposal");
+    Route::post('checkDisposalAmendReview', 'AssetDisposalMasterAPIController@checkDisposalAmendReview')->name("Check Disposal Amend Review");
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
 
 });

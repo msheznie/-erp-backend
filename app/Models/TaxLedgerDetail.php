@@ -454,10 +454,23 @@ class TaxLedgerDetail extends Model
 
     public function sales_return_details(){
         return $this->belongsTo('App\Models\SalesReturnDetail','documentDetailID', 'salesReturnDetailID');
-    } 
+    }
 
+    public function creditNode()
+    {
+        return $this->belongsTo('App\Models\CreditNote','documentMasterAutoID', 'creditNoteAutoID');
+    }
     public function credit_note_details(){
         return $this->belongsTo('App\Models\CreditNoteDetails','documentDetailID', 'creditNoteDetailsID');
+    }
+
+    public function debitNode()
+    {
+        return $this->belongsTo('App\Models\DebitNote','documentMasterAutoID', 'debitNoteAutoID');
+    }
+    public function DebitNoteDetails()
+    {
+        return $this->belongsTo('App\Models\DebitNoteDetails','documentDetailID', 'debitNoteDetailsID');
     }
 
     public function localcurrency(){
@@ -523,4 +536,6 @@ class TaxLedgerDetail extends Model
     public function vat_return_filling_details(){
         return $this->belongsTo('App\Models\VatReturnFillingDetail','returnFilledDetailID', 'id');
     }
+
+
 }

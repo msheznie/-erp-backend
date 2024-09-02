@@ -313,7 +313,9 @@ class ProcumentOrder extends Model
         'projectID',
         'approval_remarks',
         'categoryID',
-        'upload_job_status'
+        'upload_job_status',
+        'successDetailsCount',
+        'excelRowCount'
     ];
 
     /**
@@ -459,6 +461,8 @@ class ProcumentOrder extends Model
         'approval_remarks' => 'string',
         'categoryID'  => 'integer',
         'upload_job_status'  => 'integer',
+        'successDetailsCount'  => 'integer',
+        'excelRowCount'  => 'integer'
         
     ];
 

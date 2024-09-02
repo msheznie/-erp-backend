@@ -340,7 +340,8 @@ class DirectPaymentDetails extends Model
         'timeStamp',
         'detail_project_id',
         'contractID',
-        'contractDescription'
+        'contractDescription',
+        'expense_claim_er'
     ];
 
     /**
@@ -439,5 +440,10 @@ class DirectPaymentDetails extends Model
     public function project()
     {
         return $this->belongsTo('App\Models\ErpProjectMaster', 'detail_project_id', 'id');
+    }
+
+    public function vatSubCategories()
+    {
+        return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID', 'taxVatSubCategoriesAutoID');
     }
 }

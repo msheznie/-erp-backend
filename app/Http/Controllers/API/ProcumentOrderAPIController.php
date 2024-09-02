@@ -66,6 +66,7 @@ use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\BudgetConsumedData;
 use App\Models\CompanyDigitalStamp;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\TaxVatCategories;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -151,6 +152,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\ERPAssetTransfer;
@@ -1826,7 +1828,10 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
-        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)
+                             ->whereHas('item_category_type', function ($query) {
+                                $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                            });
 
 
         if ($policy == 0 && $financeCategoryId != 0) {
@@ -8889,16 +8894,27 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $input = $request->all();
         $disk = Helper::policyWiseDisk($input['companySystemID']);
-        if ($exists = Storage::disk($disk)->exists('procument_order_item_upload_template/procument_order_item_upload_template.xlsx')) {
-            return Storage::disk($disk)->download('procument_order_item_upload_template/procument_order_item_upload_template.xlsx', 'procument_order_item_upload_template.xlsx');
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isYesNO', 1)
+            ->exists();
+        if ($isProject_base) {
+            if ($exists = Storage::disk($disk)->exists('procument_order_item_upload_template/procument_order_item_upload_project_template.xlsx')) {
+                return Storage::disk($disk)->download('procument_order_item_upload_template/procument_order_item_upload_project_template.xlsx', 'procument_order_item_upload_template.xlsx');
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }
         } else {
-            return $this->sendError('Attachments not found', 500);
+            if ($exists = Storage::disk($disk)->exists('procument_order_item_upload_template/procument_order_item_upload_template.xlsx')) {
+                return Storage::disk($disk)->download('procument_order_item_upload_template/procument_order_item_upload_template.xlsx', 'procument_order_item_upload_template.xlsx');
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }
         }
     }
 
     public function poItemsUpload(request $request)
     {
-
         DB::beginTransaction();
         try {
             $input = $request->all();
@@ -8911,15 +8927,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $extension = $excelUpload[0]['filetype'];
             $size = $excelUpload[0]['size'];
 
-
             $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['requestID'])
                                                ->first();
-
 
             if (empty($purchaseOrder)) {
                 return $this->sendError('Procument Order not found', 500);
             }
-
 
             $allowedExtensions = ['xlsx','xls'];
 
@@ -8935,18 +8948,24 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-            $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $filePath = Storage::disk($disk)->path($originalFileName);
+            $spreadsheet = IOFactory::load($filePath);
+
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $sheet->removeRow(1, 6);
+
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save($filePath);
+
+            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
             $validateHeaderCode = false;
-            $validateHeaderQty = false;
             $totalItemCount = 0;
 
             $allowItemToTypePolicy = false;
-            $itemNotound = false;
             $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 64)
                                                 ->where('companySystemID', $purchaseOrder->companySystemID)
                                                 ->first();
@@ -8957,18 +8976,25 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }
             }
 
+            $excelHeaders = array_keys(array_merge(...$uniqueData));
+            $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $purchaseOrder->companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();
+            if ($isProject_base) {
+                $templateHeaders = ['item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no'];
+            } else {
+                $templateHeaders = ['item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'client_ref_no'];
+            }
+            $unexpectedHeader = array_diff($excelHeaders, $templateHeaders);
+
+            if ($unexpectedHeader) {
+                return $this->sendError('Upload failed due to changes made in the Excel template', 500);
+            }
+
             foreach ($uniqueData as $key => $value) {
                 if (isset($value['item_code']) ||  $allowItemToTypePolicy) {
                     $validateHeaderCode = true;
-                }
-
-                if (isset($value['no_qty'])) {
-                    $validateHeaderQty = true;
-                }
-
-                
-                if (isset($value['unit_cost'])) {
-                    $validateHeaderQty = true;
                 }
 
                 if ((isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['no_qty']) && !is_null($value['no_qty']) || isset($value['unit_cost']) && !is_null($value['unit_cost'])) {
@@ -8981,10 +9007,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'no_qty', 'unit_cost'))->get()->toArray();
-
-
-            $uploadSerialNumber = array_filter(collect($record)->toArray());
+            })->select(array('item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no'))->get()->toArray();
 
             if ($purchaseOrder->cancelledYN == -1) {
                 return $this->sendError('This Purchase Order already closed. You can not add.', 500);
@@ -8994,8 +9017,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 return $this->sendError('This Purchase Order fully approved. You can not add.', 500);
             }
 
-
             if (count($record) > 0) {
+                $data['isBulkItemJobRun'] = 1;
+                ProcumentOrder::where('purchaseOrderID', $purchaseOrder->purchaseOrderID)->update($data);
+
                 $db = isset($input['db']) ? $input['db'] : ""; 
                 AddMultipleItems::dispatch(array_filter($record),($purchaseOrder->toArray()),$db,Auth::id());
             } else {

@@ -109,7 +109,6 @@ class SupplierInvoiceGlService
             ->groupBy('documentSystemCode')
             ->first();
 
-
         //get balansheet account
         $bsItemDirect = SupplierInvoiceDirectItem::selectRaw("SUM(costPerUnitLocalCur*noQty) as localAmount, SUM(costPerUnitComRptCur*noQty) as rptAmount,SUM(costPerUnitSupTransCur*noQty) as transAmount,financeGLcodebBSSystemID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER, id")->WHERE('bookingSuppMasInvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
 
@@ -204,7 +203,6 @@ class SupplierInvoiceGlService
                 $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
             } else if ($masterData->documentType == 3) { // check if it is supplier item invoice
                 $directItemCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->item_details[0]->netAmountTotal);
-
                 $data['documentTransAmount'] = \Helper::roundValue($masterData->item_details[0]->netAmountTotal + $masterData->item_details[0]->totalVATAmount + $poInvoiceDirectTransExtCharge) * -1;
                 $data['documentLocalAmount'] = \Helper::roundValue($directItemCurrencyConversion['localAmount'] + $masterData->item_details[0]->totalVATAmountLocal + $poInvoiceDirectLocalExtCharge) * -1;
                 $data['documentRptAmount'] = \Helper::roundValue($directItemCurrencyConversion['reportingAmount'] + $masterData->item_details[0]->totalVATAmountRpt + $poInvoiceDirectRptExtCharge) * -1;
@@ -239,7 +237,6 @@ class SupplierInvoiceGlService
             $whtFullAmountLocal = 0;
             $whtFullAmountRpt = 0;
 
-
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
 
@@ -256,7 +253,8 @@ class SupplierInvoiceGlService
                         $retentionLocalWithoutVat = ($data['documentLocalAmount'] + ABS($totalVATAmountLocal)) * ($retentionPercentage / 100);
                         $retentionRptWithoutVat = ($data['documentRptAmount'] + ABS($totalVATAmountRpt)) * ($retentionPercentage / 100);
 
-                    } else if ($masterData->documentType == 1) {
+                    }
+                    else if ($masterData->documentType == 1) {
                         $directVATDetails = TaxService::processDirectSupplierInvoiceVAT($masterModel["autoID"],
                             $masterModel["documentSystemID"]);
                         $totalVATAmount = 0;
@@ -274,7 +272,8 @@ class SupplierInvoiceGlService
                             $retentionLocal = $data['documentLocalAmount'] * ($retentionPercentage / 100);
                             $retentionRpt = $data['documentRptAmount'] * ($retentionPercentage / 100);
                         }
-                    } else if ($masterData->documentType == 0 || $masterData->documentType == 2) {
+                    }
+                    else if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
                         $totalVATAmount = 0;
                         $totalVATAmountLocal = 0;
@@ -302,7 +301,6 @@ class SupplierInvoiceGlService
                     $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
                 }
             }
-
 
             if($masterData->whtApplicable)
             {
@@ -591,13 +589,13 @@ class SupplierInvoiceGlService
                         array_push($finalData, $data);
                     }
                 }
-            } else {
+            }
+            else {
                 if ($masterData->rcmActivated != 1) {
                 $exemptExpenseDetails = TaxService::processSIExemptVatDirectInvoice($masterModel["autoID"]);
                 $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                     $query->where('companySystemID', $masterData->companySystemID);
                 })->where('isActive', 1)->first();
-
                     if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null) {
                         $exemptVatTrans = $exemptExpenseDetails->VATAmount;
                         $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
@@ -618,6 +616,7 @@ class SupplierInvoiceGlService
 
 
                 if ($bs) {
+
                     foreach ($bs as $val) {
                         $transBSVAT = isset($directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['transVATAmount']) ? $directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['transVATAmount'] : 0;
                         $rptBSVAT = isset($directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['rptVATAmount']) ? $directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['rptVATAmount'] : 0;
@@ -663,20 +662,19 @@ class SupplierInvoiceGlService
                         }
                         $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $val->supplierTransactionER;
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + abs($transBSVAT) + abs($exemptVATTransAmount) - $exemptVatTrans);
+                        $data['documentTransAmount'] = \Helper::roundValue(($val->transAmount) + abs($transBSVAT) + abs($exemptVATTransAmount) - $exemptVatTrans);
                         $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) + abs($localBSVAT) + abs($exemptVATLocalAmount) - $exemptVATLocal);
+                        $data['documentLocalAmount'] = \Helper::roundValue(($val->localAmount) + abs($localBSVAT) + abs($exemptVATLocalAmount) - $exemptVATLocal);
                         $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                         $data['documentRptCurrencyER'] = $val->companyReportingER;
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + abs($rptBSVAT) + abs($exemptVATRptAmount) - $exemptVatRpt);
+                        $data['documentRptAmount'] = \Helper::roundValue(($val->rptAmount) + abs($rptBSVAT) + abs($exemptVATRptAmount) - $exemptVatRpt);
                         $data['timestamp'] = \Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
                 }
             }
 
-          
             //VAT entries
             $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
             $totalVATAmount = $vatDetails['totalVAT'];
@@ -933,7 +931,7 @@ class SupplierInvoiceGlService
                         $data['documentLocalAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
                         $data['documentRptAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
 
-                        if ($retentionPercentage > 0 && $masterData->documentType != 4) {
+                        if ($retentionPercentage > 0 && $masterData->documentType != 4 && !$masterData->rcmActivated) {
                             $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
                             $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
                             $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
@@ -968,11 +966,11 @@ class SupplierInvoiceGlService
                                 $data['documentLocalAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
                                 $data['documentRptAmount'] = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
 
-                                if ($retentionPercentage > 0 && $masterData->documentType != 4) {
-                                    $data['documentTransAmount'] = $data['documentTransAmount'] * ($retentionPercentage / 100);
-                                    $data['documentLocalAmount'] = $data['documentLocalAmount'] * ($retentionPercentage / 100);
-                                    $data['documentRptAmount'] = $data['documentRptAmount'] * ($retentionPercentage / 100);
-                                }
+                                // if ($retentionPercentage > 0 && $masterData->documentType != 4) {
+                                //     $data['documentTransAmount'] = $data['documentTransAmount'] * ($retentionPercentage / 100);
+                                //     $data['documentLocalAmount'] = $data['documentLocalAmount'] * ($retentionPercentage / 100);
+                                //     $data['documentRptAmount'] = $data['documentRptAmount'] * ($retentionPercentage / 100);
+                                // }
 
                                 array_push($finalData, $data);
 
@@ -1087,11 +1085,11 @@ class SupplierInvoiceGlService
                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal)) * -1;
                             $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt)) * -1;
 
-                            if ($retentionPercentage > 0 && $masterData->documentType == 1) {
-                                $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
-                                $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
-                                $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
-                            }
+                            // if ($retentionPercentage > 0 && $masterData->documentType == 1) {
+                            //     $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
+                            //     $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage / 100));
+                            //     $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage / 100));
+                            // }
 
                             array_push($finalData, $data);
 

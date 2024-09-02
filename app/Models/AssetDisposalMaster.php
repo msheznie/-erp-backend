@@ -159,6 +159,7 @@ class AssetDisposalMaster extends Model
         'disposalDocumentDate',
         'narration',
         'revenuePercentage',
+        'vatRegisteredYN',
         'confirmedYN',
         'confimedByEmpSystemID',
         'confimedByEmpID',

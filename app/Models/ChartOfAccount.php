@@ -244,4 +244,9 @@ class ChartOfAccount extends Model
         return ($checkAccountCode) ? $checkAccountCode->AccountCode : "";
 
     }
+
+    public function primaryCompany()
+    {
+        return $this->belongsTo('App\Models\Company', 'primaryCompanySystemID', 'companySystemID');
+    }
 }

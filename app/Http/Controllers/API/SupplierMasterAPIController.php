@@ -143,7 +143,7 @@ class SupplierMasterAPIController extends AppBaseController
     public function getSupplierMasterByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'isCriticalYN', 'isActive', 'supplierConfirmedYN', 'approvedYN'));
+        $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'isCriticalYN', 'isActive', 'supplierConfirmedYN', 'approvedYN', 'supCategoryMasterID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -163,7 +163,11 @@ class SupplierMasterAPIController extends AppBaseController
         $liabilityAccountSysemID = (array)$liabilityAccountSysemID;
         $liabilityAccountSysemID = collect($liabilityAccountSysemID)->pluck('id');
 
-        $supplierMasters = $this->getSuppliersByFilterQry($input, $search, $supplierCountryID, $liabilityAccountSysemID);
+        $supCategoryMasterID = $request['supCategoryMasterID'];
+        $supCategoryMasterID = (array)$supCategoryMasterID;
+        $supCategoryMasterID = collect($supCategoryMasterID)->pluck('id');
+
+        $supplierMasters = $this->getSuppliersByFilterQry($input, $search, $supplierCountryID, $liabilityAccountSysemID, $supCategoryMasterID);
 
         return \DataTables::eloquent($supplierMasters)
             ->order(function ($query) use ($input, $supplierId) {
@@ -210,7 +214,11 @@ class SupplierMasterAPIController extends AppBaseController
         $liabilityAccountSysemID = (array)$liabilityAccountSysemID;
         $liabilityAccountSysemID = collect($liabilityAccountSysemID)->pluck('id');
 
-        $supplierMasters = $this->getSuppliersByFilterQry($input, $search, $supplierCountryID, $liabilityAccountSysemID)->orderBy($supplierId, $sort)->get();
+        $supCategoryMasterID = $request['supCategoryMasterID'];
+        $supCategoryMasterID = (array)$supCategoryMasterID;
+        $supCategoryMasterID = collect($supCategoryMasterID)->pluck('id');
+
+        $supplierMasters = $this->getSuppliersByFilterQry($input, $search, $supplierCountryID, $liabilityAccountSysemID, $supCategoryMasterID)->orderBy($supplierId, $sort)->get();
         $data = array();
         $x = 0;
         foreach ($supplierMasters as $val) {
@@ -219,6 +227,8 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x]['Supplier Name'] = $val->supplierName;
             $currency = "";
             $country = "";
+            $businessCategory = "";
+            $businessSubCategory = "";
             if (count($val['supplierCurrency']) > 0) {
                 if ($val['supplierCurrency'][0]['currencyMaster']) {
                     $currency = $val['supplierCurrency'][0]['currencyMaster']['CurrencyCode'];
@@ -229,7 +239,59 @@ class SupplierMasterAPIController extends AppBaseController
                 $country = $val['country']['countryName'];
             }
 
+            if ($request['type'] == 'all') {
+                if (!empty($val['supplier_business_category'])) {
+                    $businessCategories = [];
+                
+                    foreach ($val['supplier_business_category'] as $categoryAssign) {
+                        if (!empty($categoryAssign['categoryMaster'])) {
+                            $categoryMaster = $categoryAssign['categoryMaster'];
+                            $businessCategories[] = $categoryMaster['categoryCode'] . '|' . $categoryMaster['categoryName'];
+                        }
+                    }
+                    $businessCategory = implode(',  ', $businessCategories);
+                }
+
+                if (!empty($val['supplier_sub_business_category'])) {
+                    $businessSubCategories = [];
+                
+                    foreach ($val['supplier_sub_business_category'] as $categorySubAssign) {
+                        if (!empty($categorySubAssign['categoryMaster'])) {
+                            $categoryMaster = $categorySubAssign['categoryMaster'];
+                            $businessSubCategories[] = $categoryMaster['subCategoryCode'] . '|' . $categoryMaster['categoryName'];
+                        }
+                    }
+                    $businessSubCategory = implode(',  ', $businessSubCategories);
+                }
+            } else {
+                if (!empty($val['master']['supplier_business_category'])) {
+                    $businessCategories = [];
+                
+                    foreach ($val['master']['supplier_business_category'] as $categoryAssign) {
+                        if (!empty($categoryAssign['categoryMaster'])) {
+                            $categoryMaster = $categoryAssign['categoryMaster'];
+                            $businessCategories[] = $categoryMaster['categoryCode'] . '|' . $categoryMaster['categoryName'];
+                        }
+                    }
+                    $businessCategory = implode(',  ', $businessCategories);
+                }
+
+                if (!empty($val['master']['supplier_sub_business_category'])) {
+                    $businessSubCategories = [];
+                
+                    foreach ($val['master']['supplier_sub_business_category'] as $categorySubAssign) {
+                        if (!empty($categorySubAssign['categoryMaster'])) {
+                            $categoryMaster = $categorySubAssign['categoryMaster'];
+                            $businessSubCategories[] = $categoryMaster['subCategoryCode'] . '|' . $categoryMaster['categoryName'];
+                        }
+                    }
+                    $businessSubCategory = implode(',  ', $businessSubCategories);
+                }
+            }
+
             $data[$x]['Country'] = $country;
+            $data[$x]['Supplier Business Category'] = $businessCategory;
+            $data[$x]['Supplier Business Sub Category'] = $businessSubCategory;
             $data[$x]['Category'] = ($val->categoryMaster!=null && isset($val->categoryMaster->categoryDescription))?$val->categoryMaster->categoryDescription:'-';
             $data[$x]['Currency'] = $currency;
             $data[$x]['Address'] = $val->address;
@@ -311,7 +373,7 @@ class SupplierMasterAPIController extends AppBaseController
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
-    public function getSuppliersByFilterQry($request, $search, $supplierCountryID, $liabilityAccountSysemID)
+    public function getSuppliersByFilterQry($request, $search, $supplierCountryID, $liabilityAccountSysemID, $supCategoryMasterID)
     {
 
         $input = $request;
@@ -329,12 +391,23 @@ class SupplierMasterAPIController extends AppBaseController
             $supplierMasters = SupplierMaster::with(['liablity_account', 'unbilled_account','categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'Supplier_registration_link', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
+            }, 'supplier_business_category' => function ($query) {
+                $query->with(['categoryMaster']);
+            }, 'supplier_sub_business_category' => function ($query) {
+                $query->with(['categoryMaster']);
             }]);
         } else {
             //by_company
-            $supplierMasters = SupplierAssigned::with(['liablity_account', 'unbilled_account', 'categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'master', 'supplierCurrency' => function ($query) {
+            $supplierMasters = SupplierAssigned::with(['liablity_account', 'unbilled_account', 'categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
+            }, 'master' => function ($query) {
+                $query->with(['supplier_business_category' => function ($query) {
+                    $query->with(['categoryMaster']);
+                }]);
+                $query->with(['supplier_sub_business_category' => function ($query) {
+                    $query->with(['categoryMaster']);
+                }]);
             }])->whereIn('CompanySystemID', $childCompanies)->where('isAssigned', -1);
 
         }
@@ -348,6 +421,22 @@ class SupplierMasterAPIController extends AppBaseController
         if (array_key_exists('liabilityAccountSysemID', $input)) {
             if ($input['liabilityAccountSysemID'] && !is_null($input['liabilityAccountSysemID'])) {
                 $supplierMasters->whereIn('liabilityAccountSysemID', $liabilityAccountSysemID);
+            }
+        }
+
+        if (array_key_exists('supCategoryMasterID', $input)) {
+            if ($input['supCategoryMasterID'] && !is_null($input['supCategoryMasterID'])) {
+                if ($request['type'] == 'all') {
+                    $supplierMasters->whereHas('supplier_business_category', function ($query) use ($supCategoryMasterID) {
+                        $query->whereIn('supCategoryMasterID', $supCategoryMasterID);
+                    });
+                } else {
+                    $supplierMasters->whereHas('master', function ($query) use ($supCategoryMasterID) {
+                        $query->whereHas('supplier_business_category', function ($query) use ($supCategoryMasterID) {
+                            $query->whereIn('supCategoryMasterID', $supCategoryMasterID);
+                        });
+                    });
+                }
             }
         }
 
@@ -2493,6 +2582,9 @@ class SupplierMasterAPIController extends AppBaseController
     public function validateSupplier(Request $request)
     {
         $input = $request->all();
+        if (!isset($input['supplierId'])) {
+            return $this->sendError('Supplier id not found');
+        }
         $supplier_id = $input['supplierId'];
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($supplier_id);
 

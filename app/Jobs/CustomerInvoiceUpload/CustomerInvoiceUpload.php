@@ -67,7 +67,6 @@ class CustomerInvoiceUpload implements ShouldQueue
         CommonJobService::db_switch($db);
         Log::useFiles(storage_path().'/logs/customer_invoice_bulk_insert.log');
            
-
         $uploadCustomerInvoice = $uploadData['uploadCustomerInvoice'];
         $logUploadCustomerInvoice = $uploadData['logUploadCustomerInvoice'];
 
@@ -99,6 +98,9 @@ class CustomerInvoiceUpload implements ShouldQueue
                         // Format it as MM/DD/YYYY
                         $cellValue = sprintf('%02d/%02d/%04d', $month, $day, $year);
                     }
+                }
+                if ($col == 'G') {
+                    $cellValue = (string)$cellValue; 
                 }
 
                 $rowData[] = $cellValue;

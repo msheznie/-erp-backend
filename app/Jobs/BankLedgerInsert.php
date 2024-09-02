@@ -22,6 +22,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use ExchangeSetupConfig;
 
 class BankLedgerInsert implements ShouldQueue
 {
@@ -60,15 +61,25 @@ class BankLedgerInsert implements ShouldQueue
                         if ($masterData->financeperiod_by->isActive == -1) {
                             $masterDocumentDate = $masterData->BPVdate;
                         }
+
                         if (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) {
                             $masterDocumentDate = Carbon::parse($masterModel['pdcDate']);
 
-                            $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $masterModel['pdcAmount']);
+                            if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))
+                            {
+                                $masterData->payAmountBank = $masterModel['pdcAmount'];
+                                $masterData->payAmountSuppTrans = $masterModel['pdcAmount'];
+                                $masterData->payAmountCompLocal = ($masterModel['pdcAmount']/$masterData->localCurrencyER);
+                                $masterData->payAmountCompRpt = ($masterModel['pdcAmount']/$masterData->companyRptCurrencyER);
+                            }else {
+                                $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $masterModel['pdcAmount']);
 
-                            $masterData->payAmountBank = $masterModel['pdcAmount'];
-                            $masterData->payAmountSuppTrans = $masterModel['pdcAmount'];
-                            $masterData->payAmountCompLocal = $currencyConvertionData['localAmount'];
-                            $masterData->payAmountCompRpt = $currencyConvertionData['reportingAmount'];
+                                $masterData->payAmountBank = $masterModel['pdcAmount'];
+                                $masterData->payAmountSuppTrans = $masterModel['pdcAmount'];
+                                $masterData->payAmountCompLocal = $currencyConvertionData['localAmount'];
+                                $masterData->payAmountCompRpt = $currencyConvertionData['reportingAmount'];
+                            }
+
                         }
                         $retationVATAmount = 0;
                         $retentionLocalVatAmount = 0;
@@ -123,10 +134,10 @@ class BankLedgerInsert implements ShouldQueue
                             $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompLocal) * -1 : $masterData->payAmountCompLocal;
                             $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompRpt) * -1 : $masterData->payAmountCompRpt;
                         } else {
-                            $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountBank)) * -1 : $masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountBank);
+                            $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->BPVbankCurrencyER))) * -1 : $masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->BPVbankCurrencyER));
                             $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?($masterData->payAmountSuppTrans + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmount)) * -1 : $masterData->payAmountSuppTrans + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmount);
-                            $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountLocal)) * -1 : $masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountLocal);
-                            $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountRpt)) * -1 : $masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountRpt);
+                            $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->localCurrencyER))) * -1 : $masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->localCurrencyER));
+                            $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->companyRptCurrencyER))) * -1 : $masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : ($masterData->VATAmount/$masterData->companyRptCurrencyER));
                         }
 
 

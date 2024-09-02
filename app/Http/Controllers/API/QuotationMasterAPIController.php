@@ -25,6 +25,7 @@
 
 namespace App\Http\Controllers\API;
 use App\helper\Helper;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\ItemMaster;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -863,7 +864,10 @@ class QuotationMasterAPIController extends AppBaseController
 
         $items = ItemAssigned::where('companySystemID', $companySystemID)
             ->where('isActive', 1)
-            ->where('isAssigned', -1);
+            ->where('isAssigned', -1)
+            ->whereHas('item_category_type',function($q){
+                $q->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems());
+            });
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {

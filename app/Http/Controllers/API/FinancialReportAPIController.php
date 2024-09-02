@@ -204,10 +204,14 @@ class FinancialReportAPIController extends AppBaseController
         $input = count($groupCompanySystemID) > 0 ? $groupCompanySystemID[0] : [];
         $companiesData = [];
         if (isset($input['companySystemID'])) {
-            $companies = Company::where('companySystemID', $input['companySystemID'])->with(['accosiate_jv_companies'])->first();
-
+            $companies = Company::where('companySystemID', $input['companySystemID'])->with(['accosiate_jv_companies', 'subsidiary_companies'])->first();
+            
             if ($companies && count($companies->accosiate_jv_companies) > 0) {
                 $this->getSubAssociateJvCompanies($companies->accosiate_jv_companies);
+            }
+
+            if ($companies && count($companies->subsidiary_companies) > 0) {
+                $this->getSubSubsidaryCompanies($companies->subsidiary_companies);
             }
 
             $companiesData = Company::whereIn('companySystemID', $this->accJvCompanies)->get();
@@ -225,6 +229,19 @@ class FinancialReportAPIController extends AppBaseController
 
             if ($companies && count($companies->accosiate_jv_companies) > 0) {
                 $this->getSubAssociateJvCompanies($companies->accosiate_jv_companies);
+            } 
+        }
+    }
+
+    public function getSubSubsidaryCompanies($subsidiary_companies)
+    {
+        foreach ($subsidiary_companies as $key => $value) {
+            $this->accJvCompanies[] = $value->companySystemID;
+
+            $companies = Company::where('companySystemID', $value->companySystemID)->with(['subsidiary_companies'])->whereHas('subsidiary_companies')->first();
+
+            if ($companies && count($companies->subsidiary_companies) > 0) {
+                $this->getSubSubsidaryCompanies($companies->subsidiary_companies);
             } 
         }
     }
@@ -1428,13 +1445,15 @@ class FinancialReportAPIController extends AppBaseController
                     $shareHolderCYTDAmount = 0;
                     $NCICYTDAmount = 0;
 
-                    foreach ($netProfitColumnData as $key => $value) {
-                        $company = Company::where('CompanyID', $key)->first();
-                        $CYTTDAmount = isset($value[$companyWiseDataArray['CYYTDColumnKey']]) ? $value[$companyWiseDataArray['CYYTDColumnKey']] : 0;
+                    if(!empty($netProfitColumnData) && is_array($netProfitColumnData)) {
+                        foreach ($netProfitColumnData as $key => $value) {
+                            $company = Company::where('CompanyID', $key)->first();
+                            $CYTTDAmount = isset($value[$companyWiseDataArray['CYYTDColumnKey']]) ? $value[$companyWiseDataArray['CYYTDColumnKey']] : 0;
 
-                        if ($company) {
-                            $shareHolderCYTDAmount += $CYTTDAmount * ($company->holding_percentage / 100);
-                            $NCICYTDAmount += $CYTTDAmount * (1 - ($company->holding_percentage / 100));
+                            if ($company) {
+                                $shareHolderCYTDAmount += $CYTTDAmount * ($company->holding_percentage / 100);
+                                $NCICYTDAmount += $CYTTDAmount * (1 - ($company->holding_percentage / 100));
+                            }
                         }
                     }
 
@@ -7675,6 +7694,9 @@ GROUP BY
             $prevMonth2 = Carbon::parse($currentMonth)->subMonth(2)->format('Y-m');
             $LCurrentMonth = Carbon::parse($toDate)->subYear()->format('Y-m');
             $LYear = Carbon::parse($toDate)->subYear()->format('Y');
+            $LYear1 = Carbon::parse($toDate)->subYear(2)->format('Y');
+            $LYear2 = Carbon::parse($toDate)->subYear(3)->format('Y');
+            $LYear3 = Carbon::parse($toDate)->subYear(4)->format('Y');
             $LPrevMonth = Carbon::parse($LCurrentMonth)->subMonth()->format('Y-m');
             $LPrevMonth2 = Carbon::parse($LCurrentMonth)->subMonth(2)->format('Y-m');
             foreach ($currentYearPeriod as $val) {
@@ -7793,6 +7815,89 @@ GROUP BY
                     }
                     $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;
                 }
+
+                if ($val->shortCode == 'CY-2') {
+                    if ($request->accountType == 2) {
+                        
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear(2)->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->subYear(2)->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($request->toDate)->subYear(2)->format('Y-m-d');
+                            $fromDate = Carbon::parse($request->fromDate)->subYear(2)->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear(2)->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear1;
+                }
+
+                if ($val->shortCode == 'CY-3') {
+                    if ($request->accountType == 2) {
+                        
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear(3)->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->subYear(3)->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($request->toDate)->subYear(3)->format('Y-m-d');
+                            $fromDate = Carbon::parse($request->fromDate)->subYear(3)->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear(3)->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear2;
+                }
+
+                if ($val->shortCode == 'CY-4') {
+                    if ($request->accountType == 2) {
+                        
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear(4)->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->subYear(4)->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($request->toDate)->subYear(4)->format('Y-m-d');
+                            $fromDate = Carbon::parse($request->fromDate)->subYear(4)->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear(4)->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear3;
+                }
+
+
                 if ($val->shortCode == 'BCM') {
 
                     if ($changeSelect) {
@@ -7866,7 +7971,7 @@ GROUP BY
                         // if column has a formula value decoding process is done here
                         $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false, 1);
                     }
-                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CMB') {
+                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CY-2' || $val->shortCode == 'CY-3' || $val->shortCode == 'CY-4' || $val->shortCode == 'CMB') {
                     $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                 } else {
                     $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
@@ -7954,7 +8059,7 @@ GROUP BY
                         $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
                         $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true, 2);
                     }
-                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CMB') {
+                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CY-2' || $val->shortCode == 'CY-3' || $val->shortCode == 'CY-4' || $val->shortCode == 'CMB') {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                     $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode], 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
@@ -9329,213 +9434,218 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
     }
 
     public function getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$companyID,$employeeIDs) {
+        try {
+            $typeIDs = join(',', json_decode($typeID));
+            $employeeIDs = join(',', json_decode($employeeIDs));
+            $companyID = join(',', json_decode($companyID));
 
-        $typeIDs = join(',', json_decode($typeID));
-        $employeeIDs = join(',', json_decode($employeeIDs));
-        $companyID = join(',', json_decode($companyID));
+            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , "exchange-gainloss-gl");
 
-        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , "exchange-gainloss-gl");
+            return DB::select('SELECT * FROM ( 
+                    SELECT
+                        erp_bookinvsuppmaster.bookingDate AS documentDate,
+                        erp_bookinvsuppmaster.bookingInvCode AS documentCode,
+                        erp_bookinvsuppmaster.comments AS description,
+                        erp_bookinvsuppmaster.employeeID AS employeeID,
+                        erp_bookinvsuppmaster.bookingAmountLocal AS amountLocal,
+                        erp_bookinvsuppmaster.bookingAmountRpt AS amountRpt,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+                        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+                        4 AS type
+                    FROM
+                        erp_bookinvsuppmaster
+                        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+                        LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
+                    WHERE
+                        DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_bookinvsuppmaster.approved = -1 AND
+                        erp_bookinvsuppmaster.documentType = 4 AND
+                        4 IN (' . $typeIDs . ') AND
+                        erp_bookinvsuppmaster.companySystemID IN ('.$companyID.')
+                        UNION ALL
+                        SELECT
+                        erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+                        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+                        erp_paysupplierinvoicemaster.BPVNarration AS description,
+                        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+                        (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
+                        (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+                        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+                        5 AS type
+                    FROM
+                        erp_paysupplierinvoicemaster
+                        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+                        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+                    WHERE
+                        erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+                        DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_paysupplierinvoicemaster.approved = -1 AND
+                        5 IN (' . $typeIDs . ') AND
+                        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
+                        UNION ALL
+                        SELECT
+                        erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+                        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+                        erp_paysupplierinvoicemaster.BPVNarration AS description,
+                        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+                        (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
+                        (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+                        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+                        6 AS type
+                    FROM
+                        erp_paysupplierinvoicemaster
+                        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+                        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+                    WHERE
+                        erp_paysupplierinvoicemaster.invoiceType = 7 AND 
+                        DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_paysupplierinvoicemaster.approved = -1 AND
+                        6 IN (' . $typeIDs . ') AND
+                        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
+                        UNION ALL
+                        SELECT
+                        erp_bookinvsuppmaster.bookingDate AS documentDate,
+                        erp_bookinvsuppmaster.bookingInvCode AS documentCode,
+                        erp_bookinvsuppmaster.comments AS description,
+                        expense_employee_allocation.employeeSystemID AS employeeID,
+                        expense_employee_allocation.amountLocal AS amountLocal,
+                        expense_employee_allocation.amountRpt AS amountRpt,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+                        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+                        1 AS type
+                    FROM
+                        erp_bookinvsuppmaster
+                        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+                        LEFT JOIN expense_employee_allocation ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = expense_employee_allocation.documentSystemCode
+                        LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
+                    WHERE
+                        DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_bookinvsuppmaster.approved = -1 AND
+                        erp_bookinvsuppmaster.documentType = 1 AND
+                        expense_employee_allocation.documentSystemID = 11 AND
+                        1 IN (' . $typeIDs . ') AND
+                        erp_bookinvsuppmaster.companySystemID IN ('.$companyID.')
+                        UNION ALL
+                        SELECT
+                        erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+                        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+                        erp_paysupplierinvoicemaster.BPVNarration AS description,
+                        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+                        (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
+                        (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+                        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+                        2 AS type
+                    FROM
+                        erp_paysupplierinvoicemaster
+                        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+                        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+                    WHERE
+                        erp_paysupplierinvoicemaster.invoiceType = 3 AND 
+                        DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_paysupplierinvoicemaster.approved = -1 AND
+                        2 IN (' . $typeIDs . ') AND
+                        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
+                        UNION ALL 
+                        SELECT
+                         srp_erp_iouvouchers.voucherDate AS documentDate,
+                        srp_erp_iouvouchers.iouCode AS documentCode,
+                        srp_erp_iouvouchers.narration AS description,
+                        srp_erp_iouvouchers.empID AS employeeID,
+                        srp_erp_iouvouchers.companyLocalAmount AS amountLocal,
+                        srp_erp_iouvouchers.companyReportingAmount AS amountRpt,
+                        srp_erp_ioubookingmaster.bookingCode AS referenceDoc,
+                        srp_erp_ioubookingmaster.bookingDate AS referenceDocDate,
+                        srp_erp_ioubookingmaster.bookingMasterID AS masterID,
+                        srp_erp_iouvouchers.companyLocalCurrencyDecimalPlaces AS localCurrencyDecimals,
+                        srp_erp_iouvouchers.companyReportingCurrencyDecimalPlaces AS rptCurrencyDecimals,
+                        3 AS type
+                    FROM
+                        srp_erp_iouvouchers
+                        LEFT JOIN srp_erp_ioubookingmaster ON srp_erp_iouvouchers.voucherAutoID = srp_erp_ioubookingmaster.iouVoucherAutoID
+                    WHERE
+                        DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
+                        3 IN (' . $typeIDs . ') AND
+                        srp_erp_iouvouchers.companyID IN ('.$companyID.') AND
+                        srp_erp_iouvouchers.approvedYN = 1
+                        UNION ALL  
+                        SELECT
+                        erp_debitnote.debitNoteDate AS documentDate,
+                        erp_debitnote.debitNoteCode AS documentCode,
+                        erp_debitnote.comments AS description,
+                        erp_debitnote.empID AS employeeID,
+                        erp_debitnote.netAmountLocal AS amountLocal,
+                        erp_debitnote.netAmountRpt AS amountRpt,
+                        erp_debitnote.invoiceNumber AS referenceDoc,
+                        erp_debitnote.postedDate AS referenceDocDate,
+                        erp_debitnote.debitNoteAutoID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        rptCurrency.DecimalPlaces AS rptCurrencyDecimals,
+                        7 AS type
+                    FROM
+                    erp_debitnote
+                        LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster as rptCurrency ON erp_debitnote.companyReportingCurrencyID = rptCurrency.currencyID
+                    WHERE
+                        DATE(erp_debitnote.debitNoteDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
+                        7 IN (' . $typeIDs . ') AND
+                        erp_debitnote.companySystemID IN ('.$companyID.') AND
+                        erp_debitnote.approved = -1
+                        UNION ALL
+                        SELECT
+                        erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+                        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+                        "Exchange Gain or Loss" AS description,
+                        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+                        erp_generalledger.documentLocalAmount*-1 AS amountLocal,
+                        erp_generalledger.documentRptAmount*-1 AS amountRpt,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+                        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+                        5 AS type
+                    FROM
+                        erp_paysupplierinvoicemaster
+                        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+                        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+                        LEFT JOIN erp_generalledger ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+                    WHERE
+                        erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+                        DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_paysupplierinvoicemaster.approved = -1 AND
+                        5 IN (' . $typeIDs . ') AND
+                        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.') AND
+                        erp_generalledger.documentSystemID = 4 AND 
+                        erp_generalledger.chartOfAccountSystemID = "'.$exchangeGainLossAccount.'"
+                        ) AS t1 WHERE t1.employeeID IN (' . $employeeIDs . ')');
 
-        return DB::select('SELECT * FROM ( SELECT
-        erp_bookinvsuppmaster.bookingDate AS documentDate,
-        erp_bookinvsuppmaster.bookingInvCode AS documentCode,
-        erp_bookinvsuppmaster.comments AS description,
-        erp_bookinvsuppmaster.employeeID AS employeeID,
-        erp_bookinvsuppmaster.bookingAmountLocal AS amountLocal,
-        erp_bookinvsuppmaster.bookingAmountRpt AS amountRpt,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
-        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-        currencymaster.DecimalPlaces AS localCurrencyDecimals,
-        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-        4 AS type
-    FROM
-        erp_bookinvsuppmaster
-        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
-        LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
-        LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
-    WHERE
-        DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
-        erp_bookinvsuppmaster.approved = -1 AND
-        erp_bookinvsuppmaster.documentType = 4 AND
-        4 IN (' . $typeIDs . ') AND
-        erp_bookinvsuppmaster.companySystemID IN ('.$companyID.')
-        UNION ALL
-        SELECT
-        erp_paysupplierinvoicemaster.BPVdate AS documentDate,
-        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
-        erp_paysupplierinvoicemaster.BPVNarration AS description,
-        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
-        (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
-        (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
-        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-        currencymaster.DecimalPlaces AS localCurrencyDecimals,
-        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-        5 AS type
-    FROM
-        erp_paysupplierinvoicemaster
-        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
-        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
-        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
-    WHERE
-        erp_paysupplierinvoicemaster.invoiceType = 6 AND 
-        DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
-        erp_paysupplierinvoicemaster.approved = -1 AND
-        5 IN (' . $typeIDs . ') AND
-        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
-        UNION ALL
-        SELECT
-        erp_paysupplierinvoicemaster.BPVdate AS documentDate,
-        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
-        erp_paysupplierinvoicemaster.BPVNarration AS description,
-        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
-        (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
-        (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
-        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-        currencymaster.DecimalPlaces AS localCurrencyDecimals,
-        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-        6 AS type
-    FROM
-        erp_paysupplierinvoicemaster
-        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
-        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
-        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
-    WHERE
-        erp_paysupplierinvoicemaster.invoiceType = 7 AND 
-        DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
-        erp_paysupplierinvoicemaster.approved = -1 AND
-        6 IN (' . $typeIDs . ') AND
-        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
-        UNION ALL
-        SELECT
-        erp_bookinvsuppmaster.bookingDate AS documentDate,
-        erp_bookinvsuppmaster.bookingInvCode AS documentCode,
-        erp_bookinvsuppmaster.comments AS description,
-        expense_employee_allocation.employeeSystemID AS employeeID,
-        expense_employee_allocation.amountLocal AS amountLocal,
-        expense_employee_allocation.amountRpt AS amountRpt,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
-        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-        currencymaster.DecimalPlaces AS localCurrencyDecimals,
-        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-        1 AS type
-    FROM
-        erp_bookinvsuppmaster
-        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
-        LEFT JOIN expense_employee_allocation ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = expense_employee_allocation.documentSystemCode
-        LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
-        LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
-    WHERE
-        DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
-        erp_bookinvsuppmaster.approved = -1 AND
-        erp_bookinvsuppmaster.documentType = 1 AND
-        expense_employee_allocation.documentSystemID = 11 AND
-        1 IN (' . $typeIDs . ') AND
-        erp_bookinvsuppmaster.companySystemID IN ('.$companyID.')
-        UNION ALL
-        SELECT
-        erp_paysupplierinvoicemaster.BPVdate AS documentDate,
-        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
-        erp_paysupplierinvoicemaster.BPVNarration AS description,
-        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
-        (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
-        (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
-        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-        currencymaster.DecimalPlaces AS localCurrencyDecimals,
-        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-        2 AS type
-    FROM
-        erp_paysupplierinvoicemaster
-        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
-        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
-        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
-    WHERE
-        erp_paysupplierinvoicemaster.invoiceType = 3 AND 
-        DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
-        erp_paysupplierinvoicemaster.approved = -1 AND
-        2 IN (' . $typeIDs . ') AND
-        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
-        UNION ALL 
-        SELECT
-         srp_erp_iouvouchers.voucherDate AS documentDate,
-        srp_erp_iouvouchers.iouCode AS documentCode,
-        srp_erp_iouvouchers.narration AS description,
-        srp_erp_iouvouchers.empID AS employeeID,
-        srp_erp_iouvouchers.companyLocalAmount AS amountLocal,
-        srp_erp_iouvouchers.companyReportingAmount AS amountRpt,
-        srp_erp_ioubookingmaster.bookingCode AS referenceDoc,
-        srp_erp_ioubookingmaster.bookingDate AS referenceDocDate,
-        srp_erp_ioubookingmaster.bookingMasterID AS masterID,
-        srp_erp_iouvouchers.companyLocalCurrencyDecimalPlaces AS localCurrencyDecimals,
-        srp_erp_iouvouchers.companyReportingCurrencyDecimalPlaces AS rptCurrencyDecimals,
-        3 AS type
-    FROM
-        srp_erp_iouvouchers
-        LEFT JOIN srp_erp_ioubookingmaster ON srp_erp_iouvouchers.voucherAutoID = srp_erp_ioubookingmaster.iouVoucherAutoID
-    WHERE
-        DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
-        3 IN (' . $typeIDs . ') AND
-        srp_erp_iouvouchers.companyID IN ('.$companyID.') AND
-        srp_erp_iouvouchers.approvedYN = 1
-        UNION ALL  
-        SELECT
-        erp_debitnote.debitNoteDate AS documentDate,
-        erp_debitnote.debitNoteCode AS documentCode,
-        erp_debitnote.comments AS description,
-        erp_debitnote.empID AS employeeID,
-        erp_debitnote.netAmountLocal AS amountLocal,
-        erp_debitnote.netAmountRpt AS amountRpt,
-        erp_debitnote.invoiceNumber AS referenceDoc,
-        erp_debitnote.postedDate AS referenceDocDate,
-        erp_debitnote.debitNoteAutoID AS masterID,
-        currencymaster.DecimalPlaces AS localCurrencyDecimals,
-        rptCurrency.DecimalPlaces AS rptCurrencyDecimals,
-        7 AS type
-    FROM
-    erp_debitnote
-        LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID
-        LEFT JOIN currencymaster as rptCurrency ON erp_debitnote.companyReportingCurrencyID = rptCurrency.currencyID
-    WHERE
-        DATE(erp_debitnote.debitNoteDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
-        7 IN (' . $typeIDs . ') AND
-        erp_debitnote.companySystemID IN ('.$companyID.') AND
-        erp_debitnote.approved = -1
-        UNION ALL
-        SELECT
-        erp_paysupplierinvoicemaster.BPVdate AS documentDate,
-        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
-        "Exchange Gain or Loss" AS description,
-        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
-        erp_generalledger.documentLocalAmount*-1 AS amountLocal,
-        erp_generalledger.documentRptAmount*-1 AS amountRpt,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
-        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
-        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-        currencymaster.DecimalPlaces AS localCurrencyDecimals,
-        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-        5 AS type
-    FROM
-        erp_paysupplierinvoicemaster
-        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
-        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
-        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
-        LEFT JOIN erp_generalledger ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_generalledger.documentSystemCode
-    WHERE
-        erp_paysupplierinvoicemaster.invoiceType = 6 AND 
-        DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
-        erp_paysupplierinvoicemaster.approved = -1 AND
-        5 IN (' . $typeIDs . ') AND
-        erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.') AND
-        erp_generalledger.documentSystemID = 4 AND 
-        erp_generalledger.chartOfAccountSystemID = "'.$exchangeGainLossAccount.'"
-        ) AS t1 WHERE t1.employeeID IN (' . $employeeIDs . ')');
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
     }
 
     public function getGeneralLedgerRefAmount() {

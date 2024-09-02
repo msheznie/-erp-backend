@@ -437,6 +437,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
         },'direct_customer_invoice' => function($query) {
             $query->select('custInvoiceDirectAutoID','bookingInvCode');
+        },'vrfDocument' => function($query) {
+            $query->where('masterDocumentTypeID',11);
         }])->findWithoutFail($id);
 
         if (empty($bookInvSuppMaster)) {
@@ -824,26 +826,24 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     return $this->sendError('Due Date cannot be null as retention amount is greater than zero', 500);
                 }
 
+                if(!is_numeric($input['retentionPercentage'])) {
+                    $input['retentionPercentage'] = 0;
+                }
 
+                if ($input['documentType'] == 1 || $input['documentType'] == 4) {
+                    $vatTrans = TaxService::processDirectSupplierInvoiceVAT($input['bookingSuppMasInvAutoID'], $input['documentSystemID']);
+                    $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
+                }
 
-            if ($input['documentType'] == 1 || $input['documentType'] == 4) {
-                $vatTrans = TaxService::processDirectSupplierInvoiceVAT($input['bookingSuppMasInvAutoID'], $input['documentSystemID']);
-                $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
-            }
-
-            if ($input['documentType'] == 0) {
+                if ($input['documentType'] == 0) {
                     $vatTrans = TaxService::processPoBasedSupllierInvoiceVAT($input['bookingSuppMasInvAutoID']);
-                    if(!is_numeric($input['retentionPercentage']))
-                    {
-                        $input['retentionPercentage'] = 0;
-                    }
-                    
                     $input['retentionVatAmount'] = $vatTrans['totalVAT'] *  $input['retentionPercentage'] / 100;
-            }
-            if ($input['documentType'] == 3) {
+                }
+
+                if ($input['documentType'] == 3) {
                     $vatTrans = TaxService::processSupplierInvoiceItemsVAT($input['bookingSuppMasInvAutoID']);
                     $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
-            }
+                }
 
             }
 
@@ -2975,11 +2975,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $time = strtotime("now");
         $fileName = 'supplier_invoice_' . $id . '_' . $time . '.pdf';
+        
         $html = view('print.supplier_invoice', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        // $pdf = \App::make('dompdf.wrapper');
+        // $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        // return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+
+        // $html = view('print.APMC_customer_invoice', $order);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public function supplierInvoiceCancel(Request $request)

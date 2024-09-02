@@ -2,6 +2,7 @@
 
 namespace App\Jobs\AddBulkItem;
 
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\ItemIssueMaster;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -71,7 +72,11 @@ class MaterialRequestAddBulkItemJob implements ShouldQueue
             $financeCategorySub = isset($input['financeCategorySub'])?$input['financeCategorySub']:null;
          
             $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-                                        return $query->where('companySystemID', '=', $companyId)->where('isAssigned', '=', -1)->whereIn('categoryType', ['[{"id":1,"itemName":"Purchase"}]','[{"id":1,"itemName":"Purchase"},{"id":2,"itemName":"Sale"}]','[{"id":2,"itemName":"Sale"},{"id":1,"itemName":"Purchase"}]']);
+                                        return $query->where('companySystemID', '=', $companyId)
+                                            ->where('isAssigned', '=', -1)
+                                            ->whereHas('item_category_type', function ($q) {
+                                                $q->whereIn('categoryTypeID',ItemCategoryTypeMaster::purchaseItems());
+                                            });
                                      })->where('isActive',1)
                                      ->where('itemApprovedYN',1)
                                      ->when((isset($input['financeCategoryMaster']) && $input['financeCategoryMaster']), function($query) use ($input){

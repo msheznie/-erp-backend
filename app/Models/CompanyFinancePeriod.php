@@ -221,11 +221,22 @@ class CompanyFinancePeriod extends Model
     }
 
     public static function activeFinancePeriod($company, $departmentSystemID, $date){
-        return CompanyFinancePeriod::selectRaw("companySystemID, DATE(dateFrom) AS startDate, DATE(dateTo) AS endDate")
+        return CompanyFinancePeriod::selectRaw("companySystemID, DATE(dateFrom) AS startDate, DATE(dateTo) AS endDate,companyFinancePeriodID")
             ->where('companySystemID', $company)
             ->where('departmentSystemID', $departmentSystemID)
             ->where('isActive', -1)
             ->whereRaw("('{$date}' BETWEEN DATE(dateFrom) AND DATE(dateTo))")
             ->first();
     }
+
+    public static function activeAndCurrentFinancePeriod($company, $departmentSystemID, $date){
+        return CompanyFinancePeriod::selectRaw("companySystemID, DATE(dateFrom) AS startDate, DATE(dateTo) AS endDate,companyFinancePeriodID")
+            ->where('companySystemID', $company)
+            ->where('departmentSystemID', $departmentSystemID)
+            ->where('isActive', -1)
+            ->where('isCurrent',-1)
+            ->whereRaw("('{$date}' BETWEEN DATE(dateFrom) AND DATE(dateTo))")
+            ->first();
+    }
+
 }

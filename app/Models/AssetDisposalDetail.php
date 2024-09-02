@@ -154,6 +154,9 @@ class AssetDisposalDetail extends Model
         'faCode',
         'faUnitSerialNo',
         'assetDescription',
+        'condition',
+        'depMonth',
+        'lastDepDate',
         'COSTUNIT',
         'costUnitRpt',
         'netBookValueLocal',
@@ -169,6 +172,11 @@ class AssetDisposalDetail extends Model
         'revenuePercentage',
         'sellingPriceLocal',
         'sellingPriceRpt',
+        'vatPercentage',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
+        'vatAmount',
+        'sellingTotal',
         'timestamp'
     ];
 
@@ -189,6 +197,9 @@ class AssetDisposalDetail extends Model
         'faCode' => 'string',
         'faUnitSerialNo' => 'string',
         'assetDescription' => 'string',
+        'condition' => 'integer',
+        'depMonth' => 'float',
+        'lastDepDate' => 'date',
         'COSTUNIT' => 'float',
         'costUnitRpt' => 'float',
         'netBookValueLocal' => 'float',

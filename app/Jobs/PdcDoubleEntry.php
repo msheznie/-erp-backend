@@ -76,7 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\BankLedgerInsert;
 use App\Jobs\TaxLedgerInsert;
-
+use ExchangeSetupConfig;
 class PdcDoubleEntry implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -338,9 +338,14 @@ class PdcDoubleEntry implements ShouldQueue
                             }
 
                             if ($masterData->invoiceType == 3) { //Direct Payment
-                                $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
-                                $masterLocal = $currencyConvertionData['localAmount'];
-                                $masterRpt = $currencyConvertionData['reportingAmount'];
+                                if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData)) {
+                                    $masterLocal = ($pdcData['amount']/$masterData->localCurrencyER);
+                                    $masterRpt = ($pdcData['amount']/$masterData->companyRptCurrencyER);
+                                }else {
+                                    $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
+                                    $masterLocal = $currencyConvertionData['localAmount'];
+                                    $masterRpt = $currencyConvertionData['reportingAmount'];
+                                }
                                 $data['serviceLineSystemID'] = 24;
                                 $data['serviceLineCode'] = 'X';
                                 $data['glAccountType'] = 'BS';

@@ -55,7 +55,6 @@ Route::group([],function (){
     Route::group(['middleware' => ['max_memory_limit', 'max_execution_limit']], function () { 
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport')->name("Generate financial report");
         Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport')->name("Export financial report");
-    
     });
     Route::post('exportFinanceReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Export financial report pdf");
     Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown')->name("Report template gl drill down");
