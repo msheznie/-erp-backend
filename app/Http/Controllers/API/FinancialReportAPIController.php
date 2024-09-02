@@ -5198,6 +5198,11 @@ class FinancialReportAPIController extends AppBaseController
         }
         $chartOfAccount = ChartOfAccount::find($chartOfAccountID);
 
+        $serviceLines = join(',', array_map(function ($sl) {
+            return $sl['serviceLineSystemID'];
+        }, $request->selectedServicelines));
+
+
         $dateQry = '';
         if ($chartOfAccount) {
             // if ($chartOfAccount->catogaryBLorPLID == 2) {
@@ -5229,6 +5234,7 @@ class FinancialReportAPIController extends AppBaseController
                                 WHERE
                                     ' . $dateQry . '    
                                     AND erp_generalledger.chartOfAccountSystemID  = ' . $chartOfAccountID . '
+                                    AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')  ORDER BY erp_generalledger.documentDate;';
 
         $output = \DB::select($query);
