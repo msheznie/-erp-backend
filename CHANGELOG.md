@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.48.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.48.0...v10.48.1) (2024-09-03)
+
+
+### Bug Fixes
+
+* **Supplier Appointments Approvals:** Unable to reject 'Delivery Appointments' from the ERP [GSUP-1812] ([#6665](https://github.com/pbsgears/Gears_BackEnd/issues/6665)) ([1ae5205](https://github.com/pbsgears/Gears_BackEnd/commit/1ae5205adfd6564d2d111a5c584bb97131a4bfd4))
+* **Tender:** Unable to submit the technical evaluation values [Yes/No and Descriptive] when using pre-defined technical criteria [Hot-Fix] [GSUP-1817] ([e2fed51](https://github.com/pbsgears/Gears_BackEnd/commit/e2fed5180806effd8edec96eae60913e5b3d4888))
+* **Tender:** Unable to submit the technical evaluation values [Yes/No and Descriptive] when using pre-defined technical criteria [Hot-Fix] [GSUP-1817] ([7a61a75](https://github.com/pbsgears/Gears_BackEnd/commit/7a61a75bad9f74e182960ae7c4972ef3ef62f16d))
+* **Tender:** Unable to submit the technical evaluation values [Yes/No and Descriptive] when using pre-defined technical criteria [Hot-Fix] [GSUP-1817] ([30bd693](https://github.com/pbsgears/Gears_BackEnd/commit/30bd693114f1907294417ddd91f789332ad3d06e))
+* **Tender:** Unable to submit the technical evaluation values [Yes/No and Descriptive] when using pre-defined technical criteria [Hot-Fix] [GSUP-1817] ([92b3107](https://github.com/pbsgears/Gears_BackEnd/commit/92b3107422f9f835e4662d523cbecb0f6a4d7988))
+* **Tender:** Unable to submit the technical evaluation values [Yes/No and Descriptive] when using pre-defined technical criteria [Hot-Fix] [GSUP-1817] ([#6691](https://github.com/pbsgears/Gears_BackEnd/issues/6691)) ([3155b7f](https://github.com/pbsgears/Gears_BackEnd/commit/3155b7f86ee3b59e1d61a2e81b4ed20625eb8ccb))
+
 ## [10.48.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.47.2...v10.48.0) (2024-09-02)
 
 
