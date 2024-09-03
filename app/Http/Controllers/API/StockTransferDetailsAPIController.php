@@ -549,13 +549,16 @@ class StockTransferDetailsAPIController extends AppBaseController
             return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
         }
 
-        if ($input['qty'] > $stockTransferDetails->warehouseStockQty) {
+        $itemDefaultUnit = ItemMaster::where('itemCodeSystem',$input['itemCodeSystem'])->select('unit')->first();
+        $conversionUnit = UnitConversion::where('masterUnitID',$itemDefaultUnit->unit)->where('subUnitID',$input['unitOfMeasure'])->first();
+
+        if (($input['qty'] / (isset($conversionUnit)? $conversionUnit->conversion:1)) > $stockTransferDetails->warehouseStockQty) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
             return $this->sendError("Current warehouse stock Qty is: " . $stockTransferDetails->warehouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500, $qtyError);
         }
 
-        if ($input['qty'] > $stockTransferDetails->currentStockQty) {
+        if (($input['qty'] / (isset($conversionUnit)? $conversionUnit->conversion:1)) > $stockTransferDetails->currentStockQty) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
             return $this->sendError("Current stock Qty is: " . $stockTransferDetails->currentStockQty . " .You cannot issue more than the current stock qty.", 500, $qtyError);
@@ -568,13 +571,8 @@ class StockTransferDetailsAPIController extends AppBaseController
         ->where('companySystemID', $stockTransfer->companySystemID)
         ->first();
 
-        $iemDefaultUnit = ItemMaster::where('itemCodeSystem',$input['itemCodeSystem'])->select('unit')->first();
-
-    
-        $convertionUnit = UnitConversion::where('masterUnitID',$iemDefaultUnit->unit)->where('subUnitID',$input['unitOfMeasure'])->first();
-
-        $input['unitCostLocal'] = $iemDefaultUnit->unit != $input['unitOfMeasure'] && isset($convertionUnit)?$item->wacValueLocal/$convertionUnit->conversion:$item->wacValueLocal;
-        $input['unitCostRpt'] = $iemDefaultUnit->unit != $input['unitOfMeasure'] && isset($convertionUnit)?$item->wacValueReporting/$convertionUnit->conversion:$item->wacValueReporting;
+        $input['unitCostLocal'] = $itemDefaultUnit->unit != $input['unitOfMeasure'] && isset($conversionUnit)?$item->wacValueLocal/$conversionUnit->conversion:$item->wacValueLocal;
+        $input['unitCostRpt'] = $itemDefaultUnit->unit != $input['unitOfMeasure'] && isset($conversionUnit)?$item->wacValueReporting/$conversionUnit->conversion:$item->wacValueReporting;
  
 
         $stockTransferDetails = $this->stockTransferDetailsRepository->update($input, $id);
