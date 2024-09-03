@@ -52,7 +52,7 @@ Route::group([],function (){
     Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData')->name("Get financial report filter data");
     Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport')->name("Validate financial report");
     Route::post('getSubsidiaryCompanies', 'FinancialReportAPIController@getSubsidiaryCompanies')->name("Get subsidiary companies");
-    Route::group(['middleware' => ['max_memory_limit', 'max_execution_limit']], function () { 
+    Route::group(['middleware' => ['max_memory_limit', 'max_execution_limit']], function () {
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport')->name("Generate financial report");
         Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport')->name("Export financial report");
     });
@@ -64,7 +64,7 @@ Route::group([],function (){
 //General Ledger
 Route::group([],function (){
     Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts')->name("Get afr filter chart of accounts");
-  
+
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
             Route::post('exportGLReport', 'FinancialReportAPIController@exportGLReport')->name("Export general ledger report");
@@ -96,7 +96,7 @@ Route::group([],function (){
     Route::post('generateARCAReportPDF', 'AccountsReceivableReportAPIController@pdfExportCAReport')->name("Account receivable customer aging");
 });
 
-//segment 
+//segment
 Route::group([],function (){
     Route::post('exportProcessedSegments', 'SegmentMasterAPIController@exportProcessedSegments')->name('Export processed segments');
     Route::post('exportAssignedEmp', 'SegmentMasterAPIController@exportAssignedEmp')->name('Export segment assigned employees');

@@ -61,7 +61,7 @@ class EvaluationCriteriaScoreConfig extends Model
 {
 
     public $table = 'srm_evaluation_criteria_score_config';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -71,6 +71,7 @@ class EvaluationCriteriaScoreConfig extends Model
     public $fillable = [
         'criteria_detail_id',
         'label',
+        'fromTender',
         'score',
         'created_by',
         'updated_by'
@@ -87,7 +88,8 @@ class EvaluationCriteriaScoreConfig extends Model
         'label' => 'string',
         'score' => 'float',
         'created_by' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'fromTender'=> 'integer'
     ];
 
     /**
@@ -96,8 +98,16 @@ class EvaluationCriteriaScoreConfig extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    
+    public static function getEvalScore($id, $fromTender)
+    {
+        return self::select('id','criteria_detail_id','label','score')
+            ->where('fromTender', 0)
+            ->where('criteria_detail_id', $id)
+            ->get();
+    }
+
+
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateEvaluationCriteriaScoreConfigAPIRequest;
 use App\Http\Requests\API\UpdateEvaluationCriteriaScoreConfigAPIRequest;
 use App\Models\EvaluationCriteriaDetails;
+use App\Models\EvaluationCriteriaMasterDetails;
 use App\Models\EvaluationCriteriaScoreConfig;
 use App\Repositories\EvaluationCriteriaScoreConfigRepository;
 use Illuminate\Http\Request;
@@ -289,11 +290,15 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
         $min_value = 0;
         $max_value = 0;
         $x=1;
+        $fromTender = $input['fromTender'] ?? false;
+        $model = $fromTender ? EvaluationCriteriaDetails::class : EvaluationCriteriaMasterDetails::class;
         DB::beginTransaction();
         try {
             $result = EvaluationCriteriaScoreConfig::where('id',$input['id'])->delete();
             if($result) {
-                $criteriaConfig = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['criteria_detail_id'])->get();
+                $criteriaConfig = EvaluationCriteriaScoreConfig::where('fromTender',$fromTender)
+                    ->where('criteria_detail_id',$input['criteria_detail_id'])
+                    ->get();
                 foreach ($criteriaConfig as $val){
                     if($x==1){
                         $min_value = $val['score'];
@@ -309,7 +314,7 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
 
                     $ans['max_value'] = $max_value;
                     $ans['min_value'] = $min_value;
-                    EvaluationCriteriaDetails::where('id',$input['criteria_detail_id'])->update($ans);
+                    $model::where('id',$input['criteria_detail_id'])->update($ans);
                     $x++;
                 }
                 DB::commit();
@@ -325,19 +330,25 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
     public function addEvaluationCriteriaConfig(Request $request)
     {
         $input = $request->all();
+        $fromTender = $input['fromTender'] ?? false;
         $employee = \Helper::getEmployeeInfo();
         $min_value = 0;
         $max_value = 0;
         $x=1;
+        $model = $fromTender ? EvaluationCriteriaDetails::class : EvaluationCriteriaMasterDetails::class;
         DB::beginTransaction();
         try {
             $drop['criteria_detail_id'] = $input['criteria_detail_id'];
             $drop['label'] = $input['label'];
             $drop['score'] = $input['score'];
+            $drop['fromTender'] = $fromTender;
             $drop['created_by'] = $employee->employeeSystemID;
             $result = EvaluationCriteriaScoreConfig::create($drop);
             if($result){
-                $criteriaConfig = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['criteria_detail_id'])->get();
+
+                $criteriaConfig = EvaluationCriteriaScoreConfig::where('fromTender',$fromTender)
+                    ->where('criteria_detail_id',$input['criteria_detail_id'])->get();
+
                 foreach ($criteriaConfig as $val){
                     if($x==1){
                         $min_value = $val['score'];
@@ -353,7 +364,9 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
 
                     $ans['max_value'] = $max_value;
                     $ans['min_value'] = $min_value;
-                    EvaluationCriteriaDetails::where('id',$input['criteria_detail_id'])->update($ans);
+
+                    $model::where('id',$input['criteria_detail_id'])->update($ans);
+
                     $x++;
                 }
 
@@ -395,7 +408,7 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
                     }
                     $ans['max_value'] = $max_value;
                     $ans['min_value'] = $min_value;
-                    EvaluationCriteriaDetails::where('id',$ScoreConfig['criteria_detail_id'])->update($ans);
+                    EvaluationCriteriaMasterDetails::where('id',$ScoreConfig['criteria_detail_id'])->update($ans);
                     $x++;
                 }
 

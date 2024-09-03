@@ -17,17 +17,17 @@ Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@ge
 Route::resource('procurement_categories', 'TenderProcurementCategoryController');
 
 Route::post('get_all_calendar_dates', 'TenderCalendarDatesController@getAllCalendarDates')->name("Get all calendar dates");
-Route::resource('calendar_date', 'TenderCalendarDatesController');
-Route::resource('srm_department', 'SrmDepartmentMasterAPIController');
+Route::resource('calendar_date', 'TenderCalendarDatesController', ['names' => ['Calender Date Master']]);
+Route::resource('srm_department', 'SrmDepartmentMasterAPIController', ['names' => ['Department Master']]);
 Route::post('get_all_departments', 'SrmDepartmentMasterAPIController@getAllDepartments')->name("Get all departments");
 Route::post('update_department_status', 'SrmDepartmentMasterAPIController@updateDepartmentStatus')->name("Update department Status");
 
-Route::post('get-tender-committee', 'TenderCommitteeController@getAll');
-Route::post('add-employees-to-tender-committee', 'TenderCommitteeController@assignEmployeesToTenderCommitee');
-Route::post('delete-tender-committee', 'TenderCommitteeController@delete');
+Route::post('get-tender-committee', 'TenderCommitteeController@getAll')->name("Get all committee");
+Route::post('add-employees-to-tender-committee', 'TenderCommitteeController@assignEmployeesToTenderCommitee')->name("Add employees to committee");
+Route::post('delete-tender-committee', 'TenderCommitteeController@delete')->name("Delete committee");
 
 Route::resource('tender-committee', 'TenderCommitteeController');
-Route::post('tender-committee/{id}','TenderCommitteeController@update');
+Route::post('tender-committee/{id}','TenderCommitteeController@update')->name("Update committee");
 Route::post('getActiveEmployeesForBid','TenderCommitteeController@getActiveEmployeesForBid')->name("Get active employees for bid");
 
 Route::resource('tender-bid-employee-details','TenderBidEmployeeDetailsController');
@@ -71,10 +71,10 @@ Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenera
 Route::post('tenderBidDocVerification', 'TenderMasterAPIController@tenderBidDocVerification')->name("Tender bid doc verification");
 
 Route::post('getMainWorksList', 'TenderMainWorksAPIController@getMainWorksList')->name("Get main works list");
-Route::post('addMainWorks', 'TenderMainWorksAPIController@addMainWorks');
-Route::get('downloadMainWorksUploadTemplate', 'TenderMainWorksAPIController@downloadMainWorksUploadTemplate');
-Route::post('mainWorksItemsUpload', 'TenderMainWorksAPIController@mainWorksItemsUpload');
-Route::post('deleteMainWorks', 'TenderMainWorksAPIController@deleteMainWorks');
+Route::post('addMainWorks', 'TenderMainWorksAPIController@addMainWorks')->name("Add Main works");
+Route::get('downloadMainWorksUploadTemplate', 'TenderMainWorksAPIController@downloadMainWorksUploadTemplate')->name("Download main works upload template");
+Route::post('mainWorksItemsUpload', 'TenderMainWorksAPIController@mainWorksItemsUpload')->name("Main works items upload");
+Route::post('deleteMainWorks', 'TenderMainWorksAPIController@deleteMainWorks')->name("Delete Main Works");
 Route::post('updateWorkOrderDescription', 'TenderMainWorksAPIController@updateWorkOrderDescription')->name("Update work order description");
 
 Route::post('getFaqFormData', 'TenderMasterAPIController@getFaqFormData')->name("Get FAQ form data");
@@ -174,7 +174,7 @@ Route::post('getCommercialEvalBoq', 'TenderMasterAPIController@getCommercialEval
 
 Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
 
-Route::resource('srm_bid_documentattachments', 'SrmBidDocumentattachmentsAPIController');
+Route::resource('srm_bid_documentattachments', 'SrmBidDocumentattachmentsAPIController', ['names' => '  Supplier Bid Document Attachments']);
 
 Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
 Route::resource('bid_evaluation_selections', 'BidEvaluationSelectionAPIController');
@@ -214,59 +214,56 @@ Route::post('getAwardedFormData', 'TenderMasterAPIController@getAwardedFormData'
 Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsController@getEmployeesTenderAwardinglApproval')->name("Get employees tender awarding approval");
 Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment')->name("Confirm final bid award comment");
 Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail')->name("Send tender award email");
-Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList');
+Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList')->name("Get negotiation started tender list");
 
 
 Route::resource('document_modify_requests', 'DocumentModifyRequestAPIController');
-
-
-
 
 Route::post('createEditRequest', 'DocumentModifyRequestAPIController@createEditRequest')->name("Create edit request");
 Route::post('getTenderEditMasterApproval', 'TenderMasterAPIController@getTenderEditMasterApproval')->name("Get tender edit master approval");
 Route::post('approveEditDocument', 'DocumentModifyRequestAPIController@approveEditDocument')->name("Approve edit document");
 Route::post('getTenderEditMasterFullApproved', 'TenderMasterAPIController@getTenderEditMasterFullApproved')->name("Get tender edit master full approved");
-Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument');
+Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument')->name("Reject edit document");
 
-Route::post('startTenderNegotiation', 'TenderMasterAPIController@startTenderNegotiation');
-Route::post('closeTenderNegotiation', 'TenderMasterAPIController@closeTenderNegotiation');
-Route::post('getFormDataTenderNegotiation', 'TenderNegotiationController@getFormData');
+Route::post('startTenderNegotiation', 'TenderMasterAPIController@startTenderNegotiation')->name("Start tender negotiation");
+Route::post('closeTenderNegotiation', 'TenderMasterAPIController@closeTenderNegotiation')->name("Close tender negotiation");
+Route::post('getFormDataTenderNegotiation', 'TenderNegotiationController@getFormData')->name("Get tender edit master negotiation");
 
 Route::resource('tender_negotiation', 'TenderNegotiationController');
 
 Route::resource('supplierTenderNegotiations', 'SupplierTenderNegotiationController');
 
-Route::post('getFinalBidsForTenderNegotiation', 'TenderNegotiationController@getFinalBidsForTenderNegotiation');
+Route::post('getFinalBidsForTenderNegotiation', 'TenderNegotiationController@getFinalBidsForTenderNegotiation')->name("Get final bids for tender negotiation");
 
-Route::post('getTenderNegotiatedSupplierIds','SupplierTenderNegotiationController@getTenderNegotiatedSupplierIds');
+Route::post('getTenderNegotiatedSupplierIds','SupplierTenderNegotiationController@getTenderNegotiatedSupplierIds')->name("Get tender negotiated supplier");
 
 Route::resource('tenderNegotiationAreas', 'TenderNegotiationAreaController');
 
-Route::post('getSelectedAreas', 'TenderNegotiationAreaController@getSelectedAreas');
+Route::post('getSelectedAreas', 'TenderNegotiationAreaController@getSelectedAreas')->name("Get selected areas");
 
 Route::resource('tenderNegotiationApprovals', 'TenderNegotiationApprovalController');
 
-Route::post('tenderNegotiationApprovalsGetEmployees', 'TenderNegotiationApprovalController@getEmployees');
+Route::post('tenderNegotiationApprovalsGetEmployees', 'TenderNegotiationApprovalController@getEmployees')->name("Get negotiation approval employees");
 
-Route::post('publishNegotiation', 'TenderNegotiationApprovalController@publishNegotiation');
+Route::post('publishNegotiation', 'TenderNegotiationApprovalController@publishNegotiation')->name("Publish negotiation");
 Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');
 Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPIController');
 
 Route::post('getTenderFilterData', 'TenderMasterAPIController@getTenderFilterData')->name("Get tender filter data");
 
-Route::post('approveBidOpening', 'TenderMasterAPIController@approveBidOpening');
+Route::post('approveBidOpening', 'TenderMasterAPIController@approveBidOpening')->name("Approve bid opening");
 
-Route::post('addAllSuppliersToNegotiation', 'SupplierTenderNegotiationController@addAllSuppliersToNegotiation');
+Route::post('addAllSuppliersToNegotiation', 'SupplierTenderNegotiationController@addAllSuppliersToNegotiation')->name("Add all suppliers to negotiation");
 
-Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationController@deleteAllSuppliersFromNegotiation');
+Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationController@deleteAllSuppliersFromNegotiation')->name("Delete all suppliers negotiation");
 
 
-Route::post('saveTenderNegotiationDetails', 'TenderNegotiationController@saveTenderNegotiationDetails');
-Route::get('getTenderPr', 'TenderMasterAPIController@getTenderPr');
-Route::get('getPurchaseRequestDetails', 'TenderMasterAPIController@getPurchaseRequestDetails');
-Route::post('referBackTenderMaster', 'TenderMasterAPIController@referBackTenderMaster');
-Route::post('getTenderAmendHistory', 'TenderMasterAPIController@getTenderAmendHistory');
-Route::post('getTenderRfxAudit', 'TenderMasterAPIController@getTenderRfxAudit');
+Route::post('saveTenderNegotiationDetails', 'TenderNegotiationController@saveTenderNegotiationDetails')->name("Save tender negotiation details");
+Route::get('getTenderPr', 'TenderMasterAPIController@getTenderPr')->name("Get tender pr");
+Route::get('getPurchaseRequestDetails', 'TenderMasterAPIController@getPurchaseRequestDetails')->name("Get purchase request details");
+Route::post('referBackTenderMaster', 'TenderMasterAPIController@referBackTenderMaster')->name("Referback tender master");
+Route::post('getTenderAmendHistory', 'TenderMasterAPIController@getTenderAmendHistory')->name("Get tender amend history");
+Route::post('getTenderRfxAudit', 'TenderMasterAPIController@getTenderRfxAudit')->name("Get tender rfx audit");
 
 
 Route::group(['prefix' => 'srm'], function (){
@@ -282,8 +279,8 @@ Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
 Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType')->name("Remove document attachment type");
 Route::post('getTenderNegotiationList', 'TenderMasterAPIController@getTenderNegotiationList')->name("Get tender negotiation list");
 Route::post('getIsExistCommonAttachment', 'BidSubmissionMasterAPIController@getIsExistCommonAttachment');
-Route::post('getTenderPurchaseList', 'TenderMasterAPIController@getTenderPurchaseList');
-Route::post('getBudgetItemTotalAmount', 'TenderMasterAPIController@getBudgetItemTotalAmount');
+Route::post('getTenderPurchaseList', 'TenderMasterAPIController@getTenderPurchaseList')->name("Get tender purchase list");
+Route::post('getBudgetItemTotalAmount', 'TenderMasterAPIController@getBudgetItemTotalAmount')->name("Get budget item total amount");
 Route::post('removeTenderUserAccess', 'TenderBidEmployeeDetailsController@removeTenderUserAccess');
 Route::post('addUserAccessEmployee', 'TenderBidEmployeeDetailsController@addUserAccessEmployee');
 
