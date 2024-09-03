@@ -180,7 +180,7 @@ class UserService{
                 $join->on('e.EIdNo', '=', 'u.employee_id');
             })
             ->join('employees as emp', function($join) {
-                $join->on('emp.empID', '=', 'u.employee_id');
+                $join->on('emp.employeeSystemID', '=', 'u.employee_id');
             })
             ->leftJoin('hrms_gender as g', function($join) {
                 $join->on('g.genderID', '=', 'e.Gender');
