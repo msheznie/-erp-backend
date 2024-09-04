@@ -295,7 +295,7 @@ Route::group([], function () {
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
 
     Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse')->name('Get Warehouse');
-    Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger')->name('Get Erp Ledger');
+    Route::post('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger')->name('Get Erp Ledger');
 
     Route::post('getErpLedgerItems', 'ErpItemLedgerAPIController@getErpLedgerItems')->name('Get Erp Ledger Items');
     Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport')->name('Validate Stock Ledger Report');
@@ -311,7 +311,7 @@ Route::group([], function () {
     Route::resource('erp_stock_valuation', 'InventoryReportAPIController');
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
 
-    Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData')->name('Get Inventory Filter Data');
+    Route::post('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData')->name('Get Inventory Filter Data');
 
     Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport')->name('Validate Stock Valuation Report');
     Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport')->name('Generate Stock Valuation Report');

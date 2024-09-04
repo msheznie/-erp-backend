@@ -356,7 +356,32 @@ class PurchaseRequestAPIController extends AppBaseController
         $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies);
         $warehouseData = $wareHouses->where('isActive', 1);
         $warehouseData = $warehouseData->get();
-        return $this->sendResponse($warehouseData, 'Record retrieved successfully');
+
+        $categoryType = $request->input('categoryType');
+        $categoryTypeID = collect($categoryType)->pluck('id')->toArray();
+
+        $item = ErpItemLedger::select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+            ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+            ->where('itemmaster.financeCategoryMaster', 1)
+            ->when(!empty($categoryTypeID), function ($query) use ($categoryTypeID) {
+                $query->whereHas('item_master.item_category_type', function ($query) use ($categoryTypeID) {
+                    $query->whereIn('categoryTypeID', $categoryTypeID);
+                });
+            })
+            ->groupBy('erp_itemledger.itemSystemCode')
+            ->get();
+    
+            $categoryTypeData = ItemCategoryTypeMaster::all();
+
+            $output = array(
+                'item' => $item,
+                'warehouseData' => $warehouseData,
+                'categoryTypeData' => $categoryTypeData,
+            );
+
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
     public function createPrMaterialRequest(Request $request){

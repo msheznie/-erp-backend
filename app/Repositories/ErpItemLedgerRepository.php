@@ -109,6 +109,7 @@ class ErpItemLedgerRepository extends BaseRepository
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
         }
 
+        $items=[];
         if (array_key_exists('Items', $input)) {
             $items = (array)$input['Items'];
             $items = collect($items)->pluck('itemSystemCode');

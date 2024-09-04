@@ -30,6 +30,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use App\helper\CreateExcel;
+use App\Models\ItemCategoryTypeMaster;
+
 class InventoryReportAPIController extends AppBaseController
 {
     public function validateReport(Request $request)
@@ -171,21 +173,29 @@ class InventoryReportAPIController extends AppBaseController
         $document = DocumentMaster::where('departmentSystemID', 10)->get();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
 
+        $categoryType = $request->input('categoryType');
+        $categoryTypeID = collect($categoryType)->pluck('id')->toArray();
 
-        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+        $item = ErpItemLedger::select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
         ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
         ->whereIn('erp_itemledger.companySystemID', $companiesByGroup)
         ->where('itemmaster.financeCategoryMaster', 1)
+        ->when(!empty($categoryTypeID), function ($query) use ($categoryTypeID) {
+            $query->whereHas('item_master.item_category_type', function ($query) use ($categoryTypeID) {
+                $query->whereIn('categoryTypeID', $categoryTypeID);
+            });
+        })
         ->groupBy('erp_itemledger.itemSystemCode')
-        //->take(50)
         ->get();
 
+        $categoryTypeData = ItemCategoryTypeMaster::all();
 
         $output = array(
             'warehouse' => $warehouse,
             'document' => $document,
             'segment' => $segment,
             'item' => $item,
+            'categoryTypeData' => $categoryTypeData,
             'company_name' => $company_name
         );
 
@@ -605,6 +615,12 @@ class InventoryReportAPIController extends AppBaseController
 
         }
 
+        $inputItems = [];
+        if (array_key_exists('Items', $input)) {
+            $inputItems = (array)$input['Items'];
+            $inputItems = collect($inputItems)->pluck('itemSystemCode');
+        }
+
         $aging = ['0-30', '31-60', '61-90', '91-120', '121-365', '366-730', '> 730'];
 
         if ($input['reportCategory'] == 2) {
@@ -701,6 +717,7 @@ class InventoryReportAPIController extends AppBaseController
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                 AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+	            AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($inputItems)) . ") 
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                
@@ -863,6 +880,13 @@ class InventoryReportAPIController extends AppBaseController
             $segment = (array)$input['segment'];
             $segment = collect($segment)->pluck('serviceLineSystemID');
         }
+
+        $items=[];
+        if (array_key_exists('Items', $input)) {
+            $items = (array)$input['Items'];
+            $items = collect($items)->pluck('itemSystemCode');
+        }
+
         //DB::enableQueryLog();
         $sql = "SELECT
                 ItemLedger.companySystemID,
@@ -929,6 +953,7 @@ class InventoryReportAPIController extends AppBaseController
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                 AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
                 AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ")
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 ) AS ItemLedger 

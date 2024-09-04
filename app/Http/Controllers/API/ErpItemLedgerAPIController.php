@@ -36,6 +36,8 @@ use App\Models\Company;
 use App\Models\ItemMaster;
 use App\Models\Unit;
 use App\helper\CreateExcel;
+use App\Models\ItemCategoryTypeMaster;
+
 /**
  * Class ErpItemLedgerController
  * @package App\Http\Controllers\API
@@ -315,13 +317,24 @@ class ErpItemLedgerAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
-        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+
+        $categoryType = $request->input('categoryType');
+        $categoryTypeID = collect($categoryType)->pluck('id')->toArray();
+
+        $item = ErpItemLedger::select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
             ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->whereIn('erp_itemledger.companySystemID', $subCompanies)
             ->where('itemmaster.financeCategoryMaster', 1)
+            ->when(!empty($categoryTypeID), function ($query) use ($categoryTypeID) {
+                $query->whereHas('item_master.item_category_type', function ($query) use ($categoryTypeID) {
+                    $query->whereIn('categoryTypeID', $categoryTypeID);
+                });
+            })
             ->groupBy('erp_itemledger.itemSystemCode')
-            //->take(50)
             ->get();
+    
+
+
 
         $document = DB::table('erp_itemledger')
             ->join('erp_documentmaster', 'erp_itemledger.documentSystemID', '=', 'erp_documentmaster.documentSystemID')
@@ -337,9 +350,12 @@ class ErpItemLedgerAPIController extends AppBaseController
             ->groupBy('erp_itemledger.wareHouseSystemCode')
             ->get();
 
+        $categoryTypeData = ItemCategoryTypeMaster::all();
+
         $output = array(
             'item' => $item,
             'document' => $document,
+            'categoryTypeData' => $categoryTypeData,
             'warehouse' => $warehouse
         );
         return $this->sendResponse($output, 'Supplier Master retrieved successfully');
@@ -984,6 +1000,12 @@ WHERE
             $segment = (array)$input['segment'];
             $segment = collect($segment)->pluck('serviceLineSystemID');
         }
+        
+        $items=[];
+        if (array_key_exists('Items', $input)) {
+            $items = (array)$input['Items'];
+            $items = collect($items)->pluck('itemSystemCode');
+        }
         //DB::enableQueryLog();
         $sql = "SELECT
                 ItemLedger.companySystemID,
@@ -1045,6 +1067,7 @@ WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                 AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
                 AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+	            AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") 
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 ) AS ItemLedger 
@@ -1098,6 +1121,12 @@ WHERE
         if (array_key_exists('segment', $input)) {
             $segment = (array)$input['segment'];
             $segment = collect($segment)->pluck('serviceLineSystemID');
+        }
+
+        $items=[];
+        if (array_key_exists('Items', $input)) {
+            $items = (array)$input['Items'];
+            $items = collect($items)->pluck('itemSystemCode');
         }
 
         $date = new Carbon($input['date']);
@@ -1182,6 +1211,7 @@ WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                 AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
                 AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+	            AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") 
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 ) AS ItemLedger 
@@ -1289,6 +1319,12 @@ WHERE
             $warehouse = (array)$input['warehouse'];
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
 
+        }
+
+        $items=[];
+        if (array_key_exists('Items', $input)) {
+            $items = (array)$input['Items'];
+            $items = collect($items)->pluck('itemSystemCode');
         }
 
         if (isset($request->itemCode)) {
@@ -1449,6 +1485,7 @@ WHERE
 	itemmaster.financeCategoryMaster = 1 
 	AND DATE(erp_itemledger.transactionDate) <= '$date' 
 	AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ")
+	AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") 
 	AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
 	$searchQry
 	) AS ItemLedger 
@@ -1503,6 +1540,12 @@ GROUP BY
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
         }
 
+        $items=[];
+        if (array_key_exists('Items', $input)) {
+            $items = (array)$input['Items'];
+            $items = collect($items)->pluck('itemSystemCode');
+        }
+        
         if (isset($request->itemCode)) {
             if (!empty($request->itemCode)) {
                 $search[] = "erp_itemledger.itemPrimaryCode LIKE '%" . $request->itemCode . "%'";
@@ -1659,6 +1702,7 @@ WHERE
 	itemmaster.financeCategoryMaster = 1 
 	AND DATE(erp_itemledger.transactionDate) <= '$date' 
 	AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ")
+	AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") 
 	AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
 	$searchQry
 	) AS ItemLedger 
