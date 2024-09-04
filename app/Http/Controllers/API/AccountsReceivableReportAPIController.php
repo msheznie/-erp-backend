@@ -2585,7 +2585,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $companyID = (array)$request->companySystemID;
         }
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $controlAccounts = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
         $currency = $request->currencyID;
         $customer = $request->singleCustomer;
 
@@ -2725,7 +2726,7 @@ WHERE
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 	AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '"
 	AND "' . $toDate . '"
-	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
+	AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
 	AND erp_generalledger.supplierCodeSystem = ' . $customer . '
 	) AS MainQuery
 	LEFT JOIN (
@@ -2819,7 +2820,8 @@ GROUP BY
         $customers = (array)$request->customers;
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $controlAccounts = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
 
 
         $currency = $request->currencyID;
@@ -2963,7 +2965,7 @@ FROM
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
+	AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
@@ -3144,7 +3146,8 @@ WHERE
         $customers = (array)$request->customers;
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $controlAccounts = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
 
         $currency = $request->currencyID;
 
@@ -3394,7 +3397,7 @@ FROM
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" )
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
+	AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
@@ -3603,7 +3606,8 @@ WHERE
         $customers = (array)$request->customers;
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $controlAccounts = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
 
         $currency = $request->currencyID;
 
@@ -3789,7 +3793,7 @@ FROM
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
+    AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
@@ -4668,7 +4672,9 @@ WHERE
         $customers = (array)$request->customers;
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $controlAccounts = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
+
 
         return \DB::select('SELECT
                     CustomerBalanceSummary_Detail.companySystemID,
@@ -4749,8 +4755,7 @@ WHERE
                 ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_generalledger.documentSystemCode AND erp_generalledger.documentSystemID = 20
                 WHERE
                     (erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
-                    AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
-
+                    AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 		            AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
 		            AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . '))
@@ -5439,7 +5444,8 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
             $companyID = (array)$request->companySystemID;
         }
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $controlAccounts = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
         $currency = $request->currencyID;
 
         $customers = (array)$request->customers;
@@ -5563,7 +5569,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '"
                 AND "' . $toDate . '"
-                AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
+                 AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
                 ' . $filter . '
                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
                 ) AS MainQuery
