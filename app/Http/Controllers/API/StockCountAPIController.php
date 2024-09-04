@@ -43,7 +43,8 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Traits\AuditTrial;
-
+use App\Jobs\StockCount\StockCountDetailJob;
+use Illuminate\Support\Facades\Log;
 /**
  * Class StockCountController
  * @package App\Http\Controllers\API
@@ -289,27 +290,11 @@ class StockCountAPIController extends AppBaseController
             $errorMessage = [];
             $stockCount = $this->stockCountRepository->create($input);
             if ($stockCount) {
-                foreach ($finalItems as $key => $value) {
-                    $stockCountRes = $this->stockCountDetailRepository->addStockCountItems($value->itemCodeSystem, $stockCount, $input['companySystemID']);
-                    if (!$stockCountRes['status']) {
-                        DB::rollBack();
-                        return $this->sendError($stockCountRes['message'], 500);
-                    } else {
-                        if (isset($stockCountRes['message']) && $stockCountRes['message']) {
-                            $errorMessage[] = $stockCountRes['message'];
-                        }
-                    }
-                }
-            } else {
-                 DB::rollBack();
-                 return $this->sendError("Error occured while creating stock count", 500);
+                $db = isset($request->db) ? $request->db : "";
+                StockCountDetailJob::dispatch($db,$stockCount,$input['companySystemID'],$stockCount->stockCountAutoID,$skipItemIds);
+        
             }
-
-            if (count($errorMessage) == count($finalItems)) {
-                DB::rollBack();
-                return $this->sendError("All items are pulled for transaction document. There no items to proceed this documents.", 500, array('type' => 'no_item'));
-            }
-
+        
             DB::commit();
             return $this->sendResponse(['stockCount' => $stockCount->toArray(), 'errorMessage' => $errorMessage], 'Stock Count saved successfully');
         } catch (\Exception $exception) {

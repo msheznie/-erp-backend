@@ -165,7 +165,8 @@ class StockCountRepository extends BaseRepository
                 'createdDateTime',
                 'refNo',
                 'location',
-                'refferedBackYN'
+                'refferedBackYN',
+                'detailStatus'
             ]);
 
 
