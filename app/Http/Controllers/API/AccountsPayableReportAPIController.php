@@ -1764,15 +1764,15 @@ class AccountsPayableReportAPIController extends AppBaseController
         $decimalPlaceQry = '';
         if ($currency == 1) {
             $currencyQry = "finalAgingDetail.transCurrencyCode AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountTrans, finalAgingDetail.documentTransDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(finalAgingDetail.documentAmountTrans, 0) AS invoiceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentTransDecimalPlaces AS balanceDecimalPlaces";
         } else if ($currency == 2) {
             $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(finalAgingDetail.documentAmountLocal, 0) AS invoiceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
         } else {
             $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(finalAgingDetail.documentAmountRpt, 0) AS invoiceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
 
