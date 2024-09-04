@@ -163,9 +163,9 @@
             <tr>
                 <th colspan="{{6 + count($extraColumns)}}">{{ $key  }}</th>
                  @if($isGroup == 0)
-                    <th colspan="2" style="text-align: center">Local Currency ({{$currencyLocal}})</th>
+                    <th colspan="3" style="text-align: center">Local Currency ({{$currencyLocal}})</th>
                 @endif
-                <th colspan="2" style="text-align: center">Reporting Currency ({{$currencyRpt}})</th>
+                <th colspan="3" style="text-align: center">Reporting Currency ({{$currencyRpt}})</th>
             </tr>
             <tr>
                 <th>Document Number</th>
@@ -189,15 +189,21 @@
                 @if($isGroup == 0)
                     <th style="text-align: center">Debit</th>
                     <th style="text-align: center">Credit</th>
+                    <th style="text-align: center">Balance</th>
                 @endif
                 <th style="text-align: center">Debit</th>
                 <th style="text-align: center">Credit</th>
+                <th style="text-align: center">Balance</th>
             </tr>
             {{$acLocalDebitTotal = 0}}
             {{$acLocalCreditTotal = 0}}
             {{$acRptDebitTotal = 0}}
             {{$acRptCreditTotal = 0}}
+            {{$localBalanceAmount = 0}}
+            {{$rptBalanceAmount = 0}}
             @foreach ($det as $key2 => $val)
+                {{$localBalanceAmount += $val->localBalanceAmount}}
+                {{$rptBalanceAmount += $val->rptBalanceAmount}}
                 <tr>
                     <td>{{ $val->documentCode  }}</td>
                     <td>{{\Helper::dateFormat($val->documentDate)}}</td>
@@ -220,9 +226,11 @@
                     @if($isGroup == 0)
                         <td class="text-right">{{number_format($val->localDebit, $decimalPlaceLocal)}}</td>
                         <td class="text-right">{{number_format($val->localCredit, $decimalPlaceLocal)}}</td>
+                        <td class="text-right">{{number_format($localBalanceAmount, $decimalPlaceLocal)}}</td>
                     @endif
                     <td class="text-right">{{number_format($val->rptDebit, $decimalPlaceRpt)}}</td>
                     <td class="text-right">{{number_format($val->rptCredit, $decimalPlaceRpt)}}</td>
+                    <td class="text-right">{{number_format($rptBalanceAmount, $decimalPlaceRpt)}}</td>
                 </tr>
                 {{$acLocalDebitTotal += $val->localDebit}}
                 {{$acLocalCreditTotal += $val->localCredit}}
@@ -242,6 +250,7 @@
                     <td class="text-right">
                         <b>{{number_format($acLocalCreditTotal, $decimalPlaceLocal)}}</b>
                     </td>
+                    <td>&nbsp;</td>
                 @endif
                 <td class="text-right">
                     <b>{{number_format($acRptDebitTotal, $decimalPlaceRpt)}}</b>
@@ -249,6 +258,7 @@
                 <td class="text-right">
                     <b>{{number_format($acRptCreditTotal, $decimalPlaceRpt)}}</b>
                 </td>
+                <td>&nbsp;</td>
             </tr>
             <tr style="background-color: #E7E7E7">
                 <td colspan="{{6 + count($extraColumns)}}" class="text-right"
@@ -259,10 +269,12 @@
                     <td colspan="2" class="text-right">
                         <b>{{number_format(($acLocalDebitTotal - $acLocalCreditTotal ), $decimalPlaceLocal)}}</b>
                     </td>
+                    <td>&nbsp;</td>
                 @endif
                 <td colspan="2" class="text-right">
                     <b>{{number_format(($acRptDebitTotal - $acRptCreditTotal), $decimalPlaceRpt)}}</b>
                 </td>
+                <td>&nbsp;</td>
             </tr>
         @endforeach
         <tr style="background-color: #E7E7E7">
@@ -278,6 +290,7 @@
                 <td class="text-right">
                     <b>{{number_format($totaldocumentLocalAmountCredit, $decimalPlaceLocal)}}</b>
                 </td>
+                <td>&nbsp;</td>
             @endif
             <td class="text-right">
                 <b>{{number_format($totaldocumentRptAmountDebit, $decimalPlaceRpt)}}</b>
@@ -285,6 +298,7 @@
             <td class="text-right">
                 <b>{{number_format($totaldocumentRptAmountCredit, $decimalPlaceRpt)}}</b>
             </td>
+            <td>&nbsp;</td>
         </tr>
         <tr style="background-color: #E7E7E7">
             <td colspan="{{6 + count($extraColumns)}}" class="text-right"
@@ -294,10 +308,12 @@
                 <td colspan="2" class="text-right">
                     <b>{{number_format(($totaldocumentLocalAmountDebit - $totaldocumentLocalAmountCredit ), $decimalPlaceLocal)}}</b>
                 </td>
+                <td>&nbsp;</td>
             @endif
             <td colspan="2" class="text-right">
                 <b>{{number_format(($totaldocumentRptAmountDebit - $totaldocumentRptAmountCredit), $decimalPlaceRpt)}}</b>
             </td>
+            <td>&nbsp;</td>
         </tr>
     </table>
 </div>
