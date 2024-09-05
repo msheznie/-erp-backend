@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.48.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.48.1...v10.48.2) (2024-09-05)
+
+
+### Bug Fixes
+
+* **accounts payable:** VAT getting added to selected GL code at standard rate fixed [GCP-4570] ([#6733](https://github.com/pbsgears/Gears_BackEnd/issues/6733)) ([6c951aa](https://github.com/pbsgears/Gears_BackEnd/commit/6c951aa3d147afd29837ba0e0bea4b9d411dc9d2))
+
 ## [10.48.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.48.0...v10.48.1) (2024-09-03)
 
 
