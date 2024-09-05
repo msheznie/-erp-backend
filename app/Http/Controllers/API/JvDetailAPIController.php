@@ -577,7 +577,8 @@ class JvDetailAPIController extends AppBaseController
         $output = DB::select("SELECT
         COALESCE(
             (SELECT sep.documentCode FROM srp_erp_payrollmaster sep WHERE hrms_jvmaster.jvDoc = 'SP' AND hrms_jvmaster.salaryProcessMasterID = sep.payrollMasterID),
-            (SELECT f.documentCode FROM srp_erp_pay_finalsettlementmaster f WHERE hrms_jvmaster.jvDoc = 'FS' AND hrms_jvmaster.salaryProcessMasterID = f.masterID)
+            (SELECT f.documentCode FROM srp_erp_pay_finalsettlementmaster f WHERE hrms_jvmaster.jvDoc = 'FS' AND hrms_jvmaster.salaryProcessMasterID = f.masterID),
+            (SELECT nonpay.documentCode FROM srp_erp_non_payrollmaster nonpay WHERE hrms_jvmaster.jvDoc = 'NSP' AND hrms_jvmaster.salaryProcessMasterID = nonpay.payrollMasterID)
         ) AS payrollCode
     FROM
         hrms_jvmaster

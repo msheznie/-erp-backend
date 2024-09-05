@@ -52,6 +52,7 @@ class JvMasterRepository extends BaseRepository
         'approvedDate',
         'postedDate',
         'jvType',
+        'type',
         'isReverseAccYN',
         'timesReferred',
         'isRelatedPartyYN',

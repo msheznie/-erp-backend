@@ -271,6 +271,27 @@
                             </span>
                         </td>
                     </tr>
+
+                    @if($masterdata->jvType == 3)
+                        <tr>
+                            <td width="70px">
+                                <span class="font-weight-bold">Type </span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                <span>
+                                    @if($masterdata->type == 1)
+                                        Non-Payroll
+                                    @else
+                                        Payroll
+                                    @endif
+                                </span>
+                            </td>
+                        </tr>
+                    @endif
+
                 </table>
             </td>
         </tr>
