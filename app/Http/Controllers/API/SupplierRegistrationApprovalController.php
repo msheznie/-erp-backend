@@ -29,6 +29,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use App\Models\SystemGlCodeScenario;
+use App\Models\ChartOfAccount;
+
 
 // supplier KYC status
 define('PENDING', 0);
@@ -284,6 +287,53 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $company = Company::where('companySystemID', $supplierMasterData['company_id'])->first();
         $employee = \Helper::getEmployeeInfo();
         $document = DocumentMaster::where('documentID', 'SUPM')->first();
+        $selectedCompanyId = $supplierMasterData['company_id'];
+
+
+        $liabilityAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-liability-account')
+                        ->with(['detail'=>function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        }])
+                        ->whereHas('detail',function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        })
+                        ->first();
+
+        $unbilledAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-unbilled-account')
+                        ->with(['detail'=>function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        }])                        
+                        ->whereHas('detail',function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        })
+                        ->first();
+
+        $advanceAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-advance-account')
+                        ->with(['detail'=>function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        }])                        
+                        ->whereHas('detail',function($query) use($selectedCompanyId){
+                            $query->where('companySystemID',$selectedCompanyId);
+                        })
+                        ->first();
+
+
+        if($liabilityAccountConfigs->detail !== null && $liabilityAccountConfigs->detail->chartOfAccountSystemID !== null){
+            $data['liabilityAccountSysemID'] = $liabilityAccountConfigs->detail->chartOfAccountSystemID;
+            $liabilityAccountSysemID =  ChartOfAccount::where('chartOfAccountSystemID', $data['liabilityAccountSysemID'])->first();
+            $data['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
+        }
+        if($unbilledAccountConfigs->detail !== null && $unbilledAccountConfigs->detail->chartOfAccountSystemID !== null){
+            $data['UnbilledGRVAccountSystemID'] = $unbilledAccountConfigs->detail->chartOfAccountSystemID;
+            $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID', $data['UnbilledGRVAccountSystemID'])->first();
+            $data['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
+        }
+        if($advanceAccountConfigs->detail !== null && $advanceAccountConfigs->detail->chartOfAccountSystemID !== null){
+            $data['advanceAccountSystemID'] = $advanceAccountConfigs->detail->chartOfAccountSystemID;
+            $advanceAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID', $data['advanceAccountSystemID'])->first();
+            $data['AdvanceAccount'] = $advanceAccountSystemID['AccountCode'];
+        }
+
 
         $data['primaryCompanySystemID'] = $supplierMasterData['company_id'];
         $data['primaryCompanyID'] = $company->CompanyID;
