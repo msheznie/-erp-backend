@@ -924,9 +924,17 @@ WHERE
                                 $new['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
                                 $new['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
                                 $new['VATAmount'] = 0;
-                                if (isset($new['unittransactionAmount']) && $new['unittransactionAmount'] > 0) {
-                                    $new['VATAmount'] = (($new['unittransactionAmount'] / 100) * $vatDetails['percentage']);
+
+                                if($new['VATApplicableOn'] == 1){
+                                    if (isset($new['unittransactionAmount']) && $new['unittransactionAmount'] > 0) {
+                                        $new['VATAmount'] = (($new['unittransactionAmount'] / 100) * $vatDetails['percentage']);
+                                    }
+                                } else {
+                                    if ($totalNetcost > 0) {
+                                        $new['VATAmount'] = (($totalNetcost / 100) * $vatDetails['percentage']);
+                                    }
                                 }
+
                                 $currencyConversionVAT = \Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $new['VATAmount']);
 
                                 $new['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
