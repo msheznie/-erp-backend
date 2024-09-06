@@ -248,7 +248,7 @@ class ErpItemLedger extends Model
 
     
     public function item_master(){
-        return $this->belongsTo('App\Models\itemmaster', 'itemSystemCode','itemCodeSystem');
+        return $this->belongsTo('App\Models\ItemMaster', 'itemSystemCode','itemCodeSystem');
     }
 
     public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
