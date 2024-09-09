@@ -588,7 +588,24 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else if ($reportTypeID == 'SAS') { //Supplier aging Summary
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
+
+                    $outputDetail = $this->getSupplierAgingDetailQRY($request);
+
                     $output = $this->getSupplierAgingSummaryQRY($request);
+                    if ($output['data']) {
+
+                        foreach ($output['data'] as $val) {
+                            $unallocatedTotal = 0;
+                            if ($outputDetail['data']) {
+                                foreach ($outputDetail['data'] as $valDet) {
+                                    if($val->supplierCodeSystem == $valDet->supplierCodeSystem) {
+                                        $unallocatedTotal += $valDet->unAllocatedAmount;
+                                    }
+                                }
+                            }
+                            $val->unAllocatedAmount = $unallocatedTotal;
+                        }
+                    }
 
                     $outputArr = array();
                     $grandTotalArr = array();
@@ -1451,7 +1468,23 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                     else if ($reportTypeID == 'SAS') { //supplier aging summary
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                        $outputDetail = $this->getSupplierAgingDetailQRY($request);
+
                         $output = $this->getSupplierAgingSummaryQRY($request);
+                        if ($output['data']) {
+
+                            foreach ($output['data'] as $val) {
+                                $unallocatedTotal = 0;
+                                if ($outputDetail['data']) {
+                                    foreach ($outputDetail['data'] as $valDet) {
+                                        if($val->supplierCodeSystem == $valDet->supplierCodeSystem) {
+                                            $unallocatedTotal += $valDet->unAllocatedAmount;
+                                        }
+                                    }
+                                }
+                                $val->unAllocatedAmount = $unallocatedTotal;
+                            }
+                        }
                         if($typeAging == 1){
                             $fileName = 'Supplier Aging Summary Report';
                             $title = 'Supplier Aging Summary Report';
