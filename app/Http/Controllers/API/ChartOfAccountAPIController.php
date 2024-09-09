@@ -272,6 +272,9 @@ class ChartOfAccountAPIController extends AppBaseController
 
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
+
+                            ReportTemplateLinks::where('glAutoID', $input['chartOfAccountSystemID'])->update(['glDescription' => $input['AccountDescription']]);
+
                             $old_array = array_only($chartOfAccountOld, ['AccountDescription']);
                             $modified_array = array_only($input, ['AccountDescription']);
                             // update in to user log table
