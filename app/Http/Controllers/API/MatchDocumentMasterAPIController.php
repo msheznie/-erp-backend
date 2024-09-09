@@ -2270,23 +2270,23 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $input['matchingConfirmedByName'] = $employee->empName;
                     $input['matchingConfirmedDate'] = \Helper::currentDateTime();
 
+                    $data = [];
+                    $taxLedgerData = [];
+                    $finalData = [];
+
+                    $validatePostedDate = GlPostedDateService::validatePostedDate($input['PayMasterAutoId'], $input["documentSystemID"]);
+
+                    if (!$validatePostedDate['status']) {
+                        return ['status' => false, 'message' => $validatePostedDate['message']];
+                    }
+
+                    $masterDocumentDate =  $validatePostedDate['postedDate'];
+
+                    $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
 
                     if ($input['documentSystemID'] == 21)
                     {
-                        $data = [];
-                        $taxLedgerData = [];
-                        $finalData = [];
-
-                        $validatePostedDate = GlPostedDateService::validatePostedDate($input['PayMasterAutoId'], $input["documentSystemID"]);
-
-                        if (!$validatePostedDate['status']) {
-                            return ['status' => false, 'message' => $validatePostedDate['message']];
-                        }
                         $masterData = CustomerReceivePayment::with(['bank', 'finance_period_by'])->find($input['PayMasterAutoId']);
-                        $masterDocumentDate =  $validatePostedDate['postedDate'];
-
-                        $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
-
 
                         $data['companySystemID'] = $matchDocumentMaster->companySystemID;
                         $data['companyID'] = $matchDocumentMaster->companyID;
@@ -2583,17 +2583,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                                 }
 
-                                $finalTransAmount = $finalLocalAmount = $finalRptAmount = [];
+                                $finalLocalAmount = $finalRptAmount = [];
 
                                 foreach ($finalData as $key => $value) {
-                                    $temp = $value['documentTransAmount'];
-                                    if($temp > 0){
-                                        $finalTransAmount[0] = $finalTransAmount[0] ?? 0 + abs($temp);
-                                    }
-                                    else {
-                                        $finalTransAmount[1] = $finalTransAmount[1] ?? 0 + abs($temp);
-                                    }
-
                                     $temp = $value['documentLocalAmount'];
                                     if($temp > 0){
                                         $finalLocalAmount[0] = $finalLocalAmount[0] ?? 0 + abs($temp);
@@ -2611,23 +2603,20 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     }
                                 }
 
-                                $finalTransAmount[3] = $finalTransAmount[0] - $finalTransAmount[1];
-                                $finalTransAmount[3] = ($finalTransAmount[0] < $finalTransAmount[1]) ? abs($finalTransAmount[3]) : (abs($finalTransAmount[3]) * -1);
-
                                 $finalLocalAmount[3] = $finalLocalAmount[0] - $finalLocalAmount[1];
                                 $finalLocalAmount[3] = ($finalLocalAmount[0] < $finalLocalAmount[1]) ? abs($finalLocalAmount[3]) : (abs($finalLocalAmount[3]) * -1);
 
                                 $finalRptAmount[3] = $finalRptAmount[0] - $finalRptAmount[1];
                                 $finalRptAmount[3] = ($finalRptAmount[0] < $finalRptAmount[1]) ? abs($finalRptAmount[3]) : (abs($finalRptAmount[3]) * -1);
 
-                                if(($finalTransAmount[3] != 0) || ($finalLocalAmount[3] != 0) || ($finalRptAmount[3] != 0)){
+                                if(($finalLocalAmount[3] != 0) || ($finalRptAmount[3] != 0)) {
                                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
-                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");;
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                     $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                     $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue($finalTransAmount[3]);
+                                    $data['documentTransAmount'] = 0;
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                                     $data['documentLocalAmount'] =\Helper::roundValue($finalLocalAmount[3]);
@@ -2649,13 +2638,106 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     }
                                     array_push($finalData, $data);
                                 }
-                                
-                                foreach ($finalData as $data) {
-                                GeneralLedger::create($data);
-                                }
                     }
 
+                    if ($input['documentSystemID'] == 19) {
 
+                        $creditNoteMasterData = CreditNote::with('details')->find($input['PayMasterAutoId']);
+
+                        $data['companySystemID'] = $matchDocumentMaster->companySystemID;
+                        $data['companyID'] = $matchDocumentMaster->companyID;
+                        $data['serviceLineSystemID'] = null;
+                        $data['serviceLineCode'] = null;
+                        $data['masterCompanyID'] = null;
+                        $data['documentSystemID'] = $matchDocumentMaster->documentSystemID;
+                        $data['documentID'] = $matchDocumentMaster->documentID;
+                        $data['documentSystemCode'] = $input["PayMasterAutoId"];
+                        $data['documentCode'] = $creditNoteMasterData->creditNoteCode;
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
+                        $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                        $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                        $data['documentConfirmedDate'] = $matchDocumentMaster->matchingConfirmedDate;
+                        $data['documentConfirmedBy'] = $matchDocumentMaster->confirmedByEmpID;
+                        $data['documentConfirmedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
+                        $data['documentFinalApprovedDate'] = $matchDocumentMaster->approvedDate;
+                        $data['documentFinalApprovedBy'] = $creditNoteMasterData->approvedByUserID;
+                        $data['documentFinalApprovedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
+                        $data['documentNarration'] = "Matching Entry ".$matchDocumentMaster->matchingDocCode;
+                        $data['clientContractID'] = 'X';
+                        $data['contractUID'] = 159;
+                        $data['supplierCodeSystem'] = $creditNoteMasterData->customerID;
+                        $data['holdingShareholder'] = null;
+                        $data['holdingPercentage'] = 0;
+                        $data['nonHoldingPercentage'] = 0;
+                        $data['chequeNumber'] = 0;
+                        $data['documentType'] = $creditNoteMasterData->documentType;
+                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdUserID'] = \Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data['createdUserPC'] = gethostname();
+                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
+
+                        foreach ($detailAllRecords as $row) {
+                            $tempValue = $row['bookingAmountLocal'] - $creditNoteMasterData['creditAmountLocal'];
+                            $gainLocalAmount = number_format($tempValue,5);
+
+                            $tempValue = $row['bookingAmountRpt'] - $creditNoteMasterData['creditAmountRpt'];
+                            $gainRptAmount = number_format($tempValue,5);
+
+                            if(($gainLocalAmount != 0) || ($gainRptAmount != 0)) {
+                                $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($creditNoteMasterData->companySystemID, $creditNoteMasterData->documentSystemiD, "exchange-gainloss-gl");
+                                $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($creditNoteMasterData->companySystemID, $creditNoteMasterData->documentSystemiD, "exchange-gainloss-gl");
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                $data['documentTransCurrencyID'] = $creditNoteMasterData->customerCurrencyID;
+                                $data['documentTransCurrencyER'] = $creditNoteMasterData->customerCurrencyER;
+                                $data['documentTransAmount'] = 0;
+                                $data['documentLocalCurrencyID'] = $creditNoteMasterData->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = $creditNoteMasterData->localCurrencyER;
+                                $data['documentLocalAmount'] = \Helper::roundValue($gainLocalAmount);
+                                $data['documentRptCurrencyID'] = $creditNoteMasterData->companyReportingCurrencyID;
+                                $data['documentRptCurrencyER'] = $creditNoteMasterData->companyReportingER;
+                                $data['documentRptAmount'] = \Helper::roundValue($gainRptAmount);
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                $data['serviceLineSystemID'] = $creditNoteMasterData->details->first()->serviceLineSystemID;
+                                $data['serviceLineCode'] = $creditNoteMasterData->details->first()->serviceLineCode;
+                                array_push($finalData, $data);
+
+                                $data['chartOfAccountSystemID'] = $creditNoteMasterData->customerGLCodeSystemID;
+                                $data['glCode'] = $creditNoteMasterData->customerGLCode;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                $data['documentTransCurrencyID'] = $creditNoteMasterData->customerCurrencyID;
+                                $data['documentTransCurrencyER'] = $creditNoteMasterData->customerCurrencyER;
+                                $data['documentTransAmount'] = 0;
+                                $data['documentLocalCurrencyID'] = $creditNoteMasterData->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = $creditNoteMasterData->localCurrencyER;
+                                if($gainLocalAmount < 0) {
+                                    $data['documentLocalAmount'] = \Helper::roundValue(abs($gainLocalAmount));
+                                }
+                                else {
+                                    $data['documentLocalAmount'] = \Helper::roundValue($gainLocalAmount) * -1;
+                                }
+                                $data['documentRptCurrencyID'] = $creditNoteMasterData->companyReportingCurrencyID;
+                                $data['documentRptCurrencyER'] = $creditNoteMasterData->companyReportingER;
+                                if($gainRptAmount < 0) {
+                                    $data['documentRptAmount'] = \Helper::roundValue(abs($gainRptAmount));
+                                }
+                                else {
+                                    $data['documentRptAmount'] = \Helper::roundValue($gainRptAmount) * -1;
+                                }
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                $data['serviceLineSystemID'] = $creditNoteMasterData->details->first()->serviceLineSystemID;
+                                $data['serviceLineCode'] = $creditNoteMasterData->details->first()->serviceLineCode;
+                                array_push($finalData, $data);
+                            }
+                        }
+                    }
+
+                    foreach ($finalData as $data) {
+                        GeneralLedger::create($data);
+                    }
                 }
 
                 $input['modifiedPc'] = gethostname();
@@ -4085,7 +4167,7 @@ ORDER BY
                 }
             }
 
-            if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15 || $masterData->documentSystemID == 21){
+            if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15 || $masterData->documentSystemID == 21 || $masterData->documentSystemID == 19){
                 GeneralLedger::where('documentSystemID',$masterData->documentSystemID)
                                ->where('documentSystemCode',$masterData->PayMasterAutoId)
                                ->where('documentSystemID',$masterData->documentSystemID)
