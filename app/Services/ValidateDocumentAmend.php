@@ -465,4 +465,18 @@ class ValidateDocumentAmend
 
         return ['status' => true];
     }
+
+    public static function validateCLoseFinanceYear($matchingMasterID)
+    {
+        $matchMaster = MatchDocumentMaster::find($matchingMasterID);
+
+
+        $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$matchMaster->companyFinanceYearID)->first();
+        if($financeYear){
+            if($financeYear->isClosed == -1){
+                $message = 'Financial period closed , can’t refer back the matching ';
+                return ['status' => false,'message'=>$message];
+            }
+        }
+    }
 }

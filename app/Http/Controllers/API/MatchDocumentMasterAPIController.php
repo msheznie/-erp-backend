@@ -4003,7 +4003,13 @@ ORDER BY
             return $this->sendError('You cannot return back to amend this '.$documentName.' Document, it is not confirmed');
         }
 
-        
+        $validateCloseFinanceYear = ValidateDocumentAmend::validateCLoseFinanceYear($id);
+        if(isset($validateCloseFinanceYear['status']) && $validateCloseFinanceYear['status'] == false){
+            if(isset($validateCloseFinanceYear['message']) && $validateCloseFinanceYear['message']){
+                return $this->sendError($validateCloseFinanceYear['message']);
+            }
+        }
+
         $matchingMasterID = $id;
         $documentAutoId = $masterData->PayMasterAutoId;
         $documentSystemID = $masterData->documentSystemID;
