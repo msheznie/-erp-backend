@@ -78,7 +78,8 @@ class TenantEnforce
             'api/v1/generateAPReportBulkPDF',
             'api/v1/generateDocumentAgainstVRF',
             'api/v1/approveDocumentBulk',
-            'api/v1/stock_counts'
+            'api/v1/stock_counts',
+            'api/v1/mrItemsUpload'
         ];
 
         

@@ -135,6 +135,10 @@ Route::group([], function () {
     Route::post('get-items-to-link','MaterielRequestAPIController@getItemsToLink');
     Route::post('get-linked-items-details','MaterielRequestAPIController@getLinkedItemsDetails');
 
+    Route::get('downloadMrItemUploadTemplate', 'MaterielRequestAPIController@downloadMrItemUploadTemplate');
+    Route::post('mrItemsUpload', 'MaterielRequestAPIController@mrItemsUpload');
+    Route::get('getMrItemBulkUploadError', 'MrBulkUploadErrorLogAPIController@getMrItemBulkUploadError');
+    Route::post('deleteMrErrorLog/{id}', 'MrBulkUploadErrorLogAPIController@deleteMrErrorLog');
 });
 
 //Material Issue Trans

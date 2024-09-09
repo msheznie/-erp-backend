@@ -16,9 +16,11 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\helper\inventory;
 use App\Http\Requests\API\CreateMaterielRequestAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestAPIRequest;
+use App\Jobs\mrBulkUploadItem;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
@@ -52,14 +54,17 @@ use App\Services\Inventory\PullMaterialRequestFromMaterialIssueService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\helper\CancelDocument;
 use App\Models\GeneralLedger;
 use Response;
 use App\Repositories\MaterielRequestDetailsRepository;
-use Auth;
+//use Auth;
 use App\Models\ItemIssueMaster;
 use App\Services\ValidateDocumentAmend;
 use function Clue\StreamFilter\fun;
@@ -1664,5 +1669,92 @@ class MaterielRequestAPIController extends AppBaseController
 
     }
 
-    
+    public function downloadMrItemUploadTemplate(Request $request)
+    {
+        $input = $request->all();
+        $disk =Helper::policyWiseDisk($input['companySystemID'], 'public');
+        if ($exists = Storage::disk($disk)->exists('material_request_item_upload_template/material_request_item_upload_template.xlsx')) {
+            return Storage::disk($disk)->download('material_request_item_upload_template/material_request_item_upload_template.xlsx', 'material_request_item_upload_template.xlsx');
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
+    }
+
+    public function mrItemsUpload(request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['itemExcelUpload'];
+            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $materialRequest = MaterielRequest::where('RequestID', $input['requestID'])->first();
+            if (empty($materialRequest)) {
+                return $this->sendError('Material Request not found', 500);
+            }
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+            $allowedExtensions = ['xlsx','xls'];
+
+            if (!in_array($extension, $allowedExtensions)) {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+            $filePath = Storage::disk($disk)->path($originalFileName);
+            $spreadsheet = IOFactory::load($filePath);
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->removeRow(1, 5);
+
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save($filePath);
+            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            if(empty($uniqueData)) {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            $excelHeaders = array_keys(array_merge(...$uniqueData));
+            $templateHeaders = ['item_code', 'item_description', 'qty', 'comment'];
+            $unexpectedHeader = array_diff($excelHeaders, $templateHeaders);
+            if ($unexpectedHeader) {
+                return $this->sendError('Upload failed due to changes made in the Excel template', 500);
+            }
+
+            if ($materialRequest->cancelledYN == -1) {
+                return $this->sendError('This Purchase Order already closed. You can not add.', 500);
+            }
+            if ($materialRequest->approved == -1) {
+                return $this->sendError('This Purchase Order fully approved. You can not add.', 500);
+            }
+
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('item_code', 'item_description', 'qty', 'comment'))->get()->toArray();
+            if (count($record) > 0) {
+                $data['isBulkItemJobRun'] = 1;
+                $data['excelRowCount'] = 0;
+                $data['successDetailsCount'] = 0;
+                MaterielRequest::where('RequestID', $materialRequest->RequestID)->update($data);
+                $db = isset($input['db']) ? $input['db'] : "";
+                mrBulkUploadItem::dispatch(array_filter($record),($materialRequest), $db, Auth::id());
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+            Storage::disk($disk)->delete('app/' . $originalFileName);
+            DB::commit();
+            return $this->sendResponse([], 'Items uploaded Successfully!!');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
 }
