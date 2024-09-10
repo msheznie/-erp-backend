@@ -169,6 +169,10 @@ Route::group([], function () {
     Route::post('add-items-to-mi-from-mr','ItemIssueMasterAPIController@addItemFromMrToMiDetails');
     Route::post('validate-item-before-add','ItemIssueMasterAPIController@validateItemBeforeAdd');
     Route::post('store-all-details-mi','ItemIssueMasterAPIController@storeAllItemsFromMr');
+    Route::get('downloadMiItemUploadTemplate', 'ItemIssueDetailsAPIController@downloadMiItemUploadTemplate')->name('Download material issue item upload template');
+    Route::post('miItemsUpload', 'ItemIssueDetailsAPIController@miItemsUpload')->name('Material issue items upload');
+    Route::get('getMiItemBulkUploadError', 'MiBulkUploadErrorLogAPIController@getMiItemBulkUploadError')->name('Material issue item bulk upload errors');
+    Route::post('deleteMiItemUploadErrorLog/{id}', 'MiBulkUploadErrorLogAPIController@deleteMiItemUploadErrorLog')->name('Delete Material issue item upload error log');
 
 });
 

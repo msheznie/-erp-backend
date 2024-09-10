@@ -13,8 +13,10 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateItemIssueDetailsAPIRequest;
 use App\Http\Requests\API\UpdateItemIssueDetailsAPIRequest;
+use App\Jobs\AddMultipleItemsToMaterialIssue;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerInvoiceDirect;
@@ -43,7 +45,9 @@ use App\Repositories\ItemIssueDetailsRepository;
 use App\Services\Inventory\MaterialIssueService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
@@ -166,7 +170,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError('Materiel Issue not found', 500);
         }
 
-        if(isset($input['type']) && $input["type"] == "MRFROMMI") {  
+        if(isset($input['type']) && $input["type"] == "MRFROMMI") {
             $validator = \Validator::make($itemIssue->toArray(), [
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'issueType' => 'required|numeric|min:1',
@@ -1531,4 +1535,142 @@ class ItemIssueDetailsAPIController extends AppBaseController
         return MaterialRequestService::validateMaterialIssueItem($input['itemCodeSystem'], $input['companySystemID'], $input['itemIssueAutoID']);
     }
 
+    public function downloadMiItemUploadTemplate(Request $request) {
+        $input = $request->all();
+        $disk = Helper::policyWiseDisk($input['companySystemID']);
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isYesNO', 1)
+            ->exists();
+        if ($isProject_base) {
+            if (Storage::disk($disk)->exists('material_issue_item_upload_template/material_issue_item_upload_project_template.xlsx')) {
+                return Storage::disk($disk)->download('material_issue_item_upload_template/material_issue_item_upload_project_template.xlsx', 'material_issue_item_upload_template.xlsx');
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }
+        } else {
+            if (Storage::disk($disk)->exists('material_issue_item_upload_template/material_issue_item_upload_template.xlsx')) {
+                return Storage::disk($disk)->download('material_issue_item_upload_template/material_issue_item_upload_template.xlsx', 'material_issue_item_upload_template.xlsx');
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }
+        }
+    }
+
+    public function miItemsUpload(Request $request) {
+        DB::beginTransaction();
+
+        try {
+            $input = $request->all();
+
+            $excelUpload = $input['itemExcelUpload'];
+            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+
+            $materialIssue = ItemIssueMaster::where('itemIssueAutoID', $input['requestID'])->first();
+
+            if (empty($materialIssue)) {
+                return $this->sendError('Material issue not found', 500);
+            }
+
+            $allowedExtensions = ['xlsx','xls'];
+
+            if (!in_array($extension, $allowedExtensions)) {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+            $filePath = Storage::disk($disk)->path($originalFileName);
+
+            $spreadsheet = IOFactory::load($filePath);
+
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $sheet->removeRow(1, 4);
+
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save($filePath);
+
+            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            $excelHeaders = array_keys(array_merge(...$uniqueData));
+
+            $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $materialIssue->companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();
+
+            if ($isProject_base) {
+                $templateHeaders = ['item_code', 'item_description', 'project', 'qty', 'comment'];
+            }
+            else {
+                $templateHeaders = ['item_code', 'item_description', 'qty', 'comment'];
+            }
+
+            $unexpectedHeader = array_diff($templateHeaders,$excelHeaders);
+
+            if ($unexpectedHeader) {
+                return $this->sendError('Upload failed due to changes made in the Excel template', 500);
+            }
+
+            $validateHeaderCode = false;
+            $totalItemCount = 0;
+
+            foreach ($uniqueData as $key => $value) {
+                if (isset($value['item_code'])) {
+                    $validateHeaderCode = true;
+                }
+
+                if ((isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['item_description']) && !is_null($value['item_description']) || isset($value['qty']) && !is_null($value['qty'])) {
+                    $totalItemCount = $totalItemCount + 1;
+                }
+            }
+
+            if (!$validateHeaderCode) {
+                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+            }
+
+            if ($isProject_base) {
+                $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+                })->select(array('item_code', 'item_description', 'project', 'qty', 'comment'))->get()->toArray();
+            }
+            else {
+                $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+                })->select(array('item_code', 'item_description', 'qty', 'comment'))->get()->toArray();
+            }
+
+            if ($materialIssue->approved == 1) {
+                return $this->sendError('This Material Issue fully approved. You can not add.', 500);
+            }
+
+            if (count($record) > 0) {
+                $data['isBulkItemJobRun'] = 1;
+                ItemIssueMaster::where('itemIssueAutoID', $materialIssue->itemIssueAutoID)->update($data);
+
+                $db = isset($input['db']) ? $input['db'] : "";
+                AddMultipleItemsToMaterialIssue::dispatch(array_filter($record),($materialIssue->toArray()),$db,Auth::id());
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'Items uploaded Successfully!!');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
 }

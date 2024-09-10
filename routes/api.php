@@ -148,6 +148,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('user_types', 'UserTypeAPIController');
 
+            Route::resource('mi_bulk_upload_error_logs', 'MiBulkUploadErrorLogAPIController');
+
             Route::post('getCurrencyDetails', 'SupplierCurrencyAPIController@getCurrencyDetails');
 
             Route::resource('units', 'UnitAPIController');
