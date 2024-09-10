@@ -333,6 +333,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $input["itemCode"] = $grvDetails->itemCode;
                         $input["PARTNUMBER"] = $grvDetails->item_by->secondaryItemCode;
                         $input["faCode"] = $documentCode;
+                        $input["faBarcode"] = $documentCode;
                         $input['createdPcID'] = gethostname();
                         $input['createdUserID'] = \Helper::getEmployeeID();
                         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
@@ -431,6 +432,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $input["itemCode"] = $grvDetails->itemCode;
                                 $input["PARTNUMBER"] = $grvDetails->item_by->secondaryItemCode;
                                 $input["faCode"] = $documentCode;
+                                $input["faBarcode"] = $documentCode;
                                 $input['createdPcID'] = gethostname();
                                 $input['createdUserID'] = \Helper::getEmployeeID();
                                 $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
