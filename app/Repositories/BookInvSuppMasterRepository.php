@@ -91,7 +91,7 @@ class BookInvSuppMasterRepository extends BaseRepository
         \DB::enableQueryLog();
         $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with('created_by', 'transactioncurrency', 'supplier', 'employee' ,'project');
+        $invMaster->with('created_by', 'transactioncurrency', 'supplier', 'employee' ,'project','localcurrency','rptcurrency');
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -167,7 +167,11 @@ class BookInvSuppMasterRepository extends BaseRepository
                 'erp_bookinvsuppmaster.confirmedDate',
                 'erp_bookinvsuppmaster.approvedDate',
                 'erp_bookinvsuppmaster.supplierTransactionCurrencyID',
+                'erp_bookinvsuppmaster.localCurrencyID',
+                'erp_bookinvsuppmaster.companyReportingCurrencyID',
                 'erp_bookinvsuppmaster.bookingAmountTrans',
+                'erp_bookinvsuppmaster.bookingAmountLocal',
+                'erp_bookinvsuppmaster.bookingAmountRpt',
                 'erp_bookinvsuppmaster.cancelYN',
                 'erp_bookinvsuppmaster.timesReferred',
                 'erp_bookinvsuppmaster.refferedBackYN',
@@ -218,8 +222,14 @@ class BookInvSuppMasterRepository extends BaseRepository
                 $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateAndTime);
                 $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
-                $data[$x]['Amount'] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
+ 
+                $data[$x]['Transaction Currency'] = $val->supplierTransactionCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
+                $data[$x]['Transaction Amount'] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
+                $data[$x]['Local Currency'] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
+                $data[$x]['Local Amount'] = $val->localcurrency? number_format($val->bookingAmountLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x]['Reporting Currency'] = $val->companyReportingCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
+                $data[$x]['Reporting Amount'] = $val->rptcurrency? number_format($val->bookingAmountRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
+
                 $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\helper\Helper;
 use App\Models\JvMaster;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
@@ -80,7 +81,7 @@ class JvMasterRepository extends BaseRepository
 
         $invMaster = JvMaster::where('companySystemID', $input['companySystemID']);
         //$invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with(['created_by', 'transactioncurrency', 'detail' => function ($query) {
+        $invMaster->with(['created_by', 'transactioncurrency','reportingcurrency', 'detail' => function ($query) {
             $query->selectRaw('COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,jvMasterAutoId');
             $query->groupBy('jvMasterAutoId');
         }]);
@@ -151,9 +152,37 @@ class JvMasterRepository extends BaseRepository
                 $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
                 $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
-                $data[$x]['Debit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
-                $data[$x]['Credit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x]['Transaction Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
+
+
+
+                $data[$x]['Transaction Debit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x]['Transaction Credit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+
+
+                $debitAmount = $val->detail->count() > 0? $val->detail[0]->debitSum : 0;
+                $creditAmount = $val->detail->count() > 0? $val->detail[0]->creditSum : 0;
+
+                $debitRptAmount = 0;
+                $creditRptAmount = 0;
+
+                if(($val->rptCurrencyID && $val->rptCurrencyID) && ($debitAmount > 0 || $creditAmount > 0)){
+                    if($debitAmount > 0){
+                        $debitCurrencyConversionAmount = Helper::currencyConversion($val->companySystemID, $val->currencyID, $val->rptCurrencyID, $debitAmount);
+                        $debitRptAmount = $debitCurrencyConversionAmount['reportingAmount'];
+                    }
+
+                    if($creditAmount > 0){
+                        $creditCurrencyConversionAmount = Helper::currencyConversion($val->companySystemID, $val->currencyID, $val->rptCurrencyID, $creditAmount);
+                        $creditRptAmount = $creditCurrencyConversionAmount['reportingAmount'];
+                    }
+                }
+
+
+                $data[$x]['Reporting Currency'] = $val->reportingcurrency? $val->reportingcurrency->CurrencyCode : '';
+                $data[$x]['Reporting Debit Amount'] = $debitRptAmount > 0? number_format($debitRptAmount, $val->reportingcurrency? $val->reportingcurrency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x]['Reporting Credit Amount'] = $creditRptAmount > 0? number_format($creditRptAmount, $val->reportingcurrency? $val->reportingcurrency->DecimalPlaces : '', ".", "") : 0;
+
                 $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

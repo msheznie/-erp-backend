@@ -97,6 +97,8 @@ class MatchDocumentMasterRepository extends BaseRepository
         }, 'supplier' => function ($query) {
         }, 'employee' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
+        }, 'localcurrency' => function ($query) {
+        }, 'rptcurrency' => function ($query) {
         },'cancelled_by']);
 
         if (array_key_exists('confirmedYN', $input)) {
@@ -158,6 +160,13 @@ class MatchDocumentMasterRepository extends BaseRepository
                 $data[$x]['Cancelled At'] = \Helper::convertDateWithTime($val->cancelledDate);
                 $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
                 
+                $data[$x]['Transaction Currency'] = $val->supplierTransCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
+                $data[$x]['Transaction Amount'] = $val->transactioncurrency? number_format($val->payAmountSuppTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
+                $data[$x]['Local Currency'] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
+                $data[$x]['Local Amount'] = $val->localcurrency? number_format($val->payAmountCompLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x]['Reporting Currency'] = $val->companyRptCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
+                $data[$x]['Reporting Amount'] = $val->rptcurrency? number_format($val->payAmountCompRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
+
                 if($val->matchingConfirmedYN == 0 && $val->cancelledYN == 0){
                     $data[$x]['Status'] = "Not Confirmed";
                 } else if ($val->matchingConfirmedYN == 1 && $val->cancelledYN == 0) {
@@ -183,6 +192,8 @@ class MatchDocumentMasterRepository extends BaseRepository
         $invMaster->with(['segment','created_by' => function ($query) {
         }, 'customer' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
+        }, 'localcurrency' => function ($query) {
+        }, 'rptcurrency' => function ($query) {
         }, 'cancelled_by']);
 
         if (array_key_exists('confirmedYN', $input)) {
@@ -249,6 +260,12 @@ class MatchDocumentMasterRepository extends BaseRepository
                 $data[$x]['Currency'] = $val->transactioncurrency?  $val->transactioncurrency->CurrencyCode : '';
                 $data[$x]['Receipt Amount'] = number_format($val->payAmountSuppTrans, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
                 $data[$x]['Matched Amount'] = number_format($val->matchedAmount, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
+
+               
+                $data[$x]['Local Currency'] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
+                $data[$x]['Local Amount'] = $val->localcurrency? number_format($val->payAmountCompLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x]['Reporting Currency'] = $val->companyRptCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
+                $data[$x]['Reporting Amount'] = $val->rptcurrency? number_format($val->payAmountCompRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
 
                 if($val->matchingConfirmedYN == 0 && $val->cancelledYN == 0){
                     $data[$x]['Status'] = "Not Confirmed";

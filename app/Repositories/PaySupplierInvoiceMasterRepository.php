@@ -212,7 +212,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $subCompanies = [$selectedCompanyId];
         }
 
-        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project','pdc_cheque'])->whereIN('companySystemID', $subCompanies);
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project','pdc_cheque','localcurrency','rptcurrency'])->whereIN('companySystemID', $subCompanies);
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -374,6 +374,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 $data[$x]['Supplier Amount'] = number_format($val->suppAmountDocTotal, $val->suppliercurrency? $val->suppliercurrency->DecimalPlaces : 2, ".", "");
                 $data[$x]['Bank Currency'] = $val->bankcurrency? $val->bankcurrency->CurrencyCode : '';
                 $data[$x]['Bank Amount'] = number_format($val->payAmountBank, $val->bankcurrency? $val->bankcurrency->DecimalPlaces : 2, ".", "");
+                
+                $data[$x]['Local Currency'] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
+                $data[$x]['Local Amount'] = $val->localcurrency? number_format($val->payAmountCompLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x]['Reporting Currency'] = $val->companyRptCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
+                $data[$x]['Reporting Amount'] = $val->rptcurrency? number_format($val->payAmountCompRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
+                
                 $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

@@ -95,7 +95,7 @@ class PurchaseReturnRepository extends BaseRepository
 
         $purchaseReturn = PurchaseReturn::where('companySystemID', $input['companyId'])
         ->where('documentSystemID', $input['documentId'])
-        ->with(['created_by', 'segment_by', 'location_by', 'supplier_by', 'currency_by']);
+        ->with(['created_by', 'segment_by', 'location_by', 'supplier_by', 'currency_by','reporting_currency_by','local_currency_by']);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
@@ -148,6 +148,8 @@ class PurchaseReturnRepository extends BaseRepository
                 'confirmedDate',
                 'approvedDate',
                 'supplierTransactionCurrencyID',
+                'companyReportingCurrencyID',
+                'localCurrencyID',
                 'timesReferred',
                 'refferedBackYN',
                 'confirmedYN',

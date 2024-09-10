@@ -663,6 +663,11 @@ class QuotationMaster extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'companyLocalCurrencyID', 'currencyID');
     }
 
+    public function reporting_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
     public function getIsVatEligibleAttribute()
     {
         return TaxService::checkPOVATEligible($this->customerVATEligible,$this->vatRegisteredYN,$this->documentSystemID);

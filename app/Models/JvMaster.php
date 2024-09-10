@@ -361,6 +361,11 @@ class JvMaster extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID', 'currencyID');
     }
 
+    public function reportingcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'rptCurrencyID', 'currencyID');
+    }
+
     public function financeperiod_by()
     {
         return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');

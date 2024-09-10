@@ -327,7 +327,7 @@ class GRVMasterRepository extends BaseRepository
 
         $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
         $grvMaster->where('documentSystemID', $input['documentId']);
-        $grvMaster->with(['created_by' => function ($query) {
+        $grvMaster->with(['local_currency_by','reporting_currency_by','created_by' => function ($query) {
             }, 'segment_by' => function ($query) {
             }, 'location_by' => function ($query) {
             }, 'supplier_by' => function ($query) {
@@ -418,6 +418,8 @@ class GRVMasterRepository extends BaseRepository
                 'erp_grvmaster.postedDate',
                 'erp_grvmaster.supplierTransactionCurrencyID',
                 'erp_grvmaster.grvTotalSupplierTransactionCurrency',
+                'erp_grvmaster.grvTotalComRptCurrency',
+                'erp_grvmaster.grvTotalLocalCurrency',
                 'erp_grvmaster.grvCancelledYN',
                 'erp_grvmaster.timesReferred',
                 'erp_grvmaster.grvConfirmedYN',
@@ -425,6 +427,8 @@ class GRVMasterRepository extends BaseRepository
                 'erp_grvmaster.grvLocation',
                 'erp_grvmaster.refferedBackYN',
                 'erp_grvmaster.grvTypeID',
+                'erp_grvmaster.companyReportingCurrencyID',
+                'erp_grvmaster.localCurrencyID',
                 'erp_grvmaster.projectID',
                 'erp_grvmaster.companySystemID',
                 'erp_grvmaster.companySystemID'
@@ -461,8 +465,12 @@ class GRVMasterRepository extends BaseRepository
                 $data[$x]['Created Date'] = \Helper::convertDateWithTime($val->createdDateTime);
                 $data[$x]['Confirmed Date'] = \Helper::convertDateWithTime($val->grvConfirmedDate);
                 $data[$x]['Approved Date'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Currency'] = $val->supplierTransactionCurrencyID? ($val->currency_by? $val->currency_by->CurrencyCode : '') : '';
-                $data[$x]['Amount'] = number_format($val->grvTotalSupplierTransactionCurrency, $val->currency_by? $val->currency_by->DecimalPlaces : '', ".", "");
+                $data[$x]['Transaction Currency'] = $val->supplierTransactionCurrencyID? ($val->currency_by? $val->currency_by->CurrencyCode : '') : '';
+                $data[$x]['Transaction Amount'] = number_format($val->grvTotalSupplierTransactionCurrency, $val->currency_by? $val->currency_by->DecimalPlaces : '', ".", "");
+                $data[$x]['Local Currency'] = $val->localCurrencyID? ($val->local_currency_by? $val->local_currency_by->CurrencyCode : '') : '';
+                $data[$x]['Local Amount'] = number_format($val->grvTotalLocalCurrency, $val->local_currency_by? $val->local_currency_by->DecimalPlaces : '', ".", "");
+                $data[$x]['Reporting Currency'] = $val->companyReportingCurrencyID? ($val->reporting_currency_by? $val->reporting_currency_by->CurrencyCode : '') : '';
+                $data[$x]['Reporting Amount'] = number_format($val->grvTotalComRptCurrency, $val->reporting_currency_by? $val->reporting_currency_by->DecimalPlaces : '', ".", "");
                 $data[$x]['Status'] = StatusService::getStatus($val->grvCancelledYN, NULL, $val->grvConfirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
