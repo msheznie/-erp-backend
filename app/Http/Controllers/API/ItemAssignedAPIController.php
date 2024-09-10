@@ -122,15 +122,19 @@ class ItemAssignedAPIController extends AppBaseController
                 }
     
                 $company = Company::where('companySystemID', $companie['id'])->first();
-                $input['companySystemID'] = $companie['id'];
-                $input['wacValueReportingCurrencyID'] = $company->reportingCurrency;
-                $input['wacValueLocalCurrencyID'] = $company->localCurrencyID;
-                $input['companyID'] = $company->CompanyID;
-                $input['isActive'] = 1;
-                $input['isAssigned'] = -1;
-                $input['itemPrimaryCode'] = $input['primaryCode'];
-                $input['itemUnitOfMeasure'] = $input['unit'];
-                $itemAssigneds = $this->itemAssignedRepository->create($input);
+
+                $itemAssigned = new ItemAssigned();
+                $itemAssigned->companySystemID = $companie['id'];
+                $itemAssigned->wacValueReportingCurrencyID = $company->reportingCurrency;
+                $itemAssigned->wacValueLocalCurrencyID = $company->localCurrencyID;
+                $itemAssigned->companyID = $company->CompanyID;
+                $itemAssigned->isActive = 1;
+                $itemAssigned->isAssigned = 1;
+                $itemAssigned->itemPrimaryCode = $input['primaryCode'];
+                $itemAssigned->itemUnitOfMeasure = $input['unit'];
+                $itemAssigned->save();  
+
+
             }
 
         }
