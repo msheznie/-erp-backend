@@ -713,6 +713,8 @@ class PaySupplierInvoiceMasterReferback extends Model
         'interCompanyToID',
         'ReversedYN',
         'cancelYN',
+        'employeeAdvanceAccountSystemID',
+        'employeeAdvanceAccount',
         'cancelComment',
         'cancelDate',
         'cancelledByEmpSystemID',

@@ -1728,6 +1728,98 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             if ($input['matchingConfirmedYN'] == 1) 
             {
+                $advancePaymentEmployee =  PaySupplierInvoiceDetail::where('matchingDocID', $id)->where('documentSystemID',4)
+                    ->where('PayMasterAutoId', $input["PayMasterAutoId"])
+                    ->whereHas('matching_master', function($query) {
+                        $query->where('user_type', 2);
+                    });
+                if($advancePaymentEmployee->count() > 0) {
+
+                    $totAdvancePayment = $advancePaymentEmployee->selectRaw("SUM(paymentLocalAmount) as localAmount,SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount")->first();
+                    $finalData = [];
+                    $masterData = PaySupplierInvoiceMaster::with(['bank', 'financeperiod_by', 'transactioncurrency', 'localcurrency', 'rptcurrency'])->find($input["PayMasterAutoId"]);
+
+                    if ($matchDocumentMaster) {
+                        $data['companySystemID'] = $matchDocumentMaster->companySystemID;
+                        $data['companyID'] = $matchDocumentMaster->companyID;
+                        $data['serviceLineSystemID'] = null;
+                        $data['serviceLineCode'] = null;
+                        $data['masterCompanyID'] = null;
+                        $data['documentSystemID'] = $matchDocumentMaster->documentSystemID;
+                        $data['documentID'] = $matchDocumentMaster->documentID;
+                        $data['documentSystemCode'] = $input["PayMasterAutoId"];
+                        $data['documentCode'] = $matchDocumentMaster->BPVcode;
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
+                        $data['documentYear'] = \Helper::dateYear($matchDocumentMaster->matchingDocdate);
+                        $data['documentMonth'] = \Helper::dateMonth($matchDocumentMaster->matchingDocdate);
+                        $data['documentConfirmedDate'] = $matchDocumentMaster->confirmedDate;
+                        $data['documentConfirmedBy'] = $matchDocumentMaster->confirmedByEmpID;
+                        $data['documentConfirmedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
+                        $data['documentFinalApprovedDate'] = $matchDocumentMaster->matchingConfirmedDate;
+                        $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                        $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                        $data['documentNarration'] = "Matching Entry " . $matchDocumentMaster->matchingDocCode;
+                        $data['clientContractID'] = 'X';
+                        $data['contractUID'] = 159;
+                        $data['supplierCodeSystem'] = $matchDocumentMaster->BPVsupplierID;
+                        $data['holdingShareholder'] = null;
+                        $data['holdingPercentage'] = 0;
+                        $data['nonHoldingPercentage'] = 0;
+                        $data['contraYN'] = 1;
+                        $data['chequeNumber'] = $masterData->BPVchequeNo;
+                        $data['documentType'] = $masterData->invoiceType;
+                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdUserID'] = $created_by['empID'];
+                        $data['createdUserSystemID'] = $created_by['employeeSystemID'];
+                        $data['createdUserPC'] = gethostname();
+                        $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
+                        $data['timestamp'] = \Helper::currentDateTime();
+
+                        if ($totAdvancePayment) {
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                            $data['chartOfAccountSystemID'] = $masterData->employeeAdvanceAccountSystemID;
+                            $data['glCode'] = $masterData->employeeAdvanceAccount;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                            $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
+                            $data['documentTransAmount'] = \Helper::roundValue($totAdvancePayment->transAmount) * -1;;
+                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                            $data['documentLocalAmount'] = \Helper::roundValue($totAdvancePayment->transAmount * $masterData->localCurrencyER) * -1;
+                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                            $data['documentRptAmount'] = \Helper::roundValue($totAdvancePayment->transAmount * $masterData->companyRptCurrencyER) * -1;
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+
+
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                            $data['chartOfAccountSystemID'] = $masterData->advanceAccountSystemID;
+                            $data['glCode'] = $masterData->AdvanceAccount;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                            $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
+                            $data['documentTransAmount'] = \Helper::roundValue($totAdvancePayment->transAmount);
+                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                            $data['documentLocalAmount'] = \Helper::roundValue($totAdvancePayment->localAmount);
+                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                            $data['documentRptAmount'] = \Helper::roundValue($totAdvancePayment->rptAmount);
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+                        }
+
+                        foreach ($finalData as $data) {
+                            GeneralLedger::create($data);
+                        }
+                    }
+                }
+
 
                 $is_advance_payment =  PaySupplierInvoiceDetail::where('matchingDocID', $id)->where('documentSystemID',4)
                                                                ->where('PayMasterAutoId', $input["PayMasterAutoId"])

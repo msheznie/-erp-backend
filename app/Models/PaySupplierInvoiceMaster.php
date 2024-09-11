@@ -654,6 +654,8 @@ class PaySupplierInvoiceMaster extends Model
         'advanceAccountSystemID',
         'applyVAT',
         'AdvanceAccount',
+        'employeeAdvanceAccountSystemID',
+        'employeeAdvanceAccount',
     ];
 
     /**
