@@ -381,8 +381,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $this->fixedAssetCostRepository->create($cost);
 
                         // maintain assetAllocatedQty
-                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty]);
-
+                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty, 'assetAllocationDoneYN' => -1]);
                     } else {
 
                         $ceil_qty = ceil($grvDetails->noQty);
