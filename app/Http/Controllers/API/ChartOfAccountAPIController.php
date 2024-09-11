@@ -20,6 +20,7 @@ use App\Http\Requests\API\UpdateChartOfAccountAPIRequest;
 use App\Models\AllocationMaster;
 use App\helper\ReopenDocument;
 use App\Models\BankAccount;
+use App\Models\CashFlowTemplateLink;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccountsRefferedBack;
@@ -274,6 +275,8 @@ class ChartOfAccountAPIController extends AppBaseController
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
 
                             ReportTemplateLinks::where('glAutoID', $input['chartOfAccountSystemID'])->update(['glDescription' => $input['AccountDescription']]);
+
+                            CashFlowTemplateLink::where('glAutoID', $input['chartOfAccountSystemID'])->update(['glDescription' => $input['AccountDescription']]);
 
                             $old_array = array_only($chartOfAccountOld, ['AccountDescription']);
                             $modified_array = array_only($input, ['AccountDescription']);
