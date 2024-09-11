@@ -82,7 +82,7 @@ class HelpDeskAPIController extends AppBaseController
 
         if(empty($data)){
             $msg = 'The third party integration not available';
-            throw new Exception($msg);
+            throw new \Exception($msg);
         }
 
         $this->thirdParty = $data->toArray();
