@@ -354,7 +354,7 @@ class ConfigurationAPIController extends AppBaseController
         foreach ($payData as $key => $value) {
             $updatePaySupplier = array();
             if ($value->localCurrencyID == $value->companyRptCurrencyID) {
-                $updatePaySupplier = ['payAmountCompRpt' => $value->payAmountCompLocal, 'vatAmountRpt' => $value->VATAmountLocal, 'netAmountRpt' => $value->netAmountLocal];
+                $updatePaySupplier = ['payAmountCompRpt' => $value->payAmountCompLocal, 'VATAmountRpt' => $value->VATAmountLocal, 'netAmountRpt' => $value->netAmountLocal];
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->payAmountSuppTrans, $value->companyRptCurrencyER);
                 $vatRpt = $this->convertAmountToLocalRpt($value->VATAmount, $value->companyRptCurrencyER);
@@ -364,8 +364,8 @@ class ConfigurationAPIController extends AppBaseController
                     $updatePaySupplier['payAmountCompRpt'] = round($newRpt, 7);
                 }
 
-                if (round($vatRpt, 7) !== $value->vatAmountRpt) {
-                    $updatePaySupplier['vatAmountRpt'] = round($vatRpt, 7);
+                if (round($vatRpt, 7) !== $value->VATAmountRpt) {
+                    $updatePaySupplier['VATAmountRpt'] = round($vatRpt, 7);
                 }
 
                 if (round($netRpt, 7) !== $value->netAmountRpt) {
