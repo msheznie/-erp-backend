@@ -14,6 +14,8 @@ use App\Http\Middleware\MobileAccessVerify;
 */
 
 use Illuminate\Support\Facades\Route;
+
+
 Route::group(['middleware' => 'mobileServer'], function () {
 Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTaxLedgerForSupplierInvoice');
 
