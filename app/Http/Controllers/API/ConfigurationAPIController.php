@@ -82,6 +82,134 @@ class ConfigurationAPIController extends AppBaseController
 
     public function updateWrongEnrty()
     {
+
+        //Supplier invoice master
+        $supplierMaster = DB::table('erp_bookinvsuppmaster')
+            ->whereDate('createdDateTime', '>=', '2024-09-02')
+            ->whereColumn('supplierTransactionCurrencyID', '!=', 'companyReportingCurrencyID')
+            ->whereColumn('companyReportingER', '<=', 'supplierTransactionCurrencyER')
+            ->get();
+
+        foreach ($supplierMaster as $key => $value) {
+            $updateSupplierMaster= array();
+            if ($value->localCurrencyID == $value->companyReportingCurrencyID) {
+                $updateSupplierMaster = ['bookingAmountRpt' => $value->bookingAmountLocal];
+            } else {
+                $newRpt = $this->convertAmountToLocalRpt($value->bookingAmountTrans, $value->companyReportingER);
+
+                if (round($newRpt, 7) !== round($value->bookingAmountRpt, 7)) {
+                    $updateSupplierMaster = ['bookingAmountRpt' => round($newRpt, 7)];
+                }
+            }
+
+            if (!empty($updateSupplierMaster)) {
+                $updateDataFinal[] = ['value' => $value, 'updateSupplierMaster' => $updateSupplierMaster];
+                DB::table('erp_bookinvsuppmaster')->where('bookingSuppMasInvAutoID', $value->bookingSuppMasInvAutoID)->update($updateSupplierMaster);
+            }
+
+            $supplierMasterDetails = DB::table('erp_bookinvsuppdet')
+                ->where('bookingSuppMasInvAutoID',$value->bookingSuppMasInvAutoID)
+                ->get();
+
+            foreach ($supplierMasterDetails as $keyDetail => $valueDetail) {
+                $updateSupplierMasterDetail = array();
+
+                if ($value->localCurrencyID == $value->companyReportingCurrencyID) {
+                    $updateSupplierMasterDetail = ['totRptAmount' => $valueDetail->totLocalAmount, 'VATAmountRpt' => $valueDetail->VATAmountLocal];
+                } else {
+                    $newRptSupplier = $this->convertAmountToLocalRpt($valueDetail->totTransactionAmount, $valueDetail->companyReportingER);
+
+                    if (round($newRptSupplier, 7) !== round($valueDetail->totRptAmount, 7)) {
+                        $updateSupplierMasterDetail['totRptAmount'] = round($newRptSupplier, 7);
+                    }
+
+                    $newRptVatSupplier= $this->convertAmountToLocalRpt($valueDetail->VATAmount, $valueDetail->companyReportingER);
+
+                    if (round($newRptVatSupplier, 7) !== round($valueDetail->VATAmountRpt, 7)) {
+                        $updateSupplierMasterDetail['VATAmountRpt'] = round($newRptVatSupplier, 7);
+                    }
+
+                }
+
+                if (!empty($updateSupplierMasterDetail)) {
+                    $updateDataFinal[] = ['value' => $valueDetail, 'updateSupplierMasterDetail' => $updateSupplierMasterDetail];
+                    DB::table('erp_bookinvsuppdet')->where('bookingSupInvoiceDetAutoID', $valueDetail->bookingSupInvoiceDetAutoID)->update($updateSupplierMasterDetail);
+                }
+            }
+
+        }
+
+        //credit note
+        $creditNote = DB::table('erp_creditnote')
+            ->whereDate('createdDateTime', '>=', '2024-09-02')
+            ->whereColumn('customerCurrencyID', '!=', 'companyReportingCurrencyID')
+            ->whereColumn('companyReportingER', '<=', 'customerCurrencyER')
+            ->get();
+
+        foreach ($creditNote as $key => $value) {
+            $updateDataCreditNote = array();
+            if ($value->localCurrencyID == $value->companyReportingCurrencyID) {
+                $updateDataCreditNote = ['creditAmountRpt' => $value->creditAmountLocal];
+            } else {
+                $newRpt = $this->convertAmountToLocalRpt($value->creditAmountTrans, $value->companyReportingER);
+
+                if (round($newRpt, 7) !== round($value->creditAmountRpt, 7)) {
+                    $updateDataCreditNote = ['creditAmountRpt' => round($newRpt, 7)];
+                }
+            }
+
+            if (!empty($updateDataCreditNote)) {
+                $updateDataFinal[] = ['value' => $value, 'updateDataJvDetail' => $updateDataCreditNote];
+                DB::table('erp_creditnote')->where('creditNoteAutoID', $value->creditNoteAutoID)->update($updateDataCreditNote);
+            }
+
+            $creditNoteDetails = DB::table('erp_creditnotedetails')
+                ->where('creditNoteAutoID',$value->creditNoteAutoID)
+                ->whereColumn('creditAmountCurrency', '!=', 'comRptCurrency')
+                ->whereColumn('comRptCurrencyER', '<=', 'creditAmountCurrencyER')
+                ->get();
+
+            foreach ($creditNoteDetails as $keyDetail => $valueDetail) {
+                $updateCreditNoteDetail = array();
+
+                if ($valueDetail->localCurrency == $valueDetail->comRptCurrency) {
+                    $updateCreditNoteDetail = ['comRptAmount' => $valueDetail->localAmount, 'VATAmountRpt' => $valueDetail->VATAmountLocal, 'netAmountRpt' => $valueDetail->netAmountLocal];
+                } else {
+                    $newRptMark1 = $this->convertAmountToLocalRpt($valueDetail->creditAmount, $valueDetail->comRptCurrencyER);
+
+                    if (round($newRptMark1, 7) !== round($valueDetail->comRptAmount, 7)) {
+                        $updateCreditNoteDetail['comRptAmount'] = round($newRptMark1, 7);
+                    }
+
+                    $newRptVatAm = $this->convertAmountToLocalRpt($valueDetail->VATAmount, $valueDetail->comRptCurrencyER);
+
+                    if (round($newRptVatAm, 7) !== round($valueDetail->VATAmountRpt, 7)) {
+                        $updateCreditNoteDetail['VATAmountRpt'] = round($newRptVatAm, 7);
+                    }
+
+                    $newRptNetAmount = $this->convertAmountToLocalRpt($valueDetail->netAmount, $valueDetail->comRptCurrencyER);
+
+                    if (round($newRptNetAmount, 7) !== round($valueDetail->netAmountRpt, 7)) {
+                        $updateCreditNoteDetail['netAmountRpt'] = round($newRptNetAmount, 7);
+                    }
+                }
+
+
+                if (!empty($updateCreditNoteDetail)) {
+                    $updateDataFinal[] = ['value' => $valueDetail, 'updateCreditNoteDetail' => $updateCreditNoteDetail];
+                    DB::table('erp_creditnotedetails')->where('creditNoteDetailsID', $valueDetail->creditNoteDetailsID)->update($updateCreditNoteDetail);
+                }
+            }
+        }
+
+        return $updateDataFinal;
+
+    }
+
+
+
+    public function updateWrongEnrtyx()
+    {
         $updateDataFinal = [];
         $wrongGlDaata = DB::table('erp_generalledger')
                           ->whereDate('createdDateTime', '>=', '2024-09-02')
@@ -338,7 +466,7 @@ class ConfigurationAPIController extends AppBaseController
 
 
                 if (!empty($updateDataGrvDetail)) {
-                    $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateDataGrvDetail' => $updateDataGrvDetail];
+                    $updateDataFinal[] = ['value' => $valueDetail, 'updateDataGrvDetail' => $updateDataGrvDetail];
                     // DB::table('erp_grvdetails')->where('grvDetailsID', $valueDetail->grvDetailsID)->update($updateDataGrvDetail);
                 }
             }
@@ -406,7 +534,7 @@ class ConfigurationAPIController extends AppBaseController
             }
 
             if (!empty($updateDataPayDetail)) {
-                $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateDataPayDetail' => $updateDataPayDetail];
+                $updateDataFinal[] = ['value' => $valueDetail, 'updateDataPayDetail' => $updateDataPayDetail];
                 // DB::table('erp_paysupplierinvoicedetail')->where('payDetailAutoID', $valueDetail->payDetailAutoID)->update($updateDataPayDetail);
             }
         }
@@ -438,7 +566,7 @@ class ConfigurationAPIController extends AppBaseController
             }
 
             if (!empty($updateDataPayAdvDetail)) {
-                $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateDataPayAdvDetail' => $updateDataPayAdvDetail];
+                $updateDataFinal[] = ['value' => $valueDetail, 'updateDataPayAdvDetail' => $updateDataPayAdvDetail];
                 // DB::table('erp_advancepaymentdetails')->where('advancePaymentDetailAutoID', $valueDetail->advancePaymentDetailAutoID)->update($updateDataPayAdvDetail);
             }
         }
@@ -464,7 +592,7 @@ class ConfigurationAPIController extends AppBaseController
             }
 
             if (!empty($updateDataPayDirDetail)) {
-                $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateDataPayDirDetail' => $updateDataPayDirDetail];
+                $updateDataFinal[] = ['value' => $valueDetail, 'updateDataPayDirDetail' => $updateDataPayDirDetail];
                 // DB::table('erp_directpaymentdetails')->where('directPaymentDetailsID', $valueDetail->directPaymentDetailsID)->update($updateDataPayDirDetail);
             }
         }
@@ -504,7 +632,7 @@ class ConfigurationAPIController extends AppBaseController
                 }
 
                 if (!empty($updateDataJvDetail)) {
-                     $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateDataJvDetail' => $updateDataJvDetail];
+                     $updateDataFinal[] = ['value' => $valueDetail, 'updateDataJvDetail' => $updateDataJvDetail];
                     // DB::table('erp_consolejvdetail')->where('consoleJvDetailAutoID', $valueDetail->consoleJvDetailAutoID)->update($updateDataJvDetail);
                 }
             }
@@ -567,7 +695,7 @@ class ConfigurationAPIController extends AppBaseController
 
 
                 if (!empty($updateCreditNoteDetail)) {
-                    $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateCreditNoteDetail' => $updateCreditNoteDetail];
+                    $updateDataFinal[] = ['value' => $valueDetail, 'updateCreditNoteDetail' => $updateCreditNoteDetail];
                     // DB::table('erp_creditnotedetails')->where('creditNoteAutoID', $valueDetail->creditNoteAutoID)->update($updateCreditNoteDetail);
                 }
             }
@@ -643,7 +771,7 @@ class ConfigurationAPIController extends AppBaseController
 
 
             if (!empty($updateDataPayDetail)) {
-                $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateDataPayDetail' => $updateDataPayDetail];
+                $updateDataFinal[] = ['value' => $valueDetail, 'updateDataPayDetail' => $updateDataPayDetail];
                 // DB::table('erp_custreceivepaymentdet')->where('custRecivePayDetAutoID', $valueDetail->custRecivePayDetAutoID)->update($updateDataPayDetail);
             }
         }
@@ -677,7 +805,7 @@ class ConfigurationAPIController extends AppBaseController
 
 
             if (!empty($updateDataDirectPayDetail)) {
-                $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateDataDirectPayDetail' => $updateDataDirectPayDetail];
+                $updateDataFinal[] = ['value' => $valueDetail, 'updateDataDirectPayDetail' => $updateDataDirectPayDetail];
                 // DB::table('erp_directreceiptdetails')->where('directReceiptDetailsID', $valueDetail->directReceiptDetailsID)->update($updateDataDirectPayDetail);
             }
         }
@@ -709,7 +837,7 @@ class ConfigurationAPIController extends AppBaseController
             }
 
             if (!empty($updateDataAdvPayDetail)) {
-                $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateDataAdvPayDetail' => $updateDataAdvPayDetail];
+                $updateDataFinal[] = ['value' => $valueDetail, 'updateDataAdvPayDetail' => $updateDataAdvPayDetail];
                 // DB::table('erp_advancereceiptdetails')->where('advanceReceiptDetailAutoID', $valueDetail->advanceReceiptDetailAutoID)->update($updateDataAdvPayDetail);
             }
         }
@@ -763,7 +891,7 @@ class ConfigurationAPIController extends AppBaseController
                 }
 
                 if (!empty($updateSupplierMasterDetail)) {
-                    $updateDataFinal[] = ['valueDetail' => $valueDetail, 'updateSupplierMasterDetail' => $updateSupplierMasterDetail];
+                    $updateDataFinal[] = ['value' => $valueDetail, 'updateSupplierMasterDetail' => $updateSupplierMasterDetail];
                     // DB::table('erp_bookinvsuppdet')->where('bookingSuppMasInvAutoID', $valueDetail->bookingSuppMasInvAutoID)->update($updateSupplierMasterDetail);
                 }
             }
