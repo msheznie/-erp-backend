@@ -98,7 +98,7 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->documentTransAmount, $value->documentRptCurrencyER);
 
-                if (round($newRpt, 7) != $value->documentRptAmount) {
+                if (round($newRpt, 7) != round($value->documentRptAmount, 7)) {
                     $updateDataGl = ['documentRptAmount' => round($newRpt, 7)];
                 } 
             }
@@ -124,7 +124,7 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->custInvoiceAmount, $value->comRptER);
 
-                if (round($newRpt, 7) != $value->comRptAmount) {
+                if (round($newRpt, 7) != round($value->comRptAmount, 7)) {
                     $updateDataAR = ['comRptAmount' => round($newRpt, 7)];
                 } 
             }
@@ -151,7 +151,7 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->supplierInvoiceAmount, $value->comRptER);
 
-                if (round($newRpt, 7) != $value->comRptAmount) {
+                if (round($newRpt, 7) != round($value->comRptAmount, 7)) {
                     $updateDataAP = ['comRptAmount' => round($newRpt, 7)];
                 } 
             }
@@ -177,13 +177,13 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->totTransactionAmount, $value->companyReportingER);
 
-                if (round($newRpt, 7) != $value->totRptAmount) {
+                if (round($newRpt, 7) != round($value->totRptAmount,7)) {
                     $updateDataUnbilled['totRptAmount'] = round($newRpt, 7);
                 } 
 
                 $newRptVat = $this->convertAmountToLocalRpt($value->totalVATAmount, $value->companyReportingER);
 
-                if (round($newRptVat, 7) != $value->totalVATAmountRpt) {
+                if (round($newRptVat, 7) != round($value->totalVATAmountRpt, 7)) {
                     $updateDataUnbilled['totalVATAmountRpt'] = round($newRptVat, 7);
                 } 
             }
@@ -209,13 +209,13 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->transAmount, $value->comRptER);
 
-                if (round($newRpt, 7) != $value->rptAmount) {
+                if (round($newRpt, 7) != round($value->rptAmount, 7)) {
                     $updateDataTaxLedger['rptAmount'] = round($newRpt, 7);
                 } 
 
                 $newRptVat = $this->convertAmountToLocalRpt($value->documentTransAmount, $value->comRptER);
 
-                if (round($newRptVat, 7) != $value->documentReportingAmount) {
+                if (round($newRptVat, 7) != round($value->documentReportingAmount, 7)) {
                     $updateDataTaxLedger['documentReportingAmount'] = round($newRptVat, 7);
                 } 
             }
@@ -241,13 +241,13 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->taxableAmount, $value->reportingER);
 
-                if (round($newRpt, 7) != $value->taxableAmountReporting) {
+                if (round($newRpt, 7) != round($value->taxableAmountReporting, 7)) {
                     $updateDataTaxLedgerDetail['taxableAmountReporting'] = round($newRpt, 7);
                 } 
 
                 $newRptVat = $this->convertAmountToLocalRpt($value->VATAmount, $value->reportingER);
 
-                if (round($newRptVat, 7) != $value->VATAmountRpt) {
+                if (round($newRptVat, 7) != round($value->VATAmountRpt, 7)) {
                     $updateDataTaxLedgerDetail['VATAmountRpt'] = round($newRptVat, 7);
                 } 
             }
@@ -274,7 +274,7 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->payAmountSuppTrans, $value->companyRptCurrencyER);
 
-                if (round($newRpt, 7) != $value->payAmountCompRpt) {
+                if (round($newRpt, 7) != round($value->payAmountCompRpt, 7)) {
                     $updateDataBL = ['payAmountCompRpt' => round($newRpt, 7)];
                 } 
             }
@@ -300,7 +300,7 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->grvTotalSupplierTransactionCurrency, $value->companyReportingER);
 
-                if (round($newRpt, 7) !== $value->grvTotalComRptCurrency) {
+                if (round($newRpt, 7) !== round($value->grvTotalComRptCurrency, 7)) {
                     $updateDataGrv = ['grvTotalComRptCurrency' => round($newRpt, 7)];
                 }
             }
@@ -325,13 +325,13 @@ class ConfigurationAPIController extends AppBaseController
 
                     $newRptGRVcostPerUnitSupTransCur = $this->convertAmountToLocalRpt($valueDetail->GRVcostPerUnitSupTransCur, $valueDetail->companyReportingER);
 
-                    if (round($newRptGRVcostPerUnitSupTransCur, 7) !== $valueDetail->GRVcostPerUnitComRptCur) {
+                    if (round($newRptGRVcostPerUnitSupTransCur, 7) !== round($valueDetail->GRVcostPerUnitComRptCur, 7)) {
                         $updateDataGrvDetail['GRVcostPerUnitComRptCur'] = round($newRptGRVcostPerUnitSupTransCur, 7);
                     }
 
                     $newRptlandingCost_RptCur = $this->convertAmountToLocalRpt($valueDetail->landingCost_TransCur, $valueDetail->companyReportingER);
 
-                    if (round($newRptlandingCost_RptCur, 7) !== $valueDetail->landingCost_RptCur) {
+                    if (round($newRptlandingCost_RptCur, 7) !== round($valueDetail->landingCost_RptCur, 7)) {
                         $updateDataGrvDetail['landingCost_RptCur'] = round($newRptlandingCost_RptCur, 7);
                     }
                 }
@@ -360,15 +360,15 @@ class ConfigurationAPIController extends AppBaseController
                 $vatRpt = $this->convertAmountToLocalRpt($value->VATAmount, $value->companyRptCurrencyER);
                 $netRpt = $this->convertAmountToLocalRpt($value->netAmount, $value->companyRptCurrencyER);
 
-                if (round($newRpt, 7) !== $value->payAmountCompRpt) {
+                if (round($newRpt, 7) !== round($value->payAmountCompRpt, 7)) {
                     $updatePaySupplier['payAmountCompRpt'] = round($newRpt, 7);
                 }
 
-                if (round($vatRpt, 7) !== $value->VATAmountRpt) {
+                if (round($vatRpt, 7) !== round($value->VATAmountRpt, 7)) {
                     $updatePaySupplier['VATAmountRpt'] = round($vatRpt, 7);
                 }
 
-                if (round($netRpt, 7) !== $value->netAmountRpt) {
+                if (round($netRpt, 7) !== round($value->netAmountRpt, 7)) {
                     $updatePaySupplier['netAmountRpt'] = round($netRpt, 7);
                 }
             }
@@ -394,13 +394,13 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRptCom = $this->convertAmountToLocalRpt($valueDetail->paymentSupplierDefaultAmount, $valueDetail->comRptER);
 
-                if ($newRptCom !== $valueDetail->paymentComRptAmount) {
+                if (round($newRptCom,7) !== round($valueDetail->paymentComRptAmount, 7)) {
                     $updateDataPayDetail['paymentComRptAmount'] = round($newRptCom,7);
                 }
 
                 $newRptVat = $this->convertAmountToLocalRpt($valueDetail->VATAmount, $valueDetail->comRptER);
 
-                if ($newRptVat !== $valueDetail->VATAmountRpt) {
+                if (round($newRptVat, 7) !== round($valueDetail->VATAmountRpt, 7)) {
                     $updateDataPayDetail['VATAmountRpt'] = round($newRptVat, 7);
                 }
             }
@@ -426,13 +426,13 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRptCom = $this->convertAmountToLocalRpt($valueDetail->supplierTransAmount, $valueDetail->comRptER);
 
-                if ($newRptCom !== $valueDetail->comRptAmount) {
+                if (round($newRptCom,7) !== round($valueDetail->comRptAmount, 7)) {
                     $updateDataPayAdvDetail['comRptAmount'] = round($newRptCom,7);
                 }
 
                 $newRptVat = $this->convertAmountToLocalRpt($valueDetail->VATAmount, $valueDetail->comRptER);
 
-                if ($newRptVat !== $valueDetail->VATAmountRpt) {
+                if (round($newRptVat,7) !== round($valueDetail->VATAmountRpt, 7)) {
                     $updateDataPayAdvDetail['VATAmountRpt'] = round($newRptVat,7);
                 }
             }
@@ -458,7 +458,7 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRptCom = $this->convertAmountToLocalRpt($valueDetail->DPAmount, $valueDetail->comRptCurrencyER);
 
-                if ($newRptCom !== $valueDetail->comRptAmount) {
+                if (round($newRptCom,7) !== round($valueDetail->comRptAmount, 7)) {
                     $updateDataPayDirDetail['comRptAmount'] = round($newRptCom,7);
                 }
             }
@@ -492,13 +492,13 @@ class ConfigurationAPIController extends AppBaseController
                 } else {
                     $newRptDebit = $this->convertAmountToLocalRpt($valueDetail->debitAmount, $value->rptCurrencyER);
 
-                    if ($newRptDebit !== $valueDetail->rptDebitAmount) {
+                    if (round($newRptDebit,7) !== round($valueDetail->rptDebitAmount, 7)) {
                         $updateDataJvDetail['rptDebitAmount'] = round($newRptDebit,7);
                     }
 
                     $newRptCredit = $this->convertAmountToLocalRpt($valueDetail->creditAmount, $value->rptCurrencyER);
 
-                    if ($newRptCredit !== $valueDetail->rptCreditAmount) {
+                    if (round($newRptCredit,7) !== round($valueDetail->rptCreditAmount, 7)) {
                         $updateDataJvDetail['rptCreditAmount'] = round($newRptCredit,7);
                     }
                 }
@@ -524,7 +524,7 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->creditAmountTrans, $value->companyReportingER);
 
-                if (round($newRpt, 7) !== $value->creditAmountRpt) {
+                if (round($newRpt, 7) !== round($value->creditAmountRpt, 7)) {
                     $updateDataCreditNote = ['creditAmountRpt' => round($newRpt, 7)];
                 }
             }
@@ -548,19 +548,19 @@ class ConfigurationAPIController extends AppBaseController
                 } else {
                     $newRptMark1 = $this->convertAmountToLocalRpt($valueDetail->creditAmount, $valueDetail->comRptCurrencyER);
 
-                    if (round($newRptMark1, 7) !== $valueDetail->comRptAmount) {
+                    if (round($newRptMark1, 7) !== round($valueDetail->comRptAmount, 7)) {
                         $updateCreditNoteDetail['comRptAmount'] = round($newRptMark1, 7);
                     }
 
                     $newRptVatAm = $this->convertAmountToLocalRpt($valueDetail->VATAmount, $valueDetail->comRptCurrencyER);
 
-                    if (round($newRptVatAm, 7) !== $valueDetail->VATAmountRpt) {
+                    if (round($newRptVatAm, 7) !== round($valueDetail->VATAmountRpt, 7)) {
                         $updateCreditNoteDetail['VATAmountRpt'] = round($newRptVatAm, 7);
                     }
 
                     $newRptNetAmount = $this->convertAmountToLocalRpt($valueDetail->netAmount, $valueDetail->comRptCurrencyER);
 
-                    if (round($newRptNetAmount, 7) !== $valueDetail->netAmountRpt) {
+                    if (round($newRptNetAmount, 7) !== round($valueDetail->netAmountRpt, 7)) {
                         $updateCreditNoteDetail['netAmountRpt'] = round($newRptNetAmount, 7);
                     }
                 }
@@ -589,16 +589,16 @@ class ConfigurationAPIController extends AppBaseController
                 $vatChanged = $this->convertAmountToLocalRpt($value->VATAmount, $value->companyRptCurrencyER);
                 $netAmountNewRpt = $this->convertAmountToLocalRpt($value->netAmount, $value->companyRptCurrencyER);
 
-                if (round($newRpt, 7) !== $value->companyRptAmount) {
+                if (round($newRpt, 7) !== round($value->companyRptAmount, 7)) {
                     $updatePaySupplier['companyRptAmount'] = round($newRpt, 7);
                 }
 
-                if (round($vatChanged, 7) !== $value->VATAmountRpt) {
+                if (round($vatChanged, 7) !== round($value->VATAmountRpt, 7)) {
                     $updatePaySupplier['VATAmountRpt'] = round($vatChanged, 7);
                 }
 
-                if ($netAmountNewRpt !== $value->netAmountRpt) {
-                    $updatePaySupplier['netAmountRpt'] = $netAmountNewRpt;
+                if (round($netAmountNewRpt, 7) !== round($value->netAmountRpt, 7)) {
+                    $updatePaySupplier['netAmountRpt'] = round($netAmountNewRpt, 7);
                 }
             }
 
@@ -623,19 +623,19 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRptCom = $this->convertAmountToLocalRpt($valueDetail->receiveAmountTrans, $valueDetail->companyReportingER);
 
-                if ($newRptCom !== $valueDetail->receiveAmountRpt) {
-                    $updateDataPayDetail['receiveAmountRpt'] = $newRptCom;
+                if (round($newRptCom, 7) !== round($valueDetail->receiveAmountRpt, 7)) {
+                    $updateDataPayDetail['receiveAmountRpt'] = round($newRptCom, 7);
                 }
 
                 $newRptCom2 = $this->convertAmountToLocalRpt($valueDetail->bookingAmountTrans, $valueDetail->companyReportingER);
 
-                if ($newRptCom2 !== $valueDetail->receiveAmountRpt) {
-                    $updateDataPayDetail['bookingAmountRpt'] = $newRptCom2;
+                if (round($newRptCom2, 7) !== round($valueDetail->receiveAmountRpt, 7)) {
+                    $updateDataPayDetail['bookingAmountRpt'] = round($newRptCom2, 7);
                 }
 
                 $newRptVat = $this->convertAmountToLocalRpt($valueDetail->VATAmount, $valueDetail->companyReportingER);
 
-                if ($newRptVat !== $valueDetail->VATAmountRpt) {
+                if (round($newRptVat, 7) !== round($valueDetail->VATAmountRpt, 7)) {
                     $updateDataPayDetail['VATAmountRpt'] = round($newRptVat, 7);
                 }
 
@@ -663,13 +663,13 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRptCom = $this->convertAmountToLocalRpt($valueDetail->DRAmount, $valueDetail->comRptCurrencyER);
 
-                if ($newRptCom !== $valueDetail->comRptAmount) {
+                if (round($newRptCom, 7) !== round($valueDetail->comRptAmount, 7)) {
                     $updateDataDirectPayDetail['comRptAmount'] = round($newRptCom,7);
                 }
 
                 $newRptVat = $this->convertAmountToLocalRpt($valueDetail->VATAmount, $valueDetail->comRptCurrencyER);
 
-                if ($newRptVat !== $valueDetail->VATAmountRpt) {
+                if (round($newRptVat, 7) !== round($valueDetail->VATAmountRpt, 7)) {
                     $updateDataDirectPayDetail['VATAmountRpt'] = round($newRptVat, 7);
                 }
 
@@ -697,13 +697,13 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRptCom = $this->convertAmountToLocalRpt($valueDetail->paymentAmount, $valueDetail->comRptER);
 
-                if ($newRptCom !== $valueDetail->comRptAmount) {
+                if (round($newRptCom, 7) !== round($valueDetail->comRptAmount, 7)) {
                     $updateDataAdvPayDetail['comRptAmount'] = round($newRptCom,7);
                 }
 
                 $newRptVat = $this->convertAmountToLocalRpt($valueDetail->VATAmount, $valueDetail->comRptER);
 
-                if ($newRptVat !== $valueDetail->VATAmountRpt) {
+                if (round($newRptVat, 7) !== round($valueDetail->VATAmountRpt, 7)) {
                     $updateDataAdvPayDetail['VATAmountRpt'] = round($newRptVat, 7);
                 }
             }
@@ -728,7 +728,7 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->bookingAmountTrans, $value->companyReportingER);
 
-                if (round($newRpt, 7) !== $value->bookingAmountRpt) {
+                if (round($newRpt, 7) !== round($value->bookingAmountRpt, 7)) {
                     $updateSupplierMaster = ['bookingAmountRpt' => round($newRpt, 7)];
                 }
             }
@@ -750,13 +750,13 @@ class ConfigurationAPIController extends AppBaseController
                 } else {
                     $newRptSupplier = $this->convertAmountToLocalRpt($valueDetail->totTransactionAmount, $valueDetail->companyReportingER);
 
-                    if (round($newRptSupplier, 7) !== $valueDetail->totRptAmount) {
+                    if (round($newRptSupplier, 7) !== round($valueDetail->totRptAmount, 7)) {
                         $updateSupplierMasterDetail['totRptAmount'] = round($newRptSupplier, 7);
                     }
 
                     $newRptVatSupplier= $this->convertAmountToLocalRpt($valueDetail->VATAmount, $valueDetail->companyReportingER);
 
-                    if (round($newRptVatSupplier, 7) !== $valueDetail->VATAmountRpt) {
+                    if (round($newRptVatSupplier, 7) !== round($valueDetail->VATAmountRpt, 7)) {
                         $updateSupplierMasterDetail['VATAmountRpt'] = round($newRptVatSupplier, 7);
                     }
 
@@ -784,7 +784,7 @@ class ConfigurationAPIController extends AppBaseController
             } else {
                 $newRpt = $this->convertAmountToLocalRpt($value->payAmountSuppTrans, $value->companyRptCurrencyER);
 
-                if (round($newRpt, 7) !== $value->payAmountCompRpt) {
+                if (round($newRpt, 7) !== round($value->payAmountCompRpt, 7)) {
                     $updateMatchDoc = ['payAmountCompRpt' => round($newRpt, 7)];
                 }
             }
