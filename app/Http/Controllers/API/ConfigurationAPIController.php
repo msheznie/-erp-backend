@@ -82,7 +82,7 @@ class ConfigurationAPIController extends AppBaseController
 
     public function updateWrongEnrty()
     {
-
+        $updateDataFinal = [];
         //Supplier invoice master
         $supplierMaster = DB::table('erp_bookinvsuppmaster')
             ->whereDate('createdDateTime', '>=', '2024-09-02')
