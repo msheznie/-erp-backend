@@ -7087,13 +7087,13 @@ class Helper
                 } else {
                     if ($trasToRptER > 1) {
                         if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
-                            $reportingAmount = $transactionAmount / $trasToRptER;
+                            $reportingAmount = $transactionAmount * $trasToRptER;
                         } else {
                             $reportingAmount = 0; 
                         }
                     } else {
                         if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
-                            $reportingAmount = $transactionAmount * $trasToRptER;
+                            $reportingAmount = $transactionAmount / $trasToRptER;
                         } else {
                             $reportingAmount = 0; 
                         }
