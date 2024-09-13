@@ -1597,7 +1597,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             $sheet = $spreadsheet->getActiveSheet();
 
-            $sheet->removeRow(1, 4);
+            $sheet->removeRow(1, 5);
 
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
@@ -1606,7 +1606,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
-            $excelHeaders = array_keys(array_merge(...$uniqueData));
+            $excelHeaders = $formatChk->getHeading();
 
             $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
                 ->where('companySystemID', $materialIssue->companySystemID)
@@ -1620,9 +1620,14 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $templateHeaders = ['item_code', 'item_description', 'qty', 'comment'];
             }
 
-            $unexpectedHeader = array_diff($templateHeaders,$excelHeaders);
+            if(count($excelHeaders) > count($templateHeaders)) {
+                $unexpectedHeader = array_diff($excelHeaders,$templateHeaders);
+            }
+            else {
+                $unexpectedHeader = array_diff($templateHeaders,$excelHeaders);
+            }
 
-            if ($unexpectedHeader) {
+            if (count($unexpectedHeader) > 0) {
                 return $this->sendError('Upload failed due to changes made in the Excel template', 500);
             }
 

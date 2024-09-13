@@ -166,7 +166,7 @@ class MaterialIssueService
     }
 
     public static function uploadValidations($excelRows, $materialIssue, $authID) {
-        $rowNumber = 6;
+        $rowNumber = 7;
         $validationErrorMsg = $validatedItemsArray = [];
         $successCount = $excelRowCount = 0;
 
@@ -468,9 +468,14 @@ class MaterialIssueService
                         }
                     }
 
-                    $projectId = ErpProjectMaster::where('projectCode', trim($rowData['project']))->first();
-                    if($projectId) {
-                        $item['detail_project_id'] = $projectId->id;
+                    if (isset($rowData['project']) && $rowData['project'] !== null) {
+                        $projectId = ErpProjectMaster::where('projectCode', trim($rowData['project']))->first();
+                        if($projectId) {
+                            $item['detail_project_id'] = $projectId->id;
+                        }
+                    }
+                    else{
+                        $item['detail_project_id'] = null;
                     }
 
                     array_push($validatedItemsArray,$item);
