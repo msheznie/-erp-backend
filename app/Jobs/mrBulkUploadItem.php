@@ -82,6 +82,18 @@ class mrBulkUploadItem implements ShouldQueue
         $successCount = $excelRowCount = 0;
         $companyId = $mrRequest['companySystemID'];
         foreach ($excelRows as $rowData) {
+            if(
+                (!array_key_exists('item_code',$rowData) || is_null($rowData['item_code']))
+            &&
+                (!array_key_exists('item_description',$rowData) || is_null($rowData['item_description']))
+            &&
+                (!array_key_exists('qty',$rowData) || is_null($rowData['qty']))
+            &&
+                (!array_key_exists('comment',$rowData) || is_null($rowData['comment']))
+            ) {
+                break;
+            }
+
             $isValidationError = 0;
             if (!array_key_exists('qty',$rowData) || is_null($rowData['qty'])) {
                 $validationErrorMsg[] = 'The item Qty has not been updated for Excel row: ' . $rowNumber;

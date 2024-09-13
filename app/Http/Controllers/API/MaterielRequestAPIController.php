@@ -1744,8 +1744,8 @@ class MaterielRequestAPIController extends AppBaseController
                 $data['excelRowCount'] = 0;
                 $data['successDetailsCount'] = 0;
                 MaterielRequest::where('RequestID', $materialRequest->RequestID)->update($data);
-                $db = isset($input['db']) ? $input['db'] : "";
-                mrBulkUploadItem::dispatch(array_filter($record),($materialRequest), $db, Auth::id());
+                $db = isset($request->db) ? $request->db : "";
+                mrBulkUploadItem::dispatch(array_filter($record),($materialRequest->toArray()), $db, Auth::id());
             } else {
                 return $this->sendError('No Records found!', 500);
             }
