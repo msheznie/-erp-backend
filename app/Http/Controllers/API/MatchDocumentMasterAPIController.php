@@ -191,8 +191,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
                
             }
-           
+            if(isset($input['matchType']) && $input['matchType'] == 1 && isset($input['user_type']) && $input['user_type'] == 2) {
+                $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], 4, "employee-advance-account");
 
+                if (is_null($isEmpAdvConfigured)) {
+                    return $this->sendError('Please configure employee advance account for this company', 500);
+                }
+            }
+            
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required',
                 'matchType' => 'required',
@@ -747,6 +753,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['approvedDate'] = $creditNoteMaster->approvedDate;
             }
         }
+
+
 
         $input['matchingDocCode'] = 0;
         $input['matchingDocdate'] = date('Y-m-d H:i:s');
@@ -1728,12 +1736,19 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             if ($input['matchingConfirmedYN'] == 1) 
             {
+
                 $advancePaymentEmployee =  PaySupplierInvoiceDetail::where('matchingDocID', $id)->where('documentSystemID',4)
                     ->where('PayMasterAutoId', $input["PayMasterAutoId"])
                     ->whereHas('matching_master', function($query) {
                         $query->where('user_type', 2);
                     });
                 if($advancePaymentEmployee->count() > 0) {
+
+                    $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
+
+                    if (is_null($isEmpAdvConfigured)) {
+                        return $this->sendError('Please configure employee advance account for this company');
+                    }
 
                     $totAdvancePayment = $advancePaymentEmployee->selectRaw("SUM(paymentLocalAmount) as localAmount,SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount")->first();
                     $finalData = [];
