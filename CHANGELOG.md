@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.48.3](https://github.com/pbsgears/Gears_BackEnd/compare/v10.48.2...v10.48.3) (2024-09-13)
+
+
+### Bug Fixes
+
+* **common:** currency conversion issue fixed [GCP-4624] ([#6767](https://github.com/pbsgears/Gears_BackEnd/issues/6767)) ([34c7c7b](https://github.com/pbsgears/Gears_BackEnd/commit/34c7c7b1142e8aecf51c7cccb060322ab2c7c40c))
+
 ## [10.48.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.48.1...v10.48.2) (2024-09-05)
 
 
