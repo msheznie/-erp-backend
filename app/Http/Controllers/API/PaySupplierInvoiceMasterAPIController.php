@@ -374,6 +374,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['AdvanceAccount'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
                 $input['advanceAccountSystemID'] = $checkEmployeeControlAccount;
 
+                $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
+
+                if (is_null($isEmpAdvConfigured)) {
+                    return $this->sendError('Please configure employee advance account for this company', 500, array('type' => 'create'));
+                }
+
+                $input['employeeAdvanceAccount'] = ChartOfAccount::getAccountCode($isEmpAdvConfigured);
+                $input['employeeAdvanceAccountSystemID'] = $isEmpAdvConfigured;
+
                 $emp = Employee::find($input["directPaymentPayeeEmpID"]);
                 $input['directPaymentPayee'] = $emp->empFullName;
             }
@@ -1578,14 +1587,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     return $this->sendError('Please configure Employee control account for this company', 500);
                 }
 
-                if($input['invoiceType'] == 7) {
-                    $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
-
-                    if (is_null($isEmpAdvConfigured)) {
-                        return $this->sendError('Please configure employee advance account for this company', 500);
-                    }
-                }
-
                 $input['BPVsupplierID'] = 0;
                 $input['supplierGLCodeSystemID'] = $checkEmployeeControlAccount;
                 $input['supplierGLCode'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
@@ -2622,15 +2623,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $input['AdvanceAccount'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
                     $input['advanceAccountSystemID'] = $checkEmployeeControlAccount;
-
-                    $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
-
-                    if (is_null($isEmpAdvConfigured)) {
-                        return $this->sendError('Please configure employee advance account for this company', 500);
-                    }
-
-                    $input['employeeAdvanceAccount'] = ChartOfAccount::getAccountCode($isEmpAdvConfigured);
-                    $input['employeeAdvanceAccountSystemID'] = $isEmpAdvConfigured;
                 }
 
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
