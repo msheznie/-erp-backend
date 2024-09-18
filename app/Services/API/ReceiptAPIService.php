@@ -40,8 +40,66 @@ class ReceiptAPIService
         $savedReceipts = array();
         $errorDetails = array();
 
+        $structuredError = [];
         if($this->isError) {
-            return ['status'=>'fail', "code" => 422,'data' => $this->validationErrorArray];
+            $errorArray = array();
+            foreach ($this->validationErrorArray as $key => $errorsMaster)
+            {
+                $nonIntKeys = array_filter($errorsMaster, function($item) {
+                    foreach ($item as $key => $value) {
+                        if (!is_int($key)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+
+
+                $intKeys = array_filter($errorsMaster, function($item) {
+                    foreach ($item as $key => $value) {
+                        if (!is_int($key)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+
+                $grouped = [];
+
+                foreach ($nonIntKeys as $errors) {
+                    foreach ($errors as $invoice => $messages) {
+                        if (!isset($grouped[$invoice])) {
+                            $grouped[$invoice] = [];
+                        }
+                        $grouped[$invoice] = array_merge($grouped[$invoice], $messages);
+                    }
+                }
+
+                $data = collect($grouped)->map(function($error,$key) {
+
+                        return [
+                            'refNo' => $key,
+                            'success' => false,
+                            'data' => implode(',',array_flatten($error)),
+                            'details' => []
+
+                        ];
+                })->toArray();
+
+                $detailsArray = array();
+                foreach ($data as $dt)
+                {
+                    array_push($detailsArray,$dt);
+                }
+
+                $errorArray['success'] = (empty($detailsArray) && empty(implode(',',array_flatten($intKeys)))) ? true : false;
+                $errorArray['refNo'] = $key;
+                $errorArray['data'] =  implode(',',array_flatten($intKeys));
+                $errorArray['details'] = $detailsArray;
+                array_push($structuredError,$errorArray);
+
+            }
+            return ['status'=>'fail', "code" => 422,'data' => $structuredError];
         }
 
         foreach ($receipts as $receipt) {
@@ -644,7 +702,7 @@ class ReceiptAPIService
         if (isset($errorMessage)) {
             $this->isError = true;
             $error[$receipt->narration] = [$errorMessage];
-            $this->validationErrorArray[$receipt->narration] = $error[$receipt->narration];
+            array_push($this->validationErrorArray[$receipt->narration],$error[$receipt->narration]);
         }
 
         return $receipt;
