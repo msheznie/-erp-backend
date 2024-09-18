@@ -3,6 +3,7 @@ namespace App\Services\hrms\attendance;
 
 use App\enums\shift\Shifts;
 use App\helper\CommonJobService;
+use App\helper\SME;
 use App\Models\SrpEmployeeDetails;
 use App\Services\hrms\attendance\computation\SMFixedShiftComputation;
 use App\Services\hrms\attendance\computation\SMRotaShiftCrossDayComputation;
@@ -26,6 +27,7 @@ class SMAttendancePullingService{
     private $dateTime;
     private $pulledVia;
     private $chunkSize;
+    private $weekendColumn;
 
     public function __construct($companyId, $pullingDate, $isClockOutPulling)
     {
@@ -58,6 +60,7 @@ class SMAttendancePullingService{
                 if(!$this->isAllDataPulled()){ return false; }
             }
 
+            $this->weekendPolicy();
             $this->step1();
 
             if($this->isClockOutPulling){
@@ -308,8 +311,8 @@ class SMAttendancePullingService{
         $q = "SELECT t.emp_id, e.ECode, e.Ename2, t.att_date, t.clock_in, t.clock_out, t.location_in, t.location_out, 
         t.upload_type, t.device_id_in, t.machine_id_in, t.machine_id_out, lm.leaveMasterID, lm.leaveHalfDay, 
         shd.onDutyTime, shd.offDutyTime, shd.weekDayNo, IF (IFNULL(shd.isHalfDay, 0), 1, 0) AS isHalfDay, 
-        IF(IFNULL(calenders.holiday_flag, 0), 1, 0) AS isHoliday, shd.isWeekend, shd.gracePeriod, shd.isFlexyHour, 
-        shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour,
+        IF(IFNULL(calenders.holiday_flag, 0), 1, 0) AS isHoliday, {$this->weekendColumn} AS isWeekend, shd.gracePeriod,
+        shd.isFlexyHour, shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour,
         t.company_id, shd.is_cross_day, '12:00:00' as crossDayCutOffTime,
         IF(wrd.typeId,wrd.typeId,trd.typeId) as typeId, wrd.detailId
         FROM attendance_temporary_tbl AS t
@@ -572,5 +575,12 @@ class SMAttendancePullingService{
         return "LEFT JOIN({$fixedJoin} {$rotaUnion} {$OffDayUnion}) AS shd ON shd.emp_id = e.EIdNo 
                     AND t.att_date = shd.schedule_date";
 
+    }
+
+    function weekendPolicy(){
+
+        $this->weekendColumn = (SME::policy($this->companyId, 'LCW', 'LA'))
+            ? "IFNULL(shd.isWeekend, 0)"
+            : "IFNULL(calenders.weekend_flag, 0)";
     }
 }
