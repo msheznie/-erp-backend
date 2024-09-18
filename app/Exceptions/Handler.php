@@ -7,6 +7,9 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Validation\ValidationException;
+use KeycloakGuard\Exceptions\TokenException;
+use KeycloakGuard\Exceptions\UserNotFoundException;
+use Throwable; 
 
 class Handler extends ExceptionHandler
 {
@@ -57,6 +60,10 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        if ($exception instanceof TokenException || $exception instanceof UserNotFoundException) {
+            return $this->keyCloackException($exception);
+        }
+
         if (!($exception instanceof HttpException || $exception instanceof AuthenticationException || $exception instanceof ValidationException)) {
             if (!config('app.debug')) {
                 return response()->json(['message' => 'Something went wrong. Please contact system administrator'], 500);
@@ -77,6 +84,18 @@ class Handler extends ExceptionHandler
             ], 401
         );
     }
+
+    protected function keyCloackException($e)
+    {
+        return response()->json(
+            [
+                'errors' => [
+                    'status' => 500,
+                    'message' => $e->getMessage(),
+                ]
+            ], 500
+        );
+    } 
 
     // public function render($request, Exception $e)
     // {

@@ -83,7 +83,6 @@ class TenantEnforce
             'api/v1/miItemsUpload'
         ];
 
-        
         if (env('IS_MULTI_TENANCY', false)) {
 
             
@@ -111,6 +110,16 @@ class TenantEnforce
 
                     if (in_array($request->route()->uri, AuditRoutesTenantService::getTenantRoutes())) {
                         $request->request->add(['tenant_uuid' => $tenant->uuid]);
+                    }
+
+                    $loginData = DB::table('tenant_login')->where('tenantID', $tenant->id)->first();
+                
+                    if ($loginData && $loginData->loginType == 4) {
+                        $loginConfig = json_decode($loginData->config, true);
+
+                        if (isset($loginConfig['realm-public-key'])) {
+                            Config::set("keycloak.realm_public_key", $loginConfig['realm-public-key']);
+                        }
                     }
 
                     Config::set("database.connections.mysql.database", $tenant->database);

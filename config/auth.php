@@ -45,6 +45,11 @@ return [
             'driver' => 'passport',
             'provider' => 'users',
         ],
+
+        'keycloak' => [
+            'driver' => 'keycloak',
+            'provider' => 'users',
+        ],
     ],
 
     /*

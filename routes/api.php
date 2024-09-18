@@ -58,7 +58,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('create_customer_invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
     });
 
-    Route::group(['middleware' => 'auth:api'], function () {
+    Route::group(['middleware' => 'auth.api.keycloak'], function () {
 
         Route::group(['middleware' => ['authorization:api','mobileAccess']], function () {
             Route::post('getAllCreatedByEmployees', 'FilterApiController@getAllCreatedByEmployees');

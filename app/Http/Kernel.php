@@ -73,6 +73,7 @@ class Kernel extends HttpKernel
         'print_lang' => \App\Http\Middleware\DetectPrintLang::class,
         'hrms_employee' => \App\Http\Middleware\DetectHRMSEmployee::class,
         'mobileAccess' => \App\Http\Middleware\MobileAccessVerify::class,
+        'auth.api.keycloak' => \App\Http\Middleware\EitherAuthAPIorKeyClock::class,
         'mobileServer' => \App\Http\Middleware\MobileServer::class
     ];
 }
