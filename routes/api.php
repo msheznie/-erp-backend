@@ -22,7 +22,6 @@ Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTa
 Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
 
 Route::group(['middleware' => ['tenant','locale']], function () {
-    Route::get('updateWrongEnrty', 'ConfigurationAPIController@updateWrongEnrty');
     Route::get('getAppearance', 'CompanyAPIController@getAppearance')->middleware(MobileAccessVerify::class);
     Route::post('postEmployeeFromPortal', 'HelpDesk\HelpDeskAPIController@postEmployee');
 
