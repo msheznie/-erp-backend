@@ -79,12 +79,21 @@ class StockCountDetailJob implements ShouldQueue
         ->get();
 
         $count = count($finalItems);
+        Log::info('count '.$count);
+
         if($count == 0)
         {
             StockCount::where('stockCountAutoID', $stockCountAutoID)->update(['detailStatus' => 1]);
         }
         foreach ($finalItems as $key => $value) {
-            StockCountDetailSubJob::dispatch($db, $value->itemCodeSystem, $stockCount, $companyId,$count,$stockCountAutoID)->onQueue('single');
+            $dataSubArray = array(
+                'itemCodeSystem' => $value->itemCodeSystem,
+                'stockCount' => $stockCount,
+                'companySystemID' => $companyId,
+                'stockCountAutoID' => $stockCountAutoID
+            );
+
+            StockCountDetailSubJob::dispatch($db, $dataSubArray, $count)->onQueue('single');
         }
 
         

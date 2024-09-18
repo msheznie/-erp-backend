@@ -29,13 +29,10 @@ class StockCountDetailSubJob implements ShouldQueue
      */
 
      protected $db;
-     protected $itemCodeSystem;
-     protected $stockCount;
-     protected $companySystemID;
+     protected $dataSubArray;
      protected $count;
-     protected $autoId;
 
-    public function __construct($db, $itemCodeSystem,$stockCount,$companySystemID,$count,$autoId)
+    public function __construct($db, $dataSubArray, $count)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -47,11 +44,9 @@ class StockCountDetailSubJob implements ShouldQueue
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->db = $db;
-        $this->itemCodeSystem = $itemCodeSystem;
-        $this->stockCount = $stockCount;
-        $this->companySystemID = $companySystemID;
+        $this->dataSubArray = $dataSubArray;
         $this->count = $count;
-        $this->autoId = $autoId;
+
     }
 
     /**
@@ -61,21 +56,30 @@ class StockCountDetailSubJob implements ShouldQueue
      */
     public function handle()
     {
-        ini_set('max_execution_time', 21600);
-        ini_set('memory_limit', -1);
-        $itemCodeSystem = $this->itemCodeSystem;
-        $stockCount = $this->stockCount;
-        $db = $this->db;
-        $companySystemID = $this->companySystemID;
-        $count = $this->count;
-        $autoId = $this->autoId;
-        CommonJobService::db_switch($db);
 
-        $isValid = true;
+        $db = $this->db;
+
+        CommonJobService::db_switch($db);
 
         Log::useFiles(storage_path().'/logs/stock_count_job.log');
 
-        $stockCounter = StockCount::where('stockCountAutoID',$autoId)->first();
+        Log::info("Starting Sub Job". $db);
+
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
+
+        $dataSubArray = $this->dataSubArray;
+
+        $itemCodeSystem = $dataSubArray['itemCodeSystem'];
+        $stockCount = $dataSubArray['stockCount'];
+        $companySystemID = $dataSubArray['companySystemID'];
+        $count = $this->count;
+        $stockCountAutoID = $dataSubArray['stockCountAutoID'];
+
+        $isValid = true;
+
+
+        $stockCounter = StockCount::where('stockCountAutoID',$stockCountAutoID)->first();
         $item = ItemAssigned::where('itemCodeSystem', $itemCodeSystem)
         ->where('companySystemID', $companySystemID)
         ->first();
@@ -188,7 +192,7 @@ class StockCountDetailSubJob implements ShouldQueue
 
         Log::info('new value '.$newCounterValue);
         if ($newCounterValue == $count) {
-            StockCount::where('stockCountAutoID', $autoId)->update(['detailStatus' => 1]);
+            StockCount::where('stockCountAutoID', $stockCountAutoID)->update(['detailStatus' => 1]);
         }
 
 
