@@ -11,7 +11,6 @@ use App\helper\CommonJobService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Exception;
-use App\Jobs\StockCount\StockCountDetailSubJob;
 use App\Models\StockCountDetail;
 use App\Models\StockCount;
 use App\Models\FinanceItemcategorySubAssigned;

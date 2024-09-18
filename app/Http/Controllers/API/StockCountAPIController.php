@@ -291,7 +291,16 @@ class StockCountAPIController extends AppBaseController
             $stockCount = $this->stockCountRepository->create($input);
             if ($stockCount) {
                 $db = isset($request->db) ? $request->db : "";
-                StockCountDetailJob::dispatch($db,$stockCount,$input['companySystemID'],$stockCount->stockCountAutoID,$skipItemIds);
+
+
+                $dataArray = array(
+                    'stockCount' => $stockCount,
+                    'companySystemID' => $input['companySystemID'],
+                    'stockCountAutoID' => $stockCount->stockCountAutoID,
+                    'skipItemIds' => $skipItemIds
+                );
+
+                StockCountDetailJob::dispatch($db,$dataArray);
         
             }
         

@@ -2,6 +2,7 @@
 
 namespace App\Jobs\StockCount;
 
+use App\Models\StockCount;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -29,8 +30,9 @@ class StockCountDetailJob implements ShouldQueue
     protected $companyId;
     protected $autoId;
     protected $skipItemIds;
+    protected $dataArray;
 
-    public function __construct($db,$stockCount,$companyId,$autoId,$skipItemIds)
+    public function __construct($db, $dataArray)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -42,10 +44,7 @@ class StockCountDetailJob implements ShouldQueue
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->db = $db;
-        $this->stockCount = $stockCount;
-        $this->companyId = $companyId;
-        $this->autoId = $autoId;
-        $this->skipItemIds = $skipItemIds;
+        $this->dataArray = $dataArray;
     }
 
     /**
@@ -57,15 +56,20 @@ class StockCountDetailJob implements ShouldQueue
     {
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
-        $stockCount = $this->stockCount;
         $db = $this->db;
-        $companyId = $this->companyId;
-        $autoId = $this->autoId;
-        $skipItemIds = $this->skipItemIds;
+        $dataArray = $this->dataArray;
+
         CommonJobService::db_switch($db);
 
         Log::useFiles(storage_path().'/logs/stock_count_job.log');
-  
+
+        Log::info($db);
+
+        $companyId = $dataArray['companySystemID'];
+        $skipItemIds = $dataArray['skipItemIds'];
+        $stockCountAutoID = $dataArray['stockCountAutoID'];
+        $stockCount = $dataArray['stockCount'];
+
 
 
         $finalItems = ItemAssigned::where('companySystemID', $companyId)
@@ -77,10 +81,10 @@ class StockCountDetailJob implements ShouldQueue
         $count = count($finalItems);
         if($count == 0)
         {
-            StockCount::where('stockCountAutoID', $autoId)->update(['detailStatus' => 1]);
+            StockCount::where('stockCountAutoID', $stockCountAutoID)->update(['detailStatus' => 1]);
         }
         foreach ($finalItems as $key => $value) {
-            StockCountDetailSubJob::dispatch($db, $value->itemCodeSystem, $stockCount, $companyId,$count,$autoId)->onQueue('single');
+            StockCountDetailSubJob::dispatch($db, $value->itemCodeSystem, $stockCount, $companyId,$count,$stockCountAutoID)->onQueue('single');
         }
 
         
