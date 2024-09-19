@@ -412,7 +412,7 @@ class FinancialReportAPIController extends AppBaseController
                     'toDate' => 'required|date|after_or_equal:fromDate',
                     'glCodes' => 'required',
                     'currencyID' => 'required',
-                    'serviceLineSystemID' => 'required',
+                    'selectedServicelines' => 'required',
                     // 'contracts' => 'required'
                 ]);
 
