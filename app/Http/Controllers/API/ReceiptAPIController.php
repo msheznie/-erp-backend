@@ -32,9 +32,9 @@ class ReceiptAPIController extends AppBaseController
 
         }else {
             if(isset($createReceiptVoucher['code']))
-                return $this->sendError($createReceiptVoucher['data'],422);
+                return $this->sendError("Receipt voucher creation failed",422,$createReceiptVoucher['data']);
 
-            return $this->sendError($createReceiptVoucher['message']);
+            return $this->sendError("Receipt voucher creation failed",500,$createReceiptVoucher['message']);
 
         }
     }
