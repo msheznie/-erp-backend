@@ -1587,6 +1587,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     return $this->sendError('Please configure Employee control account for this company', 500);
                 }
 
+
                 $input['BPVsupplierID'] = 0;
                 $input['supplierGLCodeSystemID'] = $checkEmployeeControlAccount;
                 $input['supplierGLCode'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
@@ -1596,6 +1597,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['directPaymentPayee'] = $emp->empFullName;
                 }
                 
+            }
+
+            if ($input['invoiceType'] == 7) {
+                $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
+
+                if (is_null($isEmpAdvConfigured)) {
+                    return $this->sendError('Please configure employee advance account for this company', 500, array('type' => 'create'));
+                }
+
+                $input['employeeAdvanceAccount'] = ChartOfAccount::getAccountCode($isEmpAdvConfigured);
+                $input['employeeAdvanceAccountSystemID'] = $isEmpAdvConfigured;
+            } else {
+                $input['employeeAdvanceAccount'] = null;
+                $input['employeeAdvanceAccountSystemID'] = null;
             }
             
 
