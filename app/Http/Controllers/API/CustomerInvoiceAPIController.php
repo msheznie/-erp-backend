@@ -302,10 +302,10 @@ class CustomerInvoiceAPIController extends AppBaseController
             if (count($createCustomerInvoice['data']) > 0) {
                 $this->storeToDocumentSystemMapping(20,$createCustomerInvoice['data'],$header);
             }
-            return $this->sendResponse(null,"Customer Invoices Store Successfully");
+            return $this->sendResponse($createCustomerInvoice['responseData'],"Customer Invoices Store Successfully");
         }
         else{
-            return $this->sendError($createCustomerInvoice['message']);
+            return $this->sendError("Customer Invoices Store Failed",404, $createCustomerInvoice['responseData']);
         }
 
     }

@@ -40,6 +40,7 @@ use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
 use App\Services\ChartOfAccountValidationService;
+use App\Services\DocumentAutoApproveService;
 use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -47,7 +48,7 @@ use Illuminate\Support\Facades\DB;
 
 class CustomerInvoiceAPIService extends AppBaseController
 {
-    private static function setInvoiceMasterDataForAPI($request): array {
+    private static function validateMasterData($request): array {
 
         $invoiceType = ($request['invoice_type'] == 1) ? 0 : 2;
 
@@ -201,11 +202,11 @@ class CustomerInvoiceAPIService extends AppBaseController
         return $returnDataset;
     }
 
-    private static function setInvoiceDetailsStoreDataForAPI($customerInvoiceData,$request): array {
+    private static function validateDetailsData($masterData, $request): array {
 
-        if($customerInvoiceData['isPerforma'] == 0){
+        if($masterData['invoice_type'] == 1){
             // Validate GL Code
-            $chartOfAccountAssign = ChartOfAccountsAssigned::where('companySystemID',$customerInvoiceData['companySystemID'])
+            $chartOfAccountAssign = ChartOfAccountsAssigned::where('companySystemID',$masterData['company_id'])
                 ->where('AccountCode',$request['gl_code'])
                 ->where('controllAccountYN', 0)
                 ->where('isAssigned', -1)
@@ -223,7 +224,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
                 ->where('isActive', 1)
                 ->where('isDeleted', 0)
-                ->where('companySystemID', $customerInvoiceData['companySystemID'])
+                ->where('companySystemID', $masterData['company_id'])
                 ->first();
             if(!$segment){
                 return [
@@ -242,10 +243,10 @@ class CustomerInvoiceAPIService extends AppBaseController
             ];
         }
 
-        if($customerInvoiceData['isPerforma'] == 2){
+        if($masterData['invoice_type'] == 2){
             // Validate Service Code
             $serviceCode = ItemAssigned::where('itemPrimaryCode',$request['service_code'])
-                ->where('companySystemID', $customerInvoiceData['companySystemID'])
+                ->where('companySystemID', $masterData['company_id'])
                 ->where('isActive', 1)
                 ->where('isAssigned', -1)
                 ->whereIn('financeCategoryMaster', [1,2,4])
@@ -261,8 +262,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         $returnData = [
             "status" => true,
             "data" => [
-                'companySystemID' => $customerInvoiceData['companySystemID'],
-                'custInvoiceDirectAutoID' => $customerInvoiceData['custInvoiceDirectAutoID'],
+                'companySystemID' => $masterData['company_id'],
                 'salesPrice' => $request['sales_price'],
                 'isAutoCreateDocument' => true,
                 'discountPercentage' => $request['discount_percentage'] ?? 0,
@@ -271,7 +271,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             ]
         ];
 
-        if($customerInvoiceData['isPerforma'] == 0) {
+        if($masterData['invoice_type'] == 1) {
             $returnData['data']['glCode'] = $chartOfAccountAssign->chartOfAccountSystemID;
             $returnData['data']['unitOfMeasure'] = $unit->UnitID;
             $returnData['data']['serviceLineSystemID'] = $segment->serviceLineSystemID;
@@ -279,7 +279,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             $returnData['data']['discountAmountLine'] = $request['discount_amount'] ?? 0;
 
         }
-        elseif ($customerInvoiceData['isPerforma'] == 2){
+        elseif ($masterData['invoice_type'] == 2){
             $returnData['data']['customerCatalogDetailID'] = 0;
             $returnData['data']['customerCatalogMasterID'] = 0;
             $returnData['data']['itemCode'] = $serviceCode->idItemAssigned;
@@ -3128,151 +3128,183 @@ class CustomerInvoiceAPIService extends AppBaseController
 
     public static function storeCustomerInvoicesFromAPI($data): array {
 
+        $invoices = $data['invoices'];
+
+        $errorDocuments = $masterDatasets = $detailsDataSets = [];
+        $i = 0;
+
+        foreach ($invoices as $invoice){
+            $invoice['company_id'] = $data['company_id'];
+            //Validate Master Data
+            $datasetMaster = self::validateMasterData($invoice);
+
+            if ($datasetMaster['status']) {
+
+                $detailsDataError = false;
+                foreach ($invoice['details'] as $detail) {
+
+                    //Validate Details Data
+                    $datasetDetails = self::validateDetailsData($invoice,$detail);
+                    if ($datasetDetails['status']) {
+                        //Store Details data if details valid
+                        $detailsDataSets[$i][] = $datasetDetails['data'];
+                    }
+                    else {
+                        //prevent further processing if details invalid
+                        if(!$detailsDataError) {
+                            $errorDocuments[] = [
+                                "invoiceNumber" => $invoice['customer_invoice_number'],
+                                "errorMessage" => $datasetDetails['message']
+                            ];
+                            // delete invalid document old details from details data array
+                            unset($detailsDataSets[$i]);
+                            $detailsDataError = true;
+                            break;
+                        }
+                    }
+                }
+
+                //Store Master data if all the details valid
+                if (!$detailsDataError) {
+                    $masterDatasets[] = $datasetMaster['data'];
+                }
+            }
+            else {
+                $errorDocuments[] = [
+                    "invoiceNumber" => $invoice['customer_invoice_number'],
+                    "errorMessage" => $datasetMaster['message']
+                ];
+            }
+
+            $i++;
+        }
+
+        // Remove empty array from detailsDataSets and reindex array
+        $detailsDataSets = array_values($detailsDataSets);
+
+        if (count($errorDocuments) > 0) {
+            return [
+                'status' => false,
+                'responseData' => $errorDocuments,
+            ];
+        }
+
+        // Store Master and Details
         DB::beginTransaction();
 
         $returnData = [
             'status' => true,
-            'message' => ''
+            'responseData' => []
         ];
 
-        $invoices = $data['invoices'];
         $createdCustomerInvoiceIds = [];
-        foreach ($invoices as $invoice){
+        $i = 0;
 
-            try{
-                $invoice['company_id'] = $data['company_id'];
-                $datasetMaster = self::setInvoiceMasterDataForAPI($invoice);
+        foreach ($masterDatasets as $masterData) {
+            try {
+                // Create Customer Invoice Document
+                $customerInvoiceStoreData = self::customerInvoiceStore($masterData);
+                if($customerInvoiceStoreData['status'] && $customerInvoiceStoreData['data'] != "e") {
 
-                if($datasetMaster['status']){
+                    // Create Customer Invoice Details
+                    foreach ($detailsDataSets[$i] as $detailsData) {
+                        $detailsData['custInvoiceDirectAutoID'] = $customerInvoiceStoreData['data']['custInvoiceDirectAutoID'];
 
-                    // Create Customer Invoice Document
-                    $customerInvoiceStoreData = self::customerInvoiceStore($datasetMaster['data']);
-                    if($customerInvoiceStoreData['status'] && $customerInvoiceStoreData['data'] != "e"){
-
-                        // Create Customer Invoice Details
-                        foreach ($invoice['details'] as $invoiceDetail){
-                            $datasetDetails = self::setInvoiceDetailsStoreDataForAPI($customerInvoiceStoreData['data'],$invoiceDetail);
-
-                            if($datasetDetails['status']){
-
-                                // Check Invoice Type and call item details store or direct item details
-                                if($datasetMaster['data']['isPerforma'] == 0){
-                                    $customerInvoiceDetailsStoreData = self::customerInvoiceDirectDetailsStore($datasetDetails['data']);
-                                }
-                                elseif ($datasetMaster['data']['isPerforma'] == 2){
-                                    $customerInvoiceDetailsStoreData = self::customerInvoiceItemDetailsStore($datasetDetails['data']);
-                                }
-                                else{
-                                    DB::rollBack();
-                                    $returnData['status'] = false;
-                                    $returnData['message'] = "Invoice Type Error";
-                                    break 2;
-                                }
-
-                                if($customerInvoiceDetailsStoreData['status']){
-                                    $returnData['status'] = true;
-                                    $returnData['message'] = $customerInvoiceDetailsStoreData['message'];
-                                }
-                                else{
-                                    DB::rollBack();
-                                    $returnData['status'] = false;
-                                    $returnData['message'] = $customerInvoiceDetailsStoreData['message'];
-                                    break 2;
-                                }
-                            }
-                            else{
-                                DB::rollBack();
-                                $returnData['status'] = false;
-                                $returnData['message'] = $datasetDetails['message'];
-                                break 2;
-                            }
+                        // Check Invoice Type to switch item details store or direct item details type
+                        if($customerInvoiceStoreData['data']['isPerforma'] == 0) {
+                            $customerInvoiceDetailsStoreData = self::customerInvoiceDirectDetailsStore($detailsData);
+                        }
+                        elseif ($customerInvoiceStoreData['data']['isPerforma'] == 2) {
+                            $customerInvoiceDetailsStoreData = self::customerInvoiceItemDetailsStore($detailsData);
+                        }
+                        else {
+                            DB::rollBack();
+                            $returnData['status'] = false;
+                            $returnData['responseData'] = [
+                                "invoiceNumber" => $masterData['customerInvoiceNo'],
+                                "errorMessage" => "Invoice Type Error"
+                            ];
+                            break 2;
                         }
 
-                        if($returnData['status']){
+                        if($customerInvoiceDetailsStoreData['status']){
+                            $returnData['status'] = true;
+                        }
+                        else{
+                            DB::rollBack();
+                            $returnData['status'] = false;
+                            $returnData['responseData'] = [
+                                "invoiceNumber" => $masterData['customerInvoiceNo'],
+                                "errorMessage" => $customerInvoiceDetailsStoreData['message']
+                            ];
+                            break 2;
+                        }
+                    }
 
-                            // Confirm Document
-                            $confirmDataSet = $customerInvoiceStoreData['data'];
-                            $confirmDataSet['confirmedYN'] = 1;
-                            $confirmDataSet['isAutoCreateDocument'] = true;
-                            $customerInvoiceUpdateData = self::customerInvoiceUpdate($confirmDataSet['custInvoiceDirectAutoID'],$confirmDataSet);
-                            if($customerInvoiceUpdateData['status']){
+                    if($returnData['status']){
+                        // Confirm Document
+                        $confirmDataSet = $customerInvoiceStoreData['data'];
+                        $confirmDataSet['confirmedYN'] = 1;
+                        $confirmDataSet['isAutoCreateDocument'] = true;
+                        $customerInvoiceUpdateData = self::customerInvoiceUpdate($confirmDataSet['custInvoiceDirectAutoID'],$confirmDataSet);
+                        if($customerInvoiceUpdateData['status']){
 
-                                // Approve Document
-                                $request = new Request();
-                                $request->replace([
-                                    'companyId' => $invoice['company_id'],
-                                    'custInvoiceDirectAutoID' => $confirmDataSet['custInvoiceDirectAutoID'],
-                                    'isAutoCreateDocument' => true
-                                ]);
-                                $controller = app(CustomerInvoiceDirectAPIController::class);
-                                $customerInvoiceApprovalData = $controller->getCustomerInvoiceApproval($request);
-                                $customerInvoiceApprovalData = json_decode(json_encode($customerInvoiceApprovalData),true);
+                            // Approve Document
+                            $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($confirmDataSet['documentSystemiD'],$confirmDataSet['custInvoiceDirectAutoID']);
+                            $autoApproveParams['db'] = $data['db'];
 
-                                if($customerInvoiceApprovalData['success']){
-
-                                    $dataset = $customerInvoiceApprovalData['data'];
-                                    $dataset['isAutoCreateDocument'] = true;
-                                    $dataset['companySystemID'] = $invoice['company_id'];
-                                    $dataset['approvedComments'] = '';
-
-                                    $approvePreCheck = \Helper::postedDatePromptInFinalApproval($dataset);
-                                    if ($approvePreCheck["success"]) {
-
-                                        $dataset['db'] = $data['db'];
-                                        $approveDocument = \Helper::approveDocument($dataset);
-                                        if ($approveDocument["success"]) {
-                                            $returnData['status'] = true;
-                                            $createdCustomerInvoiceIds[] = $confirmDataSet['custInvoiceDirectAutoID'];
-                                        }
-                                        else {
-                                            DB::rollBack();
-                                            $returnData['status'] = false;
-                                            $returnData['message'] = $approveDocument['message'];
-                                            break;
-                                        }
-                                    }
-                                    else {
-                                        DB::rollBack();
-                                        $returnData['status'] = false;
-                                        $returnData['message'] = $approvePreCheck['message'];
-                                        break;
-                                    }
-                                }
-                                else{
-                                    DB::rollBack();
-                                    $returnData['status'] = false;
-                                    $returnData['message'] = $customerInvoiceApprovalData['message'];
-                                    break;
-                                }
+                            $approveDocument = Helper::approveDocument($autoApproveParams);
+                            if ($approveDocument["success"]) {
+                                $returnData['status'] = true;
+                                $returnData['responseData'][] = [
+                                    "invoiceNumber" => $masterData['customerInvoiceNo'],
+                                    "referenceNumber" => $confirmDataSet['bookingInvCode']
+                                ];
+                                $createdCustomerInvoiceIds[] = $confirmDataSet['custInvoiceDirectAutoID'];
                             }
-                            else{
+                            else {
                                 DB::rollBack();
                                 $returnData['status'] = false;
-                                $returnData['message'] = $customerInvoiceUpdateData['message'];
+                                $returnData['responseData'] = [
+                                    "invoiceNumber" => $masterData['customerInvoiceNo'],
+                                    "errorMessage" => $approveDocument['message']
+                                ];
                                 break;
                             }
                         }
                         else{
+                            DB::rollBack();
+                            $returnData['status'] = false;
+                            $returnData['responseData'] = [
+                                "invoiceNumber" => $masterData['customerInvoiceNo'],
+                                "errorMessage" => $customerInvoiceUpdateData['message']
+                            ];
                             break;
                         }
                     }
                     else{
-                        $returnData['status'] = false;
-                        $returnData['message'] = $customerInvoiceStoreData['message'];
                         break;
                     }
                 }
                 else{
                     $returnData['status'] = false;
-                    $returnData['message'] = $datasetMaster['message'];
+                    $returnData['responseData'] = [
+                        "invoiceNumber" => $masterData['customerInvoiceNo'],
+                        "errorMessage" => $customerInvoiceStoreData['message']
+                    ];
                     break;
                 }
             } catch (\Exception $e){
                 DB::rollBack();
                 $returnData['status'] = false;
-                $returnData['message'] = $e->getMessage();
+                $returnData['responseData'] = [
+                    "invoiceNumber" => $masterData['customerInvoiceNo'],
+                    "errorMessage" => $e->getMessage()
+                ];
                 break;
             }
+
+            $i++;
         }
 
         if($returnData['status']){
@@ -3282,7 +3314,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         return [
             'status' => $returnData['status'],
             'data' => $createdCustomerInvoiceIds,
-            'message' => $returnData['message']
+            'responseData' => $returnData['responseData']
         ];
     }
 }
