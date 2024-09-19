@@ -123,6 +123,7 @@ class mrBulkUploadItem implements ShouldQueue
                         return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1);
                     })->where('isActive',1)
                         ->where('itemApprovedYN',1)
+                        ->where('financeCategoryMaster', 1)
                         ->where('primaryCode', trim($rowData['item_code']))
                         ->first();
 
