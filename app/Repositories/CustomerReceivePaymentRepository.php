@@ -286,10 +286,10 @@ class CustomerReceivePaymentRepository extends BaseRepository
                 $data[$x]['Bank Currency'] = $val->bankCurrencyCode;
                 $data[$x]['Bank Amount'] = $val->bankAmount? number_format(abs($val->bankAmount), $bankDecimal, ".", "") : '';
 
-                $data[$x]['Local Currency'] = $val->localCurrencyID? ($val->local_currency? $val->local_currency->CurrencyCode : '') : '';
-                $data[$x]['Local Amount'] = $val->local_currency? number_format($val->localAmount,  $val->local_currency->DecimalPlaces, ".", "") : '';
-                $data[$x]['Reporting Currency'] = $val->companyRptCurrencyID? ($val->rpt_currency? $val->rpt_currency->CurrencyCode : '') : '';
-                $data[$x]['Reporting Amount'] = $val->rpt_currency? number_format($val->companyRptAmount,  $val->rpt_currency->DecimalPlaces, ".", "") : '';
+				$data[$x]['Local Currency'] = $val->localCurrencyID? ($val->localCurrency? $val->localCurrency->CurrencyCode : '') : '';
+                $data[$x]['Local Amount'] = $val->localCurrency? number_format($val->localAmount,  $val->localCurrency->DecimalPlaces, ".", "") : '';
+                $data[$x]['Reporting Currency'] = $val->companyRptCurrencyID? ($val->rptCurrency? $val->rptCurrency->CurrencyCode : '') : '';
+                $data[$x]['Reporting Amount'] = $val->rptCurrency? number_format($val->companyRptAmount,  $val->rptCurrency->DecimalPlaces, ".", "") : '';
 
                 $data[$x]['Treasury Cleared'] = $val->trsClearedYN == -1? 'Yes' : 'No';
                 $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);

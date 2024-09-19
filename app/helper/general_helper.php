@@ -9425,6 +9425,7 @@ class Helper
         return $array;
     }
 
+
     public static function updateSupplierRetentionAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
     { 
         $directItems = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
