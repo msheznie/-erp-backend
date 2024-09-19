@@ -89,9 +89,10 @@ class DebitNoteTaxLedgerService
         $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
             
 
-        $details = DebitNoteDetails::selectRaw('SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,debitAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,debitAmountCurrencyER as transCurrencyER')
+        $details = DebitNoteDetails::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,debitAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,debitAmountCurrencyER as transCurrencyER')
                                 ->where('debitNoteAutoID', $masterModel["autoID"])
                                 ->whereNotNull('vatSubCategoryID')
+                                ->join('erp_tax_vat_sub_categories', 'erp_debitnotedetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                                 ->groupBy('vatSubCategoryID')
                                 ->get();
 
@@ -100,6 +101,20 @@ class DebitNoteTaxLedgerService
 
             if ($subCategoryData) {
                 $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
+            }
+            if($value->subCatgeoryType == 3)
+            {
+                $ledgerData['inputVATGlAccountID'] = null;
+                $ledgerData['inputVatTransferAccountID'] = null;
+                $ledgerData['outputVatTransferGLAccountID'] = null;
+                $ledgerData['outputVatGLAccountID'] = null;
+            }
+            else
+            {
+                $ledgerData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                $ledgerData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                $ledgerData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                $ledgerData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
             }
 
             $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
@@ -118,6 +133,7 @@ class DebitNoteTaxLedgerService
         }
 
         $detailData = DebitNoteDetails::where('debitNoteAutoID', $masterModel["autoID"])
+                                            ->join('erp_tax_vat_sub_categories', 'erp_debitnotedetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                                             ->whereNotNull('vatSubCategoryID')
                                             ->get();
 
@@ -137,6 +153,15 @@ class DebitNoteTaxLedgerService
                 $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
                 $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
             }
+
+            if($value->subCatgeoryType == 3)
+            {
+                $ledgerDetailsData['inputVATGlAccountID'] = null;
+                $ledgerDetailsData['inputVatTransferAccountID'] = null;
+                $ledgerDetailsData['outputVatTransferGLAccountID'] = null;
+                $ledgerDetailsData['outputVatGLAccountID'] = null;
+            }
+
 
             $ledgerDetailsData['transactionCurrencyID'] = $value->debitAmountCurrency;
             $ledgerDetailsData['originalInvoice'] = null;
