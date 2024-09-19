@@ -1799,13 +1799,15 @@ class MatchDocumentMasterAPIController extends AppBaseController
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                             $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
+                            $conversion = \Helper::convertAmountToLocalRpt(204, $matchDocumentMaster->matchDocumentMasterAutoID, $totAdvancePayment->transAmount);
+
                             $data['documentTransAmount'] = \Helper::roundValue($totAdvancePayment->transAmount) * -1;;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($totAdvancePayment->transAmount * $masterData->localCurrencyER) * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue($conversion['localAmount']) * -1;
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue($totAdvancePayment->transAmount * $masterData->companyRptCurrencyER) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($conversion['reportingAmount']) * -1;
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
