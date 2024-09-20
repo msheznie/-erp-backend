@@ -2445,67 +2445,73 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                                 
                                 foreach ($directReceipts as $directReceipt)
                                 {
-                                    $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
-                                    $data['serviceLineCode'] = $directReceipt->serviceLineCode;
-                                    $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
-                                    $data['glCode'] = $masterData->custAdvanceAccount;
-                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                    $data['documentTransAmount'] =  \Helper::roundValue($detailAmountTotTran);
-                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
-                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
-                                    $data['timestamp'] = \Helper::currentDateTime();
-                                    array_push($finalData, $data);
+                                    foreach ($detailAllRecords as $detailRecord) {
+                                        $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $directReceipt->serviceLineCode;
+                                        $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
+                                        $data['glCode'] = $masterData->custAdvanceAccount;
+                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                        $data['documentTransAmount'] =  Helper::roundValue(abs($detailRecord->receiveAmountTrans));
+                                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                        $data['documentLocalAmount'] = Helper::conversionCurrencyByER($masterData->custTransactionCurrencyID,$masterData->localCurrencyID,abs($detailRecord->receiveAmountTrans),$masterData->localCurrencyER);
+                                        $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                        $data['documentRptAmount'] = Helper::conversionCurrencyByER($masterData->custTransactionCurrencyID,$masterData->companyRptCurrencyID,abs($detailRecord->receiveAmountTrans),$masterData->companyRptCurrencyER);
+                                        $data['timestamp'] = Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
                                 }
 
                                 foreach ($directReceipts as $directReceipt)
                                 {
-                                    $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
-                                    $data['serviceLineCode'] = $directReceipt->serviceLineCode;
-                                    $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
-                                    $data['glCode'] = $masterData->customerGLCode;
-                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                    $data['documentTransAmount'] =  \Helper::roundValue($detailAmountTotTran) * -1;
-                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($detailAmountTotLoc) * -1;
-                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($detailAmountTotRpt) * -1;
-                                    $data['timestamp'] = \Helper::currentDateTime();
-                                    array_push($finalData, $data);
+                                    foreach ($detailAllRecords as $detailRecord) {
+                                        $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $directReceipt->serviceLineCode;
+                                        $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
+                                        $data['glCode'] = $masterData->custAdvanceAccount;
+                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                        $data['documentTransCurrencyID'] = $detailRecord->custTransactionCurrencyID;
+                                        $data['documentTransCurrencyER'] = $detailRecord->custTransactionCurrencyER;
+                                        $data['documentTransAmount'] =  Helper::roundValue($detailRecord->receiveAmountTrans) * -1;
+                                        $data['documentLocalCurrencyID'] = $detailRecord->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = $detailRecord->localCurrencyER;
+                                        $data['documentLocalAmount'] = Helper::roundValue($detailRecord->receiveAmountLocal) * -1;
+                                        $data['documentRptCurrencyID'] = $detailRecord->companyReportingCurrencyID;
+                                        $data['documentRptCurrencyER'] = $detailRecord->companyReportingER;
+                                        $data['documentRptAmount'] = Helper::roundValue($detailRecord->receiveAmountRpt) * -1;
+                                        $data['timestamp'] = Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
                                 }
 
 
 
 
                                 foreach ($advReceipts as $advReceipt) {
-                                    $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
-                                    $data['serviceLineCode'] = $advReceipt->serviceLineCode;
-                                    $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
-                                    $data['glCode'] = $masterData->custAdvanceAccount;
-                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue($detailAmountTotTran);
-                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] =\Helper::roundValue($detailAmountTotLoc);
-                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
-                                    $data['timestamp'] = \Helper::currentDateTime();
-                                    array_push($finalData, $data);
+                                    foreach ($detailAllRecords as $detailRecord) {
+                                        $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $advReceipt->serviceLineCode;
+                                        $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
+                                        $data['glCode'] = $masterData->custAdvanceAccount;
+                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                        $data['documentTransAmount'] =  Helper::roundValue(abs($detailRecord->receiveAmountTrans));
+                                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                        $data['documentLocalAmount'] = Helper::conversionCurrencyByER($masterData->custTransactionCurrencyID,$masterData->localCurrencyID,abs($detailRecord->receiveAmountTrans),$masterData->localCurrencyER);
+                                        $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                        $data['documentRptAmount'] = Helper::conversionCurrencyByER($masterData->custTransactionCurrencyID,$masterData->companyRptCurrencyID,abs($detailRecord->receiveAmountTrans),$masterData->companyRptCurrencyER);
+                                        $data['timestamp'] = Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
                                 }
 
 
@@ -2513,23 +2519,25 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                                 foreach ($advReceipts as $advReceipt)
                                 {
-                                    $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
-                                    $data['glCode'] = $masterData->customerGLCode;
-                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue($advReceipt->transAmount) * -1;;
-                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($advReceipt->localAmount) * -1;;
-                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($advReceipt->rptAmount) * -1;;
-                                    $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
-                                    $data['serviceLineCode'] = $advReceipt->serviceLineCode;
-                                    $data['timestamp'] = \Helper::currentDateTime();
-                                    array_push($finalData, $data);
+                                    foreach ($detailAllRecords as $detailRecord) {
+                                        $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $advReceipt->serviceLineCode;
+                                        $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
+                                        $data['glCode'] = $masterData->custAdvanceAccount;
+                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                        $data['documentTransCurrencyID'] = $detailRecord->custTransactionCurrencyID;
+                                        $data['documentTransCurrencyER'] = $detailRecord->custTransactionCurrencyER;
+                                        $data['documentTransAmount'] =  \Helper::roundValue($detailRecord->receiveAmountTrans) * -1;
+                                        $data['documentLocalCurrencyID'] = $detailRecord->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = $detailRecord->localCurrencyER;
+                                        $data['documentLocalAmount'] = \Helper::roundValue($detailRecord->receiveAmountLocal) * -1;
+                                        $data['documentRptCurrencyID'] = $detailRecord->companyReportingCurrencyID;
+                                        $data['documentRptCurrencyER'] = $detailRecord->companyReportingER;
+                                        $data['documentRptAmount'] = \Helper::roundValue($detailRecord->receiveAmountRpt) * -1;
+                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
                                 }
                                 
                                 if ($masterData->isVATApplicable == 1 && $masterData->documentType == 15) {
@@ -2677,14 +2685,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
 
                                                 if ($finalDataTax) {
-                                                    foreach ($finalDataTax as $data)
+                                                    foreach ($finalDataTax as $tempFinalDataTax)
                                                     {
-                                                        TaxLedger::create($data);
+                                                        TaxLedger::create($tempFinalDataTax);
                                                     }
 
-                                                    foreach ($finalDetailDataTax as $data)
+                                                    foreach ($finalDetailDataTax as $tempFinalDetailDataTax)
                                                     {
-                                                        TaxLedgerDetail::create($data);
+                                                        TaxLedgerDetail::create($tempFinalDetailDataTax);
                                                     }
                                                 }
                                             } 
@@ -2692,33 +2700,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                                 }
 
-                                $finalLocalAmount = $finalRptAmount = [];
+                                $tempCollection = collect($finalData);
+                                $finalLocalAmount = $tempCollection->sum('documentLocalAmount') * -1;
+                                $finalRptAmount = $tempCollection->sum('documentRptAmount') * -1;
 
-                                foreach ($finalData as $key => $value) {
-                                    $temp = $value['documentLocalAmount'];
-                                    if($temp > 0){
-                                        $finalLocalAmount[0] = $finalLocalAmount[0] ?? 0 + abs($temp);
-                                    }
-                                    else {
-                                        $finalLocalAmount[1] = $finalLocalAmount[1] ?? 0 + abs($temp);
-                                    }
-
-                                    $temp = $value['documentRptAmount'];
-                                    if($temp > 0){
-                                        $finalRptAmount[0] = $finalRptAmount[0] ?? 0 + abs($temp);
-                                    }
-                                    else {
-                                        $finalRptAmount[1] = $finalRptAmount[1] ?? 0 + abs($temp);
-                                    }
-                                }
-
-                                $finalLocalAmount[3] = $finalLocalAmount[0] - $finalLocalAmount[1];
-                                $finalLocalAmount[3] = ($finalLocalAmount[0] < $finalLocalAmount[1]) ? abs($finalLocalAmount[3]) : (abs($finalLocalAmount[3]) * -1);
-
-                                $finalRptAmount[3] = $finalRptAmount[0] - $finalRptAmount[1];
-                                $finalRptAmount[3] = ($finalRptAmount[0] < $finalRptAmount[1]) ? abs($finalRptAmount[3]) : (abs($finalRptAmount[3]) * -1);
-
-                                if(($finalLocalAmount[3] != 0) || ($finalRptAmount[3] != 0)) {
+                                if(($finalLocalAmount != 0) || ($finalRptAmount != 0)) {
                                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
                                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
@@ -2728,10 +2714,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     $data['documentTransAmount'] = 0;
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] =\Helper::roundValue($finalLocalAmount[3]);
+                                    $data['documentLocalAmount'] =\Helper::roundValue($finalLocalAmount);
                                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($finalRptAmount[3]);
+                                    $data['documentRptAmount'] = \Helper::roundValue($finalRptAmount);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     if(isset($advReceipt)) {
                                         $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
@@ -2787,65 +2773,69 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['timestamp'] = \Helper::currentDateTime();
                         $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
 
+                        $gainLocalAmount = $gainRptAmount = 0;
+
                         foreach ($detailAllRecords as $row) {
-                            $tempValue = $row['bookingAmountLocal'] - $creditNoteMasterData['creditAmountLocal'];
-                            $gainLocalAmount = number_format($tempValue,5);
 
-                            $tempValue = $row['bookingAmountRpt'] - $creditNoteMasterData['creditAmountRpt'];
-                            $gainRptAmount = number_format($tempValue,5);
+                            $tempValue = $row['receiveAmountLocal'] - Helper::conversionCurrencyByER(1,2,$row['receiveAmountTrans'],$creditNoteMasterData['localCurrencyER']);
+                            $gainLocalAmount += round($tempValue,5);
 
-                            if(($gainLocalAmount != 0) || ($gainRptAmount != 0)) {
-                                $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($creditNoteMasterData->companySystemID, $creditNoteMasterData->documentSystemiD, "exchange-gainloss-gl");
-                                $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($creditNoteMasterData->companySystemID, $creditNoteMasterData->documentSystemiD, "exchange-gainloss-gl");
-                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                $data['documentTransCurrencyID'] = $creditNoteMasterData->customerCurrencyID;
-                                $data['documentTransCurrencyER'] = $creditNoteMasterData->customerCurrencyER;
-                                $data['documentTransAmount'] = 0;
-                                $data['documentLocalCurrencyID'] = $creditNoteMasterData->localCurrencyID;
-                                $data['documentLocalCurrencyER'] = $creditNoteMasterData->localCurrencyER;
-                                $data['documentLocalAmount'] = \Helper::roundValue($gainLocalAmount);
-                                $data['documentRptCurrencyID'] = $creditNoteMasterData->companyReportingCurrencyID;
-                                $data['documentRptCurrencyER'] = $creditNoteMasterData->companyReportingER;
-                                $data['documentRptAmount'] = \Helper::roundValue($gainRptAmount);
-                                $data['timestamp'] = \Helper::currentDateTime();
-                                $data['serviceLineSystemID'] = $creditNoteMasterData->details->first()->serviceLineSystemID;
-                                $data['serviceLineCode'] = $creditNoteMasterData->details->first()->serviceLineCode;
-                                array_push($finalData, $data);
 
-                                $data['chartOfAccountSystemID'] = $creditNoteMasterData->customerGLCodeSystemID;
-                                $data['glCode'] = $creditNoteMasterData->customerGLCode;
-                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                $data['documentTransCurrencyID'] = $creditNoteMasterData->customerCurrencyID;
-                                $data['documentTransCurrencyER'] = $creditNoteMasterData->customerCurrencyER;
-                                $data['documentTransAmount'] = 0;
-                                $data['documentLocalCurrencyID'] = $creditNoteMasterData->localCurrencyID;
-                                $data['documentLocalCurrencyER'] = $creditNoteMasterData->localCurrencyER;
-                                if($gainLocalAmount < 0) {
-                                    $data['documentLocalAmount'] = \Helper::roundValue(abs($gainLocalAmount));
-                                }
-                                else {
-                                    $data['documentLocalAmount'] = \Helper::roundValue($gainLocalAmount) * -1;
-                                }
-                                $data['documentRptCurrencyID'] = $creditNoteMasterData->companyReportingCurrencyID;
-                                $data['documentRptCurrencyER'] = $creditNoteMasterData->companyReportingER;
-                                if($gainRptAmount < 0) {
-                                    $data['documentRptAmount'] = \Helper::roundValue(abs($gainRptAmount));
-                                }
-                                else {
-                                    $data['documentRptAmount'] = \Helper::roundValue($gainRptAmount) * -1;
-                                }
-                                $data['timestamp'] = \Helper::currentDateTime();
-                                $data['serviceLineSystemID'] = $creditNoteMasterData->details->first()->serviceLineSystemID;
-                                $data['serviceLineCode'] = $creditNoteMasterData->details->first()->serviceLineCode;
-                                array_push($finalData, $data);
+                            $tempValue = $row['receiveAmountRpt'] - Helper::conversionCurrencyByER(1,2,$row['receiveAmountTrans'],$creditNoteMasterData['companyReportingER']);
+                            $gainRptAmount += round($tempValue,5);
+                        }
+
+                        if(($gainLocalAmount != 0) || ($gainRptAmount != 0)) {
+                            $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($creditNoteMasterData->companySystemID, $creditNoteMasterData->documentSystemiD, "exchange-gainloss-gl");
+                            $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($creditNoteMasterData->companySystemID, $creditNoteMasterData->documentSystemiD, "exchange-gainloss-gl");
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentTransCurrencyID'] = $creditNoteMasterData->customerCurrencyID;
+                            $data['documentTransCurrencyER'] = $creditNoteMasterData->customerCurrencyER;
+                            $data['documentTransAmount'] = 0;
+                            $data['documentLocalCurrencyID'] = $creditNoteMasterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $creditNoteMasterData->localCurrencyER;
+                            $data['documentLocalAmount'] = \Helper::roundValue($gainLocalAmount);
+                            $data['documentRptCurrencyID'] = $creditNoteMasterData->companyReportingCurrencyID;
+                            $data['documentRptCurrencyER'] = $creditNoteMasterData->companyReportingER;
+                            $data['documentRptAmount'] = \Helper::roundValue($gainRptAmount);
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['serviceLineSystemID'] = $creditNoteMasterData->details->first()->serviceLineSystemID;
+                            $data['serviceLineCode'] = $creditNoteMasterData->details->first()->serviceLineCode;
+                            array_push($finalData, $data);
+
+                            $data['chartOfAccountSystemID'] = $creditNoteMasterData->customerGLCodeSystemID;
+                            $data['glCode'] = $creditNoteMasterData->customerGLCode;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentTransCurrencyID'] = $creditNoteMasterData->customerCurrencyID;
+                            $data['documentTransCurrencyER'] = $creditNoteMasterData->customerCurrencyER;
+                            $data['documentTransAmount'] = 0;
+                            $data['documentLocalCurrencyID'] = $creditNoteMasterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $creditNoteMasterData->localCurrencyER;
+                            if($gainLocalAmount < 0) {
+                                $data['documentLocalAmount'] = \Helper::roundValue(abs($gainLocalAmount));
                             }
+                            else {
+                                $data['documentLocalAmount'] = \Helper::roundValue($gainLocalAmount) * -1;
+                            }
+                            $data['documentRptCurrencyID'] = $creditNoteMasterData->companyReportingCurrencyID;
+                            $data['documentRptCurrencyER'] = $creditNoteMasterData->companyReportingER;
+                            if($gainRptAmount < 0) {
+                                $data['documentRptAmount'] = \Helper::roundValue(abs($gainRptAmount));
+                            }
+                            else {
+                                $data['documentRptAmount'] = \Helper::roundValue($gainRptAmount) * -1;
+                            }
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['serviceLineSystemID'] = $creditNoteMasterData->details->first()->serviceLineSystemID;
+                            $data['serviceLineCode'] = $creditNoteMasterData->details->first()->serviceLineCode;
+                            array_push($finalData, $data);
                         }
                     }
 
-                    foreach ($finalData as $data) {
-                        GeneralLedger::create($data);
+                    foreach ($finalData as $storeData) {
+                        GeneralLedger::create($storeData);
                     }
                 }
 
