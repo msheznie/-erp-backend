@@ -1720,7 +1720,7 @@ class MaterielRequestAPIController extends AppBaseController
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
             if(empty($uniqueData)) {
-                return $this->sendError('No Records found!', 500);
+                return $this->sendError('Upload failed due to changes made in the Excel template', 500);
             }
 
             $excelHeaders = array_keys(array_merge(...$uniqueData));
@@ -1739,6 +1739,7 @@ class MaterielRequestAPIController extends AppBaseController
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item_code', 'item_description', 'qty', 'comment'))->get()->toArray();
+
             if (count($record) > 0) {
                 $data['isBulkItemJobRun'] = 1;
                 $data['excelRowCount'] = 0;
@@ -1747,7 +1748,7 @@ class MaterielRequestAPIController extends AppBaseController
                 $db = isset($request->db) ? $request->db : "";
                 mrBulkUploadItem::dispatch(array_filter($record),($materialRequest->toArray()), $db, Auth::id());
             } else {
-                return $this->sendError('No Records found!', 500);
+                return $this->sendError('Upload failed due to changes made in the Excel template', 500);
             }
             Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();
