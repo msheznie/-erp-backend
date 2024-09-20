@@ -107,8 +107,7 @@ class BudgetCommitmentsDetailsReport
      */
     public function setBalance(): void
     {
-//        $balance = ($this->totalAvailableBudget) - ($this->actualAmountSpentTillDateCB) - ($this->actualAmountSpentTillDatePC) - ($this->commitmentsFromCurrenyYear);
-        $balance = 1000000;
+        $balance = ($this->totalAvailableBudget) - ($this->actualAmountSpentTillDateCB) - ($this->actualAmountSpentTillDatePC) - ($this->commitmentsFromCurrenyYear);
         $this->balance = number_format($balance,3);
     }
 
