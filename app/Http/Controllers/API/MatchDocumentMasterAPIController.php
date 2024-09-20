@@ -2471,8 +2471,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     foreach ($detailAllRecords as $detailRecord) {
                                         $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
                                         $data['serviceLineCode'] = $directReceipt->serviceLineCode;
-                                        $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
-                                        $data['glCode'] = $masterData->custAdvanceAccount;
+                                        $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
+                                        $data['glCode'] = $masterData->customerGLCode;
                                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                         $data['documentTransCurrencyID'] = $detailRecord->custTransactionCurrencyID;
@@ -2522,8 +2522,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     foreach ($detailAllRecords as $detailRecord) {
                                         $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
                                         $data['serviceLineCode'] = $advReceipt->serviceLineCode;
-                                        $data['chartOfAccountSystemID'] = $masterData->custAdvanceAccountSystemID;
-                                        $data['glCode'] = $masterData->custAdvanceAccount;
+                                        $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
+                                        $data['glCode'] = $masterData->customerGLCode;
                                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                         $data['documentTransCurrencyID'] = $detailRecord->custTransactionCurrencyID;
