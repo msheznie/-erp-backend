@@ -1,9 +1,0 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "com.gears.gearserp",
-    "sha256_cert_fingerprints":
-    ["7D:84:BF:C0:6A:A3:E9:A7:04:03:67:2F:D4:49:E5:4A:E5:DE:5C:0E:5F:4F:12:EE:44:14:36:56:19:CE:90:ED"]
-  }
-}]
