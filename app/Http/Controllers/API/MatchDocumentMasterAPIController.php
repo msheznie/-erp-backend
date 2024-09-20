@@ -4102,16 +4102,25 @@ ORDER BY
             return $this->sendError('You cannot return back to amend this '.$documentName.' Document, it is not confirmed');
         }
 
-        $validateCloseFinanceYear = ValidateDocumentAmend::validateCLoseFinanceYear($id);
+        $matchingMasterID = $id;
+        $documentAutoId = $masterData->PayMasterAutoId;
+        $documentSystemID = $masterData->documentSystemID;
+
+
+        $validateCloseFinanceYear = ValidateDocumentAmend::validateCLoseFinanceYear($documentSystemID, $matchingMasterID);
         if(isset($validateCloseFinanceYear['status']) && $validateCloseFinanceYear['status'] == false){
             if(isset($validateCloseFinanceYear['message']) && $validateCloseFinanceYear['message']){
                 return $this->sendError($validateCloseFinanceYear['message']);
             }
         }
 
-        $matchingMasterID = $id;
-        $documentAutoId = $masterData->PayMasterAutoId;
-        $documentSystemID = $masterData->documentSystemID;
+        $validateCloseFinancePeriod = ValidateDocumentAmend::validateCLoseFinancePeriod($documentSystemID, $matchingMasterID);
+        if(isset($validateCloseFinancePeriod['status']) && $validateCloseFinancePeriod['status'] == false){
+            if(isset($validateCloseFinancePeriod['message']) && $validateCloseFinancePeriod['message']){
+                return $this->sendError($validateCloseFinancePeriod['message']);
+            }
+        }
+
 
         if($masterData->approved == -1 && $masterData->documentSystemID != 19 && $masterData->matchingOption != 1){
             if($masterData->documentSystemID == 15){
