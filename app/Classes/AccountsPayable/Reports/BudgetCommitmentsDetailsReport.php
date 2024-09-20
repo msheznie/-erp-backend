@@ -107,7 +107,22 @@ class BudgetCommitmentsDetailsReport
      */
     public function setBalance(): void
     {
-        $balance = ($this->totalAvailableBudget) - ($this->actualAmountSpentTillDateCB) - ($this->actualAmountSpentTillDatePC) - ($this->commitmentsFromCurrenyYear);
+        if(!is_numeric($this->totalAvailableBudget))
+            $this->totalAvailableBudget = 0;
+
+        if(!is_numeric($this->actualAmountSpentTillDateCB))
+            $this->actualAmountSpentTillDateCB = 0;
+
+        if(!is_numeric($this->actualAmountSpentTillDatePC))
+            $this->actualAmountSpentTillDatePC = 0;
+
+        if(!is_numeric($this->commitmentsForCurrentYear))
+            $this->commitmentsForCurrentYear = 0;
+
+        if(!is_numeric($this->commitmentsFromPreviosYear))
+            $this->commitmentsFromPreviosYear = 0;
+
+        $balance = ($this->totalAvailableBudget) - ($this->actualAmountSpentTillDateCB) - ($this->actualAmountSpentTillDatePC) - ($this->commitmentsForCurrentYear) - ($this->commitmentsFromPreviosYear);
         $this->balance = number_format($balance,3);
     }
 
