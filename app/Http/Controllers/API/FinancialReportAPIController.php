@@ -1497,27 +1497,29 @@ class FinancialReportAPIController extends AppBaseController
 
                     $shareOfAccosicateAmount = 0;
 
-                    foreach ($shareOfAccosicateColumnData as $key => $value) {
-                        $company = Company::where('CompanyID', $key)->first();
-                        $CYTTDAmount = isset($value[$shareOfAccosicateDataArray['CYYTDColumnKey']]) ? $value[$shareOfAccosicateDataArray['CYYTDColumnKey']] : 0;
+                    if(!empty($shareOfAccosicateColumnData) && is_array($shareOfAccosicateColumnData)) {
+                        foreach ($shareOfAccosicateColumnData as $key => $value) {
+                            $company = Company::where('CompanyID', $key)->first();
+                            $CYTTDAmount = isset($value[$shareOfAccosicateDataArray['CYYTDColumnKey']]) ? $value[$shareOfAccosicateDataArray['CYYTDColumnKey']] : 0;
 
-                        if ($company) {
-                            $shareOfAccosicateAmount += $CYTTDAmount * ($company->holding_percentage / 100);
+                            if ($company) {
+                                $shareOfAccosicateAmount += $CYTTDAmount * ($company->holding_percentage / 100);
+                            }
                         }
                     }
 
                     foreach ($response['reportData'] as $key => $value) {
-                        if ($value->itemType == 5) {
+                        if (isset($value->itemType) && $value->itemType == 5) {
                             $value->{$shareOfAccosicateDataArray['CONSColumnKey']} = $shareOfAccosicateAmount;
                         }
 
-                        if ($value->itemType == 6) {
+                        if (isset($value->itemType) && $value->itemType == 6) {
                             foreach ($value->detail as $key1 => $value1) {
-                                if ($value1->itemType == 7) {
+                                if (isset($value1->itemType) && $value1->itemType == 7) {
                                     $value1->{$shareOfAccosicateDataArray['CYYTDColumnKey']} = $shareHolderCYTDAmount;
                                 }
 
-                                if ($value1->itemType == 8) {
+                                if (isset($value1->itemType) && $value1->itemType == 8) {
                                     $value1->{$shareOfAccosicateDataArray['CYYTDColumnKey']} = $NCICYTDAmount;
                                 }
                             }
