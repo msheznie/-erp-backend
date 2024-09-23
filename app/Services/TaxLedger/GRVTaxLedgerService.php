@@ -68,7 +68,7 @@ class GRVTaxLedgerService
         $ledgerDetailsData = $ledgerData;
         $ledgerDetailsData['createdUserSystemID'] = $empID->employeeSystemID;
 
-        $details = GRVDetails::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER')
+        $details = GRVDetails::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER')
                                 ->where('grvAutoID', $masterModel["autoID"])
                                 ->whereNotNull('vatSubCategoryID')
                                 ->join('erp_tax_vat_sub_categories', 'erp_grvdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
@@ -76,6 +76,14 @@ class GRVTaxLedgerService
                                 ->get();
 
         $master = GRVMaster::with(['financeperiod_by', 'supplier_by'])->find($masterModel["autoID"]);
+
+        $exampteVat = TaxVatCategories::where('subCatgeoryType',3)->where('isActive',1)->first();
+        $exemptVatSub = $exampteVat?$exampteVat->taxVatSubCategoriesAutoID:NULL;
+        $exemptVatMain = $exampteVat?$exampteVat->mainCategory:NULL;
+
+        $standardRatedSupply = TaxVatCategories::where('subCatgeoryType',1)->where('isActive',1)->first();
+        $standardRatedSupplyID = $standardRatedSupply?$standardRatedSupply->taxVatSubCategoriesAutoID:null;
+
 
         $masterDocumentDate = date('Y-m-d H:i:s');
         if (isset($master->financeperiod_by->isActive) && $master->financeperiod_by->isActive == -1) {
@@ -96,36 +104,62 @@ class GRVTaxLedgerService
             if ($subCategoryData) {
                 $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
             }
+                $ledgerData['transER'] = $value->supplierTransactionER;
+                $ledgerData['localER'] = $value->localCurrencyER;
+                $ledgerData['comRptER'] = $value->companyReportingER;
+                $ledgerData['localCurrencyID'] = $value->localCurrencyID;
+                $ledgerData['rptCurrencyID'] = $value->companyReportingCurrencyID;
+                $ledgerData['transCurrencyID'] = $value->supplierTransactionCurrencyID;
+                $ledgerData['rcmApplicableYN'] = TaxService::isGRVRCMActivation($masterModel["autoID"]);
 
-            if($value->subCatgeoryType == 3)
+            if($value->subCatgeoryType == 1)
             {
-                $ledgerData['inputVATGlAccountID'] = null;
-                $ledgerData['inputVatTransferAccountID'] = null;
-                $ledgerData['outputVatTransferGLAccountID'] = null;
-                $ledgerData['outputVatGLAccountID'] = null;
+
+                $vatPortion = $value->exempt_vat_portion;
+                $exemptAmount =   ($vatPortion/100) * $value->transVATAmount ;
+                $standardAmount = $value->transVATAmount - $exemptAmount;
+
+
+                $info = [
+                    ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
+                    ["amount" => $standardAmount,"subcat" => $value->vatSubCategoryID,"mastercat" => $value->vatMasterCategoryID,"inVat" => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,
+                    "inTra" => isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null,
+                    "outVat" => isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null,
+                     "outTra" => isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null]
+                ];
+
+                foreach ($info as $key1 => $value1) {
+                    $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
+
+                    $ledgerData['subCategoryID'] = $value1['subcat'];
+                    $ledgerData['masterCategoryID'] = $value1['mastercat'];
+                    $ledgerData['localAmount'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $ledgerData['rptAmount'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                    $ledgerData['transAmount'] = \Helper::roundValue($value1['amount']);
+                    $ledgerData['inputVATGlAccountID'] = $value1['inVat'];
+                    $ledgerData['inputVatTransferAccountID'] =  $value1['inTra'];
+                    $ledgerData['outputVatTransferGLAccountID'] = $value1['outTra'];
+                    $ledgerData['outputVatGLAccountID'] =  $value1['outVat'];
+                    array_push($finalData, $ledgerData);
+                }
+
+
             }
             else
             {
-                $ledgerData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
-                $ledgerData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
-                $ledgerData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
-                $ledgerData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
+                    $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
+                    $ledgerData['masterCategoryID'] = $value->vatMasterCategoryID;
+                    $ledgerData['localAmount'] = $value->localVATAmount;
+                    $ledgerData['rptAmount'] = $value->rptVATAmount;
+                    $ledgerData['transAmount'] = $value->transVATAmount;
+                    $ledgerData['inputVATGlAccountID'] = $value->subCatgeoryType == 3?null:isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                    $ledgerData['inputVatTransferAccountID'] =  $value->subCatgeoryType == 3?null:isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                    $ledgerData['outputVatTransferGLAccountID'] =  $value->subCatgeoryType == 3?null:isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                    $ledgerData['outputVatGLAccountID'] =  $value->subCatgeoryType == 3?null:isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
+                    array_push($finalData, $ledgerData);
             }
 
-            $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
-            $ledgerData['masterCategoryID'] = $value->vatMasterCategoryID;
-            $ledgerData['localAmount'] = $value->localVATAmount;
-            $ledgerData['rptAmount'] = $value->rptVATAmount;
-            $ledgerData['transAmount'] = $value->transVATAmount;
-            $ledgerData['transER'] = $value->supplierTransactionER;
-            $ledgerData['localER'] = $value->localCurrencyER;
-            $ledgerData['comRptER'] = $value->companyReportingER;
-            $ledgerData['localCurrencyID'] = $value->localCurrencyID;
-            $ledgerData['rptCurrencyID'] = $value->companyReportingCurrencyID;
-            $ledgerData['transCurrencyID'] = $value->supplierTransactionCurrencyID;
-            $ledgerData['rcmApplicableYN'] = TaxService::isGRVRCMActivation($masterModel["autoID"]);
 
-            array_push($finalData, $ledgerData);
         }
 
         $detailData = GRVDetails::where('grvAutoID', $masterModel["autoID"])
@@ -137,37 +171,11 @@ class GRVTaxLedgerService
 
         foreach ($detailData as $key => $value) {
             $ledgerDetailsData['documentDetailID'] = $value->grvDetailsID;
-            $ledgerDetailsData['vatSubCategoryID'] = $value->vatSubCategoryID;
-            $ledgerDetailsData['vatMasterCategoryID'] = $value->vatMasterCategoryID;
             $ledgerDetailsData['serviceLineSystemID'] = $master->serviceLineSystemID;
             $ledgerDetailsData['documentDate'] = $masterDocumentDate;
             $ledgerDetailsData['postedDate'] = date('Y-m-d H:i:s');
             $ledgerDetailsData['documentNumber'] = $master->grvPrimaryCode;
             $ledgerDetailsData['chartOfAccountSystemID'] = $value->financeGLcodePLSystemID;
-
-            $chartOfAccountData = ChartOfAccount::find($value->financeGLcodePLSystemID);
-
-            if ($chartOfAccountData) {
-                $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
-                $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
-            }
-            
-            if($value->subCatgeoryType == 3)
-            {
-                
-                $ledgerDetailsData['inputVATGlAccountID'] = null;
-                $ledgerDetailsData['inputVatTransferAccountID'] = null;
-                $ledgerDetailsData['outputVatTransferGLAccountID'] = null;
-                $ledgerDetailsData['outputVatGLAccountID'] = null;
-            }
-            else
-            {
-                $ledgerDetailsData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
-                $ledgerDetailsData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
-                $ledgerDetailsData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
-                $ledgerDetailsData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
-            }
-
             $ledgerDetailsData['transactionCurrencyID'] = $value->supplierItemCurrencyID;
             $ledgerDetailsData['originalInvoice'] = NULL;
             $ledgerDetailsData['originalInvoiceDate'] = NULL;
@@ -181,43 +189,118 @@ class GRVTaxLedgerService
             $ledgerDetailsData['itemCode'] = $value->itemPrimaryCode;
             $ledgerDetailsData['itemDescription'] = $value->itemDescription;
             $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
-            $ledgerDetailsData['VATAmount'] = $value->VATAmount * $value->noQty;
             $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount * $value->noQty;
             $ledgerDetailsData['localER'] = $value->localCurrencyER;
             $ledgerDetailsData['reportingER'] = $value->companyReportingER;
-            $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal * $value->noQty;
-            $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt * $value->noQty;
-            
-            $subCategory = TaxVatCategories::find($value->vatSubCategoryID);
-            if($subCategory->subCatgeoryType != 2) {
-                if($value->exempt_vat_portion != 0) {
-                    $taxableAmountLocal = (($value->landingCost_LocalCur * $value->noQty) -  ($ledgerDetailsData['VATAmountLocal'] / 100) * $value->exempt_vat_portion);
-                    $taxableAmountReporting = (($value->landingCost_RptCur * $value->noQty) -  ($ledgerDetailsData['VATAmountRpt'] / 100) * $value->exempt_vat_portion);
-                    $taxableAmount =  ($value->landingCost_TransCur * $value->noQty) - (($ledgerDetailsData['VATAmount'] / 100) * $value->exempt_vat_portion);
-
-                }else {
-                    $taxableAmountLocal =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_LocalCur * $value->noQty) -  $ledgerDetailsData['VATAmountLocal']) : $value->landingCost_LocalCur * $value->noQty;
-                    $taxableAmountReporting =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_RptCur * $value->noQty)  - $ledgerDetailsData['VATAmountRpt']) : $value->landingCost_RptCur * $value->noQty;
-                    $taxableAmount =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_TransCur * $value->noQty)  - $ledgerDetailsData['VATAmount']) : $value->landingCost_TransCur * $value->noQty;
-
-                }
-            }else {
-                $taxableAmountLocal =  $value->landingCost_LocalCur * $value->noQty;
-                $taxableAmountReporting =  $value->landingCost_RptCur * $value->noQty;
-                $taxableAmount =  $value->landingCost_TransCur * $value->noQty;
-
-            }    
-
-            $ledgerDetailsData['taxableAmount'] = $taxableAmount;
-            $ledgerDetailsData['taxableAmountLocal'] = $taxableAmountLocal;
-            $ledgerDetailsData['taxableAmountReporting'] = $taxableAmountReporting;
             $ledgerDetailsData['localCurrencyID'] = $value->localCurrencyID;
             $ledgerDetailsData['rptCurrencyID'] = $value->companyReportingCurrencyID;
             $ledgerDetailsData['exempt_vat_portion'] = $value->exempt_vat_portion;
 
-            
+            $chartOfAccountData = ChartOfAccount::find($value->financeGLcodePLSystemID);
 
-            array_push($finalDetailData, $ledgerDetailsData);
+            if ($chartOfAccountData) {
+                $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
+                $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
+            }
+            
+            if($value->subCatgeoryType == 1)
+            {
+                
+                $vatPortion = $value->exempt_vat_portion;
+                $exemptAmount =   ($vatPortion/100) *  $value->VATAmount * $value->noQty;
+                $standardAmount = $value->VATAmount * $value->noQty - $exemptAmount;
+
+
+                $info = [
+                    ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
+                    ["amount" => $standardAmount,"subcat" => $value->vatSubCategoryID,"mastercat" => $value->vatMasterCategoryID,"inVat" => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,
+                    "inTra" => isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null,
+                    "outVat" => isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null,
+                     "outTra" => isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null]
+                ];
+
+                foreach ($info as $key1 => $value1) {
+                    $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
+
+                    $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
+                    $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
+                    $ledgerDetailsData['VATAmount'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                    $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
+                    $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
+                    $ledgerDetailsData['outputVatTransferGLAccountID'] = $value1['outTra'];
+                    $ledgerDetailsData['outputVatGLAccountID'] =  $value1['outVat'];
+
+                    $subCategory = TaxVatCategories::find($value->vatSubCategoryID);
+                    if($subCategory->subCatgeoryType != 2) {
+                        if($value->exempt_vat_portion != 0) {
+                            $taxableAmountLocal = (($value->landingCost_LocalCur * $value->noQty) -  ($ledgerDetailsData['VATAmountLocal'] / 100) * $value->exempt_vat_portion);
+                            $taxableAmountReporting = (($value->landingCost_RptCur * $value->noQty) -  ($ledgerDetailsData['VATAmountRpt'] / 100) * $value->exempt_vat_portion);
+                            $taxableAmount =  ($value->landingCost_TransCur * $value->noQty) - (($ledgerDetailsData['VATAmount'] / 100) * $value->exempt_vat_portion);
+        
+                        }else {
+                            $taxableAmountLocal =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_LocalCur * $value->noQty) -  $ledgerDetailsData['VATAmountLocal']) : $value->landingCost_LocalCur * $value->noQty;
+                            $taxableAmountReporting =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_RptCur * $value->noQty)  - $ledgerDetailsData['VATAmountRpt']) : $value->landingCost_RptCur * $value->noQty;
+                            $taxableAmount =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_TransCur * $value->noQty)  - $ledgerDetailsData['VATAmount']) : $value->landingCost_TransCur * $value->noQty;
+        
+                        }
+                    }else {
+                        $taxableAmountLocal =  $value->landingCost_LocalCur * $value->noQty;
+                        $taxableAmountReporting =  $value->landingCost_RptCur * $value->noQty;
+                        $taxableAmount =  $value->landingCost_TransCur * $value->noQty;
+        
+                    }    
+        
+                    $ledgerDetailsData['taxableAmount'] = $taxableAmount;
+                    $ledgerDetailsData['taxableAmountLocal'] = $taxableAmountLocal;
+                    $ledgerDetailsData['taxableAmountReporting'] = $taxableAmountReporting;
+
+                    array_push($finalDetailData, $ledgerDetailsData);
+                }
+
+
+
+            }
+            else
+            {
+                    $ledgerDetailsData['vatSubCategoryID'] = $value->vatSubCategoryID;
+                    $ledgerDetailsData['vatMasterCategoryID'] = $value->vatMasterCategoryID;
+                    $ledgerDetailsData['VATAmount'] = $value->VATAmount * $value->noQty;
+                    $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt * $value->noQty;
+                    $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal * $value->noQty;
+                    $ledgerDetailsData['inputVATGlAccountID'] = $value->subCatgeoryType == 3?null:isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                    $ledgerDetailsData['inputVatTransferAccountID'] =  $value->subCatgeoryType == 3?null:isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                    $ledgerDetailsData['outputVatTransferGLAccountID'] =  $value->subCatgeoryType == 3?null:isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                    $ledgerDetailsData['outputVatGLAccountID'] =  $value->subCatgeoryType == 3?null:isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
+                   
+                    $subCategory = TaxVatCategories::find($value->vatSubCategoryID);
+                    if($subCategory->subCatgeoryType != 2) {
+                        if($value->exempt_vat_portion != 0) {
+                            $taxableAmountLocal = (($value->landingCost_LocalCur * $value->noQty) -  ($ledgerDetailsData['VATAmountLocal'] / 100) * $value->exempt_vat_portion);
+                            $taxableAmountReporting = (($value->landingCost_RptCur * $value->noQty) -  ($ledgerDetailsData['VATAmountRpt'] / 100) * $value->exempt_vat_portion);
+                            $taxableAmount =  ($value->landingCost_TransCur * $value->noQty) - (($ledgerDetailsData['VATAmount'] / 100) * $value->exempt_vat_portion);
+        
+                        }else {
+                            $taxableAmountLocal =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_LocalCur * $value->noQty) -  $ledgerDetailsData['VATAmountLocal']) : $value->landingCost_LocalCur * $value->noQty;
+                            $taxableAmountReporting =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_RptCur * $value->noQty)  - $ledgerDetailsData['VATAmountRpt']) : $value->landingCost_RptCur * $value->noQty;
+                            $taxableAmount =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_TransCur * $value->noQty)  - $ledgerDetailsData['VATAmount']) : $value->landingCost_TransCur * $value->noQty;
+        
+                        }
+                    }else {
+                        $taxableAmountLocal =  $value->landingCost_LocalCur * $value->noQty;
+                        $taxableAmountReporting =  $value->landingCost_RptCur * $value->noQty;
+                        $taxableAmount =  $value->landingCost_TransCur * $value->noQty;
+        
+                    }    
+        
+                    $ledgerDetailsData['taxableAmount'] = $taxableAmount;
+                    $ledgerDetailsData['taxableAmountLocal'] = $taxableAmountLocal;
+                    $ledgerDetailsData['taxableAmountReporting'] = $taxableAmountReporting;
+                   
+                    array_push($finalDetailData, $ledgerDetailsData);
+            }
+
         }
 
         $logisticData = PoAdvancePayment::with(['category_by' => function($query) {
