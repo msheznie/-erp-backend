@@ -30,12 +30,12 @@ class BudgetReportController extends AppBaseController
                 break;
         }
 
-        return \DataTables::of($output)
+        return \DataTables::of($output['data'])
             ->addIndexColumn()
             ->with('companyName', $checkIsGroup->CompanyName)
             ->with('isGroup', $checkIsGroup->isGroup)
             ->with('currencyID', "")
-            ->with('total', 0)
+            ->with('total', $output['total'])
             ->with('decimalPlace', 2)
             ->with('currencyCode', "")
             ->addIndexColumn()
@@ -68,9 +68,10 @@ class BudgetReportController extends AppBaseController
                 $to_date = $request->fromDate;
 
 
-                $outputData = array('reportData' => $data,
+                $outputData = array('reportData' => $data['data'],
                     'companyName' => $company_name,
-                    'fromDate' =>  $request->fromDate
+                    'fromDate' =>  $request->fromDate,
+                    'total' => $data['total']
                 );
 
                 $excelColumnFormat = [

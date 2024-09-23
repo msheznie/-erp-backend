@@ -49,7 +49,7 @@ class BudgetCommitmentsDetailsReport
      */
     public function setBudgetAmount($budgetAmount): void
     {
-        $this->budgetAmount = number_format($budgetAmount,3);
+        $this->budgetAmount = $budgetAmount;
     }
 
     /**
@@ -57,7 +57,7 @@ class BudgetCommitmentsDetailsReport
      */
     public function setCommitments($commitments): void
     {
-        $this->commitments = number_format($commitments,3);
+        $this->commitments = $commitments;
     }
 
     /**
@@ -65,7 +65,7 @@ class BudgetCommitmentsDetailsReport
      */
     public function setTotalAvailableBudget($totalAvailableBudget): void
     {
-        $this->totalAvailableBudget = number_format($totalAvailableBudget,3);
+        $this->totalAvailableBudget = $totalAvailableBudget;
     }
 
     /**
@@ -73,7 +73,7 @@ class BudgetCommitmentsDetailsReport
      */
     public function setActualAmountSpentTillDateCB($actualAmountSpentTillDateCB): void
     {
-        $this->actualAmountSpentTillDateCB = number_format($actualAmountSpentTillDateCB,3);
+        $this->actualAmountSpentTillDateCB = $actualAmountSpentTillDateCB;
     }
 
     /**
@@ -81,7 +81,7 @@ class BudgetCommitmentsDetailsReport
      */
     public function setActualAmountSpentTillDatePC($actualAmountSpentTillDatePC): void
     {
-        $this->actualAmountSpentTillDatePC = number_format($actualAmountSpentTillDatePC,3);
+        $this->actualAmountSpentTillDatePC = $actualAmountSpentTillDatePC;
     }
 
 
@@ -90,7 +90,7 @@ class BudgetCommitmentsDetailsReport
      */
     public function setCommitmentsForCurrentYear($commitmentsForCurrentYear): void
     {
-        $this->commitmentsForCurrentYear = number_format($commitmentsForCurrentYear,3);
+        $this->commitmentsForCurrentYear = $commitmentsForCurrentYear;
     }
 
 
@@ -107,8 +107,7 @@ class BudgetCommitmentsDetailsReport
      */
     public function setBalance(): void
     {
-        if(!is_numeric($this->totalAvailableBudget))
-            $this->totalAvailableBudget = 0;
+
 
         if(!is_numeric($this->actualAmountSpentTillDateCB))
             $this->actualAmountSpentTillDateCB = 0;
@@ -123,15 +122,22 @@ class BudgetCommitmentsDetailsReport
             $this->commitmentsFromPreviosYear = 0;
 
         $balance = ($this->totalAvailableBudget) - ($this->actualAmountSpentTillDateCB) - ($this->actualAmountSpentTillDatePC) - ($this->commitmentsForCurrentYear) - ($this->commitmentsFromPreviosYear);
-        $this->balance = number_format($balance,3);
+        $this->balance = $balance;
     }
+
 
     /**
      * @param mixed $total
      */
-    public function setTotal($total): void
+    public function setTotal(): void
     {
-        $this->total = number_format($total,3);
+        $this->total += $this->balance;
     }
+
+    public function getTotal()
+    {
+        return $this->balance;
+    }
+
 
 }

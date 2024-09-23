@@ -37,6 +37,7 @@ class BudgetReportService
         $errorBudgetZero = [];
 
             $chartOfAccountDataArray = array();
+            $total =0;
             foreach ($chartOfAccountIDs as $chartOfAccountID)
             {
 
@@ -114,18 +115,20 @@ class BudgetReportService
                     $budgetCommitmentsDetailsReport->setGlTypes($chartOfAccount->catogaryBLorPL);
                     $budgetCommitmentsDetailsReport->setBudgetAmount($currentBudgetAmount);
                     $budgetCommitmentsDetailsReport->setCommitments($commitments);
-                    $budgetCommitmentsDetailsReport->setTotalAvailableBudget(($currentBudgetAmount + $commitments));
+                    $budgetCommitmentsDetailsReport->setTotalAvailableBudget($currentBudgetAmount + $commitments);
                     $budgetCommitmentsDetailsReport->setActualAmountSpentTillDateCB($grvTotalAmountCurrYear->total1);
                     $budgetCommitmentsDetailsReport->setActualAmountSpentTillDatePC($grvTotalAmountPreYear->total);
                     $budgetCommitmentsDetailsReport->setCommitmentsForCurrentYear($currentOpenPOs - $grvTotalAmountCurrYear->total1);
                     $budgetCommitmentsDetailsReport->setCommitmentsFromPreviosYear($prvOpenPOs - $grvTotalAmountPreYear->total);
                     $budgetCommitmentsDetailsReport->setBalance();
+                    $total += $budgetCommitmentsDetailsReport->getTotal();
+
                     array_push($data,$budgetCommitmentsDetailsReport);
                 }
 
             }
 
-        return $data;
+        return ['data' => $data, 'total' => $total];
 
     }
 
