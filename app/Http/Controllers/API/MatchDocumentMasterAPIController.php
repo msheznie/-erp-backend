@@ -4107,19 +4107,23 @@ ORDER BY
         $documentSystemID = $masterData->documentSystemID;
 
 
-        $validateCloseFinanceYear = ValidateDocumentAmend::validateCLoseFinanceYear($documentSystemID, $matchingMasterID);
-        if(isset($validateCloseFinanceYear['status']) && $validateCloseFinanceYear['status'] == false){
-            if(isset($validateCloseFinanceYear['message']) && $validateCloseFinanceYear['message']){
-                return $this->sendError($validateCloseFinanceYear['message']);
+        if($masterData->documentSystemID == 4 ){
+            
+            $validateCloseFinanceYear = ValidateDocumentAmend::validateCLoseFinanceYear($documentSystemID, $matchingMasterID);
+            if(isset($validateCloseFinanceYear['status']) && $validateCloseFinanceYear['status'] == false){
+                if(isset($validateCloseFinanceYear['message']) && $validateCloseFinanceYear['message']){
+                    return $this->sendError($validateCloseFinanceYear['message']);
+                }
+            }
+    
+            $validateCloseFinancePeriod = ValidateDocumentAmend::validateCLoseFinancePeriod($documentSystemID, $matchingMasterID);
+            if(isset($validateCloseFinancePeriod['status']) && $validateCloseFinancePeriod['status'] == false){
+                if(isset($validateCloseFinancePeriod['message']) && $validateCloseFinancePeriod['message']){
+                    return $this->sendError($validateCloseFinancePeriod['message']);
+                }
             }
         }
 
-        $validateCloseFinancePeriod = ValidateDocumentAmend::validateCLoseFinancePeriod($documentSystemID, $matchingMasterID);
-        if(isset($validateCloseFinancePeriod['status']) && $validateCloseFinancePeriod['status'] == false){
-            if(isset($validateCloseFinancePeriod['message']) && $validateCloseFinancePeriod['message']){
-                return $this->sendError($validateCloseFinancePeriod['message']);
-            }
-        }
 
 
         if($masterData->approved == -1 && $masterData->documentSystemID != 19 && $masterData->matchingOption != 1){

@@ -192,6 +192,14 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
                 $input['companySystemID'] = $companie['id'];
                 $input['isAssigned'] = -1;
                 $input['mainItemCategoryID'] = $input['itemCategoryID'];
+
+                if(isset($input['finance_item_category_type'])){
+                    unset($input['finance_item_category_type']);
+                }
+                if(isset($input['DT_Row_Index'])){
+                    unset($input['DT_Row_Index']);
+                }
+                
                 $financeItemCategorySubAssigned = $this->financeItemcategorySubAssignedRepository->create($input);
                 
                 $masterData = $financeItemCategorySubAssigned->toArray();
