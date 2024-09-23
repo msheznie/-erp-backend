@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\helper\CommonJobService;
 use App\Services\Inventory\MaterialIssueService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -17,13 +18,12 @@ class AddMultipleItemsToMaterialIssue implements ShouldQueue
     public $materialIssue;
     public $timeout = 500;
     public $db;
-    public $authID;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($record,$materialIssue,$db,$authID)
+    public function __construct($record,$materialIssue,$db)
     {
 
         if(env('IS_MULTI_TENANCY',false)){
@@ -45,6 +45,7 @@ class AddMultipleItemsToMaterialIssue implements ShouldQueue
      */
     public function handle()
     {
-        MaterialIssueService::addMultipleItems($this->record,$this->materialIssue, $this->db,$this->authID);
+        CommonJobService::db_switch($this->db);
+        MaterialIssueService::addMultipleItems($this->record,$this->materialIssue);
     }
 }

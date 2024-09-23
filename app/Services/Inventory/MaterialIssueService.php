@@ -135,16 +135,15 @@ class MaterialIssueService
 
     }
 
-    public static function  addMultipleItems($items,$materialIssue,$db,$authID) {
-        CommonJobService::db_switch($db);
-
+    public static function addMultipleItems($items,$materialIssue) {
         $materialIssue = ItemIssueMaster::find($materialIssue['itemIssueAutoID']);
         $materialIssue->upload_job_status = 0;
+        $materialIssue->isBulkItemJobRun = 0;
         $materialIssue->successDetailsCount = 0;
         $materialIssue->excelRowCount = 0;
         $materialIssue->save();
 
-        $validatedItems = self::uploadValidations($items, $materialIssue, $authID);
+        $validatedItems = self::uploadValidations($items, $materialIssue);
 
         if (!empty($validatedItems['itemDetails'])) {
             foreach ($validatedItems['itemDetails'] as $key => $value) {
@@ -165,7 +164,7 @@ class MaterialIssueService
         $materialIssue->save();
     }
 
-    public static function uploadValidations($excelRows, $materialIssue, $authID) {
+    public static function uploadValidations($excelRows, $materialIssue) {
         $rowNumber = 7;
         $validationErrorMsg = $validatedItemsArray = [];
         $successCount = $excelRowCount = 0;
@@ -173,7 +172,7 @@ class MaterialIssueService
         foreach ($excelRows as $rowData) {
             $isValidationError = 0;
 
-            if (array_key_exists('item_code',$rowData) && !is_null($rowData['item_code'])) {
+            if (isset($rowData['item_code']) && $rowData['item_code'] != null) {
                 $companyId = $materialIssue['companySystemID'];
                 $categoryType = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
                     return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1);
@@ -192,16 +191,18 @@ class MaterialIssueService
                         $isValidationError = 1;
                     }
 
-                    $data = array(
-                        'companySystemID' => $materialIssue['companySystemID'],
-                        'itemCodeSystem' => $categoryType->itemCodeSystem,
-                        'wareHouseId' => $materialIssue['wareHouseFrom']
-                    );
-                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
+                    if(isset($rowData['qty']) && is_numeric($rowData['qty']) && $rowData['qty'] > 0) {
+                        $data = array(
+                            'companySystemID' => $materialIssue['companySystemID'],
+                            'itemCodeSystem' => $categoryType->itemCodeSystem,
+                            'wareHouseId' => $materialIssue['wareHouseFrom']
+                        );
+                        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
-                    if (($rowData['qty'] > $itemCurrentCostAndQty['currentStockQty']) || ($rowData['qty'] > $itemCurrentCostAndQty['currentWareHouseStockQty'])) {
-                        $validationErrorMsg[] = 'Stock Qty is 0. You cannot issue. for Excel row: ' . $rowNumber;
-                        $isValidationError = 1;
+                        if (($rowData['qty'] > $itemCurrentCostAndQty['currentStockQty']) || ($rowData['qty'] > $itemCurrentCostAndQty['currentWareHouseStockQty'])) {
+                            $validationErrorMsg[] = 'Stock Qty is 0. You cannot issue. for Excel row: ' . $rowNumber;
+                            $isValidationError = 1;
+                        }
                     }
 
                     $checkMaterialIssue = ItemIssueMaster::where('itemIssueAutoID', '!=', $materialIssue['itemIssueAutoID'])
@@ -338,12 +339,12 @@ class MaterialIssueService
                 $isValidationError = 1;
             }
 
-            if (!array_key_exists('item_description',$rowData) && is_null($rowData['item_description'])) {
+            if (!isset($rowData['item_description'])) {
                 $validationErrorMsg[] = 'The item description has not been updated for Excel row: ' . $rowNumber;
                 $isValidationError = 1;
             }
 
-            if (array_key_exists('project',$rowData) && $rowData['project'] !== null) {
+            if (isset($rowData['project']) && $rowData['project'] != null) {
                 $projectId = ErpProjectMaster::where('projectCode', trim($rowData['project']))->first();
                 if (!$projectId) {
                     $validationErrorMsg[] = 'The Project Code not match with system for Excel row: ' . $rowNumber;
@@ -351,7 +352,7 @@ class MaterialIssueService
                 }
             }
 
-            if (!array_key_exists('qty',$rowData) || is_null($rowData['qty'])) {
+            if (!isset($rowData['qty'])) {
                 $validationErrorMsg[] = 'The item Qty has not been updated for Excel row: ' . $rowNumber;
                 $isValidationError = 1;
             }

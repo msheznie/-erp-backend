@@ -1663,6 +1663,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             if (count($record) > 0) {
                 $data['isBulkItemJobRun'] = 1;
+                $data['excelRowCount'] = 0;
+                $data['successDetailsCount'] = 0;
                 ItemIssueMaster::where('itemIssueAutoID', $materialIssue->itemIssueAutoID)->update($data);
 
                 $db = isset($input['db']) ? $input['db'] : "";
@@ -1671,6 +1673,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 return $this->sendError('No Records found!', 500);
             }
 
+            Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();
             return $this->sendResponse([], 'Items uploaded Successfully!!');
         } catch (\Exception $exception) {
