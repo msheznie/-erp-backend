@@ -13,6 +13,9 @@ class BudgetReportController extends AppBaseController
 {
     public function generateReport(Request $request)
     {
+        ini_set('max_execution_time', 6000);
+        ini_set('memory_limit', -1);
+
         $reportID = $request->reportID;
         $budgetReportService = new BudgetReportService();
         $checkIsGroup = Company::find($request->companySystemID);
@@ -44,6 +47,9 @@ class BudgetReportController extends AppBaseController
 
     public function export(Request $request)
     {
+        ini_set('max_execution_time', 6000);
+        ini_set('memory_limit', -1);
+
         $reportID = $request->reportID;
         $budgetReportService = new BudgetReportService();
         $company = Company::find($request->companySystemID);
