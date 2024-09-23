@@ -4081,7 +4081,7 @@ WHERE
                         DEPpercentage,
                         dateAQ,
                         dateDEP,
-                        depMonth * 12 as depMonth,
+                        erp_fa_asset_master.depMonth * 12 as depMonth,
                         locationName,
                         supplierName,
                         depreciatedMonths,
