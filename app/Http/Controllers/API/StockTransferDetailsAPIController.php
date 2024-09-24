@@ -586,7 +586,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($item)) {
-            if (($stockTransferDetails->currentStockQty - $stockTransferDetails->qty) < $item->minimumQty) {
+            if (($stockTransferDetails->currentStockQty - ($stockTransferDetails->qty / (isset($conversionUnit)? $conversionUnit->conversion:1))) < $item->minimumQty) {
                 $minQtyPolicy = CompanyPolicyMaster::where('companySystemID', $stockTransfer->companySystemID)
                     ->where('companyPolicyCategoryID', 6)
                     ->first();
