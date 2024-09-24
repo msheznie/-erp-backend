@@ -1668,7 +1668,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 ItemIssueMaster::where('itemIssueAutoID', $materialIssue->itemIssueAutoID)->update($data);
 
                 $db = isset($input['db']) ? $input['db'] : "";
-                AddMultipleItemsToMaterialIssue::dispatch(array_filter($record),($materialIssue->toArray()),$db,Auth::id());
+                AddMultipleItemsToMaterialIssue::dispatch(array_filter($record),($materialIssue->toArray()),$db);
             } else {
                 return $this->sendError('No Records found!', 500);
             }
