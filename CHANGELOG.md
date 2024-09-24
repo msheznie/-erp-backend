@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.49.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.48.3...v10.49.0) (2024-09-24)
+
+
+### Features
+
+* **OSOS 3.0:** API - User OSOS 3.0 [GHR-1917] ([#6690](https://github.com/pbsgears/Gears_BackEnd/issues/6690)) ([4001fd4](https://github.com/pbsgears/Gears_BackEnd/commit/4001fd4e60e7e5ba09504fba13fbbe228833b2fe))
+
+
+### Bug Fixes
+
+* **API:** Fixed the issue in salary declaration [GHR-1885] ([#6754](https://github.com/pbsgears/Gears_BackEnd/issues/6754)) ([055216b](https://github.com/pbsgears/Gears_BackEnd/commit/055216b16238b5f39414e4f4dce312d01cf10072))
+
 ## [10.48.3](https://github.com/pbsgears/Gears_BackEnd/compare/v10.48.2...v10.48.3) (2024-09-13)
 
 
