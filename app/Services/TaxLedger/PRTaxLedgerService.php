@@ -245,17 +245,20 @@ class PRTaxLedgerService
 
                 foreach ($info as $key1 => $value1) {
                     $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
+                    if($value1['amount'] != 0)
+                    {   
+                        $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
+                        $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
+                        $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                        $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                        $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
+                        $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
+                        $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
+                        $ledgerDetailsData['outputVatTransferGLAccountID'] = $value1['outTra'];
+                        $ledgerDetailsData['outputVatGLAccountID'] =  $value1['outVat'];
+                        array_push($finalDetailData, $ledgerDetailsData); 
+                    }
 
-                    $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
-                    $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
-                    $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                    $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                    $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
-                    $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
-                    $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
-                    $ledgerDetailsData['outputVatTransferGLAccountID'] = $value1['outTra'];
-                    $ledgerDetailsData['outputVatGLAccountID'] =  $value1['outVat'];
-                    array_push($finalDetailData, $ledgerDetailsData); 
                 }
             }
             else
@@ -266,10 +269,10 @@ class PRTaxLedgerService
                     $ledgerDetailsData['VATAmount'] = $value->VATAmount * $value->noQty;
                     $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal * $value->noQty;
                     $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt * $value->noQty;
-                    $ledgerDetailsData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
-                    $ledgerDetailsData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
-                    $ledgerDetailsData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
-                    $ledgerDetailsData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
+                    $ledgerDetailsData['inputVATGlAccountID'] = $value->subCatgeoryType == 3?null:isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                    $ledgerDetailsData['inputVatTransferAccountID'] = $value->subCatgeoryType == 3?null:isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                    $ledgerDetailsData['outputVatTransferGLAccountID'] = $value->subCatgeoryType == 3?null:isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                    $ledgerDetailsData['outputVatGLAccountID'] = $value->subCatgeoryType == 3?null:isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
                     array_push($finalDetailData, $ledgerDetailsData); 
             }
 
