@@ -1458,6 +1458,11 @@ class FinancialReportAPIController extends AppBaseController
                 $showZeroGL = isset($request->showZeroGL) ? $request->showZeroGL : false;
                 $showRetained = isset($request->showRetained) ? $request->showRetained : false;
                 $consolidationStatus = isset($request->type) && $request->type ? $request->type : 1;
+
+                if ($request->type == 2) {
+                    ini_set('max_execution_time', 21600);
+                    ini_set('memory_limit', -1);
+                }
                 
                 $response = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained);
                 if ($request->type == 2) {
