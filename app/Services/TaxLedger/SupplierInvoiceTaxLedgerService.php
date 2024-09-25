@@ -100,11 +100,10 @@ class SupplierInvoiceTaxLedgerService
         $standardRatedSupplyID = $standardRatedSupply?$standardRatedSupply->taxVatSubCategoriesAutoID:null;
 
         if ($masterData->documentType == 1 || $masterData->documentType == 4) {
-            $details = DirectInvoiceDetails::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DIAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,DIAmountCurrencyER as transCurrencyER')
+            $details = DirectInvoiceDetails::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,(VATAmount) as transVATAmount,(VATAmountLocal) as localVATAmount ,(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DIAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,DIAmountCurrencyER as transCurrencyER')
                                     ->where('directInvoiceAutoID', $masterModel["autoID"])
                                     ->whereNotNull('vatSubCategoryID')
                                     ->join('erp_tax_vat_sub_categories', 'erp_directinvoicedetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-                                    ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
                                     ->get();
 
             foreach ($details as $key => $value) {
@@ -169,6 +168,25 @@ class SupplierInvoiceTaxLedgerService
                 }
       
             }
+
+            $groupedData = collect($finalData)
+                        ->groupBy('subCategoryID')
+                        ->map(function ($group) {
+                            $sumLocalAmount = $group->sum('localAmount');
+                            $sumRptAmount = $group->sum('rptAmount');
+                            $sumTransAmount = $group->sum('transAmount');
+                            
+                            $firstItem = $group->first();
+                            $firstItem['localAmount'] = $sumLocalAmount;
+                            $firstItem['rptAmount'] = $sumRptAmount;
+                            $firstItem['transAmount'] = $sumTransAmount;
+                            
+                            return $firstItem;
+                        })
+                        ->values() 
+                        ->toArray();
+
+                        $finalData = $groupedData;
 
             $detailData = DirectInvoiceDetails::where('directInvoiceAutoID', $masterModel["autoID"])
                                             ->whereNotNull('vatSubCategoryID')
@@ -242,8 +260,8 @@ class SupplierInvoiceTaxLedgerService
 
                         $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
                         $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
-                        $ledgerDetailsData['VATAmount'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                        $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                        $ledgerDetailsData['VATAmount'] =  \Helper::roundValue($value1['amount']);
+                        $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                         $ledgerDetailsData['transAmount'] = \Helper::roundValue($value1['amount']);
                         $ledgerDetailsData['recoverabilityAmount'] =\Helper::roundValue($currencyConversionVAT['localAmount']);
                         $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
@@ -275,11 +293,10 @@ class SupplierInvoiceTaxLedgerService
              
             }
         } else if($masterData->documentType == 3) {
-            $details = SupplierInvoiceDirectItem::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,noQty, SUM(VATAmount * noQty) as transVATAmount, SUM(VATAmountLocal * noQty) as localVATAmount ,SUM(VATAmountRpt * noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID, companyReportingCurrencyID as reportingCurrencyID, supplierDefaultCurrencyID as transCurrencyID, companyReportingER as reportingCurrencyER, localCurrencyER as localCurrencyER, supplierDefaultER as transCurrencyER')
+            $details = SupplierInvoiceDirectItem::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,noQty, (VATAmount * noQty) as transVATAmount, (VATAmountLocal * noQty) as localVATAmount ,(VATAmountRpt * noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID, companyReportingCurrencyID as reportingCurrencyID, supplierDefaultCurrencyID as transCurrencyID, companyReportingER as reportingCurrencyER, localCurrencyER as localCurrencyER, supplierDefaultER as transCurrencyER')
                 ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
                 ->whereNotNull('vatSubCategoryID')
                 ->join('erp_tax_vat_sub_categories', 'supplier_invoice_items.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-                ->groupBy('vatSubCategoryID')
                 ->get();
 
 
@@ -345,7 +362,24 @@ class SupplierInvoiceTaxLedgerService
 
 
             }
+            $groupedData = collect($finalData)
+                        ->groupBy('subCategoryID')
+                        ->map(function ($group) {
+                            $sumLocalAmount = $group->sum('localAmount');
+                            $sumRptAmount = $group->sum('rptAmount');
+                            $sumTransAmount = $group->sum('transAmount');
+                            
+                            $firstItem = $group->first();
+                            $firstItem['localAmount'] = $sumLocalAmount;
+                            $firstItem['rptAmount'] = $sumRptAmount;
+                            $firstItem['transAmount'] = $sumTransAmount;
+                            
+                            return $firstItem;
+                        })
+                        ->values() 
+                        ->toArray();
 
+                        $finalData = $groupedData;
             $detailData = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $masterModel["autoID"])
                 ->join('erp_tax_vat_sub_categories', 'supplier_invoice_items.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                 ->whereNotNull('vatSubCategoryID')
@@ -411,10 +445,10 @@ class SupplierInvoiceTaxLedgerService
 
                         $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
                         $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
-                        $ledgerDetailsData['VATAmount'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                        $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
                         $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
                         $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                        $ledgerDetailsData['recoverabilityAmount'] =\Helper::roundValue($currencyConversionVAT['localAmount']);
+                        $ledgerDetailsData['recoverabilityAmount'] =\Helper::roundValue($value1['amount']);
                         $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
                         $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
                         $ledgerDetailsData['outputVatTransferGLAccountID'] = $value1['outTra'];
@@ -442,11 +476,10 @@ class SupplierInvoiceTaxLedgerService
             }
         }
         else {
-            $details = SupplierInvoiceItemDetail::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID as transCurrencyID,companyReportingER as reportingCurrencyER,localCurrencyER as localCurrencyER,supplierTransactionCurrencyER as transCurrencyER')
+            $details = SupplierInvoiceItemDetail::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,(VATAmount) as transVATAmount,(VATAmountLocal) as localVATAmount ,(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID as transCurrencyID,companyReportingER as reportingCurrencyER,localCurrencyER as localCurrencyER,supplierTransactionCurrencyER as transCurrencyER')
                                     ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
                                     ->whereNotNull('vatSubCategoryID')
                                     ->join('erp_tax_vat_sub_categories', 'erp_bookinvsupp_item_det.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-                                    ->groupBy('vatSubCategoryID')
                                     ->get();
             
 
@@ -514,7 +547,23 @@ class SupplierInvoiceTaxLedgerService
           
                 }
             }
-
+            $groupedData = collect($finalData)
+                        ->groupBy('subCategoryID')
+                        ->map(function ($group) {
+                            $sumLocalAmount = $group->sum('localAmount');
+                            $sumRptAmount = $group->sum('rptAmount');
+                            $sumTransAmount = $group->sum('transAmount');
+                            
+                            $firstItem = $group->first();
+                            $firstItem['localAmount'] = $sumLocalAmount;
+                            $firstItem['rptAmount'] = $sumRptAmount;
+                            $firstItem['transAmount'] = $sumTransAmount;
+                            
+                            return $firstItem;
+                        })
+                        ->values() 
+                        ->toArray();
+            $finalData = $groupedData;
             $detailData = SupplierInvoiceItemDetail::with(['grv_detail', 'logistic_detail' => function($query) {
                                                 $query->with(['category_by' => function($query) {
                                                     $query->with(['item_by']);
@@ -606,8 +655,8 @@ class SupplierInvoiceTaxLedgerService
                         $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
                         $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                         $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                        $ledgerDetailsData['VATAmount'] = \Helper::roundValue($currencyConversionVAT['documentAmount']);
-                        $ledgerDetailsData['taxableAmount'] = ($value->totTransactionAmount - \Helper::roundValue($currencyConversionVAT['documentAmount']));
+                        $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
+                        $ledgerDetailsData['taxableAmount'] = ($value->totTransactionAmount - \Helper::roundValue($value1['amount']));
                         $ledgerDetailsData['taxableAmountLocal'] = ($isRCMApplicable) ? $value->totLocalAmount  : ($value->totLocalAmount - \Helper::roundValue($currencyConversionVAT['localAmount']));
                         $ledgerDetailsData['taxableAmountReporting'] = ($isRCMApplicable) ? $value->totRptAmount : ($value->totRptAmount - \Helper::roundValue($currencyConversionVAT['reportingAmount']));
 

@@ -68,11 +68,10 @@ class GRVTaxLedgerService
         $ledgerDetailsData = $ledgerData;
         $ledgerDetailsData['createdUserSystemID'] = $empID->employeeSystemID;
 
-        $details = GRVDetails::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER')
+        $details = GRVDetails::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,(VATAmount*noQty) as transVATAmount,(VATAmountLocal*noQty) as localVATAmount ,(VATAmountRpt*noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER')
                                 ->where('grvAutoID', $masterModel["autoID"])
                                 ->whereNotNull('vatSubCategoryID')
                                 ->join('erp_tax_vat_sub_categories', 'erp_grvdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-                                ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
                                 ->get();
 
         $master = GRVMaster::with(['financeperiod_by', 'supplier_by'])->find($masterModel["autoID"]);
@@ -161,7 +160,24 @@ class GRVTaxLedgerService
 
 
         }
+        $groupedData = collect($finalData)
+                        ->groupBy('subCategoryID')
+                        ->map(function ($group) {
+                            $sumLocalAmount = $group->sum('localAmount');
+                            $sumRptAmount = $group->sum('rptAmount');
+                            $sumTransAmount = $group->sum('transAmount');
+                            
+                            $firstItem = $group->first();
+                            $firstItem['localAmount'] = $sumLocalAmount;
+                            $firstItem['rptAmount'] = $sumRptAmount;
+                            $firstItem['transAmount'] = $sumTransAmount;
+                            
+                            return $firstItem;
+                        })
+                        ->values() 
+                        ->toArray();
 
+        $finalData = $groupedData;
         $detailData = GRVDetails::where('grvAutoID', $masterModel["autoID"])
                                 ->join('erp_tax_vat_sub_categories', 'erp_grvdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                                 ->whereNotNull('vatSubCategoryID')

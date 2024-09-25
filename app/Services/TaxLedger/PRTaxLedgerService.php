@@ -68,11 +68,10 @@ class PRTaxLedgerService
         $ledgerDetailsData = $ledgerData;
         $ledgerDetailsData['createdUserSystemID'] = $empID->employeeSystemID;
 
-        $details = PurchaseReturnDetails::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID,supplierTransactionER,companyReportingER,localCurrencyER')
+        $details = PurchaseReturnDetails::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,(VATAmount*noQty) as transVATAmount,(VATAmountLocal*noQty) as localVATAmount ,(VATAmountRpt*noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID,supplierTransactionER,companyReportingER,localCurrencyER')
                                 ->where('purhaseReturnAutoID', $masterModel["autoID"])
                                 ->whereNotNull('vatSubCategoryID')
                                 ->join('erp_tax_vat_sub_categories', 'erp_purchasereturndetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
-                                ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
                                 ->get();
 
         $master = PurchaseReturn::with(['finance_period_by', 'supplier_by', 'details' => function ($query) {
@@ -166,7 +165,24 @@ class PRTaxLedgerService
  
 
         }
+        $groupedData = collect($finalData)
+                        ->groupBy('subCategoryID')
+                        ->map(function ($group) {
+                            $sumLocalAmount = $group->sum('localAmount');
+                            $sumRptAmount = $group->sum('rptAmount');
+                            $sumTransAmount = $group->sum('transAmount');
+                            
+                            $firstItem = $group->first();
+                            $firstItem['localAmount'] = $sumLocalAmount;
+                            $firstItem['rptAmount'] = $sumRptAmount;
+                            $firstItem['transAmount'] = $sumTransAmount;
+                            
+                            return $firstItem;
+                        })
+                        ->values() 
+                        ->toArray();
 
+                $finalData = $groupedData;
 
         $detailData = PurchaseReturnDetails::where('purhaseReturnAutoID', $masterModel["autoID"])
                                             ->join('erp_tax_vat_sub_categories', 'erp_purchasereturndetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
@@ -234,7 +250,7 @@ class PRTaxLedgerService
                     $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
                     $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                     $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                    $ledgerDetailsData['VATAmount'] = \Helper::roundValue($currencyConversionVAT['documentAmount']);
+                    $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
                     $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
                     $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
                     $ledgerDetailsData['outputVatTransferGLAccountID'] = $value1['outTra'];
