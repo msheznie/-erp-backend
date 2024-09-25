@@ -290,7 +290,7 @@ class CustomerInvoiceAPIController extends AppBaseController
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_invoice')]));
     }
 
-    public function createCustomerInvoiceAPI(CreateCustomerInvoiceAPIRequest $request){
+    public function createCustomerInvoiceAPI(Request $request){
 
         $input = $request->all();
 
@@ -305,7 +305,7 @@ class CustomerInvoiceAPIController extends AppBaseController
             return $this->sendResponse($createCustomerInvoice['responseData'],"Customer Invoices Store Successfully");
         }
         else{
-            return $this->sendError("Customer Invoices Store Failed",404, $createCustomerInvoice['responseData']);
+            return $this->sendAPIError($createCustomerInvoice['message'],422, $createCustomerInvoice['responseData']);
         }
 
     }
