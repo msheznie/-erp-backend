@@ -649,7 +649,6 @@ class ClubManagementAPIController extends AppBaseController
         $customerMaster = CustomerMaster::find($input['customerCodeSystem'],$inputParameterArray);
 
 //        $customerUpdateValidation = $this->validateCustomerUpdate($customerMaster,$data);
-
         if($customerMaster->customerShortCode != $input['customerShortCode'])
         {
             $duplicateCustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
@@ -657,6 +656,11 @@ class ClubManagementAPIController extends AppBaseController
             if($duplicateCustomerShortCode)
                 return ['status' => false , 'message' => 'Secondary code already exists.'];
 
+        }
+
+        if(!($input['isCustomerActive'] == 0 || $input['isCustomerActive'] == 1))
+        {
+            return ['status' => false , 'message' => 'isCustomerActive value should be 0 or 1'];
         }
 
         $updateData = array_diff_assoc($data, $customerMaster->toArray());
