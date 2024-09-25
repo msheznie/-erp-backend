@@ -38,6 +38,13 @@ class BudgetReportService
 
             $chartOfAccountDataArray = array();
             $total =0;
+            $totalBudgetAmount = 0;
+            $totalCommitments = 0;
+            $totalAvailableBudget = 0;
+            $totalActualAmountSpentTillDateCB = 0;
+            $totalActualAmountSpentTillDatePC = 0;
+            $totalCommitmentsForCurrentYear = 0;
+            $totalCommitmentsFromPreviousYear = 0;
             foreach ($chartOfAccountIDs as $chartOfAccountID)
             {
 
@@ -122,13 +129,32 @@ class BudgetReportService
                     $budgetCommitmentsDetailsReport->setCommitmentsFromPreviosYear($prvOpenPOs - $grvTotalAmountPreYear->total);
                     $budgetCommitmentsDetailsReport->setBalance();
                     $total += $budgetCommitmentsDetailsReport->getTotal();
+                    $totalBudgetAmount += $currentBudgetAmount;
+                    $totalCommitments += $commitments;
+                    $totalAvailableBudget += ($currentBudgetAmount + $commitments);
+                    $totalActualAmountSpentTillDateCB += $grvTotalAmountCurrYear->total1;
+                    $totalActualAmountSpentTillDatePC += $grvTotalAmountPreYear->total;
+                    $totalCommitmentsForCurrentYear += ($currentOpenPOs - $grvTotalAmountCurrYear->total1);
+                    $totalCommitmentsFromPreviousYear += ($prvOpenPOs - $grvTotalAmountPreYear->total);
 
                     array_push($data,$budgetCommitmentsDetailsReport);
                 }
 
             }
 
-        return ['data' => $data, 'total' => $total];
+        $totals = [
+            'totalBudgetAmount' => $totalBudgetAmount,
+            'totalCommitments' => $totalCommitments,
+            'totalAvailableBudget' => $totalAvailableBudget,
+            'totalActualAmountSpentTillDateCB' => $totalActualAmountSpentTillDateCB,
+            'totalActualAmountSpentTillDatePC' => $totalActualAmountSpentTillDatePC,
+            'totalCommitmentsForCurrentYear' => $totalCommitmentsForCurrentYear,
+            'totalCommitmentsFromPreviousYear' => $totalCommitmentsFromPreviousYear,
+            'total' => $total, // Total of the reports if applicable
+        ];
+
+
+        return ['data' => $data, 'total' => $totals];
 
     }
 

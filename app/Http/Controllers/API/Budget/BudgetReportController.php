@@ -63,7 +63,8 @@ class BudgetReportController extends AppBaseController
             case "BCD";
                 // Budget commitmentes details report
                 $data = $budgetReportService->generateBudgetCommitmentDetailsReport($request);
-
+                $serviceLines =  collect($request->selectedServicelines)->pluck('ServiceLineCode')->toArray();
+                $currency = $request->currencyID[0];
                 $fileName = 'Budget Commitments Detail';
                 $title = 'Budget Commitments Detail Report';
                 $excelColumnFormat = [];
@@ -72,12 +73,16 @@ class BudgetReportController extends AppBaseController
                 $company_name = $company->CompanyName;
                 $from_date = $request->fromDate;
                 $to_date = $request->fromDate;
+                $date = $request->fromDate.'-'.$request->toDate;
 
 
                 $outputData = array('reportData' => $data['data'],
                     'companyName' => $company_name,
-                    'fromDate' =>  $request->fromDate,
-                    'total' => $data['total']
+                    'fromDate' => $date,
+                    'total' => $data['total'],
+                    'serviceLines' => implode(' & ',$serviceLines),
+                    'currency' => $currency,
+
                 );
 
                 $excelColumnFormat = [
