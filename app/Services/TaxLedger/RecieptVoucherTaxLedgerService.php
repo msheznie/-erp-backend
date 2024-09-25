@@ -210,8 +210,8 @@ class RecieptVoucherTaxLedgerService
                                 $ledgerDetailsData['itemDescription'] = null;
                                 $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
                                 $ledgerDetailsData['taxableAmount'] = ($value->netAmount);
-                                $ledgerDetailsData['VATAmount'] = $value->vatAmount;
-                                $ledgerDetailsData['recoverabilityAmount'] = $value->vatAmount;
+                                $ledgerDetailsData['VATAmount'] = $value->VATAmount;
+                                $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount;
                                 $ledgerDetailsData['localER'] = $value->localCurrencyER;
                                 $ledgerDetailsData['reportingER'] = $value->comRptCurrencyER;
                                 $ledgerDetailsData['taxableAmountLocal'] = $value->netAmountLocal;
@@ -349,8 +349,8 @@ class RecieptVoucherTaxLedgerService
                         $ledgerDetailsData['itemDescription'] = null;
                         $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
                         $ledgerDetailsData['taxableAmount'] = ($value->netAmount);
-                        $ledgerDetailsData['VATAmount'] = $value->vatAmount;
-                        $ledgerDetailsData['recoverabilityAmount'] = $value->vatAmount;
+                        $ledgerDetailsData['VATAmount'] = $value->VATAmount;
+                        $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount;
                         $ledgerDetailsData['localER'] = $value->localCurrencyER;
                         $ledgerDetailsData['reportingER'] = $value->comRptCurrencyER;
                         $ledgerDetailsData['taxableAmountLocal'] = $value->netAmountLocal;
