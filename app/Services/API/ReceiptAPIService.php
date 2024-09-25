@@ -54,7 +54,7 @@ class ReceiptAPIService
         foreach ($receipts as $receipt) {
             $receipt = self::serialCodeDetails($receipt);
             $saveReceipt = CustomerReceivePayment::create($receipt->toArray());
-            array_push($savedReceipts,["refNo" => $saveReceipt->narration, "custPaymentReceiveCode"=> $saveReceipt->custPaymentReceiveCode]);
+            array_push($savedReceipts,["refNo" => $saveReceipt->narration, "custPaymentReceiveCode"=> $saveReceipt->custPaymentReceiveCode,'custReceivePaymentAutoID' => $saveReceipt->custReceivePaymentAutoID]);
             if($saveReceipt) {
                 foreach ($receipt->details as $detail) {
                     $result = ReceiptDetailsAPIService::storeReceiptDetails($detail,$saveReceipt);
