@@ -643,9 +643,11 @@ class SupplierInvoiceTaxLedgerService
                 if($value->subCatgeoryType == 1)
                 {
           
-                    $vatPortion = $value->exempt_vat_portion;
-                    $exemptAmount =   ($vatPortion/100) * $value->VATAmount * $value->noQty ;
-                    $standardAmount = $value->VATAmount * $value->noQty - $exemptAmount;
+                    $normalVAT = $value->grv_detail->VATAmount - ($value->grv_detail->VATAmount * ($value->exempt_vat_portion /100));
+                    $exemptAmount = (($value->grv_detail->VATAmount - $normalVAT) * $value->grv_detail->noQty);
+                    
+                    $standardAmount =  ($normalVAT * $value->grv_detail->noQty);
+
     
     
                     $info = [
