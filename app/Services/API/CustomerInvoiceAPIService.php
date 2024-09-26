@@ -102,14 +102,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                 else {
                     $errorData[] = [
                         'field' => "invoice_type",
-                        'message' => ["invoice_type must be an integer"]
+                        'message' => ["invoice_type format is invalid"]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "invoice_type",
-                    'message' => ["invoice_type format is invalid"]
+                    'message' => ["invoice_type must be an integer"]
                 ];
             }
         }
@@ -164,6 +164,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                         ->where('customerCodeSystem', $customer->customerCodeSystem)
                         ->where('isAssigned', -1)
                         ->first();
+
                     if(!$currency){
                         $errorData[] = [
                             'field' => "currency_code",
@@ -178,6 +179,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                 ->where('companySystemID', $request['company_id'])
                                 ->where('bankShortCode',$request['bank_code'])
                                 ->first();
+
                             if(!$bank){
                                 $errorData[] = [
                                     'field' => "bank_code",
@@ -194,6 +196,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                         ->where('approvedYN', 1)
                                         ->where('isAccountActive', 1)
                                         ->first();
+
                                     if(!$bankAccount){
                                         $errorData[] = [
                                             'field' => "account_number",
@@ -425,6 +428,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         // Validate Unit Code
         if(isset($request['uom'])){
             $unit = Unit::where('is_active', 1)->where('UnitShortCode',$request['uom'])->first();
+
             if(!$unit){
                 $errorData[] = [
                     'field' => "uom",
