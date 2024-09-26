@@ -482,10 +482,11 @@ class SupplierInvoiceTaxLedgerService
             }
         }
         else {
-            $details = SupplierInvoiceItemDetail::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,(VATAmount) as transVATAmount,(VATAmountLocal) as localVATAmount ,(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID as transCurrencyID,companyReportingER as reportingCurrencyER,localCurrencyER as localCurrencyER,supplierTransactionCurrencyER as transCurrencyER')
+            $details = SupplierInvoiceItemDetail::selectRaw('erp_grvdetails.noQty,erp_grvdetails.VATAmount as grvVATAmount,erp_bookinvsupp_item_det.exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,(erp_bookinvsupp_item_det.VATAmount) as transVATAmount,(erp_bookinvsupp_item_det.VATAmountLocal) as localVATAmount ,(erp_bookinvsupp_item_det.VATAmountRpt) as rptVATAmount, erp_bookinvsupp_item_det.vatMasterCategoryID, erp_bookinvsupp_item_det.vatSubCategoryID, erp_bookinvsupp_item_det.localCurrencyID as localCurrencyID,erp_bookinvsupp_item_det.companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID as transCurrencyID,erp_bookinvsupp_item_det.companyReportingER as reportingCurrencyER,erp_bookinvsupp_item_det.localCurrencyER as localCurrencyER,supplierTransactionCurrencyER as transCurrencyER')
                                     ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
-                                    ->whereNotNull('vatSubCategoryID')
+                                    ->whereNotNull('erp_bookinvsupp_item_det.vatSubCategoryID')
                                     ->join('erp_tax_vat_sub_categories', 'erp_bookinvsupp_item_det.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
+                                    ->join('erp_grvdetails', 'erp_bookinvsupp_item_det.grvDetailsID', '=', 'erp_grvdetails.grvDetailsID')
                                     ->get();
             
 
@@ -506,10 +507,11 @@ class SupplierInvoiceTaxLedgerService
 
                 if($value->subCatgeoryType == 1)
                 {
-
-                    $vatPortion = $value->exempt_vat_portion;
-                    $exemptAmount =   ($vatPortion/100) * $value->transVATAmount ;
-                    $standardAmount = $value->transVATAmount - $exemptAmount;
+                    
+                    $normalVAT = $value->grvVATAmount - ($value->grvVATAmount * ($value->exempt_vat_portion /100));
+                    $exemptAmount = (($value->grvVATAmount - $normalVAT) * $value->noQty);
+                    
+                    $standardAmount =  ($normalVAT * $value->noQty);
     
     
                     $info = [
