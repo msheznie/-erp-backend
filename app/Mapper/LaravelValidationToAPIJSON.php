@@ -92,7 +92,12 @@ class LaravelValidationToAPIJSON
                     'status' => false,
                     'errors' =>  $errors
                 ],
-                "detailData" => array_filter($resultArray, function ($entry) use ($key) {
+                "detailData" => empty(array_filter($resultArray, function ($entry) use ($key) {
+                    return $entry[0]['parentIndex'] == $key;
+                })) ? [
+                    'status' => true,
+                    'errors' => []
+                ] : array_filter($resultArray, function ($entry) use ($key) {
                     return $entry[0]['parentIndex'] == $key;
                 })
             ];
