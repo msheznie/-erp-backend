@@ -665,6 +665,9 @@ class StockTransferAPIController extends AppBaseController
                 // $updateItem->unitCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
                 $updateItem->save();
 
+                $itemDefaultUnit = ItemMaster::where('itemCodeSystem',$updateItem->itemCodeSystem)->select('unit')->first();
+                $conversionUnit = UnitConversion::where('masterUnitID',$itemDefaultUnit->unit)->where('subUnitID', $updateItem->unitOfMeasure)->first();
+
                 if ($updateItem->unitCostLocal == 0 || $updateItem->unitCostRpt == 0) {
                     array_push($finalError['cost_zero'], $updateItem->itemPrimaryCode);
                     $error_count++;
@@ -681,12 +684,12 @@ class StockTransferAPIController extends AppBaseController
                     array_push($finalError['currentWareHouseStockQty_zero'], $updateItem->itemPrimaryCode);
                     $error_count++;
                 }
-                if ($updateItem->qty > $updateItem->currentStockQty) {
+                if ($updateItem->qty / (isset($conversionUnit)? $conversionUnit->conversion:1) > $updateItem->currentStockQty) {
                     array_push($finalError['currentStockQty_more'], $updateItem->itemPrimaryCode);
                     $error_count++;
                 }
 
-                if ($updateItem->qty > $updateItem->warehouseStockQty) {
+                if ($updateItem->qty / (isset($conversionUnit)? $conversionUnit->conversion:1) > $updateItem->warehouseStockQty) {
                     array_push($finalError['currentWareHouseStockQty_more'], $updateItem->itemPrimaryCode);
                     $error_count++;
                 }
