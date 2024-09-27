@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.49.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.49.0...v10.49.1) (2024-09-27)
+
+
+### Bug Fixes
+
+* **Supplier Ranking:** User unable to confirm the commercial ranking even after the bid selection [GSUP-1857] ([#6762](https://github.com/pbsgears/Gears_BackEnd/issues/6762)) ([73f0118](https://github.com/pbsgears/Gears_BackEnd/commit/73f0118819497afd5e42cdc6f98f2ae4750da504))
+
 ## [10.49.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.48.3...v10.49.0) (2024-09-24)
 
 
