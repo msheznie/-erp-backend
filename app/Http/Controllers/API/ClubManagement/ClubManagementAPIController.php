@@ -594,6 +594,9 @@ class ClubManagementAPIController extends AppBaseController
         if(key_exists('customerCodeSystem',$input))
         {
 
+            if ($commonValidator->fails()) {
+                return $this->sendError($commonValidator->messages(), 422);
+            }
             $customerMaster = $this->updateCustomer($input);
         }else {
 
