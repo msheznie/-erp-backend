@@ -34,14 +34,11 @@ class ReceiptAPIController extends AppBaseController
             '*.approvedBy' => 'required|integer',
             '*.approvedDate' => 'required|date_format:d-m-Y',
             '*.vatApplicable' => 'required|in:yes,no',
-            '*.details.*.invoiceCode' => "required_if:*.receiptType,2",
-            '*.details.*.segmentCode' => "required_if:*.receiptType,2",
-            '*.details.*.receiptAmount' => "required_if:*.receiptType,2",
-            '*.details.*.glCode' => "required_if:*.receiptType,1",
-            '*.details.*.segmentCode' => "required_if:*.receiptType,1",
-            '*.details.*.amount' => "required_if:*.receiptType,1",
-            '*.details.*.segmentCode' => "required_if:*.receiptType,3",
-            '*.details.*.amount' => "required_if:*.receiptType,3",
+            '*.details.*.invoiceCode' => 'required_if:*.receiptType,2',
+            '*.details.*.segmentCode' => 'required_if:*.receiptType,1,2,3',
+            '*.details.*.receiptAmount' => 'required_if:*.receiptType,2',
+            '*.details.*.glCode' => 'required_if:*.receiptType,1',
+            '*.details.*.amount' => 'required_if:*.receiptType,1,3',
 
         ];
 
