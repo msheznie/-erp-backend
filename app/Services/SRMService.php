@@ -1288,6 +1288,26 @@ class SRMService
                     ->get();
                 $value['approval_list'] = $approvalList;
             }
+            else
+            {
+                $approved_id = $value->employeeSystemID;
+                $approved_date = $value->approvedDate;
+                $approved_date = Carbon::parse($approved_date)->format('Y-m-d');
+                $department = EmployeesDepartment::where('employeeSystemID',$approved_id)
+                    ->where('approvalDeligated','!=',0)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('documentSystemID', $documentSystemID)
+                    ->where('employeeGroupID', $value->approvalGroupID)
+                    ->with(['delegator_employee'=>function($q){
+                        $q->Select('employeeSystemID','empUserName');
+                    }])->select('employeesDepartmentsID','approvalDeligatedFromEmpID')
+                    ->first();
+                if($department)
+                {
+                    $value['delegation'] = true;
+                    $value['deparmtnet'] = $department;
+                }
+            }
         }
 
         return [
