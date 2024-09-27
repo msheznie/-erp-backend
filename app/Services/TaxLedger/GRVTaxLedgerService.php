@@ -241,7 +241,7 @@ class GRVTaxLedgerService
                     {
                     $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
                     $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
-                    $ledgerDetailsData['VATAmount'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
                     $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
                     $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                     $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
