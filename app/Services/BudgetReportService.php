@@ -25,7 +25,7 @@ class BudgetReportService
         $fromDate = new Carbon($request->input('fromDate'));
         $toDate = new Carbon($request->input('toDate'));
         $currentFinanicalYear = CompanyFinanceYear::currentFinanceYear($request->input('companySystemID'));
-
+        $currencyID = $request->currencyID[0];
         $previosYear = CompanyFinanceYear::selectRaw("companyFinanceYearID, DATE(bigginingDate) AS startDate, DATE(endingDate) AS endDate")
             ->where('companySystemID', $request->input('companySystemID'))
             ->whereDate('bigginingDate', '<', $currentFinanicalYear->startDate)
@@ -45,17 +45,41 @@ class BudgetReportService
             $totalActualAmountSpentTillDatePC = 0;
             $totalCommitmentsForCurrentYear = 0;
             $totalCommitmentsFromPreviousYear = 0;
-            foreach ($chartOfAccountIDs as $chartOfAccountID)
+
+        $idWithValue = Budjetdetails::with(['budget_master.segment_by', 'budget_master.company', 'chart_of_account'])
+            ->whereHas('budget_master.segment_by', function ($query) use ($serviceLineSystemIDs) {
+                $query->whereIn('serviceLineSystemID', $serviceLineSystemIDs);
+            })
+            ->whereHas('budget_master.company', function($query) use ($request) {
+                $query->where('companySystemID', $request->input('companySystemID'));
+            })
+            ->whereHas('chart_of_account', function ($query) use ($chartOfAccountIDs) {
+                $query->whereIn('chartOfAccountSystemID', $chartOfAccountIDs);
+            })
+            ->whereHas('budget_master', function ($query) use ($currentFinanicalYear) {
+                $query->where('companyFinanceYearID', $currentFinanicalYear->companyFinanceYearID);
+            })
+            ->whereBetween('createdDateTime', [$fromDate, $toDate])
+            ->where('budjetAmtLocal', '>', 0)
+            ->groupBy('chartOfAccountID')
+            ->pluck('chartOfAccountID')
+            ->toArray();
+
+        foreach (array_flatten($idWithValue) as $chartOfAccountID)
             {
 
-                $currentBudgetAmount = Budjetdetails::whereHas('budget_master.segment_by', function ($query) use ($serviceLineSystemIDs,$currentFinanicalYear) {
-                    $query->where('companyFinanceYearID',$currentFinanicalYear->companyFinanceYearID);
+                $currentBudgetAmount = Budjetdetails::with(['budget_master.segment_by', 'budget_master.company', 'chart_of_account'])
+                ->whereHas('budget_master.segment_by', function ($query) use ($serviceLineSystemIDs,$currentFinanicalYear) {
                     $query->whereIn('serviceLineSystemID', $serviceLineSystemIDs);
                 })->whereHas('budget_master.company', function($query) use ($request) {
                     $query->where('companySystemID',$request->input('companySystemID'));
                 })->whereHas('chart_of_account', function ($query) use ($chartOfAccountID) {
                     $query->where('chartOfAccountSystemID',$chartOfAccountID);
-                })->whereBetween('erp_budjetdetails.createdDateTime', [$fromDate, $toDate])->sum('budjetAmtLocal');
+                })->whereHas('budget_master',function ($query) use ($currentFinanicalYear) {
+                    $query->where('companyFinanceYearID',$currentFinanicalYear->companyFinanceYearID);
+                })->whereBetween('erp_budjetdetails.createdDateTime', [$fromDate, $toDate]);
+
+                $currentBudgetAmount = ($currencyID == 1) ? $currentBudgetAmount->sum('budjetAmtLocal') : $currentBudgetAmount->sum('budjetAmtRpt');
 
                 $chartOfAccount = ChartOfAccount::find($chartOfAccountID);
 
@@ -64,47 +88,56 @@ class BudgetReportService
                     array_push($errorBudgetZero,$chartOfAccount->AccountCode);
                 }
                 else {
-                    $commitments = ProcumentOrder::whereIn('serviceLineSystemID',$serviceLineSystemIDs)
+                    $commitments = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
                         ->where('poConfirmedYN',1)->where('approved',-1)
                         ->where('budgetYear','<',Carbon::parse($currentFinanicalYear->startDate)->year)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
-                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate])
-                        ->sum('poTotalLocalCurrency');
+                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
 
-                    $currentOpenPOs = ProcumentOrder::whereIn('serviceLineSystemID',$serviceLineSystemIDs)
+                    $commitments = ($currencyID == 1) ? $commitments->sum('poTotalLocalCurrency') : $commitments->sum('poTotalComRptCurrency');
+
+
+                    $currentOpenPOs = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
                         ->where('poConfirmedYN',1)
                         ->where('approved',-1)
                         ->where('budgetYear',Carbon::parse($currentFinanicalYear->startDate)->year)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
-                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate])
-                        ->sum('poTotalLocalCurrency');
+                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
 
-                    $prvOpenPOs = ProcumentOrder::whereIn('serviceLineSystemID',$serviceLineSystemIDs)
+                    $currentOpenPOs = ($currencyID == 1) ? $currentOpenPOs->sum('poTotalLocalCurrency') : $currentOpenPOs->sum('poTotalComRptCurrency');
+
+
+                    $prvOpenPOs = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
                         ->where('poConfirmedYN',1)
                         ->where('approved',-1)
                         ->where('budgetYear','<',Carbon::parse($currentFinanicalYear->startDate)->year)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
-                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate])
-                        ->sum('poTotalLocalCurrency');
+                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
 
-                    $grvTotalAmountPreYear = ProcumentOrder::whereIn('serviceLineSystemID',$serviceLineSystemIDs)->where('poConfirmedYN', 1)
+                    $prvOpenPOs = ($currencyID == 1) ? $prvOpenPOs->sum('poTotalLocalCurrency') : $prvOpenPOs->sum('poTotalComRptCurrency');
+
+                    $grvTotalAmountPreYear = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)->where('poConfirmedYN', 1)
                         ->Where('approved', -1)
                         ->join('erp_grvdetails', 'erp_grvdetails.purchaseOrderMastertID', '=', 'erp_purchaseordermaster.purchaseOrderID') // Join the grv_details table
                         ->where('budgetYear','<', Carbon::parse($currentFinanicalYear->startDate)->year)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
-                        ->selectRaw('SUM(poTotalLocalCurrency) as total') // Sum netAmount from grv_details
+                        ->selectRaw(
+                            $currencyID == 1
+                                ? 'SUM(poTotalLocalCurrency) as total'
+                                : 'SUM(poTotalComRptCurrency) as total'
+                        )
                         ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate])
                         ->first();
 
-                    $grvTotalAmountCurrYear = ProcumentOrder::whereIn('serviceLineSystemID',$serviceLineSystemIDs)->where('poConfirmedYN', 1)
+                    $grvTotalAmountCurrYear = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)->where('poConfirmedYN', 1)
                         ->Where('approved', -1)
                         ->where('budgetYear',Carbon::parse($currentFinanicalYear->startDate)->year)
                         ->join('erp_grvdetails', 'erp_grvdetails.purchaseOrderMastertID', '=', 'erp_purchaseordermaster.purchaseOrderID') // Join the grv_details table
@@ -112,7 +145,11 @@ class BudgetReportService
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
                         ->whereHas('grv_details')
-                        ->selectRaw('SUM(poTotalLocalCurrency) as total1') // Sum netAmount from grv_details
+                        ->selectRaw(
+                            $currencyID == 1
+                                ? 'SUM(poTotalLocalCurrency) as total1'
+                                : 'SUM(poTotalComRptCurrency) as total1'
+                        )
                         ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate])
                         ->first();
 
