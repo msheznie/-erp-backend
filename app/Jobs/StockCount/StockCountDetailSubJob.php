@@ -183,12 +183,12 @@ class StockCountDetailSubJob implements ShouldQueue
 
         }
 
-
-       $stockCounter->counter += 1;
-
-        $stockCounter->save();
-
-        $newCounterValue = $stockCounter->counter;
+        $newCounterValue = 0;
+        if(isset($stockCounter)) {
+            $stockCounter->counter += 1;
+            $stockCounter->save();
+            $newCounterValue = $stockCounter->counter;
+        }
 
         Log::info('new value '.$newCounterValue);
         if ($newCounterValue == $count) {
