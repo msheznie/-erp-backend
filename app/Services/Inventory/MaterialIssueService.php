@@ -235,8 +235,8 @@ class MaterialIssueService
                                 'erp_itemissuemaster.itemIssueCode',
                                 'erp_itemissuemaster.approved'
                             )
-                            ->whereHas('details', function ($query) use ($rowData) {
-                                $query->where('itemCodeSystem', $rowData['item_code']);
+                            ->whereHas('details', function ($query) use ($categoryType) {
+                                $query->where('itemCodeSystem', $categoryType->itemCodeSystem);
                             })
                             ->where('approved', 0)
                             ->first();
@@ -262,8 +262,8 @@ class MaterialIssueService
                                 'erp_stocktransfer.stockTransferCode',
                                 'erp_stocktransfer.approved'
                             )
-                            ->whereHas('details', function ($query) use ($rowData) {
-                                $query->where('itemCodeSystem', $rowData['item_code']);
+                            ->whereHas('details', function ($query) use ($categoryType) {
+                                $query->where('itemCodeSystem', $categoryType->itemCodeSystem);
                             })
                             ->where('approved', 0)
                             ->first();
@@ -287,8 +287,8 @@ class MaterialIssueService
                                 'erp_custinvoicedirect.wareHouseSystemCode',
                                 'erp_custinvoicedirect.approved'
                             )
-                            ->whereHas('issue_item_details', function ($query) use ($rowData) {
-                                $query->where('itemCodeSystem', $rowData['item_code']);
+                            ->whereHas('issue_item_details', function ($query) use ($categoryType) {
+                                $query->where('itemCodeSystem', $categoryType->itemCodeSystem);
                             })
                             ->where('approved', 0)
                             ->where('canceledYN', 0)
@@ -308,8 +308,8 @@ class MaterialIssueService
                                 'erp_delivery_order.deliveryOrderID',
                                 'erp_delivery_order.companySystemID'
                             )
-                            ->whereHas('detail', function ($query) use ($rowData) {
-                                $query->where('itemCodeSystem', $rowData['item_code']);
+                            ->whereHas('detail', function ($query) use ($categoryType) {
+                                $query->where('itemCodeSystem', $categoryType->itemCodeSystem);
                             })
                             ->where('approvedYN', 0)
                             ->first();
@@ -331,8 +331,8 @@ class MaterialIssueService
                                 'erp_purchasereturnmaster.companySystemID',
                                 'erp_purchasereturnmaster.purchaseReturnLocation'
                             )
-                            ->whereHas('details', function ($query) use ($rowData) {
-                                $query->where('itemCode', $rowData['item_code']);
+                            ->whereHas('details', function ($query) use ($categoryType) {
+                                $query->where('itemCode', $categoryType->itemCodeSystem);
                             })
                             ->where('approved', 0)
                             ->first();
