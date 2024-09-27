@@ -1631,21 +1631,12 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 return $this->sendError('Upload failed due to changes made in the Excel template', 500);
             }
 
-            $validateHeaderCode = false;
             $totalItemCount = 0;
 
             foreach ($uniqueData as $key => $value) {
-                if (isset($value['item_code'])) {
-                    $validateHeaderCode = true;
-                }
-
                 if ((isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['item_description']) && !is_null($value['item_description']) || isset($value['qty']) && !is_null($value['qty'])) {
                     $totalItemCount = $totalItemCount + 1;
                 }
-            }
-
-            if (!$validateHeaderCode) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
             }
 
             if ($isProject_base) {
