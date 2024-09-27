@@ -653,6 +653,9 @@ class ClubManagementAPIController extends AppBaseController
         {
             $duplicateCustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
 
+            if(empty($input['customerShortCode']))
+                return ['status' => false , 'message' => 'Secondary code cannot be empty!'];
+
             if($duplicateCustomerShortCode)
                 return ['status' => false , 'message' => 'Secondary code already exists.'];
 
