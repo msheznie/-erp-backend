@@ -22,8 +22,8 @@ class AssetCostingBulkSubJob implements ShouldQueue
      * @return void
      */
     protected $db;
-    protected $params;
-    public function __construct($db, $params)
+    protected $data;
+    public function __construct($db, $data)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -35,7 +35,7 @@ class AssetCostingBulkSubJob implements ShouldQueue
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->db = $db;
-        $this->params = $params;
+        $this->data = $data;
     }
 
     /**
@@ -50,7 +50,8 @@ class AssetCostingBulkSubJob implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/approve_bulk_document.log');
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
-        $params = $this->params;
+        $data = $this->data;
+        $params = $data['params'];
         $errorData = [];
         try {
             Log::info("Sub Job Starting");
@@ -62,7 +63,7 @@ class AssetCostingBulkSubJob implements ShouldQueue
                     'documentSystemID' => 22,
                     'documentSystemCode' => $params['documentSystemCode'],
                     'tag' => 'general-ledger',
-                    'errorType' => $approve["type"],
+                    'errorType' => 2,
                     'errorMessage' => $approve["message"],
                     'error' => null
                 ];
