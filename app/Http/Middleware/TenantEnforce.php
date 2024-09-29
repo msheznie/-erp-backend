@@ -81,7 +81,7 @@ class TenantEnforce
             'api/v1/stock_counts',
             'api/v1/mrItemsUpload',
             'api/v1/miItemsUpload',
-            'apo/v1/approveDocumentBulk'
+            'api/v1/approveDocumentBulk'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {
