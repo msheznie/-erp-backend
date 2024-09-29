@@ -49,6 +49,7 @@ class AssetCostingBulk implements ShouldQueue
         ini_set('memory_limit', -1);
         $uploadData = $this->uploadData;
         $db = $this->db;
+        Log::info('switching db '.$db);
         CommonJobService::db_switch($db);
         Log::useFiles(storage_path() . '/logs/approve_bulk_document.log');
         Log::info('switching db '.$db);
