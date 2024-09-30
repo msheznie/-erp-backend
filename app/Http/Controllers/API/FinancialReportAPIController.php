@@ -6449,9 +6449,9 @@ AND MASTER .canceledYN = 0';
         foreach ($columnKeys as $key => $val) {
             $coloumnShortCode = explode('-', $val)[0];
             if ($coloumnShortCode == "BCM") {
-                $fifthLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
+                $fifthLinkedcolumnQry .= 'IF(erp_budgetmaster.approvedYN = 0, 0, IFNULL( bAmountMonth,  0 )) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "BYTD") {
-                $fifthLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+                $fifthLinkedcolumnQry .= 'IF(erp_budgetmaster.approvedYN = 0, 0, IFNULL( bAmountYear,  0 )) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
                 $fifthLinkedcolumnQry .= 'IFNULL( eliminationAmount,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
@@ -6555,7 +6555,8 @@ FROM
                         erp_companyreporttemplatelinks.templateDetailID,
                         erp_companyreporttemplatelinks.categoryType AS linkCatType,
                         erp_companyreporttemplatedetails.description,
-                        erp_companyreporttemplatedetails.categoryType AS templateCatType
+                        erp_companyreporttemplatedetails.categoryType AS templateCatType,
+                        erp_companyreporttemplatedetails.companyReportTemplateID
                     FROM
                         erp_companyreporttemplatelinks
                     INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
@@ -6564,6 +6565,8 @@ FROM
                     ORDER BY
                         erp_companyreporttemplatedetails.sortOrder
                 ) AS a ON a.glAutoID = g.chartOfAccountSystemID
+                INNER JOIN (SELECT companyReportTemplateID FROM erp_companyreporttemplate)as erp_companyreporttemplate ON erp_companyreporttemplate.companyReportTemplateID = a.companyReportTemplateID
+                LEFT JOIN (SELECT templateMasterID, approvedYN FROM erp_budgetmaster)as erp_budgetmaster ON erp_budgetmaster.templateMasterID = erp_companyreporttemplate.companyReportTemplateID
             )
             LEFT JOIN(
                     SELECT
@@ -6638,7 +6641,8 @@ FROM
                         erp_companyreporttemplatelinks.templateDetailID,
                         erp_companyreporttemplatelinks.categoryType AS linkCatType,
                         erp_companyreporttemplatedetails.description,
-                        erp_companyreporttemplatedetails.categoryType AS templateCatType
+                        erp_companyreporttemplatedetails.categoryType AS templateCatType,
+                        erp_companyreporttemplatedetails.companyReportTemplateID
                     FROM
                         erp_companyreporttemplatelinks
                     INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
@@ -6647,6 +6651,8 @@ FROM
                     ORDER BY
                         erp_companyreporttemplatedetails.sortOrder
                 ) AS a ON a.glAutoID = g.chartOfAccountSystemID
+                INNER JOIN (SELECT companyReportTemplateID FROM erp_companyreporttemplate)as erp_companyreporttemplate ON erp_companyreporttemplate.companyReportTemplateID = a.companyReportTemplateID
+                LEFT JOIN (SELECT templateMasterID, approvedYN FROM erp_budgetmaster)as erp_budgetmaster ON erp_budgetmaster.templateMasterID = erp_companyreporttemplate.companyReportTemplateID
             )
             LEFT JOIN(
                     SELECT
