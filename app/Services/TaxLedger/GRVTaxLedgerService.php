@@ -129,7 +129,8 @@ class GRVTaxLedgerService
 
                 foreach ($info as $key1 => $value1) {
                     $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
-
+                    if($value1['amount'] != 0)
+                    {
                     $ledgerData['subCategoryID'] = $value1['subcat'];
                     $ledgerData['masterCategoryID'] = $value1['mastercat'];
                     $ledgerData['localAmount'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
@@ -140,6 +141,7 @@ class GRVTaxLedgerService
                     $ledgerData['outputVatTransferGLAccountID'] = $value1['outTra'];
                     $ledgerData['outputVatGLAccountID'] =  $value1['outVat'];
                     array_push($finalData, $ledgerData);
+                    }
                 }
 
 
