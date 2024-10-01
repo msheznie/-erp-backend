@@ -24,6 +24,7 @@ class BudgetReportService
         $chartOfAccountIDs = collect($request->input('glCodes'))->pluck('chartOfAccountSystemID')->toArray();
         $fromDate = new Carbon($request->input('fromDate'));
         $toDate = new Carbon($request->input('toDate'));
+        $toDate = $toDate->setTime(23, 59, 59);
         $currentFinanicalYear = CompanyFinanceYear::currentFinanceYear($request->input('companySystemID'));
         $currencyID = $request->currencyID[0];
         $previosYear = CompanyFinanceYear::selectRaw("companyFinanceYearID, DATE(bigginingDate) AS startDate, DATE(endingDate) AS endDate")
@@ -107,7 +108,6 @@ class BudgetReportService
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
                         ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
-
                     $currentOpenPOs = ($currencyID == 1) ? $currentOpenPOs->sum('poTotalLocalCurrency') : $currentOpenPOs->sum('poTotalComRptCurrency');
 
 
