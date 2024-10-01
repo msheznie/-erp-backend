@@ -16,8 +16,10 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateDocumentApprovedAPIRequest;
 use App\Http\Requests\API\UpdateDocumentApprovedAPIRequest;
+use App\Jobs\AssetBulkApproval\AssetCostingBulk;
 use App\Models\ApprovalLevel;
 use App\Models\DocumentApproved;
+use App\Models\GRVMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\DocumentApprovedRepository;
@@ -3455,43 +3457,46 @@ WHERE
         return $controller;
     }
 
-	public function approveDocumentBulk(Request $request)
+    public function approveDocumentBulk(Request $request)
     {
-		$input = $request->all();
-		$companyId = $input['companyId'];
-		$grv_id = $input['docOriginSystemCode'];
-		$empID = \Helper::getEmployeeSystemID();
-		
-		$results = $this->getPendingData($companyId,$grv_id); 
 
-		if(count($results) == 0)
-		{
-			return $this->sendError('There is no document to approve');
-		}
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $grv_id = $input['docOriginSystemCode'];
+        $empID = \Helper::getEmployeeSystemID();
+        $db = isset($request->db) ? $request->db : "";
+        $results = $this->getPendingData($companyId,$grv_id);
 
-		foreach($results as $result)
-		{	
-			$params = array(
-				'documentApprovedID' => $result->documentApprovedID,
-				'documentSystemCode' => $result->documentSystemCode,
-					'documentSystemID' => $result->documentSystemID,
-				'approvalLevelID' => $result->approvalLevelID,
-				'rollLevelOrder' => $result->rollLevelOrder,
-				'approvedComments' => $input['approvedComments'],
-			);
-			$approve = \Helper::approveDocument($params);
-			if (!$approve["success"]) {
-				return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
-			} 
+        $grvMaster = GRVMaster::find($grv_id);
+        if(count($results) == 0)
+        {
+            return $this->sendError('There are no documents to approve');
+        }
 
-		}
+        if(!empty($grvMaster) && $grvMaster->isProcessing == -1) {
+            return $this->sendError('Job is still processing !', 500,['type' => 'processing']);
+        }
 
-		return $this->sendResponse(true, 'Document Approved succesfully');
-
-	}
+        GRVMaster::where('grvAutoID', $grv_id)->update(['isProcessing' => -1]);
 
 
-	public function rejectDocumentBulk(Request $request)
+        $uploadData = array(
+            'results' => $results,
+            'approvedComments' => $input['approvedComments'],
+            'empID' => $empID,
+            'grvID' => $grv_id
+        );
+
+        AssetCostingBulk::dispatch($db, $uploadData);
+
+
+        return $this->sendResponse(true, 'Document Approved succesfully, Job is still processing !');
+
+    }
+
+
+
+    public function rejectDocumentBulk(Request $request)
 	{
 		$input = $request->all();
 		$companyId = $input['companyId'];

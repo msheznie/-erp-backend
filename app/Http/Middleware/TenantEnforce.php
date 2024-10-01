@@ -76,7 +76,8 @@ class TenantEnforce
             'api/v1/approveRecurringVoucher',
             'api/v1/create_customer_invoices',
             'api/v1/generateAPReportBulkPDF',
-            'api/v1/generateDocumentAgainstVRF'
+            'api/v1/generateDocumentAgainstVRF',
+            'api/v1/approveDocumentBulk'
         ];
 
         
