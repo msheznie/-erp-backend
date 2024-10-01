@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.49.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.49.1...v10.49.2) (2024-10-01)
+
+
+### Bug Fixes
+
+* **asset management:** Changed asset costing bulk approval to jobs [GCP-4730] ([#6853](https://github.com/pbsgears/Gears_BackEnd/issues/6853)) ([6f32f6b](https://github.com/pbsgears/Gears_BackEnd/commit/6f32f6bb3cb61670022c33ed893304ca22f48fc3))
+
 ## [10.49.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.49.0...v10.49.1) (2024-09-27)
 
 
