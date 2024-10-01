@@ -60,7 +60,7 @@ class BudgetReportService
                 $query->where('companyFinanceYearID', $currentFinanicalYear->companyFinanceYearID);
             })
             ->whereBetween('createdDateTime', [$fromDate, $toDate])
-            ->where('budjetAmtLocal', '>', 0)
+            ->where('budjetAmtLocal', '!=', 0)
             ->groupBy('chartOfAccountID')
             ->pluck('chartOfAccountID')
             ->toArray();
