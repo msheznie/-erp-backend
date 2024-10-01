@@ -6567,8 +6567,7 @@ FROM
             )
             LEFT JOIN(
                     SELECT
-                        ' . $budgetQuery . ' ,
-                        erp_budjetdetails.budgetmasterID
+                        ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
                     WHERE
@@ -6756,9 +6755,9 @@ GROUP BY
         foreach ($columnKeys as $val) {
             $coloumnShortCode = explode('-', $val)[0];
             if ($coloumnShortCode == "BCM") {
-                $secondLinkedcolumnQry .= 'IF(erp_budgetmaster.approvedYN = 0, 0, IFNULL(bAmountMonth, 0)) AS `' . $val . '`,';
+                $secondLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "BYTD") {
-                $secondLinkedcolumnQry .= 'IF(erp_budgetmaster.approvedYN = 0, 0, IFNULL(bAmountYear, 0)) AS `' . $val . '`,';
+                $secondLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
                 $secondLinkedcolumnQry .= 'IFNULL( eliminationAmount,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
@@ -6789,7 +6788,7 @@ GROUP BY
             $budgetJoin = ' AND gl.serviceLineID = budget.serviceLineSystemID';
             $generalLedgerGroup = ' ,erp_generalledger.serviceLineSystemID';
         }
-        
+
         $sql = 'SELECT * FROM (SELECT
     ' . $secondLinkedcolumnQry . '
     erp_companyreporttemplatelinks.glCode,
@@ -6801,8 +6800,6 @@ GROUP BY
 FROM
     erp_companyreporttemplatelinks
     INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
-    INNER JOIN erp_companyreporttemplate ON erp_companyreporttemplate.companyReportTemplateID = erp_companyreporttemplatedetails.companyReportTemplateID
-    LEFT JOIN erp_budgetmaster ON erp_budgetmaster.templateMasterID = erp_companyreporttemplate.companyReportTemplateID
     LEFT JOIN (
         SELECT
         ' . $firstLinkedcolumnQry . '
@@ -6816,8 +6813,7 @@ FROM
         GROUP BY erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . ') AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
     LEFT JOIN(
                 SELECT
-                    ' . $budgetQuery . ' ,
-                    erp_budjetdetails.budgetmasterID
+                    ' . $budgetQuery . ' 
                 FROM
                     erp_budjetdetails
                 WHERE
@@ -6840,7 +6836,7 @@ FROM
         ON
             elimination.chartOfAccountID = erp_companyreporttemplatelinks.glAutoID 
 WHERE
-    erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL 
+    erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
     erp_companyreporttemplatelinks.sortOrder) a '.$whereNonZero;
 
