@@ -160,7 +160,7 @@ class SRMService
         ->orderBy('createdDateTime', 'desc')
         ->paginate($per_page, ['*'], 'page', $page);*/
 
-        $query = ProcumentOrder::where('approved', -1)
+        $query = ProcumentOrder::where('approveds', -1)
             ->where('supplierID', $supplierID)
             ->where('poType_N', '!=', 5)
             ->with(['currency', 'created_by', 'segment', 'supplier'])
