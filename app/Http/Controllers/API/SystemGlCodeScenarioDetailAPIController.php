@@ -264,7 +264,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
 
             $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository->update($input, $id);
 
-            $hr_scenarios = [7, 8, 26];
+            $hr_scenarios = [7, 8, 25];
             if(in_array($systemGlCodeScenarioDetail->systemGlScenarioID, $hr_scenarios)){
                 $this->update_hr_config($systemGlCodeScenarioDetail);
             }
@@ -306,7 +306,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
                 $glTypeCode = 'IOU';
             break;
 
-            case 26: //NSPC
+            case 25: //NSPC
                 $glTypeCode = 'NSPC';
             break;
 
