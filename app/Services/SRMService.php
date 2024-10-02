@@ -1325,11 +1325,7 @@ class SRMService
 
     public function getTenders(Request $request)
     {
-        return [
-            'success' => true,
-            'message' => 'Test',
-            'data' => []
-        ];
+        
         $input = $request->all();
         $registrationLinkIds = array();
         $tenderMasterId = array();
