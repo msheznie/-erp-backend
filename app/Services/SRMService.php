@@ -142,12 +142,6 @@ class SRMService
 
     public function getPoList(Request $request): array
     {
-        return [
-            'success' => true,
-            'message' => 'test',
-            'data' => []
-        ];
-
         $input = $request->all();
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $per_page = $request->input('extra.per_page');
