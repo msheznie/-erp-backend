@@ -2706,7 +2706,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                                 $epsilon = 0.00001;
 
-                                if(($finalLocalAmount > $epsilon) || ($finalRptAmount > $epsilon)) {
+                                if((abs($finalLocalAmount) > $epsilon) || (abs($finalRptAmount) > $epsilon)) {
                                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
                                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
