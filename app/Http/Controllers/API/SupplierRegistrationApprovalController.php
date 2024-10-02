@@ -8,7 +8,9 @@ use App\Jobs\ThirdPartySystemNotifications\ThirdPartySystemNotificationJob;
 use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierBusinessCategoryAssign;
+use App\Models\SupplierCategory;
 use App\Models\SupplierContactDetails;
+use App\Models\SupplierGroup;
 use App\Models\SupplierSubCategoryAssign;
 use App\Services\SRMService;
 use Carbon\Carbon;
@@ -357,6 +359,16 @@ class SupplierRegistrationApprovalController extends AppBaseController
             $data['supCategoryMasterID'] = $supplierCat['supCategoryMasterID'];
         }
 
+        if ($supplierFormValues['supCategory'] != "0") {
+            $supplierCat = SupplierCategory::select('id')->where('id', $supplierFormValues['supCategory'])->first();
+            $data['supplier_category_id'] = $supplierCat['id'];
+        }
+
+        if ($supplierFormValues['supGroup'] != "0") {
+            $supplierGrp = SupplierGroup::select('id')->where('id', $supplierFormValues['supGroup'])->first();
+            $data['supplier_group_id'] = $supplierGrp['id'];
+        }
+
         $data['vatEligible'] =  $supplierFormValues['vatEligible'];
         $data['createdFrom'] =  6;
         $data['vatNumber'] =  $supplierFormValues['vatNumber'];
@@ -378,7 +390,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $data['webAddress'] = $supplierFormValues['webAddress'];
         $data['registrationExprity'] = $supplierFormValues['expireDate'];
 
-        if($isApprovalAmmend!=1){ 
+        if($isApprovalAmmend!=1){
             $supplierMasters = SupplierMaster::create($data); 
             $dataPrimary['primarySupplierCode'] = 'S0' . strval($supplierMasters['supplierCodeSystem']);
             SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])

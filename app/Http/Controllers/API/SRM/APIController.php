@@ -5,9 +5,11 @@ namespace App\Http\Controllers\API\SRM;
 use App\Http\Controllers\Controller;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
+use App\Models\SupplierCategory;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierContactType;
+use App\Models\SupplierGroup;
 use App\Services\POService;
 use App\Services\SRMService;
 use GuzzleHttp\Exception\RequestException;
@@ -300,6 +302,12 @@ class APIController extends Controller
                                     } else if ($val3->form_field_id == 2) { // Sub Category 
                                         $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode','categoryName')->where('supCategorySubID', $val4->value)->first();
                                         $val4->value = $subCategory['categoryName'];
+                                    } else if ($val3->form_field_id == 74) {
+                                        $category = SupplierCategory::select('id', 'category')->where('id', $val4->value)->first();
+                                        $val4->value = $category['category'];
+                                    } else if ($val3->form_field_id == 75) {
+                                        $group = SupplierGroup::select('id', 'group')->where('id', $val4->value)->first();
+                                        $val4->value = $group['group'];
                                     } else if ($val3->form_field_id == 28) { // Preferred Functional Currency
                                         $currency = CurrencyMaster::select('CurrencyCode', 'CurrencyName')->where('currencyID', $val4->value)->first();
                                         $val4->value = $currency['CurrencyName'] . ' (' . $currency['CurrencyCode'] . ')';

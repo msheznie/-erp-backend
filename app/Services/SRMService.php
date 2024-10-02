@@ -36,9 +36,11 @@ use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SRMSupplierValues;
+use App\Models\SupplierCategory;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierContactType;
+use App\Models\SupplierGroup;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
@@ -891,12 +893,16 @@ class SRMService
         $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID', 'categoryCode', 'categoryName')->get();
         $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID', 'supMasterCategoryID', 'subCategoryCode', 'categoryName')->get();
         $supplierContactType = SupplierContactType::select('supplierContactTypeID', 'supplierContactDescription')->get();
+        $supplierCategory = SupplierCategory::select('id', 'category')->where('is_deleted', 0)->where('is_active', 1)->get();
+        $supplierGroup = SupplierGroup::select('id', 'group')->where('is_deleted', 0)->where('is_active', 1)->get();
         $formData = array(
             'currencyMaster' => $currencyMaster,
             'countryMaster' => $countryMaster,
             'supplierCategoryMaster' => $supplierCategoryMaster,
             'supplierCategorySubMaster' => $supplierCategorySubMaster,
             'supplierContactType' => $supplierContactType,
+            'supplierCategory' => $supplierCategory,
+            'supplierGroup' => $supplierGroup,
         );
 
         return [
