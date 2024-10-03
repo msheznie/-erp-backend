@@ -353,18 +353,20 @@ class SupplierRegistrationApprovalController extends AppBaseController
         if ($supplierFormValues['currency'] != "0") {
             $currency = CurrencyMaster::select('currencyID')->where('currencyID', $supplierFormValues['currency'])->first();
             $data['currency'] = $currency['currencyID'];
+        } else {
+            $data['currency'] = 0;
         }
         if ($supplierFormValues['supCategoryMasterID'] != "0") {
             $supplierCat = SupplierCategoryMaster::select('supCategoryMasterID')->where('supCategoryMasterID', $supplierFormValues['supCategoryMasterID'])->first();
             $data['supCategoryMasterID'] = $supplierCat['supCategoryMasterID'];
         }
-
-        if ($supplierFormValues['supCategory'] != "0") {
+        
+        if (isset($supplierFormValues['supCategory']) && !empty($supplierFormValues['supCategory']) && $supplierFormValues['supCategory'] != "0") {
             $supplierCat = SupplierCategory::select('id')->where('id', $supplierFormValues['supCategory'])->first();
             $data['supplier_category_id'] = $supplierCat['id'];
         }
 
-        if ($supplierFormValues['supGroup'] != "0") {
+        if (isset($supplierFormValues['supGroup']) && !empty($supplierFormValues['supGroup']) && $supplierFormValues['supGroup'] != "0") {
             $supplierGrp = SupplierGroup::select('id')->where('id', $supplierFormValues['supGroup'])->first();
             $data['supplier_group_id'] = $supplierGrp['id'];
         }
