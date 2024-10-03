@@ -161,7 +161,7 @@ class BudgetReportService
                     $budgetCommitmentsDetailsReport->setGlCode($chartOfAccount->AccountCode);
                     $budgetCommitmentsDetailsReport->setAccountsDescription($chartOfAccount->AccountDescription);
                     $budgetCommitmentsDetailsReport->setGlTypes($chartOfAccount->catogaryBLorPL);
-                    $budgetCommitmentsDetailsReport->setBudgetAmount($currentBudgetAmount);
+                    $budgetCommitmentsDetailsReport->setBudgetAmount(ABS($currentBudgetAmount));
                     $budgetCommitmentsDetailsReport->setCommitments($commitments);
                     $budgetCommitmentsDetailsReport->setTotalAvailableBudget($currentBudgetAmount + $commitments);
                     $budgetCommitmentsDetailsReport->setActualAmountSpentTillDateCB($grvTotalAmountCurrYear->total1);
