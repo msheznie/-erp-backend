@@ -387,8 +387,8 @@ class AttendanceDataPullingService{
                 'noPaynonPayrollAmount' => $obj->absDedNonAmount,
                 'salaryCategoryID' => $obj->salCatId,
 
-                'checkIn' => $obj->clockIn,
-                'checkOut' => $obj->clockOut,
+                'checkIn' => $row['clock_in'],
+                'checkOut' => $row['clock_out'],
                 'work_out_detail_id'=> $row['detailId'],
                 'presentTypeID' => $obj->presentAbsentType,
 
