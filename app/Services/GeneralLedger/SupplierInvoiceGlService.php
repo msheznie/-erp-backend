@@ -568,6 +568,7 @@ class SupplierInvoiceGlService
 
 
                 if ($bs) {
+
                     foreach ($bs as $val) {
                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                         $data['serviceLineCode'] = $val->serviceLineCode;
@@ -618,6 +619,7 @@ class SupplierInvoiceGlService
                 if ($bs) {
 
                     foreach ($bs as $val) {
+
                         $transBSVAT = isset($directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['transVATAmount']) ? $directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['transVATAmount'] : 0;
                         $rptBSVAT = isset($directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['rptVATAmount']) ? $directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['rptVATAmount'] : 0;
                         $localBSVAT = isset($directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['localVATAmount']) ? $directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['localVATAmount'] : 0;
@@ -662,14 +664,35 @@ class SupplierInvoiceGlService
                         }
                         $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $val->supplierTransactionER;
-                        $data['documentTransAmount'] = \Helper::roundValue(($val->transAmount) + abs($transBSVAT) + abs($exemptVATTransAmount) - $exemptVatTrans);
+                        if($exemptVatTrans > 0)
+                        {
+                            $data['documentTransAmount'] = \Helper::roundValue(($val->transAmount));
+                        }else {
+                            $data['documentTransAmount'] = \Helper::roundValue(($val->transAmount) + abs($transBSVAT) + abs($exemptVATTransAmount) - $exemptVatTrans);
+
+                        }
                         $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                        $data['documentLocalAmount'] = \Helper::roundValue(($val->localAmount) + abs($localBSVAT) + abs($exemptVATLocalAmount) - $exemptVATLocal);
+                        if($exemptVATLocal > 0)
+                        {
+                            $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
+                        }else {
+                            $data['documentLocalAmount'] = \Helper::roundValue(($val->localAmount) + abs($localBSVAT) + abs($exemptVATLocalAmount) - $exemptVATLocal);
+
+                        }
+
                         $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                         $data['documentRptCurrencyER'] = $val->companyReportingER;
-                        $data['documentRptAmount'] = \Helper::roundValue(($val->rptAmount) + abs($rptBSVAT) + abs($exemptVATRptAmount) - $exemptVatRpt);
+
+                        if($exemptVatRpt > 0)
+                        {
+                            $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount);
+                        }else {
+                            $data['documentRptAmount'] = \Helper::roundValue(($val->rptAmount) + abs($rptBSVAT) + abs($exemptVATRptAmount) - $exemptVatRpt);
+
+                        }
                         $data['timestamp'] = \Helper::currentDateTime();
+
                         array_push($finalData, $data);
                     }
                 }
