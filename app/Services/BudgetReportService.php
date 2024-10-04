@@ -97,7 +97,7 @@ class BudgetReportService
                         })
                         ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
 
-                    $commitments = ($currencyID == 1) ? $commitments->sum('poTotalLocalCurrency') : $commitments->sum('poTotalComRptCurrency');
+                    $commitments = ($currencyID == 1) ? $commitments->selectRaw('SUM(poTotalLocalCurrency - VATAmountLocal) as amount')->first()->amount : $commitments->selectRaw('SUM(poTotalComRptCurrency - VATAmountRpt) as amount')->first()->amount;
 
 
                     $currentOpenPOs = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
@@ -108,8 +108,7 @@ class BudgetReportService
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
                         ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
-                    $currentOpenPOs = ($currencyID == 1) ? $currentOpenPOs->sum('poTotalLocalCurrency') : $currentOpenPOs->sum('poTotalComRptCurrency');
-
+                    $currentOpenPOs = ($currencyID == 1) ? $currentOpenPOs->selectRaw('SUM(poTotalLocalCurrency - VATAmountLocal) as amount')->first()->amount : $currentOpenPOs->selectRaw('SUM(poTotalComRptCurrency - VATAmountRpt) as amount')->first()->amount;
 
                     $prvOpenPOs = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
                         ->where('poConfirmedYN',1)
@@ -120,7 +119,7 @@ class BudgetReportService
                         })
                         ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
 
-                    $prvOpenPOs = ($currencyID == 1) ? $prvOpenPOs->sum('poTotalLocalCurrency') : $prvOpenPOs->sum('poTotalComRptCurrency');
+                    $prvOpenPOs = ($currencyID == 1) ? $prvOpenPOs->selectRaw('SUM(poTotalLocalCurrency - VATAmountLocal) as amount')->first()->amount : $prvOpenPOs->selectRaw('SUM(poTotalComRptCurrency - VATAmountRpt) as amount')->first()->amount;
 
                     $grvTotalAmountPreYear = ProcumentOrder::with(['detail'])->whereIn('erp_purchaseordermaster.serviceLineSystemID',$serviceLineSystemIDs)->where('poConfirmedYN', 1)
                         ->Where('erp_purchaseordermaster.approved', -1)
@@ -133,8 +132,8 @@ class BudgetReportService
                         })
                         ->selectRaw(
                             $currencyID == 1
-                                ? 'SUM(poTotalLocalCurrency) as total'
-                                : 'SUM(poTotalComRptCurrency) as total'
+                                ? 'SUM(erp_grvmaster.grvTotalLocalCurrency) as total'
+                                : 'SUM(erp_grvmaster.grvTotalComRptCurrency) as total'
                         )
                         ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate])
                         ->first();
@@ -151,8 +150,8 @@ class BudgetReportService
                         ->whereHas('grv_details')
                         ->selectRaw(
                             $currencyID == 1
-                                ? 'SUM(poTotalLocalCurrency) as total1'
-                                : 'SUM(poTotalComRptCurrency) as total1'
+                                ? 'SUM(erp_grvmaster.grvTotalLocalCurrency) as total1'
+                                : 'SUM(erp_grvmaster.grvTotalComRptCurrency) as total1'
                         )
                         ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate])
                         ->first();
@@ -163,16 +162,16 @@ class BudgetReportService
                     $budgetCommitmentsDetailsReport->setGlTypes($chartOfAccount->catogaryBLorPL);
                     $budgetCommitmentsDetailsReport->setBudgetAmount(ABS($currentBudgetAmount));
                     $budgetCommitmentsDetailsReport->setCommitments($commitments);
-                    $budgetCommitmentsDetailsReport->setTotalAvailableBudget($currentBudgetAmount + $commitments);
+                    $budgetCommitmentsDetailsReport->setTotalAvailableBudget(ABS($currentBudgetAmount + $commitments));
                     $budgetCommitmentsDetailsReport->setActualAmountSpentTillDateCB($grvTotalAmountCurrYear->total1);
                     $budgetCommitmentsDetailsReport->setActualAmountSpentTillDatePC($grvTotalAmountPreYear->total);
                     $budgetCommitmentsDetailsReport->setCommitmentsForCurrentYear($currentOpenPOs - $grvTotalAmountCurrYear->total1);
                     $budgetCommitmentsDetailsReport->setCommitmentsFromPreviosYear($prvOpenPOs - $grvTotalAmountPreYear->total);
                     $budgetCommitmentsDetailsReport->setBalance();
                     $total += $budgetCommitmentsDetailsReport->getTotal();
-                    $totalBudgetAmount += $currentBudgetAmount;
+                    $totalBudgetAmount += ABS($currentBudgetAmount);
                     $totalCommitments += $commitments;
-                    $totalAvailableBudget += ($currentBudgetAmount + $commitments);
+                    $totalAvailableBudget += ABS($currentBudgetAmount + $commitments);
                     $totalActualAmountSpentTillDateCB += $grvTotalAmountCurrYear->total1;
                     $totalActualAmountSpentTillDatePC += $grvTotalAmountPreYear->total;
                     $totalCommitmentsForCurrentYear += ($currentOpenPOs - $grvTotalAmountCurrYear->total1);
