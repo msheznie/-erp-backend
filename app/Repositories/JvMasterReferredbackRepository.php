@@ -54,6 +54,7 @@ class JvMasterReferredbackRepository extends BaseRepository
         'approvedByUserSystemID',
         'postedDate',
         'jvType',
+        'type',
         'isReverseAccYN',
         'refferedBackYN',
         'timesReferred',

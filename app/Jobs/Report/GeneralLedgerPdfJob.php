@@ -134,12 +134,28 @@ class GeneralLedgerPdfJob implements ShouldQueue
                     IF
                         ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
                     IF
-                        ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) AS localCredit,
+                        ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) AS localCredit,                        
+                   CASE	
+                        WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
+                        (
+                            IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) - (
+                            IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 )) ELSE (
+                            IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0) - (
+                            IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ))
+                    END AS localBalanceAmount,
                         erp_generalledger.documentRptCurrencyID,
                     IF
                         ( documentRptAmount > 0, documentRptAmount, 0 ) AS rptDebit,
                     IF
                         ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
+                    CASE
+                        WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
+                        (
+                            IF ( documentRptAmount > 0, documentRptAmount, 0 )) - (
+                            IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 )) ELSE (
+                            IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) - (
+                            IF ( documentRptAmount > 0, documentRptAmount, 0 ))) 
+                    END AS rptBalanceAmount,
                     IF
                         ( erp_generalledger.documentSystemID = 87 OR erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
                     FROM
@@ -193,9 +209,25 @@ class GeneralLedgerPdfJob implements ShouldQueue
                         erp_templatesdetails.templateDetailDescription,
                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
+                        CASE	
+                            WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
+                            (
+                                sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) )) - (
+                                sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) )) ELSE (
+                                sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) - (
+                                sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ))) 
+                        END AS localBalanceAmount,
                         erp_generalledger.documentRptCurrencyID,
                         sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
                         sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
+                        CASE
+                            WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
+                            (
+                                sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) )) - (
+                                sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) )) ELSE (
+                                sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) - (
+                                sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ))) 
+                        END AS rptBalanceAmount,
                         "" AS isCustomer
                     FROM
                         erp_generalledger

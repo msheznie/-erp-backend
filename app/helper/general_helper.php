@@ -3617,6 +3617,22 @@ class Helper
         }
     }
 
+    public static function conversionCurrencyByER(
+        $transactionCurrencyID,
+        $convertCurrencyID,
+        $transactionAmount,
+        $convertCurrencyER
+    ) {
+        $transactionAmount = self::roundValue($transactionAmount);
+        if ($transactionCurrencyID == $convertCurrencyID) {
+            $finalAmount = $transactionAmount;
+        } else {
+            $finalAmount = $transactionAmount / $convertCurrencyER;
+        }
+
+        return $finalAmount;
+    }
+
     /**
      * Function to get currency conversion rate by company,supplier and bankaccount
      * @param $companySystemID - company auto id
@@ -9424,6 +9440,7 @@ class Helper
 
         return $array;
     }
+
 
     public static function updateSupplierRetentionAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
     { 

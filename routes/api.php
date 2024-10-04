@@ -14,6 +14,8 @@ use App\Http\Middleware\MobileAccessVerify;
 */
 
 use Illuminate\Support\Facades\Route;
+
+
 Route::group(['middleware' => 'mobileServer'], function () {
 Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTaxLedgerForSupplierInvoice');
 
@@ -56,7 +58,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('create_customer_invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
     });
 
-    Route::group(['middleware' => 'auth:api'], function () {
+    Route::group(['middleware' => 'auth.api.keycloak'], function () {
 
         Route::group(['middleware' => ['authorization:api','mobileAccess']], function () {
             Route::post('getAllCreatedByEmployees', 'FilterApiController@getAllCreatedByEmployees');
@@ -81,6 +83,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/groupReport/groupReportRoutes.php';
             require __DIR__.'/../routes/generalLedger/generalLedgerRoutes.php';
             require __DIR__.'/../routes/thirdParty/thirdPartyRoutes.php';
+            require __DIR__.'/../routes/budget/budgetRoutes.php';
 
             Route::post('downloadCITemplate', 'CustomerInvoiceDirectAPIController@downloadCITemplate')->name("Download ci template");
             Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");
@@ -147,6 +150,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
 
             Route::resource('user_types', 'UserTypeAPIController');
+
+            Route::resource('mi_bulk_upload_error_logs', 'MiBulkUploadErrorLogAPIController');
 
             Route::post('getCurrencyDetails', 'SupplierCurrencyAPIController@getCurrencyDetails');
 

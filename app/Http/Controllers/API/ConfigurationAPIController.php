@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Models\TenantConfiguration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 
 class ConfigurationAPIController extends AppBaseController
 {

@@ -331,8 +331,10 @@
             <tr class="theme-tr-head">
                 <th></th>
                 <th class="text-left">Item </th>
-                <th class="text-left">Ref No</th>
                 <th class="text-left">UOM</th>
+                @if($entity->orderType != 1)
+                    <th class="text-left">Part No / Ref.Number</th>
+                @endif
                 <th class="text-left">QTY</th>
                 <th class="text-left">Unit Price</th>
                 <th class="text-left">Discount</th>
@@ -352,15 +354,17 @@
                         <div style="font-size: 10px !important;">{{$item->itemPrimaryCode}}</div>
                     </td>
                     <td>
-                        @if($item->quotation)
-                        {{$item->quotation->referenceNo}}
-                        @endif
-                    </td>
-                    <td>
                         @if($item->uom_issuing)
                             {{$item->uom_issuing->UnitShortCode}}
                         @endif
                     </td>
+                    @if($entity->orderType != 1)
+                        <td>
+                            @if(!empty($item->item_by) && !empty($item->item_by->secondaryItemCode))
+                                {{$item->item_by->secondaryItemCode}}
+                            @endif
+                        </td>
+                    @endif
                     <td class="text-right">{{number_format($item->qtyIssuedDefaultMeasure,2)}}</td>
                     <td class="text-right">{{number_format($item->unitTransactionAmount,$entity->currency)}}</td>
                     <td class="text-right">{{number_format($item->discountAmount,$entity->currency)}}</td>
@@ -375,7 +379,7 @@
             </tbody>
             @if($entity->isVatEligible == 1)
             <tr>
-                <td colspan="9" style="text-align: right; border-left: none !important;"><b>Total </b></td>
+                <td colspan="{{ $entity->orderType != 1 ? 9 : 8 }}" style="text-align: right; border-left: none !important;"><b>Total </b></td>
                 <td class="text-right">
                     @if ($entity->detail)
                         {{number_format($directTraSubTotal, $entity->currency)}}
@@ -385,7 +389,7 @@
             @endif
             @if($entity->isVatEligible == 0)
             <tr>
-                <td colspan="8" style="text-align: right; border-left: none !important;"><b>Total </b></td>
+                <td colspan="{{ $entity->orderType != 1 ? 8 : 7 }}" style="text-align: right; border-left: none !important;"><b>Total </b></td>
                 <td class="text-right">
                     @if ($entity->detail)
                         {{number_format($directTraSubTotal, $entity->currency)}}
@@ -395,7 +399,7 @@
             @endif
             @if($entity->isVatEligible)
             <tr>
-                <td colspan="9" style="text-align: right; border-left: none !important;"><b>VAT </b></td>
+                <td colspan="{{ $entity->orderType != 1 ? 9 : 8 }}" style="text-align: right; border-left: none !important;"><b>VAT </b></td>
                 <td class="text-right">
                     @if ($entity->detail && $entity->tax && $entity->tax->amount)
                         {{number_format($entity->tax->amount, $entity->currency)}}
@@ -405,7 +409,7 @@
                 </td>
             </tr>
             <tr>
-                <td colspan="9" style="text-align: right; border-left: none !important;"><b>Net Total </b></td>
+                <td colspan="{{ $entity->orderType != 1 ? 9 : 8 }}" style="text-align: right; border-left: none !important;"><b>Net Total </b></td>
                 <td class="text-right">
                     @if ($entity->detail && $entity->tax && $entity->tax->amount)
                         {{number_format(($directTraSubTotal + $entity->tax->amount), $entity->currency)}}

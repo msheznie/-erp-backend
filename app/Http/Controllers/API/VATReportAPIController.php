@@ -134,6 +134,7 @@ class VATReportAPIController extends AppBaseController
         $input = $input['filterData'];
         $output = $this->getVatReportQuery($input);
         $search = $request->input('search.value');
+
         /*if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $output = $output->where(function ($query) use ($search) {
@@ -561,30 +562,30 @@ public function exportVATDetailReport(Request $request, ExportVatDetailReportSer
                             ->when($reportTypeID == 1, function ($query) use ($accountTypeIds) {
                                 if (sizeof($accountTypeIds) == 1) {
                                     $query->when($accountTypeIds[0] == 1, function ($query) {
-                                                $query->whereNotNull('outputVatTransferGLAccountID');
+                                              $query->whereNotNull('outputVatTransferGLAccountID');
                                           })
                                           ->when($accountTypeIds[0] == 2, function ($query) {
-                                                $query->whereNotNull('outputVatGLAccountID');
+                                              $query->whereNotNull('outputVatGLAccountID');
                                           });
-                                } else {
+                                } else if (sizeof($accountTypeIds) == 2){
                                     $query->where(function ($query) {
-                                                $query->whereNotNull('outputVatTransferGLAccountID')
-                                                      ->orWhereNotNull('outputVatGLAccountID');
+                                            $query->whereNotNull('outputVatTransferGLAccountID')
+                                            ->orWhereNotNull('outputVatGLAccountID');
                                             });
                                 }
                             })
                             ->when($reportTypeID == 2, function ($query) use ($accountTypeIds) {
                                  if (sizeof($accountTypeIds) == 1) {
                                     $query->when($accountTypeIds[0] == 1, function ($query) {
-                                                $query->whereNotNull('inputVatTransferAccountID');
+                                            $query->whereNotNull('inputVatTransferAccountID');
                                           })
                                           ->when($accountTypeIds[0] == 2,function ($query) {
-                                                $query->whereNotNull('inputVATGlAccountID');
+                                            $query->whereNotNull('inputVATGlAccountID');
                                           });
-                                } else {
+                                } else if (sizeof($accountTypeIds) == 2){
                                     $query->where(function ($query) {
                                                 $query->whereNotNull('inputVatTransferAccountID')
-                                                      ->orWhereNotNull('inputVATGlAccountID');
+                                                ->orWhereNotNull('inputVATGlAccountID');
                                             });
                                 }
                             })
@@ -664,15 +665,15 @@ public function exportVATDetailReport(Request $request, ExportVatDetailReportSer
                             ->when($reportTypeID == 3, function ($query) use ($accountTypeIds) {
                                 if (sizeof($accountTypeIds) == 1) {
                                     $query->when($accountTypeIds[0] == 1, function ($query) {
-                                                $query->whereNotNull('outputVatTransferGLAccountID');
+                                             $query->whereNotNull('outputVatTransferGLAccountID');
                                           })
                                           ->when($accountTypeIds[0] == 2, function ($query) {
-                                                $query->whereNotNull('outputVatGLAccountID');
+                                             $query->whereNotNull('outputVatGLAccountID');
                                           });
-                                } else {
+                                } else if (sizeof($accountTypeIds) == 2){
                                     $query->where(function ($query) {
-                                                $query->whereNotNull('outputVatTransferGLAccountID')
-                                                      ->orWhereNotNull('outputVatGLAccountID');
+                                            $query->whereNotNull('outputVatTransferGLAccountID')
+                                            ->orWhereNotNull('outputVatGLAccountID');
                                             });
                                 }
                             })
@@ -689,15 +690,15 @@ public function exportVATDetailReport(Request $request, ExportVatDetailReportSer
                             ->when($reportTypeID == 4, function ($query) use ($accountTypeIds) {
                                  if (sizeof($accountTypeIds) == 1) {
                                     $query->when($accountTypeIds[0] == 1, function ($query) {
-                                                $query->whereNotNull('inputVatTransferAccountID');
+                                             $query->whereNotNull('inputVatTransferAccountID');
                                           })
                                           ->when($accountTypeIds[0] == 2,function ($query) {
-                                                $query->whereNotNull('inputVATGlAccountID');
+                                             $query->whereNotNull('inputVATGlAccountID');
                                           });
-                                } else {
+                                } else if (sizeof($accountTypeIds) == 2){
                                     $query->where(function ($query) {
-                                                $query->whereNotNull('inputVatTransferAccountID')
-                                                      ->orWhereNotNull('inputVATGlAccountID');
+                                            $query->whereNotNull('inputVatTransferAccountID')
+                                            ->orWhereNotNull('inputVATGlAccountID');
                                             });
                                 }
                             })
@@ -712,15 +713,15 @@ public function exportVATDetailReport(Request $request, ExportVatDetailReportSer
                             ->when($reportTypeID == 5, function ($query) use ($accountTypeIds) {
                                  if (sizeof($accountTypeIds) == 1) {
                                     $query->when($accountTypeIds[0] == 1, function ($query) {
-                                                $query->whereNotNull('inputVatTransferAccountID');
+                                          $query->whereNotNull('inputVatTransferAccountID');
                                           })
                                           ->when($accountTypeIds[0] == 2,function ($query) {
-                                                $query->whereNotNull('inputVATGlAccountID');
+                                            $query->whereNotNull('inputVATGlAccountID');
                                           });
-                                } else {
+                                } else if (sizeof($accountTypeIds) == 2){
                                     $query->where(function ($query) {
-                                                $query->whereNotNull('inputVatTransferAccountID')
-                                                      ->orWhereNotNull('inputVATGlAccountID');
+                                            $query->whereNotNull('inputVatTransferAccountID')
+                                            ->orWhereNotNull('inputVATGlAccountID');
                                             });
                                 }
                             })

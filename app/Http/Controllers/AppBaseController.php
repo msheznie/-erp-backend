@@ -24,6 +24,20 @@ class AppBaseController extends BaseController
         return Response::json(ResponseUtil::makeError($error,$errorType), $code);
     }
 
+    public function sendAPIError($error, $code = 422,$data = [])
+    {
+        $res = [
+            'success' => false,
+            'message' => $error,
+        ];
+
+        if (!empty($data)) {
+            $res['errors'] = $data;
+        }
+
+        return Response::json($res, $code);
+    }
+
 
     public function convertArrayToValue ($input){
         foreach ($input as $key => $value) {

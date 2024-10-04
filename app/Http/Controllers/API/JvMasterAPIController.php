@@ -482,7 +482,7 @@ class JvMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
-            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency', 'modified_by']);
+            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency', 'modified_by','type']);
         $input = $this->convertArrayToValue($input);
 
         /** @var JvMaster $jvMaster */
@@ -1059,6 +1059,12 @@ class JvMasterAPIController extends AppBaseController
             $companyID = $company->CompanyID;
         }
 
+        $type = $request['type'];
+        $where = " AND jvDoc != 'NSP'";
+        if ($type == 1) {
+            $where = " AND jvDoc = 'NSP'";
+        }
+
         $output = DB::select("SELECT
 	hrms_jvmaster.accruvalMasterID,
 	hrms_jvmaster.salaryProcessMasterID,
@@ -1073,7 +1079,7 @@ FROM
 WHERE hrms_jvmaster.accConfirmedYN = 1
 AND hrms_jvmaster.accJVSelectedYN = 0
 AND hrms_jvmaster.accJVpostedYN = 0
-AND hrms_jvmaster.companyID = '" . $companyID . "'");
+AND hrms_jvmaster.companyID = '" . $companyID . "'" . $where);
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 

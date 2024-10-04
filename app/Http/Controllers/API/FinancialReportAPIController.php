@@ -405,6 +405,21 @@ class FinancialReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'BCD':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'glCodes' => 'required',
+                    'currencyID' => 'required',
+                    'selectedServicelines' => 'required',
+                    // 'contracts' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -1343,6 +1358,21 @@ class FinancialReportAPIController extends AppBaseController
                 $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
                 $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
 
+                $previousLocalBalanceAmount = 0;
+                $previousReportingBalanceAmount = 0;
+                if (count($request->glCodes) === 1) {
+                    $result = array();
+                    foreach($output as $ou) {
+                        $ou->doucmentLocalBalanceAmount += $previousLocalBalanceAmount;
+                        $previousLocalBalanceAmount = $ou->doucmentLocalBalanceAmount;
+
+                        $ou->documentRptBalanceAmount += $previousReportingBalanceAmount;
+                        $previousReportingBalanceAmount = $ou->documentRptBalanceAmount;
+
+                        array_push($result,$ou);
+                    }
+                    $output = $result;
+                }
                
                 $sort = 'asc';
                 $dataArrayNew = array();
@@ -1359,7 +1389,6 @@ class FinancialReportAPIController extends AppBaseController
                     $total['documentLocalAmountCredit'] = array_sum(collect($dataArrayNew)->pluck('localCredit')->toArray());
                     $total['documentRptAmountDebit'] = array_sum(collect($dataArrayNew)->pluck('rptDebit')->toArray());
                     $total['documentRptAmountCredit'] = array_sum(collect($dataArrayNew)->pluck('rptCredit')->toArray());
-
     
                     return \DataTables::of($dataArrayNew)
                     ->addIndexColumn()
@@ -1379,7 +1408,6 @@ class FinancialReportAPIController extends AppBaseController
                     $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
                     $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
                     $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
-
     
                     return \DataTables::of($output)
                     ->addIndexColumn()
@@ -1469,27 +1497,29 @@ class FinancialReportAPIController extends AppBaseController
 
                     $shareOfAccosicateAmount = 0;
 
-                    foreach ($shareOfAccosicateColumnData as $key => $value) {
-                        $company = Company::where('CompanyID', $key)->first();
-                        $CYTTDAmount = isset($value[$shareOfAccosicateDataArray['CYYTDColumnKey']]) ? $value[$shareOfAccosicateDataArray['CYYTDColumnKey']] : 0;
+                    if(!empty($shareOfAccosicateColumnData) && is_array($shareOfAccosicateColumnData)) {
+                        foreach ($shareOfAccosicateColumnData as $key => $value) {
+                            $company = Company::where('CompanyID', $key)->first();
+                            $CYTTDAmount = isset($value[$shareOfAccosicateDataArray['CYYTDColumnKey']]) ? $value[$shareOfAccosicateDataArray['CYYTDColumnKey']] : 0;
 
-                        if ($company) {
-                            $shareOfAccosicateAmount += $CYTTDAmount * ($company->holding_percentage / 100);
+                            if ($company) {
+                                $shareOfAccosicateAmount += $CYTTDAmount * ($company->holding_percentage / 100);
+                            }
                         }
                     }
 
                     foreach ($response['reportData'] as $key => $value) {
-                        if ($value->itemType == 5) {
+                        if (isset($value->itemType) && $value->itemType == 5) {
                             $value->{$shareOfAccosicateDataArray['CONSColumnKey']} = $shareOfAccosicateAmount;
                         }
 
-                        if ($value->itemType == 6) {
+                        if (isset($value->itemType) && $value->itemType == 6) {
                             foreach ($value->detail as $key1 => $value1) {
-                                if ($value1->itemType == 7) {
+                                if (isset($value1->itemType) && $value1->itemType == 7) {
                                     $value1->{$shareOfAccosicateDataArray['CYYTDColumnKey']} = $shareHolderCYTDAmount;
                                 }
 
-                                if ($value1->itemType == 8) {
+                                if (isset($value1->itemType) && $value1->itemType == 8) {
                                     $value1->{$shareOfAccosicateDataArray['CYYTDColumnKey']} = $NCICYTDAmount;
                                 }
                             }
@@ -2992,8 +3022,8 @@ class FinancialReportAPIController extends AppBaseController
 
          
                 $company_name = $companyCurrency->CompanyName;
-                $to_date = \Helper::dateFormat($request->toDate);
-                $from_date = \Helper::dateFormat($request->fromDate);
+                $to_date = $request->toDate;
+                $from_date = $request->fromDate;
                 if ($reportTypeID == 'FTBM') {
                     $title = 'Financial Trial Balance Month Wise';
                     if ($request->currencyID == 1) {
@@ -3176,8 +3206,9 @@ class FinancialReportAPIController extends AppBaseController
                         'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
-
+                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 } else {
                     $data = $this->getGLAllRecordsToExport($output,$request,$extraColumns,$checkIsGroup,$currencyLocal,$currencyRpt,$decimalPlaceLocal,$decimalPlaceRpt);
@@ -3186,7 +3217,9 @@ class FinancialReportAPIController extends AppBaseController
                         'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 }
                 $exportToExcel = $exportGlToExcelService
@@ -3451,15 +3484,21 @@ class FinancialReportAPIController extends AppBaseController
                 if ($checkIsGroup->isGroup == 0) {
                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = 'Debit (Local Currency - ' . $currencyLocal . ')';
                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = 'Credit (Local Currency - ' . $currencyLocal . ')';
+                    $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = 'Balance (Local Currency - ' . $currencyLocal . ')';
                 }
                 $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = 'Debit (Reporting Currency - ' . $currencyRpt . ')';
                 $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = 'Credit (Reporting Currency - ' . $currencyRpt . ')';
+                $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = 'Balance (Reporting Currency - ' . $currencyRpt . ')';
                 if (!empty($values)) {
                     $subTotalDebitRpt = 0;
                     $subTotalCreditRpt = 0;
                     $subTotalDebitLocal = 0;
                     $subTotalCreditRptLocal = 0;
+                    $runningBalanceLocal = 0;
+                    $runningBalanceRpt = 0;
                     foreach ($values as $val) {
+                        $runningBalanceLocal += $val->doucmentLocalBalanceAmount;
+                        $runningBalanceRpt += $val->documentRptBalanceAmount;
                         $x++;
                         $data[$x]['Company ID'] = $val->companyID;
                         $data[$x]['Company Name'] = $val->CompanyName;
@@ -3491,10 +3530,12 @@ class FinancialReportAPIController extends AppBaseController
                         if ($checkIsGroup->isGroup == 0) {
                             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->localDebit, $decimalPlaceLocal));
                             $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->localCredit, $decimalPlaceLocal));
+                            $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($runningBalanceLocal, $decimalPlaceLocal));
                         }
 
                         $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->rptDebit, $decimalPlaceRpt));
                         $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->rptCredit, $decimalPlaceRpt));
+                        $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($runningBalanceRpt, $decimalPlaceRpt));
                         $subTotalDebitRpt +=  round($val->rptDebit, $decimalPlaceRpt);
                         $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
 
@@ -3532,10 +3573,12 @@ class FinancialReportAPIController extends AppBaseController
                     if ($checkIsGroup->isGroup == 0) {
                         $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal, $decimalPlaceLocal));
                         $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRptLocal, $decimalPlaceLocal));
+                        $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
                     }
 
                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt, $decimalPlaceRpt));
                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRpt, $decimalPlaceRpt));
+                    $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
 
                     $x++;
                     $data[$x]['Company ID'] = '';
@@ -3568,10 +3611,12 @@ class FinancialReportAPIController extends AppBaseController
                     if ($checkIsGroup->isGroup == 0) {
                         $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] =  '';
                         $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal-$subTotalCreditRptLocal, $decimalPlaceLocal));
+                        $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
                     }
 
                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] =  '';
                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt-$subTotalCreditRpt, $decimalPlaceRpt));
+                    $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
 
                     $x++;
                     $data[$x][''] = '';
@@ -3622,9 +3667,11 @@ class FinancialReportAPIController extends AppBaseController
             if ($checkIsGroup->isGroup == 0) {
                 $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'], $decimalPlaceLocal));
                 $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountCredit'], $decimalPlaceLocal));
+                $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
             }
             $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'], $decimalPlaceRpt));
             $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountCredit'], $decimalPlaceRpt));
+            $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
 
             $x++;
             $data[$x]['Company ID'] = '';
@@ -3657,9 +3704,11 @@ class FinancialReportAPIController extends AppBaseController
             if ($checkIsGroup->isGroup == 0) {
                 $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
                 $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'] - $total['documentLocalAmountCredit'], $decimalPlaceLocal));
+                $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
             }
             $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
             $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] =CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'] - $total['documentRptAmountCredit'], $decimalPlaceRpt));
+            $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] ="";
         }
 
         return $data;
@@ -3673,7 +3722,8 @@ class FinancialReportAPIController extends AppBaseController
             $subTotalCreditRpt = 0;
             $subTotalDebitLocal = 0;
             $subTotalCreditRptLocal = 0;
-
+            $runningBalanceLocal = 0;
+            $runningBalanceRpt = 0;
             $dataArrayNew = array();
 
             if(isset($request->isClosing) && !$request->isClosing && isset($request->month)) {
@@ -3686,7 +3736,16 @@ class FinancialReportAPIController extends AppBaseController
                 $output = $dataArrayNew;
             }
 
+            $viewBalance = 0;
+            if(count($request->glCodes) == 1) {
+                $viewBalance = 1;
+            }
+
             foreach ($output as $val) {
+                if($viewBalance == 1) {
+                    $runningBalanceLocal += $val->doucmentLocalBalanceAmount;
+                    $runningBalanceRpt += $val->documentRptBalanceAmount;
+                }
                 $data[$x]['Company ID'] = $val->companyID;
                 $data[$x]['Company Name'] = $val->CompanyName;
                 $data[$x]['GL Code'] = $val->glCode;
@@ -3719,13 +3778,19 @@ class FinancialReportAPIController extends AppBaseController
                 if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->localDebit, $decimalPlaceLocal));
                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->localCredit, $decimalPlaceLocal));
+
+                    if($viewBalance == 1) {
+                        $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($runningBalanceLocal, $decimalPlaceLocal));
+                    }
                 }
 
                 if($request->currencyID == 2 || !isset($request->month)) {
                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->rptDebit, $decimalPlaceRpt));
                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->rptCredit, $decimalPlaceRpt));
                 }
-
+                if($viewBalance == 1) {
+                    $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($runningBalanceRpt, $decimalPlaceLocal));
+                }
 
                 $subTotalDebitRpt += round($val->rptDebit, $decimalPlaceRpt);
                 $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
@@ -3752,11 +3817,18 @@ class FinancialReportAPIController extends AppBaseController
         if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal, $decimalPlaceLocal));
             $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditRptLocal, $decimalPlaceLocal));
+            if($viewBalance == 1) {
+                $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
+            }
         }
 
         if($request->currencyID == 2 || !isset($request->month)) {
             $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt, $decimalPlaceRpt));
             $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditRpt, $decimalPlaceRpt));
+
+            if($viewBalance == 1) {
+                $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
+            }
         }
         $x++;
         $data[$x]['Company ID'] = "";
@@ -3776,11 +3848,17 @@ class FinancialReportAPIController extends AppBaseController
         if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
             $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlaceLocal));
+            if($viewBalance == 1) {
+                $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
+            }
         }
 
         if($request->currencyID == 2 || !isset($request->month)) {
             $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
             $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt));
+            if($viewBalance == 1) {
+                $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
+            }
         }
 
         return $data;
@@ -5198,6 +5276,11 @@ class FinancialReportAPIController extends AppBaseController
         }
         $chartOfAccount = ChartOfAccount::find($chartOfAccountID);
 
+        $serviceLines = join(',', array_map(function ($sl) {
+            return $sl['serviceLineSystemID'];
+        }, $request->selectedServicelines));
+
+
         $dateQry = '';
         if ($chartOfAccount) {
             // if ($chartOfAccount->catogaryBLorPLID == 2) {
@@ -5229,6 +5312,7 @@ class FinancialReportAPIController extends AppBaseController
                                 WHERE
                                     ' . $dateQry . '    
                                     AND erp_generalledger.chartOfAccountSystemID  = ' . $chartOfAccountID . '
+                                    AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')  ORDER BY erp_generalledger.documentDate;';
 
         $output = \DB::select($query);
@@ -5444,131 +5528,163 @@ class FinancialReportAPIController extends AppBaseController
         $query = 'SELECT * 
                     FROM
                         (
-                    SELECT
-                        * 
-                    FROM
-                        (
-                    SELECT
-                        erp_generalledger.companySystemID,
-                        erp_generalledger.companyID,
-                        erp_generalledger.serviceLineSystemID,
-                        erp_generalledger.serviceLineCode,
-                        erp_generalledger.documentSystemID,
-                        erp_generalledger.documentID,
-                        erp_generalledger.documentSystemCode,
-                        erp_generalledger.documentCode,
-                        erp_generalledger.documentDate,
-                        erp_generalledger.chartOfAccountSystemID,
-                        erp_generalledger.glCode,
-                        erp_generalledger.glAccountType,
-                        erp_generalledger.documentNarration,
-                        erp_generalledger.clientContractID,
-                        erp_generalledger.supplierCodeSystem,
-                        erp_generalledger.documentLocalCurrencyID,
-                        chartofaccounts.AccountDescription,
-                        companymaster.CompanyName,
-                        erp_templatesglcode.templatesDetailsAutoID as templatesDetailsAutoID,
-                        approveEmp.empName as approvedBy,
-                        confirmEmp.empName as confirmedBy,
-                        erp_generalledger.documentConfirmedDate,
-                        erp_generalledger.documentFinalApprovedDate,
-                        erp_templatesglcode.templateMasterID,
-                        erp_templatesdetails.templateDetailDescription,
-                        erp_companyreporttemplatedetails.description as templateDescription,
-                    IF
-                        ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
-                    IF
-                        ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) AS localCredit,
-                        erp_generalledger.documentRptCurrencyID,
-                    IF
-                        ( documentRptAmount > 0, documentRptAmount, 0 ) AS rptDebit,
-                    IF
-                        ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
-                    IF
-                        ( erp_generalledger.documentSystemID = 87 OR erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
-                    FROM
-                        erp_generalledger
-                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
-                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
-                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
-                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
-                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
-                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
-                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
-                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
-                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
-                        )
-                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
-                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
-                    WHERE
-                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                        AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
-                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
-                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                        ) AS erp_qry_GL UNION ALL
-                    SELECT
-                        * 
-                    FROM
-                        (
-                    SELECT
-                        erp_generalledger.companySystemID,
-                        erp_generalledger.companyID,
-                        erp_generalledger.serviceLineSystemID,
-                        erp_generalledger.serviceLineCode,
-                        "" AS documentSystemID,
-                        "" AS documentID,
-                        "" AS documentSystemCode,
-                        "" AS documentCode,
-                        "" AS documentDate,
-                        erp_generalledger.chartOfAccountSystemID,
-                        erp_generalledger.glCode,
-                        "BS" AS glAccountType,
-                        "Opening Balance" AS documentNarration,
-                        "" AS clientContractID,
-                        "" AS supplierCodeSystem,
-                        erp_generalledger.documentLocalCurrencyID,
-                        chartofaccounts.AccountDescription,
-                        companymaster.CompanyName,
-                        erp_templatesglcode.templatesDetailsAutoID,
-                        approveEmp.empName as approvedBy,
-                        confirmEmp.empName as confirmedBy,
-                        erp_generalledger.documentConfirmedDate,
-                        erp_generalledger.documentFinalApprovedDate,
-                        erp_templatesglcode.templateMasterID,
-                        erp_templatesdetails.templateDetailDescription,
-                        erp_companyreporttemplatedetails.description as templateDescription,
-                        sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
-                        sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
-                        erp_generalledger.documentRptCurrencyID,
-                        sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
-                        sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
-                        "" AS isCustomer
-                    FROM
-                        erp_generalledger
-                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
-                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
-                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
-                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
-                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
-                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
-                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
-                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
-                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
-                        )
-                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
-                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
-                        WHERE
-                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                        AND erp_generalledger.glAccountTypeID = 1
-                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
-                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
-                    GROUP BY
-                        erp_generalledger.companySystemID,
-                        erp_generalledger.serviceLineSystemID,
-                        erp_generalledger.chartOfAccountSystemID
-                        ) AS erp_qry_gl_bf 
-                        ) AS GL_final 
+                            SELECT
+                                * 
+                            FROM
+                                (
+                                    SELECT
+                                        erp_generalledger.companySystemID,
+                                        erp_generalledger.companyID,
+                                        erp_generalledger.serviceLineSystemID,
+                                        erp_generalledger.serviceLineCode,
+                                        erp_generalledger.documentSystemID,
+                                        erp_generalledger.documentID,
+                                        erp_generalledger.documentSystemCode,
+                                        erp_generalledger.documentCode,
+                                        erp_generalledger.documentDate,
+                                        erp_generalledger.chartOfAccountSystemID,
+                                        erp_generalledger.glCode,
+                                        erp_generalledger.glAccountType,
+                                        erp_generalledger.documentNarration,
+                                        erp_generalledger.clientContractID,
+                                        erp_generalledger.supplierCodeSystem,
+                                        erp_generalledger.documentLocalCurrencyID,
+                                        chartofaccounts.AccountDescription,
+                                        companymaster.CompanyName,
+                                        erp_templatesglcode.templatesDetailsAutoID as templatesDetailsAutoID,
+                                        approveEmp.empName as approvedBy,
+                                        confirmEmp.empName as confirmedBy,
+                                        erp_generalledger.documentConfirmedDate,
+                                        erp_generalledger.documentFinalApprovedDate,
+                                        erp_templatesglcode.templateMasterID,
+                                        erp_templatesdetails.templateDetailDescription,
+                                        erp_companyreporttemplatedetails.description as templateDescription,
+                                    IF
+                                        ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
+                                    IF
+                                        ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) AS localCredit,
+                                       CASE	
+                                            WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
+                                            (
+                                                IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) - (
+                                                IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 )) ELSE (
+                                                IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0) - (
+                                                IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ))
+                                        END AS doucmentLocalBalanceAmount,
+                                        erp_generalledger.documentRptCurrencyID,
+                                    IF
+                                        ( documentRptAmount > 0, documentRptAmount, 0 ) AS rptDebit,
+                                    IF
+                                        ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
+                                    CASE
+                                        WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
+                                        (
+                                            IF ( documentRptAmount > 0, documentRptAmount, 0 )) - (
+                                            IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 )) ELSE (
+                                            IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) - (
+                                            IF ( documentRptAmount > 0, documentRptAmount, 0 ))) 
+                                    END AS documentRptBalanceAmount,
+                                    IF
+                                        ( erp_generalledger.documentSystemID = 87 OR erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
+                                    FROM
+                                        erp_generalledger
+                                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
+                                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                                        )
+                                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
+                                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
+                                    WHERE
+                                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                        AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
+                                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                                ) AS erp_qry_GL UNION ALL
+                            SELECT
+                                * 
+                            FROM
+                                (
+                                    SELECT
+                                        erp_generalledger.companySystemID,
+                                        erp_generalledger.companyID,
+                                        erp_generalledger.serviceLineSystemID,
+                                        erp_generalledger.serviceLineCode,
+                                        "" AS documentSystemID,
+                                        "" AS documentID,
+                                        "" AS documentSystemCode,
+                                        "" AS documentCode,
+                                        "" AS documentDate,
+                                        erp_generalledger.chartOfAccountSystemID,
+                                        erp_generalledger.glCode,
+                                        "BS" AS glAccountType,
+                                        "Opening Balance" AS documentNarration,
+                                        "" AS clientContractID,
+                                        "" AS supplierCodeSystem,
+                                        erp_generalledger.documentLocalCurrencyID,
+                                        chartofaccounts.AccountDescription,
+                                        companymaster.CompanyName,
+                                        erp_templatesglcode.templatesDetailsAutoID,
+                                        approveEmp.empName as approvedBy,
+                                        confirmEmp.empName as confirmedBy,
+                                        erp_generalledger.documentConfirmedDate,
+                                        erp_generalledger.documentFinalApprovedDate,
+                                        erp_templatesglcode.templateMasterID,
+                                        erp_templatesdetails.templateDetailDescription,
+                                        erp_companyreporttemplatedetails.description as templateDescription,
+                                        sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
+                                        sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
+                                        CASE	
+                                            WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
+                                            (
+                                                sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) )) - (
+                                                sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) )) ELSE (
+                                                sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) - (
+                                                sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ))) 
+                                        END AS doucmentLocalBalanceAmount,
+                                        erp_generalledger.documentRptCurrencyID,
+                                        sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
+                                        sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
+                                        CASE
+                                            WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
+                                            (
+                                                sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) )) - (
+                                                sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) )) ELSE (
+                                                sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) - (
+                                                sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ))) 
+                                        END AS documentRptBalanceAmount,
+                                        "" AS isCustomer
+                                    FROM
+                                        erp_generalledger
+                                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
+                                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                                        )
+                                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
+                                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
+                                        WHERE
+                                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                        AND erp_generalledger.glAccountTypeID = 1
+                                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
+                                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                                    GROUP BY
+                                        erp_generalledger.companySystemID,
+                                        erp_generalledger.serviceLineSystemID,
+                                        erp_generalledger.chartOfAccountSystemID
+                                ) AS erp_qry_gl_bf
+                    ) AS GL_final 
                     ORDER BY
                         documentDate ASC';
 

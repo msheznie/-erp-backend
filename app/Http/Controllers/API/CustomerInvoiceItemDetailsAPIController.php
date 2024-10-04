@@ -878,7 +878,7 @@ WHERE
         $id = $input['deliveryOrderID'];
         $companySystemID = $input['companySystemID'];
         $deliveryOrder = DeliveryOrder::with(['company','customer','transaction_currency', 'tax','sales_person','detail' => function($query){
-            $query->with(['quotation','uom_default','uom_issuing']);
+            $query->with(['quotation','uom_default','uom_issuing','item_by']);
         },'approved_by' => function($query) use($companySystemID){
             $query->where('companySystemID',$companySystemID)
                 ->where('documentSystemID',71)

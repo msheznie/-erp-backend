@@ -6,7 +6,6 @@ use App\helper\Helper;
 use App\helper\inventory;
 use App\helper\ItemTracking;
 use App\helper\TaxService;
-use App\Http\Controllers\API\CustomerInvoiceDirectAPIController;
 use App\Http\Controllers\AppBaseController;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
@@ -28,7 +27,6 @@ use App\Models\DeliveryOrder;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
 use App\Models\ItemIssueMaster;
-use App\Models\ItemMaster;
 use App\Models\PurchaseReturn;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
@@ -40,258 +38,568 @@ use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
 use App\Services\ChartOfAccountValidationService;
+use App\Services\DocumentAutoApproveService;
 use App\Services\UserTypeService;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
+use DateTime;
 use Illuminate\Support\Facades\DB;
 
 class CustomerInvoiceAPIService extends AppBaseController
 {
-    private static function setInvoiceMasterDataForAPI($request): array {
+    private static function validateMasterData($request): array {
 
-        $invoiceType = ($request['invoice_type'] == 1) ? 0 : 2;
+        $errorData = $fieldErrors = [];
+
+        // Validate Invoice Type
+        if (isset($request['invoice_type'])) {
+            if(is_int($request['invoice_type'])) {
+                if (in_array($request['invoice_type'], [1,2])) {
+                    $invoiceType = ($request['invoice_type'] == 1) ? 0 : 2;
+
+                    if($invoiceType == 2) {
+                        // Validate Segment Code
+                        if (isset($request['segment_code'])) {
+                            $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
+                                ->where('isActive', 1)
+                                ->where('isDeleted', 0)
+                                ->where('companySystemID', $request['company_id'])
+                                ->first();
+                            if(!$segment){
+                                $errorData[] = [
+                                    'field' => "segment_code",
+                                    'message' => ["Segment Not Found"]
+                                ];
+                            }
+                        }
+                        else {
+                            $errorData[] = [
+                                'field' => "segment_code",
+                                'message' => ["segment_code field is required"]
+                            ];
+                        }
+
+                        // Validate Warehouse
+                        if (isset($request['warehouse_code'])) {
+                            $warehouse = WarehouseMaster::where('wareHouseCode',$request['warehouse_code'])
+                                ->where("companySystemID", $request['company_id'])
+                                ->where('isActive', 1)
+                                ->first();
+                            if(!$warehouse){
+                                $errorData[] = [
+                                    'field' => "warehouse_code",
+                                    'message' => ["Warehouse Not Found"]
+                                ];
+                            }
+                        }
+                        else {
+                            $errorData[] = [
+                                'field' => "warehouse_code",
+                                'message' => ["warehouse_code field is required"]
+                            ];
+                        }
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "invoice_type",
+                        'message' => ["invoice_type format is invalid"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "invoice_type",
+                    'message' => ["invoice_type must be an integer"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "invoice_type",
+                'message' => ["invoice_type field is required"]
+            ];
+        }
 
         // Validate Customer
-        $customer = CustomerAssigned::join('customermaster', 'customerassigned.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
-            ->where('customermaster.customer_registration_no', $request['customer_code'])
-            ->orWhere('customerassigned.CutomerCode',$request['customer_code'])
-            ->where('companySystemID', $request['company_id'])
-            ->where('isActive', 1)
-            ->where('isAssigned', -1)
-            ->first();
-
-        if(!$customer){
-            return [
-                'status' => false,
-                'message' => "Invalid Customer Code"
-            ];
-        }
-
-        // Validate Currency
-        $request['currency_code'] = strtoupper($request['currency_code']);
-        $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
-            ->where('currencymaster.CurrencyCode', $request['currency_code'])
-            ->where('customerCodeSystem', $customer->customerCodeSystem)
-            ->where('isAssigned', -1)
-            ->first();
-        if(!$currency){
-            return [
-                'status' => false,
-                'message' => "Invalid Currency"
-            ];
-        }
-
-        // Validate Financial Year & Period
-        $documentDate = Carbon::parse($request['document_date']);
-        $financeYear = CompanyFinanceYear::where('companySystemID',$request['company_id'])
-            ->where('isDeleted',0)
-            ->where('bigginingDate','<=',$documentDate)
-            ->where('endingDate','>=',$documentDate)
-            ->first();
-
-        if($financeYear){
-            $financePeriod = CompanyFinancePeriod::where('companySystemID',$request['company_id'])
-                ->where('departmentSystemID',4)
-                ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
-                ->where('isActive',-1)
-                ->whereMonth('dateFrom',$documentDate->month)
-                ->whereMonth('dateTo',$documentDate->month)
-                ->first();
-            if(!$financePeriod){
-                return [
-                    'status' => false,
-                    'message' => "Finance Period Not Active"
-                ];
-            }
-        }
-        else{
-            return [
-                'status' => false,
-                'message' => "Finance Year Not Found"
-            ];
-        }
-
-        $invoiceDueDate = $documentDate->copy();
-        $invoiceDueDate->addDays($customer->creditDays);
-
-        $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
-            ->where('currencymaster.CurrencyCode', $request['currency_code'])
-            ->where('customerCodeSystem', $customer->customerCodeSystem)
-            ->where('isAssigned', -1)
-            ->first();
-
-        $bank = BankAssign::where('isActive', 1)
-            ->where('isAssigned', -1)
-            ->where('companySystemID', $request['company_id'])
-            ->where('bankShortCode',$request['bank_code'])
-            ->first();
-        if(!$bank){
-            return [
-                'status' => false,
-                'message' => "Bank Not Found"
-            ];
-        }
-
-        $bankAccount = BankAccount::where('companySystemID', $request['company_id'])
-            ->where('bankmasterAutoID', $bank->bankmasterAutoID)
-            ->where('accountCurrencyID', $currency->currencyID)
-            ->where('AccountNo', $request['account_number'])
-            ->where('approvedYN', 1)
-            ->where('isAccountActive', 1)
-            ->first();
-        if(!$bankAccount){
-            return [
-                'status' => false,
-                'message' => "Bank Account Not Found"
-            ];
-        }
-
-        if($invoiceType == 2){
-            // Validate Segment Code
-            $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
-                ->where('isActive', 1)
-                ->where('isDeleted', 0)
+        if (isset($request['customer_code'])) {
+            $customer = CustomerAssigned::join('customermaster', 'customerassigned.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
+                ->where('customermaster.customer_registration_no', $request['customer_code'])
+                ->orWhere('customerassigned.CutomerCode',$request['customer_code'])
                 ->where('companySystemID', $request['company_id'])
+                ->where('isActive', 1)
+                ->where('isAssigned', -1)
                 ->first();
-            if(!$segment){
-                return [
-                    'status' => false,
-                    'message' => "Segment Not Found"
+
+            if(!$customer){
+                $errorData[] = [
+                    'field' => "customer_code",
+                    'message' => ["Invalid Customer Code"]
                 ];
             }
+            else {
+                // Validate customer invoice no
+                if (isset($request['customer_invoice_number'])) {
+                    $verifyCompanyInvoiceNo = CustomerInvoiceDirect::select("bookingInvCode")->where('customerInvoiceNo', $request['customer_invoice_number'])->where('customerID', $customer->customerCodeSystem)->where('companySystemID', $request['company_id'])->first();
+                    if ($verifyCompanyInvoiceNo) {
+                        $fieldErrors = [
+                            'field' => "customer_invoice_number",
+                            'message' => ["Entered customer invoice number was already used ($verifyCompanyInvoiceNo->bookingInvCode). Please check again"]
+                        ];
+                        $errorData[] = $fieldErrors;
+                    }
+                }
+                else {
+                    $fieldErrors = [
+                        'field' => "customer_invoice_number",
+                        'message' => ["customer_invoice_number field is required"]
+                    ];
+                    $errorData[] = $fieldErrors;
+                }
 
-            // Validate Warehouse
-            $warehouse = WarehouseMaster::where('wareHouseCode',$request['warehouse_code'])
-                ->where("companySystemID", $request['company_id'])
-                ->where('isActive', 1)
-                ->first();
-            if(!$warehouse){
-                return [
-                    'status' => false,
-                    'message' => "Warehouse Not Found"
-                ];
+                // Validate Currency
+                if (isset($request['currency_code'])) {
+                    $request['currency_code'] = strtoupper($request['currency_code']);
+                    $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
+                        ->where('currencymaster.CurrencyCode', $request['currency_code'])
+                        ->where('customerCodeSystem', $customer->customerCodeSystem)
+                        ->where('isAssigned', -1)
+                        ->first();
+
+                    if(!$currency){
+                        $errorData[] = [
+                            'field' => "currency_code",
+                            'message' => ["Invalid Currency"]
+                        ];
+                    }
+                    else {
+                        // Validate Bank Code
+                        if (isset($request['bank_code'])) {
+                            $bank = BankAssign::where('isActive', 1)
+                                ->where('isAssigned', -1)
+                                ->where('companySystemID', $request['company_id'])
+                                ->where('bankShortCode',$request['bank_code'])
+                                ->first();
+
+                            if(!$bank){
+                                $errorData[] = [
+                                    'field' => "bank_code",
+                                    'message' => ["Bank Not Found"]
+                                ];
+                            }
+                            else {
+                                // Validate Bank Account Number
+                                if (isset($request['account_number'])) {
+                                    $bankAccount = BankAccount::where('companySystemID', $request['company_id'])
+                                        ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                                        ->where('accountCurrencyID', $currency->currencyID)
+                                        ->where('AccountNo', $request['account_number'])
+                                        ->where('approvedYN', 1)
+                                        ->where('isAccountActive', 1)
+                                        ->first();
+
+                                    if(!$bankAccount){
+                                        $errorData[] = [
+                                            'field' => "account_number",
+                                            'message' => ["Bank Account Not Found"]
+                                        ];
+                                    }
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "account_number",
+                                        'message' => ["account_number field is required"]
+                                    ];
+                                }
+                            }
+                        }
+                        else {
+                            $errorData[] = [
+                                'field' => "bank_code",
+                                'message' => ["bank_code field is required"]
+                            ];
+                        }
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "currency_code",
+                        'message' => ["currency_code field is required"]
+                    ];
+                }
+
+                // Validate Document Date
+                if (isset($request['document_date'])) {
+                    if(DateTime::createFromFormat('Y-m-d', $request['document_date'])) {
+                        $documentDate = Carbon::parse($request['document_date']);
+
+                        $invoiceDueDate = $documentDate->copy();
+                        $invoiceDueDate->addDays($customer->creditDays);
+
+                        // Validate Financial Year & Period
+                        $financeYear = CompanyFinanceYear::where('companySystemID',$request['company_id'])
+                            ->where('isDeleted',0)
+                            ->where('bigginingDate','<=',$documentDate)
+                            ->where('endingDate','>=',$documentDate)
+                            ->first();
+
+                        if($financeYear){
+                            $financePeriod = CompanyFinancePeriod::where('companySystemID',$request['company_id'])
+                                ->where('departmentSystemID',4)
+                                ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
+                                ->where('isActive',-1)
+                                ->whereMonth('dateFrom',$documentDate->month)
+                                ->whereMonth('dateTo',$documentDate->month)
+                                ->first();
+                            if(!$financePeriod){
+                                $errorData[] = [
+                                    'field' => "document_date",
+                                    'message' => ["Finance Period Not Active"]
+                                ];
+                            }
+                        }
+                        else{
+                            $errorData[] = [
+                                'field' => "document_date",
+                                'message' => ["Finance Year Not Found"]
+                            ];
+                        }
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "document_date",
+                            'message' => ["document_date format is invalid"]
+                        ];
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "document_date",
+                        'message' => ["document_date field is required"]
+                    ];
+                }
             }
         }
+        else {
+            $errorData[] = [
+                'field' => "customer_code",
+                'message' => ["customer_code field is required"]
+            ];
+        }
 
-        $returnDataset = [
-            'status' => true,
-            'data' => [
-                'bookingDate' => $documentDate->toDateString(),
-                'comments' => $request['comment'],
-                'companyFinanceYearID' => $financeYear->companyFinanceYearID,
-                'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
-                'companyID' => $request['company_id'],
-                'custTransactionCurrencyID' => $currency->currencyID,
-                'customerID' => $customer->customerCodeSystem,
-                'date_of_supply' => Carbon::today()->toDateString(),
-                'invoiceDueDate' => $invoiceDueDate->toDateString(),
-                'isPerforma' => $invoiceType,
-                'bankID' => $bank->bankmasterAutoID,
-                'bankAccountID' => $bankAccount->bankAccountAutoID,
-                'customerInvoiceNo' => $request['customer_invoice_number'],
-                'isAutoCreateDocument' => true
-            ]
-        ];
+        // Validate Comment
+        if (!isset($request['comment'])) {
+            $errorData[] = [
+                'field' => "comment",
+                'message' => ["comment field is required"]
+            ];
+        }
 
-        if($invoiceType == 2){
-            $returnDataset['data']['wareHouseSystemCode'] = $warehouse->wareHouseSystemCode;
-            $returnDataset['data']['serviceLineSystemID'] = $segment->serviceLineSystemID;
+        if (empty($errorData) && empty($fieldErrors)) {
+            $returnDataset = [
+                'status' => true,
+                'data' => [
+                    'bookingDate' => $documentDate->toDateString(),
+                    'comments' => $request['comment'],
+                    'companyFinanceYearID' => $financeYear->companyFinanceYearID,
+                    'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
+                    'companyID' => $request['company_id'],
+                    'custTransactionCurrencyID' => $currency->currencyID,
+                    'customerID' => $customer->customerCodeSystem,
+                    'date_of_supply' => Carbon::today()->toDateString(),
+                    'invoiceDueDate' => $invoiceDueDate->toDateString(),
+                    'isPerforma' => $invoiceType,
+                    'bankID' => $bank->bankmasterAutoID,
+                    'bankAccountID' => $bankAccount->bankAccountAutoID,
+                    'customerInvoiceNo' => $request['customer_invoice_number'],
+                    'isAutoCreateDocument' => true
+                ]
+            ];
+
+            if($invoiceType == 2){
+                $returnDataset['data']['wareHouseSystemCode'] = $warehouse->wareHouseSystemCode;
+                $returnDataset['data']['serviceLineSystemID'] = $segment->serviceLineSystemID;
+            }
+        }
+        else {
+            $returnDataset = [
+                'status' => false,
+                'data' => $errorData,
+                'fieldErrors' => $fieldErrors
+            ];
         }
 
         return $returnDataset;
     }
 
-    private static function setInvoiceDetailsStoreDataForAPI($customerInvoiceData,$request): array {
+    private static function validateDetailsData($masterData, $request): array {
 
-        if($customerInvoiceData['isPerforma'] == 0){
-            // Validate GL Code
-            $chartOfAccountAssign = ChartOfAccountsAssigned::where('companySystemID',$customerInvoiceData['companySystemID'])
-                ->where('AccountCode',$request['gl_code'])
-                ->where('controllAccountYN', 0)
-                ->where('isAssigned', -1)
-                ->where('isActive', 1)
-                ->where('isBank', 0)
-                ->first();
-            if(!$chartOfAccountAssign){
-                return [
-                    'status' => false,
-                    'message' => "GL Code Not Found"
-                ];
+        $errorData = [];
+
+        if (isset($masterData['invoice_type'])) {
+            if($masterData['invoice_type'] == 1) {
+                // Validate GL Code
+                if(isset($request['gl_code'])){
+                    $chartOfAccountAssign = ChartOfAccountsAssigned::where('companySystemID',$masterData['company_id'])
+                        ->where('AccountCode',$request['gl_code'])
+                        ->where('controllAccountYN', 0)
+                        ->where('isAssigned', -1)
+                        ->where('isActive', 1)
+                        ->where('isBank', 0)
+                        ->first();
+                    if(!$chartOfAccountAssign){
+                        $errorData[] = [
+                            'field' => "gl_code",
+                            'message' => ["GL Code Not Found"]
+                        ];
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "gl_code",
+                        'message' => ["gl_code field is required"]
+                    ];
+                }
+
+                // Validate Segment Code
+                if(isset($request['segment_code'])){
+                    $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
+                        ->where('isActive', 1)
+                        ->where('isDeleted', 0)
+                        ->where('companySystemID', $masterData['company_id'])
+                        ->first();
+                    if(!$segment){
+                        $errorData[] = [
+                            'field' => "segment_code",
+                            'message' => ["Segment Not Found"]
+                        ];
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "segment_code",
+                        'message' => ["segment_code field is required"]
+                    ];
+                }
             }
 
-            // Validate Segment Code
-            $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
-                ->where('isActive', 1)
-                ->where('isDeleted', 0)
-                ->where('companySystemID', $customerInvoiceData['companySystemID'])
-                ->first();
-            if(!$segment){
-                return [
-                    'status' => false,
-                    'message' => "Segment Not Found"
-                ];
+            if($masterData['invoice_type'] == 2) {
+                // Validate Service Code
+                if(isset($request['service_code'])){
+                    $serviceCode = ItemAssigned::where('itemPrimaryCode',$request['service_code'])
+                        ->where('companySystemID', $masterData['company_id'])
+                        ->where('isActive', 1)
+                        ->where('isAssigned', -1)
+                        ->whereIn('financeCategoryMaster', [1,2,4])
+                        ->first();
+                    if(!$serviceCode){
+                        $errorData[] = [
+                            'field' => "service_code",
+                            'message' => ["Service Code Not Found"]
+                        ];
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "service_code",
+                        'message' => ["service_code field is required"]
+                    ];
+                }
+
+                // Validate Margin Percentage
+                if (isset($request['margin_percentage'])) {
+                    if (gettype($request['margin_percentage']) != 'string') {
+                        if ($request['margin_percentage'] < 0) {
+                            $errorData[] = [
+                                'field' => "margin_percentage",
+                                'message' => ["margin_percentage must be at least 0"]
+                            ];
+                        }
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "margin_percentage",
+                            'message' => ["margin_percentage must be a numeric"]
+                        ];
+                    }
+                }
             }
         }
 
         // Validate Unit Code
-        $unit = Unit::where('is_active', 1)->where('UnitShortCode',$request['uom'])->first();
-        if(!$unit){
-            return [
-                'status' => false,
-                'message' => "Unit Not Found"
+        if(isset($request['uom'])){
+            $unit = Unit::where('is_active', 1)->where('UnitShortCode',$request['uom'])->first();
+
+            if(!$unit){
+                $errorData[] = [
+                    'field' => "uom",
+                    'message' => ["Unit Not Found"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "uom",
+                'message' => ["uom field is required"]
             ];
         }
 
-        if($customerInvoiceData['isPerforma'] == 2){
-            // Validate Service Code
-            $serviceCode = ItemAssigned::where('itemPrimaryCode',$request['service_code'])
-                ->where('companySystemID', $customerInvoiceData['companySystemID'])
-                ->where('isActive', 1)
-                ->where('isAssigned', -1)
-                ->whereIn('financeCategoryMaster', [1,2,4])
-                ->first();
-            if(!$serviceCode){
-                return [
-                    'status' => false,
-                    'message' => "Service Code Not Found"
+        // Validate Quantity
+        if(isset($request['quantity'])) {
+            if (is_int($request['quantity'])) {
+                if ($request['quantity'] <= 0) {
+                    $errorData[] = [
+                        'field' => "quantity",
+                        'message' => ["quantity must be at least 1"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "quantity",
+                    'message' => ["quantity must be an integer"]
+                ];
+            }
+        }
+        else{
+            $errorData[] = [
+                'field' => "quantity",
+                'message' => ["quantity field is required"]
+            ];
+        }
+
+        // Validate Sales Price
+        if(isset($request['sales_price'])) {
+            if (gettype($request['sales_price']) != 'string') {
+                if ($request['sales_price'] <= 0) {
+                    $errorData[] = [
+                        'field' => "sales_price",
+                        'message' => ["sales_price must be at least 1"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "sales_price",
+                    'message' => ["sales_price must be a numeric"]
+                ];
+            }
+        }
+        else{
+            $errorData[] = [
+                'field' => "sales_price",
+                'message' => ["sales_price field is required"]
+            ];
+        }
+
+        // Validate Discount Percentage
+        if (isset($request['discount_percentage'])) {
+            if (gettype($request['discount_percentage']) != 'string') {
+                if ($request['discount_percentage'] < 0) {
+                    $errorData[] = [
+                        'field' => "discount_percentage",
+                        'message' => ["discount_percentage must be at least 0"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "discount_percentage",
+                    'message' => ["discount_percentage must be a numeric"]
                 ];
             }
         }
 
-        $returnData = [
-            "status" => true,
-            "data" => [
-                'companySystemID' => $customerInvoiceData['companySystemID'],
-                'custInvoiceDirectAutoID' => $customerInvoiceData['custInvoiceDirectAutoID'],
-                'salesPrice' => $request['sales_price'],
-                'isAutoCreateDocument' => true,
-                'discountPercentage' => $request['discount_percentage'] ?? 0,
-                'VATPercentage' => $request['vat_percentage'] ?? 0,
-                'VATAmount' => $request['vat_amount'] ?? 0
-            ]
-        ];
-
-        if($customerInvoiceData['isPerforma'] == 0) {
-            $returnData['data']['glCode'] = $chartOfAccountAssign->chartOfAccountSystemID;
-            $returnData['data']['unitOfMeasure'] = $unit->UnitID;
-            $returnData['data']['serviceLineSystemID'] = $segment->serviceLineSystemID;
-            $returnData['data']['invoiceQty'] = $request['quantity'];
-            $returnData['data']['discountAmountLine'] = $request['discount_amount'] ?? 0;
-
+        // Validate Discount Amount
+        if (isset($request['discount_amount'])) {
+            if (gettype($request['discount_amount']) != 'string') {
+                if ($request['discount_amount'] < 0) {
+                    $errorData[] = [
+                        'field' => "discount_amount",
+                        'message' => ["discount_amount must be at least 0"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "discount_amount",
+                    'message' => ["discount_amount must be a numeric"]
+                ];
+            }
         }
-        elseif ($customerInvoiceData['isPerforma'] == 2){
-            $returnData['data']['customerCatalogDetailID'] = 0;
-            $returnData['data']['customerCatalogMasterID'] = 0;
-            $returnData['data']['itemCode'] = $serviceCode->idItemAssigned;
-            $returnData['data']['itemUnitOfMeasure'] = $unit->UnitID;
-            $returnData['data']['qtyIssued'] = $request['quantity'];
-            $returnData['data']['discountAmount'] = $request['discount_amount'] ?? 0;
-            $returnData['data']['marginPercentage'] = $request['margin_percentage'] ?? 0;
+
+        // Validate Vat Percentage
+        if (isset($request['vat_percentage'])) {
+            if (gettype($request['vat_percentage']) != 'string') {
+                if ($request['vat_percentage'] < 0) {
+                    $errorData[] = [
+                        'field' => "vat_percentage",
+                        'message' => ["vat_percentage must be at least 0"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "vat_percentage",
+                    'message' => ["vat_percentage must be a numeric"]
+                ];
+            }
+        }
+
+        // Validate Vat Amount
+        if (isset($request['vat_amount'])) {
+            if (gettype($request['vat_amount']) != 'string') {
+                if ($request['vat_amount'] < 0) {
+                    $errorData[] = [
+                        'field' => "vat_amount",
+                        'message' => ["vat_amount must be at least 0"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "vat_amount",
+                    'message' => ["vat_amount must be a numeric"]
+                ];
+            }
+        }
+
+        if (empty($errorData)) {
+            $returnData = [
+                "status" => true,
+                "data" => [
+                    'companySystemID' => $masterData['company_id'],
+                    'salesPrice' => $request['sales_price'],
+                    'isAutoCreateDocument' => true,
+                    'discountPercentage' => $request['discount_percentage'] ?? 0,
+                    'VATPercentage' => $request['vat_percentage'] ?? 0,
+                    'VATAmount' => $request['vat_amount'] ?? 0
+                ]
+            ];
+
+            if (isset($masterData['invoice_type'])) {
+                if($masterData['invoice_type'] == 1) {
+                    $returnData['data']['glCode'] = $chartOfAccountAssign->chartOfAccountSystemID;
+                    $returnData['data']['unitOfMeasure'] = $unit->UnitID;
+                    $returnData['data']['serviceLineSystemID'] = $segment->serviceLineSystemID;
+                    $returnData['data']['invoiceQty'] = $request['quantity'];
+                    $returnData['data']['discountAmountLine'] = $request['discount_amount'] ?? 0;
+
+                }
+                elseif ($masterData['invoice_type'] == 2){
+                    $returnData['data']['customerCatalogDetailID'] = 0;
+                    $returnData['data']['customerCatalogMasterID'] = 0;
+                    $returnData['data']['itemCode'] = $serviceCode->idItemAssigned;
+                    $returnData['data']['itemUnitOfMeasure'] = $unit->UnitID;
+                    $returnData['data']['qtyIssued'] = $request['quantity'];
+                    $returnData['data']['discountAmount'] = $request['discount_amount'] ?? 0;
+                    $returnData['data']['marginPercentage'] = $request['margin_percentage'] ?? 0;
+                }
+            }
         }
         else{
-            return [
-                'status' => false,
-                'message' => "Invalid Item Code"
+            $returnData = [
+                "status" => false,
+                "data" => $errorData
             ];
         }
 
@@ -3126,153 +3434,218 @@ class CustomerInvoiceAPIService extends AppBaseController
         return ['status' => true];
     }
 
+    public static function createResponceDataArray($invoiceNumber,$masterIndex,$fieldErrors, $headerData, $detailData): array
+    {
+        return [
+            'identifier' => [
+                'unqie-key' => $invoiceNumber ?? "",
+                'index' => $masterIndex + 1
+            ],
+            'fieldErrors' => $fieldErrors,
+            'headerData' => [$headerData],
+            'detailData' => [$detailData]
+        ];
+    }
+
     public static function storeCustomerInvoicesFromAPI($data): array {
 
+        $invoices = $data['invoices'] ?? null;
+
+        $fieldErrors = $errorDocuments = $masterDatasets = $detailsDataSets = [];
+        $headerData = $detailData = ['status' => false , 'errors' => []];
+        $validationMessage = "Validation failed";
+        $validation = false;
+        $masterIndex = 0;
+
+        // Validate Customer Invoice Data
+        if(is_array($invoices)) {
+            foreach ($invoices as $invoice) {
+                $validation = true;
+
+                $invoice['company_id'] = $data['company_id'];
+
+                //Get Invoice Details to new variable and remove it from Master Data
+                $invoiceDetails = $invoice['details'] ?? "";
+                unset($invoice['details']);
+
+                //Validate Master Data
+                $datasetMaster = self::validateMasterData($invoice);
+
+                //Store Master data errors if available
+                if (!$datasetMaster['status']) {
+                    $fieldErrors = $datasetMaster['fieldErrors'];
+                    $headerData['errors'] = $datasetMaster['data'];
+                    $validation = false;
+                }
+
+                $detailIndex = 0;
+                foreach ($invoiceDetails as $detail) {
+
+                    //Validate Details Data
+                    $datasetDetails = self::validateDetailsData($invoice,$detail);
+
+                    if ($datasetDetails['status']) {
+                        //Store Details data if details valid
+                        $detailsDataSets[$masterIndex][] = $datasetDetails['data'];
+                    }
+                    else {
+                        //Store details data errors if available
+                        $detailData['errors'][] = [
+                            'index' => $detailIndex + 1,
+                            'error' => $datasetDetails['data']
+                        ];
+                        // delete invalid document old details from details data array
+                        unset($detailsDataSets[$masterIndex]);
+                        $validation = false;
+                    }
+
+                    $detailIndex++;
+                }
+
+                //Store Master data if all the details valid
+                if (empty($headerData['errors']) && empty($detailData['errors']) && empty($fieldErrors)) {
+                    $masterDatasets[] = $datasetMaster['data'];
+                }
+                else {
+                    // Store full document error details to return array
+                    if (empty($headerData['errors'])) {
+                        $headerData['status'] = true;
+                    }
+
+                    if (empty($detailData['errors'])) {
+                        $detailData['status'] = true;
+                    }
+
+                    $errorDocuments[] = self::createResponceDataArray($invoice['customer_invoice_number'] ?? "", $masterIndex, $fieldErrors, $headerData, $detailData);
+
+                    $fieldErrors = [];
+                    $headerData = $detailData = ['status' => false , 'errors' => []];
+                }
+
+                $masterIndex++;
+            }
+        }
+        else {
+            $validationMessage = "Invalid Data Format";
+        }
+
+        if (!empty($errorDocuments) || !$validation) {
+            return [
+                'status' => false,
+                'message' => $validationMessage,
+                'responseData' => $errorDocuments
+            ];
+        }
+
+        // Remove empty array from detailsDataSets and reindex array
+        $detailsDataSets = array_values($detailsDataSets);
+
+        // Store Master and Details
         DB::beginTransaction();
 
         $returnData = [
             'status' => true,
-            'message' => ''
+            'message' => "",
+            'data' => [],
+            'responseData' => []
         ];
 
-        $invoices = $data['invoices'];
-        $createdCustomerInvoiceIds = [];
-        foreach ($invoices as $invoice){
+        $headerData = $detailData = ['status' => true , 'errors' => []];
+        $i = 0;
 
-            try{
-                $invoice['company_id'] = $data['company_id'];
-                $datasetMaster = self::setInvoiceMasterDataForAPI($invoice);
+        foreach ($masterDatasets as $masterData) {
+            try {
+                // Create Customer Invoice Document
+                $customerInvoiceStoreData = self::customerInvoiceStore($masterData);
+                if($customerInvoiceStoreData['status'] && $customerInvoiceStoreData['data'] != "e") {
 
-                if($datasetMaster['status']){
+                    // Create Customer Invoice Details
+                    foreach ($detailsDataSets[$i] as $detailsData) {
+                        $detailsData['custInvoiceDirectAutoID'] = $customerInvoiceStoreData['data']['custInvoiceDirectAutoID'];
 
-                    // Create Customer Invoice Document
-                    $customerInvoiceStoreData = self::customerInvoiceStore($datasetMaster['data']);
-                    if($customerInvoiceStoreData['status'] && $customerInvoiceStoreData['data'] != "e"){
-
-                        // Create Customer Invoice Details
-                        foreach ($invoice['details'] as $invoiceDetail){
-                            $datasetDetails = self::setInvoiceDetailsStoreDataForAPI($customerInvoiceStoreData['data'],$invoiceDetail);
-
-                            if($datasetDetails['status']){
-
-                                // Check Invoice Type and call item details store or direct item details
-                                if($datasetMaster['data']['isPerforma'] == 0){
-                                    $customerInvoiceDetailsStoreData = self::customerInvoiceDirectDetailsStore($datasetDetails['data']);
-                                }
-                                elseif ($datasetMaster['data']['isPerforma'] == 2){
-                                    $customerInvoiceDetailsStoreData = self::customerInvoiceItemDetailsStore($datasetDetails['data']);
-                                }
-                                else{
-                                    DB::rollBack();
-                                    $returnData['status'] = false;
-                                    $returnData['message'] = "Invoice Type Error";
-                                    break 2;
-                                }
-
-                                if($customerInvoiceDetailsStoreData['status']){
-                                    $returnData['status'] = true;
-                                    $returnData['message'] = $customerInvoiceDetailsStoreData['message'];
-                                }
-                                else{
-                                    DB::rollBack();
-                                    $returnData['status'] = false;
-                                    $returnData['message'] = $customerInvoiceDetailsStoreData['message'];
-                                    break 2;
-                                }
-                            }
-                            else{
-                                DB::rollBack();
-                                $returnData['status'] = false;
-                                $returnData['message'] = $datasetDetails['message'];
-                                break 2;
-                            }
+                        // Check Invoice Type to switch item details store or direct item details type
+                        if($customerInvoiceStoreData['data']['isPerforma'] == 0) {
+                            $customerInvoiceDetailsStoreData = self::customerInvoiceDirectDetailsStore($detailsData);
+                        }
+                        elseif ($customerInvoiceStoreData['data']['isPerforma'] == 2) {
+                            $customerInvoiceDetailsStoreData = self::customerInvoiceItemDetailsStore($detailsData);
+                        }
+                        else {
+                            DB::rollBack();
+                            $returnData['status'] = false;
+                            $returnData['responseData'] = self::createResponceDataArray($masterData['customerInvoiceNo'], $i, [], $headerData, $detailData);
+                            $returnData['message'] = "Invoice Type Error";
+                            break 2;
                         }
 
-                        if($returnData['status']){
+                        if($customerInvoiceDetailsStoreData['status']){
+                            $returnData['status'] = true;
+                        }
+                        else{
+                            DB::rollBack();
+                            $returnData['status'] = false;
+                            $returnData['responseData'] = self::createResponceDataArray($masterData['customerInvoiceNo'], $i, [], $headerData, $detailData);
+                            $returnData['message'] = $customerInvoiceDetailsStoreData['message'];
+                            break 2;
+                        }
+                    }
 
-                            // Confirm Document
-                            $confirmDataSet = $customerInvoiceStoreData['data'];
-                            $confirmDataSet['confirmedYN'] = 1;
-                            $confirmDataSet['isAutoCreateDocument'] = true;
-                            $customerInvoiceUpdateData = self::customerInvoiceUpdate($confirmDataSet['custInvoiceDirectAutoID'],$confirmDataSet);
-                            if($customerInvoiceUpdateData['status']){
+                    if($returnData['status']){
+                        // Confirm Document
+                        $confirmDataSet = $customerInvoiceStoreData['data'];
+                        $confirmDataSet['confirmedYN'] = 1;
+                        $confirmDataSet['isAutoCreateDocument'] = true;
+                        $customerInvoiceUpdateData = self::customerInvoiceUpdate($confirmDataSet['custInvoiceDirectAutoID'],$confirmDataSet);
+                        if($customerInvoiceUpdateData['status']){
 
-                                // Approve Document
-                                $request = new Request();
-                                $request->replace([
-                                    'companyId' => $invoice['company_id'],
-                                    'custInvoiceDirectAutoID' => $confirmDataSet['custInvoiceDirectAutoID'],
-                                    'isAutoCreateDocument' => true
-                                ]);
-                                $controller = app(CustomerInvoiceDirectAPIController::class);
-                                $customerInvoiceApprovalData = $controller->getCustomerInvoiceApproval($request);
-                                $customerInvoiceApprovalData = json_decode(json_encode($customerInvoiceApprovalData),true);
+                            // Approve Document
+                            $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($confirmDataSet['documentSystemiD'],$confirmDataSet['custInvoiceDirectAutoID']);
+                            $autoApproveParams['db'] = $data['db'];
 
-                                if($customerInvoiceApprovalData['success']){
-
-                                    $dataset = $customerInvoiceApprovalData['data'];
-                                    $dataset['isAutoCreateDocument'] = true;
-                                    $dataset['companySystemID'] = $invoice['company_id'];
-                                    $dataset['approvedComments'] = '';
-
-                                    $approvePreCheck = \Helper::postedDatePromptInFinalApproval($dataset);
-                                    if ($approvePreCheck["success"]) {
-
-                                        $dataset['db'] = $data['db'];
-                                        $approveDocument = \Helper::approveDocument($dataset);
-                                        if ($approveDocument["success"]) {
-                                            $returnData['status'] = true;
-                                            $createdCustomerInvoiceIds[] = $confirmDataSet['custInvoiceDirectAutoID'];
-                                        }
-                                        else {
-                                            DB::rollBack();
-                                            $returnData['status'] = false;
-                                            $returnData['message'] = $approveDocument['message'];
-                                            break;
-                                        }
-                                    }
-                                    else {
-                                        DB::rollBack();
-                                        $returnData['status'] = false;
-                                        $returnData['message'] = $approvePreCheck['message'];
-                                        break;
-                                    }
-                                }
-                                else{
-                                    DB::rollBack();
-                                    $returnData['status'] = false;
-                                    $returnData['message'] = $customerInvoiceApprovalData['message'];
-                                    break;
-                                }
+                            $approveDocument = Helper::approveDocument($autoApproveParams);
+                            if ($approveDocument["success"]) {
+                                $returnData['status'] = true;
+                                $returnData['responseData'][] = [
+                                    "ref" => $confirmDataSet['bookingInvCode'],
+                                    "invoiceNumber" => $masterData['customerInvoiceNo']
+                                ];
+                                $returnData['data'][] = $confirmDataSet['custInvoiceDirectAutoID'];
                             }
-                            else{
+                            else {
                                 DB::rollBack();
                                 $returnData['status'] = false;
-                                $returnData['message'] = $customerInvoiceUpdateData['message'];
+                                $returnData['responseData'] = self::createResponceDataArray($masterData['customerInvoiceNo'], $i, [], $headerData, $detailData);
+                                $returnData['message'] = $approveDocument['message'];
                                 break;
                             }
                         }
                         else{
+                            DB::rollBack();
+                            $returnData['status'] = false;
+                            $returnData['responseData'] = self::createResponceDataArray($masterData['customerInvoiceNo'], $i, [], $headerData, $detailData);
+                            $returnData['message'] = $customerInvoiceUpdateData['message'];
                             break;
                         }
                     }
                     else{
-                        $returnData['status'] = false;
-                        $returnData['message'] = $customerInvoiceStoreData['message'];
                         break;
                     }
                 }
                 else{
                     $returnData['status'] = false;
-                    $returnData['message'] = $datasetMaster['message'];
+                    $returnData['responseData'] = self::createResponceDataArray($masterData['customerInvoiceNo'], $i, [], $headerData, $detailData);
+                    $returnData['message'] = $customerInvoiceStoreData['message'];
                     break;
                 }
             } catch (\Exception $e){
                 DB::rollBack();
                 $returnData['status'] = false;
+                $returnData['responseData'] = self::createResponceDataArray($masterData['customerInvoiceNo'], $i, [], $headerData, $detailData);
                 $returnData['message'] = $e->getMessage();
                 break;
             }
+
+            $i++;
         }
 
         if($returnData['status']){
@@ -3281,8 +3654,9 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         return [
             'status' => $returnData['status'],
-            'data' => $createdCustomerInvoiceIds,
-            'message' => $returnData['message']
+            'data' => $returnData['data'],
+            'message' => $returnData['message'],
+            'responseData' => $returnData['responseData']
         ];
     }
 }

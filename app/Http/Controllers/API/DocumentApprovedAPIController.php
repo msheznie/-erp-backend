@@ -37,9 +37,11 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\DocumentModifyRequest;
 use App\Repositories\DocumentModifyRequestRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\JobErrorLog;
 
 /**
  * Class DocumentApprovedController

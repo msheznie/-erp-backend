@@ -135,6 +135,10 @@ Route::group([], function () {
     Route::post('get-items-to-link','MaterielRequestAPIController@getItemsToLink');
     Route::post('get-linked-items-details','MaterielRequestAPIController@getLinkedItemsDetails');
 
+    Route::get('downloadMrItemUploadTemplate', 'MaterielRequestAPIController@downloadMrItemUploadTemplate');
+    Route::post('mrItemsUpload', 'MaterielRequestAPIController@mrItemsUpload');
+    Route::get('getMrItemBulkUploadError', 'MrBulkUploadErrorLogAPIController@getMrItemBulkUploadError');
+    Route::post('deleteMrErrorLog/{id}', 'MrBulkUploadErrorLogAPIController@deleteMrErrorLog');
 });
 
 //Material Issue Trans
@@ -165,6 +169,10 @@ Route::group([], function () {
     Route::post('add-items-to-mi-from-mr','ItemIssueMasterAPIController@addItemFromMrToMiDetails');
     Route::post('validate-item-before-add','ItemIssueMasterAPIController@validateItemBeforeAdd');
     Route::post('store-all-details-mi','ItemIssueMasterAPIController@storeAllItemsFromMr');
+    Route::get('downloadMiItemUploadTemplate', 'ItemIssueDetailsAPIController@downloadMiItemUploadTemplate')->name('Download material issue item upload template');
+    Route::post('miItemsUpload', 'ItemIssueDetailsAPIController@miItemsUpload')->name('Material issue items upload');
+    Route::get('getMiItemBulkUploadError', 'MiBulkUploadErrorLogAPIController@getMiItemBulkUploadError')->name('Material issue item bulk upload errors');
+    Route::post('deleteMiItemUploadErrorLog/{id}', 'MiBulkUploadErrorLogAPIController@deleteMiItemUploadErrorLog')->name('Delete Material issue item upload error log');
 
 });
 
@@ -295,7 +303,7 @@ Route::group([], function () {
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
 
     Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse')->name('Get Warehouse');
-    Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger')->name('Get Erp Ledger');
+    Route::post('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger')->name('Get Erp Ledger');
 
     Route::post('getErpLedgerItems', 'ErpItemLedgerAPIController@getErpLedgerItems')->name('Get Erp Ledger Items');
     Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport')->name('Validate Stock Ledger Report');
@@ -311,7 +319,7 @@ Route::group([], function () {
     Route::resource('erp_stock_valuation', 'InventoryReportAPIController');
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
 
-    Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData')->name('Get Inventory Filter Data');
+    Route::post('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData')->name('Get Inventory Filter Data');
 
     Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport')->name('Validate Stock Valuation Report');
     Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport')->name('Generate Stock Valuation Report');

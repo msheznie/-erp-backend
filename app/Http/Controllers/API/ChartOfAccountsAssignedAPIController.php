@@ -282,7 +282,6 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                                          $query->where('inputVatGLAccountAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID)
                                                ->orWhere('outputVatGLAccountAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID)
                                                ->orWhere('inputVatTransferGLAccountAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID)
-                                               ->orWhere('GLAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID)
                                                ->orWhere('outputVatTransferGLAccountAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID);
                                       })
                                       ->first();

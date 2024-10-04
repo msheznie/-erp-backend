@@ -2,9 +2,11 @@
 
 namespace App\Repositories;
 
+use App\helper\Helper;
 use App\Models\JvMaster;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
+use App\Models\GeneralLedger;
 
 /**
  * Class JvMasterRepository
@@ -52,6 +54,7 @@ class JvMasterRepository extends BaseRepository
         'approvedDate',
         'postedDate',
         'jvType',
+        'type',
         'isReverseAccYN',
         'timesReferred',
         'isRelatedPartyYN',
@@ -79,10 +82,12 @@ class JvMasterRepository extends BaseRepository
 
         $invMaster = JvMaster::where('companySystemID', $input['companySystemID']);
         //$invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with(['created_by', 'transactioncurrency', 'detail' => function ($query) {
+        $invMaster->with(['created_by', 'transactioncurrency','reportingcurrency', 'detail' => function ($query) {
             $query->selectRaw('COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,jvMasterAutoId');
             $query->groupBy('jvMasterAutoId');
-        }]);
+        } ,'company'=> function ($query) {
+            $query->with(['localcurrency','reportingcurrency']);
+        } ]);
 
         if (array_key_exists('createdBy', $input)) {
             if($input['createdBy'] && !is_null($input['createdBy']))
@@ -150,9 +155,246 @@ class JvMasterRepository extends BaseRepository
                 $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
                 $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
-                $data[$x]['Debit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
-                $data[$x]['Credit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x]['Transaction Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
+
+
+
+                $data[$x]['Transaction Debit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x]['Transaction Credit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+
+
+                $debitAmount = $val->detail->count() > 0? $val->detail[0]->debitSum : 0;
+                $creditAmount = $val->detail->count() > 0? $val->detail[0]->creditSum : 0;
+
+                $debitRptAmount = 0;
+                $creditRptAmount = 0;
+                $debitLocalAmount = 0;
+                $creditLocalAmount = 0;
+
+                $localCurrencyCode = '';
+                $reportingCurrencyCode = '';
+                $localCurrencyDecimal = '';
+                $reportingCurrencyDecimal = '';
+
+
+                if($val->approved == 0){
+                    $localCurrencyCode = $val->company->localcurrency? $val->company->localcurrency->CurrencyCode : '';
+                    $reportingCurrencyCode = $val->company->reportingcurrency? $val->company->reportingcurrency->CurrencyCode : '';
+                    $localCurrencyDecimal = $val->company->localcurrency? $val->company->localcurrency->DecimalPlaces : '';
+                    $reportingCurrencyDecimal = $val->company->reportingcurrency? $val->company->reportingcurrency->DecimalPlaces : '';
+
+                    if(($val->rptCurrencyID && $val->currencyID) && ($debitAmount > 0 || $creditAmount > 0)){
+                        if($debitAmount > 0){
+                            $debitCurrencyConversionAmount = Helper::currencyConversion($val->companySystemID, $val->currencyID, $val->currencyID, $debitAmount);
+                            $debitRptAmount = $debitCurrencyConversionAmount['reportingAmount'];
+                            $debitLocalAmount = $debitCurrencyConversionAmount['localAmount'];
+                        }
+    
+                        if($creditAmount > 0){
+                            $creditCurrencyConversionAmount = Helper::currencyConversion($val->companySystemID, $val->currencyID, $val->currencyID, $creditAmount);
+                            $creditRptAmount = $creditCurrencyConversionAmount['reportingAmount'];
+                            $creditLocalAmount = $creditCurrencyConversionAmount['localAmount'];
+                        }
+                    }
+                }
+
+
+                if($val->approved == -1){
+                    $trasToTransER = $val->currencyER;
+                    
+
+                    $jvGl = GeneralLedger::with(['localcurrency','rptcurrency'])
+                    ->where('documentCode',$val->JVcode)
+                    ->first();
+                    
+                   
+
+
+                    if($jvGl){
+                        $localCurrencyCode = $jvGl->localcurrency? $jvGl->localcurrency->CurrencyCode : '';
+                        $reportingCurrencyCode = $jvGl->rptcurrency? $jvGl->rptcurrency->CurrencyCode : '';
+                        $localCurrencyDecimal = $jvGl->localcurrency? $jvGl->localcurrency->DecimalPlaces : '';
+                        $reportingCurrencyDecimal = $jvGl->rptcurrency? $jvGl->rptcurrency->DecimalPlaces : '';
+
+                        $trasToRptER = $jvGl->documentRptCurrencyER;
+                        $trasToLocER = $jvGl->documentLocalCurrencyER;
+
+                        if ($trasToRptER > $trasToTransER) {
+                            if ($trasToRptER > 1) {
+                                if ((is_numeric($debitAmount) || is_numeric($creditAmount)) && is_numeric($trasToRptER)) {
+                                    if(is_numeric($debitAmount)){
+                                        $debitRptAmount = $debitAmount / $trasToRptER;
+                                    } else {
+                                        $debitRptAmount = 0;
+                                    }
+        
+                                    if(is_numeric($creditAmount)){
+                                        $creditRptAmount = $creditAmount / $trasToRptER;
+                                    } else {
+                                        $creditRptAmount = 0;
+                                    }
+        
+                                } else {
+                                    $debitRptAmount = 0;
+                                    $creditRptAmount = 0;
+                                }
+                            } else {
+                                if ((is_numeric($debitAmount) || is_numeric($creditAmount)) && is_numeric($trasToRptER)) 
+                                {
+                                    if(is_numeric($debitAmount)){
+                                        $debitRptAmount = $debitAmount * $trasToRptER;
+                                    } else {
+                                        $debitRptAmount = 0;
+                                    }
+        
+                                    if(is_numeric($creditAmount)){
+                                        $creditRptAmount = $creditAmount * $trasToRptER;
+                                    } else {
+                                        $creditRptAmount = 0;
+                                    }
+        
+                                } else {
+                                    $debitRptAmount = 0;
+                                    $creditRptAmount = 0;                        
+                                }
+                            }
+                        } else {
+                            if ($trasToRptER > 1) {
+                                if ((is_numeric($debitAmount) || is_numeric($creditAmount)) && is_numeric($trasToRptER)) 
+                                {
+                                    if(is_numeric($debitAmount)){
+                                        $debitRptAmount = $debitAmount * $trasToRptER;
+                                    } else {
+                                        $debitRptAmount = 0;
+                                    }
+        
+                                    if(is_numeric($creditAmount)){
+                                        $creditRptAmount = $creditAmount * $trasToRptER;
+                                    } else {
+                                        $creditRptAmount = 0;
+                                    }                        
+                                } else {
+                                    $debitRptAmount = 0;
+                                    $creditRptAmount = 0;                        
+                                }
+                            } else {
+                                if ((is_numeric($debitAmount) || is_numeric($creditAmount)) && is_numeric($trasToRptER)) {
+                                    if(is_numeric($debitAmount)){
+                                        $debitRptAmount = $debitAmount / $trasToRptER;
+                                    } else {
+                                        $debitRptAmount = 0;
+                                    }
+        
+                                    if(is_numeric($creditAmount)){
+                                        $creditRptAmount = $creditAmount / $trasToRptER;
+                                    } else {
+                                        $creditRptAmount = 0;
+                                    }                       
+                                } else {
+                                    $debitRptAmount = 0;
+                                    $creditRptAmount = 0;                        
+                                }
+                            }
+                        }
+
+                        if ($trasToLocER > $trasToTransER) {
+                            if ($trasToLocER > 1) {
+                                if ((is_numeric($debitAmount) || is_numeric($creditAmount)) && is_numeric($trasToRptER)) {
+                                    if(is_numeric($debitAmount)){
+                                        $debitLocalAmount = $debitAmount / $trasToLocER;
+                                    } else {
+                                        $debitLocalAmount = 0;
+                                    }
+        
+                                    if(is_numeric($creditAmount)){
+                                        $creditLocalAmount = $creditAmount / $trasToLocER;
+                                    } else {
+                                        $creditLocalAmount = 0;
+                                    }
+        
+                                } else {
+                                    $debitLocalAmount = 0;
+                                    $creditLocalAmount = 0;
+                                }
+
+                            } else {
+                                if ((is_numeric($debitAmount) || is_numeric($creditAmount)) && is_numeric($trasToRptER)) {
+                                    if(is_numeric($debitAmount)){
+                                        $debitLocalAmount = $debitAmount * $trasToLocER;
+                                    } else {
+                                        $debitLocalAmount = 0;
+                                    }
+        
+                                    if(is_numeric($creditAmount)){
+                                        $creditLocalAmount = $creditAmount * $trasToLocER;
+                                    } else {
+                                        $creditLocalAmount = 0;
+                                    }
+        
+                                } else {
+                                    $debitLocalAmount = 0;
+                                    $creditLocalAmount = 0;
+                                }
+
+                            }
+                        } else {
+                            if ($trasToLocER > 1) {
+                                if ((is_numeric($debitAmount) || is_numeric($creditAmount)) && is_numeric($trasToRptER)) {
+                                    if(is_numeric($debitAmount)){
+                                        $debitLocalAmount = $debitAmount * $trasToLocER;
+                                    } else {
+                                        $debitLocalAmount = 0;
+                                    }
+        
+                                    if(is_numeric($creditAmount)){
+                                        $creditLocalAmount = $creditAmount * $trasToLocER;
+                                    } else {
+                                        $creditLocalAmount = 0;
+                                    }
+        
+                                } else {
+                                    $debitLocalAmount = 0;
+                                    $creditLocalAmount = 0;
+                                }
+
+                            } else {
+                                if ((is_numeric($debitAmount) || is_numeric($creditAmount)) && is_numeric($trasToRptER)) {
+                                    if(is_numeric($debitAmount)){
+                                        $debitLocalAmount = $debitAmount / $trasToLocER;
+                                    } else {
+                                        $debitLocalAmount = 0;
+                                    }
+        
+                                    if(is_numeric($creditAmount)){
+                                        $creditLocalAmount = $creditAmount / $trasToLocER;
+                                    } else {
+                                        $creditLocalAmount = 0;
+                                    }
+        
+                                } else {
+                                    $debitLocalAmount = 0;
+                                    $creditLocalAmount = 0;
+                                }
+                            }
+                        }
+                    } else {
+                        $debitRptAmount = 0;
+                        $creditRptAmount = 0;  
+                        $debitLocalAmount = 0;
+                        $creditLocalAmount = 0;
+                    }
+
+                }
+
+
+                $data[$x]['Local Currency'] = $localCurrencyCode;
+                $data[$x]['Local Debit Amount'] = $debitLocalAmount > 0? number_format($debitLocalAmount, $localCurrencyDecimal, ".", "") : 0;
+                $data[$x]['Local Credit Amount'] = $creditLocalAmount > 0? number_format($creditLocalAmount, $localCurrencyDecimal, ".", "") : 0;
+
+                $data[$x]['Reporting Currency'] = $reportingCurrencyCode;
+                $data[$x]['Reporting Debit Amount'] = $debitRptAmount > 0? number_format($debitRptAmount, $reportingCurrencyDecimal, ".", "") : 0;
+                $data[$x]['Reporting Credit Amount'] = $creditRptAmount > 0? number_format($creditRptAmount, $reportingCurrencyDecimal, ".", "") : 0;
+
                 $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

@@ -60,6 +60,8 @@ class CreateStockReceive implements ShouldQueue
                            StockReceiveDetailsRepository $stockReceiveDetailsRepo)
     {
         Log::useFiles(storage_path() . '/logs/create_stock_receive_jobs.log');
+
+        $dataBase = $this->dataBase;
         $st = $this->stMaster;
         $stMaster = StockTransfer::where('stockTransferAutoID', $st->stockTransferAutoID)->first();
         if (!empty($stMaster)) {

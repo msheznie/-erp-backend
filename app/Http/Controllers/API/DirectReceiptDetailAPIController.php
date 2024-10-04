@@ -600,12 +600,12 @@ class DirectReceiptDetailAPIController extends AppBaseController
             $currencyNet = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $input['netAmount']);
 
             if($policy == true) {
-                $input["netAmountRpt"] = round(\Helper::roundValue($input['netAmount']/$master->companyRptCurrencyER),$decimal);
-                $input["netAmountLocal"] = round(\Helper::roundValue($input['netAmount']/$master->localCurrencyER),$decimal);
+                $input["netAmountRpt"] = \Helper::roundValue($input['netAmount']/$master->companyRptCurrencyER);
+                $input["netAmountLocal"] = \Helper::roundValue($input['netAmount']/$master->localCurrencyER);
             }
             if($policy == false) {
-                $input["netAmountRpt"] = round(\Helper::roundValue($currencyNet['reportingAmount']),$decimal);
-                $input["netAmountLocal"] = round(\Helper::roundValue($currencyNet['localAmount']),$decimal);
+                $input["netAmountRpt"] = \Helper::roundValue($currencyNet['reportingAmount']);
+                $input["netAmountLocal"] = \Helper::roundValue($currencyNet['localAmount']);
             }
 
        // }

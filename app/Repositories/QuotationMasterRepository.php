@@ -118,7 +118,7 @@ class QuotationMasterRepository extends BaseRepository
 
         $quotationMaster = QuotationMaster::whereIn('companySystemID', $childCompanies)
             ->where('documentSystemID', $input['documentSystemID'])
-        ->with(['segment']);
+        ->with(['segment','local_currency','reporting_currency','transaction_currency']);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -203,8 +203,14 @@ class QuotationMasterRepository extends BaseRepository
                 $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
                 $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
                 $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
-                $data[$x]['Currency'] = $val->transactionCurrency? $val->transactionCurrency : '';
-                $data[$x]['Amount'] = number_format($val->transactionAmount, $val->transactionCurrencyDecimalPlaces? $val->transactionCurrencyDecimalPlaces : '', ".", "");
+                $data[$x]['Transaction Currency'] = $val->transaction_currency? $val->transaction_currency->CurrencyCode : '';
+                $data[$x]['Transaction Amount'] = number_format($val->transactionAmount, $val->transaction_currency? $val->transaction_currency->DecimalPlaces : '', ".", "");
+                
+                $data[$x]['Local Currency'] = $val->local_currency? $val->local_currency->CurrencyCode : '';
+                $data[$x]['Local Amount'] = number_format($val->companyLocalAmount, $val->local_currency? $val->local_currency->DecimalPlaces : '', ".", "");
+                $data[$x]['Reporting Currency'] = $val->reporting_currency? $val->reporting_currency->CurrencyCode : '';
+                $data[$x]['Reporting Amount'] = number_format($val->companyReportingAmount, $val->reporting_currency? $val->reporting_currency->DecimalPlaces : '', ".", "");
+
                 $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approvedYN, $val->refferedBackYN);
 
                 $x++;

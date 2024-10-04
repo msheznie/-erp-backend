@@ -268,9 +268,9 @@ class GeneralLedgerPostingService
                 }
 
 
-                if (!empty($taxLedgerData)) {
+                
                     $updateVATLedger = TaxLedgerInsert::dispatch($masterModel, $taxLedgerData, $dataBase);
-                }
+                
             }
             
             Log::info('---- GL End Successfully -----' . date('H:i:s'));

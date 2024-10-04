@@ -465,4 +465,54 @@ class ValidateDocumentAmend
 
         return ['status' => true];
     }
+
+    public static function validateCLoseFinanceYear($documentSystemID, $matchingMasterID)
+    {
+
+        switch ($documentSystemID) {
+            case 4: // Payment Voucher Matching
+                $matchMaster = MatchDocumentMaster::find($matchingMasterID);
+                if($matchMaster){
+                    $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$matchMaster->companyFinanceYearID)->first();
+                    if($financeYear){
+
+                        if($financeYear->isClosed == -1){
+                            $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
+                            $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
+
+                            $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted is closed, can’t refer back the matching';
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                }
+                break;
+            default:
+                return ['status' => false,'message'=>'Document ID not found'];
+        }
+    }
+
+    public static function validateCLoseFinancePeriod($documentSystemID, $matchingMasterID)
+    {
+        
+        switch ($documentSystemID) {
+            case 4: // Payment Voucher Matching
+                $matchMaster = MatchDocumentMaster::find($matchingMasterID);
+                if($matchMaster){
+                    $financePeriod = CompanyFinancePeriod::where('companyFinancePeriodID',$matchMaster->companyFinancePeriodID)->first();
+                    if($financePeriod){
+                        if($financePeriod->isClosed == -1){
+                            $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
+                            $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
+
+                            $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted is closed, can’t refer back the matching';
+                            return ['status' => false,'message'=>$message];
+                        }
+                    }
+                }
+                break;
+            default:
+                return ['status' => false,'message'=>'Document ID not found'];
+        }
+    }
+
 }

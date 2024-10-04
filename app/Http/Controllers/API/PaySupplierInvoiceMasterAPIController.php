@@ -374,6 +374,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['AdvanceAccount'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
                 $input['advanceAccountSystemID'] = $checkEmployeeControlAccount;
 
+                $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
+
+                if (is_null($isEmpAdvConfigured)) {
+                    return $this->sendError('Please configure employee advance account for this company', 500, array('type' => 'create'));
+                }
+
+                $input['employeeAdvanceAccount'] = ChartOfAccount::getAccountCode($isEmpAdvConfigured);
+                $input['employeeAdvanceAccountSystemID'] = $isEmpAdvConfigured;
+
                 $emp = Employee::find($input["directPaymentPayeeEmpID"]);
                 $input['directPaymentPayee'] = $emp->empFullName;
             }
@@ -1578,6 +1587,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     return $this->sendError('Please configure Employee control account for this company', 500);
                 }
 
+
                 $input['BPVsupplierID'] = 0;
                 $input['supplierGLCodeSystemID'] = $checkEmployeeControlAccount;
                 $input['supplierGLCode'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
@@ -1587,6 +1597,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['directPaymentPayee'] = $emp->empFullName;
                 }
                 
+            }
+
+            if ($input['invoiceType'] == 7) {
+                $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
+
+                if (is_null($isEmpAdvConfigured)) {
+                    return $this->sendError('Please configure employee advance account for this company', 500, array('type' => 'create'));
+                }
+
+                $input['employeeAdvanceAccount'] = ChartOfAccount::getAccountCode($isEmpAdvConfigured);
+                $input['employeeAdvanceAccountSystemID'] = $isEmpAdvConfigured;
+            } else {
+                $input['employeeAdvanceAccount'] = null;
+                $input['employeeAdvanceAccountSystemID'] = null;
             }
             
 
@@ -1658,9 +1682,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if ((($paySupplierInvoiceMaster->BPVbankCurrencyER != $input['BPVbankCurrencyER'] && $input['BPVbankCurrency'] == $paySupplierInvoiceMaster->BPVbankCurrency) || $paySupplierInvoiceMaster->localCurrencyER != $input['localCurrencyER'] && $input['localCurrencyID'] == $paySupplierInvoiceMaster->localCurrencyID || $paySupplierInvoiceMaster->companyRptCurrencyER != $input['companyRptCurrencyER'] && $input['companyRptCurrencyID'] == $paySupplierInvoiceMaster->companyRptCurrencyID)) {
 
-
-                if ($checkErChange) {
-                    $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
+                if ($checkErChange && $input['confirmedYN'] == 1) {
+                    if(($input['BPVbankCurrencyEROld'] != $paySupplierInvoiceMaster->BPVbankCurrencyER) || ($input['localCurrencyEROld'] != $paySupplierInvoiceMaster->localCurrencyER) || ($input['companyRptCurrencyEROld'] != $paySupplierInvoiceMaster->companyRptCurrencyER))
+                    {
+                        $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$input['BPVbankCurrencyEROld']." | Local ER ".$input['localCurrencyEROld']." | Reporting ER ".$input['companyRptCurrencyEROld']."</p><p style='font-size: medium;'>Current rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p>Are you sure you want to proceed ?</p>";
+                    }else {
+                        $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
+                    }
 
                     return $this->sendError($erMessage, 500, ['type' => 'erChange']);
                 } else {

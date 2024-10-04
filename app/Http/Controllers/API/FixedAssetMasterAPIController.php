@@ -333,6 +333,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $input["itemCode"] = $grvDetails->itemCode;
                         $input["PARTNUMBER"] = $grvDetails->item_by->secondaryItemCode;
                         $input["faCode"] = $documentCode;
+                        $input["faBarcode"] = $documentCode;
                         $input['createdPcID'] = gethostname();
                         $input['createdUserID'] = \Helper::getEmployeeID();
                         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
@@ -380,8 +381,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $this->fixedAssetCostRepository->create($cost);
 
                         // maintain assetAllocatedQty
-                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty]);
-
+                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty, 'assetAllocationDoneYN' => -1]);
                     } else {
 
                         $ceil_qty = ceil($grvDetails->noQty);
@@ -431,6 +431,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $input["itemCode"] = $grvDetails->itemCode;
                                 $input["PARTNUMBER"] = $grvDetails->item_by->secondaryItemCode;
                                 $input["faCode"] = $documentCode;
+                                $input["faBarcode"] = $documentCode;
                                 $input['createdPcID'] = gethostname();
                                 $input['createdUserID'] = \Helper::getEmployeeID();
                                 $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
@@ -942,7 +943,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             unset($input['itemPicture']);
 
             if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
-                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID']);
+                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID','faUnitSerialNo']);
 
                 $fixedAssetMaster = $this->fixedAssetMasterRepository->update($amendableData, $id);
             } else {
@@ -955,8 +956,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             $employee = Helper::getEmployeeInfo();
             if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
 
-                $old_array = array_only($fixedAssetMasterOld,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE']);
-                $modified_array = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE']);
+                $old_array = array_only($fixedAssetMasterOld,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo']);
+                $modified_array = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo']);
                 // update in to user log table
                 foreach ($old_array as $key => $old){
                     if(isset($modified_array[$key]) && $old != $modified_array[$key]){
@@ -2005,7 +2006,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
             $input = $request->all();
 
-            if(isset($input['assetCostingTypeID']) && $input['assetCostingTypeID'] == 2) {
+            if(isset($input['assetCostingTypeID'])) {
 
                 if($input['assetDescription']== ''){
                     return $this->sendError('Description is required',500);
@@ -2063,15 +2064,27 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
 
-                $uploadData = ['objPHPExcel' => $objPHPExcel,
-                   'uploadAssetCosting' => $uploadAssetCosting,
-                    'logUploadAssetCosting' => $logUploadAssetCosting,
-                    'employee' => $employee,
-                    'uploadedCompany' =>  $input['companySystemID'],
-                    'auditCategory' => $input['auditCategory'],
-                    'postToGL' => $input['postToGL'],
-                    'postToGLCodeSystemID' => $input['postToGLCodeSystemID']
-                ];
+                if($input['assetCostingTypeID'] == 1){
+                    $uploadData = ['objPHPExcel' => $objPHPExcel,
+                        'uploadAssetCosting' => $uploadAssetCosting,
+                        'logUploadAssetCosting' => $logUploadAssetCosting,
+                        'employee' => $employee,
+                        'uploadedCompany' => $input['companySystemID'],
+                        'auditCategory' => $input['auditCategory'],
+                        'postToGL' => $input['postToGL'],
+                        'postToGLCodeSystemID' => $input['postToGLCodeSystemID'],
+                        'assetCostingTypeID' => $input['assetCostingTypeID']
+                    ];
+                } else {
+                    $uploadData = ['objPHPExcel' => $objPHPExcel,
+                        'uploadAssetCosting' => $uploadAssetCosting,
+                        'logUploadAssetCosting' => $logUploadAssetCosting,
+                        'employee' => $employee,
+                        'uploadedCompany' => $input['companySystemID'],
+                        'auditCategory' => $input['auditCategory'],
+                        'assetCostingTypeID' => $input['assetCostingTypeID']
+                    ];
+                }
 
                 AssetCostingUpload::dispatch($db, $uploadData);
 
@@ -2079,119 +2092,6 @@ class FixedAssetMasterAPIController extends AppBaseController
                 DB::commit();
                 return $this->sendResponse([], 'Asset Costing uploaded successfully');
 
-            } else {
-                $excelUpload = $input['assetExcelUpload'];
-                $input = array_except($request->all(), 'assetExcelUpload');
-
-                $input = $this->convertArrayToValue($input);
-
-                $decodeFile = base64_decode($excelUpload[0]['file']);
-                $originalFileName = $excelUpload[0]['filename'];
-
-                $disk = 'local';
-                Storage::disk($disk)->put($originalFileName, $decodeFile);
-
-                $finalData = [];
-                $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-                })->first()->toArray();
-
-                if (count($formatChk) > 0) {
-                    if (!isset($formatChk['asset_description']) || !isset($formatChk['serial_no'])) {
-                        return $this->sendError('Uploaded data format is invalid', 500);
-                    }
-                }
-
-                $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-                })->select(array('asset_description', 'serial_no'))->get()->toArray();
-
-                $uploadSerialNumber = array_filter(collect($record)->pluck('serial_no')->toArray());
-                $uploadSerialNumberUnique = array_unique($uploadSerialNumber);
-
-                $fixedAsset = FixedAssetMaster::ofCompany([$input['companySystemID']])->pluck('faUnitSerialNo')->toArray();
-
-                if (count($record) > 0) {
-                    // check for duplicate serial number in db
-                    $chkDuplicateAssetInDB = array_intersect($fixedAsset, $uploadSerialNumber);
-
-                    // check for duplicate serial number in uploaded asset
-                    if ((count($uploadSerialNumber) != count($uploadSerialNumberUnique)) || count($chkDuplicateAssetInDB) > 0) {
-                        return $this->sendError('The uploaded assets has duplicate serial numbers, please check and re-upload', 500);
-                    }
-
-                    $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
-                    if ($lastSerial) {
-                        $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-                    }
-
-                    $department = DepartmentMaster::find($input['departmentSystemID']);
-                    if ($department) {
-                        $input['departmentID'] = $department->DepartmentID;
-                    }
-
-                    $segment = SegmentMaster::find($input['serviceLineSystemID']);
-                    if ($segment) {
-                        $input['serviceLineCode'] = $segment->ServiceLineCode;
-                    }
-
-                    $company = Company::find($input['companySystemID']);
-                    if ($company) {
-                        $input['companyID'] = $company->CompanyID;
-                    }
-
-                    foreach ($record as $val) {
-                        if (isset($val['asset_description']) || isset($val['serial_no'])) {
-                            $data = [];
-                            $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-                            $data['assetDescription'] = $val['asset_description'];
-                            $data['faUnitSerialNo'] = $val['serial_no'];
-                            $data['serialNo'] = $lastSerialNumber;
-                            $data['faCode'] = $documentCode;
-                            $data['supplierIDRentedAsset'] = $input['supplierID'];
-                            $data['faCatID'] = $input['faCatID'];
-                            $data['faSubCatID'] = $input['faSubCatID'];
-                            $data['faSubCatID2'] = $input['faSubCatID2'];
-                            $data['faSubCatID3'] = $input['faSubCatID3'];
-                            $data['faSubCatID3'] = $input['faSubCatID3'];
-                            $data['documentID'] = 'FA';
-                            $data['documentSystemID'] = 22;
-                            $data['companySystemID'] = $input['companySystemID'];
-                            $data['companyID'] = $input['companyID'];
-                            $data['serviceLineSystemID'] = $input['serviceLineSystemID'];
-                            $data['serviceLineCode'] = $input['serviceLineCode'];
-                            $data['departmentSystemID'] = $input['departmentSystemID'];
-                            $data['departmentID'] = $input['departmentID'];
-                            $data['dateAQ'] = NOW();
-                            $data['MANUFACTURE'] = '-';
-                            $data['assetType'] = 2;
-                            $data['confirmedYN'] = 1;
-                            $data['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
-                            $data['confirmedByEmpID'] = \Helper::getEmployeeID();
-                            $data['confirmedDate'] = NOW();
-                            $data['approved'] = -1;
-                            $data['approvedDate'] = NOW();
-                            $data['postedDate'] = NOW();
-                            $data['approvedByUserID'] = \Helper::getEmployeeID();
-                            $data['approvedByUserSystemID'] = \Helper::getEmployeeSystemID();
-                            $data['createdPcID'] = gethostname();
-                            $data['createdUserID'] = \Helper::getEmployeeID();
-                            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                            $data['timestamp'] = NOW();
-                            $finalData[] = $data;
-                            $lastSerialNumber++;
-                        }
-                    }
-                } else {
-                    return $this->sendError('No Records found!', 500);
-                }
-
-                if (count($finalData) > 0) {
-                    foreach (array_chunk($finalData, 500) as $t) {
-                        FixedAssetMaster::insert($t);
-                    }
-                }
-                Storage::disk($disk)->delete('app/' . $originalFileName);
-                DB::commit();
-                return $this->sendResponse([], 'Assets uploaded successfully');
             }
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -2237,26 +2137,18 @@ class FixedAssetMasterAPIController extends AppBaseController
         $disk = Helper::policyWiseDisk($input['companySystemID']);
         $companyMaster = Company::find($input['companySystemID']);
 
-        if($input['type'] == 1){
-            if (Storage::disk($disk)->exists('asset_master_template/asset_upload_template.xlsx')) {
-                return Storage::disk($disk)->download('asset_master_template/asset_upload_template.xlsx', 'asset_upload_template.xlsx');
-            } else {
-                return $this->errorMessageForAttachments();
-            }
-        } else {
-            if(!empty($companyMaster)) {
-                if ($companyMaster->localCurrencyID == $companyMaster->reportingCurrency) {
-                    if (Storage::disk($disk)->exists('asset_master_template/same_currency_own_asset_upload_template.xlsx')) {
-                        return Storage::disk($disk)->download('asset_master_template/same_currency_own_asset_upload_template.xlsx', 'same_currency_own_asset_upload_template.xlsx');
-                    } else {
-                        return $this->errorMessageForAttachments();
-                    }
+        if(!empty($companyMaster)) {
+            if ($companyMaster->localCurrencyID == $companyMaster->reportingCurrency) {
+                if (Storage::disk($disk)->exists('asset_master_template/same_currency_own_asset_upload_template.xlsx')) {
+                    return Storage::disk($disk)->download('asset_master_template/same_currency_own_asset_upload_template.xlsx', 'same_currency_own_asset_upload_template.xlsx');
                 } else {
-                    if (Storage::disk($disk)->exists('asset_master_template/own_asset_upload_template.xlsx')) {
-                        return Storage::disk($disk)->download('asset_master_template/own_asset_upload_template.xlsx', 'own_asset_upload_template.xlsx');
-                    } else {
-                        return $this->errorMessageForAttachments();
+                    return $this->errorMessageForAttachments();
                     }
+            } else {
+                if (Storage::disk($disk)->exists('asset_master_template/own_asset_upload_template.xlsx')) {
+                    return Storage::disk($disk)->download('asset_master_template/own_asset_upload_template.xlsx', 'own_asset_upload_template.xlsx');
+                } else {
+                    return $this->errorMessageForAttachments();
                 }
             }
         }

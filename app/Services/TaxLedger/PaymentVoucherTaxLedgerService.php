@@ -109,9 +109,10 @@ class PaymentVoucherTaxLedgerService
                 $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
                 $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
 
-                $details = PaySupplierInvoiceDetail::selectRaw('SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID as localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER')
+                $details = PaySupplierInvoiceDetail::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID as localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER')
                         ->where('matchingDocID', $masterModel["matchDocumentMasterAutoID"])
                         ->whereNotNull('vatSubCategoryID')
+                        ->join('erp_tax_vat_sub_categories', 'erp_paysupplierinvoicedetail.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                         ->groupBy('vatSubCategoryID')
                         ->get();
 
@@ -120,6 +121,21 @@ class PaymentVoucherTaxLedgerService
 
                     if ($subCategoryData) {
                         $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
+                    }
+                    
+                    if($value->subCatgeoryType == 3)
+                    {
+                        $ledgerData['inputVATGlAccountID'] = null;
+                        $ledgerData['inputVatTransferAccountID'] = null;
+                        $ledgerData['outputVatTransferGLAccountID'] = null;
+                        $ledgerData['outputVatGLAccountID'] = null;
+                    }
+                    else
+                    {
+                        $ledgerData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                        $ledgerData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                        $ledgerData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                        $ledgerData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
                     }
 
                     $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
@@ -139,6 +155,7 @@ class PaymentVoucherTaxLedgerService
                 }
 
                 $detailData = PaySupplierInvoiceDetail::where('matchingDocID', $masterModel["matchDocumentMasterAutoID"])
+                    ->join('erp_tax_vat_sub_categories', 'erp_paysupplierinvoicedetail.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                     ->whereNotNull('vatSubCategoryID')
                     ->get();
 
@@ -158,6 +175,22 @@ class PaymentVoucherTaxLedgerService
                     //     $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
                     //     $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
                     // }
+
+                    if($value->subCatgeoryType == 3)
+                    {
+                        $ledgerDetailsData['inputVATGlAccountID'] = null;
+                        $ledgerDetailsData['inputVatTransferAccountID'] = null;
+                        $ledgerDetailsData['outputVatTransferGLAccountID'] = null;
+                        $ledgerDetailsData['outputVatGLAccountID'] = null;
+                    }
+                    else
+                    {
+                        $ledgerDetailsData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                        $ledgerDetailsData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                        $ledgerDetailsData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                        $ledgerDetailsData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
+                    }
+
 
                     $ledgerDetailsData['transactionCurrencyID'] = $value->supplierTransCurrencyID;
                     $ledgerDetailsData['originalInvoice'] = null;
@@ -210,9 +243,10 @@ class PaymentVoucherTaxLedgerService
                 $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
                 $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
 
-                $details = AdvancePaymentDetails::selectRaw('SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID as localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER')
+                $details = AdvancePaymentDetails::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID as localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER')
                         ->where('PayMasterAutoId', $masterModel["autoID"])
                         ->whereNotNull('vatSubCategoryID')
+                        ->join('erp_tax_vat_sub_categories', 'erp_advancepaymentdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                         ->groupBy('vatSubCategoryID')
                         ->get();
 
@@ -221,6 +255,21 @@ class PaymentVoucherTaxLedgerService
 
                     if ($subCategoryData) {
                         $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
+                    }
+
+                    if($value->subCatgeoryType == 3)
+                    {
+                        $ledgerData['inputVATGlAccountID'] = null;
+                        $ledgerData['inputVatTransferAccountID'] = null;
+                        $ledgerData['outputVatTransferGLAccountID'] = null;
+                        $ledgerData['outputVatGLAccountID'] = null;
+                    }
+                    else
+                    {
+                        $ledgerData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                        $ledgerData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                        $ledgerData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                        $ledgerData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
                     }
 
                     $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
@@ -239,6 +288,7 @@ class PaymentVoucherTaxLedgerService
                 }
 
                 $detailData = AdvancePaymentDetails::where('PayMasterAutoId', $masterModel["autoID"])
+                    ->join('erp_tax_vat_sub_categories', 'erp_advancepaymentdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                     ->whereNotNull('vatSubCategoryID')
                     ->get();
 
@@ -258,6 +308,21 @@ class PaymentVoucherTaxLedgerService
                     //     $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
                     //     $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
                     // }
+
+                    if($value->subCatgeoryType == 3)
+                    {
+                        $ledgerDetailsData['inputVATGlAccountID'] = null;
+                        $ledgerDetailsData['inputVatTransferAccountID'] = null;
+                        $ledgerDetailsData['outputVatTransferGLAccountID'] = null;
+                        $ledgerDetailsData['outputVatGLAccountID'] = null;
+                    }
+                    else
+                    {
+                        $ledgerDetailsData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                        $ledgerDetailsData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                        $ledgerDetailsData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                        $ledgerDetailsData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
+                    }
 
                     $ledgerDetailsData['transactionCurrencyID'] = $value->supplierTransCurrencyID;
                     $ledgerDetailsData['originalInvoice'] = null;
@@ -297,9 +362,10 @@ class PaymentVoucherTaxLedgerService
                 }
             }
         } else {
-            $details = DirectPaymentDetails::selectRaw('SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DPAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,DPAmountCurrencyER as transCurrencyER')
+            $details = DirectPaymentDetails::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DPAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,DPAmountCurrencyER as transCurrencyER')
                     ->where('directPaymentAutoID', $masterModel["autoID"])
                     ->whereNotNull('vatSubCategoryID')
+                    ->join('erp_tax_vat_sub_categories', 'erp_directpaymentdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                     ->groupBy('vatSubCategoryID')
                     ->get();
 
@@ -308,6 +374,21 @@ class PaymentVoucherTaxLedgerService
 
                 if ($subCategoryData) {
                     $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
+                }
+
+                if($value->subCatgeoryType == 3)
+                {
+                    $ledgerData['inputVATGlAccountID'] = null;
+                    $ledgerData['inputVatTransferAccountID'] = null;
+                    $ledgerData['outputVatTransferGLAccountID'] = null;
+                    $ledgerData['outputVatGLAccountID'] = null;
+                }
+                else
+                {
+                    $ledgerData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                    $ledgerData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                    $ledgerData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                    $ledgerData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
                 }
 
                 $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
@@ -326,6 +407,7 @@ class PaymentVoucherTaxLedgerService
             }
 
             $detailData = DirectPaymentDetails::where('directPaymentAutoID', $masterModel["autoID"])
+                ->join('erp_tax_vat_sub_categories', 'erp_directpaymentdetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                 ->whereNotNull('vatSubCategoryID')
                 ->get();
 
@@ -344,6 +426,22 @@ class PaymentVoucherTaxLedgerService
                 if ($chartOfAccountData) {
                     $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
                     $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
+                }
+
+
+                if($value->subCatgeoryType == 3)
+                {
+                    $ledgerDetailsData['inputVATGlAccountID'] = null;
+                    $ledgerDetailsData['inputVatTransferAccountID'] = null;
+                    $ledgerDetailsData['outputVatTransferGLAccountID'] = null;
+                    $ledgerDetailsData['outputVatGLAccountID'] = null;
+                }
+                else
+                {
+                    $ledgerDetailsData['inputVATGlAccountID'] = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                    $ledgerDetailsData['inputVatTransferAccountID'] = isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null;
+                    $ledgerDetailsData['outputVatTransferGLAccountID'] = isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null;
+                    $ledgerDetailsData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
                 }
 
                 $ledgerDetailsData['transactionCurrencyID'] = $value->DPAmountCurrency;

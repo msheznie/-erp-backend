@@ -16,13 +16,17 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CountryMaster;
 use App\Models\CustomerCurrency;
+use App\Models\CustomerInvoice;
 use App\Models\CustomerMaster;
 use App\Models\CustomerMasterCategory;
+use App\Models\CustomerReceivePayment;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
+use App\Models\MatchDocumentMaster;
 use App\Models\SegmentMaster;
 use App\Models\StageCustomerInvoice;
 use App\Models\StageCustomerInvoiceDirectDetail;
@@ -541,8 +545,11 @@ class ClubManagementAPIController extends AppBaseController
     public function createCustomerMaster(Request $request){
         $input = $request->all();
 
+        $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
+
         $commonValidorMessages = [
             'customerCountry.required' => 'Country field is required.',
+            'customerCountry.numeric' => 'Country value should ne numeric.',
             'custUnbilledAccountSystemID.required' => 'Unbilled Receivable Account field is required.',
             'custGLAccountSystemID.required' => 'Control Account field is required.',
             'custAdvanceAccountSystemID.required' => 'Advance Account field is required.',
@@ -550,24 +557,24 @@ class ClubManagementAPIController extends AppBaseController
             'CustomerName.required' => 'Customer Name field is required.',
             'customerCategoryID.required' => 'Customer Category field is required.',
             'ReportTitle.required' => 'Report Title field is required.',
+            'creditLimit.required' => 'Credit limit field is required',
+            'creditLimit.numeric' => 'Credit limit value should be numeric',
+            'creditDays.numeric'  => 'Credit days value should be numeric',
+            'creditDays.required' => 'Credit days field is required'
         ];
 
         $commonValidator = \Validator::make($input, [
-            'customerCountry' => 'required',
+            'customerCountry' => 'required|numeric',
             'custUnbilledAccountSystemID' => 'required',
             'custGLAccountSystemID' => 'required',
             'custAdvanceAccountSystemID' => 'required',
             'customerShortCode' => 'required',
             'CustomerName' => 'required',
             'customerCategoryID' => 'required',
-            'ReportTitle' => 'required'
+            'ReportTitle' => 'required',
+            'creditLimit' => 'required|numeric',
+            'creditDays' => 'required|numeric'
         ], $commonValidorMessages);
-
-        if ($commonValidator->fails()) {
-            return $this->sendError($commonValidator->messages(), 422);
-        }
-
-        $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
 
         if(isset($request->company_id)) {
             $input['primaryCompanySystemID'] = $request->company_id;
@@ -576,17 +583,40 @@ class ClubManagementAPIController extends AppBaseController
             return $this->sendError('Company System ID not found.');
         }
 
-        $duplicateCustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
+        if(key_exists('customerCountry',$input))
+        {
+            $countryMaster = CountryMaster::find($input['customerCountry']);
 
-        if($duplicateCustomerShortCode){
-            return $this->sendError('Secondary code already exists.' ,500);
+            if(empty($countryMaster))
+                return $this->sendError("Customer country not found!", 422);
         }
 
-        Log::useFiles(storage_path().'/logs/laravel.log');
+        if(key_exists('customerCodeSystem',$input))
+        {
 
-        $input['isAutoCreateDocument'] = true;
+            if ($commonValidator->fails()) {
+                return $this->sendError($commonValidator->messages(), 422);
+            }
+            $customerMaster = $this->updateCustomer($input);
+        }else {
 
-        $customerMaster = CustomerMasterAPIService::storeCustomerMasterFromAPI($input);
+            if ($commonValidator->fails()) {
+                return $this->sendError($commonValidator->messages(), 422);
+            }
+
+            $duplicateCustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
+
+            if($duplicateCustomerShortCode){
+                return $this->sendError('Secondary code already exists.' ,500);
+            }
+
+            Log::useFiles(storage_path().'/logs/laravel.log');
+
+            $input['isAutoCreateDocument'] = true;
+
+            $customerMaster = CustomerMasterAPIService::storeCustomerMasterFromAPI($input);
+        }
+
 
         if(!$customerMaster['status']){
             return $this->sendError(
@@ -596,6 +626,72 @@ class ClubManagementAPIController extends AppBaseController
         }
 
         return $this->sendResponse($customerMaster['data']->toArray(), 'Customer Master created successfully');
+    }
+
+    private function updateCustomer($input)
+    {
+
+        $inputParameterArray = [
+            'customerCountry',
+//            'custUnbilledAccountSystemID',
+//            'custGLAccountSystemID',
+//            'custAdvanceAccountSystemID',
+            'CustomerName',
+            'creditLimit',
+            'creditDays',
+            'customerCountry',
+            'customerAddress1',
+            'customerCategoryID',
+            'customerCodeSystem',
+            'customerShortCode',
+            'isCustomerActive'
+        ];
+
+        $data = array_only($input,$inputParameterArray);
+
+        $customerMaster = CustomerMaster::find($input['customerCodeSystem'],$inputParameterArray);
+
+//        $customerUpdateValidation = $this->validateCustomerUpdate($customerMaster,$data);
+        if($customerMaster->customerShortCode != $input['customerShortCode'])
+        {
+            $duplicateCustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
+
+            if(empty($input['customerShortCode']))
+                return ['status' => false , 'message' => 'Secondary code cannot be empty!'];
+
+            if($duplicateCustomerShortCode)
+                return ['status' => false , 'message' => 'Secondary code already exists.'];
+
+        }
+
+        if(!($input['isCustomerActive'] == 0 || $input['isCustomerActive'] == 1))
+        {
+            return ['status' => false , 'message' => 'isCustomerActive value should be 0 or 1'];
+        }
+
+        $updateData = array_diff_assoc($data, $customerMaster->toArray());
+        $updateData['customerCodeSystem'] = $input['customerCodeSystem'];
+        return CustomerMasterAPIService::updateCustomerMaster($updateData);
+    }
+
+    public function validateCustomerUpdate($customer,$input)
+    {
+        $errorMessages = array();
+        $cusInvoice = CustomerInvoice::where('customerID', $customer->customerCodeSystem)->where('customerGLSystemID', $customer->custGLAccountSystemID)->first();
+        $isFullyMatched = CustomerReceivePayment::where('customerID',$customer->customerCodeSystem)->where('matchInvoice','!=',2)->first();
+        $matDoc = MatchDocumentMaster::where('BPVsupplierID',$customer->customerCodeSystem)->where('matchingConfirmedYN',0)->first();
+        if($cusInvoice)
+        {
+            $errorMessages[] = "Receivable Account cannot be amended. it had used in customer Invoice";
+        }
+
+
+        if($isFullyMatched || $matDoc)
+        {
+            $errorMessages[] = "Advance Account cannot be amended. Match all pending Advance Receipt Voucher documents to update this account";
+        }
+
+        return $errorMessages;
     }
 
     public function createCustomerCategory(Request $request){
@@ -697,14 +793,14 @@ class ClubManagementAPIController extends AppBaseController
 
             if($bank_master_id) {
 
-                $banks = BankAccount::selectRaw('bankAccountAutoID,bankMasterAutoID, bankShortCode As bankCode, bankName As bankName, AccountNo as accountNo, accountCurrencyID as currency, chartOfAccountSystemID as glCode, bankBranch as bankBranch, accountSwiftCode as swiftCode, isAccountActive as isActive')
+                $banks = BankAccount::selectRaw('bankAccountAutoID,bankMasterAutoID, bankShortCode As bankCode, bankName As bankName, AccountNo as accountNo, accountCurrencyID as currency, chartOfAccountSystemID as glCode, bankBranch as bankBranch, accountSwiftCode as swiftCode, isAccountActive as isActive,isDefault')
                     ->where('companySystemID', $company_id)
                     ->where('bankMasterAutoID', $bank_master_id)
                     ->where('approvedYN', 1)
                     ->get();
             } else{
 
-                $banks = BankAccount::selectRaw('bankAccountAutoID,bankMasterAutoID, bankShortCode As bankCode, bankName As bankName, AccountNo as accountNo, accountCurrencyID as currency, chartOfAccountSystemID as glCode, bankBranch as bankBranch, accountSwiftCode as swiftCode, isAccountActive as isActive')
+                $banks = BankAccount::selectRaw('bankAccountAutoID,bankMasterAutoID, bankShortCode As bankCode, bankName As bankName, AccountNo as accountNo, accountCurrencyID as currency, chartOfAccountSystemID as glCode, bankBranch as bankBranch, accountSwiftCode as swiftCode, isAccountActive as isActive,isDefault')
                     ->where('companySystemID', $company_id)
                     ->where('approvedYN', 1)
                     ->get();

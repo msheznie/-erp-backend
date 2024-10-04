@@ -104,7 +104,7 @@ class DeliveryOrderRepository extends BaseRepository
         $customerID = (array)$customerID;
         $customerID = collect($customerID)->pluck('id');
         $deliveryOrder = DeliveryOrder::whereIn('companySystemID', $childCompanies)
-        ->with(['customer','transaction_currency','created_by','segment']);
+        ->with(['customer','transaction_currency','local_currency','reporting_currency','created_by','segment']);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -173,8 +173,14 @@ class DeliveryOrderRepository extends BaseRepository
                 $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
                 $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
                 $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
-                $data[$x]['Currency'] = $val->transaction_currency? $val->transaction_currency->CurrencyCode : '';
-                $data[$x]['Amount'] = $val->transactionAmount? number_format($val->transactionAmount + $val->VATAmount, $val->transaction_currency? $val->transaction_currency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x]['Transaction Currency'] = $val->transaction_currency? $val->transaction_currency->CurrencyCode : '';
+                $data[$x]['Transaction Amount'] = $val->transactionAmount? number_format($val->transactionAmount + $val->VATAmount, $val->transaction_currency? $val->transaction_currency->DecimalPlaces : '', ".", "") : 0;
+
+                $data[$x]['Local Currency'] = $val->local_currency? $val->local_currency->CurrencyCode : '';
+                $data[$x]['Local Amount'] = $val->companyLocalAmount? number_format($val->companyLocalAmount + $val->VATAmountLocal, $val->local_currency? $val->local_currency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x]['Reporting Currency'] = $val->reporting_currency? $val->reporting_currency->CurrencyCode : '';
+                $data[$x]['Reporting Amount'] = $val->companyReportingAmount? number_format($val->companyReportingAmount + $val->VATAmountRpt, $val->reporting_currency? $val->reporting_currency->DecimalPlaces : '', ".", "") : 0;
+
                 $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

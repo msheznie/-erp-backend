@@ -257,6 +257,7 @@ class JvMaster extends Model
         'approvedByUserSystemID',
         'postedDate',
         'jvType',
+        'type',
         'isReverseAccYN',
         'refferedBackYN',
         'timesReferred',
@@ -310,6 +311,7 @@ class JvMaster extends Model
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'jvType' => 'integer',
+        'type' => 'integer',
         'isReverseAccYN' => 'integer',
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
@@ -357,6 +359,11 @@ class JvMaster extends Model
     public function transactioncurrency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID', 'currencyID');
+    }
+
+    public function reportingcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'rptCurrencyID', 'currencyID');
     }
 
     public function financeperiod_by()

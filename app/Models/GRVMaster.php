@@ -335,6 +335,16 @@ class GRVMaster extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
     }
 
+    public function reporting_currency_by()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
+    public function local_currency_by()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
     public function approved_by()
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'grvAutoID');

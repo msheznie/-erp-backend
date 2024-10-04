@@ -1294,6 +1294,8 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $quotationMasterArray = array_except($quotationMasterData->toArray(),'isVatEligible');
+
+        
         unset($quotationMasterArray['quotation_last_status']);
         $storeQuotationMasterVersion = QuotationMasterVersion::insert($quotationMasterArray);
 

@@ -113,7 +113,7 @@ class CustomerReceivePaymentRepository extends BaseRepository
 
     public function customerReceiveListQuery($request, $input, $search = '') {
 
-        $master = CustomerReceivePayment::with('bank','project')->where('erp_customerreceivepayment.companySystemID', $input['companyId'])
+        $master = CustomerReceivePayment::with('bank','project','localCurrency','rptCurrency')->where('erp_customerreceivepayment.companySystemID', $input['companyId'])
         ->leftjoin('currencymaster as transCurr', 'custTransactionCurrencyID', '=', 'transCurr.currencyID')
         ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
         ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
@@ -177,6 +177,10 @@ class CustomerReceivePaymentRepository extends BaseRepository
 
     $master = $master->select([
         'custPaymentReceiveCode',
+        'erp_customerreceivepayment.localCurrencyID',
+        'erp_customerreceivepayment.companyRptCurrencyID',
+        'erp_customerreceivepayment.localAmount',
+        'erp_customerreceivepayment.companyRptAmount',
         'transCurr.CurrencyCode as transCurrencyCode',
         'bankCurr.CurrencyCode as bankCurrencyCode',
         'documentType',
@@ -277,10 +281,16 @@ class CustomerReceivePaymentRepository extends BaseRepository
                 $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
                 $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Currency'] = $val->transCurrencyCode;
+                $data[$x]['Transaction Currency'] = $val->transCurrencyCode;
                 $data[$x]['Transaction Amount'] = $val->receivedAmount? number_format(abs($val->receivedAmount), $transDecimal, ".", "") : '';
                 $data[$x]['Bank Currency'] = $val->bankCurrencyCode;
                 $data[$x]['Bank Amount'] = $val->bankAmount? number_format(abs($val->bankAmount), $bankDecimal, ".", "") : '';
+
+				$data[$x]['Local Currency'] = $val->localCurrencyID? ($val->localCurrency? $val->localCurrency->CurrencyCode : '') : '';
+                $data[$x]['Local Amount'] = $val->localCurrency? number_format($val->localAmount,  $val->localCurrency->DecimalPlaces, ".", "") : '';
+                $data[$x]['Reporting Currency'] = $val->companyRptCurrencyID? ($val->rptCurrency? $val->rptCurrency->CurrencyCode : '') : '';
+                $data[$x]['Reporting Amount'] = $val->rptCurrency? number_format($val->companyRptAmount,  $val->rptCurrency->DecimalPlaces, ".", "") : '';
+
                 $data[$x]['Treasury Cleared'] = $val->trsClearedYN == -1? 'Yes' : 'No';
                 $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
