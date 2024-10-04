@@ -162,7 +162,7 @@ class BudgetReportService
                     $budgetCommitmentsDetailsReport->setGlTypes($chartOfAccount->catogaryBLorPL);
                     $budgetCommitmentsDetailsReport->setBudgetAmount(ABS($currentBudgetAmount));
                     $budgetCommitmentsDetailsReport->setCommitments($commitments);
-                    $budgetCommitmentsDetailsReport->setTotalAvailableBudget(ABS($currentBudgetAmount + $commitments));
+                    $budgetCommitmentsDetailsReport->setTotalAvailableBudget(ABS(ABS($currentBudgetAmount) + $commitments));
                     $budgetCommitmentsDetailsReport->setActualAmountSpentTillDateCB($grvTotalAmountCurrYear->total1);
                     $budgetCommitmentsDetailsReport->setActualAmountSpentTillDatePC($grvTotalAmountPreYear->total);
                     $budgetCommitmentsDetailsReport->setCommitmentsForCurrentYear($currentOpenPOs - $grvTotalAmountCurrYear->total1);
@@ -171,7 +171,7 @@ class BudgetReportService
                     $total += $budgetCommitmentsDetailsReport->getTotal();
                     $totalBudgetAmount += ABS($currentBudgetAmount);
                     $totalCommitments += $commitments;
-                    $totalAvailableBudget += ABS($currentBudgetAmount + $commitments);
+                    $totalAvailableBudget += ABS(ABS($currentBudgetAmount) + $commitments);
                     $totalActualAmountSpentTillDateCB += $grvTotalAmountCurrYear->total1;
                     $totalActualAmountSpentTillDatePC += $grvTotalAmountPreYear->total;
                     $totalCommitmentsForCurrentYear += ($currentOpenPOs - $grvTotalAmountCurrYear->total1);
