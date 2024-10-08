@@ -2555,6 +2555,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         ->where('docOriginDocumentSystemID', 3)
         ->where('approved','!=',-1)
         ->where('refferedBackYN','!=',-1)
+        ->where('companySystemID', $companyId)
         ->groupBy('docOrigin');
 
 
