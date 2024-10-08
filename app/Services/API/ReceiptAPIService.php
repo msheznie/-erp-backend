@@ -134,7 +134,15 @@ class ReceiptAPIService
                 $receipt = self::setCompanyDetails($companyID,$receipt); // set company details of the document
                 $receipt = self::setFinancialYear($dt['documentDate'],$receipt);
                 $receipt = self::setBankDetails($dt['bank'],$receipt,$receiptValidationService);
-                $receipt = self::setCustomerDetails($dt['customer'],$receipt);
+                if($receipt->documentType != 14 && $receipt->payeeTypeID != 3)
+                {
+                    $receipt = self::setCustomerDetails($dt['customer'],$receipt);
+                }
+                else
+                {
+                    $receipt = self::setOtherDetails($dt['customer'],$receipt);
+                }
+                
                 $receipt = self::setCurrency($dt['currency'],$receipt);
                 $receipt = self::setBankAccount($dt['account'],$receipt,$receiptValidationService);
                 $receipt = self::setBankCurrency($dt['bankCurrency'],$receipt);
@@ -144,7 +152,6 @@ class ReceiptAPIService
                 $receipt = self::setLocalAndReportingAmounts($receipt);
                 $receipt = self::setConfirmedDetails($dt,$receipt);
                 $receipt = self::setApprovedDetails($dt,$receipt);
-
 
                 if($receipt->documentType == 13) {
                     $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
@@ -973,5 +980,10 @@ class ReceiptAPIService
         return ['success' => false , 'data' => []];
     }
 
+    private function setOtherDetails($customerCode,$receipt): CustomerReceivePayment
+    {
+        $receipt->PayeeName = $customerCode;
 
+        return $receipt;
+    }
 }
