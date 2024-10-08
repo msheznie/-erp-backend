@@ -283,4 +283,6 @@ Route::post('getTenderPurchaseList', 'TenderMasterAPIController@getTenderPurchas
 Route::post('getBudgetItemTotalAmount', 'TenderMasterAPIController@getBudgetItemTotalAmount')->name("Get budget item total amount");
 Route::post('removeTenderUserAccess', 'TenderBidEmployeeDetailsController@removeTenderUserAccess');
 Route::post('addUserAccessEmployee', 'TenderBidEmployeeDetailsController@addUserAccessEmployee');
+Route::post('getPublicSupplierLinkData', 'SRMPublicLinkAPIController@getPublicSupplierLinkData');
+Route::post('saveSupplierPublicLink', 'SRMPublicLinkAPIController@saveSupplierPublicLink');
 

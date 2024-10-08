@@ -59,8 +59,10 @@ use App\Models\TenderSupplierAssignee;
 use App\Models\WarehouseMaster;
 use App\Models\BookInvSuppMaster;
 use App\Repositories\DocumentAttachmentsRepository;
+use App\Repositories\SRMPublicLinkRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\TenderBidClarificationsRepository;
+use App\Repositories\SupplierRegistrationLinkRepository;
 use App\Services\Shared\SharedService;
 use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
@@ -100,6 +102,9 @@ class SRMService
     private $bookInvSuppMasterRepository;
     private $paySupplierInvoiceMasterRepository;
 
+    private $supplierRegistrationLinkRepository;
+    private $supplierPublicLinkRepository;
+
     public function __construct(
         BookInvSuppMasterRepository $bookInvSuppMasterRepository,
         POService                           $POService,
@@ -109,7 +114,9 @@ class SRMService
         SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo,
         TenderBidClarificationsRepository   $tenderBidClarificationsRepo,
         DocumentAttachmentsRepository       $documentAttachmentsRepo,
-        PaySupplierInvoiceMasterRepository  $paySupplierInvoiceMasterRepository
+        PaySupplierInvoiceMasterRepository  $paySupplierInvoiceMasterRepository,
+        SupplierRegistrationLinkRepository $supplierRegistrationLinkRepository,
+        SRMPublicLinkRepository $supplierPublicLinkRepository
     ) {
         $this->POService = $POService;
         $this->supplierService = $supplierService;
@@ -119,6 +126,8 @@ class SRMService
         $this->tenderBidClarificationsRepository = $tenderBidClarificationsRepo;
         $this->documentAttachmentsRepo = $documentAttachmentsRepo;
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepository;
+        $this->supplierRegistrationLinkRepository = $supplierRegistrationLinkRepository;
+        $this->supplierPublicLinkRepository = $supplierPublicLinkRepository;
     }
 
     /**
@@ -5006,5 +5015,54 @@ class SRMService
             'message' => 'Pre Bid Clarification Policy Data Retrieved',
             'data' => $raiseAsPrivate
         ];
+    }
+
+    public function saveSupplierRegistration($request)
+    {
+        try
+        {
+            $data = $this->supplierRegistrationLinkRepository->saveExternalLinkData($request);
+
+            return [
+                'success' => true,
+                'message' => 'Supplier Registration Saved Successfully',
+                'data' => $data
+            ];
+
+        }
+        catch (\Exception $e)
+        {
+            return [
+                'success' => false,
+                'message' => 'Failed to process supplier registration: ' . $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+
+    public function getExternalLinkData($request)
+    {
+
+        try
+        {
+            $data = $this->supplierPublicLinkRepository->getPublicLinkDataByUuid($request);
+
+            return [
+                'success' => $data['success'],
+                'message' => $data['message'],
+                'data' =>  $data['data']
+            ];
+        }
+        catch (Exception $e)
+        {
+            return [
+                'success' => false,
+                'message' => 'An error occurred while retrieving data. '. $e->getMessage(),
+                'data' => null
+            ];
+        }
+
+
+
     }
 }

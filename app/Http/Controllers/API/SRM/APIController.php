@@ -93,6 +93,8 @@ define('CHECK_GRV_CREATION', 'CHECK_GRV_CREATION');
 define('GET_NEGOTIATION_TENDERS', 'GET_NEGOTIATION_TENDERS');
 define('GET_SUPPLIER_REGISTRATION_DATA', 'GET_SUPPLIER_REGISTRATION_DATA');
 define('GET_PREBID_CLARIFICATION_POLICY', 'GET_PREBID_CLARIFICATION_POLICY');
+define('SAVE_SUPPLIER_REGISTRATION', 'SAVE_SUPPLIER_REGISTRATION');
+define('GET_EXTERNAL_LINK_DATA', 'GET_EXTERNAL_LINK_DATA');
 
 
 class APIController extends Controller
@@ -260,6 +262,10 @@ class APIController extends Controller
                 return $this->SRMService->getSupplierRegistrationData($request);
             case GET_PREBID_CLARIFICATION_POLICY:
                 return $this->SRMService->getPreBidClarificationPolicy($request);
+            case SAVE_SUPPLIER_REGISTRATION:
+                return $this->SRMService->saveSupplierRegistration($request);
+            case GET_EXTERNAL_LINK_DATA:
+                return $this->SRMService->getExternalLinkData($request);
             default:
                 return [
                     'success'   => false,
