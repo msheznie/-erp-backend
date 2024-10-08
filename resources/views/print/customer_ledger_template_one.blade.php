@@ -180,6 +180,7 @@
                     <th>Invoice Number</th>
                     <th>Invoice Date</th>
                     <th>Contract</th>
+                    <th>PO Number</th>
                     <th>Narration</th>
                     <th>Currency</th>
                     <th>Invoice Amount</th>
@@ -199,6 +200,7 @@
                         <td class="white-space-pre-line">{{ $det2->invoiceNumber }}</td>
                         <td> {{ \App\helper\Helper::dateFormat($det2->InvoiceDate)}}</td>
                         <td>{{ $det2->Contract }}</td>
+                        <td>{{ $det2->PONumber }}</td>
                         <td>{{ $det2->DocumentNarration }}</td>
                         <td>{{ $det2->documentCurrency }}</td>
                         <td class="text-right">{{ number_format($det2->invoiceAmount, $currencyDecimalPlace) }}</td>

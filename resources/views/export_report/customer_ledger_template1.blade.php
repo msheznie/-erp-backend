@@ -32,6 +32,7 @@
                         <th>Invoice Number</th>
                         <th>Invoice Date</th>
                         <th>Contract</th>
+                        <th>PO Number</th>
                         <th>Narration</th>
                         <th>currency</th>
                         <th>Invoice Amount</th>
@@ -77,6 +78,12 @@
 
                             @if ($value->Contract)
                                 <td>{{$value->Contract}}</td>
+                            @else
+                                <td>-</td>
+                            @endif
+
+                            @if ($value->PONumber)
+                                <td>{{$value->PONumber}}</td>
                             @else
                                 <td>-</td>
                             @endif
