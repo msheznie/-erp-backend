@@ -27,15 +27,7 @@ class CustomerAgingDetailReport
     public $currency;
     public $invoiceAmount;
     public $outStanding;
-    public $column1;
-    public $column2;
-    public $column3;
-    public $column4;
-    public $column5;
-    public $currentOutstanding;
-    public $collectionAmount;
-    public $receiptMatchingNo;
-    public $collectionTrackerStatus;
+   
 
     public function getCloumnFormat():Array {
         return [
@@ -54,8 +46,8 @@ class CustomerAgingDetailReport
         ];
     }
 
-    public function getHeader() :Array {
-        return [
+    public function getHeader($header) :Array {
+        return array_merge([
             'Company ID',
             'Company Name',
             'Document Code',
@@ -75,17 +67,15 @@ class CustomerAgingDetailReport
             'Currency',
             'Invoice Amount',
             'OutStanding',
-            '0-30',
-            '31-60',
-            '61-90',
-            '91-100',
-            '> 100',
+            ],
+            $header,
+            [
             'Current Outstanding',
             'Subsequent Collection Amount',
             'Receipt Matching/BRVNo',
             'Collection Tracker Status'
 
-        ];
+        ]);
     }
 
     /**

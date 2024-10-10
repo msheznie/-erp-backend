@@ -1950,20 +1950,16 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
             $output = $this->getCustomerAgingDetailQRY($request);
 
-            if ($output['data']) {
+            if ($output['data'] && $output['aging']) {
                 $x = 0;
                 if(empty($data)) {
                     $ObjCustomerAgingDetailReportHeader =  new CustomerAgingDetailReport();
-                    array_push($data,collect($ObjCustomerAgingDetailReportHeader->getHeader())->toArray());
+                    array_push($data,collect($ObjCustomerAgingDetailReportHeader->getHeader($output['aging']))->toArray());
                 }
 
                 foreach ($output['data'] as $val) {
                     $lineTotal = 0;
-                    $column1 = $output['aging'][0];
-                    $column2 = $output['aging'][1];
-                    $column3 = $output['aging'][2];
-                    $column4 = $output['aging'][3];
-                    $column5 = $output['aging'][4];
+
                     foreach ($output['aging'] as $val2) {
                         $lineTotal += $val->$val2;
                     }
@@ -1988,17 +1984,22 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $objCustomerAgingDetailReport->setCurrency($val->documentCurrency);
                     $objCustomerAgingDetailReport->setInvoiceAmount($val->invoiceAmount);
                     $objCustomerAgingDetailReport->setOutStanding($lineTotal);
-                    $objCustomerAgingDetailReport->setColumn1(CurrencyService::convertNumberFormatToNumber(number_format($val->$column1,2)));
-                    $objCustomerAgingDetailReport->setColumn2(CurrencyService::convertNumberFormatToNumber(number_format($val->$column2,2)));
-                    $objCustomerAgingDetailReport->setColumn3(CurrencyService::convertNumberFormatToNumber(number_format($val->$column3,2)));
-                    $objCustomerAgingDetailReport->setColumn4(CurrencyService::convertNumberFormatToNumber(number_format($val->$column4,2)));
-                    $objCustomerAgingDetailReport->setColumn5(CurrencyService::convertNumberFormatToNumber(number_format($val->$column5,2)));
-                    $objCustomerAgingDetailReport->setCurrentOutstanding($val->subsequentBalanceAmount);
-                    $objCustomerAgingDetailReport->setCollectionAmount($val->subsequentAmount);
-                    $objCustomerAgingDetailReport->setReceiptMatchingNo( $val->brvInv);
-                    $objCustomerAgingDetailReport->setCollectionTrackerStatus($val->commentAndStatus);
 
                     array_push($data,collect($objCustomerAgingDetailReport)->toArray());
+                }
+
+                foreach ($output['data'] as $index => $val) {
+
+                    foreach ($output['aging'] as $val2) {
+                        $data[$index + 1][$val2] = $val->$val2;
+                    }
+
+
+                    $data[$index + 1]['Current Outstanding'] = $val->subsequentBalanceAmount;
+                    $data[$index + 1]['Subsequent Collection Amount'] = $val->subsequentAmount;
+                    $data[$index + 1]['Receipt Matching/BRVNo'] = $val->brvInv;
+                    $data[$index + 1]['Collection Tracker Status'] = $val->commentAndStatus;
+
                 }
             }
         } else {

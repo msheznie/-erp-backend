@@ -13,12 +13,6 @@ class SupplierAgingSummaryAdvanceReport
     public $creditPeriod;
     public $currency;
     public $agingDays;
-    public $column1;
-    public $column2;
-    public $column3;
-    public $column4;
-    public $column5;
-    public $total;
 
     /**
      * @return mixed
@@ -36,9 +30,9 @@ class SupplierAgingSummaryAdvanceReport
         ];
     }
 
-    public function getHeader($typeAging) :Array {
+    public function getHeader($typeAging, $header) :Array {
         if($typeAging == 1) {
-            return [
+            return array_merge([
                 'Company ID',
                 'Company Name',
                 'Account',
@@ -47,15 +41,13 @@ class SupplierAgingSummaryAdvanceReport
                 'Credit Period',
                 'Currency',
                 'Aging Days',
-                '0-30',
-                '31-60',
-                '61-90',
-                '91-100',
-                '> 100',
+                ],
+                $header,
+                [
                 'Total'
-            ];
+            ]);
         } else {
-            return [
+            return array_merge([
                 'Company ID',
                 'Company Name',
                 'Account',
@@ -64,13 +56,11 @@ class SupplierAgingSummaryAdvanceReport
                 'Credit Period',
                 'Currency',
                 'Aging Days',
-                '0-30',
-                '31-60',
-                '61-90',
-                '91-100',
-                '> 100',
+                ],
+                $header,
+                [
                 'Total'
-            ];
+            ]);
         }
     }
     /**
