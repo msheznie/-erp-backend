@@ -2542,6 +2542,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if ($deleteApproval) {
             $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
                 ->update([
+                    'refferedBackYN' => 0,
                     'poConfirmedYN' => 0,
                     'poConfirmedByEmpSystemID' => null,
                     'poConfirmedByEmpID' => null,
