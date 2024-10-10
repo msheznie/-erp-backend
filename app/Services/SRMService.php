@@ -5019,6 +5019,12 @@ class SRMService
 
     public function saveSupplierRegistration($request)
     {
+
+        return [
+            'success' => false,
+            'message' => 'Supplier Registration Saved Successfully',
+            'data' => []
+        ];
         try
         {
             $data = $this->supplierRegistrationLinkRepository->saveExternalLinkData($request);
