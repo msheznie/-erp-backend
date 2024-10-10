@@ -213,7 +213,9 @@ class CustReceivePaymentDetRefferedHistory extends Model
         'VATPercentage',
         'vatMasterCategoryID',
         'vatSubCategoryID',
-        'isVatDisabled'
+        'isVatDisabled',
+        'serviceLineCode',
+        'serviceLineSystemID'
     ];
 
     /**
@@ -248,7 +250,9 @@ class CustReceivePaymentDetRefferedHistory extends Model
         'custbalanceAmount' => 'float',
         'receiveAmountTrans' => 'float',
         'receiveAmountLocal' => 'float',
-        'receiveAmountRpt' => 'float'
+        'receiveAmountRpt' => 'float',
+        'serviceLineCode' => 'string',
+        'serviceLineSystemID' => 'integer'
     ];
 
     /**

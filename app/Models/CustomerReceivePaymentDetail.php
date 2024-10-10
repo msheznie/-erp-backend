@@ -217,7 +217,9 @@ class CustomerReceivePaymentDetail extends Model
         'VATPercentage',
         'vatMasterCategoryID',
         'vatSubCategoryID',
-        'isVatDisabled'
+        'isVatDisabled',
+        'serviceLineCode',
+        'serviceLineSystemID'
     ];
 
     /**
@@ -252,7 +254,9 @@ class CustomerReceivePaymentDetail extends Model
         'receiveAmountTrans' => 'float',
         'receiveAmountLocal' => 'float',
         'receiveAmountRpt' => 'float',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'serviceLineCode' => 'string',
+        'serviceLineSystemID' => 'integer'
     ];
 
     /**

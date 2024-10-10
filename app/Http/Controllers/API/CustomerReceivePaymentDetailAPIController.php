@@ -18,12 +18,14 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCustomerReceivePaymentDetailAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentDetailAPIRequest;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\SegmentMaster;
 use App\Repositories\UserRepository;
 use App\Models\CustomerReceivePayment;
 use App\Models\MatchDocumentMaster;
 use App\Models\AccountsReceivableLedger;
 use App\Models\GeneralLedger;
 use App\Repositories\CustomerReceivePaymentDetailRepository;
+use Exception;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -702,22 +704,6 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $itemExistArray = array();
 
-        //check supplier invoice all ready exist
-        foreach ($input['detailTable'] as $itemExist) {
-
-            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
-                $siDetailExistPS = CustomerReceivePaymentDetail::where('matchingDocID', $matchDocumentMasterAutoID)
-                    ->where('companySystemID', $itemExist['companySystemID'])
-                    ->where('bookingInvCodeSystem', $itemExist['bookingInvCodeSystem'])
-                    ->first();
-
-                if (!empty($siDetailExistPS)) {
-                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is all ready added. Please check again";
-                    $itemExistArray[] = [$itemDrt];
-                }
-            }
-        }
-
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
 
@@ -749,7 +735,16 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         try {
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
-                    
+
+                    try {
+                        $serviceLineCode = $new['segment'];
+                        $serviceLineSystemID = SegmentMaster::where('ServiceLineCode',$serviceLineCode)->where('isDeleted',0)->first();
+                        $serviceLineSystemID = $serviceLineSystemID->serviceLineSystemID;
+                    } catch (Exception $e) {
+                        $serviceLineCode = null;
+                        $serviceLineSystemID = null;
+                    }
+
                     $tempArray = $new;
                     $tempArray["custReceivePaymentAutoID"] = $matchDocumentMasterData->PayMasterAutoId;
                     $tempArray["arAutoID"] = $new['arAutoID'];
@@ -774,6 +769,8 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $tempArray["receiveAmountTrans"] = 0;
                     $tempArray["receiveAmountLocal"] = 0;
                     $tempArray["receiveAmountRpt"] = 0;
+                    $tempArray["serviceLineCode"] = $serviceLineCode;
+                    $tempArray["serviceLineSystemID"] = $serviceLineSystemID;
 
                     unset($tempArray['isChecked']);
                     unset($tempArray['DecimalPlaces']);

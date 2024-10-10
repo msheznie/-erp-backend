@@ -2469,8 +2469,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                 foreach ($directReceipts as $directReceipt)
                                 {
                                     foreach ($detailAllRecords as $detailRecord) {
-                                        $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
-                                        $data['serviceLineCode'] = $directReceipt->serviceLineCode;
+                                        $data['serviceLineSystemID'] = $detailRecord->serviceLineSystemID != null ? $detailRecord->serviceLineSystemID : $directReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $detailRecord->serviceLineCode != null ? $detailRecord->serviceLineCode : $directReceipt->serviceLineCode;
                                         $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
                                         $data['glCode'] = $masterData->customerGLCode;
                                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
@@ -2520,8 +2520,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                 foreach ($advReceipts as $advReceipt)
                                 {
                                     foreach ($detailAllRecords as $detailRecord) {
-                                        $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
-                                        $data['serviceLineCode'] = $advReceipt->serviceLineCode;
+                                        $data['serviceLineSystemID'] = $detailRecord->serviceLineSystemID != null ? $detailRecord->serviceLineSystemID : $advReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $detailRecord->serviceLineCode != null ? $detailRecord->serviceLineCode : $advReceipt->serviceLineCode;
                                         $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
                                         $data['glCode'] = $masterData->customerGLCode;
                                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
@@ -3799,6 +3799,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
 
+        $segmentCheckPolicy = Helper::checkPolicy($matchDocumentMasterData->companySystemID,95);
+
         $qry = "SELECT
 	erp_accountsreceivableledger.arAutoID,
 	erp_accountsreceivableledger.documentCodeSystem AS bookingInvCodeSystem,
@@ -3912,9 +3914,13 @@ AND date(erp_accountsreceivableledger.documentDate) <= '{$matchingDocdate}'
 AND erp_accountsreceivableledger.documentSystemID = 20
 AND erp_accountsreceivableledger.selectedToPaymentInv = 0
 AND erp_accountsreceivableledger.fullyInvoiced <> 2
-AND erp_accountsreceivableledger.companySystemID =  $matchDocumentMasterData->companySystemID
-AND erp_accountsreceivableledger.serviceLineSystemID =  $serviceLineSystemID
-AND erp_accountsreceivableledger.customerID = $matchDocumentMasterData->BPVsupplierID
+AND erp_accountsreceivableledger.companySystemID =  $matchDocumentMasterData->companySystemID";
+
+        if (!$segmentCheckPolicy) {
+            $qry .= "\nAND erp_accountsreceivableledger.serviceLineSystemID =  $serviceLineSystemID";
+        }
+
+        $qry .= "\nAND erp_accountsreceivableledger.customerID = $matchDocumentMasterData->BPVsupplierID
 AND erp_accountsreceivableledger.custTransCurrencyID = $matchDocumentMasterData->supplierTransCurrencyID
 {$filter}
 HAVING
