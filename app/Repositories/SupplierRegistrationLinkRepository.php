@@ -84,7 +84,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
                 $supplierLink->is_bid_tender =  $inputData['is_bid_tender'];
                 $supplierLink->created_via =  3;
                 $supplierLink->is_existing_erp_supplier = 0;
-                $supplierLink->sub_domain = 'asdasdasdasdasd';
+                $supplierLink->sub_domain = ' ';
                 $supplierLink->save();
             });
         }
