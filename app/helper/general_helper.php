@@ -3241,13 +3241,22 @@ class Helper
                                 $isCategoryWise = $policy->isCategoryApproval;
                                 $isValueWise = $policy->isAmountApproval;
                                 $isAttachment = $policy->isAttachmentYN;
-                                //check for attachment is uploaded if attachment policy is set to must
-                                if ($isAttachment == -1) {
-                                    $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params['document'])->where('documentSystemCode', $params["autoID"])->first();
-                                    if (!$docAttachment) {
-                                        return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
+
+                                $fromCiUpload = false;
+                                if(isset($params["fromUpload"]) && $params["fromUpload"] == true){
+                                    $fromCiUpload = true;
+                                }
+
+                                if($fromCiUpload == false){
+                                    //check for attachment is uploaded if attachment policy is set to must
+                                    if ($isAttachment == -1) {
+                                        $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params['document'])->where('documentSystemCode', $params["autoID"])->first();
+                                        if (!$docAttachment) {
+                                            return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
+                                        }
                                     }
                                 }
+
                             } else {
                                 return ['success' => false, 'message' => 'Policy not available for this document.'];
                             }
