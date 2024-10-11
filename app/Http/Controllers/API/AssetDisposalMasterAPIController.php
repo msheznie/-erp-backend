@@ -450,7 +450,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     $query->with(['group_all_to']);
                 }])->where('assetdisposalMasterAutoID', $id)->get();
 
-                if (empty($disposalDetailExist)) {
+                if ($disposalDetailExist->isEmpty()) {
                     return $this->sendError(trans('custom.asset_disposal_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                 }
 
