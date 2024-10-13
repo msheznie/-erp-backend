@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.50.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.50.1...v10.50.2) (2024-10-13)
+
+
+### Bug Fixes
+
+* **accounts payable:** error while pulling the GRV from Supplier Invoice [GCP-4905] ([#6917](https://github.com/pbsgears/Gears_BackEnd/issues/6917)) ([ec8c12d](https://github.com/pbsgears/Gears_BackEnd/commit/ec8c12d0965e5555fb5ea064644bfcbc7633b9f6))
+
 ## [10.50.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.50.0...v10.50.1) (2024-10-07)
 
 
