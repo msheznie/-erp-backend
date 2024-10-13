@@ -975,7 +975,15 @@ class BookInvSuppDetAPIController extends AppBaseController
             $details['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
             $details['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
             $grvDetailsInfo = GRVDetails::with(['vat_sub_category'])->find($grvDetail->grvDetailsID);
-            $examptVal = $grvDetailsInfo->vat_sub_category->subCatgeoryType != 3?TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount']:TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['exemptVATTrans'];
+        
+             if(isset($grvDetailsInfo->vat_sub_category->subCatgeoryType) && $grvDetailsInfo->vat_sub_category->subCatgeoryType == 3)
+            {
+                $examptVal = TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['exemptVATTrans'];
+            }
+            else
+            {
+                $examptVal = TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
+            }
 
             $totalVATAmount = ($unbilledData['logisticYN']) ? TaxService::poLogisticVATDistributionForGRV($grvDetail->grvAutoID,0,$grvDetail->supplierID)['vatOnPOTotalAmountTrans'] : $examptVal;
              if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
