@@ -169,14 +169,7 @@
 </div>
 <div class="content">
     <table style="width:100%;">
-        <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span><b>{{$customerName}}</b></span>
-            </td>
-            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;"><b>Report Date {{ $reportDate }}</b></span><br>
-            </td>
-        </tr>
+
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
 
@@ -186,70 +179,79 @@
             </td>
         </tr>
     </table>
-    <table style="width:95%;border:1px solid #9fcdff" class="table">
-        @foreach ($reportData as $key => $val)
-            <thead>
-            <tr>
-                <th width="10%">Document Code</th>
-                <th width="6%">Posted Date</th>
-                <th width="5%">Contract</th>
-                <th width="5%">PO Number</th>
-                <th width="7%">Invoice Date</th>
-                <th width="15%">Narration</th>
-                <th width="5%">Currency</th>
-                <th width="10%">Invoice Amount</th>
-                <th width="5%">Receipt/CN Code</th>
-                <th width="5%">Receipt/CN Date</th>
-                <th width="10%">Receipt Amount</th>
-                <th width="10%">Balance Amount</th>
-            </tr>
-            </thead>
-            {{ $subInvoiceAmount = 0 }}
-            {{ $subReceiptAmount = 0 }}
-            {{ $subBalanceAmount = 0 }}
-            @foreach ($val as $det)
-                {{ $subInvoiceAmount += $det->invoiceAmount }}
-                {{ $subReceiptAmount += $det->receiptAmount }}
-                {{ $subBalanceAmount += $det->balanceAmount }}
+
+    @foreach ($reportData as $key => $val)
+        <h4>{{$key}}</h4>
+            @foreach ($val as $key1=>$res)
+                @php
+                    $subInvoiceAmount = 0;
+                    $subReceiptAmount = 0;
+                    $subBalanceAmount = 0;
+                @endphp
+            <table style="width:95%;border:1px solid #9fcdff" class="table">
+                <thead>
                 <tr>
-                    <td>{{ $det->documentCode  }}</td>
-                    <td>{{\Helper::dateFormat($det->postedDate)}}</td>
-                    <td>{{$det->clientContractID}}</td>
-                    <td>{{$det->PONumber}}</td>
-                    <td>{{\Helper::dateFormat($det->invoiceDate)}}</td>
-                    <td style="word-break: break-all;white-space: normal;">{{$det->documentNarration}}</td>
-                    <td>{{$det->documentCurrency}}</td>
-                    <td class="text-right">{{number_format($det->invoiceAmount, $det->balanceDecimalPlaces)}}</td>
-                    <td>{{$det->ReceiptCode}}</td>
-                    <td>{{\Helper::dateFormat($det->ReceiptDate)}}</td>
-                    <td class="text-right">{{number_format($det->receiptAmount, $det->balanceDecimalPlaces)}}</td>
-                    <td class="text-right">{{number_format($det->balanceAmount, $det->balanceDecimalPlaces)}}</td>
+                    <th width="10%">Document Code</th>
+                    <th width="6%">Posted Date</th>
+                    <th width="5%">Contract</th>
+                    <th width="5%">PO Number</th>
+                    <th width="7%">Invoice Date</th>
+                    <th width="10%">Narration</th>
+                    <th width="5%">Currency</th>
+                    <th width="10%">Invoice Amount</th>
+                    <th width="5%">Receipt/CN Code</th>
+                    <th width="5%">Receipt/CN Date</th>
+                    <th width="10%">Receipt Amount</th>
+                    <th width="10%">Balance Amount</th>
                 </tr>
-            @endforeach
-            <tr style="background-color: #E7E7E7">
-                <td colspan="7" class="text-right"
-                    style=""><b>Sub Total:</b>
-                </td>
-                <td class="text-right">
-                    <b>{{number_format($subInvoiceAmount, $reportData->$key[0]->balanceDecimalPlaces)}}</b></td>
-                <td colspan="2" style=""
-                    class="text-right"></td>
-                <td class="text-right">
-                    <b>{{number_format($subReceiptAmount, $reportData->$key[0]->balanceDecimalPlaces)}}</b></td>
-                <td class="text-right">
-                    <b>{{number_format($subBalanceAmount, $reportData->$key[0]->balanceDecimalPlaces)}}</b></td>
-            </tr>
-        @endforeach
-        @if($currencyID != 1)
-            <tr style="background-color: #E7E7E7">
-                <td colspan="7" class="text-right"
-                    style=""><b>Grand Total:</b></td>
-                <td class="text-right"><b>{{number_format($invoiceAmount, $currencyDecimalPlace)}}</b></td>
-                <td colspan="2" style=""
-                    class="text-right"></td>
-                <td class="text-right"><b>{{number_format($receiptAmount, $currencyDecimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($balanceAmount, $currencyDecimalPlace)}}</b></td>
-            </tr>
-        @endif
+                </thead>
+
+                @foreach($res as $det)
+                    {{ $subInvoiceAmount += $det->invoiceAmount }}
+                    {{ $subReceiptAmount += $det->receiptAmount }}
+                    {{ $subBalanceAmount += $det->balanceAmount }}
+                    <tr>
+                        <td>{{ $det->documentCode  }}</td>
+                        <td>{{\Helper::dateFormat($det->postedDate)}}</td>
+                        <td>{{$det->clientContractID}}</td>
+                        <td>{{$det->PONumber}}</td>
+                        <td>{{\Helper::dateFormat($det->invoiceDate)}}</td>
+                        <td style="word-break: break-all;white-space: normal;">{{$det->documentNarration}}</td>
+                        <td>{{$det->documentCurrency}}</td>
+                        <td class="text-right">{{number_format($det->invoiceAmount, $det->balanceDecimalPlaces)}}</td>
+                        <td><p style="width: 80px;">{{$det->ReceiptCode}}</p></td>
+                        <td>{{\Helper::dateFormat($det->ReceiptDate)}}</td>
+                        <td class="text-right">{{number_format($det->receiptAmount, $det->balanceDecimalPlaces)}}</td>
+                        <td class="text-right">{{number_format($det->balanceAmount, $det->balanceDecimalPlaces)}}</td>
+                    </tr>
+                @endforeach
+                    <tr style="background-color: #E7E7E7">
+                        <td colspan="7" class="text-right"
+                            style=""><b>Sub Total:</b>
+                        </td>
+                        <td class="text-right">
+                            <b>{{number_format($subInvoiceAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
+                        <td colspan="2" style=""
+                            class="text-right"></td>
+                        <td class="text-right">
+                            <b>{{number_format($subReceiptAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
+                        <td class="text-right">
+                            <b>{{number_format($subBalanceAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
+                    </tr>
+            @if($currencyID != 1)
+                <tr style="background-color: #E7E7E7">
+                    <td colspan="7" class="text-right"
+                        style=""><b>Grand Total:</b></td>
+                    <td class="text-right"><b>{{number_format($invoiceAmount, $currencyDecimalPlace)}}</b></td>
+                    <td colspan="2" style=""
+                        class="text-right"></td>
+                    <td class="text-right"><b>{{number_format($receiptAmount, $currencyDecimalPlace)}}</b></td>
+                    <td class="text-right"><b>{{number_format($balanceAmount, $currencyDecimalPlace)}}</b></td>
+                </tr>
+            @endif
     </table>
+        @endforeach
+
+    @endforeach
+
 </div>

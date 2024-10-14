@@ -86,7 +86,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $validator = \Validator::make($request->all(), [
                         'fromDate' => 'required|date',
                         'toDate' => 'required|date|after_or_equal:fromDate',
-                        'singleCustomer' => 'required',
+                        'customers' => 'required',
                         'reportTypeID' => 'required',
                     ]);
                 }
@@ -312,12 +312,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company')]));
                     }
 
-                    $customerName = CustomerMaster::find($request->singleCustomer);
-
-                    if (empty($customerName)) {
-                        return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer')]));
-                    }
-
                     $output = $this->getCustomerStatementAccountQRY($request);
 
                     $balanceTotal = collect($output)->pluck('balanceAmount')->toArray();
@@ -346,11 +340,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     if ($output) {
                         foreach ($output as $val) {
-                            $outputArr[$val->documentCurrency][] = $val;
+                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode);
                 }
                 break;
             case 'CA': //Customer Aging
@@ -970,6 +964,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $excelColumnFormat = $objCustomerBalanceStatementReport->getColumnFormat();
                 }
                 else if ($request->reportTypeID == 'CSA') {
+
                     $typ_re = 2;
                     $from_date = $request->fromDate;
                     $toDate = $request->toDate;
@@ -2242,7 +2237,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
         if ($request->reportTypeID == 'CSA') {
             $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
             $checkIsGroup = Company::find($request->companySystemID);
-            $customerName = CustomerMaster::find($request->singleCustomer);
 
             $companyLogo = $checkIsGroup->logo_url;
 
@@ -2274,11 +2268,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
             if ($output) {
                 foreach ($output as $val) {
-                    $outputArr[$val->documentCurrency][] = $val;
+                    $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                 }
             }
 
-            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
+            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
 
 
             if ($sentTo) {
@@ -2396,31 +2390,82 @@ class AccountsReceivableReportAPIController extends AppBaseController
             return $this->sendError("customer Statement cannot be sent to multiple customers",500);
         }
 
-        $html = $this->customerStatementExportPdf($request, true);
+        if ($request->reportTypeID == 'CSA')
+        {
+            $this->sendEmailToMutipleCustomers($request,$input);
+        }
+        else {
+            $html = $this->customerStatementExportPdf($request, true);
 
-        $customerCodeSystem = ($request->reportTypeID == 'CSA') ? $request->singleCustomer : $input['customers'][0]['customerCodeSystem'];
+            $customerCodeSystem = ($request->reportTypeID == 'CSA') ? $request->singleCustomer : $input['customers'][0]['customerCodeSystem'];
 
-        $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
-                                               ->get();
+            $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
+                ->get();
 
-        $customerMaster = CustomerMaster::find($customerCodeSystem);
+            $customerMaster = CustomerMaster::find($customerCodeSystem);
 
-        $emailSentTo = 0;
+            $emailSentTo = 0;
 
-        if ($fetchCusEmail) {
-            foreach ($fetchCusEmail as $row) {
-                if (!empty($row->contactPersonEmail)) {
-                    $emailSentTo = 1;
+            if ($fetchCusEmail) {
+                foreach ($fetchCusEmail as $row) {
+                    if (!empty($row->contactPersonEmail)) {
+                        $emailSentTo = 1;
+                    }
                 }
+            }
+
+            if ($emailSentTo == 0) {
+                return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
+            } else {
+                CustomerStatementJob::dispatch($request->db, $html, $customerCodeSystem, $input['companySystemID'], $request->reportTypeID);
+                return $this->sendResponse($emailSentTo, 'Customer statement report sent');
             }
         }
 
-        if ($emailSentTo == 0) {
-            return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
-        } else {
-            CustomerStatementJob::dispatch($request->db, $html, $customerCodeSystem, $input['companySystemID'], $request->reportTypeID);
-            return $this->sendResponse($emailSentTo, 'Customer statement report sent');
-        }
+    }
+
+    public function sendEmailToMutipleCustomers($request,$input)
+    {
+       $html = $this->customerStatementExportPdf($request, true);
+       $customers = $request->customers;
+       $customerSystemCodes = collect($customers)->pluck(['customerCodeSystem']);
+
+       foreach ($customerSystemCodes as $customerSystemCode)
+       {
+           $reportDataCopy = $html;
+           $fetchCusEmail = CustomerContactDetails::where('customerID', $customerSystemCode)
+               ->get();
+
+           $customerMaster = CustomerMaster::find($customerSystemCode);
+
+           $customerKey = $customerMaster->CutomerCode." - ".$customerMaster->CustomerName;
+           if (isset($html['reportData']->$customerKey)) {
+               $customerData = $html['reportData']->$customerKey;
+               $reportDataCopy['reportData'] = $customerData;
+               $totalBalanceAmount = 0;
+               $totalInvoiceAmount = 0;
+               $totalReceiptAmount = 0;
+               foreach ($reportDataCopy['reportData'] as $key=>$reportByCurrency)
+               {
+                   $reportDataCopy['reportData'][$key]['balanceAmount'] = collect($reportByCurrency)->sum('balanceAmount');
+                   $reportDataCopy['reportData'][$key]['invoiceAmount'] = collect($reportByCurrency)->sum('invoiceAmount');
+                   $reportDataCopy['reportData'][$key]['receiptAmount'] = collect($reportByCurrency)->sum('receiptAmount');
+
+                   $totalBalanceAmount += collect($reportByCurrency)->sum('balanceAmount');
+                   $totalInvoiceAmount += collect($reportByCurrency)->sum('invoiceAmount');
+                   $totalReceiptAmount += collect($reportByCurrency)->sum('receiptAmount');
+               }
+
+               $reportDataCopy['balanceAmount'] = $totalBalanceAmount;
+               $reportDataCopy['invoiceAmount'] = $totalInvoiceAmount;
+               $reportDataCopy['receiptAmount'] = $totalReceiptAmount;
+
+               CustomerStatementJob::dispatch($request->db, $reportDataCopy, $customerSystemCode, $input['companySystemID'], $request->reportTypeID);
+
+           }
+       }
+
+        return $this->sendResponse("", 'Customer statement report sent');
     }
 
     public function sentCustomerLedger(Request $request)
@@ -2589,7 +2634,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
         $controlAccounts = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
         $currency = $request->currencyID;
-        $customer = $request->singleCustomer;
+
+        $customers = (array)$request->customers;
+        $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
         $balanceAmountQry = '';
         $balanceAmountWhere = '';
@@ -2728,7 +2775,7 @@ WHERE
 	AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '"
 	AND "' . $toDate . '"
 	AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
-	AND erp_generalledger.supplierCodeSystem = ' . $customer . '
+	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	) AS MainQuery
 	LEFT JOIN (
 SELECT
