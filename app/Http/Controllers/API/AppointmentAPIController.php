@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAppointmentAPIRequest;
 use App\Http\Requests\API\UpdateAppointmentAPIRequest;
+use App\Http\Requests\DeliveryAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\DocumentAttachments;
 use App\Repositories\AppointmentRepository;
@@ -18,6 +19,8 @@ use App\Models\CompanyFinanceYear;
 use Carbon\Carbon;
 use App\Models\ApprovalLevel;
 use App\Jobs\DeliveryAppoinmentGRV;
+use App\Models\AppointmentDetails;
+
 /**
  * Class AppointmentController
  * @package App\Http\Controllers\API
@@ -543,13 +546,25 @@ class AppointmentAPIController extends AppBaseController
 
     }
 
+    public function getSegmentOfAppointment(DeliveryAppointmentRequest $request)
+    {
+        try
+        {
+            $serviceLineSystemID = $this->appointmentRepository->getServiceLineSystemIDs($request);
+            return $this->sendResponse($serviceLineSystemID , 'Data Retrieved successfully');
+        }
+        catch (\Exception $e)
+        {
+            return $this->sendError('Something went wrong '.$e->getMessage());
+        }
+    }
+
     public function createAppointmentGrv(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
         $acc_d = DeliveryAppoinmentGRV::dispatch($input);
 
         return $this->sendResponse($acc_d, 'succesfully created');
-
-
     }
 }
