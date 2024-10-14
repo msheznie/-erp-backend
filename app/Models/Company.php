@@ -391,6 +391,10 @@ class Company extends Model
         return $this->hasMany('App\Models\Company', 'group_two','companySystemID')->whereIn('group_type', [2,3]);
     }
 
+    public function allSubAssociateJVCompanies(){
+        return $this->hasMany('App\Models\Company', 'group_two','companySystemID')->whereIn('group_type', [1, 2, 3]);
+    }
+
 
     public static function getComanyCode($companySystemID)
     {

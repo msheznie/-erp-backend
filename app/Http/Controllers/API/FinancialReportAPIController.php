@@ -61,7 +61,7 @@ ini_set('max_execution_time', 500);
 class FinancialReportAPIController extends AppBaseController
 {
     protected $globalFormula; //keep whole formula ro replace
-    protected $subsidiaryComanies = []; //keep whole formula ro replace
+    protected $subAssociateJVCompanies = []; 
     protected $accJvCompanies = []; //keep whole formula ro replace
 
     public function getFRFilterData(Request $request)
@@ -176,25 +176,28 @@ class FinancialReportAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $companies = Company::where('companySystemID', $input['companySystemID'])->with(['subsidiary_companies'])->first();
+        $companies = Company::where('companySystemID', $input['companySystemID'])->with(['allSubAssociateJVCompanies'])->first();
 
-        if ($companies && count($companies->subsidiary_companies) > 0) {
-            $this->getSubSubsidiaryCompanies($companies->subsidiary_companies);
+        if(!empty($companies)){
+            $this->subAssociateJVCompanies[] = $input['companySystemID'];
+        }
+        if ($companies && count($companies->allSubAssociateJVCompanies) > 0) {
+            $this->getSubSubsidiaryCompanies($companies->allSubAssociateJVCompanies);
         }
 
-        $companiesData = Company::whereIn('companySystemID', $this->subsidiaryComanies)->get();
+        $companiesData = Company::whereIn('companySystemID', $this->subAssociateJVCompanies)->get();
         return $this->sendResponse($companiesData, "companies retrived successfully");        
     }
 
     public function getSubSubsidiaryCompanies($subsidiary_companies)
     {
         foreach ($subsidiary_companies as $key => $value) {
-            $this->subsidiaryComanies[] = $value->companySystemID;
+            $this->subAssociateJVCompanies[] = $value->companySystemID;
 
-            $companies = Company::where('companySystemID', $value->companySystemID)->with(['subsidiary_companies'])->whereHas('subsidiary_companies')->first();
+            $companies = Company::where('companySystemID', $value->companySystemID)->with(['allSubAssociateJVCompanies'])->whereHas('allSubAssociateJVCompanies')->first();
 
-            if ($companies && count($companies->subsidiary_companies) > 0) {
-                $this->getSubSubsidiaryCompanies($companies->subsidiary_companies);
+            if ($companies && count($companies->allSubAssociateJVCompanies) > 0) {
+                $this->getSubSubsidiaryCompanies($companies->allSubAssociateJVCompanies);
             } 
         }
     }
