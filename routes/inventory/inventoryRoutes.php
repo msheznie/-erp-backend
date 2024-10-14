@@ -173,7 +173,11 @@ Route::group([], function () {
     Route::post('miItemsUpload', 'ItemIssueDetailsAPIController@miItemsUpload')->name('Material issue items upload');
     Route::get('getMiItemBulkUploadError', 'MiBulkUploadErrorLogAPIController@getMiItemBulkUploadError')->name('Material issue item bulk upload errors');
     Route::post('deleteMiItemUploadErrorLog/{id}', 'MiBulkUploadErrorLogAPIController@deleteMiItemUploadErrorLog')->name('Delete Material issue item upload error log');
-
+    Route::post('getMIReportData', 'ItemIssueMasterAPIController@getMIReportData')->name('GetMI Report Data');
+    Route::post('validateMIRReport', 'ItemIssueMasterAPIController@validateMIRReport')->name('Validate MIR Report');
+    Route::post('generateMIRReport', 'ItemIssueMasterAPIController@generateMIRReport')->name('Generate MIR Report');
+    Route::post('exportMIRReport', 'ItemIssueMasterAPIController@exportMIRReport')->name('Export MIR Report');
+    
 });
 
 //Material return Trans
