@@ -61,7 +61,7 @@ class TaxLedgerService
                 $result = RecieptVoucherTaxLedgerService::processEntry($taxLedgerData, $masterModel);
                 break;
             default:
-                # code...
+                $result = ['status' => false];
                 break;
         }
 
