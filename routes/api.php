@@ -21,8 +21,8 @@ Route::group(['middleware' => 'mobileServer'], function () {
         Route::get('getAppearance', 'CompanyAPIController@getAppearance')->middleware(MobileAccessVerify::class);
         Route::post('postEmployeeFromPortal', 'HelpDesk\HelpDeskAPIController@postEmployee');
 
-
-        Route::group(['middleware' => ['pos_api']], function (){
+        //thrid party APIs
+        Route::group(['middleware' => ['thirdPartyApis']], function (){
             Route::get('pull_tax_details', 'ClubManagement\ClubManagementAPIController@pullTaxDetails');
             Route::get('pull_bank_accounts', 'ClubManagement\ClubManagementAPIController@pullBankAccounts');
             Route::post('post_customer_category', 'ClubManagement\ClubManagementAPIController@createCustomerCategory');
@@ -979,7 +979,7 @@ Route::group(['middleware' => 'mobileServer'], function () {
 
     Route::group(['middleware' => ['tenantById', 'cors']], function (){
         Route::get('pull_company_details', 'POS\PosAPIController@pullCompanyDetails');
-        Route::group(['middleware' => ['pos_api','hrms_employee']], function () {
+        Route::group(['middleware' => ['thirdPartyApis','hrms_employee']], function () {
             Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
             Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
             require __DIR__.'/../routes/osos_3_0/osos_3_0.php';
