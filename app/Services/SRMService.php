@@ -1990,7 +1990,7 @@ class SRMService
                 $att['path'] = $path;
                 $att['originalFileName'] = $attachment['originalFileName'];
                 $att['myFileName'] = $company->CompanyID . '_' . time() . '_DeliveryAppointment.' . $extension;
-                $att['attachmentType'] = $extension;
+                $att['attachmentType'] = 11;
                 $att['sizeInKbs'] = $attachment['sizeInKbs'];
                 $att['isUploaded'] = 1;
                 $result = DocumentAttachments::create($att);
@@ -4663,7 +4663,8 @@ class SRMService
        )
         ->where('documentSystemID', 11)
         ->where('documentSystemCode', $id)
-        ->where('attachmentType', 0);
+        ->whereIn('attachmentType', [0, 11]);
+
         $search = $request->input('search.value');
 
         if ($search) {
@@ -4676,8 +4677,7 @@ class SRMService
 
             $data = DataTables::of($query)
                 ->addColumn('Actions', 'Actions', "Actions")
-                ->order(function ($query){
-                })
+                ->order(function ($query){})
                 ->addIndexColumn()
                 ->make(true);
 
