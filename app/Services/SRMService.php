@@ -4583,7 +4583,7 @@ class SRMService
                 $att['path'] = $path;
                 $att['originalFileName'] = $attachment['originalFileName'];
                 $att['myFileName'] = $company->CompanyID . '_' . time() . '_Supplier_Invoice.' . $extension;
-                $att['attachmentType'] = $extension;
+                $att['attachmentType'] = 11;
                 $att['sizeInKbs'] = $attachment['sizeInKbs'];
                 $att['isUploaded'] = 1;
                 $result = DocumentAttachments::create($att);
