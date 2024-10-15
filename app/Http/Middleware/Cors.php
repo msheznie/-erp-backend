@@ -5,6 +5,8 @@ namespace App\Http\Middleware;
 use Closure;
 use App\Models\ThirdPartyDomain;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as LaravelResponse;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class Cors
 {
@@ -32,32 +34,43 @@ class Cors
             $origin = $request->headers->get('Origin');
 
             $originPattern = env('APP_BASE_URL');
-
             array_push($this->allowedOriginsPatterns, $originPattern);
 
-            $alllowedDomains = ThirdPartyDomain::pluck('name')->toArray();
-            $this->allowedOrigins = array_merge($this->allowedOrigins, $alllowedDomains);
+            $allowedDomains = ThirdPartyDomain::pluck('name')->toArray();
+            $this->allowedOrigins = array_merge($this->allowedOrigins, $allowedDomains);
 
-            if (in_array($origin, $this->allowedOrigins)) {
-                return $this->setCorsHeaders($response, $origin);
-            } elseif ($this->isAllowedOriginPattern($origin)) {
+            if (in_array($origin, $this->allowedOrigins) || $this->isAllowedOriginPattern($origin)) {
                 return $this->setCorsHeaders($response, $origin);
             }
         } else {
-            // return $response
-            //     ->header('Access-Control-Allow-Origin', '*')
-            //     ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            return $this->setCorsHeaders($response, '*');
         }
 
         return $response;
     }
 
+    /**
+     * Set CORS headers on the response.
+     *
+     * @param  mixed  $response
+     * @param  string $origin
+     * @return mixed
+     */
     protected function setCorsHeaders($response, $origin)
     {
-        return $response
-            ->header('Access-Control-Allow-Origin', $origin)
-            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        if ($response instanceof LaravelResponse || method_exists($response, 'header')) {
+            return $response
+                ->header('Access-Control-Allow-Origin', $origin)
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        }
+
+        // For non-Laravel responses like Symfony responses or JsonResponse
+        if ($response instanceof SymfonyResponse) {
+            $response->headers->set('Access-Control-Allow-Origin', $origin);
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        }
+
+        return $response;
     }
 
     protected function isAllowedOriginPattern($origin)
@@ -75,3 +88,4 @@ class Cors
         return false;
     }
 }
+
