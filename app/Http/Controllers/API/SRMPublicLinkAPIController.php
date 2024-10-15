@@ -302,8 +302,7 @@ class SRMPublicLinkAPIController extends AppBaseController
     {
        try
        {
-           $data = $this->sRMPublicLinkRepository->getPublicLinkSupplierData($request);
-           return $this->sendResponse($data,'data retrieved successfully');
+            return $this->sRMPublicLinkRepository->getPublicLinkSupplierData($request);
        }
        catch (Exception $e)
        {

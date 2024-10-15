@@ -52,8 +52,15 @@ class SRMPublicLinkRepository extends BaseRepository
             $input = $request->all();
             $companyId = $input['companyId'];
             $publicLinkData =  $this->model->getPublicSupplierLinks($companyId);
+            $search = $request->input('search.value');
 
-            foreach ($publicLinkData as $link)
+            if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+                $sort = 'asc';
+            } else {
+                $sort = 'desc';
+            }
+
+            foreach ($publicLinkData->get() as $link)
             {
                 $currentDate = now()->startOfDay();
                 $expireDate = Carbon::parse($link->expire_date)->startOfDay();
@@ -65,7 +72,36 @@ class SRMPublicLinkRepository extends BaseRepository
                 }
             }
 
-            return $publicLinkData;
+            if ($search)
+            {
+                $search = str_replace("\\", "\\\\", $search);
+                $publicLinkData = $publicLinkData->where(function ($query) use ($search)
+                {
+                    $query->where('link_description', 'LIKE', "%{$search}%")
+                        ->orWhereHas('employee', function ($q) use ($search)
+                        {
+                            $q->where('empFullName', 'LIKE', "%{$search}%");
+                        });
+                });
+            }
+
+
+            return \DataTables::eloquent($publicLinkData)
+                ->addColumn('Actions', 'Actions', "Actions")
+                ->order(function ($query) use ($input)
+                {
+                    if (request()->has('order'))
+                    {
+                        if ($input['order'][0]['column'] == 0)
+                        {
+                            $query->orderBy('id', $input['order'][0]['dir']);
+                        }
+                    }
+                })
+                ->addIndexColumn()
+                ->with('orderCondition', $sort)
+                ->make(true);
+
         }
         catch (Exception $e)
         {
@@ -84,17 +120,25 @@ class SRMPublicLinkRepository extends BaseRepository
                 $employee = Helper::getEmployeeInfo();
                 $companyId = $input['companyId'];
                 $encodedString = base64_encode('External');
-                $existingLink = $this->model->where('link_description', $input['description'])
-                    ->first();
 
-                if ($existingLink)
+                if(isset($input['description']))
                 {
-                    throw new \Exception('The link description already exists.');
+                    $existingLink = $this->model->where('link_description', $input['description'])
+                        ->first();
+
+                    if ($existingLink)
+                    {
+                        throw new \Exception('The link description already exists.');
+                    }
                 }
 
 
+
+                $updateArr = ['current' => 0,
+                              'expired' => 1];
+
                 $this->model->where('company_id', $input['companyId'])
-                    ->update(['current' => 0]);
+                    ->update($updateArr);
 
 
                 $publicLink = $this->model->newInstance();
@@ -106,7 +150,7 @@ class SRMPublicLinkRepository extends BaseRepository
                 $publicLink->link = $link;
                 $publicLink->uuid = $uuid;
                 $publicLink->api_key = $apiKey;
-                $publicLink->link_description = $input['description'];
+                $publicLink->link_description = isset($input['description']) ? $input['description'] : '-';
                 $publicLink->expire_date = Carbon::parse($input['expireDate'])->format('Y-m-d');
                 $publicLink->expired = 0;
                 $publicLink->current = 1;

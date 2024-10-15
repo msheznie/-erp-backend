@@ -140,7 +140,8 @@ class SRMPublicLink extends Model
         'created_pc_id',
         'created_user_id',
         'created_date_time',
-        'created_user_name'
+        'created_user_name',
+        'created_at'
     ];
 
     /**
@@ -177,9 +178,12 @@ class SRMPublicLink extends Model
 
     public function getPublicSupplierLinks($companyId)
     {
-        return self::select('id','link','expire_date','expired','current','link_description','company_id')
-            ->where('company_id',$companyId)
-            ->get();
+        return self::select('id','link','expire_date','expired','current','link_description','company_id','created_user_id','created_at')
+            ->with(['employee' => function ($query)
+            {
+                $query->select('employeeSystemID','empFullName');
+            }])
+            ->where('company_id',$companyId);
     }
 
     public function getPublicLinkDataByUuid($uuid)
@@ -187,6 +191,11 @@ class SRMPublicLink extends Model
         return self::select('id','link','expire_date','expired','current','link_description','company_id')
             ->where('uuid',$uuid)
             ->first();
+    }
+
+    public function employee()
+    {
+        return $this->hasOne('App\Models\Employee','employeeSystemID','created_user_id');
     }
     
 }

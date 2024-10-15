@@ -27,7 +27,6 @@ class SrmPublicLinkRequest extends FormRequest
         $rules =
         [
             'companyId' => 'required|integer',
-            'description' => 'required|string',
             'expireDate' => 'required',
         ];
 
@@ -38,7 +37,6 @@ class SrmPublicLinkRequest extends FormRequest
     {
         return [
             'companyId.required' =>  'Company id is required',
-            'description.required' => 'Description is required',
             'expireDate.required' => 'Expire date is required',
         ];
     }
