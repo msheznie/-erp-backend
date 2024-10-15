@@ -61,8 +61,8 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
-        'cors' => \App\Http\Middleware\Cors::class
-        'corsFree' => \App\Http\Middleware\CorsFree::class
+        'cors' => \App\Http\Middleware\Cors::class,
+        'corsFree' => \App\Http\Middleware\CorsFree::class,
         'tenant' => \App\Http\Middleware\TenantEnforce::class,
         'authorization' => \App\Http\Middleware\UserAuthorization::class,
         'tenantById' => \App\Http\Middleware\TenantByKey::class,
