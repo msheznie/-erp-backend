@@ -22,6 +22,7 @@ Route::group([], function () {
     Route::post('getMaterielIssueApprovedByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovedByUser')->name("Get approved - Material issue");
     Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData')->name("Get Materiel Issue Form Data");
     Route::get('getTypeheadActiveEmployees', 'ItemIssueMasterAPIController@getTypeheadActiveEmployees')->name("Get type head active employees");
+    Route::get('getEmployeeRecentAllocation', 'ExpenseEmployeeAllocationAPIController@getEmployeeRecentAllocation')->name("Get employee recent allocation");
 
     Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser')->name("Get pending for approval - Material Request");
     Route::post('getApprovedMaterielRequestsByUser', 'MaterielRequestAPIController@getApprovedMaterielRequestsByUser')->name("Get approved - Material Request");

@@ -12,6 +12,7 @@ use App\Models\ItemIssueDetails;
 use App\Repositories\ExpenseEmployeeAllocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -410,5 +411,29 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $expenseEmployeeAllocation->delete();
 
         return $this->sendResponse([], 'Expense Employee Allocation deleted successfully');
+    }
+
+    public function getEmployeeRecentAllocation(Request $request) {
+
+        $request->validate([
+            'employeeSystemID' => 'required',
+            'documentSystemID' => 'required',
+            'itemCodeSystem' => 'required'
+        ]);
+
+        $input = $request->all();
+
+        $data = DB::table('expense_employee_allocation')
+            ->join('erp_itemissuedetails', 'expense_employee_allocation.documentDetailID', '=', 'erp_itemissuedetails.itemIssueDetailID')
+            ->where('expense_employee_allocation.employeeSystemID', $input['employeeSystemID'])
+            ->where('expense_employee_allocation.documentSystemID', $input['documentSystemID'])
+            ->where('erp_itemissuedetails.itemCodeSystem', $input['itemCodeSystem'])
+            ->where('expense_employee_allocation.documentSystemCode', '!=', $input['documentSystemCode'])
+            ->select('expense_employee_allocation.created_at', 'expense_employee_allocation.assignedQty', 'erp_itemissuedetails.itemIssueCode')
+            ->orderBy('expense_employee_allocation.created_at', 'asc')
+            ->limit(3)
+            ->get();
+
+        return $this->sendResponse($data, 'Data retrieved successfully');
     }
 }
