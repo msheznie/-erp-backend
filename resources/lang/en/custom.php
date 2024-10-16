@@ -569,4 +569,9 @@ return [
     'supplier_business_category' => 'Supplier Business Category',
     'supplier_business_sub_category' => 'Supplier Business Sub Category',
     "receive_amount" => "Receive Amount",
+    "emp_id" => "Emp ID",
+    "emp_name" => "Emp Name",
+    "qty_issued" => "Qty Issued",
+    "date_issued" => "Date Issued",
+    "emp_signature" => "Emp Signature"
 ];
