@@ -148,6 +148,21 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         
         $dataBase = isset($input['db']) ? $input['db'] : "";
+
+        $alreadyExist = $this->fixedAssetDepreciationMasterRepository
+            ->where('is_acc_dep', 0)
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->where(function ($query) use ($input) {
+                $query->where('companyFinancePeriodID', $input['companyFinancePeriodID'])
+                    ->orWhere('companyFinancePeriodID', '>', $input['companyFinancePeriodID']);
+            })
+            ->get();
+
+        if (count($alreadyExist) > 0) {
+            return $this->sendError('Depreciation already processed for the selected month', 500);
+        }
+
         DB::beginTransaction();
         try {
 
