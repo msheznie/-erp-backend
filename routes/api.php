@@ -52,6 +52,7 @@ Route::group(['middleware' => 'mobileServer'], function () {
             Route::post('create_receipts_voucher','ReceiptAPIController@store');
             Route::post('push_budget_items', 'SRM\ThirdPartySystemsController@pushBudgetItems');
             Route::post('create_customer_invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
+            Route::post('cancel_customer_invoice', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
         });
 
         Route::group(['middleware' => 'auth.api.keycloak'], function () {

@@ -103,6 +103,7 @@ use App\Models\DeliveryTermsMaster;
 use App\Models\LogUploadCustomerInvoice;
 use App\Models\PortMaster;
 use App\Models\UploadCustomerInvoice;
+use App\Services\CustomerInvoiceServices;
 use App\Services\ValidateDocumentAmend;
 use PHPExcel_IOFactory;
 use Exception;
@@ -3923,6 +3924,83 @@ WHERE
         return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer invoice cancelled successfully');
     }
 
+    public function customerInvoiceCancelAPI(Request $request)
+    {
+        $input = $request->all();
+
+        $customerInvoiceNo = $input['customerInvoiceNo'];
+
+        $masterData = CustomerInvoiceDirect::where('customerInvoiceNo',$customerInvoiceNo)->first();
+        if (empty($masterData)) {
+            return $this->sendError('Customer Invoice not found');
+        }
+
+
+
+        $id = $masterData->custInvoiceDirectAutoID;
+
+        $errorMessageAPI = 'The invoice ' . $customerInvoiceNo . ' / ' . $masterData->bookingInvCode .  ' cannot be cancelled as ';
+        $successMessage = 'The invoice ' . $customerInvoiceNo . ' / ' . $masterData->bookingInvCode .  ' has been cancelled Successfully';
+
+        if($masterData->isPerforma != 0) {
+            $errorMessage = $errorMessageAPI . 'You can do the cancellation for Direct Customer invoice only';
+            return $this->sendError($errorMessage, 422);
+        }
+
+
+        $documentAutoId = $id;
+        $documentSystemID = $masterData->documentSystemiD;
+
+
+
+        $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
+        if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
+            $errorMessage = $errorMessageAPI . 'the Invoice posted period is not Active and Current for cancellation';
+            return $this->sendError($errorMessage, 422);
+        }
+
+        DB::beginTransaction();
+        try {
+
+            if ($masterData->approved == -1) {
+                $amendCustomerInvoice = CustomerInvoiceServices::amendCustomerInvoice($input,$id,$masterData,$isFromAPI = true);
+
+                if(isset($amendCustomerInvoice['status']) && $amendCustomerInvoice['status'] == false){
+                   $errorMessage = $errorMessageAPI . $amendCustomerInvoice['message'];
+                   return $this->sendError($errorMessage, 422);
+               }
+            } 
+
+
+            $customerInvoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->count();
+
+            if ($customerInvoiceDetail > 0) {
+                
+                $deleteDetails = CustomerInvoiceServices::deleteDetails($id, $isFromAPI = true);
+                if(isset($deleteDetails['status']) && $deleteDetails['status'] == false){
+                    $errorMessage = $errorMessageAPI . $deleteDetails['message'];
+                    return $this->sendError($errorMessage, 422);
+                }
+                
+            }
+            
+
+            $masterData = CustomerInvoiceDirect::where('customerInvoiceNo',$customerInvoiceNo)->first();
+            $cancelCustomerInvoice = CustomerInvoiceServices::cancelCustomerInvoice($input,$id,$masterData,$isFromAPI = true);
+            if(isset($cancelCustomerInvoice['status']) && $cancelCustomerInvoice['status'] == false){
+               $errorMessage = $errorMessageAPI . $cancelCustomerInvoice['message'];
+               return $this->sendError($errorMessage, 422);
+            }
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), $successMessage );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+    }
+
     public function amendCustomerInvoiceReview(Request $request)
     {
         $input = $request->all();
@@ -3994,22 +4072,21 @@ WHERE
             return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Quotation');
         }
 
-        // checking document matched in machmaster
-        $checkDetailExistMatch = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $id)
-            ->where('companySystemID', $masterData->companySystemID)
-            ->where('addedDocumentSystemID', $masterData->documentSystemiD)
-            ->first();
 
-        if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. Customer Invoice is added to receipt');
-        }
 
-        $emailBody = '<p>' . $masterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->bookingInvCode . ' has been return back to amend';
 
         DB::beginTransaction();
         try {
 
+             $amendCI = CustomerInvoiceServices::amendCustomerInvoice($input,$id,$masterData);
+
+             if(isset($amendCI['status']) && $amendCI['status'] == false){
+                $errorMessage = "Customer Invoice " . $amendCI['message'];
+                return $this->sendError($errorMessage);
+            }
+             $emailBody = '<p>' . $masterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+             $emailSubject = $masterData->bookingInvCode . ' has been return back to amend';
+             
             //sending email to relevant party
             if ($masterData->confirmedYN == 1) {
                 $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
@@ -4044,65 +4121,6 @@ WHERE
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }
-
-            //deleting from approval table
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
-
-            //deleting from general ledger table
-            $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
-
-            //deleting records from accounts receivable
-            $deleteARData = AccountsReceivableLedger::where('documentCodeSystem', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
-
-            //deleting records from tax ledger
-            TaxLedger::where('documentMasterAutoID', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
-
-
-            $taxLedgerDetails = TaxLedgerDetail::where('documentMasterAutoID', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->get();
-
-            $returnFilledDetailID = null;
-            foreach ($taxLedgerDetails as $taxLedgerDetail) {
-                if($taxLedgerDetail->returnFilledDetailID != null){
-                    $returnFilledDetailID = $taxLedgerDetail->returnFilledDetailID;
-                }
-                $taxLedgerDetail->delete();
-            }
-
-            if($returnFilledDetailID != null){
-                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
-            }
-
-            // updating fields
-            $masterData->confirmedYN = 0;
-            $masterData->confirmedByEmpSystemID = null;
-            $masterData->confirmedByEmpID = null;
-            $masterData->confirmedByName = null;
-            $masterData->confirmedDate = null;
-            $masterData->RollLevForApp_curr = 1;
-
-            $masterData->approved = 0;
-            $masterData->approvedByUserSystemID = null;
-            $masterData->approvedByUserID = null;
-            $masterData->approvedDate = null;
-            $masterData->postedDate = null;
-            $masterData->save();
-
-            AuditTrial::createAuditTrial($masterData->documentSystemiD,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Customer Invoice amend saved successfully');
