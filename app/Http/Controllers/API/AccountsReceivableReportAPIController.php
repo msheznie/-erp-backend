@@ -2429,7 +2429,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
        $html = $this->customerStatementExportPdf($request, true);
        $customers = $request->customers;
        $customerSystemCodes = collect($customers)->pluck(['customerCodeSystem']);
-
+        $data =  array();
        foreach ($customerSystemCodes as $customerSystemCode)
        {
            $reportDataCopy = $html;
@@ -2441,26 +2441,33 @@ class AccountsReceivableReportAPIController extends AppBaseController
            $customerKey = $customerMaster->CutomerCode." - ".$customerMaster->CustomerName;
            if (isset($html['reportData']->$customerKey)) {
                $customerData = $html['reportData']->$customerKey;
-               $reportDataCopy['reportData'] = $customerData;
+               $data[$customerKey] = $customerData;
                $totalBalanceAmount = 0;
                $totalInvoiceAmount = 0;
                $totalReceiptAmount = 0;
-               foreach ($reportDataCopy['reportData'] as $key=>$reportByCurrency)
+               foreach ($data[$customerKey] as $key=>$reportByCurrency)
                {
-                   $reportDataCopy['reportData'][$key]['balanceAmount'] = collect($reportByCurrency)->sum('balanceAmount');
-                   $reportDataCopy['reportData'][$key]['invoiceAmount'] = collect($reportByCurrency)->sum('invoiceAmount');
-                   $reportDataCopy['reportData'][$key]['receiptAmount'] = collect($reportByCurrency)->sum('receiptAmount');
+                   $data[$customerKey][$key]['balanceAmount'] = collect($reportByCurrency)->sum('balanceAmount');
+                   $data[$customerKey][$key]['invoiceAmount'] = collect($reportByCurrency)->sum('invoiceAmount');
+                   $data[$customerKey][$key]['receiptAmount'] = collect($reportByCurrency)->sum('receiptAmount');
 
                    $totalBalanceAmount += collect($reportByCurrency)->sum('balanceAmount');
                    $totalInvoiceAmount += collect($reportByCurrency)->sum('invoiceAmount');
                    $totalReceiptAmount += collect($reportByCurrency)->sum('receiptAmount');
                }
 
-               $reportDataCopy['balanceAmount'] = $totalBalanceAmount;
-               $reportDataCopy['invoiceAmount'] = $totalInvoiceAmount;
-               $reportDataCopy['receiptAmount'] = $totalReceiptAmount;
-
-               CustomerStatementJob::dispatch($request->db, $reportDataCopy, $customerSystemCode, $input['companySystemID'], $request->reportTypeID);
+               $data['balanceAmount'] = $totalBalanceAmount;
+               $data['invoiceAmount'] = $totalInvoiceAmount;
+               $data['receiptAmount'] = $totalReceiptAmount;
+               $data['companylogo'] = $reportDataCopy['companylogo'];
+               $data['companyName'] = $reportDataCopy['companyName'];
+               $data['currencyID'] = $reportDataCopy['currencyID'];
+               $data['fromDate'] = $reportDataCopy['fromDate'];
+               $data['currency'] = $reportDataCopy['currency'];
+               $data['toDate'] = $reportDataCopy['toDate'];
+               $data['reportData'] = $reportDataCopy['reportData'];
+               $data['currencyDecimalPlace'] = $reportDataCopy['currencyDecimalPlace'];
+               CustomerStatementJob::dispatch($request->db, $data, $customerSystemCode, $input['companySystemID'], $request->reportTypeID);
 
            }
        }
@@ -4167,7 +4174,7 @@ GROUP BY
             $balanceAmountQry = "IFNULL(round( final.balanceRpt, final.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
-        return  \DB::select('SELECT
+        return \DB::select('SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -4494,6 +4501,8 @@ WHERE
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem AND mainQuery.serviceLineSystemID = InvoiceFromBRVAndMatching.serviceLineSystemID
 	) AS final 
  ORDER BY PostedDate ASC;');
+
+
     }
 
     function getCustomerLedgerTemplate2QRY($request)
