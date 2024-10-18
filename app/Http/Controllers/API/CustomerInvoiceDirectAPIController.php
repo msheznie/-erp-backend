@@ -3928,11 +3928,28 @@ WHERE
     {
         $input = $request->all();
 
-        $customerInvoiceNo = $input['customerInvoiceNo'];
+        if(empty($input['customerInvoiceNo'])){
+            return $this->sendError('Customer invoice number not found.', 422);
+        }
 
-        $masterData = CustomerInvoiceDirect::where('customerInvoiceNo',$customerInvoiceNo)->first();
+        if(empty($input['bookingInvCode'])){
+            return $this->sendError('Document code not found.', 422);
+        }
+
+        $customerInvoiceNo = $input['customerInvoiceNo'];
+        $bookingInvCode = $input['bookingInvCode'];
+        $companySystemID = $input['company_id'];
+
+        $company = Company::where('companySystemID',$companySystemID)->first();
+
+        $masterData = CustomerInvoiceDirect::where('customerInvoiceNo',$customerInvoiceNo)
+                                            ->where('bookingInvCode',$bookingInvCode)
+                                            ->where('companySystemID',$companySystemID)
+                                            ->first();
+
+
         if (empty($masterData)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError('Customer Invoice ' . $customerInvoiceNo . ' / ' . $bookingInvCode . ' not found for the company ' .$company->CompanyName);
         }
 
 
