@@ -2153,8 +2153,6 @@ class ItemIssueMasterAPIController extends AppBaseController
         $employeeCondition = $details['employeeCondition'];
         $employeeSubQuery = $details['employeeSubQuery'];
 
-   
-
        
         \DB::select("SET SESSION group_concat_max_len = 1000000");
         $query = "SELECT 
@@ -2165,10 +2163,10 @@ class ItemIssueMasterAPIController extends AppBaseController
                                 JSON_OBJECT(
                                     'itemIssueDetailID', erp_itemissuedetails.itemIssueDetailID,
                                     'itemIssueCode', erp_itemissuemaster.itemIssueCode,
-                                    'issueDate', erp_itemissuemaster.issueDate,
+                                    'issueDate', DATE(erp_itemissuemaster.issueDate),
                                     'itemPrimaryCode', erp_itemissuedetails.itemPrimaryCode,
                                     'itemDescription', erp_itemissuedetails.itemDescription,
-                                    'unit', units.UnitDes,
+                                    'unit', units.UnitShortCode,
                                     'qtyIssued', erp_itemissuedetails.qtyIssued,
                                     'issueCostLocal', erp_itemissuedetails.issueCostLocal,
                                     'issueCostLocalTotal', erp_itemissuedetails.issueCostLocalTotal,
@@ -2220,7 +2218,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     AND 
                         erp_itemissuemaster.approved = -1
                     AND  
-                        erp_itemissuemaster.issueDate BETWEEN '$startDate' AND '$endDate'
+                        DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
                        $employeeSubQuery
                       GROUP BY 
                 erp_itemissuedetails.itemPrimaryCode
@@ -2271,14 +2269,16 @@ class ItemIssueMasterAPIController extends AppBaseController
         $employee = $details['employee'];
         $employeeCondition = $details['employeeCondition'];
         $employeeSubQuery = $details['employeeSubQuery'];
+
+
         $data = array();
         $query = "SELECT 
                     erp_itemissuedetails.itemPrimaryCode,
                     erp_itemissuedetails.itemIssueDetailID,
                     erp_itemissuemaster.itemIssueCode,
-                    erp_itemissuemaster.issueDate,
+                    DATE(erp_itemissuemaster.issueDate) AS issueDate,
                     erp_itemissuedetails.itemDescription,
-                    units.UnitDes AS unit,
+                    units.UnitShortCode AS unit,
                     erp_itemissuedetails.qtyIssued,
                     erp_itemissuedetails.issueCostLocal,
                     erp_itemissuedetails.issueCostLocalTotal,
@@ -2309,7 +2309,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 WHERE 
                     erp_itemissuedetails.itemCodeSystem IN ($items)
                     AND erp_itemissuemaster.approved = -1
-                    AND erp_itemissuemaster.issueDate BETWEEN '$startDate' AND '$endDate'
+                    AND DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
                     $employeeCondition
                 ORDER BY 
                     erp_itemissuedetails.itemPrimaryCode, erp_itemissuedetails.itemIssueDetailID
