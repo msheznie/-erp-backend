@@ -35,10 +35,12 @@ use App\helper\SupplierInvoice;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
+use App\Jobs\supplierInvoiceCreation;
 use App\Models\AccountsPayableLedger;
 use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccount;
 use App\Models\CustomerMaster;
+use App\Models\DocumentSystemMapping;
 use App\Models\EmployeeLedger;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\BookInvSuppDet;
@@ -90,6 +92,7 @@ use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Repositories\VatReturnFillingMasterRepository;
+use App\Services\API\SupplierInvoiceAPIService;
 use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
@@ -217,19 +220,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])
-                                        ->when($input['documentType'] != 4, function($query) use ($input) {
-                                            $query->where('supplierID', $input['supplierID']);
-                                        })
-                                        ->when($input['documentType'] == 4, function($query) use ($input) {
-                                            $query->where('employeeID', $input['employeeID']);
-                                        })
-                                        ->first();
-
-        if ($alreadyAdded) {
-            return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
-        }
-
         if(isset($input['custInvoiceDirectAutoID'])){
             $alreadyUsed = BookInvSuppMaster::where('custInvoiceDirectAutoID', $input['custInvoiceDirectAutoID'])->first();
             if ($alreadyUsed) {
@@ -256,12 +246,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
         if (isset($input['bookingDate'])) {
             if ($input['bookingDate']) {
                 $input['bookingDate'] = new Carbon($input['bookingDate']);
-            }
-        }
-
-        if (isset($input['supplierInvoiceDate'])) {
-            if ($input['supplierInvoiceDate']) {
-                $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
             }
         }
 
@@ -299,89 +283,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
-        $input['documentSystemID'] = '11';
-        $input['documentID'] = 'SI';
 
-        $lastSerial = BookInvSuppMaster::where('companySystemID', $input['companySystemID'])
-            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('serialNo', 'desc')
-            ->first();
-
-        $lastSerialNumber = 1;
-        if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-        }
-
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
-
-        //var_dump($companyCurrencyConversion);
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if ($company) {
-            $input['companyID'] = $company->CompanyID;
-            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
-            $input['localCurrencyID'] = $company->localCurrencyID;
-            $input['companyReportingCurrencyID'] = $company->reportingCurrency;
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-        }
-
-        $input['serialNo'] = $lastSerialNumber;
-        $input['supplierTransactionCurrencyER'] = 1;
-
-        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
-
-        $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->where('companySystemID', $input['companySystemID'])
-            ->first();
-
-        if ($companyfinanceyear) {
-            $startYear = $companyfinanceyear['bigginingDate'];
-            $finYearExp = explode('-', $startYear);
-            $finYear = $finYearExp[0];
-
-            $input['FYBiggin'] = $companyfinanceyear->bigginingDate;
-            $input['FYEnd'] = $companyfinanceyear->endingDate;
+        $returnData = SupplierInvoiceAPIService::storeBookingInvoice($input);
+        if(isset($returnData['status']) && $returnData['status'] == 'success') {
+            return $this->sendResponse($returnData['data'], 'Supplier Invoice created successfully');
         } else {
-            $finYear = date("Y");
+            return $this->sendError($returnData['message'], 500);
         }
-
-        if ($documentMaster) {
-            $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'BSI' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-            $input['bookingInvCode'] = $bookingInvCode;
-        }
-
-        if ($input['documentType'] != 4) {
-            // adding supplier grv details
-            $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
-                'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
-                ->where('supplierCodeSytem', $input['supplierID'])
-                ->where('companySystemID', $input['companySystemID'])
-                ->first();
-
-            $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
-
-            if ($supplierAssignedDetail) {
-                $input['supplierVATEligible'] = $supplierAssignedDetail->vatEligible;
-                $input['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
-                $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
-                $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
-                $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
-                $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
-            }
-        } else {
-            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
-
-            if (is_null($checkEmployeeControlAccount)) {
-                return $this->sendError('Please configure Employee control account for this company', 500);
-            }
-
-            $input['employeeControlAcID'] = $checkEmployeeControlAccount;
-        }
-
-
-        $bookInvSuppMasters = $this->bookInvSuppMasterRepository->create($input);
-
-        return $this->sendResponse($bookInvSuppMasters->toArray(), 'Supplier Invoice created successfully');
     }
 
     /**
@@ -3120,6 +3028,13 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             return $this->sendError('Supplier Invoice not found');
         }
 
+        if($bookInvSuppMaster['approved'] == -1) {
+            $isAPIDocument = DocumentSystemMapping::where('documentId',$bookingSuppMasInvAutoID)->where('documentSystemID',11)->exists();
+            if ($isAPIDocument){
+                return $this->sendError('This is an autogenerated document. This cannot be returned back to amend');
+            }
+        }
+
         if ($bookInvSuppMaster->refferedBackYN != -1) {
             return $this->sendError('You cannot refer back this Supplier Invoice');
         }
@@ -3229,7 +3144,13 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $documentAutoId = $bookingSuppMasInvAutoID;
         $documentSystemID = $bookInvSuppMasterData->documentSystemID;
-        
+
+
+        $isAPIDocument = DocumentSystemMapping::where('documentId',$documentAutoId)->where('documentSystemID',11)->exists();
+        if ($isAPIDocument){
+            return $this->sendError('This is an autogenerated document. This cannot be returned back to amend');
+        }
+
         if($bookInvSuppMasterData->approved == -1) {
             $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
             if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
@@ -3484,4 +3405,15 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         return $this->sendResponse($purchaseOrders, 'Data retrieved successfully');
     }
+
+    public function createSupplierInvoices(Request $request)
+    {
+        $input = $request->all();
+        $db = isset($request->db) ? $request->db : "";
+        $authorization = $request->header('Authorization');
+        supplierInvoiceCreation::dispatch($input, $db, $request->api_external_key, $request->api_external_url);
+        return $this->sendResponse(array(),"Supplier invoice creation is sent to queue!");
+    }
+
+
 }

@@ -88,7 +88,12 @@ class SupplierInvoiceGlService
         $data = [];
         $taxLedgerData = [];
         $finalData = [];
-        $empID = Employee::find($masterModel['employeeSystemID']);
+        if($masterModel['employeeSystemID'] == "SYSTEM"){
+            $empID = Employee::where('empID',$masterModel['employeeSystemID'])->first();
+        }
+        else{
+            $empID = Employee::find($masterModel['employeeSystemID']);
+        }
         $masterData = BookInvSuppMaster::with(['detail' => function ($query) {
             $query->selectRaw("SUM(totLocalAmount) as localAmount, SUM(totRptAmount) as rptAmount,SUM(totTransactionAmount) as transAmount,SUM(VATAmount) as totalVATAmount,SUM(VATAmountLocal) as totalVATAmountLocal,SUM(VATAmountRpt) as totalVATAmountRpt,bookingSuppMasInvAutoID");
         }, 'item_details' => function ($query) {

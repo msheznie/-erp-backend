@@ -53,6 +53,7 @@ Route::group(['middleware' => 'mobileServer'], function () {
             Route::post('push_budget_items', 'SRM\ThirdPartySystemsController@pushBudgetItems');
             Route::post('create_customer_invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
             Route::post('cancel_customer_invoice', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
+            Route::post('create_supplier_invoices','BookInvSuppMasterAPIController@createSupplierInvoices');
         });
 
         Route::group(['middleware' => 'auth.api.keycloak'], function () {
@@ -1024,5 +1025,3 @@ Route::group(['middleware' => 'mobileServer'], function () {
  * End external related routes
  */
 
-
-Route::resource('third_party_domains', 'ThirdPartyDomainAPIController');
