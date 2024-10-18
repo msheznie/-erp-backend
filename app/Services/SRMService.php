@@ -169,10 +169,43 @@ class SRMService
         ->orderBy('createdDateTime', 'desc')
         ->paginate($per_page, ['*'], 'page', $page);*/
 
-        $query = ProcumentOrder::where('approved', -1)
+        $query = ProcumentOrder::select('purchaseOrderCode', 'referenceNumber', 'expectedDeliveryDate', 'supplierName',
+        'narration', 'createdDateTime', 'poConfirmedDate', 'approvedDate', 'poTotalSupplierTransactionCurrency',
+        'grvRecieved', 'invoicedBooked', 'createdUserSystemID', 'serviceLineSystemID', 'supplierID',
+        'supplierTransactionCurrencyID', 'purchaseOrderID')
+            ->where('approved', -1)
             ->where('supplierID', $supplierID)
             ->where('poType_N', '!=', 5)
-            ->with(['currency', 'created_by', 'segment', 'supplier'])
+            ->with([
+                'currency'  => function ($q)
+                {
+                    $q->select
+                    (
+                        'currencyID', 'CurrencyCode', 'DecimalPlaces'
+                    );
+                },
+                'created_by'  => function ($q)
+                {
+                    $q->select
+                    (
+                        'employeeSystemID', 'empName'
+                    );
+                },
+                'segment'  => function ($q)
+                {
+                    $q->select
+                    (
+                        'serviceLineSystemID', 'ServiceLineDes'
+                    );
+                },
+                'supplier' => function ($q)
+                {
+                    $q->select
+                    (
+                        'supplierCodeSystem', 'primarySupplierCode'
+                    );
+                }
+            ])
             ->orderBy('createdDateTime', 'desc');
 
         if ($search) {

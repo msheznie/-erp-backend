@@ -26,29 +26,86 @@ class POService
     {
         $poBasicData = ProcumentOrder::find($purchaseOrderID);
         $createdDateTime = ($poBasicData) ? Carbon::parse($poBasicData->createdDateTime) : null;
-        $output = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->with([
+        $output = ProcumentOrder::select('purchaseOrderID', 'documentSystemID', 'poType_N', 'rcmActivated',
+            'purchaseOrderCode', 'createdDateTime', 'referenceNumber', 'projectID', 'soldToAddressDescriprion',
+            'soldTocontactPersonID', 'soldTocontactPersonTelephone', 'soldTocontactPersonFaxNo',
+            'soldTocontactPersonEmail', 'supplierPrimaryCode', 'supplierName', 'supplierAddress', 'supplierVATEligible',
+            'shippingAddressDescriprion', 'shipTocontactPersonID', 'shipTocontactPersonTelephone',
+            'shipTocontactPersonFaxNo', 'shipTocontactPersonEmail', 'invoiceToAddressDescription',
+            'invoiceTocontactPersonID', 'invoiceTocontactPersonTelephone', 'invoiceTocontactPersonFaxNo',
+            'invoiceTocontactPersonEmail', 'narration', 'expectedDeliveryDate', 'vatRegisteredYN',
+            'rcmActivated', 'poDiscountAmount', 'supplierVATEligible', 'VATAmount',
+            'poTotalSupplierTransactionCurrency', 'deliveryTerms', 'panaltyTerms', 'supplierID', 'companySystemID',
+            'localCurrencyID', 'companyReportingCurrencyID', 'supplierTransactionCurrencyID', 'documentSystemID',
+            'documentSystemID')
+            ->where('purchaseOrderID', $purchaseOrderID)
+            ->with([
             'detail' => function ($query) {
-                $query->with('unit');
-            }, 'supplier' => function ($query) {
+                $query->with(['unit' => function ($q) {
+                    $q->select('UnitID', 'UnitShortCode');
+                }
+                ])
+                    ->select('purchaseOrderMasterID', 'unitOfMeasure', 'netAmount', 'itemPrimaryCode', 'VATAmount',
+                        'supplierPartNumber', 'noQty', 'altUnitValue', 'unitCost', 'discountAmount', 'itemDescription');
+            },
+            'supplier' => function ($query) {
                 $query->select('vatNumber', 'supplierCodeSystem');
-            }, 'approved' => function ($query) {
-                $query->with('employee');
-                $query->where('rejectedYN', 0);
-                $query->whereIN('documentSystemID', [2]);
-            }, 'suppliercontact' => function ($query) {
-                $query->where('isDefault', -1);
-            }, 'paymentTerms_by' => function ($query) {
-                $query->with('type');
-            }, 'advance_detail' => function ($query) {
-                $query->with(['category_by', 'grv_by', 'currency', 'supplier_by'])
+            },
+            'approved' => function ($query) {
+                $query->with(['employee' => function ($q) {
+                    $q->select('employeeSystemID', 'empFullName');
+                }
+                ])
+                    ->select('documentSystemCode', 'employeeSystemID', 'approvedDate')
+                    ->where('rejectedYN', 0)
+                    ->whereIN('documentSystemID', [2]);
+            },
+            'suppliercontact' => function ($query)
+            {
+                $query->select('supplierID', 'contactPersonName', 'contactPersonTelephone', 'contactPersonFax',
+                    'contactPersonEmail')
+                    ->where('isDefault', -1);
+            },
+            'paymentTerms_by' => function ($query) {
+                $query->with('type')
+                    ->select('poID', 'LCPaymentYN', 'paymentTemDes', 'comAmount', 'comPercentage', 'inDays', 'comDate');
+            },
+            'advance_detail' => function ($query) {
+                $query->select('poID', 'reqAmount', 'reqAmountInPOLocalCur', 'reqAmountInPORptCur')
                     ->where('poTermID', 0)
                     ->where('confirmedYN', 1)
                     ->where('isAdvancePaymentYN', 1)
                     ->where('approvedYN', -1);
-            }, 'company',
+            },
+            'company' => function ($query)
+            {
+                $query->select('companySystemID', 'logoPath', 'CompanyName', 'vatRegisteredYN',
+                    'vatRegistratonNumber', 'masterCompanySystemIDReorting');
+            },
             'secondarycompany' => function ($query) use ($createdDateTime) {
-                $query->whereDate('cutOffDate', '<=', $createdDateTime);
-            }, 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment', 'project'
+                $query->select('companySystemID', 'logoPath', 'name')
+                    ->whereDate('cutOffDate', '<=', $createdDateTime);
+            },
+            'transactioncurrency' => function ($query)
+            {
+                $query->select('currencyID', 'CurrencyCode', 'DecimalPlaces');
+            },
+            'localcurrency' => function ($query)
+            {
+                $query->select('currencyID', 'CurrencyCode', 'DecimalPlaces');
+            },
+            'reportingcurrency' => function ($query)
+            {
+                $query->select('currencyID', 'CurrencyCode', 'DecimalPlaces');
+            },
+            'companydocumentattachment' => function ($query)
+            {
+                $query->select('documentSystemID', 'companySystemID', 'docRefNumber');
+            },
+            'project' => function ($query)
+            {
+                $query->select('id', 'description');
+            }
         ])->first();
 
         if (!empty($output)) {
