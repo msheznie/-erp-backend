@@ -2391,7 +2391,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                     $masterDocumentDate =  $validatePostedDate['postedDate'];
 
-                    $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
+                    $this->matchDocumentMasterRepository->update($input, $id);
+
+                    $matchDocumentMaster = $this->matchDocumentMasterRepository->with('segment')->findWithoutFail($id);
 
                     if ($input['documentSystemID'] == 21)
                     {
@@ -2636,8 +2638,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) ;
                                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) ;
                                             $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) ;
-                                            $data['serviceLineSystemID'] = $value->ar_data->serviceLineSystemID;
-                                            $data['serviceLineCode'] = $value->ar_data->serviceLineCode;
+                                            $data['serviceLineSystemID'] = $matchDocumentMaster->segment->serviceLineSystemID;
+                                            $data['serviceLineCode'] = $matchDocumentMaster->segment->ServiceLineCode;
                                             array_push($finalData, $data);
                                         }
 
@@ -2668,8 +2670,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) * -1;
                                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
                                             $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
-                                            $data['serviceLineSystemID'] = $value->ar_data->serviceLineSystemID;
-                                            $data['serviceLineCode'] = $value->ar_data->serviceLineCode;
+                                            $data['serviceLineSystemID'] = $matchDocumentMaster->segment->serviceLineSystemID;
+                                            $data['serviceLineCode'] = $matchDocumentMaster->segment->ServiceLineCode;
                                             array_push($finalData, $data);
                                         }
                                         
