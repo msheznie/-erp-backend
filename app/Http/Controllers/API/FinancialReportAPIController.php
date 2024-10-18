@@ -967,6 +967,8 @@ class FinancialReportAPIController extends AppBaseController
 
     public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained, $companyWiseTemplate = false)
     {
+
+
         if ($request->accountType == 1) { // if account type is BS and if any new chart of account created automatically link the gl account
             $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType', 4)->whereNotNull('masterID')->first();
             if (!empty($detID->detID) && !is_null($detID->detID)) {
@@ -1000,6 +1002,18 @@ class FinancialReportAPIController extends AppBaseController
         $company = Company::find($request->selectedCompanyID);
         $template = ReportTemplate::find($request->templateType);
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyArray = isset($request->companySystemID) ? $request->companySystemID : [];
+        $segmentArray = isset($request->serviceLineSystemID) ? $request->serviceLineSystemID : [];
+        $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency[0];
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $serviceLineIDs = array_map(function($item) {
+            return $item['serviceLineSystemID'];
+        }, $segmentArray);
 
         $month = '';
         $period = '';
@@ -1032,13 +1046,14 @@ class FinancialReportAPIController extends AppBaseController
 
          if((isset($request->reportID) && $request->reportID == "FCT") && $outputCollect)
         {
-            $outputCollect->each(function ($item) use($outputDetail,$columnKeys) {
+            $outputCollect->each(function ($item) use($outputDetail,$columnKeys,$companyArray,$currency, $serviceLineIDs, $fromDate, $toDate) {
                 $detID = ($item->detID) ?  : null;
                 if($detID)
                 {
                     $data = $outputDetail->filter(function($detail) use ($detID) {
                         return $detail->templateDetailID == $detID;
                     });
+
                     if($data->isNotEmpty())
                     {
                         collect($columnKeys)->each(function($colKey) use ($item,$data)
@@ -1048,10 +1063,53 @@ class FinancialReportAPIController extends AppBaseController
                                 $item->$colKey = collect($data)->sum($colKey);
                         });
                     }
+
+                    collect($columnKeys)->each(function($colKey) use ($item,$data, $companyArray, $currency, $serviceLineIDs, $fromDate, $toDate)
+                    {
+                        $key = explode('-',$colKey);
+                        if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
+                            $item->$colKey = collect($data)->sum($colKey);
+
+                        if($item->detDescription == 'Share of Associates Profit/Loss') {
+
+                            $totalIncome = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
+                                $query->where('controlAccountsSystemID', 1);
+                            })->first();
+
+
+                            $totalExpense = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
+                                $query->where('controlAccountsSystemID', 2);
+                            })->first();
+
+
+                            $total = 0;
+
+                            foreach ($companyArray as $company) {
+                                if($currency == 1) {
+                                    $total += ($totalIncome->documentLocalAmount - $totalExpense->documentLocalAmount) * $company['holding_percentage'] / 100;
+                                } else {
+                                    $total += ($totalIncome->documentRptAmount - $totalExpense->documentRptAmount) * $company['holding_percentage'] / 100;
+                                }
+                            }
+
+
+                            if (isset($key[0]) && $key[0] == "CMB") {
+                                $item->$colKey = $total;
+                            }
+
+                            if (isset($key[0]) && $key[0] == "CONS") {
+                                $item->$colKey = $total;
+                            }
+                        }
+                    });
+
                 }
+
+
             });
         }
-        
+
+
         $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
         $grandTotalUncatArr = [];
         $uncategorizeArr = [];
@@ -1194,6 +1252,7 @@ class FinancialReportAPIController extends AppBaseController
         foreach ($segemntsDta as $key => $value) {
             $segmentParentData[$value->ServiceLineCode] = (is_null($value->parent)) ? "-" : $value->parent->ServiceLineDes;
         }
+
 
         return array(
             'reportData' => $headers,
@@ -1498,6 +1557,7 @@ class FinancialReportAPIController extends AppBaseController
 
                     $shareOfAccosicateColumnData = $shareOfAccosicateData['columnData'];
 
+
                     $shareOfAccosicateAmount = 0;
 
                     if(!empty($shareOfAccosicateColumnData) && is_array($shareOfAccosicateColumnData)) {
@@ -1513,7 +1573,7 @@ class FinancialReportAPIController extends AppBaseController
 
                     foreach ($response['reportData'] as $key => $value) {
                         if (isset($value->itemType) && $value->itemType == 5) {
-                            $value->{$shareOfAccosicateDataArray['CONSColumnKey']} = $shareOfAccosicateAmount;
+//                            $value->{$shareOfAccosicateDataArray['CONSColumnKey']} = $shareOfAccosicateAmount;
                         }
 
                         if (isset($value->itemType) && $value->itemType == 6) {
@@ -1532,7 +1592,6 @@ class FinancialReportAPIController extends AppBaseController
 
                     return $response;
                 }
-
                 return $response;
 
 
@@ -6462,8 +6521,8 @@ AND MASTER .canceledYN = 0';
             } else {
                 $fifthLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
             }
-
             $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
+
             //$thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
             //$fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
             $whereQry[] .= 'IF(masterID is not null AND isFinalLevel = 1 , d.`' . $val . '` != 0,d.`' . $val . '` IS NOT NULL)';
@@ -7856,6 +7915,19 @@ GROUP BY
             $CONSColumnKey = $consColumnData ? $consColumnData->shortCode."-".$consColumnData->columnLinkID : "";
 
             foreach ($columns as $val) {
+
+                if ($request->dateType == 1) {
+                    $toDate = new Carbon($request->toDate);
+                    $toDate = $toDate->format('Y-m-d');
+                    $fromDate = new Carbon($request->fromDate);
+                    $fromDate = $fromDate->format('Y-m-d');
+                } else {
+                    $period = CompanyFinancePeriod::find($request->month);
+                    $toDate = ($period) ? Carbon::parse($period->dateTo)->format('Y-m-d') : null;
+                    $month = Carbon::parse($toDate)->format('Y-m-d');
+                    $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
+                }
+
                 if ($val->shortCode == 'CM') {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
