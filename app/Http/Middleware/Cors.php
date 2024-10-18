@@ -31,6 +31,10 @@ class Cors
     {
         $response = $next($request);
 
+        return $response
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+
         // if (env('ENABLE_CORS', false)) {
         //     $origin = $request->headers->get('Origin');
         //     Log::info($origin);
