@@ -118,12 +118,7 @@ class FinancialReportAPIController extends AppBaseController
         }
         $financePeriod = $financePeriod->groupBy('dateFrom')->get();
 
-        $groupCompanies = Company::where(function($query) use ($selectedCompanyId){
-                                        $query->where('masterCompanySystemIDReorting', $selectedCompanyId)
-                                              ->orWhere('companySystemID', $selectedCompanyId);
-                                    })
-                                    ->whereHas('subsidiary_companies')
-                                    ->get();
+        $groupCompanies = Company::whereHas('allSubAssociateJVCompanies')->get();
 
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
@@ -181,25 +176,9 @@ class FinancialReportAPIController extends AppBaseController
         if(!empty($companies)){
             $this->subAssociateJVCompanies[] = $input['companySystemID'];
         }
-        if ($companies && count($companies->allSubAssociateJVCompanies) > 0) {
-            $this->getSubSubsidiaryCompanies($companies->allSubAssociateJVCompanies);
-        }
 
         $companiesData = Company::whereIn('companySystemID', $this->subAssociateJVCompanies)->get();
         return $this->sendResponse($companiesData, "companies retrived successfully");        
-    }
-
-    public function getSubSubsidiaryCompanies($subsidiary_companies)
-    {
-        foreach ($subsidiary_companies as $key => $value) {
-            $this->subAssociateJVCompanies[] = $value->companySystemID;
-
-            $companies = Company::where('companySystemID', $value->companySystemID)->with(['allSubAssociateJVCompanies'])->whereHas('allSubAssociateJVCompanies')->first();
-
-            if ($companies && count($companies->allSubAssociateJVCompanies) > 0) {
-                $this->getSubSubsidiaryCompanies($companies->allSubAssociateJVCompanies);
-            } 
-        }
     }
 
     public function getAssociateJvCompanies($groupCompanySystemID)
