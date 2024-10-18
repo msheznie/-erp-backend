@@ -7,6 +7,7 @@ use App\Models\ThirdPartyDomain;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as LaravelResponse;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Illuminate\Support\Facades\Log;
 
 class Cors
 {
@@ -32,12 +33,15 @@ class Cors
 
         if (env('ENABLE_CORS', false)) {
             $origin = $request->headers->get('Origin');
-
+            Log::info($origin);
             $originPattern = env('APP_BASE_URL', '/^https:\/\/[a-z0-9-]+\.gears-int\.com$/');
             array_push($this->allowedOriginsPatterns, $originPattern);
 
             $allowedDomains = ThirdPartyDomain::pluck('name')->toArray();
             $this->allowedOrigins = array_merge($this->allowedOrigins, $allowedDomains);
+            Log::info('xs');
+            Log::info($allowedDomains);
+            Log::info($this->allowedOrigins);
 
             if (in_array($origin, $this->allowedOrigins) || $this->isAllowedOriginPattern($origin)) {
                 return $this->setCorsHeaders($response, $origin);
