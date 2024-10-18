@@ -430,8 +430,8 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
             ->where('erp_itemissuedetails.itemCodeSystem', $input['itemCodeSystem'])
             ->where('expense_employee_allocation.documentSystemCode', '!=', $input['documentSystemCode'])
             ->select('expense_employee_allocation.created_at', 'expense_employee_allocation.assignedQty', 'erp_itemissuedetails.itemIssueCode')
-            ->orderBy('expense_employee_allocation.created_at', 'asc')
-            ->limit(3)
+            ->orderBy('erp_itemissuedetails.itemIssueAutoID', 'desc')
+            ->take(3)
             ->get();
 
         return $this->sendResponse($data, 'Data retrieved successfully');
