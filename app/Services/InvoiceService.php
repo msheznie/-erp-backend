@@ -109,6 +109,7 @@ class InvoiceService
 
     public function getInvoiceDetailsById($id, $supplierID)
     {
+
         return BookInvSuppMaster::select(
             [
                 'bookingSuppMasInvAutoID',
