@@ -85,7 +85,7 @@ class CustomerInvoiceServices
             }
 
             if($returnFilledDetailID != null){
-                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
+                self::$vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
             }
 
             // updating fields
