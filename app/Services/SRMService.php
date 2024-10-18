@@ -4606,9 +4606,31 @@ class SRMService
     {
         $id = $request->input('extra.id');
 
-       $query = DocumentAttachments::where('documentSystemID', 11)
-            ->where('documentSystemCode', $id)
-            ->where('attachmentType', 0);
+       $query = DocumentAttachments::select(
+        [
+            'attachmentID',
+            'companySystemID',
+            'documentSystemID',
+            'documentID',
+            'documentSystemCode',
+            'attachmentDescription',
+            'originalFileName',
+            'myFileName',
+            'docExpirtyDate',
+            'attachmentType',
+            'sizeInKbs',
+            'timeStamp',
+            'isUploaded',
+            'path',
+            'pullFromAnotherDocument',
+            'parent_id',
+            'envelopType',
+            'order_number'
+        ]
+       )
+        ->where('documentSystemID', 11)
+        ->where('documentSystemCode', $id)
+        ->where('attachmentType', 0);
         $search = $request->input('search.value');
 
         if ($search) {

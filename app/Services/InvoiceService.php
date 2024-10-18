@@ -109,7 +109,39 @@ class InvoiceService
     public function getInvoiceDetailsById($id, $supplierID)
     {
 
-        return BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)
+        return BookInvSuppMaster::select(
+            [
+                'bookingSuppMasInvAutoID',
+                'companySystemID',
+                'bookingInvCode',
+                'documentSystemID',
+                'supplierInvoiceNo',
+                'secondaryRefNo',
+                'createdDateTime',
+                'createdDateAndTime',
+                'createdUserSystemID',
+                'comments',
+                'bookingDate',
+                'supplierID',
+                'confirmedDate',
+                'approvedDate',
+                'localCurrencyID',
+                'supplierTransactionCurrencyID',
+                'companyReportingCurrencyID',
+                'bookingAmountTrans',
+                'cancelYN',
+                'timesReferred',
+                'refferedBackYN',
+                'confirmedByEmpSystemID',
+                'confirmedYN',
+                'documentType',
+                'approved',
+                'supplierInvoiceDate',
+                'employeeID',
+                'modifiedUserSystemID',
+                'canceledByEmpSystemID'
+            ])
+            ->where('bookingSuppMasInvAutoID', $id)
             ->where('supplierID', $supplierID)
             ->where('approved', -1)
             ->where('cancelYN', 0)
