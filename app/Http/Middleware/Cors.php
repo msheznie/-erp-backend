@@ -31,24 +31,21 @@ class Cors
     {
         $response = $next($request);
 
-        if (env('ENABLE_CORS', false)) {
-            $origin = $request->headers->get('Origin');
-            Log::info($origin);
-            $originPattern = env('APP_BASE_URL', '/^https:\/\/[a-z0-9-]+\.gears-int\.com$/');
-            array_push($this->allowedOriginsPatterns, $originPattern);
+        // if (env('ENABLE_CORS', false)) {
+        //     $origin = $request->headers->get('Origin');
+        //     Log::info($origin);
+        //     $originPattern = env('APP_BASE_URL', '/^https:\/\/[a-z0-9-]+\.gears-int\.com$/');
+        //     array_push($this->allowedOriginsPatterns, $originPattern);
 
-            $allowedDomains = ThirdPartyDomain::pluck('name')->toArray();
-            $this->allowedOrigins = array_merge($this->allowedOrigins, $allowedDomains);
-            Log::info('xs');
-            Log::info($allowedDomains);
-            Log::info($this->allowedOrigins);
+        //     $allowedDomains = ThirdPartyDomain::pluck('name')->toArray();
+        //     $this->allowedOrigins = array_merge($this->allowedOrigins, $allowedDomains);
 
-            if (in_array($origin, $this->allowedOrigins) || $this->isAllowedOriginPattern($origin)) {
-                return $this->setCorsHeaders($response, $origin);
-            }
-        } else {
+        //     if (in_array($origin, $this->allowedOrigins) || $this->isAllowedOriginPattern($origin)) {
+        //         return $this->setCorsHeaders($response, $origin);
+        //     }
+        // } else {
             return $this->setCorsHeaders($response, '*');
-        }
+        // }
 
         return $response;
     }
