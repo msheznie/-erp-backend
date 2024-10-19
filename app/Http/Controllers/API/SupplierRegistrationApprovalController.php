@@ -281,7 +281,6 @@ class SupplierRegistrationApprovalController extends AppBaseController
     public function supplierCreation(Request $request)
     {
         $input = $request->all();
-        
         $supplierFormValues = $input['data'];
         $supplierMasterData = $input['supplierRegistration'];
         $isApprovalAmmend = isset($supplierMasterData['isApprovalAmmend']) ? $supplierMasterData['isApprovalAmmend'] : 0;
@@ -381,6 +380,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $data['uniqueTextcode'] = 'S';
         $data['telephone'] = $supplierFormValues['phone_number'];
         $data['nameOnPaymentCheque'] = $supplierFormValues['nameOnPaymentCheque'];
+        $data['isSMEYN'] = $supplierFormValues['smeSupplier'] ?? 0;
 
         if ($supplierFormValues['fax'] != 0 ||  $supplierFormValues['fax'] != '0') {
             $data['fax'] = $supplierFormValues['fax'];
