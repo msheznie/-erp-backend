@@ -2511,7 +2511,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
                     "<br>This is an auto generated email. Please do not reply to this email because we are not " .
                     "monitoring this inbox.</font>";
-                
+
                 if ($fetchCusEmail) {
                     foreach ($fetchCusEmail as $row) {
                         if (!empty($row->contactPersonEmail)) {
@@ -2538,7 +2538,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 if ($emailSentTo == 0) {
                     $errorMessage[] = "Customer email is not updated for ".$customerMaster->CustomerName.". report is not sent";
-                } 
+                }
             }
         }
 
@@ -4174,7 +4174,8 @@ GROUP BY
             $balanceAmountQry = "IFNULL(round( final.balanceRpt, final.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
-        return \DB::select('SELECT
+
+        $query = 'SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -4500,9 +4501,23 @@ WHERE
 	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem AND mainQuery.serviceLineSystemID = InvoiceFromBRVAndMatching.serviceLineSystemID
 	) AS final 
- ORDER BY PostedDate ASC;');
+ ORDER BY PostedDate ASC;';
+        $data =  \DB::select($query);
 
+        $collection = collect($data);
+        $groupedData = $collection->groupBy('CutomerCode');
 
+        // Update each group
+        foreach ($groupedData->toArray() as $customerCode => $records) {
+            if (isset($records[1]) && isset($records[2])) {
+                $records[1]->paidAmount = $records[2]->invoiceAmount;
+                $records[2]->paidAmount = $records[2]->invoiceAmount * -1;
+                $records[1]->balanceAmount = $records[1]->invoiceAmount + $records[1]->paidAmount;
+                $records[2]->balanceAmount = $records[2]->invoiceAmount + $records[2]->paidAmount;
+            }
+        }
+
+        return $data;
     }
 
     function getCustomerLedgerTemplate2QRY($request)
