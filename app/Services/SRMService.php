@@ -586,7 +586,8 @@ class SRMService
     {
 
         if ($uuid) {
-            $supplier = SupplierRegistrationLink::where('uuid', $uuid)
+            $supplier = SupplierRegistrationLink::select(['supplier_master_id'])
+                ->where('uuid', $uuid)
                 ->with(['supplier'])
                 ->whereHas('supplier')
                 ->first();
@@ -751,9 +752,29 @@ class SRMService
                             $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
                         }
                     }
-                    $masterData['extraCharges'] = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
-                        ->with(['segment'])
-                        ->get();;
+                      
+                    $masterData['extraCharges'] = DirectInvoiceDetails::select(
+                        [
+                            'directInvoiceDetailsID',
+                            'directInvoiceAutoID',
+                            'glCode',
+                            'glCodeDes',
+                            'comments',
+                            'DIAmount',
+                            'VATAmount',
+                            'serviceLineSystemID'
+                        ])
+                        ->where('directInvoiceAutoID', $id)
+                        ->with(['segment'=> function ($q) {
+                            $q->select(
+                                [
+                                    "serviceLineSystemID",
+                                    "ServiceLineDes",
+                                    "ServiceLineCode"
+                                ]
+                            );
+                        }])
+                        ->get();
                 }
                 return [
                     'success' => true,
@@ -770,8 +791,6 @@ class SRMService
                 ];
             break;
         }
-
-
 
     }
 
@@ -4905,7 +4924,9 @@ class SRMService
 
     public function getPaymentVouchers(Request $request) {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month'.'companyID', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'payment_mode', 'projectID','payeeTypeID'));
+        $input = $this->convertArrayToSelectedValue($input, array('month'.'companyID', 'year', 'cancelYN', 'confirmedYN',
+         'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury',
+         'payment_mode', 'projectID','payeeTypeID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -4925,9 +4946,106 @@ class SRMService
 
         $search = $request->input('search.value');
 
-
-        $paymentVoucher = PaySupplierInvoiceMaster::where('BPVsupplierID', $supplierID)->whereIn('invoiceType',[2,3,5])->where('approved',-1)->with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project']);
-
+        $paymentVoucher = PaySupplierInvoiceMaster::
+        select([
+            'PayMasterAutoId',
+            'BPVsupplierID',
+            'invoiceType',
+            'approved',
+            'BPVcode',
+            'BPVNarration',
+            'suppAmountDocTotal',
+            'payAmountBank',
+            'BPVchequeNo',
+            'directPaymentPayee',
+            'createdUserSystemID',
+            'supplierTransCurrencyID',
+            'BPVbankCurrency',
+            'expenseClaimOrPettyCash',
+            'payment_mode',
+            'projectID',
+            'BPVdate',
+            'approvedDate',
+            'confirmedYN',
+            'retentionVatAmount',
+            'payAmountSuppTrans',
+            'VATAmount'
+            ])
+        ->where('BPVsupplierID', $supplierID)
+        ->whereIn('invoiceType',[2,3,5])
+        ->where('approved',-1)
+        ->with([
+            'supplier' => function ($q) {
+                $q->select(
+                    [
+                        "supplierCodeSystem",
+                        "supplierName"
+                    ]
+                );
+            }
+            , 'created_by' => function ($q) {
+                $q->select(
+                    [
+                        "employeeSystemID",
+                        "empName"
+                    ]
+                );
+            }
+            , 'suppliercurrency' => function ($q) {
+                $q->select(
+                    [
+                        "currencyID",
+                        "CurrencyName",
+                        "CurrencyCode",
+                        "DecimalPlaces"
+                    ]
+                );
+            }
+            , 'bankcurrency' => function ($q) {
+                $q->select(
+                    [
+                        "currencyID",
+                        "CurrencyName",
+                        "CurrencyCode",
+                        "DecimalPlaces"
+                    ]
+                );
+            }
+            , 'transactioncurrency' => function ($q) {
+                $q->select(
+                    [
+                        "currencyID",
+                        "CurrencyName",
+                        "CurrencyCode",
+                        "DecimalPlaces"
+                    ]
+                );
+            }
+            , 'expense_claim_type' => function ($q) {
+                $q->select(
+                    [
+                        "expenseClaimTypeID",
+                        "expenseClaimTypeDescription"
+                    ]
+                );
+            }
+            , 'paymentmode' => function ($q) {
+                $q->select(
+                    [
+                        "id",
+                        "description"
+                    ]
+                );
+            }
+            , 'project' => function ($q) {
+                $q->select(
+                    [
+                        "id",
+                        "projectCode"
+                    ]
+                );
+            }
+        ]);
 
 
         if ($search) {
@@ -4935,7 +5053,11 @@ class SRMService
             $search_without_comma = str_replace(",", "", $search);
             $paymentVoucher = $paymentVoucher->where(function ($query) use ($search, $search_without_comma) {
                 $query->where('BPVcode', 'LIKE', "%{$search}%")
-                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%")->orWhere('directPaymentPayee', 'LIKE', "%{$search_without_comma}%");
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")
+                    ->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")
+                    ->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%")
+                    ->orWhere('directPaymentPayee', 'LIKE', "%{$search_without_comma}%");
             });
         }
 
@@ -4952,7 +5074,6 @@ class SRMService
             ->with('orderCondition', $sort)
             ->make(true);
 
-
         return [
             'success' => true,
             'message' => 'Payment Vouchers successfully get',
@@ -4960,45 +5081,32 @@ class SRMService
         ];
     }
 
-    public function getPaymentVouchersDetails(Request $request) {
-
+    public function getPaymentVouchersDetails(Request $request)
+    {
         $input = $request->all();
+    
+        $masterData = $this->supplierService->getPaySupplierInvoiceDetails($input);
+    
+        if (!empty($masterData)) {
+            $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();
+            $masterData['isProjectBase'] = $isProjectBase;
 
-        $output = PaySupplierInvoiceMaster::where('PayMasterAutoId',  $input['extra']['id'])
-            ->with(['project','supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
-                'supplierdetail' => function ($query) {
-                    $query->with(['pomaster']);
-                },
-                'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by',
-                'modified_by', 'cheque_treasury_by', 'directdetail' => function ($query) {
-                    $query->with('project','segment');
-                }, 'approved_by' => function ($query) {
-                    $query->with('employee');
-                    $query->where('documentSystemID', 4);
-                }, 'created_by', 'cancelled_by', 'bankledgers' => function ($query) {
-                    $query->where('documentSystemID', 4);
-                    $query->with(['bankrec_by']);
-                },
-                'bankledger_by' => function ($query) {
-                    $query->where('documentSystemID', 4);
-                    $query->with(['bankrec_by', 'bank_transfer']);
-                },'audit_trial.modified_by'])->first();
-
-
-        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-        ->where('companySystemID', $output->companySystemID)
-        ->where('isYesNO', 1)
-        ->exists();
-        $output['isProjectBase'] = $isProjectBase;
-
-        return [
-            'success' => true,
-            'message' => 'Payment Vouchers successfully get',
-            'data' => $output
-        ];
-
-    }
-
+            return [
+                'success' => true,
+                'message' => 'Payment Vouchers successfully retrieved',
+                'data' => $masterData
+            ];
+        } else {
+            return [
+                'success' => false,
+                'message' => 'No records found',
+                'data' => []
+            ];
+        }
+    }    
 
     public function checkGrvCreation(Request $request)
     {

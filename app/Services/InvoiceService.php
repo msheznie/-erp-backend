@@ -3,7 +3,7 @@
 
 namespace App\Services;
 
-
+use App\helper\Helper;
 use App\Models\BookInvSuppMaster;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -25,7 +25,8 @@ class InvoiceService
         $search = $request->input('search.value');
 
         $query = BookInvSuppMaster::select(
-            ['bookingSuppMasInvAutoID',
+            [
+                'bookingSuppMasInvAutoID',
                 'companySystemID',
                 'bookingInvCode',
                 'documentSystemID',
@@ -108,7 +109,6 @@ class InvoiceService
 
     public function getInvoiceDetailsById($id, $supplierID)
     {
-
         return BookInvSuppMaster::select(
             [
                 'bookingSuppMasInvAutoID',
@@ -146,7 +146,40 @@ class InvoiceService
             ->where('approved', -1)
             ->where('cancelYN', 0)
             ->where('documentType', 0)
-            ->with(['detail', 'approved_by' => function ($query) {
+            ->with([
+                'detail' => function ($q) {
+                    $q->select(
+                        [
+                            "bookingSupInvoiceDetAutoID",
+                            "bookingSuppMasInvAutoID",
+                            "unbilledgrvAutoID",
+                            "supplierID",
+                            "purchaseOrderID",
+                            "grvAutoID",
+                            "grvType",
+                            "supplierTransactionCurrencyID",
+                            "supplierTransactionCurrencyER",
+                            "companyReportingCurrencyID",
+                            "companyReportingER",
+                            "localCurrencyID",
+                            "localCurrencyER",
+                            "supplierInvoOrderedAmount",
+                            "supplierInvoAmount",
+                            "transSupplierInvoAmount",
+                            "localSupplierInvoAmount",
+                            "rptSupplierInvoAmount",
+                            "totTransactionAmount",
+                            "totLocalAmount",
+                            "totRptAmount",
+                            "VATAmount",
+                            "VATAmountLocal",
+                            "VATAmountRpt",
+                            "isAddon",
+                            "invoiceBeforeGRVYN"
+                        ]
+                    );
+                },
+              'approved_by' => function ($query) {
                 $query->select(['employeeSystemID',
                                 'approvedDate',
                                 'approvedYN',
@@ -162,7 +195,10 @@ class InvoiceService
                     );
                 }])
                 ->where('documentSystemID', 11);
-            }, 'company',
+               },
+                'company' => function ($q) {
+                    $q->select(['companySystemID', 'CompanyID', 'CompanyName', 'CompanyAddress', 'logoPath', 'masterCompanySystemIDReorting']);
+                },
                 'transactioncurrency' => function ($q) {
                     $q->select(
                         [
