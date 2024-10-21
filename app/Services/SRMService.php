@@ -1444,7 +1444,9 @@ class SRMService
                 'pre_bid_clarification_start_date', 'bid_submission_opening_date', 'published_yn',
                 'final_tender_awarded', 'tender_type_id', 'currency_id', 'document_sales_end_date',
                 'pre_bid_clarification_end_date', 'bid_submission_closing_date', 'pre_bid_clarification_method',
-                'site_visit_date', 'description_sec_lang', 'title_sec_lang')
+                'site_visit_date', 'description_sec_lang', 'title_sec_lang', 'document_type', 'tender_document_fee',
+                'negotiation_code'
+            )
                 ->with([
                     'currency:currencyID,CurrencyName',
                     'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
@@ -1468,7 +1470,8 @@ class SRMService
                 'pre_bid_clarification_start_date', 'bid_submission_opening_date', 'currency_id',
                 'pre_bid_clarification_method', 'no_of_alternative_solutions', 'site_visit_date',
                 'description_sec_lang', 'title_sec_lang', 'is_active_go_no_go', 'bid_submission_closing_date',
-                'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date')
+                'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date', 'document_type',
+                'tender_document_fee', 'negotiation_code')
                 ->with([
                     'currency' => function ($q){
                         $q->select('currencyID', 'CurrencyName');
@@ -1505,7 +1508,7 @@ class SRMService
                 'pre_bid_clarification_method', 'no_of_alternative_solutions', 'site_visit_date',
                 'description_sec_lang', 'title_sec_lang', 'is_active_go_no_go', 'bid_submission_closing_date',
                 'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date',
-                'negotiation_code')
+                'negotiation_code', 'document_type', 'tender_document_fee')
                 ->with([
                     'currency' => function ($q){
                         $q->select('currencyID', 'CurrencyName');
