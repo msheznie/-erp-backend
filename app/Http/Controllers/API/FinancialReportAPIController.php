@@ -176,9 +176,19 @@ class FinancialReportAPIController extends AppBaseController
         if(!empty($companies)){
             $this->subAssociateJVCompanies[] = $input['companySystemID'];
         }
+        if ($companies && count($companies->allSubAssociateJVCompanies) > 0) {
+            $this->getSubSubsidiaryCompanies($companies->allSubAssociateJVCompanies);
+        }
 
         $companiesData = Company::whereIn('companySystemID', $this->subAssociateJVCompanies)->get();
         return $this->sendResponse($companiesData, "companies retrived successfully");        
+    }
+
+    public function getSubSubsidiaryCompanies($subsidiary_companies)
+    {
+        foreach ($subsidiary_companies as $key => $value) {
+            $this->subAssociateJVCompanies[] = $value->companySystemID;
+        }
     }
 
     public function getAssociateJvCompanies($groupCompanySystemID)
