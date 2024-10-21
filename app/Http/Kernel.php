@@ -19,7 +19,8 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\TrustProxies::class,
-
+        \App\Http\Middleware\PreflightResponse::class
+        // \Barryvdh\Cors\HandleCors::class
     ];
 
     /**
@@ -63,6 +64,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'cors' => \App\Http\Middleware\Cors::class,
         'corsFree' => \App\Http\Middleware\CorsFree::class,
+        'securityHeader' => \App\Http\Middleware\SecurityHeader::class,
         'tenant' => \App\Http\Middleware\TenantEnforce::class,
         'authorization' => \App\Http\Middleware\UserAuthorization::class,
         'tenantById' => \App\Http\Middleware\TenantByKey::class,

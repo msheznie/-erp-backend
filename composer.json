@@ -8,6 +8,7 @@
         "php": ">=7.1.3",
         "awobaz/compoships": "^2.0",
         "aws/aws-sdk-php": "3.319.4",
+        "barryvdh/laravel-cors": "^1.0",
         "barryvdh/laravel-dompdf": "^0.8.2",
         "brozot/laravel-fcm": "^1.3",
         "doctrine/dbal": "2.5.13",

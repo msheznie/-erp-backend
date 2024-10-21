@@ -16,7 +16,7 @@ use App\Http\Middleware\MobileAccessVerify;
 use Illuminate\Support\Facades\Route;
 
 
-Route::group(['middleware' => 'mobileServer'], function () {
+Route::group(['middleware' => ['mobileServer']], function () {
     Route::group(['middleware' => ['tenant','locale', 'cors']], function () {
         Route::get('getAppearance', 'CompanyAPIController@getAppearance')->middleware(MobileAccessVerify::class);
         Route::post('postEmployeeFromPortal', 'HelpDesk\HelpDeskAPIController@postEmployee');
