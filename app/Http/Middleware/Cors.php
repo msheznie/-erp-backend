@@ -33,6 +33,7 @@ class Cors
 
         if (env('ENABLE_CORS', false)) {
             $origin = $request->headers->get('Origin');
+            Log::info($origin);
             $originPattern = env('APP_BASE_URL', '/^https:\/\/[a-z0-9-]+\.gears-int\.com$/');
             array_push($this->allowedOriginsPatterns, $originPattern);
 
