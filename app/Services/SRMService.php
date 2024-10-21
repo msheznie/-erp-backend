@@ -4856,8 +4856,6 @@ class SRMService
         ->where('documentSystemID', 11)
         ->where('documentSystemCode', $id)
         ->whereIn('attachmentType', [0, 11]);
-
-
         $search = $request->input('search.value');
 
         if ($search) {
