@@ -180,7 +180,7 @@ class PoAnalysisService
 	                approved,
 	                erp_grvdetails.companySystemID
                      FROM erp_grvdetails 
-                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1
+                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1 AND erp_grvmaster.grvCancelledYN = 0
                      GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
                     $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                 })
