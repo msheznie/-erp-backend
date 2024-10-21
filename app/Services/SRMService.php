@@ -1445,8 +1445,7 @@ class SRMService
                 'final_tender_awarded', 'tender_type_id', 'currency_id', 'document_sales_end_date',
                 'pre_bid_clarification_end_date', 'bid_submission_closing_date', 'pre_bid_clarification_method',
                 'site_visit_date', 'description_sec_lang', 'title_sec_lang', 'document_type', 'tender_document_fee',
-                'negotiation_code'
-            )
+                'negotiation_code','site_visit_date', 'description_sec_lang', 'title_sec_lang')
                 ->with([
                     'currency:currencyID,CurrencyName',
                     'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
