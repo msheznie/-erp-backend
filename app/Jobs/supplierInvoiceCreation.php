@@ -585,8 +585,7 @@ class supplierInvoiceCreation implements ShouldQueue
                                                 'supplierDefaultER' => 1,
                                                 'supplierItemCurrencyID' => $invMaster['supplierTransactionCurrencyID'],
                                                 'foreignToLocalER' => 1,
-
-                                                'whtApplicable' => $invMaster['whtApplicable'],
+                                                'whtApplicable' => $invMaster['whtApplicable'] ?? 0,
                                                 'whtAmount' => $detail['whtAmount'] ?? null,
                                                 'vatSubCategoryID' => $defaultVAT['vatSubCategoryID'] ?? null,
                                                 'vatMasterCategoryID' => $defaultVAT['vatMasterCategoryID'] ?? null,
@@ -649,8 +648,13 @@ class supplierInvoiceCreation implements ShouldQueue
                 ];
             }
 
-            Log::info('Error Log');
-            Log::info($invError);
+            if(!empty($invError)) {
+                Log::error('Error Log');
+                Log::error($invError);
+            } else {
+                Log::info('Invoice created Successfully!');
+            }
+
 
             $api_external_key = $this->api_external_key;
             $api_external_url = $this->api_external_url;
