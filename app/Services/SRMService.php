@@ -503,18 +503,19 @@ class SRMService
 
         $arr['remaining_appointments'] = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
 
-        $data = Appointment::with(['detail' => function ($query) {
-            $query->with(['getPoMaster', 'getPoDetails' => function ($query) {
-                $query->with(['unit', 'appointmentDetails' => function ($q) {
-                    $q->whereHas('appointment', function ($q) {
-                        $q->where('refferedBackYN', '!=', -1);
-                        /*$q->where('confirmed_yn', 1);*/
-                    })->groupBy('po_detail_id')
-                        ->select('id', 'appointment_id', 'qty', 'po_detail_id')
-                        ->selectRaw('sum(qty) as qty');
-                }]);
-            }]);
-        }, 'created_by','grv','invoice'])
+        $data = Appointment::with([
+            'created_by' => function ($query) {
+                $query->select('supplierCodeSystem', 'supplierName');
+            },
+            'grv' => function ($query) {
+                $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN');
+            },
+            'invoice' => function ($query) {
+                $query->select('deliveryAppoinmentID');
+            }
+        ])
+            ->select('id', 'primary_code', 'created_by', 'created_at', 'confirmed_yn', 'approved_yn', 'refferedBackYN',
+                'cancelYN', 'document_system_id', 'company_id')
             ->where('slot_detail_id', $slotDetailID)
             ->where('created_by', $supplierID)
             ->get();
@@ -530,9 +531,26 @@ class SRMService
     {
         $appointmentID = $request->input('extra.appointmentID');
 
-        $data = Appointment::with(['detail' => function ($q) {
-            $q->with(['getPoDetails' => function ($q1) {
-                $q1->with(['order', 'unit', 'order.transactioncurrency']);
+        $data = Appointment::select('id', 'primary_code')
+            ->with([
+            'detail' => function ($q) {
+                $q->select('qty', 'foc_qty', 'total_amount_after_foc', 'expiry_date', 'batch_no', 'manufacturer',
+                    'brand', 'remarks', 'appointment_id', 'po_detail_id')
+                ->with([
+                'getPoDetails' => function ($q1) {
+                $q1->select('itemPrimaryCode', 'itemDescription', 'noQty', 'purchaseOrderDetailsID',
+                    'purchaseOrderMasterID', 'unitOfMeasure')
+                    ->with([
+                    'order' => function ($query) {
+                        $query->select('purchaseOrderID', 'purchaseOrderCode', 'supplierTransactionCurrencyID');
+                    },
+                    'unit' => function ($query) {
+                        $query->select('UnitID', 'UnitShortCode');
+                    },
+                    'order.transactioncurrency' => function ($query) {
+                        $query->select('currencyID', 'DecimalPlaces');
+                    }
+                ]);
             }]);
         }])
             ->where('id', $appointmentID)->first();
@@ -1031,8 +1049,15 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
 
         $detail = AppointmentDetails::where('appointment_id', $appointmentID)
-            ->with(['getPoMaster.segment', 'getPoMaster.transactioncurrency', 'getPoDetails' => function ($query) use ($appointmentID) {
-                $query->with(['unit', 'appointmentDetails' => function ($q) use ($appointmentID) {
+            ->with([
+                'getPoMaster.segment',
+                'getPoMaster.transactioncurrency' => function ($query) {
+                    $query->select('currencyID', 'DecimalPlaces');
+                },
+                'getPoDetails' => function ($query) use ($appointmentID) {
+                $query->with([
+                    'unit',
+                    'appointmentDetails' => function ($q) use ($appointmentID) {
                     $q->whereHas('appointment', function ($q) use ($appointmentID) {
                         $q->where('refferedBackYN', '!=', -1);
                         $q->where('cancelYN', 0);
@@ -1043,7 +1068,9 @@ class SRMService
                         ->select('id', 'appointment_id', 'qty', 'po_detail_id')
                         ->selectRaw('IFNULL(sum(qty),0) as qty');
                 }]);
-            }, 'appointment.attachment'])->get()
+            },
+                'appointment.attachment'
+            ])->get()
             ->transform(function ($data) {
                 return $this->appointmentDetailFormat($data);
             });
@@ -1088,7 +1115,10 @@ class SRMService
             });
         }
 
-        $po = $po->with(['order', 'unit', 'appointmentDetails' => function ($q) use ($appointmentID) {
+        $po = $po->with([
+            'order',
+            'unit',
+            'appointmentDetails' => function ($q) use ($appointmentID) {
             $q->whereHas('appointment', function ($q) use ($appointmentID) {
                 $q->where('refferedBackYN', '!=', -1);
                 $q->where('cancelYN', 0);
@@ -1098,7 +1128,12 @@ class SRMService
             })->groupBy('po_detail_id')
                 ->select('id', 'appointment_id', 'qty', 'po_detail_id')
                 ->selectRaw('IFNULL(sum(qty),0) as qty');
-        }, 'order.transactioncurrency'])->get()
+        },
+            'order.transactioncurrency' => function ($query)
+            {
+                $query->select('currencyID', 'DecimalPlaces');
+            }
+        ])->get()
             ->transform(function ($data) {
                 return $this->poDetailFormat($data);
             });
@@ -1315,10 +1350,17 @@ class SRMService
         $documentSystemCode = $request->input('extra.documentSystemCode');
         $companySystemID = $request->input('extra.companySystemID');
 
-        $approveDetails = DocumentApproved::where('documentSystemID', $documentSystemID)
+        $approveDetails = DocumentApproved::select('approvedYN', 'rejectedYN', 'rollLevelOrder', 'approvalGroupID',
+            'approvedDate', 'rejectedDate', 'approvedComments', 'rejectedComments', 'serviceLineSystemID',
+            'employeeSystemID')
+            ->where('documentSystemID', $documentSystemID)
             ->where('documentSystemCode', $documentSystemCode)
             ->where('companySystemID', $companySystemID)
-            ->with(['approved_by'])
+            ->with([
+                'approved_by' => function ($query) {
+                    $query->select('employeeSystemID', 'empName');
+                }
+            ])
             ->get();
 
         foreach ($approveDetails as $value) {
@@ -1336,7 +1378,8 @@ class SRMService
                     ];
                 }
 
-                $approvalList = EmployeesDepartment::where('employeeGroupID', $value['approvalGroupID'])
+                $approvalList = EmployeesDepartment::select('employeeSystemID')
+                    ->where('employeeGroupID', $value['approvalGroupID'])
                     ->where('companySystemID', $companySystemID)
                     ->where('documentSystemID', $documentSystemID)
                     ->where('isActive', 1)
@@ -1347,7 +1390,11 @@ class SRMService
                     $approvalList = $approvalList->where('ServiceLineSystemID', $value['serviceLineSystemID']);
                 }
 
-                $approvalList = $approvalList->with(['employee'])
+                $approvalList = $approvalList->with([
+                    'employee' => function ($query) {
+                        $query->select('employeeSystemID', 'empName');
+                    }
+                ])
                     ->whereHas('employee', function ($q) {
                         $q->where('discharegedYN', 0);
                     })
