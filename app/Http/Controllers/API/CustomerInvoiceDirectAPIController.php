@@ -4002,7 +4002,6 @@ WHERE
             }
             
 
-            $masterData = CustomerInvoiceDirect::where('customerInvoiceNo',$customerInvoiceNo)->first();
             $cancelCustomerInvoice = CustomerInvoiceServices::cancelCustomerInvoice($input,$id,$masterData,$isFromAPI = true);
             if(isset($cancelCustomerInvoice['status']) && $cancelCustomerInvoice['status'] == false){
                $errorMessage = $errorMessageAPI . $cancelCustomerInvoice['message'];
