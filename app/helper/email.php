@@ -100,6 +100,7 @@ class email
         $count = 0;
         Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
 
+        $unverifiedEmailArray = array();
         foreach ($array as $data) {
 
             $employee = Employee::where('employeeSystemID', $data['empSystemID'])
@@ -112,6 +113,7 @@ class email
                     $data['empID'] = $employee->empID;
                     $data['empName'] = $employee->empName;
                     $data['empEmail'] = $employee->empEmail;
+                    $data['isEmailVerified'] = $employee->isEmailVerified;
                 } else {
                     if (in_array($data['docSystemID'], $empInfoSkip)) {
                         continue;
@@ -558,14 +560,21 @@ class email
                         $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
                         if (isset($data['empEmail']) && $data['empEmail']) {
                             $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
-                            if ($data['empEmail']) {
+
+                            if(!isset($data['isEmailVerified']) || !$data['isEmailVerified'])
+                            {
+                                array_push($unverifiedEmailArray,'<li style="text-align: left;">'.$data['empEmail'].'</li>');
+                            }
+
+                            if ($data['empEmail'] && $data['isEmailVerified']) {
                                 Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
+                                Log::info('email sent success fully to :' . $data['empEmail']);
+                                $count = $count + 1;
+                                Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
+                                Log::info('Email send end count : ' . $count);
                             }
                         }
-                        Log::info('email sent success fully to :' . $data['empEmail']);
-                        $count = $count + 1;
-                        Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
-                        Log::info('Email send end count : ' . $count);
+
                     } else {
                         Alert::create($data);
                     }
@@ -573,8 +582,10 @@ class email
             }
         }
 
-        //$emails = Alert::insert($emailsArray);
-        return ['success' => true, 'message' => 'Successfully Inserted'];
+
+        return ['success' => true, 'message' => 'Successfully Inserted','unverifiedEmail' => count($unverifiedEmailArray) > 0, 'unverifiedEmailMsg' =>  'Notification cannot be sent to the following approvers regarding pending approval due to unverified email addresses.  <br/><br/> <ul>'. implode('',array_unique($unverifiedEmailArray)).'</ul>'];
+
+
     }
 
     public static function sendEmailErp($data)

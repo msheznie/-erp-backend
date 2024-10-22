@@ -3,8 +3,10 @@
 namespace App\Providers;
 use App\Events\DocumentCreated;
 use App\Events\POServiceLineCheck;
+use App\Events\UnverifiedEmailEvent;
 use App\Listeners\AfterDocumentCreated;
 use App\Listeners\POUpdated;
+use App\Listeners\UnverifiedEmailListener;
 use App\Models\BookInvSuppMaster;
 use App\Models\CreditNote;
 use App\Models\CustomerInvoiceDirect;
@@ -47,6 +49,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         POServiceLineCheck::class => [
             POUpdated::class
+        ],
+        UnverifiedEmailEvent::class => [
+            UnverifiedEmailListener::class
         ]
     ];
 

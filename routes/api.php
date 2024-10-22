@@ -58,7 +58,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
         Route::group(['middleware' => 'auth.api.keycloak'], function () {
 
-            Route::group(['middleware' => ['authorization:api','mobileAccess']], function () {
+            Route::group(['middleware' => ['authorization:api','mobileAccess','checkNotVerifiedEmail']], function () {
                 Route::post('getAllCreatedByEmployees', 'FilterApiController@getAllCreatedByEmployees');
 
                 require __DIR__.'/../routes/systemAdmin/systemAdminRoutes.php';

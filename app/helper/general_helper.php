@@ -16,6 +16,7 @@
 
 namespace App\helper;
 
+use App\Events\UnverifiedEmailEvent;
 use App\helper\IvmsDeliveryOrderService;
 use App\Jobs\BankLedgerInsert;
 use App\Jobs\BudgetAdjustment;
@@ -3363,7 +3364,7 @@ class Helper
                             if ($output) {
                                 /** get source document master record*/
                                 $sorceDocument = $namespacedModel::find($params["autoID"]);
-
+                                $unverifiedEmails = null;
                                 //confirm the document
                                 if (isset($params['email'])) {
                                     $email_in = $params['email'];
@@ -3577,10 +3578,16 @@ class Helper
 
                                             if ($notifyConfirm) {
                                                 $sendEmail = \Email::sendEmail($emails);
+
                                                 if (!$sendEmail["success"]) {
                                                     return ['success' => false, 'message' => $sendEmail["message"]];
                                                 }
 
+                                                if(isset($sendEmail['unverifiedEmailMsg']) && !empty($sendEmail['unverifiedEmailMsg']))
+                                                {
+                                                    $unverifiedEmails = $sendEmail['unverifiedEmailMsg'];
+                                                    event(new UnverifiedEmailEvent($sendEmail['unverifiedEmailMsg']));
+                                                }
                                                 $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
                                                 $webPushData = [
@@ -3598,6 +3605,7 @@ class Helper
 
                                 DB::commit();
                                 return ['success' => true, 'message' => 'Successfully document confirmed'];
+
                             } else {
                                 DB::rollback();
                                 return ['success' => false, 'message' => 'No approval setup created for this document'];
@@ -5607,6 +5615,7 @@ class Helper
             if (in_array($e->getCode(), [404, 500])) {
                 $msg = $e->getMessage();
             }
+
 
             // return ['success' => false, 'message' => $msg];
             return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];

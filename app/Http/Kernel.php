@@ -77,6 +77,7 @@ class Kernel extends HttpKernel
         'hrms_employee' => \App\Http\Middleware\DetectHRMSEmployee::class,
         'mobileAccess' => \App\Http\Middleware\MobileAccessVerify::class,
         'auth.api.keycloak' => \App\Http\Middleware\EitherAuthAPIorKeyClock::class,
-        'mobileServer' => \App\Http\Middleware\MobileServer::class
+        'mobileServer' => \App\Http\Middleware\MobileServer::class,
+        'checkNotVerifiedEmail' => \App\Http\Middleware\NotVerifiedEmailMiddleware::class
     ];
 }
