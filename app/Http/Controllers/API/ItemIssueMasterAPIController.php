@@ -2331,7 +2331,7 @@ class ItemIssueMasterAPIController extends AppBaseController
              $mirReportObj->setIssueCode($val->itemIssueCode);
              $mirReportObj->setIssueDate($val->issueDate);
              $mirReportObj->setRequestNo($val->RequestCode);
-             $mirReportObj->setItemCode($val->itemIssueCode);
+             $mirReportObj->setItemCode($val->itemPrimaryCode);
              $mirReportObj->setItemDescription($val->itemDescription);
              $mirReportObj->setUom($val->unit);
              $mirReportObj->setIssuedQty($val->qtyIssued);
