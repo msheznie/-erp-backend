@@ -2355,11 +2355,11 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         ];
 
-        $fileName = 'material_issue_register';
+       
         $title = 'Material Issue Register';
         $path = 'inventory/report/material_issue_register/excel/';
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
-
+        $fileName = 'material_issue_register_numbers';
 
         $exportToExcel = $exportReportToExcelService
         ->setTitle($title)
