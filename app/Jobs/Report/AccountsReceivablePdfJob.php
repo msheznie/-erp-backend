@@ -88,7 +88,8 @@ class AccountsReceivablePdfJob implements ShouldQueue
             $customers = (array)$request->customers;
             $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
     
-            $controlAccountsSystemID = $request->controlAccountsSystemID;
+            $controlAccounts = (array)$request->controlAccountsSystemID;
+            $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
     
             $currency = $request->currencyID;
     
@@ -274,7 +275,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
                 WHERE
                     ( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
                     AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-                    AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
+                    AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
                     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
                     GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
@@ -419,7 +420,8 @@ class AccountsReceivablePdfJob implements ShouldQueue
             $customers = (array)$request->customers;
             $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
     
-            $controlAccountsSystemID = $request->controlAccountsSystemID;
+            $controlAccounts = (array)$request->controlAccountsSystemID;
+            $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
     
             $currency = $request->currencyID;
     
@@ -663,7 +665,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
             WHERE
                 ( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" )
                 AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-                AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
+                AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
