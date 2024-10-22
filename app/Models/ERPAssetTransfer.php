@@ -182,7 +182,8 @@ class ERPAssetTransfer extends Model
         'updated_user_id',
         'refferedBackYN',
         'company_code',
-        'documentSystemID'
+        'documentSystemID',
+        'isDelegation'
     ];
 
     /**

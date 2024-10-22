@@ -114,7 +114,8 @@ class AssetFinanceCategory extends Model
         'modifiedUser',
         'timestamp',
         'serializationBasedOn',
-        'enableEditing' 
+        'enableEditing',
+        'isDelegation' 
     ];
 
     /**

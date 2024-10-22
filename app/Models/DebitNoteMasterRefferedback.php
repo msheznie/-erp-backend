@@ -384,7 +384,8 @@ class DebitNoteMasterRefferedback extends Model
         'modifiedPc',
         'createdDateTime',
         'createdDateAndTime',
-        'timestamp'
+        'timestamp',
+          'isDelegation'
     ];
 
     /**

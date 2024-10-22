@@ -728,7 +728,8 @@ class PaySupplierInvoiceMasterReferback extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+         'isDelegation'
     ];
 
     /**

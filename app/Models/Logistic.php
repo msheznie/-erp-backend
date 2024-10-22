@@ -385,7 +385,8 @@ class Logistic extends Model
         'modifiedUserSystemID',
         'modifiedPCID',
         'modifiedDate',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

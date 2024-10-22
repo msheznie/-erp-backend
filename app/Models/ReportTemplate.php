@@ -137,7 +137,8 @@ class ReportTemplate extends Model
         'columnTemplateID',
         'isConsolidation',
         'showZeroGlYN',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

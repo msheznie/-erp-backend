@@ -50,7 +50,8 @@ class Unit extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'isDelegation'
     ];
 
     /**

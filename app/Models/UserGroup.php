@@ -43,7 +43,9 @@ class UserGroup extends Model
         'isActive',
         'isDeleted',
         'timestamp',
-        'defaultYN'
+        'defaultYN',
+        'delegation_id',
+        'isDelegation'
     ];
 
     /**
@@ -81,5 +83,8 @@ class UserGroup extends Model
         return $this->hasMany('App\Models\EmployeeNavigation','userGroupID','userGroupID');
     }
 
+    public function delegation(){
+        return $this->belongsTo('App\Models\Deligation','delegation_id','id');
+    }
 
 }

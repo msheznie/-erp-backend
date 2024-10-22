@@ -151,7 +151,8 @@ class VatReturnFillingMaster extends Model
         'timesReferred',
         'RollLevForApp_curr',
         'masterDocumentAutoID',
-        'masterDocumentTypeID' // document master ID
+        'masterDocumentTypeID', // document master ID
+        'isDelegation'
     ];
 
     /**

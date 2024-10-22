@@ -331,6 +331,7 @@ class CustomerMasterRefferedBack extends Model
         'timeStamp',
         'custAdvanceAccountSystemID',
         'custAdvanceAccount',
+          'isDelegation'
     ];
 
     /**

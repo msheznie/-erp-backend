@@ -18,7 +18,8 @@ class SupplierCategory extends Model
         'category',
         'is_active',
         'is_deleted',
-        'deleted_by'
+        'deleted_by',
+        'isDelegation'
     ];
 
     protected $casts = [

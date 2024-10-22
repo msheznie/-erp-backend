@@ -167,7 +167,8 @@ class VatReturnFillingMasterRefferedback extends Model
         'refferedBackYN',
         'timesReferred',
         'RollLevForApp_curr',
-        'serialNo'
+        'serialNo',
+          'isDelegation'
     ];
 
     /**

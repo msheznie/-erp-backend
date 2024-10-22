@@ -346,7 +346,8 @@ class PurchaseRequestReferred extends Model
         'manuallyClosedComment',
         'timesReferred',
         'counter',
-        'requested_by'
+        'requested_by',
+          'isDelegation'
     ];
 
     /**

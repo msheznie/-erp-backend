@@ -497,7 +497,8 @@ class QuotationMaster extends Model
         'manuallyClosedComment',
         'is_return',
         'leadTime',
-        'isBulkItemJobRun'
+        'isBulkItemJobRun',
+        'isDelegation'
     ];
 
     /**

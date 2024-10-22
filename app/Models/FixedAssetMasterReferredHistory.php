@@ -626,7 +626,8 @@ class FixedAssetMasterReferredHistory extends Model
         'accumulated_depreciation_amount_rpt',
         'accumulated_depreciation_amount_lcl',
         'is_acc_dep',
-        'accumulated_depreciation_date'
+        'accumulated_depreciation_date',
+           'isDelegation'
     ];
 
     /**

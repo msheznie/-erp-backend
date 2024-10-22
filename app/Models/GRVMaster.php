@@ -193,7 +193,8 @@ class GRVMaster extends Model
         'approvedByUserID',
         'approvedByUserSystemID',
         'postedDate',
-        'deliveryAppoinmentID'
+        'deliveryAppoinmentID',
+        'isDelegation'
     ];
 
     /**

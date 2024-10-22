@@ -42,7 +42,8 @@ class EmployeeNavigation extends Model
         'userGroupID',
         'employeeSystemID',
         'companyID',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

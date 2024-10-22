@@ -264,7 +264,8 @@ class StockReceive extends Model
         'timestamp',
         'approvedByUserID',
         'approvedByUserSystemID',
-        'refferedBackYN'
+        'refferedBackYN',
+         'isDelegation'
     ];
 
     /**

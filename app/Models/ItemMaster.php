@@ -125,7 +125,8 @@ class ItemMaster extends Model
         'faSubCatID',
         'faSubCatID2',
         'faSubCatID3',
-        'pos_type'
+        'pos_type',
+        'isDelegation'
     ];
 
     /**

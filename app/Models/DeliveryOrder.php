@@ -433,7 +433,8 @@ class DeliveryOrder extends Model
         'VATAmountRpt',
         'vatRegisteredYN',
         'customerVATEligible',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

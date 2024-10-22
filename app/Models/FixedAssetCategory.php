@@ -113,7 +113,8 @@ class FixedAssetCategory extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'timestamp',
-        'catCode'
+        'catCode',
+         'isDelegation'
     ];
 
     /**

@@ -206,7 +206,8 @@ class PurchaseRequest extends Model
         'manuallyClosedComment',
         'isBulkItemJobRun',
         'counter',
-        'requested_by'
+        'requested_by',
+        'isDelegation'
     ];
 
     /**

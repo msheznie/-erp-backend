@@ -31,6 +31,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Response;
 use App\helper\CreateExcel;
+use App\Models\UserGroup;
+
 /**
  * Class UserGroupAssignController
  * @package App\Http\Controllers\API
@@ -300,7 +302,8 @@ class UserGroupAssignAPIController extends AppBaseController
         if($companyID) {
             $userGroup = EmployeeNavigation::where('employeeSystemID', $empId)
                                             ->where('companyID', $companyID)
-                                            ->first();
+                                            ->pluck('userGroupID');
+
             if(empty($userGroup)){
                 return $this->sendError('No access right found',401);
             }
@@ -309,16 +312,29 @@ class UserGroupAssignAPIController extends AppBaseController
         }
 
 
-        $userGroupID = isset($userGroup->userGroupID) ? $userGroup->userGroupID : 0;
+        $userGroupID = isset($userGroup) ? $userGroup : 0;
 
         $userGroupAssign = UserGroupAssign::where('companyID',$companyID)
                                             ->where('navigationMenuID',$navigationMenuID)
-                                            ->where('userGroupID',$userGroupID)
+                                            ->whereIn('userGroupID',$userGroupID)
                                             ->first();
+
+
         if (empty($userGroupAssign)) {
             return $this->sendError('No access right found',401);
         } else {
-            $accessRights = array('R' => $userGroupAssign->readonly, 'C' => $userGroupAssign->create ,'E' => $userGroupAssign->update, 'D' => $userGroupAssign->delete, 'P' => $userGroupAssign->print,'Ex' => $userGroupAssign->export);
+            $isDelegation = false;
+            $delegateUserGroup = $userGroupAssign->userGroupID;
+            $delegatId =  UserGroup::where('userGroupID',$delegateUserGroup)->where('delegation_id','!=',0)->with('delegation')
+                ->whereHas('delegation',function($q){
+                    $q->where('is_active',true);
+                })->first();
+            if($delegatId)
+            {
+                $isDelegation = true;
+            }  
+
+            $accessRights = array('isDelegation' => $isDelegation,'R' => $userGroupAssign->readonly, 'C' => $userGroupAssign->create ,'E' => $userGroupAssign->update, 'D' => $userGroupAssign->delete, 'P' => $userGroupAssign->print,'Ex' => $userGroupAssign->export);
         }
 
         return $this->sendResponse($accessRights, 'Record retrieved successfully');

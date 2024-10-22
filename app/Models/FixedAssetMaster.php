@@ -557,7 +557,8 @@ class FixedAssetMaster extends Model
         'is_acc_dep',
         'accumulated_depreciation_date',
         'empID',
-        'assetCostingUploadID'
+        'assetCostingUploadID',
+        'isDelegation'
     ];
 
     /**

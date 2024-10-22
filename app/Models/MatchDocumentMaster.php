@@ -390,6 +390,7 @@ class MatchDocumentMaster extends Model
         'employeeGLCode',
         'companyFinanceYearID',
         'companyFinancePeriodID',
+        'isDelegation'
     ];
 
     /**

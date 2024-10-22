@@ -273,7 +273,8 @@ class ItemReturnMasterRefferedBack extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

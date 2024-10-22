@@ -53,7 +53,8 @@ class ApprovalGroups extends Model
         'departmentID',
         'condition',
         'sortOrder',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

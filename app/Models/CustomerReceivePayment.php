@@ -502,6 +502,7 @@ class CustomerReceivePayment extends Model
         'payment_type_id',
         'custAdvanceAccountSystemID',
         'custAdvanceAccount',
+        'isDelegation'
     ];
 
     /**

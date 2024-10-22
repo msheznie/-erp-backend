@@ -121,7 +121,8 @@ class BudgetMaster extends Model
         'approvedByUserSystemID',
         'approvedDate',
         'RollLevForApp_curr',
-        'budgetUploadID'
+        'budgetUploadID',
+          'isDelegation'
     ];
 
     /**

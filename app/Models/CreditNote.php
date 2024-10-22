@@ -344,7 +344,8 @@ class CreditNote extends Model
         'VATAmountRpt',
         'netAmount',
         'netAmountLocal',
-        'netAmountRpt'
+        'netAmountRpt',
+        'isDelegation'
     ];
 
     /**

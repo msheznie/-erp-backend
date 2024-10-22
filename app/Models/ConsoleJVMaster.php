@@ -205,7 +205,8 @@ class ConsoleJVMaster extends Model
         'timesReferred',
         'RollLevForApp_curr',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

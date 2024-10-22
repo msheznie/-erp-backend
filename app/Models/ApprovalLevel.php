@@ -72,7 +72,8 @@ class ApprovalLevel extends Model
         'categoryID',
         'isActive',
         'is_deleted',
-        'timeStamp'
+        'timeStamp',
+        'isDelegation'
     ];
 
     /**

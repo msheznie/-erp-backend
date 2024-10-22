@@ -214,7 +214,8 @@ class StockAdjustment extends Model
         'approvedByUserID',
         'approvedByUserSystemID',
         'reason',
-        'timesReferred '
+        'timesReferred ',
+        'isDelegation'
     ];
 
     /**

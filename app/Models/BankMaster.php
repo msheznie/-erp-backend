@@ -43,7 +43,8 @@ class BankMaster extends Model
         'bankName',
         'createdDateTime',
         'createdByEmpID',
-        'TimeStamp'
+        'TimeStamp',
+         'isDelegation'
     ];
 
     /**

@@ -91,7 +91,8 @@ class Tax extends Model
         'modifiedUserName',
         'timestamp',
         'whtPercentage',
-        'whtType'
+        'whtType',
+         'isDelegation'
     ];
 
     /**

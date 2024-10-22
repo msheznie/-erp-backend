@@ -286,7 +286,8 @@ class StockReceiveRefferedBack extends Model
         'modifiedUser',
         'modifiedPc',
         'timestamp',
-        'refferedBackYN'
+        'refferedBackYN',
+         'isDelegation'
     ];
 
     /**

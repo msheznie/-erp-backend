@@ -901,6 +901,7 @@ class PurchaseOrderMasterRefferedHistory extends Model
         'rcmActivated',
         'approval_remarks',
         'vat_number',
+         'isDelegation'
     ];
 
     /**

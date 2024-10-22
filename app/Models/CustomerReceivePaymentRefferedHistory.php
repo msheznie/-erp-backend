@@ -546,6 +546,7 @@ class CustomerReceivePaymentRefferedHistory extends Model
         'bankAccountBalance',
         'custAdvanceAccountSystemID',
         'custAdvanceAccount',
+         'isDelegation'
     ];
 
     /**

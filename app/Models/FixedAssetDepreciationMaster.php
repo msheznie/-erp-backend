@@ -173,7 +173,8 @@ class FixedAssetDepreciationMaster extends Model
         'createdPCID',
         'timeStamp',
         'is_acc_dep',
-        'is_cancel'
+        'is_cancel',
+        'isDelegation'
     ];
 
     /**

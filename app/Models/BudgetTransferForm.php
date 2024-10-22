@@ -176,7 +176,8 @@ class BudgetTransferForm extends Model
         'modifiedUser',
         'modifiedUserSystemID',
         'timestamp',
-        'refferedBackYN'
+        'refferedBackYN',
+        'isDelegation'
     ];
 
     /**
