@@ -561,6 +561,12 @@ class JvMasterAPIController extends AppBaseController
                 }
             }
 
+            if($jvMaster->jvType == 1 || $jvMaster->jvType == 2 || $jvMaster->jvType == 3 || $jvMaster->jvType == 4)
+            {
+                $input['reversalJV'] = 0;
+                $input['reversalDate'] = null;
+            }
+
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
