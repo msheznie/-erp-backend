@@ -47,13 +47,14 @@ class supplierInvoiceCreation implements ShouldQueue
     public $db;
     public $api_external_key;
     public $api_external_url;
+    public $authorization;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($input, $db, $api_external_key, $api_external_url)
+    public function __construct($input, $db, $api_external_key, $api_external_url, $authorization)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -65,6 +66,7 @@ class supplierInvoiceCreation implements ShouldQueue
         $this->db = $db;
         $this->api_external_key = $api_external_key;
         $this->api_external_url = $api_external_url;
+        $this->authorization = $authorization;
     }
 
     /**

@@ -3411,7 +3411,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         $input = $request->all();
         $db = isset($request->db) ? $request->db : "";
         $authorization = $request->header('Authorization');
-        supplierInvoiceCreation::dispatch($input, $db, $request->api_external_key, $request->api_external_url);
+        supplierInvoiceCreation::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
         return $this->sendResponse(array(),"Supplier invoice creation is sent to queue!");
     }
 
