@@ -2280,7 +2280,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $employee = $details['employee'];
         $employeeCondition = $details['employeeCondition'];
         $employeeSubQuery = $details['employeeSubQuery'];
-
+        $company = Company::find($input['companySystemID']);
 
         $data = array();
         $query = "SELECT 
