@@ -561,12 +561,6 @@ class JvMasterAPIController extends AppBaseController
                 }
             }
 
-            if($jvMaster->jvType == 1 || $jvMaster->jvType == 2 || $jvMaster->jvType == 3 || $jvMaster->jvType == 4)
-            {
-                $input['reversalJV'] = 0;
-                $input['reversalDate'] = null;
-            }
-
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
@@ -840,6 +834,13 @@ class JvMasterAPIController extends AppBaseController
         {
             $input['reversalDate'] = Carbon::parse($input['reversalDate']);
         }
+
+        if($input['jvType'] == 1 || $input['jvType'] == 2 || $input['jvType'] == 3 || $input['jvType'] == 4)
+        {
+            $input['reversalJV'] = 0;
+            $input['reversalDate'] = null;
+        }
+
         $jvMaster = $this->jvMasterRepository->update($input, $id);
 
         if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
