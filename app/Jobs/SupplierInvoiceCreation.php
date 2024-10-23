@@ -38,7 +38,7 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\DocumentSystemMappingTrait;
 use Carbon\Carbon;
 
-class supplierInvoiceCreation implements ShouldQueue
+class SupplierInvoiceCreation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, DocumentSystemMappingTrait;
     public $record;
