@@ -134,13 +134,14 @@ class ReceiptAPIService
                 $receipt = self::setCompanyDetails($companyID,$receipt); // set company details of the document
                 $receipt = self::setFinancialYear($dt['documentDate'],$receipt);
                 $receipt = self::setBankDetails($dt['bank'],$receipt,$receiptValidationService);
-                if($receipt->documentType != 14 && $receipt->payeeTypeID != 3)
+                if($receipt->documentType == 13 || $receipt->documentType == 15 || ($receipt->documentType == 14 && $receipt->payeeTypeID == 1))
                 {
                     $receipt = self::setCustomerDetails($dt['customer'],$receipt);
                 }
-                else
+                
+                if(($receipt->documentType == 14 && $receipt->payeeTypeID == 3))
                 {
-                    $receipt = self::setOtherDetails($dt['customer'],$receipt);
+                    $receipt = self::setOtherDetails($dt['other'],$receipt);
                 }
                 
                 $receipt = self::setCurrency($dt['currency'],$receipt);
@@ -980,9 +981,9 @@ class ReceiptAPIService
         return ['success' => false , 'data' => []];
     }
 
-    private function setOtherDetails($customerCode,$receipt): CustomerReceivePayment
+    private function setOtherDetails($other,$receipt): CustomerReceivePayment
     {
-        $receipt->PayeeName = $customerCode;
+        $receipt->PayeeName = $other;
 
         return $receipt;
     }

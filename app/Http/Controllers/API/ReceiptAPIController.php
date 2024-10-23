@@ -22,7 +22,7 @@ class ReceiptAPIController extends AppBaseController
             '*.receiptType' => 'required|integer',
             '*.paymentMode' => 'required|integer',
             '*.payeeType' => 'required|integer',
-            '*.customer' => 'required|string',
+            '*.customer' => 'nullable|string',
             '*.currency' => 'required|string|max:3',
             '*.narration' => 'required|string',
             '*.documentDate' => 'required|date_format:d-m-Y',
@@ -39,6 +39,7 @@ class ReceiptAPIController extends AppBaseController
             '*.details.*.receiptAmount' => 'required_if:*.receiptType,2',
             '*.details.*.glCode' => 'required_if:*.receiptType,1',
             '*.details.*.amount' => 'required_if:*.receiptType,1,3',
+            '*.other' => 'nullable|string',
 
         ];
 
@@ -66,11 +67,34 @@ class ReceiptAPIController extends AppBaseController
         ];
 
         $validator = \Validator::make($input['data'], $rules,$messages);
+
+        $validator->after(function ($validator) use ($input) {
+            foreach ($input['data'] as $index => $data) {
+                if (isset($data['receiptType']) && $data['receiptType'] == 1 && isset($data['payeeType']) && $data['payeeType'] == 3) {
+                    if (empty($data['other'])) {
+                        $validator->errors()->add("data.$index.other", 'The other field is required when receipt type is 1 and payee type is 3.');
+                    }
+                }
+
+                if ((isset($data['receiptType']) && $data['receiptType'] == 2) || (isset($data['receiptType']) && $data['receiptType'] == 3) ||
+                (isset($data['receiptType']) && $data['receiptType'] == 1 && isset($data['payeeType']) && $data['payeeType'] == 1)) {
+                if (empty($data['customer'])) {
+                    $validator->errors()->add("data.$index.customer", 'The customer field is required when receipt type is 2 or 3 or when receipt type is 1 and payee type is 1.');
+                }
+            }
+
+
+            }
+        });
+
+
+
         if ($validator->fails()) {
             $messages = new LaravelValidationToAPIJSON();
             $data = $messages->getMessage($validator);
             return $this->sendAPIError("Validation Failed", 422, $data->toArray());
         }
+       
         $data = $receiptAPIService->buildDataToStore($input,$db);
         $createReceiptVoucher = $receiptAPIService->storeReceiptVoucherData($data,$db);
         if($createReceiptVoucher['status'] === 'success') {
