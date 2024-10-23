@@ -1306,7 +1306,18 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError('Company local currency not found');
         }
 
-        $array = array('entity' => $materielIssue);
+        $isShowAllocatedEmployeeTable = false;
+
+        foreach ($materielIssue->details as $detail) {
+            if (count($detail->allocate_employees) > 0) {
+                $isShowAllocatedEmployeeTable = true;
+            }
+        }
+
+        $array = array(
+            'isShowAllocatedEmployeeTable' => $isShowAllocatedEmployeeTable,
+            'entity' => $materielIssue
+        );
         $time = strtotime("now");
         $fileName = 'item_issue_' . $id . '_' . $time . '.pdf';
         $html = view('print.item_issue', $array);

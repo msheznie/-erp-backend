@@ -304,63 +304,72 @@
         </table>
     </div>
     {{--<hr>--}}
-    <div style="margin-top: 30px">
-        <table class="table table-bordered" style="width: 100%;">
-            <thead>
-            <tr  style="background-color: #DEDEDE !important; border-color:#000">
-                <th style="text-align: left;">{{ __('custom.item_code') . " / " . __('custom.part_no') }}</th>
-                <th style="text-align: left;">{{ __('custom.item_description') }}</th>
-                <th style="text-align: left;">{{ __('custom.emp_id') }}</th>
-                <th style="text-align: left;">{{ __('custom.emp_name') }}</th>
-                <th style="text-align: left;">{{ __('custom.qty_issued') }}</th>
-                <th style="text-align: left;">{{ __('custom.uom') }}</th>
-                <th style="text-align: left;">{{ __('custom.date_issued') }}</th>
-                <th style="text-align: left;">{{ __('custom.emp_signature') }}</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach ($entity->details as $item)
-                @foreach($item->allocate_employees as $employee)
-                    <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                        <td style="padding-left: 5px">
-                            @if($loop->first)
-                                {{ $item->itemPrimaryCode . "/" . $item->item_by->secondaryItemCode }}
-                            @endif
-                        </td>
-                        <td style="padding-left: 5px">
-                            @if($loop->first)
-                                {{ $item->itemDescription }}
-                            @endif
-                        </td>
-                        <td style="padding-left: 5px">{{ $employee->employeeSystemID }}</td>
-                        <td style="padding-left: 5px">{{ $employee->employee->empFullName }}</td>
-                        <td style="padding-right: 5px;text-align: right;">{{ $employee->assignedQty }}</td>
-                        <td style="padding-left: 5px">{{ $item->uom_issuing->UnitShortCode }}</td>
-                        <td style="padding-left: 5px">{{ \Carbon\Carbon::parse($employee->created_at)->format('d-m-y') }}</td>
-                        <td style="padding-left: 5px">
-                            @if($employee->employee->hr_emp->signatureURL != null)
-                                <img src="{{ $employee->employee->hr_emp->signatureURL }}" alt="" style="width: 100px;height: 50px">
-                            @endif
-                        </td>
-                    </tr>
-                    @if(!$loop->parent->last && $loop->last)
-                        <tr>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
+    @if($isShowAllocatedEmployeeTable)
+        <div style="margin-top: 30px">
+            <span><b>{{ __('custom.inventory_allocation_details') }}</b></span>
+            <br><br>
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr style="background-color: #DEDEDE !important; border-color:#000">
+                    <th style="text-align: left;width: 12.5%">{{ __('custom.item_code') . " / " . __('custom.part_no') }}</th>
+                    <th style="text-align: left;width: 12.5%">{{ __('custom.item_description') }}</th>
+                    <th style="text-align: left;width: 12.5%">{{ __('custom.emp_id') }}</th>
+                    <th style="text-align: left;width: 12.5%">{{ __('custom.emp_name') }}</th>
+                    <th style="text-align: left;width: 12.5%">{{ __('custom.qty_issued') }}</th>
+                    <th style="text-align: left;width: 12.5%">{{ __('custom.uom') }}</th>
+                    <th style="text-align: left;width: 12.5%">{{ __('custom.date_issued') }}</th>
+                    <th style="text-align: left;width: 12.5%">{{ __('custom.emp_signature') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach ($entity->details as $item)
+                    @foreach($item->allocate_employees as $employee)
+                        <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                            <td style="padding-left: 5px">
+                                @if($loop->first)
+                                    {{ $item->itemPrimaryCode }}
+                                    @if(($item->item_by->secondaryItemCode != null) && ($item->item_by->secondaryItemCode != ''))
+                                        {{ "/ " . $item->item_by->secondaryItemCode }}
+                                    @endif
+                                @endif
+                            </td>
+                            <td style="padding-left: 5px;padding-right: 5px">
+                                @if($loop->first)
+                                    {{ $item->itemDescription }}
+                                @endif
+                            </td>
+                            <td style="padding-left: 5px;padding-right: 5px">{{ $employee->employee->empID }}</td>
+                            <td style="padding-left: 5px">{{ $employee->employee->empName }}</td>
+                            <td style="padding-right: 5px;text-align: right;">{{ $employee->assignedQty }}</td>
+                            <td style="padding-left: 5px">{{ $item->uom_issuing->UnitShortCode }}</td>
+                            <td style="padding-left: 5px">{{ \Carbon\Carbon::parse($employee->created_at)->format('d-m-Y') }}</td>
+                            <td style="padding-left: 5px">
+                                @if((isset($employee->employee->hr_emp->signatureURL)) && ($employee->employee->hr_emp->signatureURL != null))
+                                    <img src="{{ $employee->employee->hr_emp->signatureURL }}" style="width: 100px;height: 50px">
+                                @else
+                                    <span></span>
+                                @endif
+                            </td>
                         </tr>
-                    @endif
+                        @if(!$loop->parent->last && $loop->last)
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                        @endif
+                    @endforeach
                 @endforeach
-            @endforeach
-            </tbody>
-        </table>
-    </div>
-    {{--<hr>--}}
+                </tbody>
+            </table>
+        </div>
+        {{--<hr>--}}
+    @endif
     <div class="row" style="margin-top: 60px;margin-left: -8px">
         <table>
             <tr width="100%">
