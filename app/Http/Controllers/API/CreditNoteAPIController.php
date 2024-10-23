@@ -631,7 +631,7 @@ class CreditNoteAPIController extends AppBaseController
 
         $creditNote = $this->creditNoteRepository->update($input, $id);
 
-        return $this->sendResponse($creditNote->toArray(), 'Credit note updated successfully');
+        return $this->sendReponseWithDetails($creditNote->toArray(), 'Credit note updated successfully',1,$confirm['data'] ?? null);
     }
 
     public function updateCurrency($id, UpdateCreditNoteAPIRequest $request)
@@ -909,7 +909,7 @@ class CreditNoteAPIController extends AppBaseController
 
         $creditNote = $this->creditNoteRepository->update($input, $id);
 
-        return $this->sendResponse($creditNote->toArray(), 'Credit note updated successfully');
+        return $this->sendReponseWithDetails($creditNote->toArray(), 'Credit note updated successfully',1,$confirm['data'] ?? null);
     }
     /**
      * @param int $id

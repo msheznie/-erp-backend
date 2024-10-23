@@ -645,7 +645,7 @@ class SalesReturnAPIController extends AppBaseController
                     return $this->sendError($confirm["message"], 500);
                 } else {
                     DB::commit();
-                    return $this->sendResponse($salesReturn->toArray(), 'Sales Return confirmed successfully');
+                    return $this->sendReponseWithDetails($salesReturn->toArray(), 'Sales Return confirmed successfully',1,$confirm['data'] ?? null);
                 }
 
             }else{

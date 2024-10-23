@@ -777,7 +777,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssueMaster = $this->itemIssueMasterRepository->update($input, $id);
 
-        return $this->sendResponse($itemIssueMaster->toArray(), 'Material Issue updated successfully');
+        return $this->sendReponseWithDetails($itemIssueMaster->toArray(), 'Material Issue updated successfully',1, $confirm['data'] ?? null);
     }
 
     /**

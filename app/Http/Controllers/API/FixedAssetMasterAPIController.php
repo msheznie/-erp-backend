@@ -999,7 +999,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully');
+            return $this->sendReponseWithDetails($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully',1,$confirm['data'] ?? null);
 
         } catch (\Exception $exception) {
             DB::rollBack();

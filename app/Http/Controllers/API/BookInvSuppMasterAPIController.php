@@ -1376,7 +1376,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             \Helper::updateSupplierItemWhtAmount($id,$bookInvSuppMaster);
 
         }
-        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully');
+        return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**
@@ -2009,7 +2009,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         SupplierInvoice::updateMaster($id);
 
-        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully');
+        return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully',1,$confirm['data'] ?? null);
     }
 
 

@@ -1007,7 +1007,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
-        return $this->sendResponse($policy, 'Debit note updated successfully');
+        return $this->sendReponseWithDetails($policy, 'Debit note updated successfully',1,$confirm['data'] ?? null);
     }
 
     public function updateCurrency($id, UpdateDebitNoteAPIRequest $request)
@@ -1378,7 +1378,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
-        return $this->sendResponse($debitNote, 'Debit note updated successfully');
+        return $this->sendReponseWithDetails($debitNote, 'Debit note updated successfully',1,$confirm['data'] ?? null);
 
     }
 

@@ -1451,7 +1451,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
-        return $this->sendResponse($input, 'Receipt Voucher updated successfully');
+        return $this->sendReponseWithDetails($input, 'Receipt Voucher updated successfully',1,$confirm['data'] ?? null);
     }
 
     public function updateCurrency($id, UpdateCustomerReceivePaymentAPIRequest $request)
@@ -2343,7 +2343,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
-        return $this->sendResponse($input, 'Receipt Voucher updated successfully');
+        return $this->sendReponseWithDetails($input, 'Receipt Voucher updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

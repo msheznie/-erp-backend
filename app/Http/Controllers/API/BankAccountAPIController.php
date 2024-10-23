@@ -345,7 +345,7 @@ class BankAccountAPIController extends AppBaseController
 
         $bankAccount = $this->bankAccountRepository->update($input, $id);
 
-        return $this->sendResponse($bankAccount->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_accounts')]));
+        return $this->sendReponseWithDetails($bankAccount->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_accounts')]),1,$confirm['data'] ?? null);
     }
 
     /**

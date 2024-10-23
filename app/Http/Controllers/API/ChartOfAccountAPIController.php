@@ -427,7 +427,7 @@ class ChartOfAccountAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account saved successfully');
+            return $this->sendReponseWithDetails($chartOfAccount->toArray(), 'Chart Of Account saved successfully',1,$confirm['data'] ?? null);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage() . " Line" . $exception->getLine(), 500);

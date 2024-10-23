@@ -1517,7 +1517,8 @@ class CustomerInvoiceAPIService extends AppBaseController
                             return [
                                 'status' => true,
                                 'data' => $customerInvoiceDirect->refresh()->toArray(),
-                                'message' => 'Customer invoice confirmed successfully'
+                                'message' => 'Customer invoice confirmed successfully',
+                                'detail' => $confirm['data'] ?? null
                             ];
                         }
                     }
@@ -1656,7 +1657,8 @@ class CustomerInvoiceAPIService extends AppBaseController
                                     return [
                                         'status' => true,
                                         'data' => $customerInvoiceDirect->refresh()->toArray(),
-                                        'message' => 'Customer invoice confirmed successfully'
+                                        'message' => 'Customer invoice confirmed successfully',
+                                        'detail' => $confirm['data'] ?? null
                                     ];
                                 }
                             }

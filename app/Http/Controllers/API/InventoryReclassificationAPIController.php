@@ -477,7 +477,7 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         $inventoryReclassification = $this->inventoryReclassificationRepository->update($input, $id);
 
-        return $this->sendResponse($inventoryReclassification->toArray(), 'Inventory reclassification updated successfully');
+        return $this->sendReponseWithDetails($inventoryReclassification->toArray(), 'Inventory reclassification updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

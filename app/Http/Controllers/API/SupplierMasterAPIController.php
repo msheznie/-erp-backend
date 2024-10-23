@@ -1149,7 +1149,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
+        return $this->sendReponseWithDetails($supplierMaster->toArray(), 'SupplierMaster updated successfully',1,$confirm['data'] ?? null);
     }
 
 
@@ -2026,7 +2026,7 @@ class SupplierMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Supplier updated successfully');
+            return $this->sendReponseWithDetails([], 'Supplier updated successfully',1,$confirm['data'] ?? null);
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage().$e->getLine());

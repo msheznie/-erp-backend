@@ -438,7 +438,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
         $consoleJVMaster = $this->consoleJVMasterRepository->update($input, $id);
 
-        return $this->sendResponse($consoleJVMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.console_j_v_masters')]));
+        return $this->sendReponseWithDetails($consoleJVMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.console_j_v_masters')]),1,$confirm['data'] ?? null);
     }
 
     /**

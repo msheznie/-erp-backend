@@ -216,7 +216,7 @@ class ItemMasterAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($createdItems, 'Item Master saved successfully');
+            return $this->sendReponseWithDetails($createdItems, 'Item Master saved successfully',1,$confirm['data'] ?? null);
         } catch (\Exception $e) {
             DB::rollBack();
         }
@@ -1217,7 +1217,7 @@ class ItemMasterAPIController extends AppBaseController
             $itemMasterCategoryType->save();
         }
 
-        return $this->sendResponse($itemMaster->refresh()->toArray(), 'Itemmaster updated successfully d');
+        return $this->sendReponseWithDetails($itemMaster->refresh()->toArray(), 'Itemmaster updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

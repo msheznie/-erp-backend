@@ -450,7 +450,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $assetCapitalization = $this->assetCapitalizationRepository->update($input, $id);
             DB::commit();
-            return $this->sendResponse($assetCapitalization->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_capitalization')]));
+            return $this->sendReponseWithDetails($assetCapitalization->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_capitalization')]),1,$confirm['data'] ?? null);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

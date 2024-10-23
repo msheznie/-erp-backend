@@ -408,7 +408,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $budgetTransferForm = $this->budgetTransferFormRepository->update(array_only($input, ['comments', 'year', 'templatesMasterAutoID', 'modifiedPc', 'modifiedUser', 'modifiedUserSystemID']), $id);
 
-        return $this->sendResponse($budgetTransferForm->toArray(), trans('custom.update', ['attribute' => trans('custom.budget_transfer')]));
+        return $this->sendReponseWithDetails($budgetTransferForm->toArray(), trans('custom.update', ['attribute' => trans('custom.budget_transfer')]),1,$confirm['data'] ?? null);
     }
 
     public function validateBudgetFormReview($budgetTransferFormAutoID, $budgetTransferForm, $details)

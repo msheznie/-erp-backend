@@ -380,7 +380,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceUpdate = CustomerInvoiceAPIService::customerInvoiceUpdate($id, $input);
 
         if($customerInvoiceUpdate['status']){
-            return $this->sendResponse($customerInvoiceUpdate['data'],$customerInvoiceUpdate['message']);
+            return $this->sendReponseWithDetails($customerInvoiceUpdate['data'],$customerInvoiceUpdate['message'],1,$customerInvoiceUpdate['detail'] ?? null);
         }
         else{
             return $this->sendError(
@@ -1044,7 +1044,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                                     return $this->sendError($confirm["message"], 500);
                                 } else {
-                                    return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
+                                    return $this->sendReponseWithDetails($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully',1,$confirm['data'] ?? null);
                                 }
                             }
                         } else {

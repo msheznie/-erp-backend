@@ -292,7 +292,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
 
         $currencyConversionMaster = $this->currencyConversionMasterRepository->update($updateData, $id);
 
-        return $this->sendResponse($currencyConversionMaster->toArray(), 'CurrencyConversionMaster updated successfully');
+        return $this->sendReponseWithDetails($currencyConversionMaster->toArray(), 'CurrencyConversionMaster updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

@@ -361,7 +361,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $erpBudgetAddition = $this->erpBudgetAdditionRepository->update($input, $id);
 
-        return $this->sendResponse($erpBudgetAddition->toArray(), 'Budget Addition updated successfully');
+        return $this->sendReponseWithDetails($erpBudgetAddition->toArray(), 'Budget Addition updated successfully',1,$confirm['data'] ?? null);
     }
 
     public function validateBudgetFormReview($budgetTransferFormAutoID, $budgetTransferForm, $details)

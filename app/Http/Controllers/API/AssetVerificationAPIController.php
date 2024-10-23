@@ -345,7 +345,7 @@ class AssetVerificationAPIController extends AppBaseController
         $assetVerification = $this->assetVerificationRepository->update($input, $id);
 
 
-        return $this->sendResponse($assetVerification->toArray(), 'Asset verification updated successfully');
+        return $this->sendReponseWithDetails($assetVerification->toArray(), 'Asset verification updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

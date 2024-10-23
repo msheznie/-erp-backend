@@ -542,7 +542,7 @@ class StockCountAPIController extends AppBaseController
             $stockCount = $this->stockCountRepository->update($input, $id);
 
             DB::commit();
-            return $this->sendResponse($stockCount->toArray(), 'Stock Count updated successfully');
+            return $this->sendReponseWithDetails($stockCount->toArray(), 'Stock Count updated successfully',1,$confirm['data'] ?? null);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage()." ".$exception->getLine());

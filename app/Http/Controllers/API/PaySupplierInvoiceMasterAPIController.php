@@ -1486,7 +1486,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $message = [['status' => 'success', 'message' => 'PaySupplierInvoiceMaster updated successfully'], ['status' => 'warning', 'message' => $warningMessage]];
             DB::commit();
-            return $this->sendResponse($paySupplierInvoiceMaster->toArray(), $message);
+            return $this->sendReponseWithDetails($paySupplierInvoiceMaster->toArray(), $message,1,$confirm['data'] ?? null);
         } catch
         (\Exception $exception) {
             DB::rollBack();
@@ -2733,7 +2733,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $message = [['status' => 'success', 'message' => 'PaySupplierInvoiceMaster updated successfully'], ['status' => 'warning', 'message' => $warningMessage]];
             DB::commit();
-            return $this->sendResponse($paySupplierInvoiceMaster->toArray(), $message);
+            return $this->sendReponseWithDetails($paySupplierInvoiceMaster->toArray(), $message,1,$confirm['data'] ?? null);
         } catch
         (\Exception $exception) {
             DB::rollBack();

@@ -2859,7 +2859,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse($matchDocumentMaster->toArray(), 'Receipt voucher matching updated successfully');
+            return $this->sendReponseWithDetails($matchDocumentMaster->toArray(), 'Receipt voucher matching updated successfully',1,$confirm['data'] ?? null);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

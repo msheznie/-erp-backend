@@ -543,7 +543,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->update($input, $id);
 
-        return $this->sendResponse($fixedAssetDepreciationMaster->toArray(), 'FixedAssetDepreciationMaster updated successfully');
+        return $this->sendReponseWithDetails($fixedAssetDepreciationMaster->toArray(), 'FixedAssetDepreciationMaster updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

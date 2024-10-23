@@ -83,9 +83,11 @@ use App\Services\DocumentAutoApproveService;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Utils\ResponseUtil;
 use App\helper\CurrencyValidation;
@@ -3583,10 +3585,11 @@ class Helper
                                                     return ['success' => false, 'message' => $sendEmail["message"]];
                                                 }
 
+
                                                 if(isset($sendEmail['unverifiedEmailMsg']) && !empty($sendEmail['unverifiedEmailMsg']))
                                                 {
                                                     $unverifiedEmails = $sendEmail['unverifiedEmailMsg'];
-                                                    event(new UnverifiedEmailEvent($sendEmail['unverifiedEmailMsg']));
+//                                                    event(new UnverifiedEmailEvent($unverifiedEmails));
                                                 }
                                                 $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
@@ -3604,7 +3607,7 @@ class Helper
                                 }
 
                                 DB::commit();
-                                return ['success' => true, 'message' => 'Successfully document confirmed'];
+                                return ['success' => true, 'message' => 'Successfully document confirmed', 'data' => $unverifiedEmails];
 
                             } else {
                                 DB::rollback();

@@ -851,7 +851,7 @@ class JvMasterAPIController extends AppBaseController
                 ];
             }
             else{
-                return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher confirmed successfully');
+                return $this->sendReponseWithDetails($jvMaster->toArray(), 'Journal Voucher confirmed successfully',1,$confirm['data'] ?? null);
             }
         }
 
