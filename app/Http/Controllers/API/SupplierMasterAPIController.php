@@ -533,13 +533,7 @@ class SupplierMasterAPIController extends AppBaseController
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->whereIn('primaryCompanySystemID', $companyID)
                     ->where('suppliermaster.approvedYN', 0)
-                    ->where('suppliermaster.supplierConfirmedYN', 1)
-                    ->when($search != "", function ($q) use ($search) {
-                        $q->where(function ($query) use ($search) {
-                            $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
-                                ->orWhere('supplierName', 'LIKE', "%{$search}%");
-                        });
-                    });
+                    ->where('suppliermaster.supplierConfirmedYN', 1);
             })
             ->leftJoin('supplier_categories', 'supplier_categories.id', '=', 'suppliermaster.supplier_category_id')
             ->leftJoin('currencymaster', 'suppliermaster.currency', '=', 'currencymaster.currencyID')
@@ -560,6 +554,15 @@ class SupplierMasterAPIController extends AppBaseController
                     if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
                     }
+                }
+            })
+            ->filter(function ($query) use ($input) {
+                if (request()->has('search') && !empty(request('search')['value'])) {
+                    $search = request('search')['value'];
+                    $query->where(function ($q) use ($search) {
+                        $q->where('suppliermaster.primarySupplierCode', 'LIKE', "%{$search}%")
+                        ->orWhere('suppliermaster.supplierName', 'LIKE', "%{$search}%");
+                    });
                 }
             })
             ->addIndexColumn()
