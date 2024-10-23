@@ -41,6 +41,7 @@ use App\Exports\AccountsReceivable\CustomerBalanceSummaryReport;
 use App\Exports\AccountsReceivable\CustomerStatement\CustomerBalanceStatementReport;
 use App\Exports\AccountsReceivable\CustomerStatement\CustomerStatementOfAccountReport;
 use App\Http\Controllers\AppBaseController;
+use App\Jobs\SentCustomerLedger;
 use App\Models\AccountsReceivableLedger;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
@@ -2478,75 +2479,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
     public function sentCustomerLedger(Request $request)
     {
         $input = $request->all();
-
-        $customers = $input['customers'];
-        $errorMessage = [];
-        foreach ($customers as $key => $value) {
-            $input['customers'] = [];
-            $input['customers'][] = $value;
-
-            $htmlRes = $this->customerLedgerExportPdf($input, true);
-            if (isset($htmlRes['output']) && count($htmlRes['output']) > 0) {
-                $html = $htmlRes['html'];
-                $pdf = \App::make('dompdf.wrapper');
-                $path = public_path().'/uploads/emailAttachment';
-
-                if (!file_exists($path)) {
-                    File::makeDirectory($path, 0777, true, true);
-                }
-                $nowTime = time();
-
-                $customerCodeSystem = $input['customers'][0]['customerCodeSystem'];
-                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_ledger_' . $nowTime.$customerCodeSystem . '.pdf');
-
-
-                $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
-                                                       ->get();
-
-                $customerMaster = CustomerMaster::find($customerCodeSystem);
-
-                $company = Company::where('companySystemID', $input['companySystemID'])->first();
-                $emailSentTo = 0;
-
-                $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-                    "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-                    "monitoring this inbox.</font>";
-
-                if ($fetchCusEmail) {
-                    foreach ($fetchCusEmail as $row) {
-                        if (!empty($row->contactPersonEmail)) {
-                            $emailSentTo = 1;
-                            $dataEmail['empEmail'] = $row->contactPersonEmail;
-
-                            $dataEmail['companySystemID'] = $input['companySystemID'];
-
-                            $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;
-
-                            $pdfName = realpath("uploads/emailAttachment/customer_ledger_" . $nowTime.$customerCodeSystem . ".pdf");
-
-                            $dataEmail['isEmailSend'] = 0;
-                            $dataEmail['attachmentFileName'] = $pdfName;
-                            $dataEmail['alertMessage'] = "Customer ledger report from " . $company->CompanyName;
-                            $dataEmail['emailAlertMessage'] = $temp;
-                            $sendEmail = \Email::sendEmailErp($dataEmail);
-                            if (!$sendEmail["success"]) {
-                                $errorMessage[] = $sendEmail["message"];
-                            }
-                        }
-                    }
-                }
-
-                if ($emailSentTo == 0) {
-                    $errorMessage[] = "Customer email is not updated for ".$customerMaster->CustomerName.". report is not sent";
-                }
-            }
-        }
-
-        if (count($errorMessage) > 0) {
-            return $this->sendError($errorMessage,500);
-        } else {
-            return $this->sendResponse([], 'Customer ledger report sent');
-        }
+        $db = isset($request->db) ? $request->db : "";
+        SentCustomerLedger::dispatch($input, $db);
+        return $this->sendResponse([], 'Customer ledger report sent to queue');
     }
 
     public function getAcountReceivableFilterData(Request $request)
