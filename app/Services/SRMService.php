@@ -1216,7 +1216,12 @@ class SRMService
         $search = $request->input('search.value');
 
         $query = DB::table('appointment')
-            ->select('*', 'appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN', 'appointment.created_at as appointmentCreatedDate', 'suppliermaster.supplierName as appointmentCreatedBy')
+            ->select('appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN',
+                'appointment.created_at as appointmentCreatedDate',
+                'suppliermaster.supplierName as appointmentCreatedBy', 'suppliermaster.supplierName',
+                'warehousemaster.wareHouseDescription', 'appointment.primary_code', 'slot_details.start_date',
+                'slot_details.end_date', 'appointment.confirmed_yn', 'appointment.approved_yn', 'appointment.cancelYN',
+                'appointment.document_system_id', 'appointment.company_id')
             ->join('slot_details', function ($query) {
                 $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
             })
@@ -1267,7 +1272,8 @@ class SRMService
     public function getWarehouse(Request $request)
     {
         try {
-            $warehouse = WarehouseMaster::where('isActive', 1)->get();
+            $warehouse = WarehouseMaster::select('wareHouseSystemCode', 'wareHouseDescription')
+            ->where('isActive', 1)->get();
             $message = 'Warehouse list load successfully';
         } catch (\Exception $e) {
             $message = $e;
@@ -2291,7 +2297,8 @@ class SRMService
             ->firstOrFail()->toArray();
 
         if (sizeof($queryRecordsCount)) {
-            $result = DocumentAttachments::where('documentSystemID', 106)
+            $result = DocumentAttachments::select('attachmentDescription', 'originalFileName', 'path', 'attachmentID')
+                ->where('documentSystemID', 106)
                 ->where('documentSystemCode', $appointmentID)
                 ->get();
 
