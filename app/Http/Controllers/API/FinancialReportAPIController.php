@@ -6768,6 +6768,13 @@ GROUP BY
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
+        $companySubID = collect($request->companySystemID)->where('group_type', 1)->pluck('companySystemID')->toArray();
+
+        $companyGroupID = collect($request->groupCompanySystemID)->pluck('companySystemID')->toArray();
+
+        $subGroupCompanyIDs = array_unique(array_merge($companySubID, $companyGroupID));
+        
+
         $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
         $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
         $lastYearEndDate = Carbon::parse($financeYear->endingDate);
@@ -6874,7 +6881,7 @@ FROM
         erp_generalledger
         INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
         WHERE
-        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+        erp_generalledger.companySystemID IN (' . join(',', $subGroupCompanyIDs) . ') 
         ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . ') AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
     LEFT JOIN(
