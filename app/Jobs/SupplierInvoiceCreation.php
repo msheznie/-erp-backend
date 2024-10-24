@@ -205,6 +205,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                 }
                             }
 
+                            $invMaster['supplierID'] = null;
                             if (empty($invMaster['supplier'])) {
                                 $error[] = [
                                     'field' => 'supplier',
@@ -425,7 +426,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                                 'DIAmountCurrencyER' => 1,
                                                 'DIAmount' => $detail['amount'],
                                                 'netAmount' => $detail['amount'],
-                                                'whtApplicable' => $invMaster['whtApplicable'],
+                                                'whtApplicable' => isset($invMaster['whtApplicable']) ? $invMaster['whtApplicable'] : 0,
                                                 'whtAmount' => $detail['whtAmount'] ?? null,
                                                 'vatSubCategoryID' => $defaultVAT['vatSubCategoryID'] ?? null,
                                                 'vatMasterCategoryID' => $defaultVAT['vatMasterCategoryID'] ?? null,
@@ -575,7 +576,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                                 'includePLForGRVYN' => $financeCategorySub->includePLForGRVYN,
                                                 'supplierPartNumber' => $itemAssign['secondaryItemCode'],
                                                 'unitOfMeasure' => $itemAssign['itemUnitOfMeasure'],
-                                                'trackingType' => (isset($itemAssign['trackingType'])) ? $itemAssign['trackingType'] : null,
+                                                'trackingType' => isset($itemAssign['trackingType']) ? $itemAssign['trackingType'] : null,
                                                 'noQty' => $detail['qty'],
                                                 'unitCost' => $detail['unitCost'],
                                                 'netAmount' => ($detail['unitCost'] - ($detail['discountAmount'] ?? 0)) * $detail['qty'],
@@ -587,7 +588,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                                 'supplierDefaultER' => 1,
                                                 'supplierItemCurrencyID' => $invMaster['supplierTransactionCurrencyID'],
                                                 'foreignToLocalER' => 1,
-                                                'whtApplicable' => $invMaster['whtApplicable'] ?? 0,
+                                                'whtApplicable' => isset($invMaster['whtApplicable']) ? $invMaster['whtApplicable'] : 0,
                                                 'whtAmount' => $detail['whtAmount'] ?? null,
                                                 'vatSubCategoryID' => $defaultVAT['vatSubCategoryID'] ?? null,
                                                 'vatMasterCategoryID' => $defaultVAT['vatMasterCategoryID'] ?? null,
@@ -609,6 +610,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                             $invMaster['createdUserID'] = $systemUser->empID;
                             $invMaster['createdUserSystemID'] = $systemUser->employeeSystemID;
                             $invMaster['createdPcID'] = getenv('COMPUTERNAME');
+                            $invMaster['whtApplicable'] = isset($invMaster['whtApplicable']) ? $invMaster['whtApplicable'] : 0;
                             unset($invMaster['details']);
                             unset($invMaster['currency']);
                             unset($invMaster['supplier']);
