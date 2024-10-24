@@ -6633,8 +6633,9 @@ FROM
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -6715,8 +6716,9 @@ FROM
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -6880,8 +6882,9 @@ FROM
                     ' . $budgetQuery . ' 
                 FROM
                     erp_budjetdetails
+                INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                 WHERE
-                    erp_budjetdetails.companySystemID IN(' . join(',
+                    erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                 ', $companyID) . '
             ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
             ) AS budget
@@ -7242,8 +7245,9 @@ GROUP BY
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -7284,8 +7288,9 @@ GROUP BY
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -7439,8 +7444,9 @@ GROUP BY
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -7513,8 +7519,9 @@ FROM
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -8194,7 +8201,7 @@ GROUP BY
                         IFNULL(
                             SUM(
                                 IF(
-                                    Year = '" . $currentYear . "' && month <= '" . $currentYearCurrentMonthOnly . "',
+                                    erp_budjetdetails.Year = '" . $currentYear . "' && erp_budjetdetails.month <= '" . $currentYearCurrentMonthOnly . "',
                                     $budgetColumn, 
                                     0
                                 )
@@ -8204,7 +8211,7 @@ GROUP BY
                         IFNULL(
                             SUM(
                                 IF(
-                                    Year = '" . $currentYear . "' && month = '" . $currentYearCurrentMonthOnly . "',
+                                    erp_budjetdetails.Year = '" . $currentYear . "' && erp_budjetdetails.month = '" . $currentYearCurrentMonthOnly . "',
                                     $budgetColumn, 
                                     0
                                 )
@@ -8225,7 +8232,7 @@ GROUP BY
                             0
                         ) AS `eliminationAmount`";
 
-        $budgetWhereQuery = " AND Year = " . $currentYear . " GROUP BY erp_budjetdetails.`chartOfAccountID`";
+        $budgetWhereQuery = " AND erp_budjetdetails.Year = " . $currentYear . " GROUP BY erp_budjetdetails.`chartOfAccountID`";
         $eliminationWhereQuery = " AND documentYear = " . $currentYear . " GROUP BY erp_elimination_ledger.`chartOfAccountSystemID`";
 
         if ($columnTemplateID == 1) {
