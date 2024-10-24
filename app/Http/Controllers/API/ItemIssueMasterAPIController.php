@@ -2164,6 +2164,11 @@ class ItemIssueMasterAPIController extends AppBaseController
         $employeeCondition = $details['employeeCondition'];
         $employeeSubQuery = $details['employeeSubQuery'];
 
+        if (empty($items))
+        {
+            return $this->sendError('Please check all validations', 500);
+
+        }
        
         \DB::select("SET SESSION group_concat_max_len = 1000000");
         $query = "SELECT 
