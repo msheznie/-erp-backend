@@ -2166,7 +2166,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         if (empty($items))
         {
-            return $this->sendError('Please check all validations', 500);
+            return $this->sendError('The items field is required.', 500);
 
         }
        
