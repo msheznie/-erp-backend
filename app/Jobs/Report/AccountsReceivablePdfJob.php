@@ -49,7 +49,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
      */
     public function handle()
     {
-        ini_set('max_execution_time', config('app.report_max_execution_limit'));
+        ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
         Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
         $request = $this->requestData;
@@ -60,7 +60,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
         $root = "account-recivable-pdf/".$currentDate;
 
         $output = $this->getCustomerAgingForPDF($request);
-        $outputChunkData = collect($output['data'])->chunk(300);
+        $outputChunkData = collect($output['data'])->chunk(100);
         $aging = $output['aging'];
         $reportCount = 1;
 
