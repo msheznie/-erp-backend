@@ -2854,7 +2854,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             elseif (isset($input['by']) && $input['by']== 'margin'){
                 $input['salesPrice'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
             }
-            else{
+            elseif ($customerDirectInvoice->isPerforma != 5){
                 if (isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
                     $input['salesPrice'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
                 }else{
@@ -2904,7 +2904,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     }
                 }
             }
-            else {
+            else if ($customerDirectInvoice->isPerforma != 5) {
                 if ($input['discountPercentage'] != 0) {
                     $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
                 } else {

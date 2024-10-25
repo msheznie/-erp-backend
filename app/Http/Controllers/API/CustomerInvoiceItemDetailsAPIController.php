@@ -1207,6 +1207,8 @@ WHERE
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
                             $invDetail_arr['salesPrice'] = $new['unittransactionAmount'];
                             $invDetail_arr['sellingCost'] = ($new['unittransactionAmount'] - $new['discountAmount']);
+                            $invDetail_arr['discountAmount'] = $new['discountAmount'];
+                            $invDetail_arr['discountPercentage'] = $new['discountPercentage'];
                             if ($quotationMaster->documentSystemID == 67) {
                                 $vatDetails = TaxService::getVATDetailsByItem($customerInvoioce->companySystemID, $new['itemAutoID'], $customerInvoioce->customerID,0);
                                 $invDetail_arr['VATApplicableOn'] = $vatDetails['applicableOn'];
