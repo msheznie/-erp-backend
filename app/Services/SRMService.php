@@ -5455,4 +5455,37 @@ class SRMService
 
 
     }
+
+    public function saveSupplierInvitationStatus($request)
+    {
+        $input = $request->input('extra.invitation', []);
+        $token = md5(Carbon::now()->format('YmdHisu'));
+        $newRequestData = [
+            'extra' => array_merge($input, [
+                'token' => $token,
+                'is_bid_tender' => 0,
+                'status' => 1
+            ]),
+        ];
+
+        $newRequest =  new Request($newRequestData);
+
+        try {
+            $data = $this->supplierRegistrationLinkRepository->saveExternalLinkData($newRequest);
+
+            return [
+                'success' => true,
+                'message' => 'Supplier Registration Saved Successfully',
+                'data' => 1,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to process supplier registration: ' . $e->getMessage(),
+                'data' => null,
+            ];
+        }
+
+
+    }
 }

@@ -95,6 +95,7 @@ define('GET_SUPPLIER_REGISTRATION_DATA', 'GET_SUPPLIER_REGISTRATION_DATA');
 define('GET_PREBID_CLARIFICATION_POLICY', 'GET_PREBID_CLARIFICATION_POLICY');
 define('SAVE_SUPPLIER_REGISTRATION', 'SAVE_SUPPLIER_REGISTRATION');
 define('GET_EXTERNAL_LINK_DATA', 'GET_EXTERNAL_LINK_DATA');
+define('SAVE_SUPPLIER_INVITATION_STATUS', 'SAVE_SUPPLIER_INVITATION_STATUS');
 
 
 class APIController extends Controller
@@ -266,6 +267,8 @@ class APIController extends Controller
                 return $this->SRMService->saveSupplierRegistration($request);
             case GET_EXTERNAL_LINK_DATA:
                 return $this->SRMService->getExternalLinkData($request);
+            case SAVE_SUPPLIER_INVITATION_STATUS:
+                return $this->SRMService->saveSupplierInvitationStatus($request);
             default:
                 return [
                     'success'   => false,
