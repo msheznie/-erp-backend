@@ -998,10 +998,16 @@ class FinancialReportAPIController extends AppBaseController
         $companyData = json_decode(json_encode($companyArray), true);
 
         $companySystemIDs = array_map(function($item) {
-            return $item['companySystemID'];
+            if(($item['group_type'] == 2 || $item['group_type'] == 3) && ($item['group_two'] != 0 || $item['group_two'] != null)) {
+                return $item['companySystemID'];
+            } else {
+                return null;
+            }
         }, $companyData);
 
 
+        $companySystemIDs = array_filter($companySystemIDs);
+        
 
         $toDate = new Carbon($request->toDate);
         $toDate = $toDate->format('Y-m-d');
@@ -1038,6 +1044,7 @@ class FinancialReportAPIController extends AppBaseController
         $columnTemplateID = $generatedColumn['columnTemplateID']; // customized coloumn from template
 
         $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // main query
+
 
 
         $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // detail query
@@ -6452,6 +6459,8 @@ AND MASTER .canceledYN = 0';
 
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
+
+
         $isExpand = 0;
         $divisionValue = 1;
         $templateMaster = ReportTemplate::find($request->templateType);
@@ -6459,6 +6468,16 @@ AND MASTER .canceledYN = 0';
             if ($templateMaster->showNumbersIn !== 1) {
                 $numbers = ReportTemplateNumbers::find($templateMaster->showNumbersIn);
                 $divisionValue = (float)$numbers->value;
+            }
+
+            if($templateMaster->columnTemplateID == null && $templateMaster->isConsolidation == 1) {
+                $companySubID = collect($request->companySystemID)->where('group_type', 1)->pluck('companySystemID')->toArray();
+
+                $companyGroupID = collect($request->groupCompanySystemID)->pluck('companySystemID')->toArray();
+
+                $subGroupCompanyIDs = array_unique(array_merge($companySubID, $companyGroupID));
+            } else {
+                $subGroupCompanyIDs = $companyID;
             }
 
             if ($templateMaster->presentationType == 2) {
@@ -6607,7 +6626,7 @@ FROM
                     WHERE
                         erp_generalledger.companySystemID IN (
                             ' . join(',
-                            ', $companyID) . '
+                            ', $subGroupCompanyIDs) . '
                         ) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
                     GROUP BY
                         erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . '
@@ -6690,7 +6709,7 @@ FROM
                     WHERE
                         erp_generalledger.companySystemID IN (
                             ' . join(',
-                            ', $companyID) . '
+                            ', $subGroupCompanyIDs) . '
                         ) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
                     GROUP BY
                         erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . '
@@ -6767,12 +6786,6 @@ GROUP BY
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
-
-        $companySubID = collect($request->companySystemID)->where('group_type', 1)->pluck('companySystemID')->toArray();
-
-        $companyGroupID = collect($request->groupCompanySystemID)->pluck('companySystemID')->toArray();
-
-        $subGroupCompanyIDs = array_unique(array_merge($companySubID, $companyGroupID));
         
 
         $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
@@ -6818,6 +6831,16 @@ GROUP BY
             if ($templateMaster->showNumbersIn !== 1) {
                 $numbers = ReportTemplateNumbers::find($templateMaster->showNumbersIn);
                 $divisionValue = (float)$numbers->value;
+            }
+
+            if($templateMaster->columnTemplateID == null && $templateMaster->isConsolidation == 1) {
+                $companySubID = collect($request->companySystemID)->where('group_type', 1)->pluck('companySystemID')->toArray();
+
+                $companyGroupID = collect($request->groupCompanySystemID)->pluck('companySystemID')->toArray();
+
+                $subGroupCompanyIDs = array_unique(array_merge($companySubID, $companyGroupID));
+            } else {
+                $subGroupCompanyIDs = $companyID;
             }
         }
 
