@@ -14,6 +14,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\DirectInvoiceDetails;
 use App\Models\FinanceItemCategorySub;
 use App\Models\ItemAssigned;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
@@ -45,8 +46,8 @@ class SupplierInvoiceCreation implements ShouldQueue
     public $input;
     public $timeout = 500;
     public $db;
-    public $api_external_key;
-    public $api_external_url;
+    public $apiExternalKey;
+    public $apiExternalUrl;
     public $authorization;
 
     /**
@@ -54,7 +55,7 @@ class SupplierInvoiceCreation implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($input, $db, $api_external_key, $api_external_url, $authorization)
+    public function __construct($input, $db, $apiExternalKey, $apiExternalUrl, $authorization)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -64,8 +65,8 @@ class SupplierInvoiceCreation implements ShouldQueue
 
         $this->input = $input;
         $this->db = $db;
-        $this->api_external_key = $api_external_key;
-        $this->api_external_url = $api_external_url;
+        $this->apiExternalKey = $apiExternalKey;
+        $this->apiExternalUrl = $apiExternalUrl;
         $this->authorization = $authorization;
     }
 
@@ -78,23 +79,30 @@ class SupplierInvoiceCreation implements ShouldQueue
     {
         Log::useFiles(storage_path() . '/logs/supplier_invoice_creation.log');
         CommonJobService::db_switch($this->db);
+        $returnData = [];
         try {
             /*** insert a try catch */
             $systemUser = UserTypeService::getSystemEmployee();
             $input = $this->input;
-            $invError = [];
             if (!empty($input[0])) {
                 $compId = $input['company_id'];
                 $company = Company::where('companySystemID', $compId)->first();
                 if (empty($company)) {
-                    $invError[] = [
-                        'field' => '',
-                        'error' => 'Company not found'
+                    $responseData[] = [
+                        "success" => false,
+                        "message" => "Validation Failed",
+                        "code" => 402,
+                        "errors" => [
+                            'fieldErrors' => [
+                                'field' => '',
+                                'message' => 'Company not found'
+                            ],
+                        ]
                     ];
                 }
                 $invoiceNo = 1;
                 foreach ($input[0] as $value) {
-                    $error = [];
+                    $validationError = $headerDataError = [];
                     $invDetails = [];
                     $invMaster = $value;
                     if (!empty($invMaster['documentType'])) {
@@ -103,69 +111,69 @@ class SupplierInvoiceCreation implements ShouldQueue
                                 $invMaster['documentType'] = 3;
                             }
                             if (empty($invMaster['supplierInvoiceNo'])) {
-                                $error[] = [
+                                $validationError = [
                                     'field' => 'supplierInvoiceNo',
-                                    'error' => 'Supplier Invoice No field is required'
+                                    'message' => 'Supplier Invoice No field is required'
                                 ];
                             }
 
                             if (empty($invMaster['comments'])) {
-                                $error[] = [
+                                $validationError[] = [
                                     'field' => 'comments',
-                                    'error' => 'Narration field is required'
+                                    'message' => 'Narration field is required'
                                 ];
                             }
 
                             if (empty($invMaster['supplierInvoiceDate'])) {
-                                $error[] = [
+                                $validationError[] = [
                                     'field' => 'supplierInvoiceDate',
-                                    'error' => 'Supplier Invoice Date field is required'
+                                    'message' => 'Supplier Invoice Date field is required'
                                 ];
                             }
 
                             if (empty($invMaster['bookingDate'])) {
-                                $error[] = [
+                                $validationError[] = [
                                     'field' => 'bookingDate',
-                                    'error' => 'Document Date field is required'
+                                    'message' => 'Document Date field is required'
                                 ];
                             } else {
                                 $bookingDate = Carbon::parse($invMaster['bookingDate']);
                                 $currentDate = Carbon::now()->startOfDay();
                                 if ($bookingDate->gt($currentDate)) {
-                                    $error[] = [
+                                    $headerDataError[] = [
                                         'field' => '',
-                                        'error' => 'The booking date must be today or before.'
+                                        'message' => 'The booking date must be today or before.'
                                     ];
+                                } else {
+                                    $financeYear = CompanyFinanceYear::where('companySystemID', $compId)->where('isActive', -1)->where('bigginingDate', "<=", $invMaster['bookingDate'])->where('endingDate', ">=", $invMaster['bookingDate'])->first();
+                                    if (empty($financeYear)) {
+                                        $headerDataError[] = [
+                                            'field' => '',
+                                            'message' => 'Finance Year not found'
+                                        ];
+                                    } else {
+                                        $invMaster['companyFinanceYearID'] = $financeYear['companyFinanceYearID'];
+                                    }
+
+                                    $financePeriod = CompanyFinancePeriod::where('companySystemID', $compId)->where('departmentSystemID', 1)->where('dateFrom', "<=", $invMaster['bookingDate'])->where('dateTo', ">=", $invMaster['bookingDate'])->where('isActive', -1)->first();
+                                    if (empty($financePeriod)) {
+                                        $headerDataError[] = [
+                                            'field' => '',
+                                            'message' => 'Finance Period not found'
+                                        ];
+                                    } else {
+                                        $invMaster['companyFinancePeriodID'] = $financePeriod['companyFinancePeriodID'];
+                                        $invMaster['FYPeriodDateFrom'] = $financePeriod['dateFrom'];
+                                        $invMaster['FYPeriodDateTo'] = $financePeriod['dateTo'];
+                                    }
                                 }
-                            }
-
-                            $financeYear = CompanyFinanceYear::where('companySystemID', $compId)->where('isActive', -1)->where('bigginingDate', "<=", $invMaster['bookingDate'])->where('endingDate', ">=", $invMaster['bookingDate'])->first();
-                            if (empty($financeYear)) {
-                                $error[] = [
-                                    'field' => '',
-                                    'error' => 'Finance Year not found'
-                                ];
-                            } else {
-                                $invMaster['companyFinanceYearID'] = $financeYear['companyFinanceYearID'];
-                            }
-
-                            $financePeriod = CompanyFinancePeriod::where('companySystemID', $compId)->where('departmentSystemID', 1)->where('dateFrom', "<=", $invMaster['bookingDate'])->where('dateTo', ">=", $invMaster['bookingDate'])->where('isActive', -1)->first();
-                            if (empty($financePeriod)) {
-                                $error[] = [
-                                    'field' => '',
-                                    'error' => 'Finance Period not found'
-                                ];
-                            } else {
-                                $invMaster['companyFinancePeriodID'] = $financePeriod['companyFinancePeriodID'];
-                                $invMaster['FYPeriodDateFrom'] = $financePeriod['dateFrom'];
-                                $invMaster['FYPeriodDateTo'] = $financePeriod['dateTo'];
                             }
 
                             if($invMaster['documentType'] == 3) {
                                 if(empty($invMaster['segment'])) {
-                                    $error[] = [
+                                    $validationError[] = [
                                         'field' => 'segment',
-                                        'error' => 'Segment field is required'
+                                        'message' => 'Segment field is required'
                                     ];
                                 } else {
                                     $segment = SegmentMaster::where('ServiceLineCode',$invMaster['segment'])
@@ -174,9 +182,9 @@ class SupplierInvoiceCreation implements ShouldQueue
                                         ->where('companySystemID', $compId)
                                         ->first();
                                     if(!$segment){
-                                        $error[] = [
+                                        $headerDataError[] = [
                                             'field' => 'segment',
-                                            'error' => 'Segment not found'
+                                            'message' => 'Segment not found'
                                         ];
                                     } else {
                                         $invMaster['serviceLineSystemID'] = $segment['serviceLineSystemID'];
@@ -184,9 +192,9 @@ class SupplierInvoiceCreation implements ShouldQueue
                                 }
 
                                 if (empty($invMaster['warehouse'])) {
-                                    $error[] = [
+                                    $validationError[] = [
                                         'field' => 'warehouse',
-                                        'error' => 'Warehouse field is required'
+                                        'message' => 'Warehouse field is required'
                                     ];
                                 } else {
                                     $warehouse = WarehouseMaster::where('wareHouseCode', $invMaster['warehouse'])
@@ -195,9 +203,9 @@ class SupplierInvoiceCreation implements ShouldQueue
                                         ->first();
 
                                     if(!$warehouse){
-                                        $error[] = [
+                                        $headerDataError[] = [
                                             'field' => 'warehouse',
-                                            'error' => 'Warehouse not found'
+                                            'message' => 'Warehouse not found'
                                         ];
                                     } else {
                                         $invMaster['wareHouseSystemCode'] = $warehouse['wareHouseSystemCode'];
@@ -207,9 +215,9 @@ class SupplierInvoiceCreation implements ShouldQueue
 
                             $invMaster['supplierID'] = null;
                             if (empty($invMaster['supplier'])) {
-                                $error[] = [
+                                $validationError[] = [
                                     'field' => 'supplier',
-                                    'error' => 'supplier field is required'
+                                    'message' => 'supplier field is required'
                                 ];
                                 $invMaster['supplierID'] = null;
                             } else {
@@ -222,27 +230,29 @@ class SupplierInvoiceCreation implements ShouldQueue
                                     ->first();
 
                                 if(empty($supplierExist)) {
-                                    $error[] = [
+                                    $headerDataError[] = [
                                         'field' => 'supplier',
-                                        'error' => 'supplier not found'
+                                        'message' => 'supplier not found'
                                     ];
                                 } else {
                                     $invMaster['supplierID'] = $supplierExist['supplierCodeSytem'];
                                     $supplier = SupplierMaster::where('supplierCodeSystem', $supplierExist['supplierCodeSytem'])->first();
                                     $invMaster['whtApplicableYN'] = $supplier['whtApplicableYN'];
 
-                                    $validatorResult = \Helper::checkBlockSuppliers($invMaster['bookingDate'],$invMaster['supplierID']);
-                                    if (!$validatorResult['success']) {
-                                        $error[] = [
-                                            'field' => 'supplier',
-                                            'error' => 'The selected supplier has been blocked'
-                                        ];
+                                    if(isset($invMaster['bookingDate'])) {
+                                        $validatorResult = \Helper::checkBlockSuppliers($invMaster['bookingDate'],$invMaster['supplierID']);
+                                        if (!$validatorResult['success']) {
+                                            $headerDataError[] = [
+                                                'field' => 'supplier',
+                                                'message' => 'The selected supplier has been blocked'
+                                            ];
+                                        }
                                     }
 
                                     if (empty($invMaster['currency'])) {
-                                        $error[] = [
+                                        $validationError[] = [
                                             'field' => 'currency',
-                                            'error' => 'Currency field is required'
+                                            'message' => 'Currency field is required'
                                         ];
                                     } else {
                                         $currency = SupplierCurrency::join('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
@@ -252,9 +262,9 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             ->first();
 
                                         if(!$currency){
-                                            $error[] = [
+                                            $headerDataError[] = [
                                                 'field' => 'currency',
-                                                'error' => 'Currency is invalid'
+                                                'message' => 'Currency is invalid'
                                             ];
                                         } else {
                                             $invMaster['supplierTransactionCurrencyID'] = $currency['currencyID'];
@@ -267,21 +277,35 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             ->first();
 
                                         if ($alreadyAdded) {
-                                            $error[] = [
+                                            $headerDataError[] = [
                                                 'field' => 'supplierInvoiceNo',
-                                                'error' => 'Entered supplier invoice number was already used (' . $invMaster['supplierInvoiceNo'] . '). Please check again'
+                                                'message' => 'Entered supplier invoice number was already used (' . $invMaster['supplierInvoiceNo'] . '). Please check again'
                                             ];
                                         }
                                     }
 
-                                    if((!empty($invMaster['retentionPercentage']) || !empty($invMaster['retentionAmount'])) && !empty($invMaster['bookingDate'])) {
+                                    if(!empty($invMaster['retentionPercentage'])) {
                                         if(!is_numeric($invMaster['retentionPercentage']) || $invMaster['retentionPercentage'] < 0 || $invMaster['retentionPercentage'] > 100) {
-                                            $error[] = [
+                                            $headerDataError[] = [
                                                 'field' => 'retentionPercentage',
-                                                'error' => 'Retention% should be a numeric value and between 0 - 100'
+                                                'message' => 'Retention % should be a numeric value and between 0 - 100'
                                             ];
                                         }
 
+                                        if(!empty($invMaster['bookingDate'])) {
+                                            $creditPeriod = SupplierMaster::where('supplierCodeSystem', $invMaster['supplierID'])->value('creditPeriod');
+                                            $invMaster['retentionDueDate'] = Carbon::parse($invMaster['bookingDate'])->addDays(($creditPeriod ?? 0));
+                                        }
+                                    }
+
+                                    if (!empty($invMaster['retentionAmount']) && !is_numeric($invMaster['retentionAmount'])) {
+                                        $headerDataError[] = [
+                                            'field' => 'retentionAmount',
+                                            'message' => 'Retention amount should be a numeric value'
+                                        ];
+                                    }
+
+                                    if(!empty($invMaster['bookingDate']) && (!empty($invMaster['retentionPercentage']) || !empty($invMaster['retentionAmount']))) {
                                         $creditPeriod = SupplierMaster::where('supplierCodeSystem', $invMaster['supplierID'])->value('creditPeriod');
                                         $invMaster['retentionDueDate'] = Carbon::parse($invMaster['bookingDate'])->addDays(($creditPeriod ?? 0));
                                     }
@@ -289,27 +313,31 @@ class SupplierInvoiceCreation implements ShouldQueue
                             }
 
                             if (empty($invMaster['details'])) {
-                                $error[] = [
+                                $headerDataError[] = [
                                     'field' => '',
-                                    'error' => 'Supplier invoice details not found'
+                                    'message' => 'Supplier invoice details not found'
                                 ];
                             } else {
                                 /** Supplier direct invoice */
                                 $whtTotal = 0;
                                 $isVATEligible = TaxService::checkCompanyVATEligible($compId);
+                                $detailIndex = 1;
+                                $detailsError = [];
                                 foreach ($invMaster['details'] as $detail) {
+                                    $detailsDataError = [];
+
                                     if((!empty($detail['VATPercentage']) || !empty($detail['VATAmount'])) && !empty($detail['whtAmount'])) {
-                                        $error[] = [
+                                        $detailsDataError[] = [
                                             'field' => 'whtAmount',
-                                            'error' => 'Cannot allocate WHT amount and VAT amount for same detail'
+                                            'message' => 'Cannot allocate WHT amount and VAT amount for same detail'
                                         ];
                                     }
 
                                     if (!empty($detail['whtAmount'])) {
                                         if ($supplierExist && $invMaster['whtApplicableYN'] == 0) {
-                                            $error[] = [
+                                            $detailsDataError[] = [
                                                 'field' => 'whtAmount',
-                                                'error' => 'Cannot allocate a WHT amount as the supplier is not applicable for WHT'
+                                                'message' => 'Cannot allocate a WHT amount as the supplier is not applicable for WHT'
                                             ];
                                             $detail['whtAmount'] = 0;
                                         }
@@ -317,17 +345,17 @@ class SupplierInvoiceCreation implements ShouldQueue
                                     }
 
                                     if((!empty($detail['VATPercentage']) || !empty($detail['VATAmount'])) && !$isVATEligible) {
-                                        $error[] = [
+                                        $detailsDataError[] = [
                                             'field' => 'VATPercentage',
-                                            'error' => 'Company is not vat registered'
+                                            'message' => 'Company is not vat registered'
                                         ];
                                     }
 
                                     if ($invMaster['documentType'] == 1) {
                                         if(empty($detail['glCode'])) {
-                                            $error[] = [
+                                            $validationError[] = [
                                                 'field' => 'glCode',
-                                                'error' => 'GlCode field is required'
+                                                'message' => 'GlCode field is required'
                                             ];
                                         } else {
                                             $chartOfAccountAssign = ChartOfAccountsAssigned::where('companySystemID',$compId)
@@ -338,16 +366,16 @@ class SupplierInvoiceCreation implements ShouldQueue
                                                 ->where('isBank', 0)
                                                 ->first();
                                             if(!$chartOfAccountAssign){
-                                                $error[] = [
+                                                $detailsDataError[] = [
                                                     'field' => 'glCode',
-                                                    'error' => 'GlCode not found'
+                                                    'message' => 'GlCode not found'
                                                 ];
                                             }
                                         }
                                         if(empty($detail['segment'])) {
-                                            $error[] = [
+                                            $validationError[] = [
                                                 'field' => 'segment',
-                                                'error' => 'Segment field is required'
+                                                'message' => 'Segment field is required'
                                             ];
                                         } else {
                                             $detSegment = SegmentMaster::where('ServiceLineCode',$detail['segment'])
@@ -356,24 +384,24 @@ class SupplierInvoiceCreation implements ShouldQueue
                                                 ->where('companySystemID', $compId)
                                                 ->first();
                                             if(!$detSegment){
-                                                $error[] = [
+                                                $detailsDataError[] = [
                                                     'field' => 'segment',
-                                                    'error' => 'Segment not found'
+                                                    'message' => 'Segment not found'
                                                 ];
                                             }
                                         }
 
                                         if (!empty($detail['amount'])) {
                                             if (!is_numeric($detail['amount']) || $detail['amount'] <= 0) {
-                                                $error[] = [
+                                                $detailsDataError[] = [
                                                     'field' => 'amount',
-                                                    'error' => 'Amount field should be numeric and greater than zero'
+                                                    'message' => 'Amount field should be numeric and greater than zero'
                                                 ];
                                             }
                                         } else {
-                                            $error[] = [
+                                            $validationError[] = [
                                                 'field' => 'amount',
-                                                'error' => 'Amount field is required'
+                                                'message' => 'Amount field is required'
                                             ];
                                         }
 
@@ -382,17 +410,17 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             $docAmount = ($detail['amount'] ?? 0);
                                             if(!empty($detail['VATPercentage'])) {
                                                 if(!is_numeric($detail['VATPercentage']) || $detail['VATPercentage'] > 100 || $detail['VATPercentage'] < 0) {
-                                                    $error[] = [
+                                                    $detailsDataError[] = [
                                                         'field' => 'VATPercentage',
-                                                        'error' => 'VAT% should be a numeric value and between 0 - 100'
+                                                        'message' => 'VAT % should be a numeric value and between 0 - 100'
                                                     ];
                                                 } else {
                                                     $vatAmount = ($docAmount / 100) * $detail['VATPercentage'];
 
                                                     if(!empty($detail['VATAmount']) && $detail['VATAmount'] != $vatAmount) {
-                                                        $error[] = [
+                                                        $detailsDataError[] = [
                                                             'field' => 'VATPercentage',
-                                                            'error' => 'VAT% and VAT Amount is not matching'
+                                                            'message' => 'VAT % and VAT Amount is not matching'
                                                         ];
                                                     }
                                                     $detail['VATAmount'] = $vatAmount;
@@ -400,10 +428,10 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             }
 
                                             if(!empty($detail['VATAmount']) && empty($detail['VATPercentage'])) {
-                                                if(!is_numeric($detail['VATAmount']) || ($detail['VATAmount'] > $docAmount)) {
-                                                    $error[] = [
+                                                if(!is_numeric($detail['VATAmount']) || ($detail['VATAmount'] > $docAmount) || ($detail['VATAmount'] < 0)) {
+                                                    $detailsDataError[] = [
                                                         'field' => 'VATAmount',
-                                                        'error' => 'VAT amount should be a numeric value and cannot be greater than invoice amount'
+                                                        'message' => 'VAT amount should be a positive numeric value and cannot be greater than invoice amount'
                                                     ];
                                                 } else {
                                                     $detail['VATPercentage'] = ($detail['VATAmount'] * 100) / $docAmount;
@@ -411,13 +439,13 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             }
                                         }
 
-                                        if (empty($error)) {
+                                        if (empty($validationError) && empty($headerDataError) && empty($detailsDataError)) {
                                             /*** insert records for direct invoice details */
                                             $whtTotal = $whtTotal + ($detail['whtAmount'] ?? 0);
                                             $invDetails[] = [
                                                 'companySystemID' => $compId,
                                                 'serviceLineSystemID' => $detSegment['serviceLineSystemID'],
-                                                'serviceLineCode' => $detSegment['serviceLineMasterCode'],
+                                                'serviceLineCode' => $detSegment['ServiceLineCode'],
                                                 'chartOfAccountSystemID' => $chartOfAccountAssign['chartOfAccountSystemID'],
                                                 'glCode' => $chartOfAccountAssign['AccountCode'],
                                                 'glCodeDes' => $chartOfAccountAssign['AccountDescription'],
@@ -437,30 +465,30 @@ class SupplierInvoiceCreation implements ShouldQueue
                                     } elseif ($invMaster['documentType'] == 3) {
                                     /** Supplier item invoice */
                                         if (!empty($detail['qty'])) {
-                                            if (!is_numeric($detail['qty']) || $detail['qty'] <= 1) {
-                                                $error[] = [
+                                            if (!is_numeric($detail['qty']) || $detail['qty'] < 1) {
+                                                $detailsDataError[] = [
                                                     'field' => 'qty',
-                                                    'error' => 'Quantity field should be numeric and greater than zero'
+                                                    'message' => 'Quantity field should be numeric and greater than zero'
                                                 ];
                                             }
                                         } else {
-                                            $error[] = [
+                                            $validationError[] = [
                                                 'field' => 'qty',
-                                                'error' => 'Quantity field is required'
+                                                'message' => 'Quantity field is required'
                                             ];
                                         }
 
                                         if (!empty($detail['unitCost'])) {
                                             if (!is_numeric($detail['unitCost']) || $detail['unitCost'] < 0) {
-                                                $error[] = [
+                                                $detailsDataError[] = [
                                                     'field' => 'unitCost',
-                                                    'error' => 'Unit cost field should be numeric and a positive value'
+                                                    'message' => 'Unit cost field should be numeric and a positive value'
                                                 ];
                                             }
                                         } else {
-                                            $error[] = [
+                                            $validationError[] = [
                                                 'field' => 'unitCost',
-                                                'error' => 'Unit cost field is required'
+                                                'message' => 'Unit cost field is required'
                                             ];
                                         }
 
@@ -468,43 +496,50 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             $itemAssign = ItemAssigned::with(['item_master'])->where('itemCodeSystem', $detail['item'])
                                                 ->where('companySystemID', $compId)
                                                 ->where('isActive', 1)
+                                                ->where('isAssigned', -1)
+                                                ->whereHas('item_category_type', function ($query) {
+                                                    $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                                                })
+                                                ->when((isset($input['fixedAsset']) && $input['fixedAsset'] == 0), function($query) {
+                                                    $query->whereIn('financeCategoryMaster', [1,2,4]);
+                                                })
                                                 ->first();
 
                                             if(!$itemAssign) {
-                                                $error[] = [
+                                                $detailsDataError[] = [
                                                     'field' => 'item',
-                                                    'error' => 'Item not found'
+                                                    'message' => 'Item not found'
                                                 ];
                                             } else {
                                                 if(!empty($invDetails)) {
                                                     $names = collect($invDetails)->pluck('itemCode');
                                                     if ($names->contains($detail['item'])) {
-                                                        $error[] = [
+                                                        $detailsDataError[] = [
                                                             'field' => 'item',
-                                                            'error' => 'Item is already added to the details'
+                                                            'message' => 'Item is already added to the details'
                                                         ];
                                                     }
                                                 }
                                             }
                                         } else {
-                                            $error[] = [
+                                            $validationError[] = [
                                                 'field' => 'item',
-                                                'error' => 'Item field is required'
+                                                'message' => 'Item field is required'
                                             ];
                                         }
 
                                         if (!empty($detail['discountPercentage'])) {
                                             if ($detail['discountPercentage'] > 100 || $detail['discountPercentage'] < 0) {
-                                                $error[] = [
+                                                $detailsDataError[] = [
                                                     'field' => 'discountPercentage',
-                                                    'error' => 'Discount% should be a numeric value and between 0 - 100'
+                                                    'message' => 'Discount % should be a numeric value and between 0 - 100'
                                                 ];
                                             } else {
                                                 $discountAmount = (($detail['unitCost'] ?? 0) / 100) * $detail['discountPercentage'];
                                                 if(!empty($detail['discountAmount']) && $detail['discountAmount'] != $discountAmount) {
-                                                    $error[] = [
+                                                    $detailsDataError[] = [
                                                         'field' => 'discountAmount',
-                                                        'error' => 'Discount% and Discount Amount is not matching'
+                                                        'message' => 'Discount % and Discount Amount is not matching'
                                                     ];
                                                 }
                                                 $detail['discountAmount'] = $discountAmount;
@@ -512,10 +547,10 @@ class SupplierInvoiceCreation implements ShouldQueue
                                         }
 
                                         if(!empty($detail['discountAmount']) && empty($detail['discountPercentage'])) {
-                                            if(!is_numeric($detail['discountAmount']) || ($detail['discountAmount'] > ($detail['unitCost'] ?? 0))) {
-                                                $error[] = [
+                                            if(!is_numeric($detail['discountAmount']) || ($detail['discountAmount'] > ($detail['unitCost'] ?? 0)) || ($detail['discountAmount'] < 0)) {
+                                                $detailsDataError[] = [
                                                     'field' => 'discountAmount',
-                                                    'error' => 'Discount amount should be a numeric value and cannot be greater than unit cost'
+                                                    'message' => 'Discount amount should be a positive numeric value and cannot be greater than unit cost'
                                                 ];
                                             } else {
                                                 $detail['discountPercentage'] = ($detail['discountAmount'] * 100) / ($detail['unitCost'] ?? 1);
@@ -531,17 +566,17 @@ class SupplierInvoiceCreation implements ShouldQueue
 
                                             if(!empty($detail['VATPercentage'])) {
                                                 if(!is_numeric($detail['VATPercentage']) || $detail['VATPercentage'] > 100 || $detail['VATPercentage'] < 0) {
-                                                    $error[] = [
+                                                    $detailsDataError[] = [
                                                         'field' => 'VATPercentage',
-                                                        'error' => 'VAT% should be a numeric value and between 0 - 100'
+                                                        'message' => 'VAT % should be a numeric value and between 0 - 100'
                                                     ];
                                                 } else {
                                                     $vatAmount = ($docAmount / 100) * $detail['VATPercentage'];
 
                                                     if(!empty($detail['VATAmount']) && $detail['VATAmount'] != $vatAmount) {
-                                                        $error[] = [
+                                                        $detailsDataError[] = [
                                                             'field' => 'VATPercentage',
-                                                            'error' => 'VAT% and VAT Amount is not matching'
+                                                            'message' => 'VAT % and VAT Amount is not matching'
                                                         ];
                                                     }
                                                     $detail['VATAmount'] = $vatAmount;
@@ -550,9 +585,9 @@ class SupplierInvoiceCreation implements ShouldQueue
 
                                             if(!empty($detail['VATAmount']) && empty($detail['VATPercentage'])) {
                                                 if(!is_numeric($detail['VATAmount']) || ($detail['VATAmount'] > $docAmount)) {
-                                                    $error[] = [
+                                                    $detailsDataError[] = [
                                                         'field' => 'VATAmount',
-                                                        'error' => 'VAT amount should be a numeric value and cannot be greater than invoice amount'
+                                                        'message' => 'VAT amount should be a numeric value and cannot be greater than invoice amount'
                                                     ];
                                                 } else {
                                                     $detail['VATPercentage'] = ($detail['VATAmount'] * 100) / $docAmount;
@@ -560,7 +595,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             }
                                         }
 
-                                        if (empty($error)) {
+                                        if (empty($validationError) && empty($headerDataError) && empty($detailsDataError)) {
                                             /*** insert records for item invoice details*/
                                             $whtTotal = $whtTotal + ($detail['whtAmount'] ?? 0);
                                             $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
@@ -600,6 +635,14 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             ];
                                         }
                                     }
+
+                                    if(!empty($detailsDataError)) {
+                                        $detailsError[] = [
+                                            'index' => $detailIndex,
+                                            'error' => $detailsDataError
+                                        ];
+                                    }
+                                    $detailIndex++;
                                 }
                             }
 
@@ -615,69 +658,128 @@ class SupplierInvoiceCreation implements ShouldQueue
                             unset($invMaster['currency']);
                             unset($invMaster['supplier']);
                         } else {
-                            $error[] = [
+                            $headerDataError[] = [
                                 'field' => 'documentType',
-                                'error' => 'Document Type format is invalid'
+                                'message' => 'Document Type format is invalid'
                             ];
                         }
                     } else {
-                        $error[] = [
+                        $validationError[] = [
                             'field' => 'documentType',
-                            'error' => 'Document Type field is required'
+                            'message' => 'Document Type field is required'
                         ];
                     }
 
-                    if (empty($error)) {
+                    if(empty($headerDataError) && empty($validationError) && empty($detailsError))
+                    {
                         DB::beginTransaction();
-                        $crateSupplierInvoice = self::createSupplierInvoice($invMaster, $invDetails);
+                        $createSupplierInvoice = self::createSupplierInvoice($invMaster, $invDetails);
 
-                        if(!$crateSupplierInvoice['status']) {
-                            $invError[] = [
-                                'index' => $invoiceNo,
-                                'error' => $crateSupplierInvoice['error']
+                        if(!$createSupplierInvoice['status']) {
+                            $errors =
+                                ['identifier' =>
+                                    [
+                                        'unique-key' => isset($invMaster['supplierInvoiceNo']) ? $invMaster['supplierInvoiceNo']: "",
+                                        'index' => $invoiceNo
+                                    ],
+                                    'fieldErrors' => [],
+                                    'headerData' => $createSupplierInvoice['error'],
+                                    'detailData' => []
+                                ];
+
+                            $responseData[] = [
+                                "success" => false,
+                                "message" => "Validation Failed",
+                                "code" => 402,
+                                "errors" => $errors
+                            ];
+                        } else {
+                            $responseData[] = [
+                                "success" => true,
+                                "message" => "Invoice created Successfully!",
+                                "code" => 200,
+                                "data" => [
+                                    'reference' => isset($invMaster['supplierInvoiceNo']) ? $invMaster['supplierInvoiceNo']: "",
+                                    'index' => $invoiceNo,
+                                    'invoiceNumber' => $createSupplierInvoice['invoiceCode'] ?? ''
+                                ]
                             ];
                         }
                     } else {
-                        $invError[] = [
-                            'index' => $invoiceNo,
-                            'error' => $error
+                        if(empty($headerDataError)) {
+                            $headerDataError = [
+                                'status' => true,
+                                'errors' => []
+                            ];
+                        } else {
+                            $headerDataError = [
+                                'status' => false,
+                                'errors' => $headerDataError
+                            ];
+                        }
+
+                        if(empty($detailsError)) {
+                            $detailsError = [
+                                'status' => true,
+                                'errors' => []
+                            ];
+                        } else {
+                            $detailsError = [
+                                'status' => false,
+                                'errors' => $detailsError
+                            ];
+                        }
+
+                        $errors =
+                            ['identifier' =>
+                                [
+                                    'unique-key' => isset($invMaster['supplierInvoiceNo']) ? $invMaster['supplierInvoiceNo']: "",
+                                    'index' => $invoiceNo
+                                ],
+                                'fieldErrors' => $validationError,
+                                'headerData' => $headerDataError,
+                                'detailData' => $detailsError
+                            ];
+
+                        $responseData[] = [
+                            "success" => false,
+                            "message" => "Validation Failed",
+                            "code" => 402,
+                            "errors" => $errors
                         ];
                     }
                     $invoiceNo++;
                 }
             } else {
-                $invError[] = [
-                    'field' => '',
-                    'error' => 'No supplier invoice data found'
+                $responseData[] = [
+                    "success" => false,
+                    "message" => "Validation Failed",
+                    "code" => 402,
+                    "errors" => [
+                        'fieldErrors' => [
+                            'field' => '',
+                            'message' => 'No supplier invoice data found'
+                        ],
+                    ]
                 ];
             }
 
-            if(!empty($invError)) {
-                Log::error('Error Log');
-                Log::error($invError);
-            } else {
-                Log::info('Invoice created Successfully!');
-            }
-
-
-            $api_external_key = $this->api_external_key;
-            $api_external_url = $this->api_external_url;
-            if (!empty($invError)) {
-                if($api_external_key != null && $api_external_url != null) {
-
-                    $client = new Client();
-                    $headers = [
-                        'content-type' => 'application/json',
-                        'Authorization' => 'ERP '.$api_external_key
-                    ];
-                    $res = $client->request('POST', $api_external_url . '/supplier_invoice_create_log', [
-                        'headers' => $headers,
-                        'json' => [
-                            'data' => $invError
-                        ]
-                    ]);
-                    $json = $res->getBody();
-                }
+            Log::error($responseData);
+            $apiExternalKey = $this->apiExternalKey;
+            $apiExternalUrl = $this->apiExternalUrl;
+            if($apiExternalKey != null && $apiExternalUrl != null) {
+                $client = new Client();
+                $headers = [
+                    'content-type' => 'application/json',
+                    'Authorization' => 'ERP '.$apiExternalKey
+                ];
+                $res = $client->request('POST', $apiExternalUrl . '/supplier_invoice_create_log', [
+                    'headers' => $headers,
+                    'json' => [
+                        'data' => $responseData
+                    ]
+                ]);
+                $json = $res->getBody();
             }
 
         } catch (\Exception $exception) {
@@ -769,13 +871,46 @@ class SupplierInvoiceCreation implements ShouldQueue
                 }
             }
 
+            $bookInvSuppMaster = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $returnData['bookingSuppMasInvAutoID'])->first();
+            if(!empty($invMaster['retentionPercentage']) && !empty($invMaster['retentionAmount'])) {
+                $retentionAmount = ($bookInvSuppMaster->bookingAmountTrans / 100) * $invMaster['retentionPercentage'];
+                if($retentionAmount != $invMaster['retentionAmount']) {
+                    DB::rollBack();
+                    return [
+                        'status' => false,
+                        'error' => [
+                            'field' => 'retentionPercentage',
+                            'message' => 'Retention % and retention amount is not matching'
+                        ]
+                    ];
+                }
+            } else
+                if(!empty($invMaster['retentionPercentage']) && empty($invMaster['retentionAmount'])) {
+                    $retentionAmount = ($bookInvSuppMaster->bookingAmountTrans / 100) * $invMaster['retentionPercentage'];
+                    BookInvSuppMaster::where('bookingSuppMasInvAutoID', $returnData['bookingSuppMasInvAutoID'])->update(['retentionAmount' => $retentionAmount]);
+            } else
+                if(empty($invMaster['retentionPercentage']) && !empty($invMaster['retentionAmount'])) {
+                    if($invMaster['retentionAmount'] > $bookInvSuppMaster->bookingAmountTrans) {
+                        DB::rollBack();
+                        return [
+                            'status' => false,
+                            'error' => [
+                                'field' => 'retentionAmount',
+                                'message' => 'Retention amount cannot be greater than invoice amount'
+                            ]
+                        ];
+                    }
+                    $retentionPercentage = ($invMaster['retentionAmount'] / 100) * $bookInvSuppMaster->bookingAmountTrans;
+                    BookInvSuppMaster::where('bookingSuppMasInvAutoID', $returnData['bookingSuppMasInvAutoID'])->update(['retentionPercentage' => $retentionPercentage]);
+            }
+
             /*** update details before confirmation*/
             $invoiceUpdate = self::updateInvoiceDetails($returnData);
             if(!$invoiceUpdate['status']) {
                 DB::rollBack();
                 return [
                     'status' => false,
-                    'error' => $invoiceUpdate["message"]
+                    'error' => $invoiceUpdate["error"]
                 ];
             }
 
@@ -806,7 +941,8 @@ class SupplierInvoiceCreation implements ShouldQueue
                     DB::commit();
                     return [
                         'status' => true,
-                        'error' => 'Invoice created successfully!'
+                        'error' => 'Invoice created successfully!',
+                        'invoiceCode' => $returnData['bookingInvCode']
                     ];
                 }
                 else {
