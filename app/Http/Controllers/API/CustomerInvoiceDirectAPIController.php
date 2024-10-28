@@ -4009,7 +4009,7 @@ WHERE
             }
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), $successMessage );
+            return $this->sendResponse([], $successMessage );
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
