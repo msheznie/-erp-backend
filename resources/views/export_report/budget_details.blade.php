@@ -118,16 +118,54 @@
 
 
                     @if($isFinal == 0 && $isItemType == 2)
+
                        @foreach($item1->subcategory as $key2 => $subCategory)
+                            <?php
+                            $totBudgetYearSubCategory = 0;
+                            $monthlyTotalssubCategory1 = array_fill(0, count($months), 0); // Initialize array for monthly totals
+                            ?>
+                            @if(isset($subCategory->gl_codes))
+
+                                @foreach($subCategory->gl_codes as $item2)
+                                    @foreach($subCategory->items as $item3)
+                                            <?php
+                                            $totBudgetYearSubCategory += $item3->budjetAmtRpt;
+                                            foreach($months as $monthIndex => $month) {
+                                                $monthlyTotalssubCategory1[$monthIndex] += $item3->budjetAmtRpt; // Adjust this if you have month-wise data
+                                            }
+                                            ?>
+                                    @endforeach
+                                @endforeach
+                            @endif
+
+
                         <tr>
                             <td>{{ $mainNo }}.{{ $key + 1 }}.{{$key2+1}}</td>
                             <td>{{ $subCategory->description }}</td>
-                            @foreach($months as $month)
-                                <td>0</td>
+                            @foreach($monthlyTotalssubCategory1 as $monthTotal)
+                                <td>{{ number_format($monthTotal, 2) }}</td> <!-- Display total per month -->
                             @endforeach
-                            <td>0</td>
+                            <td>{{ number_format(array_sum($monthlyTotalssubCategory1), 2) }}</td> <!-- Display yearly total -->
                         </tr>
 
+                        @if(isset($subCategory->gl_codes))
+                            @foreach($subCategory->gl_codes as $item2)
+                                <tr>
+                                    <td></td>
+                                    <td>
+                                        <strong>{{ $item2->glDescription }} | {{ $item2->glCode }}</strong>
+                                    </td>
+                                        <?php $totBudgetYear = 0 ?>
+                                    @foreach($item2->items as $item3)
+                                            <?php   $totBudgetYear += $item3->budjetAmtRpt ?>
+                                        <td>{{ number_format($item3->budjetAmtRpt,2) }}</td>
+                                    @endforeach
+                                    <td>{{ number_format($totBudgetYear,2) }}</td>
+
+                                </tr>
+                                @endforeach
+                                </tr>
+                                @endif
                         @if($subCategory->isFinalLevel == 0 && $subCategory->itemType == 2)
                             @foreach($subCategory->subcategory as $key3 => $subSubCategory)
                                 <tr>
@@ -138,34 +176,145 @@
                                     @endforeach
                                     <td>0</td>
                                 </tr>
-
-                                @if($subSubCategory->isFinalLevel == 0 && $subSubCategory->itemType == 2)
-                                    @foreach($subSubCategory->subcategory as $key4 => $subSubSubCategory)
-                                        <tr>
-                                            <td>{{ $mainNo }}.{{ $key + 1 }}.{{$key2+1}}.{{$key3+1}}.{{$key4+1}}</td>
-                                            <td>{{ $subSubSubCategory->description }}</td>
-                                            @foreach($months as $month)
-                                                <td>0</td>
-                                            @endforeach
-                                            <td>0</td>
-                                        </tr>
-
-                                        @if($subSubSubCategory->isFinalLevel == 0 && $subSubSubCategory->itemType == 2)
-                                            @foreach($subSubSubCategory->subcategory as $key5 => $subSubSubSubCategory)
+                                        @if(isset($subSubCategory->gl_codes))
+                                            @foreach($subSubCategory->gl_codes as $item2)
                                                 <tr>
-                                                    <td>{{ $mainNo }}.{{ $key + 1 }}.{{$key2 + 1}}.{{$key3 + 1}}.{{$key4 + 1}}.{{$key5 + 1}}</td>
-                                                    <td>{{ $subSubSubSubCategory->description }}</td>
-                                                    @foreach($months as $month)
-                                                        <td>0</td>
+                                                    <td></td>
+                                                    <td>
+                                                        <strong>{{ $item2->glDescription }} | {{ $item2->glCode }}</strong>
+                                                    </td>
+                                                        <?php $totBudgetYear = 0 ?>
+                                                    @foreach($item2->items as $item3)
+                                                            <?php   $totBudgetYear += $item3->budjetAmtRpt ?>
+                                                        <td>{{ number_format($item3->budjetAmtRpt,2) }}</td>
                                                     @endforeach
-                                                    <td>0</td>
-                                                </tr>
-                                            @endforeach
-                                        @endif
+                                                    <td>{{ number_format($totBudgetYear,2) }}</td>
 
-                                    @endforeach
-                                @endif
-                            @endforeach
+                                                </tr>
+                                                @endforeach
+                                                </tr>
+                                                @endif
+
+
+                                                @if($subSubCategory->isFinalLevel == 0 && $subSubCategory->itemType == 2)
+                                                    @foreach($subSubCategory->subcategory as $key4 => $subSubSubCategory)
+                                                            <?php
+                                                            $totBudgetYearSubCategory = 0;
+                                                            $monthlyTotals = array_fill(0, count($months), 0); // Initialize array for monthly totals
+                                                            ?>
+
+                                                        @if(isset($subSubSubCategory->gl_codes))
+                                                            @foreach($subSubSubCategory->gl_codes as $item2)
+                                                                @foreach($item2->items as $item3)
+                                                                        <?php
+                                                                        $totBudgetYearSubCategory += $item3->budjetAmtRpt;
+                                                                        foreach($months as $monthIndex => $month) {
+                                                                            // Assume $item3 has budget per month
+                                                                            $monthlyTotals[$monthIndex] += $item3->budjetAmtRpt; // Adjust this if you have month-wise data
+                                                                        }
+                                                                        ?>
+                                                                @endforeach
+                                                            @endforeach
+                                                        @endif
+
+                                                        <tr>
+                                                            <td>{{ $mainNo }}.{{ $key + 1 }}.{{$key2 + 1}}.{{$key3 + 1}}.{{$key4 + 1}}</td>
+                                                            <td>{{ $subSubSubCategory->description }}</td>
+                                                            @foreach($monthlyTotals as $monthTotal)
+                                                                <td>{{ number_format($monthTotal, 2) }}</td> <!-- Display total per month -->
+                                                            @endforeach
+                                                            <td>{{ number_format($totBudgetYearSubCategory, 2) }}</td> <!-- Display yearly total -->
+                                                        </tr>
+
+                                                        @if(isset($subSubSubCategory->gl_codes))
+                                                            @foreach($subSubSubCategory->gl_codes as $key7 => $item2)
+                                                                <tr>
+                                                                    <td></td>
+                                                                    <td>
+                                                                        <strong>{{ $item2->glDescription }} | {{ $item2->glCode }}</strong>
+                                                                    </td>
+                                                                        <?php
+                                                                        $totBudgetYear = 0;
+                                                                        $monthlyTotalsItem = array_fill(0, count($months), 0); // For GL codes items
+                                                                        ?>
+                                                                    @foreach($item2->items as $item3)
+                                                                            <?php
+                                                                            $totBudgetYear += $item3->budjetAmtRpt;
+                                                                            foreach($months as $monthIndex => $month) {
+                                                                                // Add monthly totals for GL codes
+                                                                                $monthlyTotalsItem[$monthIndex] += $item3->budjetAmtRpt;
+                                                                            }
+                                                                            ?>
+                                                                    @endforeach
+                                                                    @foreach($monthlyTotalsItem as $monthTotalItem)
+                                                                        <td>{{ number_format($monthTotalItem, 2) }}</td> <!-- Display total per month for GL code -->
+                                                                    @endforeach
+                                                                    <td>{{ number_format($totBudgetYear, 2) }}</td> <!-- Display yearly total for GL code -->
+                                                                </tr>
+                                                            @endforeach
+                                                        @endif
+
+                                                        @if($subSubSubCategory->isFinalLevel == 0 && $subSubSubCategory->itemType == 2)
+                                                            @foreach($subSubSubCategory->subcategory as $key5 => $subSubSubSubCategory)
+                                                                    <?php
+                                                                    $totBudgetYearSubSubCategory = 0;
+                                                                    $monthlyTotalsSubSubCategory = array_fill(0, count($months), 0); // For sub-subcategories
+                                                                    ?>
+
+                                                                @if(isset($subSubSubSubCategory->gl_codes))
+                                                                    @foreach($subSubSubSubCategory->gl_codes as $item2)
+                                                                        @foreach($item2->items as $item3)
+                                                                                <?php
+                                                                                $totBudgetYearSubSubCategory += $item3->budjetAmtRpt;
+                                                                                foreach($months as $monthIndex => $month) {
+                                                                                    $monthlyTotalsSubSubCategory[$monthIndex] += $item3->budjetAmtRpt;
+                                                                                }
+                                                                                ?>
+                                                                        @endforeach
+                                                                    @endforeach
+                                                                @endif
+
+                                                                <tr>
+                                                                    <td>{{ $mainNo }}.{{ $key + 1 }}.{{$key2 + 1}}.{{$key3 + 1}}.{{$key4 + 1}}.{{$key5 + 1}}</td>
+                                                                    <td>{{ $subSubSubSubCategory->description }}</td>
+                                                                    @foreach($monthlyTotalsSubSubCategory as $monthTotal)
+                                                                        <td>{{ number_format($monthTotal, 2) }}</td> <!-- Display total per month -->
+                                                                    @endforeach
+                                                                    <td>{{ number_format($totBudgetYearSubSubCategory, 2) }}</td> <!-- Display yearly total -->
+                                                                </tr>
+
+                                                                @if(isset($subSubSubSubCategory->gl_codes))
+                                                                    @foreach($subSubSubSubCategory->gl_codes as $item2)
+                                                                        <tr>
+                                                                            <td></td>
+                                                                            <td>
+                                                                                <strong>{{ $item2->glDescription }} | {{ $item2->glCode }}</strong>
+                                                                            </td>
+                                                                                <?php
+                                                                                $totBudgetYear = 0;
+                                                                                $monthlyTotalsItem = array_fill(0, count($months), 0); // For GL codes items
+                                                                                ?>
+                                                                            @foreach($item2->items as $item3)
+                                                                                    <?php
+                                                                                    $totBudgetYear += $item3->budjetAmtRpt;
+                                                                                    foreach($months as $monthIndex => $month) {
+                                                                                        $monthlyTotalsItem[$monthIndex] += $item3->budjetAmtRpt;
+                                                                                    }
+                                                                                    ?>
+                                                                            @endforeach
+                                                                            @foreach($monthlyTotalsItem as $monthTotalItem)
+                                                                                <td>{{ number_format($monthTotalItem, 2) }}</td> <!-- Display total per month for GL code -->
+                                                                            @endforeach
+                                                                            <td>{{ number_format($totBudgetYear, 2) }}</td> <!-- Display yearly total for GL code -->
+                                                                        </tr>
+                                                                    @endforeach
+                                                                @endif
+                                                            @endforeach
+                                                        @endif
+                                                    @endforeach
+                                                @endif
+
+                                            @endforeach
                         @endif
                        @endforeach
                     @else
@@ -240,7 +389,7 @@
                                 <td>{{ number_format($totBudgetYear,2) }}</td>
 
                             </tr>
-                            @endforeach
+                        @endforeach
                     @endif
 
                     </tr>
