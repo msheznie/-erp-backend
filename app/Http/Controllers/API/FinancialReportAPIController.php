@@ -993,7 +993,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
         $companyArray = isset($request->companySystemID) ? $request->companySystemID : [];
         $segmentArray = isset($request->serviceLineSystemID) ? $request->serviceLineSystemID : [];
-        $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency[0];
+        $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency;
 
         $companyData = json_decode(json_encode($companyArray), true);
 
