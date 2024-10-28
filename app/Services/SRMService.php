@@ -2011,9 +2011,19 @@ class SRMService
         $id = $request->input('extra.prebidId');
         $employeeId = Helper::getEmployeeSystemID();
 
-        $data['response'] = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
-            $q->with(['profilepic']);
-        }, 'attachments'])
+        $data['response'] = TenderBidClarifications::select('supplier_id', 'is_anonymous', 'is_public', 'is_closed',
+            'parent_id', 'created_at', 'posted_by_type', 'id', 'post', 'document_system_id', 'is_checked', 'user_id')
+            ->with([
+            'supplier' => function ($q) {
+                $q->select('id', 'name');
+            },
+            'employee' => function ($q) {
+                $q->select('employeeSystemID', 'empName');
+            },
+            'attachments' => function ($q) {
+                $q->select('attachmentID', 'documentSystemID', 'documentSystemCode', 'originalFileName', 'path');
+            }
+            ])
             ->where('id', '=', $id)
             ->orWhere('parent_id', '=', $id)
             ->orderBy('parent_id', 'asc')
@@ -4910,6 +4920,7 @@ class SRMService
         ->where('documentSystemID', 11)
         ->where('documentSystemCode', $id)
         ->whereIn('attachmentType', [0, 11]);
+
         $search = $request->input('search.value');
 
         if ($search) {
