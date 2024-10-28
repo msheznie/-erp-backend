@@ -181,7 +181,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
 
                 $temp = "Dear " . $customerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;
 
-                $pdfName = public_path('uploads\emailAttachment\customer_ledger_' . $customerCodeSystem . '.zip');
+                $pdfName = public_path('uploads/emailAttachment/customer_ledger_' . $customerCodeSystem . '.zip');
 
                 $dataEmail['isEmailSend'] = 0;
                 $dataEmail['attachmentFileName'] = $pdfName;
