@@ -163,7 +163,8 @@ namespace App\Services\OSOS_3_0;
                         WHEN e.empConfirmedYN = 0 THEN 1
                         WHEN e.empConfirmedYN = 1 THEN 0 
                     END as Status, 
-                    e.isDischarged, e.EEmail, e.EcMobile, d.DesignationID")
+                    e.isDischarged, e.EEmail, e.EcMobile, d.DesignationID,
+                    IFNULL(dep.DepartmentMasterID,0) as DepartmentMasterID, em.managerID")
              ->leftJoin('hr_location_emp as l', function($join) {
                  $join->on('l.emp_id', '=', 'e.EIdNo')
                      ->where('l.is_active', '=', 1)
@@ -173,6 +174,16 @@ namespace App\Services\OSOS_3_0;
                  $join->on('d.EmpID', '=', 'e.EIdNo')
                      ->where('d.isMajor', '=', 1)
                      ->whereColumn('d.Erp_companyID', 'e.Erp_companyID');
+             })
+             ->leftJoin('srp_empdepartments as dep', function($join) {
+                 $join->on('dep.EmpID', '=', 'e.EIdNo')
+                     ->where('dep.isPrimary', '=', 1)
+                     ->whereColumn('dep.Erp_companyID', 'e.Erp_companyID');
+             })
+             ->leftJoin('srp_erp_employeemanagers as em', function($join) {
+                 $join->on('em.empID', '=', 'e.EIdNo')
+                     ->where('em.active', '=', 1)
+                     ->whereColumn('em.companyID', 'e.Erp_companyID');
              })
              ->where('e.EIdNo', $this->id)
              ->first();
@@ -188,6 +199,8 @@ namespace App\Services\OSOS_3_0;
              "ContactEmail" => $data->EEmail,
              "ContactNumber" => $data->EcMobile,
              "IsDeleted" => $data->isDischarged,
+             "DepartmentId" => $this->getOtherReferenceId($data->DepartmentMasterID, 3),
+             "ReportingManagerId" => $this->getOtherReferenceId($data->managerID, 4),
              "LocationId" => $this->getOtherReferenceId($data->location_id, 1),
              "DesignationId" => $this->getOtherReferenceId($data->DesignationID, 2),
              "CompanyId" => $this->getOtherReferenceId($data->Erp_companyID, 5)
