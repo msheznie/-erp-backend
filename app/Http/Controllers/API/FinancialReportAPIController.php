@@ -1047,11 +1047,15 @@ class FinancialReportAPIController extends AppBaseController
 
 
 
+
+
         $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // detail query
 
 
 
-         if((isset($request->reportID) && $request->reportID == "FCT") && $outputCollect)
+
+
+        if((isset($request->reportID) && $request->reportID == "FCT") && $outputCollect)
         {
             $outputCollect->each(function ($item) use($outputDetail,$columnKeys,$companyArray,$currency, $serviceLineIDs, $fromDate, $toDate, $companySystemIDs) {
                 $detID = ($item->detID) ?  : null;
@@ -1092,21 +1096,22 @@ class FinancialReportAPIController extends AppBaseController
                             foreach ($companyArray as $company) {
                                 if($company['group_type'] == 2 || $company['group_type'] == 3) {
                                     if ($currency == 1) {
-                                        $total += ($totalIncome->documentLocalAmount - $totalExpense->documentLocalAmount) * $company['holding_percentage'] / 100;
+                                        $total += ($totalIncome->documentLocalAmount + $totalExpense->documentLocalAmount) * $company['holding_percentage'] / 100;
                                     } else {
-                                        $total += ($totalIncome->documentRptAmount - $totalExpense->documentRptAmount) * $company['holding_percentage'] / 100;
+                                        $total += ($totalIncome->documentRptAmount + $totalExpense->documentRptAmount) * $company['holding_percentage'] / 100;
                                     }
                                 }
                             }
 
 
                             if (isset($key[0]) && $key[0] == "CMB") {
-                                $item->$colKey = $total;
+                                $item->$colKey = $total * -1;
                             }
 
                             if (isset($key[0]) && $key[0] == "CONS") {
-                                $item->$colKey = $total;
+                                $item->$colKey = $total * -1;
                             }
+
 
                         }
                     });
@@ -1191,6 +1196,8 @@ class FinancialReportAPIController extends AppBaseController
             if (count($headers) > 0) {
                 foreach ($headers as $key => $val) {
                     $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
+
+
                     $val->detail = $details;
                     $firstLevel = true;
                     foreach ($details as $key2 => $val2) {
@@ -1233,10 +1240,16 @@ class FinancialReportAPIController extends AppBaseController
                             $removedFromArray[] = $key;
                         }
                     }
+
+
                 }
             }
+
+
             $headers = collect($headers)->forget($removedFromArray)->values();
         }
+
+
 
         //remove records which has no detail except total
         // get devision value
