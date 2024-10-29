@@ -60,7 +60,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
 
         $customerMaster = CustomerMaster::find($customerCodeSystem);
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)->get();
-        if ($fetchCusEmail) {
+        if (!$fetchCusEmail->isEmpty()) {
             self::generateReportView($input, $customerCodeSystem, $fetchCusEmail, $customerMaster->CustomerName);
         } else {
             Log::error("Customer email is not updated for " . $customerMaster->CustomerName . ". report is not sent");
@@ -78,12 +78,14 @@ class SentCustomerLedgerSubJob implements ShouldQueue
         if (!file_exists($path)) {
             File::makeDirectory($path, 0777, true, true);
         }
+        $recordExists = 0;
         if ($reportTypeID == 'CLT1') { //customer ledger template 1
             $request = (object)$baseController->convertArrayToSelectedValue($request, array('currencyID'));
             $companyLogo = $checkIsGroup->logo_url;
 
             $output = $this->receivableController->getCustomerLedgerTemplate1QRY($request);
             if($output) {
+                $recordExists = 1;
                 $outputChunkData = collect($output)->chunk(300);
                 $reportCount = 1;
 
@@ -124,6 +126,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
 
             $output = $this->receivableController->getCustomerLedgerTemplate2QRY($request);
             if($output) {
+                $recordExists = 1;
                 $outputChunkData = collect($output)->chunk(300);
                 $reportCount = 1;
 
@@ -153,50 +156,50 @@ class SentCustomerLedgerSubJob implements ShouldQueue
             }
         }
 
-        $zipFilePath = public_path('uploads/emailAttachment/customer_ledger_' . $customerCodeSystem . '.zip');
-        $zip = new ZipArchive;
+        if($recordExists == 1) {
+            $zipFilePath = public_path('uploads/emailAttachment/customer_ledger_' . $customerCodeSystem . '.zip');
+            $zip = new ZipArchive;
 
-        if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-            foreach (glob($path . '/*.pdf') as $file) {
-                $zip->addFile($file, basename($file));
+            if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+                foreach (glob($path . '/*.pdf') as $file) {
+                    $zip->addFile($file, basename($file));
+                }
+                $zip->close();
+                File::deleteDirectory($path);
+            } else {
+                Log::error('Failed to create zip file: ' . $zipFilePath);
             }
-            $zip->close();
-            File::deleteDirectory($path);
-        } else {
-            Log::error('Failed to create zip file: ' . $zipFilePath);
-        }
 
-        $company = Company::where('companySystemID', $request->companySystemID)->first();
+            $company = Company::where('companySystemID', $request->companySystemID)->first();
 
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-            "monitoring this inbox.</font>";
+            $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
+                "<br>This is an auto generated email. Please do not reply to this email because we are not " .
+                "monitoring this inbox.</font>";
 
-        $emailSentTo = 0;
-        foreach ($fetchCusEmail as $row) {
-            if (!empty($row->contactPersonEmail)) {
-                $emailSentTo = 1;
-                $dataEmail['empEmail'] = $row->contactPersonEmail;
-                $dataEmail['companySystemID'] = $request->companySystemID;
+            $emailSentTo = 0;
+            foreach ($fetchCusEmail as $row) {
+                if (!empty($row->contactPersonEmail)) {
+                    $emailSentTo = 1;
+                    $dataEmail['empEmail'] = $row->contactPersonEmail;
+                    $dataEmail['companySystemID'] = $request->companySystemID;
 
-                $temp = "Dear " . $customerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;
+                    $temp = "Dear " . $customerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;
 
-                $pdfName = public_path('uploads/emailAttachment/customer_ledger_' . $customerCodeSystem . '.zip');
-
-                $dataEmail['isEmailSend'] = 0;
-                $dataEmail['attachmentFileName'] = $pdfName;
-                $dataEmail['alertMessage'] = "Customer ledger report from " . $company->CompanyName;
-                $dataEmail['emailAlertMessage'] = $temp;
-                $sendEmail = \Email::sendEmailErp($dataEmail);
-                if (!$sendEmail["success"]) {
-                    Log::error($sendEmail["message"]);
-                } else {
-                    Log::error('Customer ledger email sent successfully');
+                    $dataEmail['isEmailSend'] = 0;
+                    $dataEmail['attachmentFileName'] = $zipFilePath;
+                    $dataEmail['alertMessage'] = "Customer ledger report from " . $company->CompanyName;
+                    $dataEmail['emailAlertMessage'] = $temp;
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    if (!$sendEmail["success"]) {
+                        Log::error($sendEmail["message"]);
+                    } else {
+                        Log::error('Customer ledger email sent successfully');
+                    }
                 }
             }
-        }
-        if($emailSentTo == 0) {
-            Log::error('Email not sent.');
+            if($emailSentTo == 0) {
+                Log::error('Email not sent.');
+            }
         }
     }
 }
