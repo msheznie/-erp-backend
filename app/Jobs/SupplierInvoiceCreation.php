@@ -22,6 +22,7 @@ use App\Models\SupplierInvoiceDirectItem;
 use App\Models\SupplierMaster;
 use App\Models\SystemGlCodeScenario;
 use App\Models\SystemGlCodeScenarioDetail;
+use App\Models\Tax;
 use App\Models\Taxdetail;
 use App\Models\TaxVatCategories;
 use App\Models\WarehouseMaster;
@@ -900,7 +901,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                             ]
                         ];
                     }
-                    $retentionPercentage = ($invMaster['retentionAmount'] / 100) * $bookInvSuppMaster->bookingAmountTrans;
+                    $retentionPercentage = ($invMaster['retentionAmount'] * 100) / $bookInvSuppMaster->bookingAmountTrans;
                     BookInvSuppMaster::where('bookingSuppMasInvAutoID', $returnData['bookingSuppMasInvAutoID'])->update(['retentionPercentage' => $retentionPercentage]);
             }
 
@@ -1056,6 +1057,19 @@ class SupplierInvoiceCreation implements ShouldQueue
             }
 
             if($returnData['whtApplicable'] == 1) {
+                $whtTypes = Tax::where('companySystemID',$companyID)->where('taxCategory',3)->where('isActive',1)->where('isDefault',1)->first();
+                if($whtTypes) {
+                    $updateRecord['whtType'] = $whtTypes->taxMasterAutoID;
+                } else {
+                    return [
+                        'status' => false,
+                        'error' => [
+                            'field' => 'whtAmount',
+                            'message' => 'wht account is not configured'
+                        ]
+                    ];
+                }
+
                 $directNetAmount = DirectInvoiceDetails::where('directInvoiceAutoID', $returnData['bookingSuppMasInvAutoID'])
                     ->sum('netAmount');
                 /** wht percentage computation */
