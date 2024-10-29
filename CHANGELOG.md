@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.51.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.50.2...v10.51.0) (2024-10-29)
+
+
+### Features
+
+* **Attendance:** Fixed Shift to Consider Flexi Hour same as Shift Duty Hour [GHR-2058] ([#6867](https://github.com/pbsgears/Gears_BackEnd/issues/6867)) ([acca51f](https://github.com/pbsgears/Gears_BackEnd/commit/acca51fc2ad514fcfddab0223d842bcf0d703fd0))
+* **OSOS_3_O:** Add Employee Department & Reporting Manager Information[GHR-1944] ([#6905](https://github.com/pbsgears/Gears_BackEnd/issues/6905)) ([8aee8e1](https://github.com/pbsgears/Gears_BackEnd/commit/8aee8e1bec021e80c87fb18f8dfb6f30d8fe10e8))
+
 ## [10.50.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.50.1...v10.50.2) (2024-10-13)
 
 
