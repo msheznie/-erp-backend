@@ -239,6 +239,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                     $invMaster['supplierID'] = $supplierExist['supplierCodeSytem'];
                                     $supplier = SupplierMaster::where('supplierCodeSystem', $supplierExist['supplierCodeSytem'])->first();
                                     $invMaster['whtApplicableYN'] = $supplier['whtApplicableYN'];
+                                    $invMaster['whtType'] = $supplier['whtType'];
 
                                     if(isset($invMaster['bookingDate'])) {
                                         $validatorResult = \Helper::checkBlockSuppliers($invMaster['bookingDate'],$invMaster['supplierID']);
@@ -1057,19 +1058,6 @@ class SupplierInvoiceCreation implements ShouldQueue
             }
 
             if($returnData['whtApplicable'] == 1) {
-                $whtTypes = Tax::where('companySystemID',$companyID)->where('taxCategory',3)->where('isActive',1)->where('isDefault',1)->first();
-                if($whtTypes) {
-                    $updateRecord['whtType'] = $whtTypes->taxMasterAutoID;
-                } else {
-                    return [
-                        'status' => false,
-                        'error' => [
-                            'field' => 'whtAmount',
-                            'message' => 'wht account is not configured'
-                        ]
-                    ];
-                }
-
                 $directNetAmount = DirectInvoiceDetails::where('directInvoiceAutoID', $returnData['bookingSuppMasInvAutoID'])
                     ->sum('netAmount');
                 /** wht percentage computation */
