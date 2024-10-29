@@ -183,7 +183,7 @@ namespace App\Services\OSOS_3_0;
              ->leftJoin('srp_erp_employeemanagers as em', function($join) {
                  $join->on('em.empID', '=', 'e.EIdNo')
                      ->where('em.active', '=', 1)
-                     ->whereColumn('dep.Erp_companyID', 'e.Erp_companyID');
+                     ->whereColumn('em.companyID', 'e.Erp_companyID');
              })
              ->where('e.EIdNo', $this->id)
              ->first();
