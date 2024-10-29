@@ -4093,19 +4093,37 @@ GROUP BY
         if ($currency == 1) {
             $currencyQry = "final.documentTransCurrency AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( final.documentTransAmount, final.documentTransDecimalPlaces ),0) AS invoiceAmount";
-            $paidAmountQry = "IFNULL(round( final.paidTransAmount, final.documentTransDecimalPlaces ),0) AS paidAmount";
+            $paidAmountQry = "IFNULL(round( final.documentLocalAmount, final.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $paidAmountQry = "CASE 
+        WHEN final.receivedAmountTrans IS NULL THEN 
+            IFNULL(round( final.paidTransAmount, final.documentTransDecimalPlaces ),0)
+        ELSE 
+            final.receivedAmountTrans 
+    END AS paidAmount
+    ";
             $balanceAmountQry = "IFNULL(round( final.balanceTrans, final.documentTransDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
         } else if ($currency == 2) {
             $currencyQry = "final.documentLocalCurrency AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( final.documentLocalAmount, final.documentLocalDecimalPlaces ),0) AS invoiceAmount";
-            $paidAmountQry = "IFNULL(round( final.paidLocalAmount, final.documentLocalDecimalPlaces ),0) AS paidAmount";
+            $paidAmountQry = "CASE 
+        WHEN final.receivedAmountLocal IS NULL THEN 
+            IFNULL(ROUND(final.paidLocalAmount, final.documentLocalDecimalPlaces), 0) 
+        ELSE 
+            final.receivedAmountLocal 
+    END AS paidAmount";
             $balanceAmountQry = "IFNULL(round( final.balanceLocal, final.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
         } else {
             $currencyQry = "final.documentRptCurrency AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( final.documentRptAmount, final.documentRptDecimalPlaces ),0) AS invoiceAmount";
-            $paidAmountQry = "IFNULL(round( final.paidRptAmount, final.documentRptDecimalPlaces ),0) AS paidAmount";
+            $paidAmountQry = "
+            CASE 
+        WHEN final.receivedAmountRpt IS NULL THEN 
+            IFNULL(round( final.paidRptAmount, final.documentRptDecimalPlaces ),0)
+        ELSE 
+            final.receivedAmountRpt 
+    END AS paidAmount";
             $balanceAmountQry = "IFNULL(round( final.balanceRpt, final.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
@@ -4132,7 +4150,11 @@ GROUP BY
 	final.documentSystemCode,
 	final.documentSystemID,
 	final.chartOfAccountSystemID,
-	final.AccountDescription
+	final.AccountDescription,
+	final.FullyMatched,
+	final.receivedAmountLocal,
+	final.receivedAmountRpt,
+	final.receivedAmountTrans
 FROM
 	(
 SELECT
@@ -4185,71 +4207,165 @@ IF( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactio
 IF( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) AS sumReturnDEOLocalAmount,
 IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS sumReturnDEORptAmount,
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srAmount.sumSRRptAmount IS NULL, 0, srAmount.sumSRRptAmount) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+	mainQuery.documentRptAmount + ( IF(mainQuery.receivedAmountRpt IS NULL,IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ),mainQuery.receivedAmountRpt) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srAmount.sumSRRptAmount IS NULL, 0, srAmount.sumSRRptAmount) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
 	) AS balanceRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) )  + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srAmount.sumSRLocalAmount IS NULL, 0, srAmount.sumSRLocalAmount) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
+	mainQuery.documentLocalAmount +(IF (mainQuery.receivedAmountLocal IS NULL,( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) , mainQuery.receivedAmountLocal)) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) )  + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srAmount.sumSRLocalAmount IS NULL, 0, srAmount.sumSRLocalAmount) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
 	) AS balanceLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srAmount.sumSRTransactionAmount IS NULL, 0, srAmount.sumSRTransactionAmount) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
+	mainQuery.documentTransAmount + ( IF(mainQuery.receivedAmountTrans IS NULL,IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ),mainQuery.receivedAmountTrans) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srAmount.sumSRTransactionAmount IS NULL, 0, srAmount.sumSRTransactionAmount) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
 	) AS balanceTrans,
 	(( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srAmount.sumSRRptAmount IS NULL, 0, srAmount.sumSRRptAmount) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ))) as paidRptAmount,
 	(( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ))  + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srAmount.sumSRLocalAmount IS NULL, 0, srAmount.sumSRLocalAmount) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )) as paidLocalAmount,
 	(( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )  + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srAmount.sumSRTransactionAmount IS NULL, 0, srAmount.sumSRTransactionAmount) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )) as paidTransAmount,
 	mainQuery.concatCustomerName, 
+	matchedBRV.FullyMatched,
 	mainQuery.CutomerCode,
 	mainQuery.CustomerName,  
 	mainQuery.PONumber,
-	chartofaccounts.AccountDescription
+	chartofaccounts.AccountDescription,
+	mainQuery.receivedAmountLocal,
+	mainQuery.receivedAmountRpt,
+	mainQuery.receivedAmountTrans
 FROM
 	(
 SELECT
-	erp_generalledger.companySystemID,
-	erp_generalledger.companyID,
-	companymaster.CompanyName,
-	erp_generalledger.serviceLineSystemID,
-	erp_generalledger.serviceLineCode,
-	erp_generalledger.documentSystemID,
-	erp_generalledger.documentID,
-	erp_generalledger.documentSystemCode,
-	erp_generalledger.documentCode,
-	erp_generalledger.documentDate,
-	DATE_FORMAT( documentDate, "%d/%m/%Y" ) AS documentDateFilter,
-	erp_generalledger.documentYear,
-	erp_generalledger.documentMonth,
-	erp_generalledger.chequeNumber,
-	erp_generalledger.invoiceNumber,
-	erp_generalledger.invoiceDate,
-	erp_generalledger.chartOfAccountSystemID as chartOfAccountSystemID,
-	erp_generalledger.glCode,
-	erp_generalledger.documentNarration,
-	erp_generalledger.clientContractID,
-	erp_generalledger.supplierCodeSystem,
-	erp_generalledger.documentTransCurrencyID,
-	currTrans.CurrencyCode as documentTransCurrency,
-	currTrans.DecimalPlaces as documentTransDecimalPlaces,
-	erp_generalledger.documentTransAmount,
-	erp_generalledger.documentLocalCurrencyID,
-	currLocal.CurrencyCode as documentLocalCurrency,
-	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
-	erp_generalledger.documentLocalAmount,
-	erp_generalledger.documentRptCurrencyID,
-	currRpt.CurrencyCode as documentRptCurrency,
-	currRpt.DecimalPlaces as documentRptDecimalPlaces,
-	erp_generalledger.documentRptAmount,
-	erp_generalledger.documentType,
-	erp_custinvoicedirect.PONumber,
-	customermaster.CutomerCode,
-	customermaster.CustomerName,
-	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as concatCustomerName
+    erp_generalledger.companySystemID,
+    erp_generalledger.companyID,
+    companymaster.CompanyName,
+    erp_generalledger.serviceLineSystemID,
+    erp_generalledger.serviceLineCode,
+    erp_generalledger.documentSystemID,
+    erp_generalledger.documentID,
+    erp_generalledger.documentSystemCode,
+    erp_generalledger.documentCode,
+    erp_generalledger.documentDate,
+    DATE_FORMAT(documentDate, "%d/%m/%Y") AS documentDateFilter,
+    erp_generalledger.documentYear,
+    erp_generalledger.documentMonth,
+    erp_generalledger.chequeNumber,
+    erp_generalledger.invoiceNumber,
+    erp_generalledger.invoiceDate,
+    erp_generalledger.chartOfAccountSystemID AS chartOfAccountSystemID,
+    erp_generalledger.glCode,
+    erp_generalledger.documentNarration,
+    erp_generalledger.clientContractID,
+    erp_generalledger.supplierCodeSystem,
+    erp_generalledger.documentTransCurrencyID,
+    currTrans.CurrencyCode AS documentTransCurrency,
+    currTrans.DecimalPlaces AS documentTransDecimalPlaces,
+    erp_generalledger.documentTransAmount,
+    erp_generalledger.documentLocalCurrencyID,
+    currLocal.CurrencyCode AS documentLocalCurrency,
+    currLocal.DecimalPlaces AS documentLocalDecimalPlaces,
+    erp_generalledger.documentLocalAmount,
+    erp_generalledger.documentRptCurrencyID,
+    currRpt.CurrencyCode AS documentRptCurrency,
+    currRpt.DecimalPlaces AS documentRptDecimalPlaces,
+    erp_generalledger.documentRptAmount,
+    erp_generalledger.documentType,
+    erp_custinvoicedirect.PONumber,
+    customermaster.CutomerCode,
+    customermaster.CustomerName,
+    CONCAT(customermaster.CutomerCode, " - ", customermaster.CustomerName) AS concatCustomerName,
+ 	CASE 
+       WHEN erp_generalledger.documentLocalAmount = (
+            SELECT 
+                CASE 
+                    WHEN erp_generalledger.documentLocalCurrencyID = 1 THEN 
+                        matchingAmount / localCurrencyER
+                    ELSE 
+                        matchingAmount / companyRptCurrencyER
+                END
+            FROM erp_matchdocumentmaster
+            WHERE 
+                erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+                AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+                AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        ) THEN -(
+            SELECT 
+                CASE 
+                    WHEN erp_generalledger.documentLocalCurrencyID = 1 THEN 
+                        matchingAmount / localCurrencyER
+                    ELSE 
+                        matchingAmount / companyRptCurrencyER
+                END
+            FROM erp_matchdocumentmaster
+            WHERE 
+                erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+                AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+                AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+        ELSE (
+            SELECT 
+                CASE 
+                    WHEN erp_generalledger.documentLocalCurrencyID = 1 THEN 
+                        matchingAmount / localCurrencyER
+                    ELSE 
+                        matchingAmount / companyRptCurrencyER
+                END
+            FROM erp_matchdocumentmaster
+            WHERE 
+                erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+                AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+                AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+    END AS receivedAmountLocal,
+    CASE
+        WHEN erp_generalledger.documentRptAmount = (
+            SELECT matchingAmount / companyRptCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        ) THEN -(
+            SELECT matchingAmount / companyRptCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+        ELSE (
+            SELECT matchingAmount / companyRptCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+    END AS receivedAmountRpt,
+    CASE
+    WHEN erp_generalledger.documentTransAmount = (
+            SELECT matchingAmount / supplierDefCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        ) THEN -(
+            SELECT matchingAmount / supplierDefCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+        ELSE (
+            SELECT matchingAmount / supplierDefCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+    END AS receivedAmountTrans
 FROM
-	erp_generalledger 
-	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
-	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
-	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
-	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
-	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
-	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
+    erp_generalledger
+LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
+LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+LEFT JOIN erp_custinvoicedirect ON 
+    erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND 
+    erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND 
+    erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" OR erp_generalledger.documentSystemID = "87" ) 
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
@@ -4266,7 +4382,8 @@ WHERE
 		erp_matchdocumentmaster.BPVcode,
 		sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS MatchedBRVTransAmount,
 		sum( erp_custreceivepaymentdet.receiveAmountLocal ) AS MatchedBRVLocalAmount,
-		sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS MatchedBRVRptAmount 
+		sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS MatchedBRVRptAmount,
+		IF ((erp_matchdocumentmaster.payAmountSuppTrans - matchBalanceAmount),true,false) AS FullyMatched
 	FROM
 		erp_matchdocumentmaster
 		INNER JOIN erp_custreceivepaymentdet ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID 
@@ -4438,19 +4555,6 @@ WHERE
 	) AS final 
  ORDER BY PostedDate ASC;';
         $data =  \DB::select($query);
-
-        $collection = collect($data);
-        $groupedData = $collection->groupBy('CutomerCode');
-
-        // Update each group
-        foreach ($groupedData->toArray() as $customerCode => $records) {
-            if (isset($records[1]) && isset($records[2])) {
-                $records[1]->paidAmount = $records[2]->invoiceAmount;
-                $records[2]->paidAmount = $records[2]->invoiceAmount * -1;
-                $records[1]->balanceAmount = $records[1]->invoiceAmount + $records[1]->paidAmount;
-                $records[2]->balanceAmount = $records[2]->invoiceAmount + $records[2]->paidAmount;
-            }
-        }
 
         return $data;
     }
