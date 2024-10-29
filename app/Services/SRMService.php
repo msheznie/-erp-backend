@@ -1822,8 +1822,13 @@ class SRMService
         try {
             $queryRecordsCount = TenderFaq::where('tender_master_id', $tenderId)->firstOrFail()->toArray();
             if (sizeof($queryRecordsCount)) {
-                $result = TenderFaq::select('id', 'question', 'answer')
+                $result = TenderFaq::select('id', 'question', 'answer', 'tender_master_id')
+                    ->with(['tender' => function ($q)
+                    {
+                        $q->select('id', 'document_type');
+                    }])
                     ->where('tender_master_id', $tenderId);
+
                 if (!empty($SearchText)) {
                     $SearchText = str_replace("\\", "\\\\", $SearchText);
                     $result = $result->where(function ($query) use ($SearchText) {
