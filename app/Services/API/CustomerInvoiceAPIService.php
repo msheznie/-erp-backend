@@ -3440,7 +3440,7 @@ class CustomerInvoiceAPIService extends AppBaseController
     {
         return [
             'identifier' => [
-                'unqie-key' => $invoiceNumber ?? "",
+                'unique-key' => $invoiceNumber ?? "",
                 'index' => $masterIndex + 1
             ],
             'fieldErrors' => $fieldErrors,
