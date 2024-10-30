@@ -17,21 +17,14 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $db;
-    public $input;
-    public $reportCount;
-    public $recordsChuncked;
-    public $fileCount;
-    public $path;
-    public $customerCodeSystem;
-    public $fetchCusEmail;
-    public $customerName;
+    public $dataArray;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $input, $reportCount, $recordsChuncked, $fileCount, $path, $customerCodeSystem, $fetchCusEmail, $customerName)
+    public function __construct($db, $dataArray)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -39,15 +32,8 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
             self::onConnection('database');
         }
 
-        $this->input = $input;
+        $this->dataArray = $dataArray;
         $this->db = $db;
-        $this->reportCount = $reportCount;
-        $this->recordsChuncked = $recordsChuncked;
-        $this->fileCount = $fileCount;
-        $this->path = $path;
-        $this->customerCodeSystem = $customerCodeSystem;
-        $this->fetchCusEmail = $fetchCusEmail;
-        $this->customerName = $customerName;
     }
 
     /**
@@ -57,20 +43,25 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
      */
     public function handle()
     {
+        ini_set('max_execution_time', config('app.report_max_execution_limit'));
+        ini_set('memory_limit', -1);
         $db = $this->db;
         CommonJobService::db_switch($db);
+        Log::info('Customer ledger PDF generation started');
+        $dataArray = $this->dataArray;
+        $input = $dataArray['input'];
+        $reportCount = $dataArray['reportCount'];
+        $recordsChuncked = $dataArray['recordsChuncked'];
+        $path = $dataArray['path'];
+        $customerCodeSystem = $dataArray['customerCodeSystem'];
+        $fileCount = $dataArray['fileCount'];
+        $fetchCusEmail = $dataArray['fetchCusEmail'];
+        $customerName = $dataArray['customerName'];
 
-        $input = $this->input;
-        $reportCount = $this->reportCount;
-        $recordsChuncked = $this->recordsChuncked;
-        $path = $this->path;
-        $customerCodeSystem = $this->customerCodeSystem;
-        $fileCount = $this->fileCount;
-        $fetchCusEmail = $this->fetchCusEmail;
-        $customerName = $this->customerName;
+        $checkIsGroup = Company::find($input['companySystemID']);
 
         if ($input['reportTypeID'] == 'CLT1') {
-
+            $outputArr = array();
             $invoiceAmount = collect($recordsChuncked)->pluck('invoiceAmount')->toArray();
             $invoiceAmount = array_sum($invoiceAmount);
 
@@ -89,8 +80,6 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                 }
             }
 
-            $outputArr = array();
-            $checkIsGroup = Company::find($input['companySystemID']);
             $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']),'companyLogo' => $checkIsGroup->logo_url);
 
             /*** make pdf file */
@@ -112,7 +101,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                     $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                 }
             }
-            $checkIsGroup = Company::find($input['companySystemID']);
+
             $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']), 'toDate' => \Helper::dateFormat($input['toDate']), 'companyLogo' => $checkIsGroup->logo_url);
 
             /*** make pdf file */
@@ -144,9 +133,9 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
 
             $emailSentTo = 0;
             foreach ($fetchCusEmail as $row) {
-                if (!empty($row->contactPersonEmail)) {
+                if (!empty($row['contactPersonEmail'])) {
                     $emailSentTo = 1;
-                    $dataEmail['empEmail'] = $row->contactPersonEmail;
+                    $dataEmail['empEmail'] = $row['contactPersonEmail'];
                     $dataEmail['companySystemID'] = $input['companySystemID'];
 
                     $temp = "Dear " . $customerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;

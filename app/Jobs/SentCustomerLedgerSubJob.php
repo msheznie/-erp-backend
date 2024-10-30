@@ -48,7 +48,6 @@ class SentCustomerLedgerSubJob implements ShouldQueue
      */
     public function handle()
     {
-        ini_set('memory_limit', -1);
         $db = $this->db;
         CommonJobService::db_switch($db);
         Log::info('customer ledger sub job started');
@@ -73,7 +72,17 @@ class SentCustomerLedgerSubJob implements ShouldQueue
                     $reportCount = 1;
                     $outputChunkData = collect($output)->chunk(300);
                     foreach ($outputChunkData as $recordsChuncked) {
-                        SentCustomerLedgerPdfGeneration::dispatch($db, $input, $reportCount, $recordsChuncked, count($outputChunkData), $path, $customerCodeSystem, $fetchCusEmail, $customerMaster->CustomerName);
+                        $dataArray = array(
+                            'input' => $input,
+                            'reportCount' => $reportCount,
+                            'recordsChuncked' => $recordsChuncked,
+                            'fileCount' => count($outputChunkData),
+                            'path' => $path,
+                            'customerCodeSystem' => $customerCodeSystem,
+                            'fetchCusEmail' => $fetchCusEmail->toArray(),
+                            'customerName' => $customerMaster->CustomerName
+                        );
+                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray);
                         $reportCount++;
                     }
                 } else {
@@ -87,7 +96,17 @@ class SentCustomerLedgerSubJob implements ShouldQueue
                     $reportCount = 1;
                     $outputChunkData = collect($output)->chunk(300);
                     foreach ($outputChunkData as $recordsChuncked) {
-                        SentCustomerLedgerPdfGeneration::dispatch($db, $input, $reportCount, $recordsChuncked, count($outputChunkData), $path, $customerCodeSystem, $fetchCusEmail, $customerMaster->CustomerName);
+                        $dataArray = array(
+                            'input' => $input,
+                            'reportCount' => $reportCount,
+                            'recordsChuncked' => $recordsChuncked,
+                            'fileCount' => count($outputChunkData),
+                            'path' => $path,
+                            'customerCodeSystem' => $customerCodeSystem,
+                            'fetchCusEmail' => $fetchCusEmail->toArray(),
+                            'customerName' => $customerMaster->CustomerName
+                        );
+                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray);
                         $reportCount++;
                     }
                 } else {
