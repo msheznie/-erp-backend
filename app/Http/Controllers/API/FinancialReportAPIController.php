@@ -1083,17 +1083,18 @@ class FinancialReportAPIController extends AppBaseController
 
                         if($item->detDescription == 'Share of Associates Profit/Loss') {
 
-                            $totalIncome = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->whereIn('companySystemID', $companySystemIDs)->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
-                                $query->where('controlAccountsSystemID', 1);
-                            })->first();
-
-                            $totalExpense = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->whereIn('companySystemID', $companySystemIDs)->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
-                                $query->where('controlAccountsSystemID', 2);
-                            })->first();
-
                             $total = 0;
 
                             foreach ($companyArray as $company) {
+
+                                $totalIncome = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
+                                    $query->where('controlAccountsSystemID', 1);
+                                })->first();
+
+                                $totalExpense = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
+                                    $query->where('controlAccountsSystemID', 2);
+                                })->first();
+
                                 if($company['group_type'] == 2 || $company['group_type'] == 3) {
                                     if ($currency == 1) {
                                         $total += ($totalIncome->documentLocalAmount + $totalExpense->documentLocalAmount) * $company['holding_percentage'] / 100;
@@ -6548,9 +6549,9 @@ AND MASTER .canceledYN = 0';
             } else if ($coloumnShortCode == "BYTD") {
                 $fifthLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
-                $fifthLinkedcolumnQry .= 'IFNULL( eliminationAmount,  0 ) AS `' . $val . '`,';
+                $fifthLinkedcolumnQry .= 'IFNULL( CASE WHEN controlAccountType = 2 THEN eliminationAmount * -1 ELSE eliminationAmount END, 0) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
-                $fifthLinkedcolumnQry .= 'IFNULL( `'.$cominedColumnKey.'` - IFNULL( eliminationAmount,  0 ),  0 ) AS `' . $val . '`,';
+                $fifthLinkedcolumnQry .= 'IFNULL( `'.$cominedColumnKey.'` - IFNULL(CASE WHEN controlAccountType = 2 THEN eliminationAmount * -1 ELSE eliminationAmount END, 0),  0 ) AS `' . $val . '`,';
             } else {
                 $fifthLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
             }
@@ -6613,7 +6614,8 @@ SELECT
     erp_companyreporttemplatedetails.fontColor,
     erp_companyreporttemplatedetails.hideHeader,
     erp_companyreporttemplatedetails.itemType,
-    erp_companyreporttemplatedetails.netProfitStatus 
+    erp_companyreporttemplatedetails.netProfitStatus,
+    erp_companyreporttemplatedetails.controlAccountType as controlAccountType
 FROM
     erp_companyreporttemplatedetails
     LEFT JOIN (
@@ -6650,7 +6652,8 @@ FROM
                         erp_companyreporttemplatelinks.templateDetailID,
                         erp_companyreporttemplatelinks.categoryType AS linkCatType,
                         erp_companyreporttemplatedetails.description,
-                        erp_companyreporttemplatedetails.categoryType AS templateCatType
+                        erp_companyreporttemplatedetails.categoryType AS templateCatType,
+                        erp_companyreporttemplatedetails.controlAccountType as controlAccountType
                     FROM
                         erp_companyreporttemplatelinks
                     INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
@@ -6678,10 +6681,12 @@ FROM
                         ' . $eliminationQuery . ' 
                     FROM
                         erp_elimination_ledger
+                    JOIN
+                        companymaster ON erp_elimination_ledger.companySystemID = companymaster.companySystemID    
                     WHERE
                         erp_elimination_ledger.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
+                ) AND companymaster.group_type = 1 ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
                 ) AS elimination
             ON
                 elimination.chartOfAccountID = a.glAutoID
@@ -6733,7 +6738,8 @@ FROM
                         erp_companyreporttemplatelinks.templateDetailID,
                         erp_companyreporttemplatelinks.categoryType AS linkCatType,
                         erp_companyreporttemplatedetails.description,
-                        erp_companyreporttemplatedetails.categoryType AS templateCatType
+                        erp_companyreporttemplatedetails.categoryType AS templateCatType,
+                        erp_companyreporttemplatedetails.controlAccountType as controlAccountType
                     FROM
                         erp_companyreporttemplatelinks
                     INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
@@ -6761,10 +6767,12 @@ FROM
                         ' . $eliminationQuery . ' 
                     FROM
                         erp_elimination_ledger
+                    JOIN    
+                        companymaster ON erp_elimination_ledger.companySystemID = companymaster.companySystemID 
                     WHERE
                         erp_elimination_ledger.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
+                ) AND companymaster.group_type = 1 ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
                 ) AS elimination
             ON
                 elimination.chartOfAccountID = a.glAutoID 
