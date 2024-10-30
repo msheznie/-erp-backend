@@ -47,6 +47,7 @@ class FilterParentMenuCriteria implements CriteriaInterface
                 },'child' => function ($query) use($companyId,$userGroupId, $langCode) {
                     $query->whereIn('userGroupID',$userGroupId)
                         ->where('companyID',$companyId)
+                        ->where('isActive',1)
                         ->with(['language'=> function($query) use ($langCode) {
                             $query->where('languageCode', $langCode);
                         },'child' => function ($query) use($companyId,$userGroupId, $langCode) {
@@ -54,6 +55,7 @@ class FilterParentMenuCriteria implements CriteriaInterface
                                 $query->where('languageCode', $langCode);
                             }])->whereIn('userGroupID',$userGroupId)
                                 ->where('companyID',$companyId)
+                                ->where('isActive',1)
                                 ->orderBy("sortOrder","asc");
                         }])
                         ->orderBy("sortOrder","asc");
@@ -69,9 +71,11 @@ class FilterParentMenuCriteria implements CriteriaInterface
                 ->with(['child' => function ($query) use($companyId,$userGroupId) {
                     $query->whereIn('userGroupID',$userGroupId)
                         ->where('companyID',$companyId)
+                        ->where('isActive',1)
                         ->with(['child' => function ($query) use($companyId,$userGroupId) {
                             $query->whereIn('userGroupID',$userGroupId)
                                 ->where('companyID',$companyId)
+                                ->where('isActive',1)
                                 ->orderBy("sortOrder","asc");
                         }])
                         ->orderBy("sortOrder","asc");
