@@ -583,7 +583,7 @@ class email
         }
 
 
-        return ['success' => true, 'message' => 'Successfully Inserted','unverifiedEmail' => ($hasPolicy) ? count($unverifiedEmailArray) > 0 : 0, 'unverifiedEmailMsg' => ($hasPolicy) ? 'Notification cannot be sent to the following approvers regarding pending approval due to unverified email addresses.  <br/><br/> <ul>'. implode('',array_unique($unverifiedEmailArray)).'</ul>' : null];
+        return ['success' => true, 'message' => 'Successfully Inserted','unverifiedEmail' => ($hasPolicy) ? count($unverifiedEmailArray) > 0 : 0, 'unverifiedEmailMsg' => ($hasPolicy && count($unverifiedEmailArray) > 0) ? 'Notification cannot be sent to the following approvers regarding pending approval due to unverified email addresses.  <br/><br/> <ul>'. implode('',array_unique($unverifiedEmailArray)).'</ul>' : null];
 
 
     }
