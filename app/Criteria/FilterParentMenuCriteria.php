@@ -39,6 +39,7 @@ class FilterParentMenuCriteria implements CriteriaInterface
             $langCode = $this->request['langCode'];
             return $model->where('masterID',NULL)
                 ->whereIn('isPortalYN',array(0))
+                ->where('isActive',1)
                 ->whereIn('userGroupID',$userGroupId)
                 ->where('companyID',$companyId)
                 ->with(['language'=> function($query) use ($langCode) {
@@ -61,6 +62,7 @@ class FilterParentMenuCriteria implements CriteriaInterface
         }
         else{
             return $model->where('masterID',NULL)
+                ->where('isActive',1)
                 ->whereIn('isPortalYN',array(0))
                 ->whereIn('userGroupID',$userGroupId)
                 ->where('companyID',$companyId)

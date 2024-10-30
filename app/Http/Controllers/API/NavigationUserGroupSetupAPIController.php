@@ -129,6 +129,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
                                                 ->whereIn('isPortalYN',array(0))
                                                 ->where('userGroupID',$userGroupId)
                                                 ->where('companyID',$companyId)
+                                                ->where('isActive',1)
                                                 ->with(['child' => function ($query) use($companyId,$userGroupId) {
                                                     $query->where('userGroupID',$userGroupId)
                                                         ->where('companyID',$companyId)
