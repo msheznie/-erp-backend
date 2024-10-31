@@ -924,7 +924,6 @@ class SRMService
         $documentSystemID = 107;
         $timesReferred = $kycFormDetails->timesReferred;
 
-
         if($isApprovalAmmend == 1){ 
             $update['approved_yn'] = 0;
             SupplierRegistrationLink::where('uuid',$request->input('supplier_uuid'))->update($update);
@@ -958,10 +957,11 @@ class SRMService
             $kycFormDetails->refferedBackYN = 0;
             $kycFormDetails->save();
         }
+
         return [
             'success' => true,
             'message' => 'Supplier Ammend',
-            'data' => $kycFormDetails
+            'data' => true
         ];
     }
 
