@@ -239,7 +239,11 @@ class SupplierInvoiceCreation implements ShouldQueue
                                     $invMaster['supplierID'] = $supplierExist['supplierCodeSytem'];
                                     $supplier = SupplierMaster::where('supplierCodeSystem', $supplierExist['supplierCodeSytem'])->first();
                                     $invMaster['whtApplicableYN'] = $supplier['whtApplicableYN'];
-                                    $invMaster['whtType'] = $supplier['whtType'];
+                                    if(isset($supplier['whtType'])) {
+                                        $invMaster['whtType'] = $supplier['whtType'];
+                                    } else {
+                                        $invMaster['whtType'] = 0;
+                                    }
 
                                     if(isset($invMaster['bookingDate'])) {
                                         $validatorResult = \Helper::checkBlockSuppliers($invMaster['bookingDate'],$invMaster['supplierID']);
@@ -342,6 +346,13 @@ class SupplierInvoiceCreation implements ShouldQueue
                                                 'message' => 'Cannot allocate a WHT amount as the supplier is not applicable for WHT'
                                             ];
                                             $detail['whtAmount'] = 0;
+                                        }
+
+                                        if($detail['whtAmount'] < 0) {
+                                            $detailsDataError[] = [
+                                                'field' => 'whtAmount',
+                                                'message' => 'whtAmount should be a positive value'
+                                            ];
                                         }
                                         $invMaster['whtApplicable'] =  1;
                                     }
