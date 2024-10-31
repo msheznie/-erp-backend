@@ -100,6 +100,8 @@ class email
         $count = 0;
         Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
 
+        $hasPolicy = $hasPolicy ?? false;
+
         $unverifiedEmailArray = array();
         foreach ($array as $data) {
 
