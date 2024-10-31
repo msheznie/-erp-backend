@@ -96,6 +96,8 @@ define('GET_PREBID_CLARIFICATION_POLICY', 'GET_PREBID_CLARIFICATION_POLICY');
 define('SAVE_SUPPLIER_REGISTRATION', 'SAVE_SUPPLIER_REGISTRATION');
 define('GET_EXTERNAL_LINK_DATA', 'GET_EXTERNAL_LINK_DATA');
 define('SAVE_SUPPLIER_INVITATION_STATUS', 'SAVE_SUPPLIER_INVITATION_STATUS');
+define('GET_PO_APPOINTMENT_CALENDAR', 'GET_PO_APPOINTMENT_CALENDAR');
+define('REMOVE_SRM_INVOICE_ATTACHMENT', 'REMOVE_SRM_INVOICE_ATTACHMENT');
 
 
 class APIController extends Controller
@@ -269,6 +271,10 @@ class APIController extends Controller
                 return $this->SRMService->getExternalLinkData($request);
             case SAVE_SUPPLIER_INVITATION_STATUS:
                 return $this->SRMService->saveSupplierInvitationStatus($request);
+            case GET_PO_APPOINTMENT_CALENDAR:
+                return $this->SRMService->getPoAppointments($request);
+            case REMOVE_SRM_INVOICE_ATTACHMENT:
+                return $this->SRMService->removeDeliveryAppointmentAttachment($request);
             default:
                 return [
                     'success'   => false,
