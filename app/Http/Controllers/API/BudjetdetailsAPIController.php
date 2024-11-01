@@ -333,7 +333,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
     public function getDetailsByBudget(Request $request)
     {
-        ini_set('max_execution_time', 360);
+        ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
         $input = $request->all();
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
