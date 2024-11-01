@@ -228,6 +228,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                     })
                                     ->where('companySystemID', $compId)
                                     ->where('isActive', 1)
+                                    ->where('isAssigned', -1)
                                     ->first();
 
                                 if(empty($supplierExist)) {
@@ -420,6 +421,29 @@ class SupplierInvoiceCreation implements ShouldQueue
 
                                         if ($isVATEligible) {
                                             $defaultVAT = TaxService::getDefaultVAT($compId, $invMaster['supplierID']);
+                                            if($defaultVAT['vatMasterCategoryID'] == null) {
+                                                $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($compId) {
+                                                    $q->where('companySystemID', $compId)
+                                                        ->where('isActive', 1)
+                                                        ->where('taxCategory', 2);
+                                                })
+                                                    ->whereHas('main', function ($q) {
+                                                        $q->where('isActive', 1);
+                                                    })
+                                                    ->where('isActive', 1)
+                                                    ->where('subCatgeoryType', 1)
+                                                    ->first();
+
+                                                if (!empty($taxDetails)) {
+                                                    $defaultVAT['vatSubCategoryID'] = $taxDetails->taxVatSubCategoriesAutoID;
+                                                    $defaultVAT['vatMasterCategoryID'] = $taxDetails->mainCategory;
+                                                } else {
+                                                    $headerDataError[] = [
+                                                        'field' => 'VATPercentage',
+                                                        'message' => 'VAT Category not found'
+                                                    ];
+                                                }
+                                            }
                                             $docAmount = ($detail['amount'] ?? 0);
                                             if(!empty($detail['VATPercentage'])) {
                                                 if(!is_numeric($detail['VATPercentage']) || $detail['VATPercentage'] > 100 || $detail['VATPercentage'] < 0) {
@@ -572,6 +596,30 @@ class SupplierInvoiceCreation implements ShouldQueue
 
                                         if ($isVATEligible) {
                                             $defaultVAT = TaxService::getVATDetailsByItem($compId, $detail['item'], $invMaster['supplierID']);
+                                            if($defaultVAT['vatMasterCategoryID'] == null) {
+                                                $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($compId) {
+                                                    $q->where('companySystemID', $compId)
+                                                        ->where('isActive', 1)
+                                                        ->where('taxCategory', 2);
+                                                })
+                                                    ->whereHas('main', function ($q) {
+                                                        $q->where('isActive', 1);
+                                                    })
+                                                    ->where('isActive', 1)
+                                                    ->where('subCatgeoryType', 1)
+                                                    ->first();
+
+                                                if (!empty($taxDetails)) {
+                                                    $defaultVAT['vatSubCategoryID'] = $taxDetails->taxVatSubCategoriesAutoID;
+                                                    $defaultVAT['vatMasterCategoryID'] = $taxDetails->mainCategory;
+                                                    $defaultVAT['applicableOn'] = $taxDetails->applicableOn;
+                                                } else {
+                                                    $headerDataError[] = [
+                                                        'field' => 'VATPercentage',
+                                                        'message' => 'VAT Category not found'
+                                                    ];
+                                                }
+                                            }
                                             $docAmount = $detail['unitCost'] ?? 0;
                                             if($defaultVAT['applicableOn'] != 1) {
                                                 $docAmount = $docAmount - ($detail['discountAmount'] ?? 0);
@@ -962,7 +1010,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                     DB::rollBack();
                     return [
                         'status' => false,
-                        'error' => 'An error occurred in supplier invoice creation'
+                        'error' => $approveDocument['message']
                     ];
                 }
             }
@@ -970,7 +1018,7 @@ class SupplierInvoiceCreation implements ShouldQueue
             DB::rollBack();
             return [
                 'status' => false,
-                'error' => 'An error occurred in supplier invoice creation'
+                'error' => $returnData['message']
             ];
         }
     }
