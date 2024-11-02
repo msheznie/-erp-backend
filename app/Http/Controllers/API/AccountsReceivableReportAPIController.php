@@ -2943,7 +2943,14 @@ SELECT
 	SUM(erp_generalledger.documentRptAmount) as documentRptAmount,
 	erp_generalledger.documentType,
 	erp_custinvoicedirect.PONumber,
-	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName
+	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName,
+	(
+            SELECT 
+                SUM(matchedAmount)
+            FROM erp_matchdocumentmaster
+            WHERE 
+                erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+   ) AS receviedAmountMatched
 FROM
 	erp_generalledger 
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
@@ -2959,7 +2966,7 @@ WHERE
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
-	) AS mainQuery
+	HAVING ABS(receviedAmountMatched) != ABS(round(documentTransAmount,documentTransDecimalPlaces))) AS mainQuery
 	LEFT JOIN (
 	SELECT
 		erp_matchdocumentmaster.companySystemID,
@@ -3213,7 +3220,7 @@ WHERE
             $invoiceQry = "round( final.documentRptAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
         }
         $currencyID = $request->currencyID;
-        $output = \DB::select('SELECT
+        $query = 'SELECT
         documentLocalAmount2,balanceSubsequentCollectionLocal,InvoiceTransAmount,DocumentCode,commentAndStatus,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,creditDays,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
 	final.documentCode AS DocumentCode,
     final.comments AS commentAndStatus,
@@ -3375,7 +3382,14 @@ SELECT
     customermaster.creditDays,
 	erp_custinvoicedirect.PONumber,
 	erp_custinvoicedirect.invoiceDueDate,
-	serviceline.ServiceLineDes AS serviceLineName
+	serviceline.ServiceLineDes AS serviceLineName,
+	(
+            SELECT 
+                SUM(matchedAmount)
+            FROM erp_matchdocumentmaster
+            WHERE 
+                erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+   ) AS receviedAmountMatched
 FROM
 	erp_generalledger
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
@@ -3400,7 +3414,7 @@ WHERE
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
-	) AS mainQuery
+	HAVING ABS(receviedAmountMatched) != ABS(round(documentTransAmount,documentTransDecimalPlaces))) AS mainQuery
 		LEFT JOIN (
     SELECT 
         salesreturndetails.custInvoiceDirectAutoID,
@@ -3584,7 +3598,8 @@ WHERE
 	AND mainQuery.documentSystemCode = Subsequentcollection.bookingInvCodeSystem
 	) AS final
 WHERE
-' . $whereQry . ' <> 0) as grandFinal ORDER BY PostedDate ASC');
+' . $whereQry . ' <> 0) as grandFinal ORDER BY PostedDate ASC';
+        $output = \DB::select($query);
 
         return ['data' => $output, 'aging' => $aging];
     }
