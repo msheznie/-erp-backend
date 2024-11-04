@@ -236,7 +236,8 @@ class CustomerInvoiceTracking extends Model
         'totalRejectedAmount',
         'createdUserID',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

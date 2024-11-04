@@ -363,7 +363,8 @@ class CreditNoteReferredback extends Model
         'createdDateTime',
         'createdDateAndTime',
         'timestamp',
-        'debitNoteAutoID'
+        'debitNoteAutoID',
+        'isDelegation'
     ];
 
     /**

@@ -345,7 +345,7 @@ class AssetVerificationAPIController extends AppBaseController
         $assetVerification = $this->assetVerificationRepository->update($input, $id);
 
 
-        return $this->sendResponse($assetVerification->toArray(), 'Asset verification updated successfully');
+        return $this->sendReponseWithDetails($assetVerification->toArray(), 'Asset verification updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**
@@ -462,6 +462,16 @@ class AssetVerificationAPIController extends AppBaseController
                 'approvalLevelID',
                 'documentSystemCode'
             )
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+                $query->whereIn('employeesdepartments.documentSystemID', [99])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
+            })
             ->join('erp_fa_asset_verification', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                     ->where('erp_fa_asset_verification.companySystemID', $companyId)

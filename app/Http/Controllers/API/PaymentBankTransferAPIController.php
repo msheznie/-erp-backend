@@ -393,7 +393,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         //  $paymentBankTransfer = $this->paymentBankTransferRepository->update($input, $id);
 
-        return $this->sendResponse($paymentBankTransfer->toArray(), 'PaymentBankTransfer updated successfully');
+        return $this->sendReponseWithDetails($paymentBankTransfer->toArray(), 'PaymentBankTransfer updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

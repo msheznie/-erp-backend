@@ -49,7 +49,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
      */
     public function handle()
     {
-        ini_set('max_execution_time', config('app.report_max_execution_limit'));
+        ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
         Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
         $request = $this->requestData;
@@ -60,7 +60,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
         $root = "account-recivable-pdf/".$currentDate;
 
         $output = $this->getCustomerAgingForPDF($request);
-        $outputChunkData = collect($output['data'])->chunk(300);
+        $outputChunkData = collect($output['data'])->chunk(100);
         $aging = $output['aging'];
         $reportCount = 1;
 
@@ -88,7 +88,8 @@ class AccountsReceivablePdfJob implements ShouldQueue
             $customers = (array)$request->customers;
             $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
     
-            $controlAccountsSystemID = $request->controlAccountsSystemID;
+            $controlAccounts = (array)$request->controlAccountsSystemID;
+            $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
     
             $currency = $request->currencyID;
     
@@ -274,7 +275,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
                 WHERE
                     ( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
                     AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-                    AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
+                    AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
                     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
                     GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
@@ -419,7 +420,8 @@ class AccountsReceivablePdfJob implements ShouldQueue
             $customers = (array)$request->customers;
             $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
     
-            $controlAccountsSystemID = $request->controlAccountsSystemID;
+            $controlAccounts = (array)$request->controlAccountsSystemID;
+            $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
     
             $currency = $request->currencyID;
     
@@ -663,7 +665,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
             WHERE
                 ( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" )
                 AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-                AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
+                AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode

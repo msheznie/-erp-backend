@@ -441,7 +441,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         //$bankReconciliation = $this->bankReconciliationRepository->update($input, $id);
 
-        return $this->sendResponse($bankReconciliation->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_reconciliation')]));
+        return $this->sendReponseWithDetails($bankReconciliation->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_reconciliation')]),1,$confirm['data'] ?? null);
     }
 
     /**

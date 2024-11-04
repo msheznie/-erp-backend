@@ -217,7 +217,8 @@ class StockTransfer extends Model
         'timestamp',
         'approvedByUserID',
         'approvedByUserSystemID',
-        'refferedBackYN'
+        'refferedBackYN',
+        'isDelegation'
     ];
 
     /**

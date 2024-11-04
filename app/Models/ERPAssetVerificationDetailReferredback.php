@@ -139,7 +139,8 @@ class ERPAssetVerificationDetailReferredback extends Model
         'modifiedPc',
         'createdDateAndTime',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+         'isDelegation'
     ];
 
     /**

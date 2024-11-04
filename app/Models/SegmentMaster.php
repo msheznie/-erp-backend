@@ -74,7 +74,8 @@ class SegmentMaster extends Model
         'consoleCode',
         'isFinalLevel',
         'masterID',
-        'consoleDescription'
+        'consoleDescription',
+        'isDelegation'
     ];
 
     /**

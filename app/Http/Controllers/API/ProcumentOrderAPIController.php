@@ -1360,7 +1360,7 @@ class ProcumentOrderAPIController extends AppBaseController
         } // closing amend if condition
 
         TaxService::updatePOVAT($id);
-        return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order updated successfully');
+        return $this->sendReponseWithDetails($procumentOrder->toArray(), 'Procurement Order updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**
@@ -2542,6 +2542,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if ($deleteApproval) {
             $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
                 ->update([
+                    'refferedBackYN' => 0,
                     'poConfirmedYN' => 0,
                     'poConfirmedByEmpSystemID' => null,
                     'poConfirmedByEmpID' => null,

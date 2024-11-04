@@ -97,7 +97,8 @@ class ChartOfAccount extends Model
         'refferedBackYN',
         'reportTemplateCategory',
         'isMasterAccount',
-        'timesReferred'
+        'timesReferred',
+         'isDelegation'
     ];
 
     /**

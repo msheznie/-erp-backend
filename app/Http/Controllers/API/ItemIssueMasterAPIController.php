@@ -75,6 +75,9 @@ use App\Models\Employee;
 use App\Models\ErpProjectMaster;
 Use App\Models\UserToken;
 use GuzzleHttp\Client;
+use App\Models\ErpItemLedger;
+use App\Services\Excel\ExportReportToExcelService;
+use App\Exports\Inventory\MaterialIssueRegister;
 /**
  * Class ItemIssueMasterController
  * @package App\Http\Controllers\API
@@ -774,7 +777,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssueMaster = $this->itemIssueMasterRepository->update($input, $id);
 
-        return $this->sendResponse($itemIssueMaster->toArray(), 'Material Issue updated successfully');
+        return $this->sendReponseWithDetails($itemIssueMaster->toArray(), 'Material Issue updated successfully',1, $confirm['data'] ?? null);
     }
 
     /**
@@ -1303,7 +1306,18 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError('Company local currency not found');
         }
 
-        $array = array('entity' => $materielIssue);
+        $isShowAllocatedEmployeeTable = false;
+
+        foreach ($materielIssue->details as $detail) {
+            if (count($detail->allocate_employees) > 0) {
+                $isShowAllocatedEmployeeTable = true;
+            }
+        }
+
+        $array = array(
+            'isShowAllocatedEmployeeTable' => $isShowAllocatedEmployeeTable,
+            'entity' => $materielIssue
+        );
         $time = strtotime("now");
         $fileName = 'item_issue_' . $id . '_' . $time . '.pdf';
         $html = view('print.item_issue', $array);
@@ -2082,4 +2096,390 @@ class ItemIssueMasterAPIController extends AppBaseController
         return $errorsArray;
     }
 
+
+    
+    public function getMIReportData(Request $request)
+    {
+
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        $item = ErpItemLedger::select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+            ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+            ->where('itemmaster.financeCategoryMaster', 1)
+            ->groupBy('erp_itemledger.itemSystemCode')
+            ->get();
+    
+
+      $employess = Employee::where('empCompanySystemID', $selectedCompanyId)->get();
+
+        $output = array(
+            'item' => $item,
+            'employess' => $employess
+        );
+        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+    }
+
+    public function validateMIRReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'MIR':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'Items' => 'required',
+                    'reportType' => 'required',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+            default:
+                return $this->sendError('Error Occurred');
+        }
+
+    }
+
+    public function generateMIRReport(Request $request)
+    {
+        $input = $request->input();
+
+        $details = $this->getMIRReportData($input);
+        $companyName = $details['companyName'];
+        $startDate = $details['startDate'];
+        $endDate = $details['endDate'];
+        $items =  $details['items'];
+        $employee = $details['employee'];
+        $employeeCondition = $details['employeeCondition'];
+        $employeeSubQuery = $details['employeeSubQuery'];
+
+        if (empty($items))
+        {
+            return $this->sendError('The items field is required.', 500);
+
+        }
+       
+        \DB::select("SET SESSION group_concat_max_len = 1000000");
+        $query = "SELECT 
+                        erp_itemissuedetails.itemPrimaryCode,
+                        CONCAT(
+                            '[', 
+                            GROUP_CONCAT(
+                                JSON_OBJECT(
+                                    'itemIssueDetailID', erp_itemissuedetails.itemIssueDetailID,
+                                    'itemIssueCode', erp_itemissuemaster.itemIssueCode,
+                                    'issueDate', DATE(erp_itemissuemaster.issueDate),
+                                    'itemPrimaryCode', erp_itemissuedetails.itemPrimaryCode,
+                                    'itemDescription', erp_itemissuedetails.itemDescription,
+                                    'unit', units.UnitShortCode,
+                                    'qtyIssued', erp_itemissuedetails.qtyIssued,
+                                    'issueCostLocal', erp_itemissuedetails.issueCostLocal,
+                                    'issueCostLocalTotal', erp_itemissuedetails.issueCostLocalTotal,
+                                    'RequestCode' , erp_request.RequestCode,
+                                    'expenseAllocations', (
+                                            SELECT 
+                                                CONCAT(
+                                                    '[', 
+                                                    GROUP_CONCAT(
+                                                        JSON_OBJECT(
+                                                        'employeeSystemID', expense_employee_allocation.employeeSystemID,
+                                                        'empID', employees.empID,
+                                                        'empName', employees.empName,
+                                                        'assignedQty', expense_employee_allocation.assignedQty,
+                                                        'amount', expense_employee_allocation.amount
+                                                        )
+                                                    ),
+                                                    ']'
+                                                )
+                                            FROM 
+                                                expense_employee_allocation 
+                                            JOIN 
+                                                employees 
+                                            ON 
+                                                expense_employee_allocation.employeeSystemID = employees.employeeSystemID     
+                                            WHERE 
+                                                expense_employee_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                                                $employeeCondition
+                                        )
+                                )
+                            ),
+                            ']'
+                        ) AS items
+                    FROM 
+                        erp_itemissuemaster 
+                    JOIN 
+                        erp_itemissuedetails 
+                    ON 
+                        erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID 
+                    LEFT JOIN 
+                        erp_request 
+                    ON erp_itemissuemaster.reqDocID = erp_request.RequestID
+                    JOIN 
+                        units 
+                    ON 
+                        erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
+                    WHERE 
+                        erp_itemissuedetails.itemCodeSystem IN ($items)
+                    AND 
+                        erp_itemissuemaster.approved = -1
+                    AND  
+                        DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
+                       $employeeSubQuery
+                      GROUP BY 
+                erp_itemissuedetails.itemPrimaryCode
+                ";
+        
+        $output = \DB::select($query);
+
+
+        $groupedResults = [];
+
+            foreach ($output as $row) {
+                
+                $details = json_decode($row->items,true);
+                $groupedResults[$row->itemPrimaryCode] = $details;
+
+
+                foreach($details as $key => $value)
+                {
+
+                    if($value['expenseAllocations'] != null)
+                    {
+
+                        $groupedResults[$row->itemPrimaryCode][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
+                    }
+                }
+                
+            }
+
+
+       $results['companyName']  = $companyName; 
+       $results['groupedResults']  = $groupedResults;    
+
+    return $this->sendResponse($results, 'Meterial issues  retrieved successfully');
+
+    }
+
+
+    public function exportMIRReport(Request $request, ExportReportToExcelService $exportReportToExcelService)
+    {
+        $input = $request->input();
+
+
+        $details = $this->getMIRReportData($input);
+        $companyName = $details['companyName'];
+        $startDate = $details['startDate'];
+        $endDate = $details['endDate'];
+        $items =  $details['items'];
+        $employee = $details['employee'];
+        $employeeCondition = $details['employeeCondition'];
+        $employeeSubQuery = $details['employeeSubQuery'];
+        $company = Company::find($input['companySystemID']);
+
+        $data = array();
+        $query = "SELECT 
+                    erp_itemissuedetails.itemPrimaryCode,
+                    erp_itemissuedetails.itemIssueDetailID,
+                    erp_itemissuemaster.itemIssueCode,
+                    DATE(erp_itemissuemaster.issueDate) AS issueDate,
+                    erp_itemissuedetails.itemDescription,
+                    units.UnitShortCode AS unit,
+                    erp_itemissuedetails.qtyIssued,
+                    erp_itemissuedetails.issueCostLocal,
+                    erp_itemissuedetails.issueCostLocalTotal,
+                    employees.employeeSystemID,
+                    employees.empID,
+                    employees.empName,
+                    expense_employee_allocation.assignedQty,
+                    expense_employee_allocation.amount,
+                    (expense_employee_allocation.assignedQty * expense_employee_allocation.amount) AS calculatedAmount,
+                    erp_request.RequestCode
+                FROM 
+                    erp_itemissuemaster
+                JOIN 
+                    erp_itemissuedetails 
+                    ON erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID
+                LEFT JOIN 
+                    erp_request 
+                    ON erp_itemissuemaster.reqDocID = erp_request.RequestID
+                JOIN 
+                    units 
+                    ON erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
+                LEFT JOIN 
+                    expense_employee_allocation 
+                    ON expense_employee_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                LEFT JOIN 
+                    employees 
+                    ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
+                WHERE 
+                    erp_itemissuedetails.itemCodeSystem IN ($items)
+                    AND erp_itemissuemaster.approved = -1
+                    AND DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
+                    $employeeCondition
+                ORDER BY 
+                    erp_itemissuedetails.itemPrimaryCode, erp_itemissuedetails.itemIssueDetailID
+
+                ";
+
+        $output = \DB::select($query);
+
+
+        if(empty($data)) {
+            $mirReportHeaderObj = new MaterialIssueRegister();
+            array_push($data,collect($mirReportHeaderObj->getHeader())->toArray());
+        }        
+
+
+         foreach ($output as $val) {
+             $mirReportObj = new MaterialIssueRegister();
+ 
+             $mirReportObj->setIssueCode($val->itemIssueCode);
+             $mirReportObj->setIssueDate($val->issueDate);
+             $mirReportObj->setRequestNo($val->RequestCode);
+             $mirReportObj->setItemCode($val->itemPrimaryCode);
+             $mirReportObj->setItemDescription($val->itemDescription);
+             $mirReportObj->setUom($val->unit);
+             $mirReportObj->setIssuedQty($val->qtyIssued);
+             $mirReportObj->setEmpID($val->empID);
+             $mirReportObj->setEmpName($val->empName);
+             $mirReportObj->setQty($val->assignedQty);
+             $mirReportObj->setCost($val->amount);
+             $mirReportObj->setAmount($val->calculatedAmount);
+             array_push($data,collect($mirReportObj)->toArray());
+         }
+ 
+
+
+        $requestCurrency = null;
+        $excelColumnFormat = [
+            'H' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+
+        ];
+
+       
+        $title = 'Material Issue Register';
+        $path = 'inventory/report/material_issue_register/excel/';
+        $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+        $fileName = 'material_issue_register';
+
+        $exportToExcel = $exportReportToExcelService
+        ->setTitle($title)
+        ->setFileName($fileName)
+        ->setPath($path)
+        ->setCompanyCode($companyCode)
+        ->setCompanyName($companyName)
+        ->setFromDate($startDate)
+        ->setToDate($endDate)
+        ->setData($data)
+        ->setReportType(1)
+        ->setType('xls')
+        ->setExcelFormat($excelColumnFormat)
+        ->setCurrency($requestCurrency)
+        ->setDateType(2)
+        ->setDetails()
+        ->generateExcel();
+
+    if(!$exportToExcel['success'])
+        return $this->sendError('Unable to export excel');
+
+    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
+    }
+
+
+
+    public function getMIRReportData($input)
+    {
+        $isGroup = \Helper::checkIsCompanyGroup($input['companySystemID']);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($input['companySystemID']);
+        }
+        else {
+            $subCompanies = [$input['companySystemID']];
+        }
+
+        if($subCompanies && $subCompanies[0]) {
+            $company = Company::find($subCompanies[0]);
+        }
+        else {
+            return [
+                'status' => false,
+                'message' => 'Company System ID not found'
+            ];
+        }
+
+        if(!isset($company)){
+            return [
+                'status' => false,
+                'message' => 'Company Details not found'
+            ];
+        }
+
+        $companyName = $company->CompanyName;
+    
+        $startDate = new Carbon($input['fromDate']);
+        $startDate = $startDate->format('Y-m-d');
+
+        $endDate = new Carbon($input['toDate']);
+        $endDate = $endDate->format('Y-m-d');
+
+        $items=[];
+        if (array_key_exists('Items', $input)) {
+            $items = collect($input['Items'])->pluck('itemSystemCode')->toArray(); 
+        }
+
+        $employess=[];
+        if (array_key_exists('employee', $input)) {
+            $employee = collect($input['employee'])->pluck('id')->toArray(); 
+        }
+
+
+
+        $items = implode(',', $items);
+        $employee = implode(',', $employee);
+
+        $employeeCondition = '';
+        $employeeSubQuery = '';
+
+            if (!empty($employee)) {
+                $employeeCondition = "AND expense_employee_allocation.employeeSystemID IN ($employee)";
+
+                $employeeSubQuery = "AND (
+                                        SELECT 
+                                            COUNT(*) 
+                                        FROM 
+                                            expense_employee_allocation 
+                                        WHERE 
+                                            expense_employee_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                                            $employeeCondition
+                                    ) > 0";
+            }
+
+            return [
+                'companyName' => $companyName,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'startDate' => $startDate,
+                'items' => $items,
+                'employee' => $employee,
+                'employeeCondition' => $employeeCondition,
+                'employeeSubQuery' => $employeeSubQuery,
+            ];
+
+    }
 }

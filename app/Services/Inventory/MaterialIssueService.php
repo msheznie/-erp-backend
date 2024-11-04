@@ -204,6 +204,21 @@ class MaterialIssueService
                             $isValidationError = 1;
                         }
 
+                        $checkItemExist = ItemIssueDetails::where('itemIssueAutoID', $materialIssue['itemIssueAutoID'])->where('itemCodeSystem', $categoryType->itemCodeSystem)->first();
+                        if(!empty($checkItemExist)) {
+                            $validationErrorMsg[] = 'The items already added to material issue for Excel row: ' . $rowNumber;
+                            $isValidationError = 1;
+                        } else {
+                            $validatedArraylist = collect($excelRows)->take(($rowNumber) - 7);
+                            if(!$validatedArraylist->isEmpty()) {
+                                $itemCodeSystemArray = collect($validatedArraylist)->pluck('item_code');
+                                if ($itemCodeSystemArray->contains($rowData['item_code'])) {
+                                    $validationErrorMsg[] = 'The items already added in excel sheet for Excel row: ' . $rowNumber;
+                                    $isValidationError = 1;
+                                }
+                            }
+                        }
+
                         if(isset($rowData['qty']) && is_numeric($rowData['qty']) && $rowData['qty'] > 0) {
                             $data = array(
                                 'companySystemID' => $materialIssue['companySystemID'],

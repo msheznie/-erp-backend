@@ -38,7 +38,7 @@ class UserGroupRepository extends BaseRepository
     public function getUserGroupByCompanyDatatable($input)
     {
 
-        $userGroup = $this->model->with('company');
+        $userGroup = $this->model->with('company')->where('delegation_id',0);
         if(array_key_exists ('selectedCompanyID' , $input)){
             if($input['selectedCompanyID'] > 0){
                 $userGroup->where('srp_erp_usergroups.companyID',$input['selectedCompanyID']);
@@ -80,7 +80,7 @@ class UserGroupRepository extends BaseRepository
 
     public function getUserGroup($input)
     {
-        $userGroup = $this->model->where('companyID',$input["companyID"])->where('isDeleted', 0)->get();
+        $userGroup = $this->model->where('companyID',$input["companyID"])->where('isDeleted', 0)->where('delegation_id',0)->get();
         return $userGroup;
     }
 }

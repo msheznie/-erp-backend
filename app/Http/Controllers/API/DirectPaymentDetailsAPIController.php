@@ -248,6 +248,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 $input['bankCurrencyID'] = $account->accountCurrencyID;
                 $conversionAmount = \Helper::currencyConversion($input['companySystemID'], $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
                 $input['bankCurrencyER'] = $conversionAmount["transToDocER"];
+                $input['expense_claim_er'] = $conversionAmount['transToDocER'];
             }else{
                 return $this->sendError('No bank account found for the selected GL code.');
             }

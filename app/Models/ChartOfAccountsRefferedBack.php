@@ -275,7 +275,8 @@ class ChartOfAccountsRefferedBack extends Model
         'createdDateTime',
         'modifiedPc',
         'modifiedUser',
-        'timestamp'
+        'timestamp',
+          'isDelegation'
     ];
 
     /**

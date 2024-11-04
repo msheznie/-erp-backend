@@ -276,7 +276,8 @@ class JvMaster extends Model
         'reversalDate',
         'reversalJV',
         'reversedYN',
-        'stopReversalJV'
+        'stopReversalJV',
+        'isDelegation'
     ];
 
     /**

@@ -280,7 +280,8 @@ class StockCount extends Model
         'timestamp',
         'RollLevForApp_curr',
         'counter',
-        'detailStatus'
+        'detailStatus',
+        'isDelegation'
     ];
 
     /**

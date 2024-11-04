@@ -91,8 +91,12 @@ class ItemIssueMasterRepository extends BaseRepository
 
     public function getAudit($id)
     {
-        return $this->with(['created_by', 'confirmed_by', 'modified_by', 'warehouse_by', 'company', 'details' => function ($q) {
-              $q->with('uom_issuing', 'item_by');
+        return $this->with(['created_by', 'confirmed_by', 'modified_by', 'warehouse_by', 'company', 'details' => function ($q1) {
+              $q1->with(['uom_issuing', 'item_by', 'allocate_employees' => function ($q2) {
+                  $q2->with(['employee' => function ($q3) {
+                      $q3->with(['hr_emp']);
+                  }]);
+              }]);
         }, 'approved_by' => function ($query) {
             $query->with(['employee' => function ($q) {
                 $q->with(['details.designation']);

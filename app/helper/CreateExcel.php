@@ -80,6 +80,17 @@ class CreateExcel
             else {
                 $excel->sheet($fileName, function ($sheet) use ($data,$fileName,$array,$columnFormat) {
 
+                    $search = ['='];
+
+                    foreach ($data as &$record) {
+                        foreach ($record as $key => &$value) {
+                            if (is_string($value)) {
+                                $value = str_replace($search, '', $value);
+                            }
+                        }
+                    }
+
+
                     $i = 7;
                     if(!isset($array['title']) && empty($array['title']))
                     {

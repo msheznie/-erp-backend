@@ -548,7 +548,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $itemReturnMaster = $this->itemReturnMasterRepository->update($input, $id);
 
-        return $this->sendResponse($itemReturnMaster->toArray(), 'Material Return Master Updated Successfully');
+        return $this->sendReponseWithDetails($itemReturnMaster->toArray(), 'Material Return Master Updated Successfully',1,$confirm['data'] ?? null);
     }
 
     /**

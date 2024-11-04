@@ -450,7 +450,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     $query->with(['group_all_to']);
                 }])->where('assetdisposalMasterAutoID', $id)->get();
 
-                if (empty($disposalDetailExist)) {
+                if ($disposalDetailExist->isEmpty()) {
                     return $this->sendError(trans('custom.asset_disposal_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                 }
 
@@ -607,7 +607,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
             $assetDisposalMaster = $this->assetDisposalMasterRepository->update($input, $id);
             DB::commit();
-            return $this->sendResponse($assetDisposalMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_disposal_master')]));
+            return $this->sendReponseWithDetails($assetDisposalMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_disposal_master')]),1,$confirm['data'] ?? null);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

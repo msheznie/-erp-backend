@@ -19,7 +19,8 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\TrustProxies::class,
-
+        \App\Http\Middleware\PreflightResponse::class
+        // \Barryvdh\Cors\HandleCors::class
     ];
 
     /**
@@ -61,7 +62,9 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
-        //'cors' => \App\Http\Middleware\Cors::class
+        'cors' => \App\Http\Middleware\Cors::class,
+        'corsFree' => \App\Http\Middleware\CorsFree::class,
+        'securityHeader' => \App\Http\Middleware\SecurityHeader::class,
         'tenant' => \App\Http\Middleware\TenantEnforce::class,
         'authorization' => \App\Http\Middleware\UserAuthorization::class,
         'tenantById' => \App\Http\Middleware\TenantByKey::class,
@@ -69,11 +72,12 @@ class Kernel extends HttpKernel
         'max_memory_limit' => \App\Http\Middleware\MaxMemoryLimit::class,
         'max_execution_limit' => \App\Http\Middleware\MaxExecutionLimit::class,
         'access_token' => \App\Http\Middleware\AccessToken::class,
-        'pos_api' => \App\Http\Middleware\PosApi::class,
+        'thirdPartyApis' => \App\Http\Middleware\PosApi::class,
         'print_lang' => \App\Http\Middleware\DetectPrintLang::class,
         'hrms_employee' => \App\Http\Middleware\DetectHRMSEmployee::class,
         'mobileAccess' => \App\Http\Middleware\MobileAccessVerify::class,
         'auth.api.keycloak' => \App\Http\Middleware\EitherAuthAPIorKeyClock::class,
-        'mobileServer' => \App\Http\Middleware\MobileServer::class
+        'mobileServer' => \App\Http\Middleware\MobileServer::class,
+        'checkNotVerifiedEmail' => \App\Http\Middleware\NotVerifiedEmailMiddleware::class
     ];
 }

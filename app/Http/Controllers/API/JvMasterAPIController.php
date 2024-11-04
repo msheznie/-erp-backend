@@ -834,6 +834,13 @@ class JvMasterAPIController extends AppBaseController
         {
             $input['reversalDate'] = Carbon::parse($input['reversalDate']);
         }
+
+        if($input['jvType'] == 1 || $input['jvType'] == 2 || $input['jvType'] == 3 || $input['jvType'] == 4)
+        {
+            $input['reversalJV'] = 0;
+            $input['reversalDate'] = null;
+        }
+
         $jvMaster = $this->jvMasterRepository->update($input, $id);
 
         if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
@@ -844,7 +851,7 @@ class JvMasterAPIController extends AppBaseController
                 ];
             }
             else{
-                return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher confirmed successfully');
+                return $this->sendReponseWithDetails($jvMaster->toArray(), 'Journal Voucher confirmed successfully',1,$confirm['data'] ?? null);
             }
         }
 

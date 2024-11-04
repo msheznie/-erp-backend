@@ -155,11 +155,15 @@ class EmployeeNavigationAPIController extends AppBaseController
     public function getUserGroupEmployeesByCompanyDatatable(Request $request)
     {
         $input = $request->all();
-        $userGroup = EmployeeNavigation::with(['company', 'usergroup', 'employee' => function ($query) use ($input) {
-                                                                            if (array_key_exists('dischargedYN', $input)) {
-                                                                                $query->where('discharegedYN', $input['dischargedYN']);
-                                                                            }
-                                                                        }]);
+        $userGroup = EmployeeNavigation::with(['company', 'usergroup'=>function($q){
+            $q->where('delegation_id',0);
+        }, 'employee' => function ($query) use ($input) {
+            if (array_key_exists('dischargedYN', $input)) {
+                $query->where('discharegedYN', $input['dischargedYN']);
+            }
+          }])->whereHas('usergroup',function($q){
+            $q->where('delegation_id',0);
+        });
         if (array_key_exists('selectedCompanyID', $input)) {
             if ($input['selectedCompanyID'] > 0) {
                 $userGroup->where('srp_erp_employeenavigation.companyID', $input['selectedCompanyID']);

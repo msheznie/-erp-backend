@@ -1517,7 +1517,8 @@ class CustomerInvoiceAPIService extends AppBaseController
                             return [
                                 'status' => true,
                                 'data' => $customerInvoiceDirect->refresh()->toArray(),
-                                'message' => 'Customer invoice confirmed successfully'
+                                'message' => 'Customer invoice confirmed successfully',
+                                'detail' => $confirm['data'] ?? null
                             ];
                         }
                     }
@@ -1656,7 +1657,8 @@ class CustomerInvoiceAPIService extends AppBaseController
                                     return [
                                         'status' => true,
                                         'data' => $customerInvoiceDirect->refresh()->toArray(),
-                                        'message' => 'Customer invoice confirmed successfully'
+                                        'message' => 'Customer invoice confirmed successfully',
+                                        'detail' => $confirm['data'] ?? null
                                     ];
                                 }
                             }
@@ -2852,7 +2854,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             elseif (isset($input['by']) && $input['by']== 'margin'){
                 $input['salesPrice'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
             }
-            else{
+            elseif ($customerDirectInvoice->isPerforma != 5){
                 if (isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
                     $input['salesPrice'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
                 }else{
@@ -2902,7 +2904,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     }
                 }
             }
-            else {
+            else if ($customerDirectInvoice->isPerforma != 5) {
                 if ($input['discountPercentage'] != 0) {
                     $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
                 } else {
@@ -3438,7 +3440,7 @@ class CustomerInvoiceAPIService extends AppBaseController
     {
         return [
             'identifier' => [
-                'unqie-key' => $invoiceNumber ?? "",
+                'unique-key' => $invoiceNumber ?? "",
                 'index' => $masterIndex + 1
             ],
             'fieldErrors' => $fieldErrors,

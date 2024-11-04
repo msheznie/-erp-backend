@@ -239,7 +239,8 @@ class BudgetTransferFormRefferedBack extends Model
         'modifiedPc',
         'modifiedUser',
         'modifiedUserSystemID',
-        'timestamp'
+        'timestamp',
+          'isDelegation'
     ];
 
     /**

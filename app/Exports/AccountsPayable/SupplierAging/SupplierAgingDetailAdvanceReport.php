@@ -18,12 +18,6 @@ class SupplierAgingDetailAdvanceReport
     public $invoiceDate;
     public $currency;
     public $agingDays;
-    public $column1;
-    public $column2;
-    public $column3;
-    public $column4;
-    public $column5;
-    public $advanceAmount;
 
     /**
      * @return mixed
@@ -41,9 +35,9 @@ class SupplierAgingDetailAdvanceReport
             'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
         ];
     }
-    public function getHeader($typeAging) :Array {
+    public function getHeader($typeAging, $header) :Array {
         if($typeAging == 1) {
-            return [
+            return array_merge([
                 'Company ID',
                 'Company Name',
                 'Doc Date',
@@ -56,15 +50,13 @@ class SupplierAgingDetailAdvanceReport
                 'Invoice Date',
                 'Currency',
                 'Aging Days',
-                '0-30',
-                '31-60',
-                '61-90',
-                '91-100',
-                '> 100',
+                ],
+                $header,
+                [
                 'Advance/UnAllocated Amount'
-            ];
+                ]);
         } else {
-            return [
+            return array_merge([
                 'Company ID',
                 'Company Name',
                 'Doc Date',
@@ -77,13 +69,11 @@ class SupplierAgingDetailAdvanceReport
                 'Invoice Date',
                 'Currency',
                 'Aging Days',
-                '0-30',
-                '31-60',
-                '61-90',
-                '91-100',
-                '> 100',
+                ],
+                $header,
+                [
                 'Advance/UnAllocated Amount'
-            ];
+            ]);
         }
     }
 

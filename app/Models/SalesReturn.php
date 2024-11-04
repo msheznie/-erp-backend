@@ -454,7 +454,8 @@ class SalesReturn extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

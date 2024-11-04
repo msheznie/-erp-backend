@@ -688,7 +688,7 @@ class DeliveryOrderAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             } else {
-                return $this->sendResponse($deliveryOrder->toArray(), 'Delivery order confirmed successfully');
+                return $this->sendReponseWithDetails($deliveryOrder->toArray(), 'Delivery order confirmed successfully',1,$confirm['data'] ?? null);
             }
 
         }else{

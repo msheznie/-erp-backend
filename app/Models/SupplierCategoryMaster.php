@@ -54,7 +54,8 @@ class SupplierCategoryMaster extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'isDelegation'
     ];
 
     /**

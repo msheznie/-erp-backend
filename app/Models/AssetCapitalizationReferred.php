@@ -300,7 +300,8 @@ class AssetCapitalizationReferred extends Model
         'canceledByEmpID',
         'canceledByEmpName',
         'RollLevForApp_curr',
-        'timestamp'
+        'timestamp',
+         'isDelegation'
     ];
 
     /**

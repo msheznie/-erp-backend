@@ -36,7 +36,8 @@ class ErpLocation extends Model
 
     public $fillable = [
         'locationName',
-        'is_deleted'
+        'is_deleted',
+        'isDelegation'
     ];
 
     /**

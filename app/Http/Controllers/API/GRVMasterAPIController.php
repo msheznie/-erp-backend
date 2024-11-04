@@ -1132,7 +1132,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($gRVMaster->toArray(), 'GRV updated successfully');
+        return $this->sendReponseWithDetails($gRVMaster->toArray(), 'GRV updated successfully',1, $confirm['data'] ?? null);
     }
 
     /**

@@ -221,6 +221,12 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])
                     ->where('companySystemID', $companySystemID)
                     ->first();
+
+                $itemExist = ItemIssueDetails::where('itemIssueAutoID', $input['itemIssueAutoID'])->where('itemCodeSystem', $item['itemCodeSystem'])->first();
+                if(!empty($itemExist)) {
+                    return $this->sendError('Selected Item is already added. Please check again', 500);
+                }
+
             } else if ($input['issueType'] == 2) {
                 $item = MaterielRequestDetails::where('RequestDetailsID', $input['itemCode'])->with(['item_by'])->first();
                 if ($item && is_null($item->itemCode)) {

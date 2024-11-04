@@ -162,7 +162,8 @@ class Employee extends Model
         'excludeObjectivesYN',
         'empCompanySystemID',
         'machineID',
-        'timestamp'
+        'timestamp',
+        'isEmailVerified'
     ];
 
     /**
@@ -229,6 +230,7 @@ class Employee extends Model
         'opRptManagerAccess' => 'integer',
         'isSupportAdmin' => 'integer',
         'isHSEadmin' => 'integer',
+        'isEmailVerified' => 'integer',
         'excludeObjectivesYN' => 'integer',
         'machineID' => 'integer'
     ];

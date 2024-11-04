@@ -532,7 +532,7 @@ class StockAdjustmentAPIController extends AppBaseController
 
         $stockAdjustment = $this->stockAdjustmentRepository->update($input, $id);
 
-        return $this->sendResponse($stockAdjustment->toArray(), 'StockAdjustment updated successfully');
+        return $this->sendReponseWithDetails($stockAdjustment->toArray(), 'StockAdjustment updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

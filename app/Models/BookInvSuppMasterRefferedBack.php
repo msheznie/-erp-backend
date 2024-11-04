@@ -390,7 +390,8 @@ class BookInvSuppMasterRefferedBack extends Model
         'whtApplicable',
         'whtAmount',
         'whtPercentage',
-        'isWHTApplicableVat'
+        'isWHTApplicableVat',
+         'isDelegation'
     ];
 
     /**

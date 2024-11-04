@@ -641,7 +641,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $purchaseReturn = $this->purchaseReturnRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseReturn->toArray(), 'PurchaseReturn updated successfully');
+        return $this->sendReponseWithDetails($purchaseReturn->toArray(), 'PurchaseReturn updated successfully',1,$confirm['data'] ?? null);
     }
 
 

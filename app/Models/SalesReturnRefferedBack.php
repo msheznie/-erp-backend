@@ -461,7 +461,8 @@ class SalesReturnRefferedBack extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
-        'timestamp'
+        'timestamp',
+         'isDelegation'
     ];
 
     /**

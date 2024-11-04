@@ -3,6 +3,7 @@
 namespace App\Traits;
 use App\helper\Helper;
 use App\Models\AuditTrail;
+use App\Services\UserTypeService;
 use Carbon\Carbon;
 
 trait AuditTrial
@@ -15,7 +16,7 @@ trait AuditTrial
      * @param string $companySystemID
      * @return array
      */
-    public static function createAuditTrial($documentSystemID, $documentSystemCode, $comment, $process = '', $oldValue = null)
+    public static function createAuditTrial($documentSystemID, $documentSystemCode, $comment, $process = '', $oldValue = null, $isFromAPI = false)
     {
         $docInforArr = array('modelName' => '', 'primarykey' => '', 'documentCodeColumnName' =>'','companySystemID' => '', 'companyID' => '', 'serviceLineSystemID' =>'','serviceLineCode' => '', 'documentID' => '', 'documentSystemCode' =>'' );
 
@@ -373,7 +374,11 @@ trait AuditTrial
         $masterRec = $namespacedModel::find($documentSystemCode);
 
         if(!empty($masterRec)){
-            $employee = Helper::getEmployeeInfo();
+            if($isFromAPI){
+                $employee = UserTypeService::getSystemEmployee();
+            } else {
+                $employee = Helper::getEmployeeInfo();
+            }
             $description = $masterRec[$docInforArr["documentID"]]." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process;
             if($comment != ''){
                 $description .= ". due to below reason: ".$comment;

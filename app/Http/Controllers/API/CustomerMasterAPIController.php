@@ -1018,14 +1018,9 @@ class CustomerMasterAPIController extends AppBaseController
         $input = $request->all();
         $document_id = $input['document_id'];
 
-        $isPosIntegrated = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
-            ->where('companyPolicyCategoryID', 69)
-            ->where('isYesNO', 1)
-            ->exists();
-
         $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
 
-        if($input['document_id'] == 57 && $isPosIntegrated){
+        if($input['document_id'] == 57){
 
             if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/item_pos_template.xlsx')) {
                 return Storage::disk($disk)->download('Master_Template/'.$document_id.'/item_pos_template.xlsx', 'item_pos_template.xlsx');

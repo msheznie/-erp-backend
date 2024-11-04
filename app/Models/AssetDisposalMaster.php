@@ -179,7 +179,8 @@ class AssetDisposalMaster extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

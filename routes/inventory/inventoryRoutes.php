@@ -22,6 +22,7 @@ Route::group([], function () {
     Route::post('getMaterielIssueApprovedByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovedByUser')->name("Get approved - Material issue");
     Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData')->name("Get Materiel Issue Form Data");
     Route::get('getTypeheadActiveEmployees', 'ItemIssueMasterAPIController@getTypeheadActiveEmployees')->name("Get type head active employees");
+    Route::get('getEmployeeRecentAllocation', 'ExpenseEmployeeAllocationAPIController@getEmployeeRecentAllocation')->name("Get employee recent allocation");
 
     Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser')->name("Get pending for approval - Material Request");
     Route::post('getApprovedMaterielRequestsByUser', 'MaterielRequestAPIController@getApprovedMaterielRequestsByUser')->name("Get approved - Material Request");
@@ -173,7 +174,11 @@ Route::group([], function () {
     Route::post('miItemsUpload', 'ItemIssueDetailsAPIController@miItemsUpload')->name('Material issue items upload');
     Route::get('getMiItemBulkUploadError', 'MiBulkUploadErrorLogAPIController@getMiItemBulkUploadError')->name('Material issue item bulk upload errors');
     Route::post('deleteMiItemUploadErrorLog/{id}', 'MiBulkUploadErrorLogAPIController@deleteMiItemUploadErrorLog')->name('Delete Material issue item upload error log');
-
+    Route::post('getMIReportData', 'ItemIssueMasterAPIController@getMIReportData')->name('GetMI Report Data');
+    Route::post('validateMIRReport', 'ItemIssueMasterAPIController@validateMIRReport')->name('Validate MIR Report');
+    Route::post('generateMIRReport', 'ItemIssueMasterAPIController@generateMIRReport')->name('Generate MIR Report');
+    Route::post('exportMIRReport', 'ItemIssueMasterAPIController@exportMIRReport')->name('Export MIR Report');
+    
 });
 
 //Material return Trans

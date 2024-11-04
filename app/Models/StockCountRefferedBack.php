@@ -288,7 +288,8 @@ class StockCountRefferedBack extends Model
         'timestamp',
         'RollLevForApp_curr',
         'counter',
-        'detailStatus'
+        'detailStatus',
+          'isDelegation'
     ];
 
     /**

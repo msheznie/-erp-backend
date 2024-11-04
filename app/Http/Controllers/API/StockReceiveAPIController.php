@@ -619,7 +619,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $stockReceive = $this->stockReceiveRepository->update($input, $id);
 
-        return $this->sendResponse($stockReceive->toArray(), 'StockReceive updated successfully');
+        return $this->sendReponseWithDetails($stockReceive->toArray(), 'StockReceive updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

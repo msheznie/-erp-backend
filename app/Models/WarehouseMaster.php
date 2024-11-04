@@ -61,7 +61,8 @@ class WarehouseMaster extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'templateImgUrl',
-        'printTemplateId'
+        'printTemplateId',
+         'isDelegation'
     ];
 
     /**

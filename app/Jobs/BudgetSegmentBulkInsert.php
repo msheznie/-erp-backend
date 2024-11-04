@@ -279,7 +279,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 'path' => "",
             ];
 
-           WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
+            WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
             try {
              
                 $this->failed($uploadedCompany,$uploadBudget->id,"Undefined error in upload",$e->getLine());
@@ -306,7 +306,18 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
         $logUploadBudget= logUploadBudget::create($uploadLogArray);
 
-      return true;;
+        $webPushData = [
+            'title' => "Upload Budget Failed",
+            'body' => "",
+            'url' => "general-ledger/budget-upload",
+            'path' => "",
+        ];
+
+        $employee = $this->uploadData['employee'];
+
+        WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $this->db);
+
+        return true;;
     }
 
         private function isRowNotEmpty(array $row): bool

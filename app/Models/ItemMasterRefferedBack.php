@@ -302,7 +302,8 @@ class ItemMasterRefferedBack extends Model
         'modifiedUserSystemID',
         'isPOSItem',
         'vatSubCategory',
-        'pos_type'
+        'pos_type',
+         'isDelegation'
     ];
 
     /**

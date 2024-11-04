@@ -67,7 +67,8 @@ class PortMaster extends Model
         'country_id',
         'is_deleted',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'isDelegation'
     ];
 
     /**

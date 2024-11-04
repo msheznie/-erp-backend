@@ -170,7 +170,8 @@ class SupplierMaster extends Model
         'AdvanceAccount',
         'omanization',
         'whtApplicableYN',
-        'whtType'
+        'whtType',
+        'isDelegation'
     ];
 
     /**

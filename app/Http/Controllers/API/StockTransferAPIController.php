@@ -729,7 +729,7 @@ class StockTransferAPIController extends AppBaseController
 
         $stockTransfer = $this->stockTransferRepository->update($input, $id);
 
-        return $this->sendResponse($stockTransfer->toArray(), 'StockTransfer updated successfully');
+        return $this->sendReponseWithDetails($stockTransfer->toArray(), 'StockTransfer updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

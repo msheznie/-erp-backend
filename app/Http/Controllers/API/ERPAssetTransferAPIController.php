@@ -421,7 +421,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             }
         }
         $eRPAssetTransfer = $this->eRPAssetTransferRepository->update($data, $id);
-        return $this->sendResponse([], 'Asset Transfer updated successfully');
+        return $this->sendReponseWithDetails([], 'Asset Transfer updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

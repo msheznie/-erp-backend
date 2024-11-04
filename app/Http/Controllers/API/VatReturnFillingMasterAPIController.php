@@ -345,7 +345,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($vatReturnFillingMaster->toArray(), 'VatReturnFillingMaster updated successfully');
+        return $this->sendReponseWithDetails($vatReturnFillingMaster->toArray(), 'VatReturnFillingMaster updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

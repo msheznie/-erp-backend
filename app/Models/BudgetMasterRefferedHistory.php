@@ -236,7 +236,8 @@ class BudgetMasterRefferedHistory extends Model
         'modifiedPc',
         'timestamp',
         'refferedBackYN',
-        'timesReferred'
+        'timesReferred',
+         'isDelegation'
     ];
 
     /**

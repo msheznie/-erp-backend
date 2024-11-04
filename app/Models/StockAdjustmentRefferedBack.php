@@ -232,7 +232,8 @@ class StockAdjustmentRefferedBack extends Model
         'modifiedUser',
         'modifiedPc',
         'timestamp',
-        'RollLevForApp_curr'
+        'RollLevForApp_curr',
+         'isDelegation'
     ];
 
     /**

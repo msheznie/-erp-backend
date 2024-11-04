@@ -413,7 +413,8 @@ class ItemIssueMasterRefferedBack extends Model
         'timestamp',
         'mfqJobID',
         'mfqJobNo',
-        'counter'
+        'counter',
+        'isDelegation'
     ];
 
     /**

@@ -141,6 +141,7 @@ class CustomerMaster extends Model
         'consignee_contact_no',
         'custAdvanceAccountSystemID',
         'custAdvanceAccount',
+        'isDelegation'
     ];
 
     /**

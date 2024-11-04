@@ -355,7 +355,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->update(array_only($input, ['comments', 'year', 'serviceLineSystemID', 'templateMasterID', 'contingencyPercentage', 'budgetAmount', 'contigencyAmount', 'templateMasterID', 'contingencyPercentage', 'budgetID', 'modifiedPc', 'modifiedUser', 'modifiedUserSystemID']), $id);
 
-        return $this->sendResponse($contingencyBudgetPlan->toArray(), trans('custom.update', ['attribute' => 'Contingency Budget']));
+        return $this->sendReponseWithDetails($contingencyBudgetPlan->toArray(), trans('custom.update', ['attribute' => 'Contingency Budget']),1,$confirm['data'] ?? null);
     }
 
     /**

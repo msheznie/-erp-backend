@@ -219,7 +219,8 @@ class MonthlyAdditionsMaster extends Model
         'createduserGroup',
         'createdpc',
         'empType',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

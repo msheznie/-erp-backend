@@ -434,7 +434,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         //$budgetMaster = $this->budgetMasterRepository->update($input, $id);
 
-        return $this->sendResponse($budgetMaster->toArray(), 'Budget Master updated successfully');
+        return $this->sendReponseWithDetails($budgetMaster->toArray(), 'Budget Master updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**
@@ -3808,7 +3808,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $reportTemplates = [];
 
-        if (isset($input['companyFinanceYearID']) && !is_null($input['companyFinanceYearID']) && $input['companyFinanceYearID'] != 'null' && isset($input['serviceLineSystemID']) && !is_null($input['serviceLineSystemID']) && $input['serviceLineSystemID'] != 'null') {
+        if (isset($input['companyFinanceYearID']) && !empty($input['companyFinanceYearID'])  && ((isset($input['serviceLineSystemID']) && !empty($input['serviceLineSystemID'])) || (isset($input['fromDownload']) && $input['fromDownload'] == true))) {
 
             $checkBudget = BudgetMaster::where('companySystemID', $companyId)
                                             ->where('companyFinanceYearID', $input['companyFinanceYearID'])

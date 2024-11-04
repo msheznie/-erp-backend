@@ -656,6 +656,7 @@ class PaySupplierInvoiceMaster extends Model
         'AdvanceAccount',
         'employeeAdvanceAccountSystemID',
         'employeeAdvanceAccount',
+        'isDelegation'
     ];
 
     /**

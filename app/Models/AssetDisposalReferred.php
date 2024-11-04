@@ -242,7 +242,8 @@ class AssetDisposalReferred extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
-        'timestamp'
+        'timestamp',
+        'isDelegation'
     ];
 
     /**

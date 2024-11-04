@@ -129,6 +129,14 @@ class GRVMasterRepository extends BaseRepository
             ];
         }
 
+        if(!isset($input['companySystemID']))
+        {
+            return [
+                'status' => 0,
+                'msg' => 'companySystemID not found'
+            ];
+        }
+
         if ($grvMaster->approved != -1) {
             return [
                 'status' => 0,

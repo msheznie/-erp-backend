@@ -273,7 +273,8 @@ class MaterielRequest extends Model
         'cancelledDate',
         'isSelectedToPR',
         'is_job_run',
-        'counter'
+        'counter',
+        'isDelegation'
     ];
 
     /**

@@ -61,7 +61,7 @@ ini_set('max_execution_time', 500);
 class FinancialReportAPIController extends AppBaseController
 {
     protected $globalFormula; //keep whole formula ro replace
-    protected $subsidiaryComanies = []; //keep whole formula ro replace
+    protected $subAssociateJVCompanies = []; 
     protected $accJvCompanies = []; //keep whole formula ro replace
 
     public function getFRFilterData(Request $request)
@@ -118,12 +118,7 @@ class FinancialReportAPIController extends AppBaseController
         }
         $financePeriod = $financePeriod->groupBy('dateFrom')->get();
 
-        $groupCompanies = Company::where(function($query) use ($selectedCompanyId){
-                                        $query->where('masterCompanySystemIDReorting', $selectedCompanyId)
-                                              ->orWhere('companySystemID', $selectedCompanyId);
-                                    })
-                                    ->whereHas('subsidiary_companies')
-                                    ->get();
+        $groupCompanies = Company::whereHas('allSubAssociateJVCompanies')->get();
 
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
@@ -176,26 +171,23 @@ class FinancialReportAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $companies = Company::where('companySystemID', $input['companySystemID'])->with(['subsidiary_companies'])->first();
+        $companies = Company::where('companySystemID', $input['companySystemID'])->with(['allSubAssociateJVCompanies'])->first();
 
-        if ($companies && count($companies->subsidiary_companies) > 0) {
-            $this->getSubSubsidiaryCompanies($companies->subsidiary_companies);
+        if(!empty($companies)){
+            $this->subAssociateJVCompanies[] = $input['companySystemID'];
+        }
+        if ($companies && count($companies->allSubAssociateJVCompanies) > 0) {
+            $this->getSubSubsidiaryCompanies($companies->allSubAssociateJVCompanies);
         }
 
-        $companiesData = Company::whereIn('companySystemID', $this->subsidiaryComanies)->get();
+        $companiesData = Company::whereIn('companySystemID', $this->subAssociateJVCompanies)->get();
         return $this->sendResponse($companiesData, "companies retrived successfully");        
     }
 
     public function getSubSubsidiaryCompanies($subsidiary_companies)
     {
         foreach ($subsidiary_companies as $key => $value) {
-            $this->subsidiaryComanies[] = $value->companySystemID;
-
-            $companies = Company::where('companySystemID', $value->companySystemID)->with(['subsidiary_companies'])->whereHas('subsidiary_companies')->first();
-
-            if ($companies && count($companies->subsidiary_companies) > 0) {
-                $this->getSubSubsidiaryCompanies($companies->subsidiary_companies);
-            } 
+            $this->subAssociateJVCompanies[] = $value->companySystemID;
         }
     }
 
@@ -964,6 +956,8 @@ class FinancialReportAPIController extends AppBaseController
 
     public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained, $companyWiseTemplate = false)
     {
+
+
         if ($request->accountType == 1) { // if account type is BS and if any new chart of account created automatically link the gl account
             $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType', 4)->whereNotNull('masterID')->first();
             if (!empty($detID->detID) && !is_null($detID->detID)) {
@@ -997,6 +991,32 @@ class FinancialReportAPIController extends AppBaseController
         $company = Company::find($request->selectedCompanyID);
         $template = ReportTemplate::find($request->templateType);
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyArray = isset($request->companySystemID) ? $request->companySystemID : [];
+        $segmentArray = isset($request->serviceLineSystemID) ? $request->serviceLineSystemID : [];
+        $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency;
+
+        $companyData = json_decode(json_encode($companyArray), true);
+
+        $companySystemIDs = array_map(function($item) {
+            if(($item['group_type'] == 2 || $item['group_type'] == 3) && ($item['group_two'] != 0 || $item['group_two'] != null)) {
+                return $item['companySystemID'];
+            } else {
+                return null;
+            }
+        }, $companyData);
+
+
+        $companySystemIDs = array_filter($companySystemIDs);
+        
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $serviceLineIDs = array_map(function($item) {
+            return $item['serviceLineSystemID'];
+        }, $segmentArray);
 
         $month = '';
         $period = '';
@@ -1025,17 +1045,26 @@ class FinancialReportAPIController extends AppBaseController
 
         $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // main query
 
+
+
+
+
         $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // detail query
 
-         if((isset($request->reportID) && $request->reportID == "FCT") && $outputCollect)
+
+
+
+
+        if((isset($request->reportID) && $request->reportID == "FCT") && $outputCollect)
         {
-            $outputCollect->each(function ($item) use($outputDetail,$columnKeys) {
+            $outputCollect->each(function ($item) use($outputDetail,$columnKeys,$companyArray,$currency, $serviceLineIDs, $fromDate, $toDate, $companySystemIDs) {
                 $detID = ($item->detID) ?  : null;
                 if($detID)
                 {
                     $data = $outputDetail->filter(function($detail) use ($detID) {
                         return $detail->templateDetailID == $detID;
                     });
+
                     if($data->isNotEmpty())
                     {
                         collect($columnKeys)->each(function($colKey) use ($item,$data)
@@ -1045,10 +1074,56 @@ class FinancialReportAPIController extends AppBaseController
                                 $item->$colKey = collect($data)->sum($colKey);
                         });
                     }
+
+                    collect($columnKeys)->each(function($colKey) use ($item,$data, $companyArray, $currency, $serviceLineIDs, $fromDate, $toDate, $companySystemIDs)
+                    {
+                        $key = explode('-',$colKey);
+                        if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
+                            $item->$colKey = collect($data)->sum($colKey);
+
+                        if($item->detDescription == 'Share of Associates Profit/Loss') {
+
+                            $total = 0;
+
+                            foreach ($companyArray as $company) {
+
+                                $totalIncome = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
+                                    $query->where('controlAccountsSystemID', 1);
+                                })->first();
+
+                                $totalExpense = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
+                                    $query->where('controlAccountsSystemID', 2);
+                                })->first();
+
+                                if($company['group_type'] == 2 || $company['group_type'] == 3) {
+                                    if ($currency == 1) {
+                                        $total += ($totalIncome->documentLocalAmount + $totalExpense->documentLocalAmount) * $company['holding_percentage'] / 100;
+                                    } else {
+                                        $total += ($totalIncome->documentRptAmount + $totalExpense->documentRptAmount) * $company['holding_percentage'] / 100;
+                                    }
+                                }
+                            }
+
+
+                            if (isset($key[0]) && $key[0] == "CMB") {
+                                $item->$colKey = $total * -1;
+                            }
+
+                            if (isset($key[0]) && $key[0] == "CONS") {
+                                $item->$colKey = $total * -1;
+                            }
+
+
+                        }
+                    });
+
                 }
+
+
             });
         }
-        
+
+
         $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
         $grandTotalUncatArr = [];
         $uncategorizeArr = [];
@@ -1122,6 +1197,8 @@ class FinancialReportAPIController extends AppBaseController
             if (count($headers) > 0) {
                 foreach ($headers as $key => $val) {
                     $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
+
+
                     $val->detail = $details;
                     $firstLevel = true;
                     foreach ($details as $key2 => $val2) {
@@ -1164,10 +1241,16 @@ class FinancialReportAPIController extends AppBaseController
                             $removedFromArray[] = $key;
                         }
                     }
+
+
                 }
             }
+
+
             $headers = collect($headers)->forget($removedFromArray)->values();
         }
+
+
 
         //remove records which has no detail except total
         // get devision value
@@ -1191,6 +1274,7 @@ class FinancialReportAPIController extends AppBaseController
         foreach ($segemntsDta as $key => $value) {
             $segmentParentData[$value->ServiceLineCode] = (is_null($value->parent)) ? "-" : $value->parent->ServiceLineDes;
         }
+
 
         return array(
             'reportData' => $headers,
@@ -1495,6 +1579,7 @@ class FinancialReportAPIController extends AppBaseController
 
                     $shareOfAccosicateColumnData = $shareOfAccosicateData['columnData'];
 
+
                     $shareOfAccosicateAmount = 0;
 
                     if(!empty($shareOfAccosicateColumnData) && is_array($shareOfAccosicateColumnData)) {
@@ -1510,7 +1595,7 @@ class FinancialReportAPIController extends AppBaseController
 
                     foreach ($response['reportData'] as $key => $value) {
                         if (isset($value->itemType) && $value->itemType == 5) {
-                            $value->{$shareOfAccosicateDataArray['CONSColumnKey']} = $shareOfAccosicateAmount;
+//                            $value->{$shareOfAccosicateDataArray['CONSColumnKey']} = $shareOfAccosicateAmount;
                         }
 
                         if (isset($value->itemType) && $value->itemType == 6) {
@@ -1529,7 +1614,6 @@ class FinancialReportAPIController extends AppBaseController
 
                     return $response;
                 }
-
                 return $response;
 
 
@@ -6389,6 +6473,8 @@ AND MASTER .canceledYN = 0';
 
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
+
+
         $isExpand = 0;
         $divisionValue = 1;
         $templateMaster = ReportTemplate::find($request->templateType);
@@ -6396,6 +6482,16 @@ AND MASTER .canceledYN = 0';
             if ($templateMaster->showNumbersIn !== 1) {
                 $numbers = ReportTemplateNumbers::find($templateMaster->showNumbersIn);
                 $divisionValue = (float)$numbers->value;
+            }
+
+            if($templateMaster->columnTemplateID == null && $templateMaster->isConsolidation == 1) {
+                $companySubID = collect($request->companySystemID)->where('group_type', 1)->pluck('companySystemID')->toArray();
+
+                $companyGroupID = collect($request->groupCompanySystemID)->pluck('companySystemID')->toArray();
+
+                $subGroupCompanyIDs = array_unique(array_merge($companySubID, $companyGroupID));
+            } else {
+                $subGroupCompanyIDs = $companyID;
             }
 
             if ($templateMaster->presentationType == 2) {
@@ -6453,14 +6549,14 @@ AND MASTER .canceledYN = 0';
             } else if ($coloumnShortCode == "BYTD") {
                 $fifthLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
-                $fifthLinkedcolumnQry .= 'IFNULL( eliminationAmount,  0 ) AS `' . $val . '`,';
+                $fifthLinkedcolumnQry .= 'IFNULL( CASE WHEN controlAccountType = 2 THEN eliminationAmount * -1 ELSE eliminationAmount END, 0) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
-                $fifthLinkedcolumnQry .= 'IFNULL( `'.$cominedColumnKey.'` - IFNULL( eliminationAmount,  0 ),  0 ) AS `' . $val . '`,';
+                $fifthLinkedcolumnQry .= 'IFNULL( `'.$cominedColumnKey.'` - IFNULL(CASE WHEN controlAccountType = 2 THEN eliminationAmount * -1 ELSE eliminationAmount END, 0),  0 ) AS `' . $val . '`,';
             } else {
                 $fifthLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
             }
-
             $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
+
             //$thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
             //$fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
             $whereQry[] .= 'IF(masterID is not null AND isFinalLevel = 1 , d.`' . $val . '` != 0,d.`' . $val . '` IS NOT NULL)';
@@ -6518,7 +6614,8 @@ SELECT
     erp_companyreporttemplatedetails.fontColor,
     erp_companyreporttemplatedetails.hideHeader,
     erp_companyreporttemplatedetails.itemType,
-    erp_companyreporttemplatedetails.netProfitStatus 
+    erp_companyreporttemplatedetails.netProfitStatus,
+    erp_companyreporttemplatedetails.controlAccountType as controlAccountType
 FROM
     erp_companyreporttemplatedetails
     LEFT JOIN (
@@ -6544,7 +6641,7 @@ FROM
                     WHERE
                         erp_generalledger.companySystemID IN (
                             ' . join(',
-                            ', $companyID) . '
+                            ', $subGroupCompanyIDs) . '
                         ) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
                     GROUP BY
                         erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . '
@@ -6555,7 +6652,8 @@ FROM
                         erp_companyreporttemplatelinks.templateDetailID,
                         erp_companyreporttemplatelinks.categoryType AS linkCatType,
                         erp_companyreporttemplatedetails.description,
-                        erp_companyreporttemplatedetails.categoryType AS templateCatType
+                        erp_companyreporttemplatedetails.categoryType AS templateCatType,
+                        erp_companyreporttemplatedetails.controlAccountType as controlAccountType
                     FROM
                         erp_companyreporttemplatelinks
                     INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
@@ -6570,8 +6668,9 @@ FROM
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -6582,10 +6681,12 @@ FROM
                         ' . $eliminationQuery . ' 
                     FROM
                         erp_elimination_ledger
+                    JOIN
+                        companymaster ON erp_elimination_ledger.companySystemID = companymaster.companySystemID    
                     WHERE
                         erp_elimination_ledger.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
+                ) AND companymaster.group_type = 1 ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
                 ) AS elimination
             ON
                 elimination.chartOfAccountID = a.glAutoID
@@ -6626,7 +6727,7 @@ FROM
                     WHERE
                         erp_generalledger.companySystemID IN (
                             ' . join(',
-                            ', $companyID) . '
+                            ', $subGroupCompanyIDs) . '
                         ) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
                     GROUP BY
                         erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . '
@@ -6637,7 +6738,8 @@ FROM
                         erp_companyreporttemplatelinks.templateDetailID,
                         erp_companyreporttemplatelinks.categoryType AS linkCatType,
                         erp_companyreporttemplatedetails.description,
-                        erp_companyreporttemplatedetails.categoryType AS templateCatType
+                        erp_companyreporttemplatedetails.categoryType AS templateCatType,
+                        erp_companyreporttemplatedetails.controlAccountType as controlAccountType
                     FROM
                         erp_companyreporttemplatelinks
                     INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
@@ -6652,8 +6754,9 @@ FROM
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -6664,10 +6767,12 @@ FROM
                         ' . $eliminationQuery . ' 
                     FROM
                         erp_elimination_ledger
+                    JOIN    
+                        companymaster ON erp_elimination_ledger.companySystemID = companymaster.companySystemID 
                     WHERE
                         erp_elimination_ledger.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
+                ) AND companymaster.group_type = 1 ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
                 ) AS elimination
             ON
                 elimination.chartOfAccountID = a.glAutoID 
@@ -6702,6 +6807,7 @@ GROUP BY
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
+        
 
         $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
         $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
@@ -6747,6 +6853,16 @@ GROUP BY
                 $numbers = ReportTemplateNumbers::find($templateMaster->showNumbersIn);
                 $divisionValue = (float)$numbers->value;
             }
+
+            if($templateMaster->columnTemplateID == null && $templateMaster->isConsolidation == 1) {
+                $companySubID = collect($request->companySystemID)->where('group_type', 1)->pluck('companySystemID')->toArray();
+
+                $companyGroupID = collect($request->groupCompanySystemID)->pluck('companySystemID')->toArray();
+
+                $subGroupCompanyIDs = array_unique(array_merge($companySubID, $companyGroupID));
+            } else {
+                $subGroupCompanyIDs = $companyID;
+            }
         }
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
@@ -6759,9 +6875,9 @@ GROUP BY
             } else if ($coloumnShortCode == "BYTD") {
                 $secondLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
-                $secondLinkedcolumnQry .= 'IFNULL( eliminationAmount,  0 ) AS `' . $val . '`,';
+                $secondLinkedcolumnQry .= 'IFNULL(CASE WHEN erp_companyreporttemplatedetails.controlAccountType = 2 THEN eliminationAmount * -1 ELSE eliminationAmount END, 0) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
-                $secondLinkedcolumnQry .= 'IFNULL( `'.$cominedColumnKey.'` - IFNULL( eliminationAmount,  0 ),  0 ) AS `' . $val . '`,';
+                $secondLinkedcolumnQry .= 'IFNULL( `'.$cominedColumnKey.'` - IFNULL(CASE WHEN erp_companyreporttemplatedetails.controlAccountType = 2 THEN eliminationAmount * -1 ELSE eliminationAmount END, 0),  0 ) AS `' . $val . '`,';
             } else {
                 $secondLinkedcolumnQry .= '((IFNULL(IF(erp_companyreporttemplatelinks.categoryType != erp_companyreporttemplatedetails.categoryType,gl.`' . $val . '`*-1,gl.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
             }
@@ -6796,7 +6912,8 @@ GROUP BY
     erp_companyreporttemplatelinks.glAutoID,
     erp_companyreporttemplatelinks.templateDetailID,
     erp_companyreporttemplatelinks.categoryType AS linkCatType,
-    erp_companyreporttemplatedetails.categoryType AS templateCatType
+    erp_companyreporttemplatedetails.categoryType AS templateCatType,
+    erp_companyreporttemplatedetails.controlAccountType as controlAccountType
 FROM
     erp_companyreporttemplatelinks
     INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
@@ -6808,7 +6925,7 @@ FROM
         erp_generalledger
         INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
         WHERE
-        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+        erp_generalledger.companySystemID IN (' . join(',', $subGroupCompanyIDs) . ') 
         ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . ') AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
     LEFT JOIN(
@@ -6816,8 +6933,9 @@ FROM
                     ' . $budgetQuery . ' 
                 FROM
                     erp_budjetdetails
+                INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                 WHERE
-                    erp_budjetdetails.companySystemID IN(' . join(',
+                    erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                 ', $companyID) . '
             ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
             ) AS budget
@@ -6828,10 +6946,10 @@ FROM
                     ' . $eliminationQuery . ' 
                 FROM
                     erp_elimination_ledger
-                WHERE
+                JOIN
+                    companymaster ON erp_elimination_ledger.companySystemID = companymaster.companySystemID        WHERE
                     erp_elimination_ledger.companySystemID IN(' . join(',
-                ', $companyID) . '
-            ) ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
+                ', $companyID) . ') AND companymaster.group_type = 1 ' . $servicelineQryForElimination . ' ' . $eliminationWhereQuery . '
             ) AS elimination
         ON
             elimination.chartOfAccountID = erp_companyreporttemplatelinks.glAutoID 
@@ -7178,8 +7296,9 @@ GROUP BY
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -7220,8 +7339,9 @@ GROUP BY
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -7375,8 +7495,9 @@ GROUP BY
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -7449,8 +7570,9 @@ FROM
                         ' . $budgetQuery . ' 
                     FROM
                         erp_budjetdetails
+                    INNER JOIN erp_budgetmaster ON erp_budgetmaster.budgetmasterID = erp_budjetdetails.budgetmasterID
                     WHERE
-                        erp_budjetdetails.companySystemID IN(' . join(',
+                        erp_budgetmaster.approvedYN = -1 AND erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
                 ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
@@ -7853,6 +7975,19 @@ GROUP BY
             $CONSColumnKey = $consColumnData ? $consColumnData->shortCode."-".$consColumnData->columnLinkID : "";
 
             foreach ($columns as $val) {
+
+                if ($request->dateType == 1) {
+                    $toDate = new Carbon($request->toDate);
+                    $toDate = $toDate->format('Y-m-d');
+                    $fromDate = new Carbon($request->fromDate);
+                    $fromDate = $fromDate->format('Y-m-d');
+                } else {
+                    $period = CompanyFinancePeriod::find($request->month);
+                    $toDate = ($period) ? Carbon::parse($period->dateTo)->format('Y-m-d') : null;
+                    $month = Carbon::parse($toDate)->format('Y-m-d');
+                    $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
+                }
+
                 if ($val->shortCode == 'CM') {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
@@ -8117,7 +8252,7 @@ GROUP BY
                         IFNULL(
                             SUM(
                                 IF(
-                                    Year = '" . $currentYear . "' && month <= '" . $currentYearCurrentMonthOnly . "',
+                                    erp_budjetdetails.Year = '" . $currentYear . "' && erp_budjetdetails.month <= '" . $currentYearCurrentMonthOnly . "',
                                     $budgetColumn, 
                                     0
                                 )
@@ -8127,7 +8262,7 @@ GROUP BY
                         IFNULL(
                             SUM(
                                 IF(
-                                    Year = '" . $currentYear . "' && month = '" . $currentYearCurrentMonthOnly . "',
+                                    erp_budjetdetails.Year = '" . $currentYear . "' && erp_budjetdetails.month = '" . $currentYearCurrentMonthOnly . "',
                                     $budgetColumn, 
                                     0
                                 )
@@ -8148,7 +8283,7 @@ GROUP BY
                             0
                         ) AS `eliminationAmount`";
 
-        $budgetWhereQuery = " AND Year = " . $currentYear . " GROUP BY erp_budjetdetails.`chartOfAccountID`";
+        $budgetWhereQuery = " AND erp_budjetdetails.Year = " . $currentYear . " GROUP BY erp_budjetdetails.`chartOfAccountID`";
         $eliminationWhereQuery = " AND documentYear = " . $currentYear . " GROUP BY erp_elimination_ledger.`chartOfAccountSystemID`";
 
         if ($columnTemplateID == 1) {

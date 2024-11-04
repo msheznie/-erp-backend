@@ -2044,7 +2044,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequest = $this->purchaseRequestRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseRequest->toArray(), 'PurchaseRequest updated successfully');
+        return $this->sendReponseWithDetails($purchaseRequest->toArray(), 'PurchaseRequest updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

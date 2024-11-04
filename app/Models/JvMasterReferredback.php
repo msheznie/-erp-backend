@@ -292,6 +292,7 @@ class JvMasterReferredback extends Model
         'createdDateTime',
         'reversalDate',
         'timestamp',
+          'isDelegation'
     ];
 
     /**

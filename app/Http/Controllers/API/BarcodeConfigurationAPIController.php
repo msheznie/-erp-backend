@@ -565,9 +565,8 @@ class BarcodeConfigurationAPIController extends AppBaseController
         
                 $pdf->SetAutoPageBreak(true, 5);
         
-                $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
-        
-               // $pdf->AddFont('aealarabiya', '', 'aealarabiya.php');
+                $pdf->setImageScale(1.5);
+            // $pdf->AddFont('aealarabiya', '', 'aealarabiya.php');
         
                 $style = array(
                     'position' => '',

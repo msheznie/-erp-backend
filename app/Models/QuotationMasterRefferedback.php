@@ -510,7 +510,8 @@ class QuotationMasterRefferedback extends Model
         'quotationType',
         'selectedForSalesOrder',
         'isInSO',
-        'timestamp'
+        'timestamp',
+          'isDelegation'
     ];
 
     /**

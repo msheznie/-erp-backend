@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -810,7 +811,7 @@ class SrpEmployeeDetails extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
+    protected $appends = ['signatureURL'];
 
 
     public $fillable = [
@@ -988,6 +989,7 @@ class SrpEmployeeDetails extends Model
         'empSecondNameOther' => 'string',
         'EFamilyNameOther' => 'string',
         'empSignature' => 'string',
+        'signatureURL' => 'string',
         'EmpImage' => 'string',
         'EthumbnailImage' => 'string',
         'Gender' => 'string',
@@ -1131,6 +1133,15 @@ class SrpEmployeeDetails extends Model
     public function manager()
     {
         return $this->hasOne(HrmsEmployeeManager::class, 'empID', 'EIdNo');
+    }
+
+    public function getSignatureURLAttribute() {
+
+        if ($this->empSignature != null) {
+            return Helper::getFileUrlFromS3($this->empSignature);
+        } else {
+            return null;
+        }
     }
 
 }

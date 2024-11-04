@@ -428,7 +428,8 @@ class PurchaseReturnMasterRefferedBack extends Model
         'timeStamp',
         'isInvoiceCreatedForGrv',
         'grvRecieved',
-        'prClosedYN'
+        'prClosedYN',
+         'isDelegation'
     ];
 
     /**

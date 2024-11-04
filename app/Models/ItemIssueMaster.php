@@ -368,7 +368,8 @@ class ItemIssueMaster extends Model
         'mfqJobID',
         'mfqJobNo',
         'postedDate',
-        'counter'
+        'counter',
+        'isDelegation'
     ];
 
     /**

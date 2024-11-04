@@ -16,6 +16,7 @@
 
 namespace App\helper;
 
+use App\Events\UnverifiedEmailEvent;
 use App\helper\IvmsDeliveryOrderService;
 use App\Jobs\BankLedgerInsert;
 use App\Jobs\BudgetAdjustment;
@@ -82,9 +83,11 @@ use App\Services\DocumentAutoApproveService;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Utils\ResponseUtil;
 use App\helper\CurrencyValidation;
@@ -3241,13 +3244,22 @@ class Helper
                                 $isCategoryWise = $policy->isCategoryApproval;
                                 $isValueWise = $policy->isAmountApproval;
                                 $isAttachment = $policy->isAttachmentYN;
-                                //check for attachment is uploaded if attachment policy is set to must
-                                if ($isAttachment == -1) {
-                                    $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params['document'])->where('documentSystemCode', $params["autoID"])->first();
-                                    if (!$docAttachment) {
-                                        return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
+
+                                $fromCiUpload = false;
+                                if(isset($params["fromUpload"]) && $params["fromUpload"] == true){
+                                    $fromCiUpload = true;
+                                }
+
+                                if($fromCiUpload == false){
+                                    //check for attachment is uploaded if attachment policy is set to must
+                                    if ($isAttachment == -1) {
+                                        $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params['document'])->where('documentSystemCode', $params["autoID"])->first();
+                                        if (!$docAttachment) {
+                                            return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
+                                        }
                                     }
                                 }
+
                             } else {
                                 return ['success' => false, 'message' => 'Policy not available for this document.'];
                             }
@@ -3354,7 +3366,7 @@ class Helper
                             if ($output) {
                                 /** get source document master record*/
                                 $sorceDocument = $namespacedModel::find($params["autoID"]);
-
+                                $unverifiedEmails = null;
                                 //confirm the document
                                 if (isset($params['email'])) {
                                     $email_in = $params['email'];
@@ -3568,10 +3580,17 @@ class Helper
 
                                             if ($notifyConfirm) {
                                                 $sendEmail = \Email::sendEmail($emails);
+
                                                 if (!$sendEmail["success"]) {
                                                     return ['success' => false, 'message' => $sendEmail["message"]];
                                                 }
 
+
+                                                if(isset($sendEmail['unverifiedEmailMsg']) && !empty($sendEmail['unverifiedEmailMsg']))
+                                                {
+                                                    $unverifiedEmails = $sendEmail['unverifiedEmailMsg'];
+//                                                    event(new UnverifiedEmailEvent($unverifiedEmails));
+                                                }
                                                 $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
                                                 $webPushData = [
@@ -3588,7 +3607,8 @@ class Helper
                                 }
 
                                 DB::commit();
-                                return ['success' => true, 'message' => 'Successfully document confirmed'];
+                                return ['success' => true, 'message' => 'Successfully document confirmed', 'data' => $unverifiedEmails];
+
                             } else {
                                 DB::rollback();
                                 return ['success' => false, 'message' => 'No approval setup created for this document'];
@@ -5598,6 +5618,7 @@ class Helper
             if (in_array($e->getCode(), [404, 500])) {
                 $msg = $e->getMessage();
             }
+
 
             // return ['success' => false, 'message' => $msg];
             return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];

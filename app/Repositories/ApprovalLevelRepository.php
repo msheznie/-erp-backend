@@ -72,33 +72,29 @@ class ApprovalLevelRepository extends BaseRepository
             }])->select('erp_approvallevel.*')->orderBy('approvalLevelID', 'desc');
         
         $approvalLevel->where('is_deleted',0);
+        $approvalLevel->where('companySystemID',$input['globalCompanyId']);
         
         if (array_key_exists('selectedCompanyID', $input)) {
             if ($input['selectedCompanyID'] > 0) {
-                $approvalLevel->where('erp_approvallevel.companySystemID', $input['selectedCompanyID']);
+                $approvalLevel->where('companySystemID', $input['selectedCompanyID']);
             }
-        } else {
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
-                $companiesByGroup = $input['globalCompanyId'];
-                $approvalLevel->where('erp_approvallevel.companySystemID', $companiesByGroup);
-            }
-        }
+        } 
 
         if (array_key_exists('documentSystemID', $input)) {
             if ($input['documentSystemID'] > 0) {
-                $approvalLevel->where('erp_approvallevel.documentSystemID', $input['documentSystemID']);
+                $approvalLevel->where('documentSystemID', $input['documentSystemID']);
             }
         }
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] > 0) {
-                $approvalLevel->where('erp_approvallevel.serviceLineSystemID', $input['serviceLineSystemID']);
+                $approvalLevel->where('serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
 
         if (array_key_exists('isActive', $input)) {
 
-            $approvalLevel->where('erp_approvallevel.isActive', $input['isActive']);
+            $approvalLevel->where('isActive', $input['isActive']);
 
         }
 
@@ -109,7 +105,8 @@ class ApprovalLevelRepository extends BaseRepository
             });
         }
 
-        //return datatables($approvalLevel)->toJson();
+        $approvalLevel->where('companySystemID',$input['globalCompanyId']);
+
         return \DataTables::eloquent($approvalLevel)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {

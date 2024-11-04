@@ -12,6 +12,9 @@ use App\Models\Deligation;
 use Carbon\Carbon;
 use App\Models\EmployeesDepartment;
 use App\helper\CommonJobService;
+use App\Models\UserGroup;
+use App\Models\EmployeeNavigation;
+use App\Models\UserGroupAssign;
 
 class DelegationActivation implements ShouldQueue
 {
@@ -41,6 +44,7 @@ class DelegationActivation implements ShouldQueue
      */
     public function handle()
     {
+      
         $tenantDb = $this->tenantDb;
         CommonJobService::db_switch( $this->tenantDb );
         $current_date = Carbon::parse(now())->format('Y-m-d');
@@ -49,10 +53,32 @@ class DelegationActivation implements ShouldQueue
         $deligate->update(['is_active' => 0]);
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_expire_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 0]);
 
+     
+        $groupInfo = UserGroup::whereIn('delegation_id',$dlegations_expire_ids);
+        $userGroupIds = $groupInfo->pluck('userGroupID');
+        if (!$userGroupIds->isEmpty())
+        {
+            $groupInfo->delete();
+            EmployeeNavigation::whereIn('userGroupID', $userGroupIds)->delete();
+            UserGroupAssign::whereIn('userGroupID', $userGroupIds)->delete();
+
+        }
+
+
 
         $dlegationPeriod = Deligation::where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date)->where('approved',-1);
         $dlegationPeriod->update(['is_active' => 1]);
         $dlegations_ids = $dlegationPeriod->pluck('id');
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 1]);
+        $activeGroup = UserGroup::whereIn('delegation_id',$dlegations_ids);
+
+        $activeGroupIds = $activeGroup->pluck('userGroupID');
+        if (!$activeGroupIds->isEmpty())
+        {
+            UserGroupAssign::whereIn('userGroupID', $activeGroupIds)->update(['isActive' => 1]);
+
+        }
+
+
     }
 }

@@ -345,7 +345,8 @@ class DebitNote extends Model
         'netAmountRpt',
         'type',
         'empID',
-        'empControlAccount'
+        'empControlAccount',
+        'isDelegation'
     ];
 
     /**

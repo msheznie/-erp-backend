@@ -12,13 +12,6 @@ class SupplierAgingSummaryReport
     public $creditPeriod;
     public $currency;
     public $agingDays;
-    public $column1;
-    public $column2;
-    public $column3;
-    public $column4;
-    public $column5;
-    public $advanceAmount;
-    public $total;
 
     public function getCloumnFormat()
     {
@@ -32,9 +25,9 @@ class SupplierAgingSummaryReport
             'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
         ];
     }
-    public function getHeader($typeAging) :Array {
+    public function getHeader($typeAging, $header) :Array {
         if($typeAging == 1) {
-            return [
+            return array_merge([
                 'Company ID',
                 'Company Name',
                 'Account',
@@ -43,16 +36,14 @@ class SupplierAgingSummaryReport
                 'Credit Period',
                 'Currency',
                 'Aging Days',
-                '0-30',
-                '31-60',
-                '61-90',
-                '91-100',
-                '> 100',
+                ],
+                $header,
+                [
                 'Advance/UnAllocated Amount',
                 'Total'
-            ];
+            ]);
         }  else {
-            return [
+            return array_merge([
                 'Company ID',
                 'Company Name',
                 'Account',
@@ -61,14 +52,12 @@ class SupplierAgingSummaryReport
                 'Credit Period',
                 'Currency',
                 'Aging Days',
-                '0-30',
-                '31-60',
-                '61-90',
-                '91-100',
-                '> 100',
+                ],
+                $header,
+                [
                 'Advance/UnAllocated Amount',
                 'Total'
-            ];
+            ]);
         }
 }
     /**
@@ -133,46 +122,6 @@ class SupplierAgingSummaryReport
     public function setAgingDays($agingDays): void
     {
         $this->agingDays = $agingDays;
-    }
-
-    /**
-     * @param mixed $column1
-     */
-    public function setColumn1($column1): void
-    {
-        $this->column1 = $column1;
-    }
-
-    /**
-     * @param mixed $column2
-     */
-    public function setColumn2($column2): void
-    {
-        $this->column2 = $column2;
-    }
-
-    /**
-     * @param mixed $column3
-     */
-    public function setColumn3($column3): void
-    {
-        $this->column3 = $column3;
-    }
-
-    /**
-     * @param mixed $column4
-     */
-    public function setColumn4($column4): void
-    {
-        $this->column4 = $column4;
-    }
-
-    /**
-     * @param mixed $column5
-     */
-    public function setColumn5($column5): void
-    {
-        $this->column5 = $column5;
     }
 
     /**

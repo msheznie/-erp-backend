@@ -72,7 +72,8 @@ class UserGroupAssign extends Model
         'export',
         'timestamp',
         'isPortalYN',
-        'externalLink'
+        'externalLink',
+        'isActive'
     ];
 
     /**

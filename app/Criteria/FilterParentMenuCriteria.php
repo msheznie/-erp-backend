@@ -39,20 +39,23 @@ class FilterParentMenuCriteria implements CriteriaInterface
             $langCode = $this->request['langCode'];
             return $model->where('masterID',NULL)
                 ->whereIn('isPortalYN',array(0))
-                ->where('userGroupID',$userGroupId)
+                ->where('isActive',1)
+                ->whereIn('userGroupID',$userGroupId)
                 ->where('companyID',$companyId)
                 ->with(['language'=> function($query) use ($langCode) {
                     $query->where('languageCode', $langCode);
                 },'child' => function ($query) use($companyId,$userGroupId, $langCode) {
-                    $query->where('userGroupID',$userGroupId)
+                    $query->whereIn('userGroupID',$userGroupId)
                         ->where('companyID',$companyId)
+                        ->where('isActive',1)
                         ->with(['language'=> function($query) use ($langCode) {
                             $query->where('languageCode', $langCode);
                         },'child' => function ($query) use($companyId,$userGroupId, $langCode) {
                             $query->with(['language' => function($query) use ($langCode){
                                 $query->where('languageCode', $langCode);
-                            }])->where('userGroupID',$userGroupId)
+                            }])->whereIn('userGroupID',$userGroupId)
                                 ->where('companyID',$companyId)
+                                ->where('isActive',1)
                                 ->orderBy("sortOrder","asc");
                         }])
                         ->orderBy("sortOrder","asc");
@@ -61,15 +64,18 @@ class FilterParentMenuCriteria implements CriteriaInterface
         }
         else{
             return $model->where('masterID',NULL)
+                ->where('isActive',1)
                 ->whereIn('isPortalYN',array(0))
-                ->where('userGroupID',$userGroupId)
+                ->whereIn('userGroupID',$userGroupId)
                 ->where('companyID',$companyId)
                 ->with(['child' => function ($query) use($companyId,$userGroupId) {
-                    $query->where('userGroupID',$userGroupId)
+                    $query->whereIn('userGroupID',$userGroupId)
                         ->where('companyID',$companyId)
+                        ->where('isActive',1)
                         ->with(['child' => function ($query) use($companyId,$userGroupId) {
-                            $query->where('userGroupID',$userGroupId)
+                            $query->whereIn('userGroupID',$userGroupId)
                                 ->where('companyID',$companyId)
+                                ->where('isActive',1)
                                 ->orderBy("sortOrder","asc");
                         }])
                         ->orderBy("sortOrder","asc");

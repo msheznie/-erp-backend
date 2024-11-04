@@ -38,6 +38,20 @@ class AppBaseController extends BaseController
         return Response::json($res, $code);
     }
 
+    public function sendReponseWithDetails($data,$message,$type,$detail)
+    {
+        $res = [
+            'success' => true,
+            'data' => $data,
+            'message' => $message,
+            'type' => 1,
+            'detail' => $detail
+        ];
+
+        return Response::json($res);
+    }
+
+
 
     public function convertArrayToValue ($input){
         foreach ($input as $key => $value) {

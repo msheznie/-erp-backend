@@ -127,7 +127,8 @@ class ChequeRegister extends Model
         'created_pc',
         'isActive',
         'updated_by',
-        'updated_pc'
+        'updated_pc',
+        'isDelegation'
     ];
 
     /**

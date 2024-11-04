@@ -148,6 +148,21 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         
         $dataBase = isset($input['db']) ? $input['db'] : "";
+
+        $alreadyExist = $this->fixedAssetDepreciationMasterRepository
+            ->where('is_acc_dep', 0)
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->where(function ($query) use ($input) {
+                $query->where('companyFinancePeriodID', $input['companyFinancePeriodID'])
+                    ->orWhere('companyFinancePeriodID', '>', $input['companyFinancePeriodID']);
+            })
+            ->get();
+
+        if (count($alreadyExist) > 0) {
+            return $this->sendError('Depreciation already processed for the selected month', 500);
+        }
+
         DB::beginTransaction();
         try {
 
@@ -273,14 +288,20 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
     
-                $alreadyExist = $this->fixedAssetDepreciationMasterRepository->findWhere(['is_acc_dep'=> 0, 'companySystemID' => $input['companySystemID'], 'companyFinanceYearID' => $input['companyFinanceYearID'], 'companyFinancePeriodID' => $input['companyFinancePeriodID']]);
-    
+                $alreadyExist = $this->fixedAssetDepreciationMasterRepository
+                                        ->where('is_acc_dep', 0)
+                                        ->where('companySystemID', $input['companySystemID'])
+                                        ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+                                        ->where(function ($query) use ($input) {
+                                            $query->where('companyFinancePeriodID', $input['companyFinancePeriodID'])
+                                                ->orWhere('companyFinancePeriodID', '>', $input['companyFinancePeriodID']);
+                                        })
+                                        ->get();
+
                 if (count($alreadyExist) > 0) {
                     return $this->sendError('Depreciation already processed for the selected month', 500);
                 }
-                
 
-                
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
                     return $this->sendError($companyFinanceYear["message"], 500);
@@ -340,7 +361,9 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 if ($lastSerial) {
                     $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                 }
-    
+
+
+
                 $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
                 $input['depCode'] = $documentCode;
                 $input['serialNo'] = $lastSerialNumber;
@@ -520,7 +543,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->update($input, $id);
 
-        return $this->sendResponse($fixedAssetDepreciationMaster->toArray(), 'FixedAssetDepreciationMaster updated successfully');
+        return $this->sendReponseWithDetails($fixedAssetDepreciationMaster->toArray(), 'FixedAssetDepreciationMaster updated successfully',1,$confirm['data'] ?? null);
     }
 
     /**

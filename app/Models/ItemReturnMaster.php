@@ -244,7 +244,8 @@ class ItemReturnMaster extends Model
         'approvedByUserID',
         'approvedByUserSystemID',
         'refferedBackYN',
-        'timesReferred'
+        'timesReferred',
+        'isDelegation'
     ];
 
     /**

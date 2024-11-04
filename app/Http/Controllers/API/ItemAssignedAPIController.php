@@ -120,26 +120,28 @@ class ItemAssignedAPIController extends AppBaseController
                 if ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0) {
                     return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
                 }
-    
+
                 $company = Company::where('companySystemID', $companie['id'])->first();
 
-                $itemAssigned = new ItemAssigned();
-                $itemAssigned->companySystemID = $companie['id'];
-                $itemAssigned->wacValueReportingCurrencyID = $company->reportingCurrency;
-                $itemAssigned->wacValueLocalCurrencyID = $company->localCurrencyID;
-                $itemAssigned->companyID = $company->CompanyID;
-                $itemAssigned->isActive = 1;
-                $itemAssigned->isAssigned = 1;
-                $itemAssigned->itemPrimaryCode = $input['primaryCode'];
-                $itemAssigned->itemUnitOfMeasure = $input['unit'];
-                $itemAssigned->save();  
-
+                $input['companySystemID'] = $companie['id'];
+                $input['wacValueReportingCurrencyID'] = $company->reportingCurrency;
+                $input['wacValueLocalCurrencyID'] = $company->localCurrencyID;
+                $input['companyID'] = $company->CompanyID;
+                $input['isActive'] = 1;
+                $input['isAssigned'] = -1;
+                $input['itemPrimaryCode'] = $input['primaryCode'];
+                $input['itemUnitOfMeasure'] = $input['unit'];
+                $itemAssigneds = ItemAssigned::create($input);
 
             }
 
         }
 
-        return $this->sendResponse($itemAssigneds->toArray(), 'Item Assigned saved successfully');
+        if (method_exists($itemAssigneds, 'toArray')) {
+            return $this->sendResponse($itemAssigneds->toArray(), 'Item Assigned saved successfully');
+        } else {
+            return $this->sendError('Unable to assign company', 500);
+        }
     }
 
     /**

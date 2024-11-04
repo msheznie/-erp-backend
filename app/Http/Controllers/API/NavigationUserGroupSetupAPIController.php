@@ -79,12 +79,12 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
         $userGroup = DB::table('srp_erp_employeenavigation')
                          ->where('employeeSystemID',$empId)
                          ->where('companyID',$request['companyId'])
-                         ->first();
+                         ->pluck('userGroupID');
 
                
 
         if($userGroup){
-            $request['userGroupId'] = $userGroup->userGroupID;
+            $request['userGroupId'] = $userGroup;
             //$this->navigationUserGroupSetupRepository->pushCriteria(new RequestCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new LimitOffsetCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new FilterParentMenuCriteria($request));
@@ -96,7 +96,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
                                          ->first();
             if($userGroupExist)
             {
-            $request['userGroupId'] = $userGroupExist->userGroupID;
+            $request['userGroupId'] = [$userGroupExist->userGroupID];
             //$this->navigationUserGroupSetupRepository->pushCriteria(new RequestCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new LimitOffsetCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new FilterParentMenuCriteria($request));
@@ -129,6 +129,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
                                                 ->whereIn('isPortalYN',array(0))
                                                 ->where('userGroupID',$userGroupId)
                                                 ->where('companyID',$companyId)
+                                                ->where('isActive',1)
                                                 ->with(['child' => function ($query) use($companyId,$userGroupId) {
                                                     $query->where('userGroupID',$userGroupId)
                                                         ->where('companyID',$companyId)

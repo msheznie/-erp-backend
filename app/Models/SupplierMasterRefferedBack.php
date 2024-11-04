@@ -454,6 +454,7 @@ class SupplierMasterRefferedBack extends Model
         'modifiedUserSystemID',
         'advanceAccountSystemID',
         'AdvanceAccount',
+         'isDelegation'
     ];
 
     /**

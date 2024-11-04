@@ -293,7 +293,8 @@ class StockTransferRefferedBack extends Model
         'modifiedUser',
         'modifiedUserSystemID',
         'modifiedPc',
-        'timestamp'
+        'timestamp',
+         'isDelegation'
     ];
 
     /**

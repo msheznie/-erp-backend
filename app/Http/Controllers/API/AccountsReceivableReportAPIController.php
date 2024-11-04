@@ -41,6 +41,7 @@ use App\Exports\AccountsReceivable\CustomerBalanceSummaryReport;
 use App\Exports\AccountsReceivable\CustomerStatement\CustomerBalanceStatementReport;
 use App\Exports\AccountsReceivable\CustomerStatement\CustomerStatementOfAccountReport;
 use App\Http\Controllers\AppBaseController;
+use App\Jobs\SentCustomerLedger;
 use App\Models\AccountsReceivableLedger;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
@@ -86,7 +87,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $validator = \Validator::make($request->all(), [
                         'fromDate' => 'required|date',
                         'toDate' => 'required|date|after_or_equal:fromDate',
-                        'singleCustomer' => 'required',
+                        'customers' => 'required',
                         'reportTypeID' => 'required',
                     ]);
                 }
@@ -312,12 +313,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company')]));
                     }
 
-                    $customerName = CustomerMaster::find($request->singleCustomer);
-
-                    if (empty($customerName)) {
-                        return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer')]));
-                    }
-
                     $output = $this->getCustomerStatementAccountQRY($request);
 
                     $balanceTotal = collect($output)->pluck('balanceAmount')->toArray();
@@ -346,11 +341,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     if ($output) {
                         foreach ($output as $val) {
-                            $outputArr[$val->documentCurrency][] = $val;
+                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode);
                 }
                 break;
             case 'CA': //Customer Aging
@@ -970,6 +965,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $excelColumnFormat = $objCustomerBalanceStatementReport->getColumnFormat();
                 }
                 else if ($request->reportTypeID == 'CSA') {
+
                     $typ_re = 2;
                     $from_date = $request->fromDate;
                     $toDate = $request->toDate;
@@ -1950,20 +1946,16 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
             $output = $this->getCustomerAgingDetailQRY($request);
 
-            if ($output['data']) {
+            if ($output['data'] && $output['aging']) {
                 $x = 0;
                 if(empty($data)) {
                     $ObjCustomerAgingDetailReportHeader =  new CustomerAgingDetailReport();
-                    array_push($data,collect($ObjCustomerAgingDetailReportHeader->getHeader())->toArray());
+                    array_push($data,collect($ObjCustomerAgingDetailReportHeader->getHeader($output['aging']))->toArray());
                 }
 
                 foreach ($output['data'] as $val) {
                     $lineTotal = 0;
-                    $column1 = $output['aging'][0];
-                    $column2 = $output['aging'][1];
-                    $column3 = $output['aging'][2];
-                    $column4 = $output['aging'][3];
-                    $column5 = $output['aging'][4];
+
                     foreach ($output['aging'] as $val2) {
                         $lineTotal += $val->$val2;
                     }
@@ -1988,17 +1980,22 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $objCustomerAgingDetailReport->setCurrency($val->documentCurrency);
                     $objCustomerAgingDetailReport->setInvoiceAmount($val->invoiceAmount);
                     $objCustomerAgingDetailReport->setOutStanding($lineTotal);
-                    $objCustomerAgingDetailReport->setColumn1(CurrencyService::convertNumberFormatToNumber(number_format($val->$column1,2)));
-                    $objCustomerAgingDetailReport->setColumn2(CurrencyService::convertNumberFormatToNumber(number_format($val->$column2,2)));
-                    $objCustomerAgingDetailReport->setColumn3(CurrencyService::convertNumberFormatToNumber(number_format($val->$column3,2)));
-                    $objCustomerAgingDetailReport->setColumn4(CurrencyService::convertNumberFormatToNumber(number_format($val->$column4,2)));
-                    $objCustomerAgingDetailReport->setColumn5(CurrencyService::convertNumberFormatToNumber(number_format($val->$column5,2)));
-                    $objCustomerAgingDetailReport->setCurrentOutstanding($val->subsequentBalanceAmount);
-                    $objCustomerAgingDetailReport->setCollectionAmount($val->subsequentAmount);
-                    $objCustomerAgingDetailReport->setReceiptMatchingNo( $val->brvInv);
-                    $objCustomerAgingDetailReport->setCollectionTrackerStatus($val->commentAndStatus);
 
                     array_push($data,collect($objCustomerAgingDetailReport)->toArray());
+                }
+
+                foreach ($output['data'] as $index => $val) {
+
+                    foreach ($output['aging'] as $val2) {
+                        $data[$index + 1][$val2] = $val->$val2;
+                    }
+
+
+                    $data[$index + 1]['Current Outstanding'] = $val->subsequentBalanceAmount;
+                    $data[$index + 1]['Subsequent Collection Amount'] = $val->subsequentAmount;
+                    $data[$index + 1]['Receipt Matching/BRVNo'] = $val->brvInv;
+                    $data[$index + 1]['Collection Tracker Status'] = $val->commentAndStatus;
+
                 }
             }
         } else {
@@ -2241,7 +2238,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
         if ($request->reportTypeID == 'CSA') {
             $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
             $checkIsGroup = Company::find($request->companySystemID);
-            $customerName = CustomerMaster::find($request->singleCustomer);
 
             $companyLogo = $checkIsGroup->logo_url;
 
@@ -2273,11 +2269,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
             if ($output) {
                 foreach ($output as $val) {
-                    $outputArr[$val->documentCurrency][] = $val;
+                    $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                 }
             }
 
-            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
+            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
 
 
             if ($sentTo) {
@@ -2395,105 +2391,97 @@ class AccountsReceivableReportAPIController extends AppBaseController
             return $this->sendError("customer Statement cannot be sent to multiple customers",500);
         }
 
-        $html = $this->customerStatementExportPdf($request, true);
+        if ($request->reportTypeID == 'CSA')
+        {
+            $this->sendEmailToMutipleCustomers($request,$input);
+        }
+        else {
+            $html = $this->customerStatementExportPdf($request, true);
 
-        $customerCodeSystem = ($request->reportTypeID == 'CSA') ? $request->singleCustomer : $input['customers'][0]['customerCodeSystem'];
+            $customerCodeSystem = ($request->reportTypeID == 'CSA') ? $request->singleCustomer : $input['customers'][0]['customerCodeSystem'];
 
-        $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
-                                               ->get();
+            $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
+                ->get();
 
-        $customerMaster = CustomerMaster::find($customerCodeSystem);
+            $customerMaster = CustomerMaster::find($customerCodeSystem);
 
-        $emailSentTo = 0;
+            $emailSentTo = 0;
 
-        if ($fetchCusEmail) {
-            foreach ($fetchCusEmail as $row) {
-                if (!empty($row->contactPersonEmail)) {
-                    $emailSentTo = 1;
+            if ($fetchCusEmail) {
+                foreach ($fetchCusEmail as $row) {
+                    if (!empty($row->contactPersonEmail)) {
+                        $emailSentTo = 1;
+                    }
                 }
+            }
+
+            if ($emailSentTo == 0) {
+                return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
+            } else {
+                CustomerStatementJob::dispatch($request->db, $html, $customerCodeSystem, $input['companySystemID'], $request->reportTypeID);
+                return $this->sendResponse($emailSentTo, 'Customer statement report sent');
             }
         }
 
-        if ($emailSentTo == 0) {
-            return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
-        } else {
-            CustomerStatementJob::dispatch($request->db, $html, $customerCodeSystem, $input['companySystemID'], $request->reportTypeID);
-            return $this->sendResponse($emailSentTo, 'Customer statement report sent');
-        }
+    }
+
+    public function sendEmailToMutipleCustomers($request,$input)
+    {
+       $html = $this->customerStatementExportPdf($request, true);
+       $customers = $request->customers;
+       $customerSystemCodes = collect($customers)->pluck(['customerCodeSystem']);
+        $data =  array();
+       foreach ($customerSystemCodes as $customerSystemCode)
+       {
+           $reportDataCopy = $html;
+           $fetchCusEmail = CustomerContactDetails::where('customerID', $customerSystemCode)
+               ->get();
+
+           $customerMaster = CustomerMaster::find($customerSystemCode);
+
+           $customerKey = $customerMaster->CutomerCode." - ".$customerMaster->CustomerName;
+           if (isset($html['reportData']->$customerKey)) {
+               $customerData = $html['reportData']->$customerKey;
+               $data[$customerKey] = $customerData;
+               $totalBalanceAmount = 0;
+               $totalInvoiceAmount = 0;
+               $totalReceiptAmount = 0;
+               foreach ($data[$customerKey] as $key=>$reportByCurrency)
+               {
+                   $data[$customerKey][$key]['balanceAmount'] = collect($reportByCurrency)->sum('balanceAmount');
+                   $data[$customerKey][$key]['invoiceAmount'] = collect($reportByCurrency)->sum('invoiceAmount');
+                   $data[$customerKey][$key]['receiptAmount'] = collect($reportByCurrency)->sum('receiptAmount');
+
+                   $totalBalanceAmount += collect($reportByCurrency)->sum('balanceAmount');
+                   $totalInvoiceAmount += collect($reportByCurrency)->sum('invoiceAmount');
+                   $totalReceiptAmount += collect($reportByCurrency)->sum('receiptAmount');
+               }
+
+               $data['balanceAmount'] = $totalBalanceAmount;
+               $data['invoiceAmount'] = $totalInvoiceAmount;
+               $data['receiptAmount'] = $totalReceiptAmount;
+               $data['companylogo'] = $reportDataCopy['companylogo'];
+               $data['companyName'] = $reportDataCopy['companyName'];
+               $data['currencyID'] = $reportDataCopy['currencyID'];
+               $data['fromDate'] = $reportDataCopy['fromDate'];
+               $data['currency'] = $reportDataCopy['currency'];
+               $data['toDate'] = $reportDataCopy['toDate'];
+               $data['reportData'] = $reportDataCopy['reportData'];
+               $data['currencyDecimalPlace'] = $reportDataCopy['currencyDecimalPlace'];
+               CustomerStatementJob::dispatch($request->db, $data, $customerSystemCode, $input['companySystemID'], $request->reportTypeID);
+
+           }
+       }
+
+        return $this->sendResponse("", 'Customer statement report sent');
     }
 
     public function sentCustomerLedger(Request $request)
     {
         $input = $request->all();
-
-        $customers = $input['customers'];
-        $errorMessage = [];
-        foreach ($customers as $key => $value) {
-            $input['customers'] = [];
-            $input['customers'][] = $value;
-
-            $htmlRes = $this->customerLedgerExportPdf($input, true);
-            if (isset($htmlRes['output']) && count($htmlRes['output']) > 0) {
-                $html = $htmlRes['html'];
-                $pdf = \App::make('dompdf.wrapper');
-                $path = public_path().'/uploads/emailAttachment';
-
-                if (!file_exists($path)) {
-                    File::makeDirectory($path, 0777, true, true);
-                }
-                $nowTime = time();
-
-                $customerCodeSystem = $input['customers'][0]['customerCodeSystem'];
-                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_ledger_' . $nowTime.$customerCodeSystem . '.pdf');
-
-
-                $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
-                                                       ->get();
-
-                $customerMaster = CustomerMaster::find($customerCodeSystem);
-
-                $company = Company::where('companySystemID', $input['companySystemID'])->first();
-                $emailSentTo = 0;
-
-                $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-                    "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-                    "monitoring this inbox.</font>";
-                
-                if ($fetchCusEmail) {
-                    foreach ($fetchCusEmail as $row) {
-                        if (!empty($row->contactPersonEmail)) {
-                            $emailSentTo = 1;
-                            $dataEmail['empEmail'] = $row->contactPersonEmail;
-
-                            $dataEmail['companySystemID'] = $input['companySystemID'];
-
-                            $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;
-
-                            $pdfName = realpath("uploads/emailAttachment/customer_ledger_" . $nowTime.$customerCodeSystem . ".pdf");
-
-                            $dataEmail['isEmailSend'] = 0;
-                            $dataEmail['attachmentFileName'] = $pdfName;
-                            $dataEmail['alertMessage'] = "Customer ledger report from " . $company->CompanyName;
-                            $dataEmail['emailAlertMessage'] = $temp;
-                            $sendEmail = \Email::sendEmailErp($dataEmail);
-                            if (!$sendEmail["success"]) {
-                                $errorMessage[] = $sendEmail["message"];
-                            }
-                        }
-                    }
-                }
-
-                if ($emailSentTo == 0) {
-                    $errorMessage[] = "Customer email is not updated for ".$customerMaster->CustomerName.". report is not sent";
-                } 
-            }
-        }
-
-        if (count($errorMessage) > 0) {
-            return $this->sendError($errorMessage,500);
-        } else {
-            return $this->sendResponse([], 'Customer ledger report sent');
-        }
+        $db = isset($request->db) ? $request->db : "";
+        SentCustomerLedger::dispatch($input, $db);
+        return $this->sendResponse([], 'Customer ledger report sent to queue');
     }
 
     public function getAcountReceivableFilterData(Request $request)
@@ -2588,7 +2576,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
         $controlAccounts = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
         $currency = $request->currencyID;
-        $customer = $request->singleCustomer;
+
+        $customers = (array)$request->customers;
+        $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
         $balanceAmountQry = '';
         $balanceAmountWhere = '';
@@ -2727,7 +2717,7 @@ WHERE
 	AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '"
 	AND "' . $toDate . '"
 	AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
-	AND erp_generalledger.supplierCodeSystem = ' . $customer . '
+	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	) AS MainQuery
 	LEFT JOIN (
 SELECT
@@ -2905,13 +2895,13 @@ IF( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMa
 IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
 IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) )  + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+	mainQuery.documentRptAmount + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) )  + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
 	) AS balanceRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( srInvoiced.sumReturnLocalAmount  IS NULL, 0, srInvoiced.sumReturnLocalAmount  * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
+	mainQuery.documentLocalAmount + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( srInvoiced.sumReturnLocalAmount  IS NULL, 0, srInvoiced.sumReturnLocalAmount  * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
 	) AS balanceLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
+	mainQuery.documentTransAmount  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
 	) AS balanceTrans,
 	mainQuery.customerName,   
 	mainQuery.PONumber 
@@ -3224,7 +3214,7 @@ WHERE
         }
         $currencyID = $request->currencyID;
         $output = \DB::select('SELECT
-        DocumentCode,commentAndStatus,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,creditDays,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
+        documentLocalAmount2,balanceSubsequentCollectionLocal,InvoiceTransAmount,DocumentCode,commentAndStatus,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,creditDays,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
 	final.documentCode AS DocumentCode,
     final.comments AS commentAndStatus,
 	final.documentDate AS PostedDate,
@@ -3251,7 +3241,10 @@ WHERE
 	final.CompanyName,
 	final.serviceLineName,
 	final.documentSystemCode,
-	final.documentSystemID
+	final.documentSystemID,
+	final.InvoiceTransAmount,
+	final.balanceSubsequentCollectionLocal,
+	final.documentLocalAmount2
 FROM
 	(
 SELECT
@@ -3303,23 +3296,23 @@ IF( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactio
 IF( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) AS sumReturnDEOLocalAmount,
 IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS sumReturnDEORptAmount,
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) )
+	mainQuery.documentTransAmount2 + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) )
 	) AS balanceRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )
+	mainQuery.documentLocalAmount2  + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )
 	) AS balanceLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )
+	mainQuery.documentTransAmount2  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )
 	) AS balanceTrans,
 
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0))
+	mainQuery.documentTransAmount2 + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0))
 	) AS balanceSubsequentCollectionRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0))
+	mainQuery.documentLocalAmount2 +  ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0))
 	) AS balanceSubsequentCollectionLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )+ ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0))
+	mainQuery.documentTransAmount2 + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )+ ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0))
 	) AS balanceSubsequentCollectionTrans,
 
 	mainQuery.customerName,
@@ -3331,7 +3324,10 @@ IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS
 	IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0) as SubsequentCollectionRptAmount,
 	IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0) as SubsequentCollectionLocalAmount,
 	IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0) as SubsequentCollectionTransAmount,
-	Subsequentcollection.docCode as brvInv
+	Subsequentcollection.docCode as brvInv,
+	mainQuery.documentLocalAmount2,
+	mainQuery.documentTransAmount2,
+	mainQuery.documentRptAmount2
 FROM
 	(
 SELECT
@@ -3360,15 +3356,18 @@ SELECT
 	erp_generalledger.documentTransCurrencyID,
 	currTrans.CurrencyCode as documentTransCurrency,
 	currTrans.DecimalPlaces as documentTransDecimalPlaces,
-	SUM(erp_generalledger.documentTransAmount) as documentTransAmount,
+	erp_generalledger.documentTransAmount as documentTransAmount,
 	erp_generalledger.documentLocalCurrencyID,
 	currLocal.CurrencyCode as documentLocalCurrency,
 	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
-	SUM(erp_generalledger.documentLocalAmount) as documentLocalAmount,
+	erp_generalledger.documentLocalAmount as documentLocalAmount,
+	SUM(erp_generalledger.documentLocalAmount) as documentLocalAmount2,
+	SUM(erp_generalledger.documentTransAmount) as documentTransAmount2,
+	SUM(erp_generalledger.documentRptAmount) as documentRptAmount2,
 	erp_generalledger.documentRptCurrencyID,
 	currRpt.CurrencyCode as documentRptCurrency,
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
-	SUM(erp_generalledger.documentRptAmount) as documentRptAmount,
+	erp_generalledger.documentRptAmount as documentRptAmount,
 	erp_generalledger.documentType,
 	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName,
 	customermaster.CustomerName as customerName2,
@@ -3586,6 +3585,7 @@ WHERE
 	) AS final
 WHERE
 ' . $whereQry . ' <> 0) as grandFinal ORDER BY PostedDate ASC');
+
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -4103,23 +4103,42 @@ GROUP BY
         if ($currency == 1) {
             $currencyQry = "final.documentTransCurrency AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( final.documentTransAmount, final.documentTransDecimalPlaces ),0) AS invoiceAmount";
-            $paidAmountQry = "IFNULL(round( final.paidTransAmount, final.documentTransDecimalPlaces ),0) AS paidAmount";
+            $paidAmountQry = "IFNULL(round( final.documentLocalAmount, final.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $paidAmountQry = "CASE 
+        WHEN final.receivedAmountTrans IS NULL THEN 
+            IFNULL(round( final.paidTransAmount, final.documentTransDecimalPlaces ),0)
+        ELSE 
+            final.receivedAmountTrans 
+    END AS paidAmount
+    ";
             $balanceAmountQry = "IFNULL(round( final.balanceTrans, final.documentTransDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
         } else if ($currency == 2) {
             $currencyQry = "final.documentLocalCurrency AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( final.documentLocalAmount, final.documentLocalDecimalPlaces ),0) AS invoiceAmount";
-            $paidAmountQry = "IFNULL(round( final.paidLocalAmount, final.documentLocalDecimalPlaces ),0) AS paidAmount";
+            $paidAmountQry = "CASE 
+        WHEN final.receivedAmountLocal IS NULL THEN 
+            IFNULL(ROUND(final.paidLocalAmount, final.documentLocalDecimalPlaces), 0) 
+        ELSE 
+            final.receivedAmountLocal 
+    END AS paidAmount";
             $balanceAmountQry = "IFNULL(round( final.balanceLocal, final.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
         } else {
             $currencyQry = "final.documentRptCurrency AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( final.documentRptAmount, final.documentRptDecimalPlaces ),0) AS invoiceAmount";
-            $paidAmountQry = "IFNULL(round( final.paidRptAmount, final.documentRptDecimalPlaces ),0) AS paidAmount";
+            $paidAmountQry = "
+            CASE 
+        WHEN final.receivedAmountRpt IS NULL THEN 
+            IFNULL(round( final.paidRptAmount, final.documentRptDecimalPlaces ),0)
+        ELSE 
+            final.receivedAmountRpt 
+    END AS paidAmount";
             $balanceAmountQry = "IFNULL(round( final.balanceRpt, final.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
-        return  \DB::select('SELECT
+
+        $query = 'SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -4141,7 +4160,11 @@ GROUP BY
 	final.documentSystemCode,
 	final.documentSystemID,
 	final.chartOfAccountSystemID,
-	final.AccountDescription
+	final.AccountDescription,
+	final.FullyMatched,
+	final.receivedAmountLocal,
+	final.receivedAmountRpt,
+	final.receivedAmountTrans
 FROM
 	(
 SELECT
@@ -4194,71 +4217,165 @@ IF( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactio
 IF( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) AS sumReturnDEOLocalAmount,
 IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS sumReturnDEORptAmount,
 	(
-	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srAmount.sumSRRptAmount IS NULL, 0, srAmount.sumSRRptAmount) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+	mainQuery.documentRptAmount + ( IF(mainQuery.receivedAmountRpt IS NULL,IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ),mainQuery.receivedAmountRpt) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srAmount.sumSRRptAmount IS NULL, 0, srAmount.sumSRRptAmount) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
 	) AS balanceRpt,
 	(
-	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) )  + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srAmount.sumSRLocalAmount IS NULL, 0, srAmount.sumSRLocalAmount) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
+	mainQuery.documentLocalAmount +(IF (mainQuery.receivedAmountLocal IS NULL,( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) , mainQuery.receivedAmountLocal)) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) )  + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srAmount.sumSRLocalAmount IS NULL, 0, srAmount.sumSRLocalAmount) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
 	) AS balanceLocal,
 	(
-	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srAmount.sumSRTransactionAmount IS NULL, 0, srAmount.sumSRTransactionAmount) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
+	mainQuery.documentTransAmount + ( IF(mainQuery.receivedAmountTrans IS NULL,IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ),mainQuery.receivedAmountTrans) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srAmount.sumSRTransactionAmount IS NULL, 0, srAmount.sumSRTransactionAmount) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
 	) AS balanceTrans,
 	(( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srAmount.sumSRRptAmount IS NULL, 0, srAmount.sumSRRptAmount) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ))) as paidRptAmount,
 	(( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ))  + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srAmount.sumSRLocalAmount IS NULL, 0, srAmount.sumSRLocalAmount) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )) as paidLocalAmount,
 	(( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )  + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srAmount.sumSRTransactionAmount IS NULL, 0, srAmount.sumSRTransactionAmount) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )) as paidTransAmount,
 	mainQuery.concatCustomerName, 
+	matchedBRV.FullyMatched,
 	mainQuery.CutomerCode,
 	mainQuery.CustomerName,  
 	mainQuery.PONumber,
-	chartofaccounts.AccountDescription
+	chartofaccounts.AccountDescription,
+	mainQuery.receivedAmountLocal,
+	mainQuery.receivedAmountRpt,
+	mainQuery.receivedAmountTrans
 FROM
 	(
 SELECT
-	erp_generalledger.companySystemID,
-	erp_generalledger.companyID,
-	companymaster.CompanyName,
-	erp_generalledger.serviceLineSystemID,
-	erp_generalledger.serviceLineCode,
-	erp_generalledger.documentSystemID,
-	erp_generalledger.documentID,
-	erp_generalledger.documentSystemCode,
-	erp_generalledger.documentCode,
-	erp_generalledger.documentDate,
-	DATE_FORMAT( documentDate, "%d/%m/%Y" ) AS documentDateFilter,
-	erp_generalledger.documentYear,
-	erp_generalledger.documentMonth,
-	erp_generalledger.chequeNumber,
-	erp_generalledger.invoiceNumber,
-	erp_generalledger.invoiceDate,
-	erp_generalledger.chartOfAccountSystemID as chartOfAccountSystemID,
-	erp_generalledger.glCode,
-	erp_generalledger.documentNarration,
-	erp_generalledger.clientContractID,
-	erp_generalledger.supplierCodeSystem,
-	erp_generalledger.documentTransCurrencyID,
-	currTrans.CurrencyCode as documentTransCurrency,
-	currTrans.DecimalPlaces as documentTransDecimalPlaces,
-	erp_generalledger.documentTransAmount,
-	erp_generalledger.documentLocalCurrencyID,
-	currLocal.CurrencyCode as documentLocalCurrency,
-	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
-	erp_generalledger.documentLocalAmount,
-	erp_generalledger.documentRptCurrencyID,
-	currRpt.CurrencyCode as documentRptCurrency,
-	currRpt.DecimalPlaces as documentRptDecimalPlaces,
-	erp_generalledger.documentRptAmount,
-	erp_generalledger.documentType,
-	erp_custinvoicedirect.PONumber,
-	customermaster.CutomerCode,
-	customermaster.CustomerName,
-	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as concatCustomerName
+    erp_generalledger.companySystemID,
+    erp_generalledger.companyID,
+    companymaster.CompanyName,
+    erp_generalledger.serviceLineSystemID,
+    erp_generalledger.serviceLineCode,
+    erp_generalledger.documentSystemID,
+    erp_generalledger.documentID,
+    erp_generalledger.documentSystemCode,
+    erp_generalledger.documentCode,
+    erp_generalledger.documentDate,
+    DATE_FORMAT(documentDate, "%d/%m/%Y") AS documentDateFilter,
+    erp_generalledger.documentYear,
+    erp_generalledger.documentMonth,
+    erp_generalledger.chequeNumber,
+    erp_generalledger.invoiceNumber,
+    erp_generalledger.invoiceDate,
+    erp_generalledger.chartOfAccountSystemID AS chartOfAccountSystemID,
+    erp_generalledger.glCode,
+    erp_generalledger.documentNarration,
+    erp_generalledger.clientContractID,
+    erp_generalledger.supplierCodeSystem,
+    erp_generalledger.documentTransCurrencyID,
+    currTrans.CurrencyCode AS documentTransCurrency,
+    currTrans.DecimalPlaces AS documentTransDecimalPlaces,
+    erp_generalledger.documentTransAmount,
+    erp_generalledger.documentLocalCurrencyID,
+    currLocal.CurrencyCode AS documentLocalCurrency,
+    currLocal.DecimalPlaces AS documentLocalDecimalPlaces,
+    erp_generalledger.documentLocalAmount,
+    erp_generalledger.documentRptCurrencyID,
+    currRpt.CurrencyCode AS documentRptCurrency,
+    currRpt.DecimalPlaces AS documentRptDecimalPlaces,
+    erp_generalledger.documentRptAmount,
+    erp_generalledger.documentType,
+    erp_custinvoicedirect.PONumber,
+    customermaster.CutomerCode,
+    customermaster.CustomerName,
+    CONCAT(customermaster.CutomerCode, " - ", customermaster.CustomerName) AS concatCustomerName,
+ 	CASE 
+       WHEN erp_generalledger.documentLocalAmount = (
+            SELECT 
+                CASE 
+                    WHEN erp_generalledger.documentLocalCurrencyID = 1 THEN 
+                        matchingAmount / localCurrencyER
+                    ELSE 
+                        matchingAmount / companyRptCurrencyER
+                END
+            FROM erp_matchdocumentmaster
+            WHERE 
+                erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+                AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+                AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        ) THEN -(
+            SELECT 
+                CASE 
+                    WHEN erp_generalledger.documentLocalCurrencyID = 1 THEN 
+                        matchingAmount / localCurrencyER
+                    ELSE 
+                        matchingAmount / companyRptCurrencyER
+                END
+            FROM erp_matchdocumentmaster
+            WHERE 
+                erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+                AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+                AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+        ELSE (
+            SELECT 
+                CASE 
+                    WHEN erp_generalledger.documentLocalCurrencyID = 1 THEN 
+                        matchingAmount / localCurrencyER
+                    ELSE 
+                        matchingAmount / companyRptCurrencyER
+                END
+            FROM erp_matchdocumentmaster
+            WHERE 
+                erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+                AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+                AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+    END AS receivedAmountLocal,
+    CASE
+        WHEN erp_generalledger.documentRptAmount = (
+            SELECT matchingAmount / companyRptCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        ) THEN -(
+            SELECT matchingAmount / companyRptCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+        ELSE (
+            SELECT matchingAmount / companyRptCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+    END AS receivedAmountRpt,
+    CASE
+    WHEN erp_generalledger.documentTransAmount = (
+            SELECT matchingAmount / supplierDefCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        ) THEN -(
+            SELECT matchingAmount / supplierDefCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+        ELSE (
+            SELECT matchingAmount / supplierDefCurrencyER
+            FROM erp_matchdocumentmaster
+            WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+              AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
+              AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+        )
+    END AS receivedAmountTrans
 FROM
-	erp_generalledger 
-	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
-	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
-	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
-	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
-	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
-	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
+    erp_generalledger
+LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
+LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+LEFT JOIN erp_custinvoicedirect ON 
+    erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND 
+    erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND 
+    erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" OR erp_generalledger.documentSystemID = "87" ) 
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
@@ -4275,7 +4392,8 @@ WHERE
 		erp_matchdocumentmaster.BPVcode,
 		sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS MatchedBRVTransAmount,
 		sum( erp_custreceivepaymentdet.receiveAmountLocal ) AS MatchedBRVLocalAmount,
-		sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS MatchedBRVRptAmount 
+		sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS MatchedBRVRptAmount,
+		IF ((erp_matchdocumentmaster.payAmountSuppTrans - matchBalanceAmount),true,false) AS FullyMatched
 	FROM
 		erp_matchdocumentmaster
 		INNER JOIN erp_custreceivepaymentdet ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID 
@@ -4445,7 +4563,10 @@ WHERE
 	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem AND mainQuery.serviceLineSystemID = InvoiceFromBRVAndMatching.serviceLineSystemID
 	) AS final 
- ORDER BY PostedDate ASC;');
+ ORDER BY PostedDate ASC;';
+        $data =  \DB::select($query);
+
+        return $data;
     }
 
     function getCustomerLedgerTemplate2QRY($request)

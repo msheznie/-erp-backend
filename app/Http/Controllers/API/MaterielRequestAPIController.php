@@ -619,7 +619,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $materielRequest = $this->materielRequestRepository->update($input, $id);
 
-        return $this->sendResponse($materielRequest->toArray(), 'MaterielRequest updated successfully');
+        return $this->sendReponseWithDetails($materielRequest->toArray(), 'MaterielRequest updated successfully',1, $confirm['data'] ?? null);
     }
 
     /**

@@ -135,7 +135,8 @@ class CurrencyConversionMaster extends Model
         'timesReferred',
         'RollLevForApp_curr',
         'serialNumber',
-        'timeStamp'
+        'timeStamp',
+        'isDelegation'
     ];
 
     /**

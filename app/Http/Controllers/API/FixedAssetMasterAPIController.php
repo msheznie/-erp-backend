@@ -999,7 +999,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully');
+            return $this->sendReponseWithDetails($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully',1,$confirm['data'] ?? null);
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -2555,6 +2555,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         ->where('docOriginDocumentSystemID', 3)
         ->where('approved','!=',-1)
         ->where('refferedBackYN','!=',-1)
+        ->where('companySystemID', $companyId)
         ->groupBy('docOrigin');
 
 

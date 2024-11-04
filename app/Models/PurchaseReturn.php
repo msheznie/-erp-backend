@@ -344,7 +344,9 @@ class PurchaseReturn extends Model
         'UnbilledGRVAccountSystemID',
         'grvRecieved',
         'prClosedYN',
-        'UnbilledGRVAccount'
+        'UnbilledGRVAccount',
+        'isDelegation'
+
     ];
 
     /**

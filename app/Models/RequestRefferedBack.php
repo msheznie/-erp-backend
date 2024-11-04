@@ -300,7 +300,8 @@ class RequestRefferedBack extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'createdDateTime',
-        'counter'
+        'counter',
+        'isDelegation'
     ];
 
     /**
