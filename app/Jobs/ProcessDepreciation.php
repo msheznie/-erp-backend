@@ -83,97 +83,91 @@ class ProcessDepreciation implements ShouldQueue
             foreach ($output as $val) {
                 $val = (object) $val;
                 $amount_local = 0;
-
-                $count = count($val->depperiod_period);
-
-                if($count == 0)
-                {
-                    $dep_start_date = $val->dateDEP;
-                }
-                else
-                {
-                    $offset = $count - 1;
-                    $time = strtotime($val->depperiod_period[$offset]['depForFYperiodStartDate']);
-                    $dep_start_date = date("Y-m-d h:i:s", strtotime("+1 month", $time));
-
-                }
-
-                $dateDEP = Carbon::parse($dep_start_date);
-                $dateDEP1 = Carbon::parse($dep_start_date);
-
-                if ($dateDEP->lessThanOrEqualTo($depDate)) {
-
-                    $life_time_month = ($val->depMonth * 12) - 1;
-
-                    $life_time_period = $dateDEP->addMonths($life_time_month);
+                $depAmountRpt = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]['depAmountRpt'] : 0;
+                $depAmountLocal = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]['depAmountLocal'] : 0;
+                $nbvLocal = $val->COSTUNIT - $depAmountLocal;
+                $nbvRpt = $val->costUnitRpt - $depAmountRpt;
+                $monthlyLocal = (($val->COSTUNIT - $val->salvage_value) * ($val->DEPpercentage / 100)) / 12;
+                $monthlyRpt = (($val->costUnitRpt - $val->salvage_value_rpt) * ($val->DEPpercentage / 100)) / 12;
 
 
-                    if ($life_time_period < $depDate) // if deprecetion running month greater than deprecetion start month then different month is life time
-                    {
+                if (round($nbvLocal, 2) > $val->salvage_value || round($nbvRpt, 2) > $val->salvage_value_rpt) {
+                    $data['depMasterAutoID'] = $depMasterAutoID;
+                    $data['companySystemID'] = $depMaster->companySystemID;
+                    $data['companyID'] = $depMaster->companyID;
+                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                    $data['serviceLineCode'] = $val->serviceLineCode;
+                    $data['faFinanceCatID'] = $val->AUDITCATOGARY;
+                    $data['faMainCategory'] = $val->faCatID;
+                    $data['faSubCategory'] = $val->faSubCatID;
+                    $data['faID'] = $val->faID;
+                    $data['faCode'] = $val->faCode;
+                    $data['assetDescription'] = $val->assetDescription;
+                    $data['depPercent'] = $val->DEPpercentage;
+                    $data['COSTUNIT'] = $val->COSTUNIT;
+                    $data['costUnitRpt'] = $val->costUnitRpt;
+                    $data['depDoneYN'] = -1;
+                    $data['createdPCid'] = gethostname();
+                    $data['createdBy'] = $depMaster->createdUserID;
+                    $data['createdUserSystemID'] = $depMaster->createdUserSystemID;
+                    $data['depAmountLocalCurr'] = $depMaster->depLocalCur;
+                    $data['depAmountRptCurr'] = $depMaster->depRptCur;
 
-                        $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $life_time_period->format('Y-m-d'));
-
+                    if ($nbvLocal < $monthlyLocal) {
+                        $data['depAmountLocal'] = $nbvLocal;
+                        $amount_local = $nbvLocal;
                     } else {
-                        $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
-
+                        $data['depAmountLocal'] = $monthlyLocal;
+                        $amount_local = $monthlyLocal;
                     }
 
 
-                    if ($differentMonths) {
+                    if ($nbvRpt < $monthlyRpt) {
+                        $data['depAmountRpt'] = $nbvRpt;
+                    } else {
+                        $data['depAmountRpt'] = $monthlyRpt;
+                    }
 
-                        $depAmountRpt = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]['depAmountRpt'] : 0;
-                        $depAmountLocal = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]['depAmountLocal'] : 0;
+                    $count = count($val->depperiod_period);
 
-                        foreach ($differentMonths as $dt) {
+                    if($count == 0)
+                    {
+                        $dep_start_date = $val->dateDEP;
+                    }
+                    else
+                    {   
+                        $offset = $count - 1;
+                        $time = strtotime($val->depperiod_period[$offset]['depForFYperiodStartDate']);
+                        $dep_start_date = date("Y-m-d h:i:s", strtotime("+1 month", $time));
 
-                            $companyFinanceYearID = CompanyFinanceYear::ofCompany($depMaster->companySystemID)->where('bigginingDate', '<=', $dt)->where('endingDate', '>=', $dt->format('Y-m-d'))->first();
-                            if ($companyFinanceYearID) {
+                    }
 
-                                $currentData = collect($finalData);
-                                $depAmountLocal += $currentData->where('faID',$val->faID)->sum('depAmountLocal');
-                                $depAmountRpt += $currentData->where('faID',$val->faID)->sum('depAmountRpt');
+                    $dateDEP = Carbon::parse($dep_start_date);
+                    $dateDEP1 = Carbon::parse($dep_start_date);
 
-                                $nbvLocal = $val->COSTUNIT - $depAmountLocal;
-                                $nbvRpt = $val->costUnitRpt - $depAmountRpt;
-                                $monthlyLocal = (($val->COSTUNIT - $val->salvage_value) * ($val->DEPpercentage / 100)) / 12;
-                                $monthlyRpt = (($val->costUnitRpt - $val->salvage_value_rpt) * ($val->DEPpercentage / 100)) / 12;
+                    if ($dateDEP->lessThanOrEqualTo($depDate)) {
 
-                                if (round($nbvLocal, 2) > $val->salvage_value || round($nbvRpt, 2) > $val->salvage_value_rpt) {
-                                    $data['depMasterAutoID'] = $depMasterAutoID;
-                                    $data['companySystemID'] = $depMaster->companySystemID;
-                                    $data['companyID'] = $depMaster->companyID;
-                                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
-                                    $data['serviceLineCode'] = $val->serviceLineCode;
-                                    $data['faFinanceCatID'] = $val->AUDITCATOGARY;
-                                    $data['faMainCategory'] = $val->faCatID;
-                                    $data['faSubCategory'] = $val->faSubCatID;
-                                    $data['faID'] = $val->faID;
-                                    $data['faCode'] = $val->faCode;
-                                    $data['assetDescription'] = $val->assetDescription;
-                                    $data['depPercent'] = $val->DEPpercentage;
-                                    $data['COSTUNIT'] = $val->COSTUNIT;
-                                    $data['costUnitRpt'] = $val->costUnitRpt;
-                                    $data['depDoneYN'] = -1;
-                                    $data['createdPCid'] = gethostname();
-                                    $data['createdBy'] = $depMaster->createdUserID;
-                                    $data['createdUserSystemID'] = $depMaster->createdUserSystemID;
-                                    $data['depAmountLocalCurr'] = $depMaster->depLocalCur;
-                                    $data['depAmountRptCurr'] = $depMaster->depRptCur;
+                        $life_time_month = ($val->depMonth * 12) - 1;
 
-                                    if ($nbvLocal < $monthlyLocal) {
-                                        $data['depAmountLocal'] = $nbvLocal;
-                                        $amount_local = $nbvLocal;
-                                    } else {
-                                        $data['depAmountLocal'] = $monthlyLocal;
-                                        $amount_local = $monthlyLocal;
-                                    }
+                        $life_time_period = $dateDEP->addMonths($life_time_month);
 
 
-                                    if ($nbvRpt < $monthlyRpt) {
-                                        $data['depAmountRpt'] = $nbvRpt;
-                                    } else {
-                                        $data['depAmountRpt'] = $monthlyRpt;
-                                    }
+                        if ($life_time_period < $depDate) // if deprecetion running month greater than deprecetion start month then different month is life time
+                        {
+
+                            $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $life_time_period->format('Y-m-d'));
+
+                        } else {
+                            $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
+
+                        }
+
+
+                        if ($differentMonths) {
+                            foreach ($differentMonths as $dt) {
+
+                                $companyFinanceYearID = CompanyFinanceYear::ofCompany($depMaster->companySystemID)->where('bigginingDate', '<=', $dt)->where('endingDate', '>=', $dt->format('Y-m-d'))->first();
+                                if ($companyFinanceYearID) {
 
                                     $data['FYID'] = $companyFinanceYearID->companyFinanceYearID;
                                     $data['depForFYStartDate'] = $companyFinanceYearID->bigginingDate;
@@ -191,11 +185,11 @@ class ProcessDepreciation implements ShouldQueue
                                     array_push($finalData, $data);
                                 }
                             }
+
+
                         }
 
-
                     }
-
                 }
 
             }
