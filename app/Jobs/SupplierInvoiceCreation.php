@@ -419,7 +419,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             ];
                                         }
 
-                                        if ($isVATEligible) {
+                                        if ($isVATEligible && (!empty($detail['VATAmount']) || !empty($detail['VATPercentage']))) {
                                             $defaultVAT = TaxService::getDefaultVAT($compId, $invMaster['supplierID']);
                                             if($defaultVAT['vatMasterCategoryID'] == null) {
                                                 $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($compId) {
@@ -530,7 +530,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                         }
 
                                         if(!empty($detail['item'])) {
-                                            $itemAssign = ItemAssigned::with(['item_master'])->where('itemCodeSystem', $detail['item'])
+                                            $itemAssign = ItemAssigned::with(['item_master'])->where('itemPrimaryCode', $detail['item'])
                                                 ->where('companySystemID', $compId)
                                                 ->where('isActive', 1)
                                                 ->where('isAssigned', -1)
@@ -549,7 +549,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                                 ];
                                             } else {
                                                 if(!empty($invDetails)) {
-                                                    $names = collect($invDetails)->pluck('itemCode');
+                                                    $names = collect($invDetails)->pluck('itemPrimaryCode');
                                                     if ($names->contains($detail['item'])) {
                                                         $detailsDataError[] = [
                                                             'field' => 'item',
@@ -594,8 +594,8 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             }
                                         }
 
-                                        if ($isVATEligible) {
-                                            $defaultVAT = TaxService::getVATDetailsByItem($compId, $detail['item'], $invMaster['supplierID']);
+                                        if ($isVATEligible && (!empty($detail['VATAmount']) || !empty($detail['VATPercentage']))) {
+                                            $defaultVAT = TaxService::getVATDetailsByItem($compId, $itemAssign['itemCodeSystem'], $invMaster['supplierID']);
                                             if($defaultVAT['vatMasterCategoryID'] == null) {
                                                 $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($compId) {
                                                     $q->where('companySystemID', $compId)
@@ -662,7 +662,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
                                             $invDetails[] = [
                                                 'companySystemID' => $compId,
-                                                'itemCode' => $detail['item'],
+                                                'itemCode' => $itemAssign['itemCodeSystem'],
                                                 'itemPrimaryCode' => $itemAssign['itemPrimaryCode'],
                                                 'itemDescription' => $itemAssign['itemDescription'],
                                                 'itemFinanceCategoryID' => $itemAssign['financeCategoryMaster'],
