@@ -160,7 +160,7 @@ namespace App\Services\OSOS_3_0;
              ->selectRaw("e.ECode, e.Ename2, '' as Description, e.Erp_companyID, l.location_id,
                     CASE
                         WHEN e.isDischarged = 1 THEN 2 
-                        WHEN e.empConfirmedYN = 0 THEN 1
+                        WHEN e.empConfirmedYN IS NULL OR e.empConfirmedYN = 0 THEN 1
                         WHEN e.empConfirmedYN = 1 THEN 0 
                     END as Status, 
                     e.isDischarged, e.EEmail, e.EcMobile, d.DesignationID,
