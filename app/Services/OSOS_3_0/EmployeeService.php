@@ -158,11 +158,7 @@ namespace App\Services\OSOS_3_0;
      {
          $data = DB::table('srp_employeesdetails as e')
              ->selectRaw("e.ECode, e.Ename2, '' as Description, e.Erp_companyID, l.location_id,
-                    CASE
-                        WHEN e.isDischarged = 1 THEN 2 
-                        WHEN e.empConfirmedYN IS NULL OR e.empConfirmedYN = 0 THEN 1
-                        WHEN e.empConfirmedYN = 1 THEN 0 
-                    END as Status, 
+                    IF(e.isDischarged = 1, 1, 0) as Status,
                     e.isDischarged, e.EEmail, e.EcMobile, d.DesignationID,
                     IFNULL(dep.DepartmentMasterID,0) as DepartmentMasterID, em.managerID")
              ->leftJoin('hr_location_emp as l', function($join) {
@@ -185,7 +181,7 @@ namespace App\Services\OSOS_3_0;
                      ->where('em.active', '=', 1)
                      ->whereColumn('em.companyID', 'e.Erp_companyID');
              })
-             ->where('e.EIdNo', $this->id)
+             ->where([['e.EIdNo', $this->id], ['e.empConfirmedYN', 1]])
              ->first();
 
          if(empty($data)){
@@ -198,7 +194,7 @@ namespace App\Services\OSOS_3_0;
              "Status" => $data->Status,
              "ContactEmail" => $data->EEmail,
              "ContactNumber" => $data->EcMobile,
-             "IsDeleted" => $data->isDischarged,
+             "IsDeleted" => false,
              "DepartmentId" => $this->getOtherReferenceId($data->DepartmentMasterID, 3),
              "ReportingManagerId" => $this->getOtherReferenceId($data->managerID, 4),
              "LocationId" => $this->getOtherReferenceId($data->location_id, 1),
