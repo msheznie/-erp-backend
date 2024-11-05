@@ -3617,7 +3617,7 @@ WHERE
         $invoiceQuery = 'SELECT ec2.bookingInvCode,ABS(ROUND(receivedAmount,3)) as receivedAmount ,ABS(matchedAmount) as matchedAmount,ROUND((ci.bookingAmountTrans + ci.VATAmount),3) as invoiceAmount from erp_customerreceivepayment ec 
         LEFT JOIN erp_matchdocumentmaster em ON ec.custReceivePaymentAutoID  = em.PayMasterAutoId  
         LEFT JOIN erp_custreceivepaymentdet ec2 ON ec2.matchingDocID  = em.matchDocumentMasterAutoID 
-        LEFT JOIN erp_custinvoicedirect	ci ON ci.custInvoiceDirectAutoID = ec2.bookingInvCodeSystem
+        LEFT JOIN erp_custinvoicedirect ci ON ci.custInvoiceDirectAutoID = ec2.bookingInvCodeSystem
         WHERE 
         custPaymentReceiveCode IS NOT NULL
         AND ec2.bookingInvCode IS NOT NULL
@@ -3634,7 +3634,7 @@ WHERE
         $brvQuery = 'SELECT custPaymentReceiveCode,ABS(ROUND(receivedAmount,3)) as receivedAmount ,ABS(matchedAmount) as matchedAmount,ROUND((ci.bookingAmountTrans + ci.VATAmount),3) as invoiceAmount from erp_customerreceivepayment ec
         LEFT JOIN erp_matchdocumentmaster em ON ec.custReceivePaymentAutoID  = em.PayMasterAutoId
         LEFT JOIN erp_custreceivepaymentdet ec2 ON ec2.matchingDocID  = em.matchDocumentMasterAutoID
-        LEFT JOIN erp_custinvoicedirect	ci ON ci.custInvoiceDirectAutoID = ec2.bookingInvCodeSystem
+        LEFT JOIN erp_custinvoicedirect ci ON ci.custInvoiceDirectAutoID = ec2.bookingInvCodeSystem
         WHERE
         custPaymentReceiveCode IS NOT NULL
         AND ec2.bookingInvCode IS NOT NULL
@@ -3647,6 +3647,32 @@ WHERE
         $fullyMatchedBrvs = \DB::select($brvQuery);
 
 
+        // get fully paid credit notes
+
+        $creditNoteQuery = 'SELECT 
+            ec.creditNoteCode ,
+            ABS(ROUND(ec.creditAmountTrans , 3)) AS receivedAmount,
+            ABS(em.matchedAmount) AS matchedAmount,
+            ABS(ROUND(ar.custInvoiceAmount,3)) as invoiceAmount
+        FROM 
+            erp_creditnote ec
+        LEFT JOIN 
+            erp_matchdocumentmaster em ON ec.creditNoteAutoID = em.PayMasterAutoId
+        LEFT JOIN 
+            erp_custreceivepaymentdet ec2 ON ec2.matchingDocID = em.matchDocumentMasterAutoID
+        LEFT JOIN erp_accountsreceivableledger ar ON ar.arAutoID  = ec2.arAutoID
+        WHERE
+            ec.creditNoteAutoID IS NOT NULL
+            AND em.matchingConfirmedYN = 1
+            AND ec2.companySystemID IN (' . join(',', $companyID) . ')
+            AND DATE(ec.postedDate)  <= "' . $asOfDate . '"
+            AND ec.customerID IN (' . join(',', $customerSystemID) . ')
+            HAVING matchedAmount=receivedAmount
+        ';
+
+        $fullyMatchedCreditNotes = \DB::select($creditNoteQuery);
+
+
 
         $array = array();
         foreach ($fullyMatchedBrvs as $item) {
@@ -3657,9 +3683,15 @@ WHERE
             $array[][] = $item->bookingInvCode;
         }
 
+
+        foreach ($fullyMatchedCreditNotes as $item)
+        {
+            $array[][] = $item->creditNoteCode;
+        }
+
+
         return $array;
     }
-
 
 
     function getCustomerAgingSummaryQRY($request)
