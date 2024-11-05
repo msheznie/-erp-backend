@@ -42,6 +42,7 @@ Route::group([], function() {
     Route::get('getPurchaseRequestTotal', 'PurchaseRequestAPIController@getPurchaseRequestTotal')->name('Get purchase request total');
     Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory')->name('Export Purchase History');
     Route::get('purchase_request_data', 'PurchaseRequestAPIController@show')->name('Get purchase request data for portal');
+    Route::get('get_purchase_request_referreds', 'PurchaseRequestReferredAPIController@get_purchase_request_referreds')->name('Get purchase request refferreds');
 
     Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails')->name('Pull mr details');
     Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails')->name('Remove pulled mr details');
