@@ -552,11 +552,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
         $newlyUpdatedPoTotalAmountCheck = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRoundForComp));
         $advancedPaymentCheckAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $advancedPayment));
-    
+
+        $advancedPaymentPercentage = PoPaymentTerms::where('poID',$id)->sum('comPercentage');
         if(isset($input['isConfirm']) && $input['isConfirm']) {
-            $epsilon = 0.00001;
-     
-            if(abs($advancedPaymentCheckAmount - $newlyUpdatedPoTotalAmountCheck) > $epsilon) {
+            if($advancedPaymentPercentage != 100) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
         }
