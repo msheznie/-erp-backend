@@ -690,19 +690,8 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $directPaymentDetails->delete();
 
-        $paySuppMaster = PaySupplierInvoiceMaster::find($directPaymentDetails->directPaymentAutoID);
-        if(!empty($paySuppMaster) && ($paySuppMaster->invoiceType == 3)) 
-        {
-            $paySuppMaster['netAmount'] = 0;
-            $paySuppMaster['netAmountLocal'] = 0;
-            $paySuppMaster['netAmountRpt'] = 0;
-            $paySuppMaster['VATAmount'] = 0;
-            $paySuppMaster['VATAmountBank'] = 0;
-            $paySuppMaster['VATAmountLocal'] = 0;
-            $paySuppMaster['VATAmountRpt'] = 0;
-            $paySuppMaster->save();
-        }
- 
+        // update master table
+        PaySupplier::updateMaster($directPaymentDetails->directPaymentAutoID);
 
         return $this->sendResponse($id, 'Direct Payment Details deleted successfully');
     }
