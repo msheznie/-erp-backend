@@ -3770,7 +3770,6 @@ WHERE
             $array[][] = $item->creditNoteCode;
         }
 
-
         return $array;
     }
 
