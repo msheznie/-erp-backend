@@ -195,7 +195,7 @@ namespace App\Services\OSOS_3_0;
          $this->employeeData = [
              "Code" => $data->ECode,
              "Name" => $data->Ename2,
-             "Status" => 1,
+             "Status" => $data->Status,
              "ContactEmail" => $data->EEmail,
              "ContactNumber" => $data->EcMobile,
              "IsDeleted" => $data->isDischarged,
