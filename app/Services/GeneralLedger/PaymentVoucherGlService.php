@@ -181,7 +181,11 @@ class PaymentVoucherGlService
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                     $data['documentRptCurrencyER'] = $si->transAmount/$si->rptAmount;
                     $data['documentRptAmount'] = \Helper::roundValue($siApData->rptAmount);
-
+                    if($isMasterExchangeRateChanged)
+                    {
+                        $data['documentLocalCurrencyER'] = $si->transAmount/$si->localAmount;
+                        $data['documentRptCurrencyER'] = $si->transAmount/$si->rptAmount;
+                    }
 
                     $data['timestamp'] = \Helper::currentDateTime();
                     if ($siApData && $siApData->transAmount > 0) {
@@ -351,9 +355,10 @@ class PaymentVoucherGlService
                         $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
 
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * ($diffTrans > 0 ? -1 : 1);
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * ($diffLocal > 0 ? -1 : 1);
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * ($diffRpt > 0 ? -1 : 1);
+
+                        $data['documentTransAmount'] = \Helper::roundValue($diffTrans);
+                        $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                        $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
