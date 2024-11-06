@@ -3611,6 +3611,7 @@ WHERE
 
         return ['data' => $filteredData, 'aging' => $aging];
     }
+    
 
     public function getFullyMatchedInvoices($companyID,$asOfDate,$customerSystemID)
     {
