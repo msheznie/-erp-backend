@@ -3691,6 +3691,7 @@ WHERE
         $filteredData = collect($output)->reject(function ($item) use ($excludedDocumentCodes) {
             return in_array($item->DocumentCode, $excludedDocumentCodes);
         });
+        
         return ['data' => $filteredData, 'aging' => $aging];
     }
 
