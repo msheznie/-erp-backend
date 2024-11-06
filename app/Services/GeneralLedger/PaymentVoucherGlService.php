@@ -176,12 +176,16 @@ class PaymentVoucherGlService
                     $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                     $data['documentTransAmount'] = \Helper::roundValue($siApData->transAmount);
                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                    $data['documentLocalCurrencyER'] = $si->transAmount/$si->localAmount;
+                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                     $data['documentLocalAmount'] = \Helper::roundValue($siApData->localAmount);
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                    $data['documentRptCurrencyER'] = $si->transAmount/$si->rptAmount;
+                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
                     $data['documentRptAmount'] = \Helper::roundValue($siApData->rptAmount);
-
+                    if($isMasterExchangeRateChanged)
+                    {
+                        $data['documentLocalCurrencyER'] = $si->transAmount/$si->localAmount;
+                        $data['documentRptCurrencyER'] = $si->transAmount/$si->rptAmount;
+                    }
 
                     $data['timestamp'] = \Helper::currentDateTime();
                     if ($siApData && $siApData->transAmount > 0) {
@@ -289,17 +293,13 @@ class PaymentVoucherGlService
                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
 
 
-
-                        $convertAmount = \Helper::convertAmountToLocalRpt(203, $masterModel["autoID"], ($si->transAmount + $retationVATAmount));
-
-
                         $data['documentTransAmount'] = \Helper::roundValue($si->transAmount + $retationVATAmount) * -1;
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                        $data['documentLocalAmount'] = \Helper::roundValue($convertAmount["localAmount"]) * -1;
+                        $data['documentLocalCurrencyER'] = $si->localAmount != 0 ? ($si->transAmount / $si->localAmount) : 0;
+                        $data['documentLocalAmount'] = \Helper::roundValue($si->localAmount + $retentionLocalVatAmount) * -1;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['documentRptAmount'] = \Helper::roundValue($convertAmount["reportingAmount"]) * -1;
+                        $data['documentRptCurrencyER'] = $si->rptAmount != 0 ? ($si->transAmount / $si->rptAmount) : 0;
+                        $data['documentRptAmount'] = \Helper::roundValue($si->rptAmount + $retentionRptVatAmount) * -1;
 
                         $retationRcmVATAmount = TaxService::calculateRCMRetentionVatAmount($masterModel["autoID"]);
                         if ($retationRcmVATAmount > 0) {
@@ -351,9 +351,9 @@ class PaymentVoucherGlService
                         $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
 
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * ($diffTrans > 0 ? -1 : 1);
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * ($diffLocal > 0 ? -1 : 1);
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * ($diffRpt > 0 ? -1 : 1);
+                        $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * ($diffTrans > 0 ? 1 : -1);
+                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * ($diffLocal > 0 ? 1 : -1);
+                        $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * ($diffRpt > 0 ? 1 : -1);
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
