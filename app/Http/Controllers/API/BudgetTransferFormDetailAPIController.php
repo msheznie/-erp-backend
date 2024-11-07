@@ -24,6 +24,7 @@ use App\Models\Budjetdetails;
 use App\Models\Company;
 use App\Models\BudgetMaster;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ContingencyBudgetPlan;
 use App\Models\SegmentMaster;
@@ -763,16 +764,20 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             'fromChartOfAccountSystemID' => 'required|numeric|min:1',
             'year' => 'required',
         ]);
-
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
+        }
+        $companyFinanceYear = \Helper::companyFinanceYear($input['companySystemID'])->first();
+        if(!isset($companyFinanceYear))
+        {
+            return $this->sendError("Company Current Finanical year not found or not active", 422);
         }
 
         $fromDataBudgetCheck = Budjetdetails::where('companySystemID', $input['companySystemID'])
             ->where('chartOfAccountID',$input['fromChartOfAccountSystemID'])
             ->where('serviceLineSystemID',$input['fromServiceLineSystemID'])
             ->where('templateDetailID',$input['fromTemplateDetailID'])
-            ->where('Year',$input['year'])
+            ->where('erp_budjetdetails.companyFinanceYearID',$companyFinanceYear->companyFinanceYearID)
             ->whereHas('budget_master', function ($query) use ($input){
                 $query->where('templateMasterID', $input['templatesMasterAutoID']);
             })
@@ -788,7 +793,6 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             $total['actuallConsumptionAmount'] = 0;
             $total['pendingDocumentAmount'] = 0;
             $total['balance'] = 0;
-
 
             $companyData = Company::with(['reportingcurrency'])->find($input['companySystemID']);
             return $this->sendResponse(['budgetAmount' => abs($budgetAmount),'total' => $total, 'companyData' => $companyData], 'successfully');
@@ -858,7 +862,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                                        ((SUM(budjetAmtRpt) * -1) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance,ifnull(adj.SumOfadjustmentRptAmount,0) AS adjusted_amount"))
             ->where('erp_budjetdetails.companySystemID', $input['companySystemID'])
             ->where('erp_budjetdetails.serviceLineSystemID', $input['fromServiceLineSystemID'])
-            ->where('erp_budjetdetails.Year', $input['year'])
+            ->where('erp_budjetdetails.companyFinanceYearID',$companyFinanceYear->companyFinanceYearID)
             ->where('erp_budjetdetails.templateDetailID', $input['fromTemplateDetailID'])
             ->where('erp_companyreporttemplatedetails.companyReportTemplateID', $input['templatesMasterAutoID'])
             ->where('erp_budjetdetails.chartOfAccountID', $input['fromChartOfAccountSystemID'])
