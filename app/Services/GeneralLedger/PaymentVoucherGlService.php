@@ -356,9 +356,9 @@ class PaymentVoucherGlService
                         $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
 
 
-                        $data['documentTransAmount'] = \Helper::roundValue($diffTrans);
-                        $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
-                        $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
+                        $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * ($diffTrans > 0 ? -1 : 1);
+                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * ($diffLocal > 0 ? -1 : 1);
+                        $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * ($diffRpt > 0 ? -1 : 1);
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
@@ -370,6 +370,8 @@ class PaymentVoucherGlService
                             $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * ($diffRpt > 0 ? 1 : -1);
                             $data['documentLocalCurrencyER'] = $si->transAmount/$si->localAmount;
                             $data['documentRptCurrencyER'] = $si->transAmount/$si->rptAmount;
+
+
 
                         }
 
