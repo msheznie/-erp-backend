@@ -507,7 +507,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 $imageContent = file_get_contents($logo);
                 $fileName = 'companyLogo.jpg';
                 $filePath = 'public/images/' . $fileName;
-            
+
                 Storage::put($filePath, $imageContent);
                 $temp_png = storage_path('app/' . $filePath);
 
@@ -515,59 +515,61 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $imageType = strtolower(pathinfo($companyLogo, PATHINFO_EXTENSION));
                 }
             }
- 
+
                $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
               // $fontFile = storage_path('app/fonts/helvetica.TTF');
+            $pdf->AddFont('Oswald-Bold', '', public_path('fonts/oswaldb.php'));
+            $pdf->AddFont('Oswald-Regular', '', public_path('fonts/oswald.php'));
 
-               $fontName = 'helvetica';//TCPDF_FONTS::addTTFfont($fontFile, 'TrueTypeUnicode', '', 96);
+            $fontName = 'Oswald-Regular';//TCPDF_FONTS::addTTFfont($fontFile, 'TrueTypeUnicode', '', 96);
 
                 $barcodesCountPage = 0;
                 if($page == "A4") {
                     $maxBarcodesPerPage = 24;
-                    $columnSpacing = 6.5; 
+                    $columnSpacing = 6.5;
                     $marginLeft = 7;
                     $barcodeWidth = 45;
-                    $maxBarcodesPerRow = 4; 
+                    $maxBarcodesPerRow = 4;
                 }
                 else if($page == "A3") {
                     $maxBarcodesPerPage = 54;
-                    $columnSpacing = 3.8; 
+                    $columnSpacing = 3.8;
                     $marginLeft = 7;
                     $barcodeWidth = 45;
-                    $maxBarcodesPerRow = 6; 
+                    $maxBarcodesPerRow = 6;
                 }
                 else if($page == "Custom Size") {
                     $maxBarcodesPerPage = 1;
-                    $columnSpacing = 6.5; 
+                    $columnSpacing = 6.5;
                     $marginLeft = 2;
                     $barcodeWidth = 45;
-                    $maxBarcodesPerRow = 1; 
+                    $maxBarcodesPerRow = 1;
                 }
-               
-               
+
+
                 $marginTop = 0;
                 $barcodeHeight = 12;
                 $rowHeight = 45;
                 $row = 0;
                 $column = 0;
-        
-               
-                
+
+
+
                 $pdf->setPrintHeader(false);
                 $pdf->setPrintFooter(false);
-        
+
                 $pdf->SetDefaultMonospacedFont($fontName);
-        
+
                 $pdf->SetMargins($marginLeft, $marginTop, $marginLeft, true);
                 $pdf->SetHeaderMargin(10);
                 $pdf->SetFooterMargin(10);
-        
+
                 $pdf->SetAutoPageBreak(true, 5);
-        
+
                 $pdf->setImageScale(1.5);
             // $pdf->AddFont('aealarabiya', '', 'aealarabiya.php');
-        
+
                 $style = array(
                     'position' => '',
                     'align' => 'C',
@@ -580,11 +582,11 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     'fgcolor' => array(0,0,0),
                     'bgcolor' => false,
                     'text' => true,
-                    'font' => 'helveticaB',
+                    'font' => "helveticaB",
                     'fontsize' => 4,
                     'stretchtext' => 0
                 );
-            
+
                     foreach ($assets as $key => $val) {
                         if ($barcodesCountPage % $maxBarcodesPerPage == 0) {
                             if($page == "A4") {
@@ -596,44 +598,46 @@ class BarcodeConfigurationAPIController extends AppBaseController
                             else if($page == "Custom Size") {
                                 $pdf->AddPage('P', array(45, 45));
                             }
-                            
+
                             $barcodesCountPage = 0;
                             $row = 0;
                             $column = 0;
                         }
-            
+
                         $x = $marginLeft + ($column * ($barcodeWidth + $columnSpacing));
                         $y = $marginTop + ($row * $rowHeight);
+                        $fontSize = (strlen($companyID) > 25) ? 5.4 : ((strlen($companyID) > 15) ? 7 : 9);
                         if($template == 2)
                         {
-                            $imageHeight = 6; 
-                            $pdf->Image($temp_png, $x-1, $y+3, 6, $imageHeight, $imageType, '', 'T', true, 300, '', false, false, 0, false, false, false);
+                            $imageHeight = 6;
+                            $pdf->Image($temp_png, $x-1, $y+2, 8, $imageHeight, $imageType, '', 'T', true, 2600, '', false, false, 0, false, false, false);
                             if (file_exists($temp_png)) {
                                 if (unlink($temp_png)) {
-                                } 
+                                }
                             };
-                            $pdf->SetFont('aealarabiya', '', 4);
-                            $pdf->SetXY($x + 6, $y+3);
+                            $pdf->SetFont('aealarabiya', '', 7);
+                            $pdf->SetXY($x + 10, $y+3);
                             $pdf->Write(0, $companyArabicName, '', 0, 'L', true, 0, false, false, 0);
 
-                            $pdf->SetFont($fontName, 'B', 5);
+                            $pdf->SetFont("Oswald-Bold", '', 5);
                             $pdf->SetXY($x-2, $y + 10);
                             $pdf->Write(0, $val->assetDescription, '', 0, 'L', true, 0, false, false, 0);
 
-                            
-                            $pdf->SetFont($fontName, 'B', 4);
-                            $pdf->SetXY($x + 6, $y + 6);
+
+                            $pdf->SetFont('Oswald-Regular', '', $fontSize);
+                            $pdf->SetXY($x + 10, $y + 6);
                             $pdf->Write(0, $companyID, '', 0, 'L', true, 0, false, false, 0);
 
                        }
                        else
                        {
-                            $pdf->SetFont($fontName, 'B', 8);
+                            $pdf->SetFont($fontName, '', 7.5);
                             $pdf->SetXY($x-2, $y+3);
                             $pdf->Write(0, $companyID, '', 0, 'L', true, 0, false, false, 0);
                        }
-            
+
                         $barcodeY = $template == 2?$y + 12:$y + 7;
+
                         if($font == 'Code 39') {
                             $pdf->write1DBarcode($val->faCode, 'C39E', $x-2, $barcodeY, $barcodeWidth, $barcodeHeight, 0.9, $style, 'N');
                         }
