@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.52.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.52.0...v10.52.1) (2024-11-08)
+
+
+### Bug Fixes
+
+* **accounts payable:** GL entry posting with wrong ER conversion for payment vouchers fixed [GCP-5167] ([#7106](https://github.com/pbsgears/Gears_BackEnd/issues/7106)) ([ac36fb4](https://github.com/pbsgears/Gears_BackEnd/commit/ac36fb4dd6b92e2c51eaea831651be7c564ff7fc))
+* **asset management:** barcode company id and logo aligned and font changed [GCP-5206] ([#7076](https://github.com/pbsgears/Gears_BackEnd/issues/7076)) ([9db5b01](https://github.com/pbsgears/Gears_BackEnd/commit/9db5b016cca8ca2619b43be8cc3dbaed0496d719))
+
 ## [10.52.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.51.0...v10.52.0) (2024-11-04)
 
 
