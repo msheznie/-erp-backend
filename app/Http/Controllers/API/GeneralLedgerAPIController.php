@@ -383,6 +383,53 @@ class GeneralLedgerAPIController extends AppBaseController
     }
 
 
+
+    public function updateNotPostedPVGLEntries(Request $request)
+    {
+        $input = $request->all();
+
+        Log::useFiles(storage_path() . '/logs/update_missing_docs.log');
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            return  "tenant list is empty";
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            Log::info('checking the db : '.$tenantDb);
+            CommonJobService::db_switch($tenantDb);
+
+            $data = DB::table('erp_paysupplierinvoicemaster')
+                ->where('invoiceType', 2)
+                ->leftJoin('erp_generalledger', function ($join) {
+                    $join->on('erp_paysupplierinvoicemaster.PayMasterAutoId', '=', 'erp_generalledger.documentSystemCode')
+                        ->where('erp_generalledger.documentSystemID', 4);
+                })
+                ->select('erp_paysupplierinvoicemaster.*')
+                ->where('erp_paysupplierinvoicemaster.approved', -1)
+                ->whereNull('erp_generalledger.documentSystemCode')
+                ->where('erp_paysupplierinvoicemaster.approvedDate', '>', '2024-07-17')
+                ->get();
+
+            foreach ($data as $dt){
+                Log::info($dt->PayMasterAutoId);
+                $masterData = ['documentSystemID' => $dt->documentSystemID,
+                    'autoID' => $dt->PayMasterAutoId,
+                    'companySystemID' => $dt->companySystemID,
+                    'documentDateOveride' => $dt->postedDate,
+                    'employeeSystemID' => $dt->approvedByUserSystemID,
+                    'otherLedgers' => false];
+                $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+            }
+        }
+
+        return $this->sendResponse([], 'General Ledger updated successfully');
+    }
+
+
     public function getGeneralLedgerReview(Request $request)
     {
         /** @var GeneralLedger $generalLedger */

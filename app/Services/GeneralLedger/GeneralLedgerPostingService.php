@@ -91,7 +91,9 @@ class GeneralLedgerPostingService
             foreach ($finalData as $data) {
                 GeneralLedger::create($data);
             }
-            $generalLedgerInsert = true;
+
+
+            $generalLedgerInsert = isset($masterModel["otherLedgers"]) ? $masterModel["otherLedgers"] : true;
 
             if ($generalLedgerInsert) {
                 // getting general ledger document date
