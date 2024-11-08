@@ -2813,6 +2813,7 @@ GROUP BY
         $controlAccounts = (array)$request->controlAccountsSystemID;
         $controlAccountsSystemID = collect($controlAccounts)->pluck('id')->toArray();
 
+        $fullyMatchedDocuments = $this->getFullyMatchedInvoices($companyID,$asOfDate,$customerSystemID);
 
         $currency = $request->currencyID;
         $currencyQry = '';
@@ -3116,7 +3117,17 @@ WHERE
 	) AS final 
 WHERE
 ' . $whereQry . ' <> 0 ORDER BY PostedDate ASC;');
-        return $output;
+
+
+        $output = collect($output)->filter(function ($item) {
+            return !str_contains($item->DocumentNarration, 'Matching');
+        });
+
+        $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
+        $filteredData = collect($output)->reject(function ($item) use ($excludedDocumentCodes) {
+            return in_array($item->DocumentCode, $excludedDocumentCodes);
+        });
+        return $filteredData;
     }
 
     // Customer Aging detail report
@@ -3179,6 +3190,8 @@ WHERE
         }
         $agingField .= "if(grandFinal.age <= 0,grandFinal.balanceAmount,0) as `current`";
 
+        $fullyMatchedDocuments = $this->getFullyMatchedInvoices($companyID,$asOfDate,$customerSystemID);
+
 
         $currencyQry = '';
         $amountQry = '';
@@ -3213,8 +3226,8 @@ WHERE
             $invoiceQry = "round( final.documentRptAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
         }
         $currencyID = $request->currencyID;
-        $output = \DB::select('SELECT
-        documentLocalAmount2,balanceSubsequentCollectionLocal,InvoiceTransAmount,DocumentCode,commentAndStatus,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,creditDays,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
+
+        $query = 'SELECT documentLocalAmount2,balanceSubsequentCollectionLocal,InvoiceTransAmount,DocumentCode,commentAndStatus,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,creditDays,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
 	final.documentCode AS DocumentCode,
     final.comments AS commentAndStatus,
 	final.documentDate AS PostedDate,
@@ -3296,7 +3309,7 @@ IF( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactio
 IF( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) AS sumReturnDEOLocalAmount,
 IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS sumReturnDEORptAmount,
 	(
-	mainQuery.documentTransAmount2 + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) )
+	mainQuery.documentRptAmount2 + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) )
 	) AS balanceRpt,
 	(
 	mainQuery.documentLocalAmount2  + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )
@@ -3306,7 +3319,7 @@ IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS
 	) AS balanceTrans,
 
 	(
-	mainQuery.documentTransAmount2 + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0))
+	mainQuery.documentRptAmount2 + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0))
 	) AS balanceSubsequentCollectionRpt,
 	(
 	mainQuery.documentLocalAmount2 +  ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0))
@@ -3397,7 +3410,7 @@ WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" )
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
 	AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
-	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
 	) AS mainQuery
@@ -3584,10 +3597,69 @@ WHERE
 	AND mainQuery.documentSystemCode = Subsequentcollection.bookingInvCodeSystem
 	) AS final
 WHERE
-' . $whereQry . ' <> 0) as grandFinal ORDER BY PostedDate ASC');
+' . $whereQry . ' <> 0) as grandFinal ORDER BY PostedDate ASC';
+        $output = \DB::select($query);
 
-        return ['data' => $output, 'aging' => $aging];
+        $output = collect($output)->filter(function ($item) {
+            return !str_contains($item->DocumentNarration, 'Matching');
+        });
+
+        $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
+        $filteredData = collect($output)->reject(function ($item) use ($excludedDocumentCodes) {
+            return in_array($item->DocumentCode, $excludedDocumentCodes);
+        });
+
+        return ['data' => $filteredData, 'aging' => $aging];
     }
+
+    public function getFullyMatchedInvoices($companyID,$asOfDate,$customerSystemID)
+    {
+        $invoiceQuery = 'SELECT ec2.bookingInvCode,ABS(ROUND(receivedAmount,3)) as receivedAmount ,ABS(matchedAmount) as matchedAmount,ROUND((ci.bookingAmountTrans + ci.VATAmount),3) as invoiceAmount from erp_customerreceivepayment ec 
+        LEFT JOIN erp_matchdocumentmaster em ON ec.custReceivePaymentAutoID  = em.PayMasterAutoId  
+        LEFT JOIN erp_custreceivepaymentdet ec2 ON ec2.matchingDocID  = em.matchDocumentMasterAutoID 
+        LEFT JOIN erp_custinvoicedirect	ci ON ci.custInvoiceDirectAutoID = ec2.bookingInvCodeSystem
+        WHERE 
+        custPaymentReceiveCode IS NOT NULL
+        AND ec2.bookingInvCode IS NOT NULL
+        AND ec.matchingConfirmedYN = -1
+        AND ec2.companySystemID IN (' . join(',', $companyID) . ')
+        AND DATE(ec.postedDate)  <= "' . $asOfDate . '"
+        AND ec.customerID IN (' . join(',', $customerSystemID) . ')
+        HAVING matchedAmount=invoiceAmount';
+
+        $fullyMatchedInvoices = \DB::select($invoiceQuery);
+
+
+
+        $brvQuery = 'SELECT custPaymentReceiveCode,ABS(ROUND(receivedAmount,3)) as receivedAmount ,ABS(matchedAmount) as matchedAmount,ROUND((ci.bookingAmountTrans + ci.VATAmount),3) as invoiceAmount from erp_customerreceivepayment ec
+        LEFT JOIN erp_matchdocumentmaster em ON ec.custReceivePaymentAutoID  = em.PayMasterAutoId
+        LEFT JOIN erp_custreceivepaymentdet ec2 ON ec2.matchingDocID  = em.matchDocumentMasterAutoID
+        LEFT JOIN erp_custinvoicedirect	ci ON ci.custInvoiceDirectAutoID = ec2.bookingInvCodeSystem
+        WHERE
+        custPaymentReceiveCode IS NOT NULL
+        AND ec2.bookingInvCode IS NOT NULL
+        AND ec.matchingConfirmedYN = -1
+        AND ec2.companySystemID IN (' . join(',', $companyID) . ')
+        AND DATE(ec.postedDate)  <= "' . $asOfDate . '"
+        AND ec.customerID IN (' . join(',', $customerSystemID) . ')
+        HAVING matchedAmount=receivedAmount';
+
+        $fullyMatchedBrvs = \DB::select($brvQuery);
+
+
+
+        $array = array();
+        foreach ($fullyMatchedBrvs as $item) {
+            $array[][] = $item->custPaymentReceiveCode;
+        }
+
+        foreach ($fullyMatchedInvoices as $item) {
+            $array[][] = $item->bookingInvCode;
+        }
+
+        return $array;
+    }
+
 
 
     function getCustomerAgingSummaryQRY($request)
@@ -4292,6 +4364,7 @@ SELECT
                 erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
                 AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
                 AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+                AND erp_matchdocumentmaster.matchingConfirmedYN = 1
         ) THEN -(
             SELECT 
                 CASE 
@@ -4305,6 +4378,7 @@ SELECT
                 erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
                 AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
                 AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+                AND erp_matchdocumentmaster.matchingConfirmedYN = 1
         )
         ELSE (
             SELECT 
@@ -4319,6 +4393,7 @@ SELECT
                 erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
                 AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
                 AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+                AND erp_matchdocumentmaster.matchingConfirmedYN = 1
         )
     END AS receivedAmountLocal,
     CASE
@@ -4328,12 +4403,14 @@ SELECT
             WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
               AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
               AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+              AND erp_matchdocumentmaster.matchingConfirmedYN = 1
         ) THEN -(
             SELECT matchingAmount / companyRptCurrencyER
             FROM erp_matchdocumentmaster
             WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
               AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
               AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+              AND erp_matchdocumentmaster.matchingConfirmedYN = 1
         )
         ELSE (
             SELECT matchingAmount / companyRptCurrencyER
@@ -4341,6 +4418,7 @@ SELECT
             WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
               AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
               AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+              AND erp_matchdocumentmaster.matchingConfirmedYN = 1
         )
     END AS receivedAmountRpt,
     CASE
@@ -4350,12 +4428,14 @@ SELECT
             WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
               AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
               AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+              AND erp_matchdocumentmaster.matchingConfirmedYN = 1
         ) THEN -(
             SELECT matchingAmount / supplierDefCurrencyER
             FROM erp_matchdocumentmaster
             WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
               AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
               AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+              AND erp_matchdocumentmaster.matchingConfirmedYN = 1
         )
         ELSE (
             SELECT matchingAmount / supplierDefCurrencyER
@@ -4363,6 +4443,7 @@ SELECT
             WHERE erp_matchdocumentmaster.PayMasterAutoId = erp_generalledger.documentSystemCode
               AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID 
               AND erp_generalledger.chartOfAccountSystemID != customermaster.custGLAccountSystemID
+              AND erp_matchdocumentmaster.matchingConfirmedYN = 1
         )
     END AS receivedAmountTrans
 FROM
@@ -4565,6 +4646,7 @@ WHERE
 	) AS final 
  ORDER BY PostedDate ASC;';
         $data =  \DB::select($query);
+
 
         return $data;
     }
