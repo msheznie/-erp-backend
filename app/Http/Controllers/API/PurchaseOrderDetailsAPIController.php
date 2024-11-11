@@ -1531,7 +1531,24 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->get();
 
         foreach ($details as $detail) {
-            $detail['grvAmount'] = 0;
+            if($detail['receivedQty'] > 0){
+                $currentGrvAmount = sprintf('%.17f', ($detail['netAmount'] / $detail['poQty']) * $detail['receivedQty']);
+                $balanceGrvAmount = sprintf('%.17f', ($detail['netAmount'] - $currentGrvAmount));
+
+                $balanceQty = sprintf('%.17f', ($detail['poQty'] - $detail['receivedQty']));
+
+                $detail['grvAmount'] = $balanceGrvAmount;
+                $detail['balanceGrvAmount'] = $balanceGrvAmount;
+                $detail['noQty'] = $balanceQty;
+                $detail['balanceQty'] = $balanceQty;
+
+            } else {
+
+                $detail['grvAmount'] = $detail['netAmount'];
+                $detail['balanceGrvAmount'] = $detail['netAmount'];
+                $detail['noQty'] = $detail['poQty'];
+                $detail['balanceQty'] = $detail['poQty'];
+            }
         }
 
 
