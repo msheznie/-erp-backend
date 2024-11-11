@@ -71,6 +71,7 @@ Route::group([], function(){
 //document policy
 Route::group([], function(){
 
+Route::get('checkPendingTreasuryClearance', 'CompanyPolicyMasterAPIController@checkPendingTreasuryClearance')->name('Get pending treasury clearance documents');
 Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions')->name('Get company policy filter options');
 Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy')->name('Get all company policy');
 Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy')->name('Get all company email sending policy');

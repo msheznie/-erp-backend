@@ -8236,6 +8236,21 @@ class Helper
             $data['invoiceType'] = $custReceivePayment->documentType;
             $data['chequePaymentYN'] = -1;
 
+            $treasuryClearPolicy = CompanyPolicyMaster::where('companySystemID', $custReceivePayment->companySystemID)
+                ->where('companyPolicyCategoryID', 96)
+                ->where('isYesNO', 1)
+                ->first();
+            if (!empty($treasuryClearPolicy)) {
+                $empId = \Helper::getEmployeeSystemID();
+                $empID = Employee::find($empId);
+                $data['trsClearedYN'] = -1;
+                $data['trsClearedDate'] = NOW();
+                $data['trsClearedByEmpSystemID'] = $empID->employeeSystemID;
+                $data['trsClearedByEmpName'] = $empID->empFullName;
+                $data['trsClearedByEmpID'] = $empID->empID;
+                $data['trsClearedAmount'] = $data['payAmountBank'];
+            }
+
             if ($custReceivePayment->trsCollectedYN == 0) {
                 $data['trsCollectedYN'] = -1;
             } else {

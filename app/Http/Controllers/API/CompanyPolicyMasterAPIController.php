@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCompanyPolicyMasterAPIRequest;
 use App\Http\Requests\API\UpdateCompanyPolicyMasterAPIRequest;
+use App\Models\BankLedger;
 use App\Models\Company;
 use App\Models\CompanyPolicyCategory;
 use App\Models\CompanyPolicyMaster;
@@ -257,4 +258,17 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_policy_masters')]));
     }
 
+    public function checkPendingTreasuryClearance(Request $request)
+    {
+        $input = $request->all();
+        $treasuryNotCleared = BankLedger::where('companySystemID', $input['selectedCompanyId'])
+            ->where('trsClearedYN', 0)
+            ->first();
+
+        if(!empty($treasuryNotCleared)) {
+            return $this->sendError('Pending treasury clearance documents exists');
+        } else {
+            return $this->sendResponse([], 'No pending documents available');
+        }
+    }
 }
