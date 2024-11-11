@@ -29,17 +29,13 @@ class ReceiptAPIController extends AppBaseController
             '*.bank' => 'required|string',
             '*.account' => 'required|string',
             '*.bankCurrency' => 'required|string|max:3',
-            '*.confirmedBy' => 'required|integer',
-            '*.confirmedDate' => 'required|date_format:d-m-Y',
-            '*.approvedBy' => 'required|integer',
-            '*.approvedDate' => 'required|date_format:d-m-Y',
             '*.vatApplicable' => 'required|in:yes,no',
             '*.details.*.invoiceCode' => 'required_if:*.receiptType,2',
             '*.details.*.segmentCode' => 'required_if:*.receiptType,1,2,3',
             '*.details.*.receiptAmount' => 'required_if:*.receiptType,2',
             '*.details.*.glCode' => 'required_if:*.receiptType,1',
             '*.details.*.amount' => 'required_if:*.receiptType,1,3',
-            '*.other' => 'nullable|string',
+            '*.other' => 'nullable',
 
         ];
 
@@ -48,16 +44,18 @@ class ReceiptAPIController extends AppBaseController
             '*.paymentMode.required' => 'The payment mode is required.',
             '*.payeeType.required' => 'The payee type is required.',
             '*.customer.required' => 'The customer field is required.',
+            '*.customer.string' => 'The customer field must be a valid string.',
             '*.currency.required' => 'The currency is required and must be a 3-letter code.',
             '*.narration.required' => 'Please provide a narration.',
-            '*.documentDate.required' => 'The document date is required and must follow the format d-m-Y.',
+            '*.documentDate.required' => 'The document date is required and must follow the format dd-MM-yyyy.',
+            '*.customer.required' => 'The customer field is required.',
+            '*.currency.required' => 'The currency is required and must be a 3-letter code.',
+            '*.narration.required' => 'Please provide a narration.',
+            '*.documentDate.required' => 'The document date is required and must follow the format dd-MM-yyyy.',
+            '*.documentDate.date_format' => 'The document date must follow the format dd-MM-yyyy.',
             '*.bank.required' => 'The bank field is required.',
             '*.account.required' => 'The account field is required.',
             '*.bankCurrency.required' => 'The bank currency is required and must be a 3-letter code.',
-            '*.confirmedBy.required' => 'The confirmation by a valid user is required.',
-            '*.confirmedDate.required' => 'The confirmed date is required and must follow the format d-m-Y.',
-            '*.approvedBy.required' => 'The approval by a valid user is required.',
-            '*.approvedDate.required' => 'The approved date is required and must follow the format d-m-Y.',
             '*.vatApplicable.required' => 'The VAT applicability is required and must be either yes or no.',
             '*.details.*.invoiceCode.required_if' => 'The invoice code is required when receipt type is 2.',
             '*.details.*.segmentCode.required_if' => 'The segment code is required when receipt type is 1, 2, or 3.',
@@ -74,16 +72,37 @@ class ReceiptAPIController extends AppBaseController
                     if (empty($data['other'])) {
                         $validator->errors()->add("data.$index.other", 'The other field is required when receipt type is 1 and payee type is 3.');
                     }
+
+
+                    if(!empty($data['other']) && !is_string($data['other']))
+                    {
+                        $validator->errors()->add("data.$index.other", 'The other field must be a valid string.');
+                    }
+                }
+
+                if (isset($data['receiptType']) && $data['receiptType'] == 1 && isset($data['payeeType']) && $data['payeeType'] == 2) {
+                    if (empty($data['employee'])) {
+                        $validator->errors()->add("data.$index.employee", 'The employee field is required when receipt type is 1 and payee type is 3.');
+                    }
+
+                    if(!empty($data['employee']) && !is_string($data['employee']))
+                    {
+                        $validator->errors()->add("data.$index.employee", 'The employee field must be a valid string.');
+                    }
+
+                }else {
+                    if(isset($data['employee']))
+                    {
+                        $validator->errors()->add("data.$index.employee", 'The employee field is required when receipt type is 1 and payee type is 3.');
+                    }
                 }
 
                 if ((isset($data['receiptType']) && $data['receiptType'] == 2) || (isset($data['receiptType']) && $data['receiptType'] == 3) ||
                 (isset($data['receiptType']) && $data['receiptType'] == 1 && isset($data['payeeType']) && $data['payeeType'] == 1)) {
-                if (empty($data['customer'])) {
-                    $validator->errors()->add("data.$index.customer", 'The customer field is required when receipt type is 2 or 3 or when receipt type is 1 and payee type is 1.');
-                }
-            }
-
-
+                    if (empty($data['customer'])) {
+                        $validator->errors()->add("data.$index.customer", 'The customer field is required when receipt type is 2 or 3 or when receipt type is 1 and payee type is 1.');
+                    }
+                 }
             }
         });
 

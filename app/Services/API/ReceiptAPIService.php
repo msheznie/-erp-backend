@@ -138,6 +138,11 @@ class ReceiptAPIService
                 {
                     $receipt = self::setCustomerDetails($dt['customer'],$receipt);
                 }
+
+                if (($receipt->documentType == 14 && $receipt->payeeTypeID == 2)) {
+
+                    $receipt = self::setEmployeeDetails($dt['employee'], $receipt);
+                }
                 
                 if(($receipt->documentType == 14 && $receipt->payeeTypeID == 3))
                 {
@@ -151,8 +156,8 @@ class ReceiptAPIService
                 $receipt = self::setFinanicalPeriod($dt['documentDate'],$receipt);
                 $receipt = self::setCurrencyDetails($receipt);
                 $receipt = self::setLocalAndReportingAmounts($receipt);
-                $receipt = self::setConfirmedDetails($dt,$receipt);
-                $receipt = self::setApprovedDetails($dt,$receipt);
+//                $receipt = self::setConfirmedDetails($dt,$receipt);
+//                $receipt = self::setApprovedDetails($dt,$receipt);
 
                 if($receipt->documentType == 13) {
                     $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
@@ -906,8 +911,6 @@ class ReceiptAPIService
             }else {
                 $receipt->bankID = $bankDetails->bankmasterAutoID;
             }
-
-
         }
 
 
@@ -984,6 +987,34 @@ class ReceiptAPIService
     private function setOtherDetails($other,$receipt): CustomerReceivePayment
     {
         $receipt->PayeeName = $other;
+
+        return $receipt;
+    }
+
+    private function setEmployeeDetails($employeeCode, $receipt): CustomerReceivePayment
+    {
+        $employeeDetails = Employee::where('empID', $employeeCode)->first();
+
+        if (!$employeeDetails) {
+            $errorMessage = 'Employee data not found';
+        } elseif (!$employeeDetails->empActive) {
+            $errorMessage = 'Employee is not active';
+        } elseif ($employeeDetails->discharegedYN == -1) {
+            $errorMessage = 'Employee discharged';
+        } else {
+            $employeeAssigned = $employeeDetails->emp_company;
+            if (!$employeeAssigned) {
+                $errorMessage = 'Employee is not assigned to the company';
+            } else {
+                $receipt->PayeeEmpID = $employeeDetails->employeeSystemID;
+            }
+        }
+
+        if (isset($errorMessage)) {
+            $this->isError = true;
+            $headerError = new Error('employee', $errorMessage);
+            array_push($this->arrayObj, $headerError);
+        }
 
         return $receipt;
     }
