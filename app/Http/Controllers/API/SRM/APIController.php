@@ -5,9 +5,11 @@ namespace App\Http\Controllers\API\SRM;
 use App\Http\Controllers\Controller;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
+use App\Models\SupplierCategory;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierContactType;
+use App\Models\SupplierGroup;
 use App\Services\POService;
 use App\Services\SRMService;
 use GuzzleHttp\Exception\RequestException;
@@ -91,6 +93,11 @@ define('CHECK_GRV_CREATION', 'CHECK_GRV_CREATION');
 define('GET_NEGOTIATION_TENDERS', 'GET_NEGOTIATION_TENDERS');
 define('GET_SUPPLIER_REGISTRATION_DATA', 'GET_SUPPLIER_REGISTRATION_DATA');
 define('GET_PREBID_CLARIFICATION_POLICY', 'GET_PREBID_CLARIFICATION_POLICY');
+define('SAVE_SUPPLIER_REGISTRATION', 'SAVE_SUPPLIER_REGISTRATION');
+define('GET_EXTERNAL_LINK_DATA', 'GET_EXTERNAL_LINK_DATA');
+define('SAVE_SUPPLIER_INVITATION_STATUS', 'SAVE_SUPPLIER_INVITATION_STATUS');
+define('GET_PO_APPOINTMENT_CALENDAR', 'GET_PO_APPOINTMENT_CALENDAR');
+define('REMOVE_SRM_INVOICE_ATTACHMENT', 'REMOVE_SRM_INVOICE_ATTACHMENT');
 
 
 class APIController extends Controller
@@ -258,6 +265,16 @@ class APIController extends Controller
                 return $this->SRMService->getSupplierRegistrationData($request);
             case GET_PREBID_CLARIFICATION_POLICY:
                 return $this->SRMService->getPreBidClarificationPolicy($request);
+            case SAVE_SUPPLIER_REGISTRATION:
+                return $this->SRMService->saveSupplierRegistration($request);
+            case GET_EXTERNAL_LINK_DATA:
+                return $this->SRMService->getExternalLinkData($request);
+            case SAVE_SUPPLIER_INVITATION_STATUS:
+                return $this->SRMService->saveSupplierInvitationStatus($request);
+            case GET_PO_APPOINTMENT_CALENDAR:
+                return $this->SRMService->getPoAppointments($request);
+            case REMOVE_SRM_INVOICE_ATTACHMENT:
+                return $this->SRMService->removeDeliveryAppointmentAttachment($request);
             default:
                 return [
                     'success'   => false,
@@ -300,6 +317,12 @@ class APIController extends Controller
                                     } else if ($val3->form_field_id == 2) { // Sub Category 
                                         $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode','categoryName')->where('supCategorySubID', $val4->value)->first();
                                         $val4->value = $subCategory['categoryName'];
+                                    } else if ($val3->form_field_id == 74) {
+                                        $category = SupplierCategory::select('id', 'category')->where('id', $val4->value)->first();
+                                        $val4->value = $category['category'];
+                                    } else if ($val3->form_field_id == 75) {
+                                        $group = SupplierGroup::select('id', 'group')->where('id', $val4->value)->first();
+                                        $val4->value = $group['group'];
                                     } else if ($val3->form_field_id == 28) { // Preferred Functional Currency
                                         $currency = CurrencyMaster::select('CurrencyCode', 'CurrencyName')->where('currencyID', $val4->value)->first();
                                         $val4->value = $currency['CurrencyName'] . ' (' . $currency['CurrencyCode'] . ')';

@@ -187,4 +187,14 @@ class Appointment extends Model
     {
         return $this->hasOne('App\Models\BookInvSuppMaster', 'deliveryAppoinmentID', 'id');
     }
+
+    public function getDeliveryAppointmentDetails($appointmentId)
+    {
+        return AppointmentDetails::select('appointment_id','po_master_id')
+        ->where('appointment_id', $appointmentId)
+        ->with(['po_master' => function ($q) {
+        $q->select('purchaseOrderID','serviceLineSystemID');
+        }])->get();
+    }
+
 }

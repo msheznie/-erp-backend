@@ -33,7 +33,8 @@ class TenantEnforce
             'api/v1/checkManWareHouse',
             'api/v1/approveDocument',
             'api/v1/rejectPurchaseRequest',
-            'api/v1/reSendSupplierRegistrationsLink'
+            'api/v1/reSendSupplierRegistrationsLink',
+            'api/v1/saveSupplierPublicLink'
         ];
 
         $dbRoutes = [

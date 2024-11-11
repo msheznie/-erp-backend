@@ -2,13 +2,14 @@
 
 namespace App\Repositories;
 
+use App\Models\SRMPublicLink;
 use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Common\BaseRepository;
-
+use Illuminate\Support\Facades\DB;
 /**
  * Class SupplierRegistrationLinkRepository
  * @package App\Repositories
@@ -61,5 +62,40 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         }else { 
             return ['status' => false];
         }
+    }
+
+    public function saveExternalLinkData($request)
+    {
+
+        $input = $request->all();
+        DB::beginTransaction();
+        try
+        {
+                $inputData = $input['extra'];
+                $supplierLink = $this->model->newInstance();
+                $supplierLink->name = $inputData['name'];
+                $supplierLink->email = $inputData['email'];
+                $supplierLink->registration_number =  $inputData['registration_number'];
+                $supplierLink->company_id = $inputData['company_id'];
+                $supplierLink->token = $inputData['token'];
+                $supplierLink->created_by = -1;
+                $supplierLink->updated_by = '';
+                $supplierLink->STATUS = ($inputData['status']) ?? 0;
+                $supplierLink->uuid = ($inputData['tenantUuid']) ?? null;
+                $supplierLink->is_bid_tender =  $inputData['is_bid_tender'];
+                $supplierLink->created_via =  3;
+                $supplierLink->is_existing_erp_supplier = 0;
+                $supplierLink->sub_domain = ' ';
+                $supplierLink->save();
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully Saved', 'data' => true];
+
+        }
+        catch (\Exception $exception)
+        {
+            DB::rollback();
+            return ['success' => false, 'message' => $exception->getMessage(), 'data' => false];
+        }
+
     }
 }

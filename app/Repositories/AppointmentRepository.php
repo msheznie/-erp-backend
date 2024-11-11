@@ -35,4 +35,22 @@ class AppointmentRepository extends BaseRepository
     {
         return Appointment::class;
     }
+
+    public function getServiceLineSystemIDs($request)
+    {
+        try {
+            $appointmentId = $request->input('appointmentId');
+
+            $serviceLineSystemIDs = (new Appointment())->getDeliveryAppointmentDetails($appointmentId);
+            $uniqueServiceLineSystemIDs = $serviceLineSystemIDs->pluck('po_master.serviceLineSystemID')->unique();
+
+            if ($uniqueServiceLineSystemIDs->count() === 1) {
+                return $uniqueServiceLineSystemIDs->first();
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
+    }
 }

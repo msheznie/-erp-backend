@@ -39,6 +39,7 @@ Route::group([], function(){
     Route::post('clanderSlotDateRangeValidation', 'SlotMasterAPIController@clanderSlotDateRangeValidation')->name("Calendar slot date range validation");
     Route::post('saveCalanderSlots', 'SlotMasterAPIController@saveCalanderSlots')->name("Save calendar slots");
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot')->name("Remove calendar slot");
+    Route::post('getSegmentOfAppointment', 'AppointmentAPIController@getSegmentOfAppointment')->name("Get Segment Of Appointment");
     Route::post('createAppointmentGrv', 'AppointmentAPIController@createAppointmentGrv')->name("Create appointment GRV");
 
 });

@@ -614,7 +614,7 @@ class TenderMasterAPIController extends AppBaseController
             $data['tender_code'] = $tenderCode;
             $data['serial_number'] = $lastSerialNumber;
             $data['document_type'] = isset($input['rfx']) ? $input['document_type'] : 0;
-            $data['isDelegation'] = $input['isDelegation'];
+            $data['isDelegation'] = $input['isDelegation'] ?? 0;
             $result = TenderMaster::create($data);
 
             if ($result) {

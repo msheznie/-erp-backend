@@ -109,4 +109,9 @@ class TenderFaq extends Model
     {
         return $this->hasOne('App\Models\Employee', 'employeeSystemID', 'created_by');
     }
+
+    public function tender()
+    {
+        return $this->hasOne(TenderMaster::class, 'id', 'tender_master_id');
+    }
 }

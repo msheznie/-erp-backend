@@ -8,7 +8,9 @@ use App\Jobs\ThirdPartySystemNotifications\ThirdPartySystemNotificationJob;
 use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierBusinessCategoryAssign;
+use App\Models\SupplierCategory;
 use App\Models\SupplierContactDetails;
+use App\Models\SupplierGroup;
 use App\Models\SupplierSubCategoryAssign;
 use App\Services\SRMService;
 use Carbon\Carbon;
@@ -279,7 +281,6 @@ class SupplierRegistrationApprovalController extends AppBaseController
     public function supplierCreation(Request $request)
     {
         $input = $request->all();
-        
         $supplierFormValues = $input['data'];
         $supplierMasterData = $input['supplierRegistration'];
         $isApprovalAmmend = isset($supplierMasterData['isApprovalAmmend']) ? $supplierMasterData['isApprovalAmmend'] : 0;
@@ -351,10 +352,22 @@ class SupplierRegistrationApprovalController extends AppBaseController
         if ($supplierFormValues['currency'] != "0") {
             $currency = CurrencyMaster::select('currencyID')->where('currencyID', $supplierFormValues['currency'])->first();
             $data['currency'] = $currency['currencyID'];
+        } else {
+            $data['currency'] = 0;
         }
         if ($supplierFormValues['supCategoryMasterID'] != "0") {
             $supplierCat = SupplierCategoryMaster::select('supCategoryMasterID')->where('supCategoryMasterID', $supplierFormValues['supCategoryMasterID'])->first();
             $data['supCategoryMasterID'] = $supplierCat['supCategoryMasterID'];
+        }
+        
+        if (isset($supplierFormValues['supCategory']) && !empty($supplierFormValues['supCategory']) && $supplierFormValues['supCategory'] != "0") {
+            $supplierCat = SupplierCategory::select('id')->where('id', $supplierFormValues['supCategory'])->first();
+            $data['supplier_category_id'] = $supplierCat['id'];
+        }
+
+        if (isset($supplierFormValues['supGroup']) && !empty($supplierFormValues['supGroup']) && $supplierFormValues['supGroup'] != "0") {
+            $supplierGrp = SupplierGroup::select('id')->where('id', $supplierFormValues['supGroup'])->first();
+            $data['supplier_group_id'] = $supplierGrp['id'];
         }
 
         $data['vatEligible'] =  $supplierFormValues['vatEligible'];
@@ -367,6 +380,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $data['uniqueTextcode'] = 'S';
         $data['telephone'] = $supplierFormValues['phone_number'];
         $data['nameOnPaymentCheque'] = $supplierFormValues['nameOnPaymentCheque'];
+        $data['isSMEYN'] = $supplierFormValues['smeSupplier'] ?? 0;
 
         if ($supplierFormValues['fax'] != 0 ||  $supplierFormValues['fax'] != '0') {
             $data['fax'] = $supplierFormValues['fax'];
@@ -378,7 +392,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $data['webAddress'] = $supplierFormValues['webAddress'];
         $data['registrationExprity'] = $supplierFormValues['expireDate'];
 
-        if($isApprovalAmmend!=1){ 
+        if($isApprovalAmmend!=1){
             $supplierMasters = SupplierMaster::create($data); 
             $dataPrimary['primarySupplierCode'] = 'S0' . strval($supplierMasters['supplierCodeSystem']);
             SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])
@@ -396,7 +410,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             SupplierBusinessCategoryAssign::where('supplierID', $supplierID)->delete();
             SupplierSubCategoryAssign::where('supplierID', $supplierID)->delete();
             SupplierContactDetails::where('supplierID', $supplierID)->delete();
-            DocumentAttachments::where('documentSystemCode', $supplierID)->where('documentSystemID', 56)->where('attachmentType', 11)->delete();
+            DocumentAttachments::where('documentSystemCode', $supplierID)->where('documentSystemID', 56)->whereIn('attachmentType',[0, 11])->delete();
 
         }
 

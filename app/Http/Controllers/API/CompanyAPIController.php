@@ -216,6 +216,7 @@ class CompanyAPIController extends AppBaseController
         $hasExistingSupplierSRMLinkPolicy = Helper::checkPolicy($selectedCompanyId, 86);
 
         $hasSupplierGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 76);
+        $hasPublicLinkGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 94);
 
         $discountsChartOfAccounts = ChartOfAccount::where('isApproved',1)
             ->where('isActive',1)
@@ -254,7 +255,8 @@ class CompanyAPIController extends AppBaseController
             'discountsChartOfAccounts' => $discountsChartOfAccounts,
             'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccountCOA,
             'businessCategories' => $businessCategories,
-            'whtTypes' => $whtTypes
+            'whtTypes' => $whtTypes,
+            'hasPublicLinkGeneratePolicy' => $hasPublicLinkGeneratePolicy
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
