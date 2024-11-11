@@ -17,7 +17,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerReceivePaymentDetailAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentDetailAPIRequest;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DirectReceiptDetail;
 use App\Models\SegmentMaster;
 use App\Repositories\UserRepository;
 use App\Models\CustomerReceivePayment;
@@ -702,6 +704,20 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             return $this->sendError('You cannot add detail, this document already confirmed', 500);
         }
 
+        $vatTotal = 0;
+        if ($matchDocumentMasterData->documentSystemID == 21) {
+            if ($matchDocumentMasterData->tableType == 1) {
+                $vatTotal = DirectReceiptDetail::where('directReceiptAutoID',$matchDocumentMasterData->PayMasterAutoId)
+                    ->where('serviceLineSystemID',$matchDocumentMasterData->serviceLineSystemID)
+                    ->sum('VATAmount');
+            }
+            if ($matchDocumentMasterData->tableType == 2) {
+                $vatTotal = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$matchDocumentMasterData->PayMasterAutoId)
+                    ->where('serviceLineSystemID',$matchDocumentMasterData->serviceLineSystemID)
+                    ->sum('VATAmount');
+            }
+        }
+
         $itemExistArray = array();
 
         //check record total in General Ledger table
@@ -724,6 +740,14 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                 } else {
                     $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
                     $itemExistArray[] = [$itemDrt];
+                }
+
+                if ($matchDocumentMasterData->documentSystemID == 21 && $vatTotal > 0) {
+                    $invoice = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$itemExist['bookingInvCodeSystem'])->select('VATAmount')->first();
+                    if($invoice->VATAmount <= 0) {
+                        $itemDrt = "The Customer invoice " . $itemExist['bookingInvDocCode'] . " does not includes VAT, you cannot match it with the Receipt voucher that does include VAT";
+                        $itemExistArray[] = [$itemDrt];
+                    }
                 }
             }
         }
