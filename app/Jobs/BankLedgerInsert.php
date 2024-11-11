@@ -241,6 +241,7 @@ class BankLedgerInsert implements ShouldQueue
                                     ->first();
 
                                 $documentFromBankReconciliation = BankReconciliationDocuments::where('documentSystemID', $custReceivePayment->documentSystemID)->where('documentAutoId', $custReceivePayment->custReceivePaymentAutoID)->first();
+
                                 if (!empty($treasuryClearPolicy)) {
                                     $data['trsClearedYN'] = -1;
                                     $data['trsClearedDate'] = NOW();
