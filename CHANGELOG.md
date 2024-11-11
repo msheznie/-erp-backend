@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.53.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.52.1...v10.53.0) (2024-11-11)
+
+
+### Features
+
+* **KYC Security issue:** Cross-site request forgery [GSUP-2009] ([#7028](https://github.com/pbsgears/Gears_BackEnd/issues/7028)) ([672dc09](https://github.com/pbsgears/Gears_BackEnd/commit/672dc0989a4124071af663014d0473aa02a26a62))
+* **srm:** Any user can access and extract sensitive information through the linked API by browsing the URL [GSUP-1941] ([#6947](https://github.com/pbsgears/Gears_BackEnd/issues/6947)) ([8bdbb40](https://github.com/pbsgears/Gears_BackEnd/commit/8bdbb40e7a224a48efbbfdbbc20f2a5d688788c0))
+* **SRM:** extract sensitive information in sourcing management | Tenders [GSUP-1960] ([#6959](https://github.com/pbsgears/Gears_BackEnd/issues/6959)) ([69a698b](https://github.com/pbsgears/Gears_BackEnd/commit/69a698b2e9b01456ba577b4b570c2799e7f01966))
+* **SRM:** extract sensitive information in sourcing management | Tenders [GSUP-1960] ([#6959](https://github.com/pbsgears/Gears_BackEnd/issues/6959)) ([388fe6d](https://github.com/pbsgears/Gears_BackEnd/commit/388fe6da00a814898b22b0c571f178f8ab1b2aaa))
+* **Supplier Master:** Generate Public link for the Supplier Registration with Supplier Portal [GSUP-1851] ([#6890](https://github.com/pbsgears/Gears_BackEnd/issues/6890)) ([b6f6713](https://github.com/pbsgears/Gears_BackEnd/commit/b6f6713404a26f51726c3a489a69bc414f36ec3a))
+* **Supplier Registration:** Generate Public link for the Supplier Registration with Supplier Portal [GSUP-1940] ([#6927](https://github.com/pbsgears/Gears_BackEnd/issues/6927)) ([f6dc81b](https://github.com/pbsgears/Gears_BackEnd/commit/f6dc81b0e1e56a4ca1928efe5277f3771ce4ac19))
+* **Tender Security:** Validate Navigation which has same API calls [GSUP-1993] ([#7010](https://github.com/pbsgears/Gears_BackEnd/issues/7010)) ([7ebe41d](https://github.com/pbsgears/Gears_BackEnd/commit/7ebe41d9e86f53901f2e84463b84610fcdf0f99b))
+
+
+### Bug Fixes
+
+* **KYC Register:** Error displayed when Registration number field is left empty when submitting the supplier registration form [GSUP-1982] ([#6990](https://github.com/pbsgears/Gears_BackEnd/issues/6990)) ([b8405a1](https://github.com/pbsgears/Gears_BackEnd/commit/b8405a1c9555b7b21f629d960fa7b6afe9cf6ac1))
+* **Tender:** Object [object] Error During RFX Creation [GSUP-2055] ([#7082](https://github.com/pbsgears/Gears_BackEnd/issues/7082)) ([abf5d55](https://github.com/pbsgears/Gears_BackEnd/commit/abf5d55f015ef5154ffd071aa0f4283fde923cf1))
+* **Tender:** Unable to submit the technical evaluation values [Yes/No and Descriptive] when using pre-defined technical criteria [Hot-Fix] [GSUP-1817] ([a59d30d](https://github.com/pbsgears/Gears_BackEnd/commit/a59d30decae909ba50bf44a3e9fd8859b6fedb6f))
+* **Tender:** Unable to submit the technical evaluation values [Yes/No and Descriptive] when using pre-defined technical criteria [Hot-Fix] [GSUP-1817] ([#6700](https://github.com/pbsgears/Gears_BackEnd/issues/6700)) ([3a82b5b](https://github.com/pbsgears/Gears_BackEnd/commit/3a82b5bd5ece6eeadc9df9403ed409850ff0c899))
+
 ## [10.52.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.52.0...v10.52.1) (2024-11-08)
 
 
