@@ -46,6 +46,7 @@ Route::group([], function(){
     Route::get('getReportHeaderData', 'ReportTemplateAPIController@getReportHeaderData')->name("Get report template header data");
     Route::get('getTemplateColumnLinks', 'ReportTemplateColumnLinkAPIController@getTemplateColumnLinks')->name("Get report template column links");
     Route::get('reportTemplateFormulaColumn', 'ReportTemplateColumnLinkAPIController@reportTemplateFormulaColumn')->name("Get report template formula column");
+    Route::resource('report_template_equities', 'ReportTemplateEquityAPIController');
 });
 
 

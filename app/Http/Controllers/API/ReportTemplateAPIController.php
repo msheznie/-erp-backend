@@ -258,7 +258,30 @@ class ReportTemplateAPIController extends AppBaseController
                 $data8['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $reportTemplateDetails4 = ReportTemplateDetails::create($data8);
             }
+            if ($input['reportID'] == 4) {
 
+                $equity = [
+                    ["name" => "Opening Balance"],
+                    ["name" => "Profit after tax"],
+                    ["name" => "Comprehensive income"],
+                    ["name" => "Other changes"],
+                    ["name" => "Closing balance"]
+                ];
+                foreach($equity as $det)
+                {
+                    $data['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                    $data['description'] = $det['name'];
+                    $data['itemType'] = 4;
+                    $data['sortOrder'] = 1;
+                    $data['companySystemID'] = $input['companySystemID'];
+                    $data['companyID'] = $input['companyID'];
+                    $data['createdPCID'] = gethostname();
+                    $data['createdUserID'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $reportTemplateDetails = ReportTemplateDetails::create($data);
+                }
+
+            }
             DB::commit();
             return $this->sendResponse($reportTemplates->toArray(), 'Report Template saved successfully');
         } catch (\Exception $exception) {
