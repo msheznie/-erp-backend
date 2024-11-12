@@ -23,7 +23,7 @@ class Error implements \JsonSerializable
     {
         return [
             'field' => $this->field,
-            'message' => $this->message
+            'message' => [$this->message]
         ];
     }
 }
