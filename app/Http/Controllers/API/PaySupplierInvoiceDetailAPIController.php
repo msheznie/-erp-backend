@@ -1229,6 +1229,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
 
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
+        $isPVHasVAT = false;
+
+        if(PaySupplierInvoiceMaster::find($matchDocumentMasterData->PayMasterAutoId)->VATAmount > 0)
+        {
+            $isPVHasVAT = true;
+        }
 
         $user_type = $matchDocumentMasterData->user_type;
 
@@ -1244,7 +1250,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         //check supplier invoice all ready exist
         foreach ($input['detailTable'] as $itemExist) {
-
             if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
                 $siDetailExistPS = PaySupplierInvoiceDetail::where('matchingDocID', $matchDocumentMasterAutoID)
                     ->where('companySystemID', $itemExist['companySystemID'])
@@ -1253,6 +1258,13 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
                 if (!empty($siDetailExistPS)) {
                     $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is all ready added. Please check again";
+                    $itemExistArray[] = [$itemDrt];
+                }
+                
+                // check supplier invoice has VAT
+                $supplierInvoiceMaster  = BookInvSuppMaster::find($itemExist['bookingInvSystemCode']);
+                if(($supplierInvoiceMaster->VATAmount > 0) && (!$isPVHasVAT)) {
+                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " includes VAT,you cannot match it with the payment voucher that does not include VAT";
                     $itemExistArray[] = [$itemDrt];
                 }
             }
