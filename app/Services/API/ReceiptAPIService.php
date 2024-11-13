@@ -82,7 +82,7 @@ class ReceiptAPIService
                 {
                     $documentApproveds = DocumentApproved::where('documentSystemCode', $saveReceipt->custReceivePaymentAutoID)->where('documentSystemID', $saveReceipt->documentSystemID)->get();
                     foreach ($documentApproveds as $documentApproved) {
-                        $documentApproved["approvedComments"] = "Generated Customer Invoice through API";
+                        $documentApproved["approvedComments"] = "Generated Receipt Voucher through API";
                         $documentApproved["db"] = $db;
                         $documentApproved['empID'] = $receipt->approvedByUserSystemID;
                         $documentApproved['documentSystemID'] = $saveReceipt->documentSystemID;

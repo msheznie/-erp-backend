@@ -46,6 +46,7 @@ class ReceiptAPIController extends AppBaseController
             '*.customer.required' => 'The customer field is required.',
             '*.customer.string' => 'The customer field must be a valid string.',
             '*.currency.required' => 'The currency is required and must be a 3-letter code.',
+            '*.currency.max' => 'The currency must be a 3-letter code.',
             '*.narration.required' => 'Please provide a narration.',
             '*.documentDate.required' => 'The document date is required and must follow the format dd-MM-yyyy.',
             '*.customer.required' => 'The customer field is required.',
@@ -56,7 +57,9 @@ class ReceiptAPIController extends AppBaseController
             '*.bank.required' => 'The bank field is required.',
             '*.account.required' => 'The account field is required.',
             '*.bankCurrency.required' => 'The bank currency is required and must be a 3-letter code.',
-            '*.vatApplicable.required' => 'The VAT applicability is required and must be either yes or no.',
+            '*.bankCurrency.max' => 'The bank currency must be a 3-letter code.',
+            '*.vatApplicable.required' => 'The vatApplicable field  is required and must be either yes or no.',
+            '*.vatApplicable.in' => 'The vatApplicable field must be either yes or no.',
             '*.details.*.invoiceCode.required_if' => 'The invoice code is required when receipt type is 2.',
             '*.details.*.segmentCode.required_if' => 'The segment code is required when receipt type is 1, 2, or 3.',
             '*.details.*.receiptAmount.required_if' => 'The receipt amount is required when receipt type is 2.',
@@ -82,7 +85,7 @@ class ReceiptAPIController extends AppBaseController
 
                 if (isset($data['receiptType']) && $data['receiptType'] == 1 && isset($data['payeeType']) && $data['payeeType'] == 2) {
                     if (empty($data['employee'])) {
-                        $validator->errors()->add("data.$index.employee", 'The employee field is required when receipt type is 1 and payee type is 3.');
+                        $validator->errors()->add("data.$index.employee", 'The employee field is required when receipt type is 1 and payee type is 2.');
                     }
 
                     if(!empty($data['employee']) && !is_string($data['employee']))
@@ -90,11 +93,6 @@ class ReceiptAPIController extends AppBaseController
                         $validator->errors()->add("data.$index.employee", 'The employee field must be a valid string.');
                     }
 
-                }else {
-                    if(isset($data['employee']))
-                    {
-                        $validator->errors()->add("data.$index.employee", 'The employee field is required when receipt type is 1 and payee type is 3.');
-                    }
                 }
 
                 if ((isset($data['receiptType']) && $data['receiptType'] == 2) || (isset($data['receiptType']) && $data['receiptType'] == 3) ||
