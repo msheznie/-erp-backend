@@ -1687,7 +1687,7 @@ class SRMService
                             ->with([
                             'SupplierTenderNegotiation' => function ($q) use ($supplierRegId)
                             {
-                                $q->select('id', 'tender_negotiation_id', 'bidSubmissionCode')
+                                $q->select('id', 'tender_negotiation_id', 'bidSubmissionCode', 'srm_bid_submission_master_id')
                                     ->where('suppliermaster_id', $supplierRegId);
                             }
                         ]);
