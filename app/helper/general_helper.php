@@ -8229,10 +8229,10 @@ class Helper
             $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
             $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
             $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
-            $data['payAmountBank'] = $custReceivePayment->bankAmount;
-            $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
-            $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
-            $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
+            $data['payAmountBank'] = Helper::roundValue($custReceivePayment->receivedAmount / $custReceivePayment->bankCurrencyER);
+            $data['payAmountSuppTrans'] = Helper::roundValue($custReceivePayment->receivedAmount / $custReceivePayment->bankCurrencyER);
+            $data['payAmountCompLocal'] = Helper::roundValue($custReceivePayment->receivedAmount / $custReceivePayment->localCurrencyER);
+            $data['payAmountCompRpt'] = Helper::roundValue($custReceivePayment->receivedAmount / $custReceivePayment->companyRptCurrencyER);
             $data['invoiceType'] = $custReceivePayment->documentType;
             $data['chequePaymentYN'] = -1;
 
