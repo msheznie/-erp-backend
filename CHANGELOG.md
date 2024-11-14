@@ -1,5 +1,15 @@
 # Changelog
 
+## [10.53.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.53.1...v10.53.2) (2024-11-14)
+
+
+### Bug Fixes
+
+* **accounts receivable:** customer invoice receipt bank ledger mismatch data update [GCP-5296] ([#7123](https://github.com/pbsgears/Gears_BackEnd/issues/7123)) ([c3a2941](https://github.com/pbsgears/Gears_BackEnd/commit/c3a294170b7134c8258604d4ebae8326fc9a6afc))
+* **accounts-recivable:** fix the BRV gl entries [GCP-5332] ([#7140](https://github.com/pbsgears/Gears_BackEnd/issues/7140)) ([9060e38](https://github.com/pbsgears/Gears_BackEnd/commit/9060e38b536f05acf3274dc3e5adfd4e819b64a8))
+* **asset management:** Asset register detail report NBV negative value issue [GCP-5100] ([#7038](https://github.com/pbsgears/Gears_BackEnd/issues/7038)) ([dc634f5](https://github.com/pbsgears/Gears_BackEnd/commit/dc634f50ad4424d359e3d1ae584f06a13d6efb98))
+* supplier invoice api route changed to tenat by key [GCP-4289] ([#7141](https://github.com/pbsgears/Gears_BackEnd/issues/7141)) ([91ba6a2](https://github.com/pbsgears/Gears_BackEnd/commit/91ba6a2ac16744390f1865db54b24f4e0672c9a1))
+
 ## [10.53.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.53.0...v10.53.1) (2024-11-12)
 
 
