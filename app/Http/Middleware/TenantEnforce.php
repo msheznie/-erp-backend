@@ -83,7 +83,7 @@ class TenantEnforce
             'api/v1/mrItemsUpload',
             'api/v1/miItemsUpload',
             'api/v1/approveDocumentBulk',
-            'api/v1/create_supplier_invoices',
+            'api/v1/supplier_invoice_create',
             'api/v1/sentCustomerLedger'
         ];
 

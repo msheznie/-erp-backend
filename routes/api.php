@@ -53,7 +53,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('push_budget_items', 'SRM\ThirdPartySystemsController@pushBudgetItems');
             Route::post('create_customer_invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
             Route::post('cancel_customer_invoice', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
-            Route::post('create_supplier_invoices','BookInvSuppMasterAPIController@createSupplierInvoices');
+            Route::post('supplier_invoice_create','BookInvSuppMasterAPIController@createSupplierInvoices');
         });
 
         Route::group(['middleware' => 'auth.api.keycloak'], function () {
@@ -984,6 +984,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::group(['middleware' => ['thirdPartyApis','hrms_employee']], function () {
             Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
             Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
+            Route::post('create_supplier_invoices','BookInvSuppMasterAPIController@createSupplierInvoices');
             require __DIR__.'/../routes/osos_3_0/osos_3_0.php';
         });
     });
