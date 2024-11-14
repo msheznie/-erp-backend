@@ -1462,6 +1462,7 @@ class BankReconciliationAPIController extends AppBaseController
                 return $this->sendError($resultData['message']);
             }
         }
+
         $DataReturn = $this->bankReconciliationDocument->create($document);
         return $this->sendResponse($DataReturn->toArray(), 'Additional entry created successfully.');
     }
