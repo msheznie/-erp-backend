@@ -34,6 +34,7 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\PaymentBankTransferDetailRefferedBack;
+use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
@@ -1363,5 +1364,33 @@ class BankReconciliationAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function getBankReconciliationAdditionalEntries(Request $request)
+    {
+        $input = $request->all();
+        $additionalEntryQuery = collect([]);
+
+        return \DataTables::collection($additionalEntryQuery)
+            ->addIndexColumn()
+            ->make(true);
+    }
+
+    public function getAllActiveSegments(Request $request)
+    {
+        $companyId = isset($request['companyId']) ? $request['companyId'] : 0;
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+        $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
+        $output = array(
+            'segments' => $segment
+        );
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }
