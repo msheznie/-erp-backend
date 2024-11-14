@@ -429,6 +429,56 @@ class GeneralLedgerAPIController extends AppBaseController
         return $this->sendResponse([], 'General Ledger updated successfully');
     }
 
+    public function updateNotPostedRVGLEntries(Request $request)
+    {
+        $input = $request->all();
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            return  "tenant list is empty";
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            $data = DB::table('erp_customerreceivepayment')
+                ->leftJoin('erp_generalledger', function ($join) {
+                    $join->on('erp_customerreceivepayment.custReceivePaymentAutoID', '=', 'erp_generalledger.documentSystemCode')
+                        ->where('erp_generalledger.documentSystemID', 21);
+                })
+                ->select('erp_customerreceivepayment.*')
+                ->where('erp_customerreceivepayment.approved', -1)
+                ->where('erp_customerreceivepayment.documentSystemID', 21)
+                ->whereNull('erp_generalledger.documentSystemCode')
+                ->where('erp_customerreceivepayment.timestamp', '>', '2024-01-01')
+                ->get();
+
+            foreach ($data as $dt){
+                $masterData = ['documentSystemID' => $dt->documentSystemID,
+                    'autoID' => $dt->custReceivePaymentAutoID,
+                    'companySystemID' => $dt->companySystemID,
+                    'documentDateOveride' => $dt->postedDate,
+                    'employeeSystemID' => $dt->approvedByUserSystemID,
+                    'otherLedgers' => false];
+                $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+
+
+                DB::table('migratedDocs')->insert([
+                    'documentSystemID' => $dt->documentSystemID,
+                    'documentSystemCode' => $dt->custReceivePaymentAutoID,
+                    'documentCode' => $dt->custPaymentReceiveCode,
+                    'comment' => "Update General Ledger",
+                    'created_at' => Carbon::now()
+                ]);
+            }
+        }
+
+        return $this->sendResponse([], 'General Ledger updated successfully');
+    }
+
 
     public function getGeneralLedgerReview(Request $request)
     {
@@ -488,6 +538,7 @@ class GeneralLedgerAPIController extends AppBaseController
                                     ->where('documentSystemCode', $request->autoID)
                                     ->where('companySystemID', $request->companySystemID)
                                     ->get();
+
 
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
         $generalLedger = [

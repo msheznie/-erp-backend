@@ -27,6 +27,7 @@ use App\Services\GeneralLedger\GPOSSalesGlService;
 use App\Services\GeneralLedger\RPOSSalesGlService;
 use App\Services\GeneralLedger\GeneralLedgerPostingService;
 use App\Models\GeneralLedger;
+use Illuminate\Support\Facades\Log;
 
 class GeneralLedgerService
 {
@@ -121,31 +122,43 @@ class GeneralLedgerService
 
     public static function validateDebitCredit($documentSystemID, $documentSystemCode)
     {
-        $geData = GeneralLedger::selectRaw('round(SUM(documentTransAmount), transCurrency.DecimalPlaces) as documentTransAmountTotal, 
-    round(SUM(documentLocalAmount), localCurrency.DecimalPlaces) as documentLocalAmountTotal, 
-    round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmountTotal,
-    round(SUM(CASE WHEN documentLocalAmount >= 0 THEN documentLocalAmount ELSE 0 END), localCurrency.DecimalPlaces) as documentLocalAmountPositiveTotal,
-    round(SUM(CASE WHEN documentLocalAmount < 0 THEN documentLocalAmount ELSE 0 END), localCurrency.DecimalPlaces) as documentLocalAmountNegativeTotal,
-    round(SUM(CASE WHEN documentRptAmount >= 0 THEN documentRptAmount ELSE 0 END), reportingCurrency.DecimalPlaces) as documentRptAmountPositiveTotal,
-    round(SUM(CASE WHEN documentRptAmount < 0 THEN documentRptAmount ELSE 0 END), reportingCurrency.DecimalPlaces) as documentRptAmountNegativeTotal')
-                               ->join('currencymaster as transCurrency', 'transCurrency.currencyID', '=', 'documentTransCurrencyID')
-                               ->join('currencymaster as localCurrency', 'localCurrency.currencyID', '=', 'documentLocalCurrencyID')
-                               ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
-                               ->where('documentSystemID', $documentSystemID)
-                               ->where('documentSystemCode', $documentSystemCode)
-                               ->first();
+        $epsilon = 0.00001;
+
+        $geData = GeneralLedger::selectRaw('
+                                    round(SUM(documentTransAmount), transCurrency.DecimalPlaces) as documentTransAmountTotal, 
+                                    round(SUM(documentLocalAmount), localCurrency.DecimalPlaces) as documentLocalAmountTotal, 
+                                    round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmountTotal,
+                                    round(SUM(CASE WHEN documentLocalAmount >= 0 THEN documentLocalAmount ELSE 0 END), localCurrency.DecimalPlaces) as documentLocalAmountPositiveTotal,
+                                    round(SUM(CASE WHEN documentLocalAmount < 0 THEN documentLocalAmount ELSE 0 END), localCurrency.DecimalPlaces) as documentLocalAmountNegativeTotal,
+                                    round(SUM(CASE WHEN documentRptAmount >= 0 THEN documentRptAmount ELSE 0 END), reportingCurrency.DecimalPlaces) as documentRptAmountPositiveTotal,
+                                    round(SUM(CASE WHEN documentRptAmount < 0 THEN documentRptAmount ELSE 0 END), reportingCurrency.DecimalPlaces) as documentRptAmountNegativeTotal
+                                ')
+                                ->join('currencymaster as transCurrency', 'transCurrency.currencyID', '=', 'documentTransCurrencyID')
+                                ->join('currencymaster as localCurrency', 'localCurrency.currencyID', '=', 'documentLocalCurrencyID')
+                                ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
+                                ->where('documentSystemID', $documentSystemID)
+                                ->where('documentSystemCode', $documentSystemCode)
+                                ->first();
 
         if ($geData && ($geData->documentLocalAmountTotal != 0 || $geData->documentRptAmountTotal != 0)) {
+            $localDifference = abs($geData->documentLocalAmountPositiveTotal) - abs($geData->documentLocalAmountNegativeTotal);
+            $rptDifference = abs($geData->documentRptAmountPositiveTotal) - abs($geData->documentRptAmountNegativeTotal);
 
-            // if (abs($geData->documentTransAmountTotal) > 0.00001) {
-            //     return ['status' => false, 'error' => ['message' => "There will be unmatch Debit and credit for this document. Trans amount mismatched : ".$geData->documentTransAmountTotal]];
-            // } else 
-
-            if (abs($geData->documentLocalAmountPositiveTotal) - abs($geData->documentLocalAmountNegativeTotal) > 0.00001) {
-                return ['status' => false, 'error' => ['message' => "There will be unmatch Debit and credit for this document. Local amount mismatched : ".(abs($geData->documentLocalAmountPositiveTotal) - abs($geData->documentLocalAmountNegativeTotal))]];
-            } else if (abs($geData->documentRptAmountPositiveTotal) - abs($geData->documentRptAmountNegativeTotal) > 0.00001) {
-                return ['status' => false, 'error' => ['message' => "There will be unmatch Debit and credit for this document. Rpt amount mismatched : ".(abs($geData->documentRptAmountPositiveTotal) - abs($geData->documentRptAmountNegativeTotal))]];
-            }  
+            if (abs($localDifference) > $epsilon) {
+                return [
+                    'status' => false,
+                    'error' => [
+                        'message' => "There will be unmatch Debit and credit for this document. Local amount mismatched: " . $localDifference
+                    ]
+                ];
+            } elseif (abs($rptDifference) > $epsilon) {
+                return [
+                    'status' => false,
+                    'error' => [
+                        'message' => "There will be unmatch Debit and credit for this document. Rpt amount mismatched: " . $rptDifference
+                    ]
+                ];
+            }
         }
 
         return ['status' => true];

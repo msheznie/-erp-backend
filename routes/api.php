@@ -1020,6 +1020,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             return 'CRON Job run successfully';
         });
         Route::get('updateNotPostedPVGLEntries', 'GeneralLedgerAPIController@updateNotPostedPVGLEntries');
+        Route::get('updateNotPostedRVGLEntries', 'GeneralLedgerAPIController@updateNotPostedRVGLEntries');
     }       
 });
 /*
