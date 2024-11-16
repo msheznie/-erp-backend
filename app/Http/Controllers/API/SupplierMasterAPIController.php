@@ -237,6 +237,8 @@ class SupplierMasterAPIController extends AppBaseController
             $x++;
             $data[$x]['Supplier Code'] = $val->primarySupplierCode;
             $data[$x]['Supplier Name'] = $val->supplierName;
+            $data[$x]['Supplier Group'] = $val['supplier_group']['group'];
+            $data[$x]['Registration Number'] = $val->registrationNumber;
             $currency = "";
             $country = "";
             $businessCategory = "";
