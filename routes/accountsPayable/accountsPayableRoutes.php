@@ -125,6 +125,8 @@ Route::group([],function (){
     Route::get('getDPExchangeRateAmount', 'DirectPaymentDetailsAPIController@getDPExchangeRateAmount')->name('Get dp exchange rate amount');
     Route::get('getDPHistoryExchangeRateAmount', 'DirectPaymentReferbackAPIController@getDPHistoryExchangeRateAmount')->name('Get dp history exchange rate amount');
     Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim')->name('Add details from expense claim');
+    Route::post('addPVBankChargeDetails', 'PaySupplierInvoiceDetailAPIController@storePaymentVoucherBankChargeDetails')->name('Add payment voucher bank charge details');
+    Route::post('updatePVBankChargeDetails', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherBankChargeDetails')->name('Update payment voucher bank charge details');
 
     Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
     Route::resource('pdc_logs', 'PdcLogAPIController');
@@ -132,6 +134,7 @@ Route::group([],function (){
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController',['except' => ['index','store']]);
     Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController',['except' => ['index','store']]);
     Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController', ['only' => ['store', 'show', 'update']]);
+    Route::resource('pv_bank_charge_details', 'PaymentVoucherBankChargeDetailsAPIController');
 });
 
 //Payment Voucher Matching

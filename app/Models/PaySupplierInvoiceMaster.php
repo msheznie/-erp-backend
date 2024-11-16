@@ -977,5 +977,10 @@ class PaySupplierInvoiceMaster extends Model
     {
         return $this->hasMany('App\Models\PdcLog', 'documentmasterAutoID', 'PayMasterAutoId');
     }
+
+    public function bank_charge()
+    {
+        return $this->hasMany('App\Models\PaymentVoucherBankChargeDetails', 'payMasterAutoID', 'PayMasterAutoId');
+    }
     
 }

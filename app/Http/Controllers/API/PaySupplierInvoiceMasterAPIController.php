@@ -19,6 +19,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
+use App\Models\PaymentVoucherBankChargeDetails;
 use ExchangeSetupConfig;
 use App\helper\Helper;
 use App\helper\TaxService;
@@ -507,7 +508,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
-        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by', 'bankaccount', 'financeperiod_by' => function ($query) {
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['transactioncurrency', 'confirmed_by', 'bankaccount', 'financeperiod_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
@@ -1784,6 +1785,72 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
+                // checking minus value
+                if ($input['invoiceType'] == 2) {
+
+                    $checkBankChargeTotal = PaymentVoucherBankChargeDetails::where('payMasterAutoID', $input['PayMasterAutoId'])->sum('dpAmount');
+
+                    $checkInvoiceDetailTotal = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input['PayMasterAutoId'])->sum('supplierPaymentAmount');
+
+                    $netMinustot = $checkBankChargeTotal + $checkInvoiceDetailTotal;
+
+                    if ($netMinustot < 0) {
+                        return $this->sendError('Net amount cannot be negative value', 500);
+                    }
+
+                    $checkQuantity = PaymentVoucherBankChargeDetails::where('payMasterAutoID', $input['PayMasterAutoId'])
+                        ->where(function ($q) {
+                            $q->where('dpAmount', '=', 0)
+                                ->orWhere('localAmount', '=', 0)
+                                ->orWhere('comRptAmount', '=', 0)
+                                ->orWhereNull('dpAmount')
+                                ->orWhereNull('localAmount')
+                                ->orWhereNull('comRptAmount');
+                        })->count();
+
+                    if ($checkQuantity > 0) {
+                        return $this->sendError('Amount should be have value', 500);
+                    }
+
+                    $pvBankChargeDetail = PaymentVoucherBankChargeDetails::where('payMasterAutoID', $input['PayMasterAutoId'])->get();
+
+                    $finalError = array(
+                        'amount_zero' => array(),
+                        'amount_neg' => array(),
+                        'required_serviceLine' => array(),
+                        'active_serviceLine' => array()
+                    );
+
+                    $error_count = 0;
+
+                    foreach ($pvBankChargeDetail as $item) {
+
+                        $updateItem = PaymentVoucherBankChargeDetails::find($item['id']);
+
+                        if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                            $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                                ->where('isActive', 1)
+                                ->first();
+                            if (empty($checkDepartmentActive)) {
+                                $updateItem->serviceLineSystemID = null;
+                                $updateItem->serviceLineCode = null;
+                                array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                                $error_count++;
+                            }
+                        } else {
+                            array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                            $error_count++;
+                        }
+
+                        $updateItem->save();
+                    }
+
+                    $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+                    if ($error_count > 0) {
+                        return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                    }
+                }
                 
                 if(($input['isSupplierBlocked']) && ($paySupplierInvoiceMaster->invoiceType == 2))
                 {
@@ -1854,14 +1921,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
 
                 if ($input['invoiceType'] == 2 || $input['invoiceType'] == 6) {
+                    $bankCharge = PaymentVoucherBankChargeDetails::selectRaw("SUM(dpAmount) as dpAmount, SUM(localAmount) as localAmount,SUM(comRptAmount) as comRptAmount")->WHERE('payMasterAutoID', $paySupplierInvoiceMaster->PayMasterAutoId)->first();
                     $si = PaySupplierInvoiceDetail::selectRaw("SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER")->WHERE('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->WHERE('matchingDocID', 0)->first();
-                    $convertAmount = \Helper::convertAmountToLocalRpt(203, $paySupplierInvoiceMaster->PayMasterAutoId, $si->transAmount);
 
-                    $masterTransAmountTotal = $si->transAmount;
-                    $masterLocalAmountTotal = $si->localAmount;
-                    $masterRptAmountTotal = $si->rptAmount;
+                    $masterTransAmountTotal = $si->transAmount + $bankCharge->dpAmount;
+                    $masterLocalAmountTotal = $si->localAmount + $bankCharge->localAmount;
+                    $masterRptAmountTotal = $si->rptAmount + $bankCharge->comRptAmount;
 
-                    $transAmountTotal = $si->transAmount;
+                    $convertAmount = \Helper::convertAmountToLocalRpt(203, $paySupplierInvoiceMaster->PayMasterAutoId, $masterTransAmountTotal);
+
+                    $transAmountTotal = $masterTransAmountTotal;
                     $localAmountTotal = $convertAmount["localAmount"];
                     $rptAmountTotal = $convertAmount["reportingAmount"];
 
@@ -2446,6 +2515,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 $amountForApproval = 0;
                 if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
+                    $bankCharge = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$id)->selectRaw('SUM(localAmount) as total')->first();
                     $totalAmountForApprovalData = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
                                                                     ->selectRaw('SUM(paymentLocalAmount) as total, SUM(retentionVatAmount) as retentionVatAmount, supplierTransCurrencyID, localCurrencyID')
                                                                     ->first();
@@ -2456,7 +2526,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $retLocal = $currencyConversionRetAmount['localAmount'];
                         
 
-                        $amountForApproval = $totalAmountForApprovalData->total + $retLocal;
+                        $amountForApproval = $totalAmountForApprovalData->total + $bankCharge->total + $retLocal;
                     }
 
 
@@ -2578,32 +2648,34 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
+                $bankChargeTotal = PaymentVoucherBankChargeDetails::selectRaw("SUM(dpAmount) as dpAmount, SUM(localAmount) as localAmount,SUM(comRptAmount) as comRptAmount")->WHERE('payMasterAutoID', $id)->first();
 
                 $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(retentionVatAmount) as retentionVatAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")
                     ->where('PayMasterAutoId', $id)
                     ->where('matchingDocID', 0)
                     ->first();
-                if (!empty($totalAmount->supplierPaymentAmount)) {
+                $supplierPaymentAmount = $totalAmount->supplierPaymentAmount + $bankChargeTotal->dpAmount;
+                if (!empty($supplierPaymentAmount)) {
                     if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->supplierTransCurrencyID) {
-                        $input['payAmountBank'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount);
-                        $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount);
-                        $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                        $input['payAmountBank'] = \Helper::roundValue($supplierPaymentAmount);
+                        $input['payAmountSuppTrans'] = \Helper::roundValue($supplierPaymentAmount);
+                        $input['payAmountSuppDef'] = \Helper::roundValue($supplierPaymentAmount);
+                        $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount + $bankChargeTotal->localAmount);
+                        $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount + $bankCharge->comRptAmount);
+                        $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
                         $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
                     } else {
-                        $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
+                        $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
                         $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
-                        $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                        $input['payAmountSuppTrans'] = \Helper::roundValue($supplierPaymentAmount);
+                        $input['payAmountSuppDef'] = \Helper::roundValue($supplierPaymentAmount);
                         $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
                         $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
-                        $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                        $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
                         $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
 
                     }
-                    $exchangeAmount =\Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
+                    $exchangeAmount =\Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
                     $input['payAmountBank'] = $exchangeAmount["defaultAmount"];
                     $input['payAmountCompLocal'] = \Helper::roundValue($exchangeAmount["localAmount"]);
                     $input['payAmountCompRpt'] = \Helper::roundValue($exchangeAmount["reportingAmount"]);

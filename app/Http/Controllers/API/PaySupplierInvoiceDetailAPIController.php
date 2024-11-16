@@ -21,6 +21,10 @@ use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppDet;
+use App\Models\ChartOfAccount;
+use App\Models\Company;
+use App\Models\PaymentVoucherBankChargeDetails;
+use App\Models\SegmentMaster;
 use App\Models\TaxVatCategories;
 use App\Models\DirectInvoiceDetails;
 use App\Models\SupplierInvoiceItemDetail;
@@ -1208,8 +1212,16 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
     function getPOPaymentDetails(Request $request)
     {
-        $data = PaySupplierInvoiceDetail::with(['pomaster'])->where('PayMasterAutoId', $request->payMasterAutoId)->where('matchingDocID', 0)->get();
-        return $this->sendResponse($data, 'Payment details saved successfully');
+        $input = $request->all();
+        $supplierPaymentVouchers = PaySupplierInvoiceDetail::with(['pomaster'])->where('PayMasterAutoId', $input['payMasterAutoId'])->where('matchingDocID', 0)->get();
+
+        $bankChargeAndOthers = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$input['payMasterAutoId'])->get();
+
+        $finalData = [
+            'supplierPaymentVoucher' => $supplierPaymentVouchers,
+            'bankChargeAndOthers' => $bankChargeAndOthers
+        ];
+        return $this->sendResponse($finalData, 'Payment details saved successfully');
     }
 
     function getMatchingPaymentDetails(Request $request)
@@ -1792,6 +1804,139 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
   
         }
         return $this->sendResponse($paySupplierInvoiceDetail->toArray(), 'PaySupplierInvoiceDetail updated successfully');
+    }
+
+    public function storePaymentVoucherBankChargeDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $messages = [
+            'companySystemID.required' => 'Company is required.',
+            'payMasterAutoID.required' => 'ID is required.',
+            'glCode.required' => 'GL Account is required.',
+        ];
+
+        $validator = \Validator::make($request->all(), [
+            'companySystemID' => 'required|numeric|min:1',
+            'payMasterAutoID' => 'required|numeric|min:1',
+            'glCode' => 'required|numeric|min:1'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $companySystemID = $input['companySystemID'];
+        $glCode = $input['glCode'] ?? 0;
+        $payMasterAutoID = $input['payMasterAutoID'];
+
+        $master = PaySupplierInvoiceMaster::where('PayMasterAutoId', $payMasterAutoID)->first();
+
+        if(empty($master)){
+            return $this->sendError('Payment Voucher not found.');
+        }
+
+        if($master->confirmedYN){
+            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+        }
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if($glCode){
+            $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')
+                ->where('chartOfAccountSystemID', $glCode)
+                ->first();
+
+            $inputData['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+            $inputData['glCode'] = $chartOfAccount->AccountCode;
+            $inputData['glCodeDescription'] = $chartOfAccount->AccountDescription;
+        }
+
+        $inputData['payMasterAutoID'] = $payMasterAutoID;
+        $inputData['companyID'] = $company->CompanyID;
+        $inputData['companySystemID'] = $companySystemID;
+
+        $inputData['dpAmountCurrency'] = $master->supplierTransCurrencyID;
+        $inputData['dpAmountCurrencyER'] = $master->supplierTransCurrencyER;
+        $inputData['dpAmount'] = 0;
+        $inputData['localCurrency'] = $master->localCurrencyID;
+        $inputData['localCurrencyER'] = $master->localCurrencyER;
+        $inputData['localAmount'] = 0;
+        $inputData['comRptCurrency'] = $master->companyRptCurrencyID;
+        $inputData['comRptCurrencyER'] = $master->companyRptCurrencyER;
+        $inputData['comRptAmount'] = 0;
+
+        DB::beginTransaction();
+
+        try {
+            PaymentVoucherBankChargeDetails::create($inputData);
+            DB::commit();
+            return $this->sendResponse(null, 'successfully created');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError($exception->getLine());
+        }
+
+    }
+
+    public function updatePaymentVoucherBankChargeDetails(request $request)
+    {
+        $input = $request->all();
+
+        $input = $this->convertArrayToValue($input);
+        $id = $input['id'];
+
+        $input = array_except($input, ['id']);
+
+        $detail = PaymentVoucherBankChargeDetails::where('id', $id)->first();
+
+        if (empty($detail)) {
+            return $this->sendError('Payment voucher bank detail not found', 500);
+        }
+
+        $master = PaySupplierInvoiceMaster::where('PayMasterAutoId', $detail->payMasterAutoID)->first();
+
+        if(empty($master)){
+            return $this->sendError('Payment Voucher not found.');
+        }
+
+        if($master->confirmedYN){
+            return $this->sendError('You cannot update detail, this document already confirmed', 500);
+        }
+
+        if($input['serviceLineSystemID'] == 0){
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
+        }
+        else if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID){
+            $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+            $input['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
+            $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
+        }
+
+        $myCurr = $master->supplierTransCurrencyID;
+        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+
+        $input['dpAmountCurrency'] = $master->supplierTransCurrencyID;
+        $input['dpAmountCurrencyER'] = $master->supplierTransCurrencyER;
+        $totalAmount = $input['dpAmount'];
+        $input['dpAmount'] = round($input['dpAmount'], $decimal);
+
+        try {
+            $currency = \Helper::convertAmountToLocalRpt(203, $detail->payMasterAutoID, $totalAmount);
+            $input["comRptAmount"] = \Helper::roundValue($currency['reportingAmount']);
+            $input["localAmount"] = \Helper::roundValue($currency['localAmount']);
+
+            DB::beginTransaction();
+
+            PaymentVoucherBankChargeDetails::where('id', $id)->update($input);
+
+            DB::commit();
+            return $this->sendResponse('s', 'successfully updated');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }
