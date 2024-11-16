@@ -225,6 +225,8 @@ class SupplierMasterAPIController extends AppBaseController
             $x++;
             $data[$x]['Supplier Code'] = $val->primarySupplierCode;
             $data[$x]['Supplier Name'] = $val->supplierName;
+            $data[$x]['Supplier Group'] = $val['supplier_group']['group'];
+            $data[$x]['Registration Number'] = $val->registrationNumber;
             $currency = "";
             $country = "";
             $businessCategory = "";
@@ -388,7 +390,7 @@ class SupplierMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
         if ($request['type'] == 'all') {
-            $supplierMasters = SupplierMaster::with(['liablity_account', 'unbilled_account','categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'Supplier_registration_link', 'supplierCurrency' => function ($query) {
+            $supplierMasters = SupplierMaster::with(['liablity_account', 'supplier_group', 'unbilled_account','categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'Supplier_registration_link', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
             }, 'supplier_business_category' => function ($query) {
@@ -402,7 +404,7 @@ class SupplierMasterAPIController extends AppBaseController
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
             }, 'master' => function ($query) {
-                $query->with(['supplier_business_category' => function ($query) {
+                $query->with(['supplier_group','supplier_business_category' => function ($query) {
                     $query->with(['categoryMaster']);
                 }]);
                 $query->with(['supplier_sub_business_category' => function ($query) {
