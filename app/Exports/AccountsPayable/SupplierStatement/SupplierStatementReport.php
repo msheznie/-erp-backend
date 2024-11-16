@@ -11,6 +11,7 @@ class SupplierStatementReport
     public $companyName;
     public $supplierCode;
     public $supplierName;
+    public $supplierGroupName;
     public $documentId;
     public $documentCode;
     public $documentDate;
@@ -68,6 +69,14 @@ class SupplierStatementReport
         $this->supplierName = $supplierName;
     }
 
+        /**
+     * @param mixed $supplierGroupName
+     */
+    public function setsupplierGroupName($supplierGroupName): void
+    {
+        $this->supplierGroupName = $supplierGroupName;
+    }
+    
     /**
      * @param mixed $documentId
      */
@@ -164,6 +173,7 @@ class SupplierStatementReport
             'Company Name',
             'Supplier Code',
             'Supplier Name',
+            'Supplier Group Name',
             'Document ID',
             'Document Code',
             'Document Date',

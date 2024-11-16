@@ -163,6 +163,7 @@
             <th>Prepayment Account</th>
             <th>Currency</th>
             <th>Supplier Name</th>
+            <th>Supplier Group Name</th>
             <th>Open Supplier Invoices</th>
             <th>Open Advance to Suppliers</th>
             <th>Open Debit Notes</th>
@@ -177,6 +178,7 @@
                 <td>{{ $supplier['prePayment_account'] }}</td>
                 <td>{{ $supplier['supplier_currency']}}</td>
                 <td>{{ $key }}</td>
+                <td>{{ $supplier['supplierGroupName']}}</td>
                 <td>{{ $supplier['open_invoices'] }}</td>
                 <td>{{ $supplier['open_advances'] }}</td>
                 <td>{{ $supplier['open_debit_notes'] }}</td>
@@ -186,7 +188,7 @@
             </tr>
         @endforeach
         <tr width="100%">
-                <td colspan="4" style="border-bottom-color:white !important;border-left-color:white !important"
+                <td colspan="5" style="border-bottom-color:white !important;border-left-color:white !important"
                     class="text-right"><b>Total:</b></td>
 
                 <td style="text-align: right"><b>{{ number_format($totalArray['totalInvoices'], $currencyDecimalPlace) }}</b></td>

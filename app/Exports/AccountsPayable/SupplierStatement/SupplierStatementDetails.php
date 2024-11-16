@@ -8,6 +8,7 @@ class SupplierStatementDetails
     public $prepaymentAccount;
     public $currency;
     public $supplierName;
+    public $supplierGroupName;
     public $openSupplierInvoices;
     public $openAdvanceToSuppliers;
     public $openDebitNotes;
@@ -56,6 +57,13 @@ class SupplierStatementDetails
     public function setSupplierName($supplierName): void
     {
         $this->supplierName = $supplierName;
+    }
+    /**
+     * @param mixed $supplierGroupName
+     */
+    public function setsupplierGroupName($supplierGroupName): void
+    {
+        $this->supplierGroupName = $supplierGroupName;
     }
 
     /**
@@ -113,6 +121,7 @@ class SupplierStatementDetails
             'Prepayment Account',
             'Currency',
             'Supplier Name',
+            'Supplier Group Name',
             'Open Supplier Invoices',
             'Open Advance to Suppliers',
             'Open Debit Notes',

@@ -22,6 +22,7 @@ class SupplierLedgerReport
     public $documentCurrency;
     public $invoiceAmount;
     public $balanceDecimalPlaces;
+    public $supplierGroupName;
     public $documentDate;
     public $invoiceAmountOrg;
 
@@ -47,6 +48,13 @@ class SupplierLedgerReport
     public function setBalanceDecimalPlaces($balanceDecimalPlaces): void
     {
         $this->balanceDecimalPlaces = $balanceDecimalPlaces;
+    }
+    /**
+     * @param mixed $supplierGroupName
+     */
+    public function setsupplierGroupName($supplierGroupName): void
+    {
+        $this->supplierGroupName = $supplierGroupName;
     }
     /**
      * @param mixed $invoiceAmount
