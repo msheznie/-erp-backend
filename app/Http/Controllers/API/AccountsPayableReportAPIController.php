@@ -6351,6 +6351,8 @@ ORDER BY
 
      public function sentSupplierLedger(Request $request)
     {
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
         $input = $request->all();
 
         if (!isset($input['suppliers'])) {
