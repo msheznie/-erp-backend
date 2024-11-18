@@ -167,6 +167,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supCategoryMasterID = (array)$supCategoryMasterID;
         $supCategoryMasterID = collect($supCategoryMasterID)->pluck('id');
 
+
         $supplierMasters = $this->getSuppliersByFilterQry($input, $search, $supplierCountryID, $liabilityAccountSysemID, $supCategoryMasterID);
 
         return \DataTables::eloquent($supplierMasters)
@@ -179,6 +180,11 @@ class SupplierMasterAPIController extends AppBaseController
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
+            ->addColumn('category',function ($row) {
+                return $row->supplier_business_category->map(function($category) {
+                    return $category->categoryMaster->categoryCode.' - '.$category->categoryMaster->categoryName;
+                })->implode(' | ');
+            })
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
     }
@@ -442,8 +448,25 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('supCategorySubID', $input)) {
+            if ($input['supCategorySubID'] && !is_null($input['supCategorySubID'])) {
+                if ($request['type'] == 'all') {
+                    $supplierMasters->whereHas('supplier_sub_business_category', function ($query) use ($input) {
+                        $query->whereIn('supSubCategoryID', collect($input['supCategorySubID'])->pluck('id')->toArray());
+                    });
+                } else {
+                    $supplierMasters->whereHas('master', function ($query) use ($input) {
+                        $query->whereHas('supplier_sub_business_category', function ($query) use ($input) {
+                            $query->whereIn('supSubCategoryID', collect($input['supCategorySubID'])->pluck('id')->toArray());
+                        });
+                    });
+                }
+            }
+        }
+
+
         if (array_key_exists('isCriticalYN', $input)) {
-            if ($input['isCriticalYN'] && !is_null($input['isCriticalYN'])) {
+            if (($input['isCriticalYN'] == 0 || $input['isCriticalYN'] == 1) && !is_null($input['isCriticalYN'])) {
                 $supplierMasters->where('isCriticalYN', '=', $input['isCriticalYN']);
             }
         }
@@ -478,6 +501,7 @@ class SupplierMasterAPIController extends AppBaseController
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
+
 
         return $supplierMasters;
 

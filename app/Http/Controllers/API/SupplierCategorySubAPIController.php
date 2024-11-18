@@ -295,4 +295,19 @@ class SupplierCategorySubAPIController extends AppBaseController
         $businessSubCategories = SupplierCategorySub::whereIn('supMasterCategoryID',$input)->where('isActive',1)->get();
         return $this->sendResponse($businessSubCategories, 'Sub category retrieved successfully');
     }
+
+
+    public function getSupplierBusinessSubCategoriesByCategory(Request $request) {
+        $categories = $request->input('categories');
+
+        if(empty($categories)) {
+            $this->sendError("Categories not found");
+        }
+
+        $categories = collect($categories)->pluck('id')->toArray();
+
+        $subCategories = SupplierCategorySub::select(['categoryName','supCategorySubID','subCategoryCode'])->whereIn('supMasterCategoryID',$categories)->isActive()->get()->toArray();
+
+        return $this->sendResponse($subCategories ?? [],'Data reterived');
+    }
 }

@@ -931,7 +931,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
         Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
         Route::post('getSubCategoriesByMultipleMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMultipleMasterCategory');
-        
+        Route::post('getSupplierBusinessSubCategoriesByCategory', 'SupplierCategorySubAPIController@getSupplierBusinessSubCategoriesByCategory');
+
         Route::get('loginwithToken', 'UserAPIController@loginwithToken');
         Route::post('login', 'AuthAPIController@auth')->middleware(MobileAccessVerify::class);
         Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
