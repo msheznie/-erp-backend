@@ -5638,7 +5638,7 @@ ORDER BY
         }
 
 
-        $companyData = Company::select('CompanyName','logoPath','masterCompanySystemIDReorting')
+        $companyData = Company::select('CompanyName','logoPath','masterCompanySystemIDReorting', 'CompanyEmail')
             ->orderBy('companySystemID','asc')
             ->first();
 
