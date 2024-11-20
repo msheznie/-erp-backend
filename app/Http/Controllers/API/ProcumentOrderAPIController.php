@@ -473,6 +473,8 @@ class ProcumentOrderAPIController extends AppBaseController
         ->where('isYesNO', 1)
         ->exists();
         $procumentOrder->isExpectedDeliveryDateEnabled = $isExpectedDeliveryDateEnabled;
+        $procumentOrder['poDiscountPercentageToTooltip'] = $procumentOrder->poDiscountPercentage;
+        $procumentOrder->poDiscountPercentage = round($procumentOrder->poDiscountPercentage,2);
 
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
@@ -495,11 +497,25 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input = $request->all();
 
-       
         $isAmendAccess = $input['isAmendAccess'];
 
+        $poDiscountPercenrtageToUpdate = 0;
+        if( strlen((string) $input['poDiscountPercentage'] ) > strlen((string)$input['poDiscountPercentageToTooltip']))
+        {
+            $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
 
-        $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location']);
+        }else {
+            if(round($input['poDiscountPercentageToTooltip'],2) != $input['poDiscountPercentage'])
+            {
+                $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
+            }else {
+                $poDiscountPercenrtageToUpdate = $input['poDiscountPercentageToTooltip'];
+            }
+        }
+
+        $input['poDiscountPercentage'] = $poDiscountPercenrtageToUpdate;
+
+        $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location','poDiscountPercentageToTooltip']);
         $input = $this->convertArrayToValue($input);
 
         
@@ -766,7 +782,6 @@ class ProcumentOrderAPIController extends AppBaseController
         //updating PO Master
         $updateDetailDiscount = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();
-
 
         // calculate total Tax for item if
         //$input['supplierVATEligible'] == 1 && $input['vatRegisteredYN'] == 0
@@ -1216,6 +1231,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 }
             }
         }
+
 
         $procumentOrderUpdate->save();
 
