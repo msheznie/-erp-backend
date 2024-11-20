@@ -97,12 +97,12 @@ class FinancialReportAPIController extends AppBaseController
         $departments = $departments1->merge($departments2)->all();
 
         $controlAccount = ChartOfAccountsAssigned::leftJoin('chartofaccounts', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
-        ->whereIn('ChartOfAccountsAssigned.companySystemID', $companiesByGroup)
+        ->whereIn('chartofaccountsassigned.companySystemID', $companiesByGroup)
         ->get([
-            'ChartOfAccountsAssigned.chartOfAccountSystemID',
-            'ChartOfAccountsAssigned.AccountCode',
-            'ChartOfAccountsAssigned.AccountDescription',
-            'ChartOfAccountsAssigned.catogaryBLorPL',
+            'chartofaccountsassigned.chartOfAccountSystemID',
+            'chartofaccountsassigned.AccountCode',
+            'chartofaccountsassigned.AccountDescription',
+            'chartofaccountsassigned.catogaryBLorPL',
             \DB::raw('COALESCE(chartofaccounts.is_retained_earnings, 0) as is_retained_earnings')
         ]);
 
@@ -267,9 +267,17 @@ class FinancialReportAPIController extends AppBaseController
             $inCategoryBLorPLID = [1, 2];
         }
 
-        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)
-            ->whereIN('catogaryBLorPLID', $inCategoryBLorPLID)
-            ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
+
+        $controlAccount = ChartOfAccountsAssigned::leftJoin('chartofaccounts', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+            ->whereIn('chartofaccountsassigned.companySystemID', $companiesByGroup)
+            ->whereIN('chartofaccountsassigned.catogaryBLorPLID', $inCategoryBLorPLID)
+            ->get([
+                'chartofaccountsassigned.chartOfAccountSystemID',
+                'chartofaccountsassigned.AccountCode',
+                'chartofaccountsassigned.AccountDescription',
+                'chartofaccountsassigned.catogaryBLorPL',
+                \DB::raw('COALESCE(chartofaccounts.is_retained_earnings, 0) as is_retained_earnings')
+            ]);
 
         $output = array(
             'controlAccount' => $controlAccount
