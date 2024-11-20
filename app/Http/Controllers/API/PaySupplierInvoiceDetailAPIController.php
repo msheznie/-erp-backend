@@ -1284,7 +1284,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     });
                 }
 
-
                 if(!$allRecordsHaveVAT && ($isPVHasVAT)) {
                     array_push($supplierInvoiceWithoutVAT,"<li>".$itemExist['bookingInvDocCode']."</li>");
                 }

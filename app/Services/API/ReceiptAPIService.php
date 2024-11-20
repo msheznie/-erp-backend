@@ -162,8 +162,9 @@ class ReceiptAPIService
                 $receipt = self::setFinanicalPeriod($dt['documentDate'],$receipt);
                 $receipt = self::setCurrencyDetails($receipt);
                 $receipt = self::setLocalAndReportingAmounts($receipt);
-//                $receipt = self::setConfirmedDetails($dt,$receipt);
-//                $receipt = self::setApprovedDetails($dt,$receipt);
+                $receipt = self::setConfirmedDetails($dt,$receipt);
+                $receipt = self::setApprovedDetails($dt,$receipt);
+
 
 
                 if($receipt->documentType == 13) {
