@@ -246,34 +246,33 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
             }
 
-            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            if((isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) && !$request->has('file')){
                 Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->copy($input['path'], $path);
+            }
+            else{
+                $file = $request->get('file');
+                $decodeFile = base64_decode($file);
 
-                $input['isUploaded'] = 1;
-                $input['path'] = $path;
+                Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
+            }
 
-                $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
+            $input['isUploaded'] = 1;
+            $input['path'] = $path;
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                $input['isAutoCreateDocument'] = 1;
+            }
 
-                DB::commit();
+            $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
 
+            DB::commit();
+
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => true,
                     "data" => $documentAttachments->toArray()
                 ];
             }
             else{
-                $file = $request->request->get('file');
-                $decodeFile = base64_decode($file);
-
-                Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
-
-                $input['isUploaded'] = 1;
-                $input['path'] = $path;
-
-                $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
-
-                DB::commit();
-
                 return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
             }
         } catch (\Exception $exception) {
@@ -378,18 +377,33 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Document Attachments not found');
         }
 
+        $attachmentDeleteData = self::deleteAttachmentData($documentAttachments);
+
+        if($attachmentDeleteData['status']){
+            return $this->sendResponse($attachmentDeleteData['data'], $attachmentDeleteData['message']);
+        }
+        else {
+            return $this->sendError($attachmentDeleteData['message'], $attachmentDeleteData['code']);
+        }
+    }
+
+    public function deleteAttachmentData($documentAttachments) {
         $path = $documentAttachments->path;
 
         $disk = Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
 
-        $attachment = DocumentAttachments::where('attachmentID', $id)
+        $attachment = DocumentAttachments::where('attachmentID', $documentAttachments->attachmentID)
             ->first();
 
         if ($attachment['documentSystemID'] == 20) {
             $invoice = CustomerInvoiceDirect::find($attachment['documentSystemCode']);
             if (!empty($invoice)) {
                 if ($invoice->confirmedYN == 1 || $invoice->approved == -1) {
-                    return $this->sendError('Customer invoice confirmed, you cannot delete the attachment', 500);
+                    return [
+                        'status' => false,
+                        'message' => 'Customer invoice confirmed, you cannot delete the attachment',
+                        'code' => 500
+                    ];
                 }
             }
         }
@@ -419,7 +433,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 $i++;
             }
         }
-        return $this->sendResponse($id, 'Document Attachments deleted successfully');
+        return [
+            'status' => true,
+            'message' => 'Document Attachments deleted successfully',
+            'data' => $documentAttachments->attachmentID
+        ];
     }
 
     public static function getImageByPath(Request $request)

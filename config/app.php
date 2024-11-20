@@ -117,6 +117,14 @@ return [
      */
     'report_max_memory_limit' => env('REPORT_MAX_MEMORY_LIMIT', '512M'),
     'report_max_execution_limit' => env('REPORT_MAX_EXECUTION_LIMIT', '60'),
+
+    /*
+     |-------------------------------------------------------------------------
+     | Maximum Upload Limits
+     |-------------------------------------------------------------------------
+     */
+    'attach_upload_size_limit' => env('ATTACH_UPLOAD_SIZE_LIMIT', '20971520'),
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
