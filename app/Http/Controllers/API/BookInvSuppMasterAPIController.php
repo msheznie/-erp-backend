@@ -457,8 +457,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
-
-
         $supplier_id = $input['supplierID'];
         $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
 
