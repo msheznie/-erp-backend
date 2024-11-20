@@ -65,7 +65,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
         $reportCount = 1;
 
         foreach ($outputChunkData as $key1 => $output1) {
-            GenerateARCAPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root,$aging)->onQueue('single');
+            GenerateARCAPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root,$aging);
             $reportCount++;
         }
     }

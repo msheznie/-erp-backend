@@ -7671,7 +7671,7 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
 
 
                 $employeeID = \Helper::getEmployeeSystemID();
-                AccountsReceivablePdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
+                AccountsReceivablePdfJob::dispatch($db, $request, [$employeeID]);
 
                 return $this->sendResponse([], "Account receivable customer aging PDF report has been sent to queue");
                 break;
