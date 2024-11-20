@@ -1275,8 +1275,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 
                 // check supplier invoice has VAT
                 $supplierInvoiceMaster  = BookInvSuppMaster::find($itemExist['bookingInvSystemCode']);
-                if(($supplierInvoiceMaster->VATAmount > 0) && (!$isPVHasVAT)) {
-                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " includes VAT,you cannot match it with the payment voucher that does not include VAT";
+                if(($supplierInvoiceMaster->VATAmount == 0) && ($isPVHasVAT)) {
+                    $itemDrt = "The Selected Invoice " . $itemExist['bookingInvDocCode'] . " without VAT you cannot be matched with a payment voucher that includes VAT.";
                     $itemExistArray[] = [$itemDrt];
                 }
             }

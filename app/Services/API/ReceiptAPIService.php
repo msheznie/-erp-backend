@@ -156,8 +156,9 @@ class ReceiptAPIService
                 $receipt = self::setFinanicalPeriod($dt['documentDate'],$receipt);
                 $receipt = self::setCurrencyDetails($receipt);
                 $receipt = self::setLocalAndReportingAmounts($receipt);
-//                $receipt = self::setConfirmedDetails($dt,$receipt);
-//                $receipt = self::setApprovedDetails($dt,$receipt);
+                $receipt = self::setConfirmedDetails($dt,$receipt);
+                $receipt = self::setApprovedDetails($dt,$receipt);
+
 
                 if($receipt->documentType == 13) {
                     $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
@@ -564,51 +565,61 @@ class ReceiptAPIService
     }
     private function setConfirmedDetails($detail,$receipt):CustomerReceivePayment {
         $employee = UserTypeService::getSystemEmployee();
-        $documentDate = Carbon::createFromFormat('d-m-Y',$detail['documentDate']);
-        $confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
 
-        if($documentDate > $confirmedDate) {
-            $this->isError = true;
-            $headerError = new Error('confirmedDate','Confirmed date should greater than document date');
-            array_push($this->arrayObj,$headerError);
-        }
+        $receipt->confirmedByEmpSystemID = $employee->employeeSystemID;
+        $receipt->confirmedByEmpID = $employee->empID;
+        $receipt->confirmedByName = $employee->empFullName;
 
-        if(!$employee) {
-            $this->isError = true;
-            $headerError = new Error('confirmedBy','Confirmed By employee data not found');
-            array_push($this->arrayObj,$headerError);
 
-        }else {
-            $receipt->confirmedByEmpSystemID = $employee->employeeSystemID;
-            $receipt->confirmedByEmpID = $employee->empID;
-            $receipt->confirmedByName = $employee->empFullName;
-            $receipt->confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
+        $receipt->createdUserID = $employee->empID;
+        $receipt->createdUserSystemID = $employee->employeeSystemID;
 
-        }
+//        $documentDate = Carbon::createFromFormat('d-m-Y',$detail['documentDate']);
+//        $confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
+//
+//        if($documentDate > $confirmedDate) {
+//            $this->isError = true;
+//            $headerError = new Error('confirmedDate','Confirmed date should greater than document date');
+//            array_push($this->arrayObj,$headerError);
+//        }
+//
+//        if(!$employee) {
+//            $this->isError = true;
+//            $headerError = new Error('confirmedBy','Confirmed By employee data not found');
+//            array_push($this->arrayObj,$headerError);
+//
+//        }else {
+//            $receipt->confirmedByEmpSystemID = $employee->employeeSystemID;
+//            $receipt->confirmedByEmpID = $employee->empID;
+//            $receipt->confirmedByName = $employee->empFullName;
+//            $receipt->confirmedDate = Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']);
+//
+//        }
 
 
         return $receipt;
     }
     private function setApprovedDetails($detail,$receipt):CustomerReceivePayment {
         $userDetails = UserTypeService::getSystemEmployee();;
-
-        if(Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']) > Carbon::createFromFormat('d-m-Y',$detail['approvedDate'])) {
-            $this->isError = true;
-            $headerError = new Error('approvedDate','Approved date should greater than confirmed date');
-            array_push($this->arrayObj,$headerError);
-        }
-
-        if(!$userDetails) {
-            $this->isError = true;
-            $headerError = new Error('approvedBy','Approved By employee data not found');
-            array_push($this->arrayObj,$headerError);
-
-        }else {
-            $receipt->approvedByUserSystemID = $userDetails->employeeSystemID;
-            $receipt->approvedByUserID = $userDetails->empID;
-            $receipt->approvedDate = Carbon::createFromFormat('d-m-Y',$detail['approvedDate']);
-        }
-
+//
+//        if(Carbon::createFromFormat('d-m-Y',$detail['confirmedDate']) > Carbon::createFromFormat('d-m-Y',$detail['approvedDate'])) {
+//            $this->isError = true;
+//            $headerError = new Error('approvedDate','Approved date should greater than confirmed date');
+//            array_push($this->arrayObj,$headerError);
+//        }
+//
+//        if(!$userDetails) {
+//            $this->isError = true;
+//            $headerError = new Error('approvedBy','Approved By employee data not found');
+//            array_push($this->arrayObj,$headerError);
+//
+//        }else {
+//            $receipt->approvedByUserSystemID = $userDetails->employeeSystemID;
+//            $receipt->approvedByUserID = $userDetails->empID;
+//            $receipt->approvedDate = Carbon::createFromFormat('d-m-Y',$detail['approvedDate']);
+//        }
+        $receipt->approvedByUserSystemID = $userDetails->employeeSystemID;
+        $receipt->approvedByUserID = $userDetails->empID;
         return $receipt;
     }
     private static function setLocalAndReportingAmounts($receipt): CustomerReceivePayment {
