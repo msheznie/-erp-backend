@@ -2142,14 +2142,14 @@ class Helper
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) {
                                 if ($input['documentSystemID'] == 71) {
                                     if ($sourceModel->isFrom != 5) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase)->onQueue('single');
                                     }
                                 } else if ($input['documentSystemID'] == 17) {
                                     if ($sourceModel->jvType != 9) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase)->onQueue('single');
                                     }
                                 } else {
-                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase)->onQueue('single');
                                 }
                                 if ($input["documentSystemID"] == 3) {
                                     $sourceData = $namespacedModel::find($input["documentSystemCode"]);
@@ -5388,14 +5388,14 @@ class Helper
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) {
                                 if ($input['documentSystemID'] == 71) {
                                     if ($sourceModel->isFrom != 5) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase)->onQueue('single');
                                     }
                                 } else if ($input['documentSystemID'] == 17) {
                                     if ($sourceModel->jvType != 9) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase)->onQueue('single');
                                     }
                                 } else {
-                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase)->onQueue('single');
                                 }
                                 
                                 if ($input["documentSystemID"] == 3) {
