@@ -48,7 +48,7 @@ class SupplierAgingDetailReport
                 'Account',
                 'Supplier Code',
                 'Supplier Name',
-                'Supplier Group Name',
+                'Supplier Group',
                 'Invoice Number',
                 'Invoice Date',
                 'Currency',

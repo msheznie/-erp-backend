@@ -121,7 +121,7 @@ class SupplierStatementDetails
             'Prepayment Account',
             'Currency',
             'Supplier Name',
-            'Supplier Group Name',
+            'Supplier Group',
             'Open Supplier Invoices',
             'Open Advance to Suppliers',
             'Open Debit Notes',

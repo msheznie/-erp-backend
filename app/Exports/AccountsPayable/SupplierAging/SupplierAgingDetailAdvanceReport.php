@@ -47,7 +47,7 @@ class SupplierAgingDetailAdvanceReport
                 'Narration',
                 'Supplier Code',
                 'Supplier Name',
-                'Supplier Group Name',
+                'Supplier Group',
                 'Invoice Number',
                 'Invoice Date',
                 'Currency',

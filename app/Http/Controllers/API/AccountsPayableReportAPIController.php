@@ -1009,7 +1009,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     $data[$x]['Payment Document Number'] = $val->documentCode;
                                     $data[$x]['Supplier Code'] = $val->supplierCode;
                                     $data[$x]['Supplier Name'] = $val->supplierName;
-                                    $data[$x]['Supplier Group Name'] = $val->supplierGroupName;
+                                    $data[$x]['Supplier Group'] = $val->supplierGroupName;
 
                                     if ($currency == 2) {
                                         $data[$x]['Currency'] = $val->documentLocalCurrency;
@@ -1027,7 +1027,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     $data[$x]['Company Name'] = $val->CompanyName;
                                     $data[$x]['Supplier Code'] = $val->supplierCode;
                                     $data[$x]['Supplier Name'] = $val->supplierName;
-                                    $data[$x]['Supplier Group Name'] = $val->supplierGroupName;
+                                    $data[$x]['Supplier Group'] = $val->supplierGroupName;
                                     $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
                                     $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
                                     $data[$x]['March'] = round($val->March, $decimalPlace);

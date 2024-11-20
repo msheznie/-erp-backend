@@ -34,7 +34,7 @@ class SupplierAgingSummaryReport
                 'Account',
                 'Supplier Code',
                 'Supplier Name',
-                'Supplier Group Name',
+                'Supplier Group',
                 'Credit Period',
                 'Currency',
                 'Aging Days',

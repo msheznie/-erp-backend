@@ -22,7 +22,7 @@ class SupplierBalanceSummary
           'Account',
           'Supplier Code',
           'Supplier Name',
-          'Supplier Group Name',
+          'Supplier Group',
           'Currency',
           'Amount'
         ];

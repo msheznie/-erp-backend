@@ -173,7 +173,7 @@ class SupplierStatementReport
             'Company Name',
             'Supplier Code',
             'Supplier Name',
-            'Supplier Group Name',
+            'Supplier Group',
             'Document ID',
             'Document Code',
             'Document Date',

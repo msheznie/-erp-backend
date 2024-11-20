@@ -163,7 +163,7 @@
             <th>Prepayment Account</th>
             <th>Currency</th>
             <th>Supplier Name</th>
-            <th>Supplier Group Name</th>
+            <th>Supplier Group</th>
             <th>Open Supplier Invoices</th>
             <th>Open Advance to Suppliers</th>
             <th>Open Debit Notes</th>
