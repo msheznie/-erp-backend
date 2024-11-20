@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\OSOS_3_0;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\OSOS_3_0\DepartmentWebHook;
 use App\Jobs\OSOS_3_0\DesignationWebHook;
+use App\Jobs\OSOS_3_0\FieldOfStudyWebHook;
 use App\Jobs\OSOS_3_0\LocationWebHook;
 use App\Models\ThirdPartyIntegrationKeys;
 use Illuminate\Http\Request;
@@ -124,6 +125,37 @@ class JobInvokeAPIController extends AppBaseController
             $comId = $this->thirdParty['company_id'] ?? 0;
             $logData = ['message' => $error];
             $this->insertToLogTb($logData, 'error', 'Department', $comId);
+
+            return $this->sendError($msg, 500);
+        }
+    }
+
+    public function fieldOfStudy(Request $request){
+        try {
+            $this->verifyIntegration();
+            $valResp = $this->commonValidations($request);
+            if(!$valResp['status']){
+                $logData = ['message' => $valResp['message']];
+                $this->insertToLogTb($logData , 'error', 'Field of Study', $this->thirdParty['company_id']);
+
+                return $this->sendError($valResp['message'], 500);
+            }
+
+            $postType = $request->postType;
+            $ids =is_array($request->fieldOfStudyId) ? $request->fieldOfStudyId : [$request->fieldOfStudyId];
+            $db = isset($request->db) ? $request->db : "";
+
+            foreach ($ids as $id) {
+                FieldOfStudyWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+            }
+
+            return $this->sendResponse([], 'OSOS 3.0 Field of Study triggered');
+        } catch(\Exception $e) {
+            $msg = $e->getMessage();
+            $error = $msg.' Error Line No: ' . $e->getLine();
+            $comId = $this->thirdParty['company_id'] ?? 0;
+            $logData = ['message' => $error];
+            $this->insertToLogTb($logData, 'error', 'Field of Study', $comId);
 
             return $this->sendError($msg, 500);
         }

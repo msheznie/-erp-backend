@@ -78,6 +78,11 @@ trait JobCommonFunctions{
                     ? "api/Users/{$this->masterUuId}"
                     : 'api/Users';
                 break;
+            case 'fos':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/hrm/fieldOfStudy/{$this->masterUuId}"
+                    : 'v2/api/hrm/fieldOfStudy';
+                break;
             default:
                 $this->url = '';
                 break;

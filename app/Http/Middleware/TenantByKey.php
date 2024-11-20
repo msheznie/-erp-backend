@@ -25,6 +25,7 @@ class TenantByKey
             'api/v1/postDesignation',
             'api/v1/postDepartment',
             'api/v1/create_supplier_invoices',
+            'api/v1/postFieldOfStudy'
 //            'api/v1/post_supplier_invoice'
         ];
 
