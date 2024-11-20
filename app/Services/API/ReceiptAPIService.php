@@ -72,16 +72,19 @@ class ReceiptAPIService
                     'amount' => '',
                     'receipt' => true,
                     'sendMail' => false,
-                    'sendNotication' => false
+                    'sendNotication' => false,
+                    'isAutoCreateDocument' => true
                 );
 
                 $receipt = self::setTaxDetails($saveReceipt);
 
-                $confirmation = \Helper::confirmDocumentForApi($params);
+                $confirmation = \Helper::confirmDocument($params);
                 if($confirmation['success'])
                 {
                     $documentApproveds = DocumentApproved::where('documentSystemCode', $saveReceipt->custReceivePaymentAutoID)->where('documentSystemID', $saveReceipt->documentSystemID)->get();
-                    foreach ($documentApproveds as $documentApproved) {
+
+                    foreach ($documentApproveds as $documentApproved)
+                    {
                         $documentApproved["approvedComments"] = "Generated Receipt Voucher through API";
                         $documentApproved["db"] = $db;
                         $documentApproved['empID'] = $receipt->approvedByUserSystemID;
@@ -90,10 +93,12 @@ class ReceiptAPIService
                         $documentApproved['sendMail'] = false;
                         $documentApproved['sendNotication'] = false;
                         $documentApproved['isCheckPrivilages'] = false;
+                        $documentApproved['isAutoCreateDocument'] = true;
+                        $approval = \Helper::approveDocument($documentApproved);
 
-
-                        $approval = \Helper::approveDocumentForApi($documentApproved);
                     }
+
+
                 }
             }
         }
