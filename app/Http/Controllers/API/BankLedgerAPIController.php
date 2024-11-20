@@ -2772,7 +2772,7 @@ class BankLedgerAPIController extends AppBaseController
         $db = isset($request->db) ? $request->db : ""; 
 
         $employeeID = \Helper::getEmployeeSystemID();
-        BankLedgerPdfJob::dispatch($db, $request, [$employeeID]);
+        BankLedgerPdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
 
         return $this->sendResponse([], "Bank Ledger PDF report has been sent to queue");
     }

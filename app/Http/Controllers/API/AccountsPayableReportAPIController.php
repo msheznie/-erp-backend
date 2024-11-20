@@ -6210,7 +6210,7 @@ ORDER BY
         $db = isset($request->db) ? $request->db : "";
         $employeeID = \Helper::getEmployeeSystemID();
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-        AccountsPayableReportJob::dispatch($db, $request, [$employeeID]);
+        AccountsPayableReportJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
         return $this->sendResponse([], "Supplier statement PDF report has been sent to queue");
     }
 

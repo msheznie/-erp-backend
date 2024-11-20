@@ -6530,7 +6530,7 @@ AND MASTER .canceledYN = 0';
                 $db = isset($request->db) ? $request->db : ""; 
 
                 $employeeID = \Helper::getEmployeeSystemID();
-                GeneralLedgerPdfJob::dispatch($db, $request, [$employeeID]);
+                GeneralLedgerPdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
 
                 return $this->sendResponse([], "General Ledger PDF report has been sent to queue");
                 break;

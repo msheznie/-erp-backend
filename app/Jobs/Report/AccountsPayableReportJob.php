@@ -70,7 +70,7 @@ class AccountsPayableReportJob implements ShouldQueue
 
                 foreach ($outputChunkData as $output1)
                 {
-                    GeneratePdfJob::dispatch($db,$request,$reportCount,$this->userIds,$output1,count($outputChunkData), $root);
+                    GeneratePdfJob::dispatch($db,$request,$reportCount,$this->userIds,$output1,count($outputChunkData), $root)->onQueue('single');
 
                     $reportCount++;
                 }
