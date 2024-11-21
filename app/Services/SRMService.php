@@ -5850,11 +5850,10 @@ class SRMService
         $sendEmail = \Email::sendEmailErp($dataEmail);
     }
 
-    public function reopenPaymentProof($request)
+    public static function reopenPaymentProof($paymentProofUuid)
     {
-        $paymentProofUuid = $request->input('extra.uuid');
-
         $paymentProofData = SRMTenderPaymentProof::getPaymentProofDataByUuid($paymentProofUuid);
+
         if (!$paymentProofData) {
             throw new Exception('Payment proof not found.');
         }
@@ -5866,22 +5865,21 @@ class SRMService
             $paymentProofData['company_id']
         );
 
-        DB::transaction(function () use ($paymentProofData, $fetchDocumentApproved) {
+        return DB::transaction(function () use ($paymentProofData, $fetchDocumentApproved) {
 
-            $this->updatePaymentProof($paymentProofData['id']);
+            self::updatePaymentProof($paymentProofData['id']);
 
             if (!empty($fetchDocumentApproved)) {
-                $this->processDocumentHistory($fetchDocumentApproved, $paymentProofData['timesReferred']);
+                self::processDocumentHistory($fetchDocumentApproved, $paymentProofData['timesReferred']);
             }
 
-            $this->deletePaymentDetails($paymentProofData);
-            $this->deleteDocumentApprovals($paymentProofData['document_system_id'], $paymentProofData['id']);
+            self::deletePaymentDetails($paymentProofData);
+            self::deleteDocumentApprovals($paymentProofData['document_system_id'], $paymentProofData['id']);
         });
 
-        return $this->generateResponse(true, 'Payment proof reopened successfully');
     }
 
-    protected function updatePaymentProof($paymentProofId)
+    protected static function updatePaymentProof($paymentProofId)
     {
         $updated = SRMTenderPaymentProof::where('id', $paymentProofId)
             ->update([
@@ -5896,7 +5894,7 @@ class SRMService
         }
     }
 
-    protected function processDocumentHistory($documentApprovals, $timesReferred)
+    protected static function processDocumentHistory($documentApprovals, $timesReferred)
     {
         if (!empty($documentApprovals)) {
             foreach ($documentApprovals as $fetchDocumentApproved) {
@@ -5910,7 +5908,7 @@ class SRMService
         }
     }
 
-    protected function deleteDocumentApprovals($documentSystemId, $documentSystemCode)
+    protected static function deleteDocumentApprovals($documentSystemId, $documentSystemCode)
     {
         $deleted = DocumentApproved::where('documentSystemID', $documentSystemId)
             ->where('documentSystemCode', $documentSystemCode)
@@ -6027,14 +6025,14 @@ class SRMService
         }
     }
 
-    private function deletePaymentDetails($paymentProofData)
+    private static function deletePaymentDetails($paymentProofData)
     {
         try {
             TenderPaymentDetail::where('tender_id', $paymentProofData['tender_id'])
                 ->where('srm_supplier_id',  $paymentProofData['srm_supplier_id'])
                 ->where('payment_id',  $paymentProofData['id'])
                 ->delete();
-            return $this->generateResponse(true, 'Payment  details deleted successfully');
+            //return $this->generateResponse(true, 'Payment  details deleted successfully');
         } catch (\Exception $e) {
             throw $e;
         }
