@@ -69,6 +69,10 @@ class DocumentAttachmentTypeController extends AppBaseController
         if (!empty($attachmentTypeExist)) {
             return $this->sendError('Document Type \'' . $input['document_type'] . '\' already exists');
         }
+
+        $sort = TenderDocumentTypes::getSortOrder();
+
+        $input['sort_order'] = $sort;
         $input['created_at'] = Carbon::now();
         $input['created_by'] = Helper::getEmployeeSystemID();
         $input['company_id'] = $companySystemID;
@@ -180,15 +184,7 @@ class DocumentAttachmentTypeController extends AppBaseController
     public function getAllDocumentAttachmentTypes(Request $request)
     {
         $input = $request->all();
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
-        $attachmentTypes = TenderDocumentTypes::with(['attachments' => function ($q) use($input){
-            $q->where('documentSystemID', 108);
-            $q->where('companySystemID', $input['companyId']);
-        }, 'TenderDocumentTypeAssign'])->orderBy('id', 'asc');
+        $attachmentTypes = TenderDocumentTypes::getTenderDocumentTypes($input);
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);

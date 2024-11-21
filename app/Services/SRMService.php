@@ -1507,6 +1507,17 @@ class SRMService
                     },
                     'tenderSupplierAssignee' => function ($q) {
                         $q->select('id', 'tender_master_id');
+                    },
+                    'DocumentAttachments' => function ($q) {
+                        $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
+                            'attachmentDescription', 'documentSystemCode')
+                            ->whereHas('tender_document_types', function ($t) {
+                                $t->where('system_generated', 1)
+                                  ->where('sort_order', 1);
+                            })
+                            ->with(['tender_document_types' => function ($t) {
+                                $t->select('id', 'system_generated', 'sort_order');
+                            }]);
                     }
                 ])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                     $q->where('purchased_by', '=', $supplierRegId);
@@ -1544,6 +1555,17 @@ class SRMService
                     'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                         $q->select('id', 'tender_master_id', 'purchased_by', 'purchased_date')
                             ->where('purchased_by', '=', $supplierRegId);
+                    },
+                    'DocumentAttachments' => function ($q) {
+                        $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
+                            'attachmentDescription', 'documentSystemCode')
+                            ->whereHas('tender_document_types', function ($t) {
+                                $t->where('system_generated', 1)
+                                  ->where('sort_order', 1);
+                            })
+                            ->with(['tender_document_types' => function ($t) {
+                                $t->select('id', 'system_generated', 'sort_order');
+                            }]);
                     }
                 ])
                 ->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
@@ -1599,6 +1621,17 @@ class SRMService
                     'awardedSupplier' => function ($query) use ($supplierRegId) {
                         $query->select('tender_id', 'id')
                             ->where('supplier_id', $supplierRegId);
+                    },
+                    'DocumentAttachments' => function ($q) {
+                        $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
+                            'attachmentDescription', 'documentSystemCode')
+                            ->whereHas('tender_document_types', function ($t) {
+                                $t->where('system_generated', 1)
+                                  ->where('sort_order', 1);
+                            })
+                            ->with(['tender_document_types' => function ($t) {
+                                $t->select('id', 'system_generated', 'sort_order');
+                            }]);
                     }
                 ])->where(function ($query) {
                     $query->where('final_tender_awarded', 1)

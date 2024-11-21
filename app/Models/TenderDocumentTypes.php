@@ -70,6 +70,8 @@ class TenderDocumentTypes extends Model
     public $fillable = [
         'document_type',
         'srm_action',
+        'system_generated',
+        'sort_order',
         'created_by',
         'updated_by',
         'company_id',
@@ -86,6 +88,8 @@ class TenderDocumentTypes extends Model
         'id' => 'integer',
         'document_type' => 'string',
         'srm_action' => 'integer',
+        'system_generated' => 'integer',
+        'sort_order' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'company_id' => 'integer'
@@ -112,4 +116,27 @@ class TenderDocumentTypes extends Model
     public function TenderDocumentTypeAssign(){
         return $this->hasMany('App\Models\TenderDocumentTypeAssign', 'document_type_id', 'id');
     }
+
+    public static function getSortOrder()
+    {
+        $sortOrder = TenderDocumentTypes::orderByDesc('sort_order')
+            ->where('system_generated', 0)
+            ->value('sort_order') ?? 0;
+
+        return $sortOrder += 1;
+    }
+
+    public static function getTenderDocumentTypes($input)
+    {
+
+        return TenderDocumentTypes::select('id', 'document_type', 'system_generated', 'srm_action', 'sort_order', 'company_id')
+            ->with(['attachments' => function ($q) use ($input) {
+                $q->select('attachmentType', 'documentSystemID', 'documentSystemCode', 'companySystemID')
+                    ->where('documentSystemID', 108)
+                    ->where('companySystemID', $input['companyId']);
+            }, 'TenderDocumentTypeAssign' => function ($q2) {
+                $q2->select('id', 'document_type_id');
+            }])->orderBy('sort_order', 'asc');
+    }
+    
 }
