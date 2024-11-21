@@ -193,6 +193,12 @@ class FinancialReportAPIController extends AppBaseController
     {
         foreach ($subsidiary_companies as $key => $value) {
             $this->subAssociateJVCompanies[] = $value->companySystemID;
+
+            $companies = Company::where('companySystemID', $value->companySystemID)->with(['allSubAssociateJVCompanies'])->whereHas('allSubAssociateJVCompanies')->first();
+
+            if ($companies && count($companies->allSubAssociateJVCompanies) > 0) {
+                $this->getSubSubsidiaryCompanies($companies->allSubAssociateJVCompanies);
+            }
         }
     }
 
@@ -1007,6 +1013,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyArray = isset($request->companySystemID) ? $request->companySystemID : [];
         $segmentArray = isset($request->serviceLineSystemID) ? $request->serviceLineSystemID : [];
         $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency;
+        $groupCompanySystemID = isset($request->groupCompanySystemID[0]) ? $request->groupCompanySystemID[0]: $request->groupCompanySystemID;
 
         $companyData = json_decode(json_encode($companyArray), true);
 
@@ -1067,7 +1074,7 @@ class FinancialReportAPIController extends AppBaseController
 
         if((isset($request->reportID) && $request->reportID == "FCT") && $outputCollect)
         {
-            $outputCollect->each(function ($item) use($outputDetail,$columnKeys,$companyArray,$currency, $serviceLineIDs, $fromDate, $toDate, $companySystemIDs) {
+            $outputCollect->each(function ($item) use($outputDetail,$columnKeys,$companyArray,$currency, $serviceLineIDs, $fromDate, $toDate, $companySystemIDs, $groupCompanySystemID) {
                 $detID = ($item->detID) ?  : null;
                 if($detID)
                 {
@@ -1085,7 +1092,7 @@ class FinancialReportAPIController extends AppBaseController
                         });
                     }
 
-                    collect($columnKeys)->each(function($colKey) use ($item,$data, $companyArray, $currency, $serviceLineIDs, $fromDate, $toDate, $companySystemIDs)
+                    collect($columnKeys)->each(function($colKey) use ($item,$data, $companyArray, $currency, $serviceLineIDs, $fromDate, $toDate, $companySystemIDs, $groupCompanySystemID)
                     {
                         $key = explode('-',$colKey);
                         if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
@@ -1095,7 +1102,7 @@ class FinancialReportAPIController extends AppBaseController
 
                             $total = 0;
 
-                            foreach ($companyArray as $company) {
+                            foreach ($companyArray as $keyCom => $company) {
 
                                 $totalIncome = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
                                     $query->where('controlAccountsSystemID', 1);
@@ -1105,11 +1112,39 @@ class FinancialReportAPIController extends AppBaseController
                                     $query->where('controlAccountsSystemID', 2);
                                 })->first();
 
+                                if ($keyCom > 0) {
+                                    $previousCompanyID = $companyArray[$keyCom - 1]['companySystemID'];
+                                    if($groupCompanySystemID != $previousCompanyID) {
+
+                                        $previousCompany = Company::find($previousCompanyID);
+
+                                        $companyHoldingPercentage = ($previousCompany->holding_percentage + $company['holding_percentage']) / 2;
+
+                                        if($companyHoldingPercentage < 50) {
+                                            $company['group_type'] = 2;
+                                        }
+                                    }
+                                }
+
                                 if($company['group_type'] == 2 || $company['group_type'] == 3) {
+
+                                    if ($keyCom > 0) {
+                                        $previousCompanyID = $companyArray[$keyCom - 1]['companySystemID'];
+                                        if($groupCompanySystemID != $previousCompanyID) {
+
+                                            $previousCompany = Company::find($previousCompanyID);
+
+                                            $holdingPercentage = ($previousCompany->holding_percentage + $company['holding_percentage']) / 2;
+                                        } else {
+                                            $holdingPercentage = $company['holding_percentage'];
+                                        }
+                                    }
+
+
                                     if ($currency == 1) {
-                                        $total += ($totalIncome->documentLocalAmount + $totalExpense->documentLocalAmount) * $company['holding_percentage'] / 100;
+                                        $total += ($totalIncome->documentLocalAmount + $totalExpense->documentLocalAmount) * $holdingPercentage / 100;
                                     } else {
-                                        $total += ($totalIncome->documentRptAmount + $totalExpense->documentRptAmount) * $company['holding_percentage'] / 100;
+                                        $total += ($totalIncome->documentRptAmount + $totalExpense->documentRptAmount) * $holdingPercentage / 100;
                                     }
                                 }
                             }
