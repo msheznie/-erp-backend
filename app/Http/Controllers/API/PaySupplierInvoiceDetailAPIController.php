@@ -1283,11 +1283,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         if (!empty($supplierInvoiceWithoutVAT)) {
-            return $this->sendError("The supplier invoice without VAT you cannot be matched with a payment voucher that includes VAT <br/>. <ul style='list-style:auto'>".implode('',$supplierInvoiceWithoutVAT)."</ul>", 422);
+            return $this->sendError("The supplier invoice without VAT you cannot be matched with a payment voucher that includes VAT <br/>. <ul style='list-style:none;'>".implode('',$supplierInvoiceWithoutVAT)."</ul>", 422);
         }
 
         if (!empty($supplierInvoiceAlreadyAdded)) {
-            return $this->sendError("Selected Invoice is already added. Please check again </br>. <ul style='list-style:auto'>".implode('',$supplierInvoiceAlreadyAdded)."</ul>", 422);
+            return $this->sendError("Selected Invoice is already added. Please check again </br>. <ul style='list-style:none'>".implode('',$supplierInvoiceAlreadyAdded)."</ul>", 422);
         }
 
         $notUpdatedInGL = [];
@@ -1312,7 +1312,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         if (!empty($notUpdatedInGL)) {
-            return $this->sendError("Selected Invoice is not updated in general ledger. Please check again </br>. <ul style='list-style:auto'>".implode('',$notUpdatedInGL)."</ul>", 422);
+            return $this->sendError("Selected Invoice is not updated in general ledger. Please check again </br>. <ul style='list-style:none'>".implode('',$notUpdatedInGL)."</ul>", 422);
         }
 
         $moreThanBookingInvoiceAmount = [];
@@ -1354,7 +1354,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         if (!empty($moreThanBookingInvoiceAmount)) {
-            return $this->sendError("Selected Invoice booked more than the invoice amount. </br>. <ul style='list-style:auto'>".implode('',$moreThanBookingInvoiceAmount)."</ul>", 422);
+            return $this->sendError("Selected Invoice booked more than the invoice amount. </br>. <ul style='list-style:none'>".implode('',$moreThanBookingInvoiceAmount)."</ul>", 422);
         }
 
         DB::beginTransaction();
