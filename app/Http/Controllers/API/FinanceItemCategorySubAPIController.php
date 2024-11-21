@@ -551,9 +551,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
        $collectCategoryType = collect($input['categoryType']);
        $categoryTypeID = $collectCategoryType->pluck('id');
+       $categoryTypeIDLength = $categoryTypeID->count();
        $itemCategory = $input['itemCategoryID'];
 
-        if ($itemCategory == 1 && $categoryTypeID->contains(2)) {
+        if ($itemCategory == 1 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
                 return $this->sendError("Please select 'COGS GL Code'",500);
             }
@@ -564,7 +565,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                 return $this->sendError("Please select 'Revenue GL Code'",500);
             }
 
-        } elseif ($itemCategory == 1 && $categoryTypeID->contains(1)) {
+        } elseif ($itemCategory == 1 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(1)) {
             if(!$balance_sheet_gl_code){
                 return $this->sendError("Please select 'Balance Sheet GL Code'",500);
             }
@@ -572,7 +573,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                 return $this->sendError("Please select 'Consumption GL Code'",500);
             }
 
-        } elseif ($itemCategory == 1 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
+        } elseif ($itemCategory == 1 && $categoryTypeIDLength == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
             if(!$balance_sheet_gl_code){
                 return $this->sendError("Please select 'Balance Sheet GL Code'",500);
             }
@@ -586,18 +587,18 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                 return $this->sendError("Please select 'Revenue GL Code'",500);
             }
 
-        } elseif ($itemCategory == 2 && $categoryTypeID->contains(2)) {
+        } elseif ($itemCategory == 2 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
                 return $this->sendError("Please select 'COGS GL Code'",500);
             }
             if(!$revenue_gl_code){
                 return $this->sendError("Please select 'Revenue GL Code'",500);
             }
-        } elseif ($itemCategory == 2 && $categoryTypeID->contains(1)) {
+        } elseif ($itemCategory == 2 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(1)) {
             if(!$consumption_gl_code) {
                 return $this->sendError("Please select 'Consumption GL Code'",500);
             }
-        } elseif ($itemCategory == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
+        } elseif ($itemCategory == 2 && $categoryTypeIDLength == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
                 return $this->sendError("Please select 'COGS GL Code'",500);
             }
@@ -611,18 +612,18 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             if(!$balance_sheet_gl_code){
                 return $this->sendError("Please select 'Balance Sheet GL Code'",500);
             }
-        } elseif ($itemCategory == 4 && $categoryTypeID->contains(2)) {
+        } elseif ($itemCategory == 4  && $categoryTypeIDLength == 1 && $categoryTypeID->contains(2)) {
             if(!$revenue_gl_code){
                 return $this->sendError("Please select 'Revenue GL Code'",500);
             }
             if(!$cogs_gl_code) {
                 return $this->sendError("Please select 'COGS GL Code'",500);
             }
-        } elseif ($itemCategory == 4 && $categoryTypeID->contains(1)) {
+        } elseif ($itemCategory == 4 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(1)) {
             if(!$consumption_gl_code) {
                 return $this->sendError("Please select 'Consumption GL Code'",500);
             }
-        } elseif ($itemCategory == 4 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
+        } elseif ($itemCategory == 4 && $categoryTypeIDLength == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
                 return $this->sendError("Please select 'COGS GL Code'",500);
             }
