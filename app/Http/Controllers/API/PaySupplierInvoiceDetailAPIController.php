@@ -1259,6 +1259,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         $itemExistArray = array();
+        $supplierInvoiceWithoutVAT = [];
+        $supplierInvoiceAlreadyAdded = [];
 
         //check supplier invoice all ready exist
         foreach ($input['detailTable'] as $itemExist) {
@@ -1269,18 +1271,26 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     ->first();
 
                 if (!empty($siDetailExistPS)) {
-                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is all ready added. Please check again";
-                    $itemExistArray[] = [$itemDrt];
+                    array_push($supplierInvoiceAlreadyAdded,"<li>".$itemExist['bookingInvDocCode']."</li>");
                 }
                 
                 // check supplier invoice has VAT
                 $supplierInvoiceMaster  = BookInvSuppMaster::find($itemExist['bookingInvSystemCode']);
                 if(($supplierInvoiceMaster->VATAmount == 0) && ($isPVHasVAT)) {
-                    $itemDrt = "The Selected Invoice " . $itemExist['bookingInvDocCode'] . " without VAT you cannot be matched with a payment voucher that includes VAT.";
-                    $itemExistArray[] = [$itemDrt];
+                    array_push($supplierInvoiceWithoutVAT,"<li>".$itemExist['bookingInvDocCode']."</li>");
                 }
             }
         }
+
+        if (!empty($supplierInvoiceWithoutVAT)) {
+            return $this->sendError("The supplier invoice without VAT you cannot be matched with a payment voucher that includes VAT <br/>. <ul style='list-style:auto'>".implode('',$supplierInvoiceWithoutVAT)."</ul>", 422);
+        }
+
+        if (!empty($supplierInvoiceAlreadyAdded)) {
+            return $this->sendError("Selected Invoice is already added. Please check again </br>. <ul style='list-style:auto'>".implode('',$supplierInvoiceAlreadyAdded)."</ul>", 422);
+        }
+
+        $notUpdatedInGL = [];
 
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
@@ -1292,14 +1302,20 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                        $itemExistArray[] = [$itemDrt];
+                        array_push($notUpdatedInGL,$itemExist['bookingInvDocCode']);
                     }
                 } else {
                     $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                    $itemExistArray[] = [$itemDrt];
+                    array_push($notUpdatedInGL,$itemExist['bookingInvDocCode']);
                 }
             }
         }
+
+        if (!empty($notUpdatedInGL)) {
+            return $this->sendError("Selected Invoice is not updated in general ledger. Please check again </br>. <ul style='list-style:auto'>".implode('',$notUpdatedInGL)."</ul>", 422);
+        }
+
+        $moreThanBookingInvoiceAmount = [];
 
         foreach ($input['detailTable'] as $item) {
             if (isset($item['isChecked']) && $item['isChecked']) {
@@ -1330,17 +1346,17 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     //supplier invoice
                     if ($payDetailMoreBooked->supplierPaymentAmount > $item['supplierInvoiceAmount']) {
 
-                        $itemDrt = "Selected invoice " . $item['bookingInvDocCode'] . " booked more than the invoice amount.";
-                        $itemExistArray[] = [$itemDrt];
+                        array_push($moreThanBookingInvoiceAmount,$item['bookingInvDocCode']);
 
                     }
                 }
             }
         }
-        
-        if (!empty($itemExistArray)) {
-            return $this->sendError($itemExistArray, 422);
+
+        if (!empty($moreThanBookingInvoiceAmount)) {
+            return $this->sendError("Selected Invoice booked more than the invoice amount. </br>. <ul style='list-style:auto'>".implode('',$moreThanBookingInvoiceAmount)."</ul>", 422);
         }
+
         DB::beginTransaction();
         try {
             foreach ($input['detailTable'] as $new) {
