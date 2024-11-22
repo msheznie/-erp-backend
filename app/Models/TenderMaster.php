@@ -328,7 +328,8 @@ class TenderMaster extends Model
         'negotiation_doc_verify_comment',
         'negotiation_doc_verify_status',
         'show_technical_criteria',
-         'isDelegation'
+        'isDelegation',
+        'uuid'
     ];
     /**
      * The attributes that should be casted to native types.
@@ -411,7 +412,8 @@ class TenderMaster extends Model
         'negotiation_award_comment' => 'string',
         'negotiation_is_awarded' => 'integer',
         'negotiation_doc_verify_comment' => 'string',
-        'negotiation_doc_verify_status'  => 'integer'
+        'negotiation_doc_verify_status'  => 'integer',
+        'uuid'  => 'string'
     ];
 
     /**

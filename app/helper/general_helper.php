@@ -9987,4 +9987,9 @@ class Helper
         }
        
     }
+
+    public static function generateSRMUuid($length=16) : string
+    {
+        return bin2hex(random_bytes($length));
+    }
 }

@@ -602,6 +602,7 @@ class TenderMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+            $data['uuid'] = Helper::generateSRMUuid(16);
             $data['currency_id'] = isset($input['currency_id']) ? $input['currency_id'] : null;
             $data['description'] = isset($input['description']) ? $input['description'] : null;
             $data['envelop_type_id'] = isset($input['envelop_type_id']) ? $input['envelop_type_id'] : null;
