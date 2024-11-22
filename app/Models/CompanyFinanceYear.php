@@ -230,7 +230,7 @@ class CompanyFinanceYear extends Model
     }
 
     public static function active_finance_year($company, $date){
-        return CompanyFinanceYear::selectRaw("companyFinanceYearID, DATE(bigginingDate) AS startDate, DATE(endingDate) AS endDate")
+        return CompanyFinanceYear::selectRaw("companyFinanceYearID, DATE(bigginingDate) AS startDate, DATE(endingDate) AS endDate, isCurrent")
             ->where('companySystemID', $company)
             ->where('isActive', -1)
             ->whereRaw("( '{$date}' BETWEEN DATE(bigginingDate) AND  DATE(endingDate) ) ")

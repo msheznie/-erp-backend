@@ -26,9 +26,12 @@ use App\Models\BankAccount;
 use App\Models\BankLedger;
 use App\Models\BankMaster;
 use App\Models\BankReconciliation;
+use App\Models\BankReconciliationDocuments;
 use App\Models\BankReconciliationRefferedBack;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -37,7 +40,10 @@ use App\Models\PaymentBankTransferDetailRefferedBack;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Repositories\BankLedgerRepository;
+use App\Repositories\BankReconciliationDocumentsRepository;
 use App\Repositories\BankReconciliationRepository;
+use App\Services\CustomerReceivePaymentService;
+use App\Services\PaymentVoucherServices;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -56,11 +62,13 @@ class BankReconciliationAPIController extends AppBaseController
     /** @var  BankReconciliationRepository */
     private $bankReconciliationRepository;
     private $bankLedgerRepository;
+    private $bankReconciliationDocument;
 
-    public function __construct(BankReconciliationRepository $bankReconciliationRepo, BankLedgerRepository $bankLedgerRepo)
+    public function __construct(BankReconciliationRepository $bankReconciliationRepo, BankLedgerRepository $bankLedgerRepo, BankReconciliationDocumentsRepository $bankReconciliationDocumentsRepo)
     {
         $this->bankReconciliationRepository = $bankReconciliationRepo;
         $this->bankLedgerRepository = $bankLedgerRepo;
+        $this->bankReconciliationDocument = $bankReconciliationDocumentsRepo;
     }
 
     /**
@@ -417,7 +425,10 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         if ($bankReconciliation->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-
+            $validateAdditionalEntryApproved = $this->bankReconciliationDocument->validateConfirmation($id, $bankReconciliation->companySystemID);
+            if(!$validateAdditionalEntryApproved->isEmpty()) {
+                return $this->sendError('There are some manually created documents pending approval', 500);
+            }
 
             $checkItems = BankLedger::where('bankRecAutoID', $id)
                 ->count();
@@ -1368,9 +1379,7 @@ class BankReconciliationAPIController extends AppBaseController
 
     public function getBankReconciliationAdditionalEntries(Request $request)
     {
-        $input = $request->all();
-        $additionalEntryQuery = collect([]);
-
+        $additionalEntryQuery = $this->bankReconciliationDocument->getAdditionalEntryView($request);
         return \DataTables::collection($additionalEntryQuery)
             ->addIndexColumn()
             ->make(true);
@@ -1392,5 +1401,49 @@ class BankReconciliationAPIController extends AppBaseController
             'segments' => $segment
         );
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function saveAdditionalEntry(Request $request)
+    {
+        $input = $request->all();
+        $departmentSystemId = ($input['type'] == 1) ? 1 : 4;
+        $documentDate = Carbon::parse($input['documentDate'])->format('Y-m-d');
+        $documentDateYearActive = CompanyFinanceYear::active_finance_year($input['companySystemID'], $documentDate);
+        if($documentDateYearActive) {
+            if ($documentDateYearActive['isCurrent'] != -1) {
+                $input['companyFinanceYearID'] = $documentDateYearActive['companyFinanceYearID'];
+                $documentDateMonthActive = CompanyFinancePeriod::activeFinancePeriod($input['companySystemID'], $departmentSystemId, $documentDate);
+                if(!$documentDateMonthActive) {
+                    return $this->sendError('Document Date is not within the active Financial Period.',500);
+                }
+                $input['companyFinancePeriodID'] = $documentDateMonthActive['companyFinancePeriodID'];
+            } else {
+                return $this->sendError('Document Date is not within the current financial year.',500);
+            }
+        } else {
+            return $this->sendError('Document Date is not within the active Financial Year.',500);
+        }
+
+        $document['bankRecAutoID'] = $input['bankRecAutoID'];
+        $document['documentSystemID'] = ($input['type'] == 1) ? 4 : 21;
+        if ($input['type'] == 1) {
+            $resultData = PaymentVoucherServices::generatePaymentVoucher($input);
+            if($resultData['status']){
+                $document['documentAutoId'] = $resultData['data']['PayMasterAutoId'];
+            }
+            else {
+                return $this->sendError($resultData['message']);
+            }
+        } else if ($input['type'] == 2) {
+            $resultData = CustomerReceivePaymentService::generateCustomerReceivePayment($input);
+            if($resultData['status']){
+                $document['documentAutoId'] = $resultData['data']['custReceivePaymentAutoID'];
+            }
+            else {
+                return $this->sendError($resultData['message']);
+            }
+        }
+        $DataReturn = $this->bankReconciliationDocument->create($document);
+        return $this->sendResponse($DataReturn->toArray(), 'Additional entry created successfully.');
     }
 }

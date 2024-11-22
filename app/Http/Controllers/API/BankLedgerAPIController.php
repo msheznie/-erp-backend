@@ -303,6 +303,31 @@ class BankLedgerAPIController extends AppBaseController
                     return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed'), 500);
                 }
 
+                $checkGLAmount = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount, SUM(documentTransAmount) as documentTransAmount, documentLocalCurrencyID, documentRptCurrencyID, documentTransCurrencyID')
+                    ->where('companySystemID', $bankLedger->companySystemID)
+                    ->where('documentSystemID', $bankLedger->documentSystemID)
+                    ->where('documentSystemCode', $bankLedger->documentSystemCode)
+                    ->when($bankLedger->pdcID > 0, function($query) use ($bankLedger) {
+                        $query->where('pdcID', $bankLedger->pdcID);
+                    })
+                    ->where('chartOfAccountSystemID', $bankLedger->bank_account->chartOfAccountSystemID)
+                    ->first();
+
+                if (!empty($checkGLAmount)) {
+                    $glAmount = 0;
+                    $conditionChecking = true;
+                    $glAmount = $checkGLAmount->documentRptAmount;
+                    $a = abs($bankLedger->payAmountCompRpt);
+                    $b = abs($glAmount);
+                    $epsilon = 0.00001;
+
+                    if ((abs($a-$b) > $epsilon)) {
+                        return $this->sendError(trans('custom.bank_amount_is_not_matching_with_gl_amount'), 500);
+                    }
+                } else {
+                    return $this->sendError(trans('custom.gl_data_cannot_be_found_for_this_document'), 500);
+                }
+
                 if ($input['bankClearedYN']) {
                     $updateArray['bankClearedYN'] = -1;
                 } else {

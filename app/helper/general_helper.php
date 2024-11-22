@@ -8245,7 +8245,9 @@ class Helper
                 ->where('companyPolicyCategoryID', 96)
                 ->where('isYesNO', 1)
                 ->first();
-            if (!empty($treasuryClearPolicy)) {
+
+            $documentFromBankReconciliation = Models\BankReconciliationDocuments::where('documentSystemID', $custReceivePayment->documentSystemID)->where('documentAutoId', $custReceivePayment->custReceivePaymentAutoID)->first();
+            if (!empty($treasuryClearPolicy) || !empty($documentFromBankReconciliation)) {
                 $empId = \Helper::getEmployeeSystemID();
                 $empID = Employee::find($empId);
                 $data['trsClearedYN'] = -1;

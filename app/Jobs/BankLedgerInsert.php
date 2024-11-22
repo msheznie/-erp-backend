@@ -15,6 +15,7 @@ use App\Models\POSGLEntries;
 use App\Models\POSInvoiceSource;
 use App\Models\POSSourceMenuSalesMaster;
 use App\Models\SupplierMaster;
+use App\Models\BankReconciliationDocuments;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -153,7 +154,9 @@ class BankLedgerInsert implements ShouldQueue
                             ->where('companyPolicyCategoryID', 96)
                             ->where('isYesNO', 1)
                             ->first();
-                        if (!empty($treasuryClearPolicy)) {
+
+                        $documentFromBankReconciliation = BankReconciliationDocuments::where('documentSystemID', $masterData->documentSystemID)->where('documentAutoId', $masterModel["autoID"])->first();
+                        if (!empty($treasuryClearPolicy) || !empty($documentFromBankReconciliation)) {
                             $data['trsClearedYN'] = -1;
                             $data['trsClearedDate'] = NOW();
                             $data['trsClearedByEmpSystemID'] = $empID->employeeSystemID;
@@ -236,6 +239,8 @@ class BankLedgerInsert implements ShouldQueue
                                     ->where('companyPolicyCategoryID', 96)
                                     ->where('isYesNO', 1)
                                     ->first();
+
+                                $documentFromBankReconciliation = BankReconciliationDocuments::where('documentSystemID', $custReceivePayment->documentSystemID)->where('documentAutoId', $custReceivePayment->custReceivePaymentAutoID)->first();
                                 if (!empty($treasuryClearPolicy)) {
                                     $data['trsClearedYN'] = -1;
                                     $data['trsClearedDate'] = NOW();

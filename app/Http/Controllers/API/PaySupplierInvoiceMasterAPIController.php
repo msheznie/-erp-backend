@@ -20,6 +20,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
 use App\Models\PaymentVoucherBankChargeDetails;
+use App\Services\PaymentVoucherServices;
 use ExchangeSetupConfig;
 use App\helper\Helper;
 use App\helper\TaxService;
@@ -210,9 +211,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'BPVAccount' => 'required',
                 'BPVdate' => 'required|date',
             ];
- 
+
             if (isset($input['pdcChequeYN']) && !$input['pdcChequeYN']) {
-                $conditions['BPVchequeDate'] = 'required|date';               
+                $conditions['BPVchequeDate'] = 'required|date';
             }
 
             $validator = \Validator::make($request->all(), $conditions);
@@ -221,218 +222,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-            if (!$companyFinanceYear["success"]) {
-                return $this->sendError($companyFinanceYear["message"], 500);
-            } else {
-                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+            $resultData = PaymentVoucherServices::createPaymentVoucher($input);
+            if($resultData['status']){
+                DB::commit();
+                return $this->sendResponse($resultData['data'], $resultData['message']);
             }
-
-            $inputParam = $input;
-            $inputParam["departmentSystemID"] = 1;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-            if (!$companyFinancePeriod["success"]) {
-                return $this->sendError($companyFinancePeriod["message"], 500);
-            } else {
-                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+            else{
+                DB::rollBack();
+                return $this->sendError($resultData['message'], 500, $resultData['type']);
             }
-
-
-            unset($inputParam);
-
-            $input['BPVdate'] = new Carbon($input['BPVdate']);
-            $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
-
-            $monthBegin = $input['FYPeriodDateFrom'];
-            $monthEnd = $input['FYPeriodDateTo'];
-
-            if (($input['BPVdate'] >= $monthBegin) && ($input['BPVdate'] <= $monthEnd)) {
-            } else {
-                return $this->sendError('Payment voucher date is not within financial period!', 500,array('type' => 'finance_period'));
-            }
-
-            if (isset($input['invoiceType']) && $input['invoiceType'] == 3 && isset($input['preCheck']) && $input['preCheck'] &&  !Helper::isLocalSupplier($input['BPVsupplierID'], $input['companySystemID'])) {
-                $company = Company::where('companySystemID', $input['companySystemID'])->first();
-                if (!empty($company) && $company->vatRegisteredYN == 1) {
-                    return $this->sendError('Do you want to activate Reverse Charge Mechanism for this Invoice', 500, array('type' => 'rcm_confirm'));
-                }
-            }
-
-            $company = Company::find($input['companySystemID']);
-            if ($company) {
-                $input['companyID'] = $company->CompanyID;
-            }
-
-            $documentMaster = DocumentMaster::find($input['documentSystemID']);
-            if ($documentMaster) {
-                $input['documentID'] = $documentMaster->documentID;
-            }
-
-            $lastSerial = PaySupplierInvoiceMaster::where('companySystemID', $input['companySystemID'])
-                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-                ->orderBy('serialNo', 'desc')
-                ->first();
-
-            $lastSerialNumber = 1;
-            if ($lastSerial) {
-                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-            }
-
-            if ($companyFinanceYear["message"]) {
-                $startYear = $companyFinanceYear["message"]['bigginingDate'];
-                $finYearExp = explode('-', $startYear);
-                $finYear = $finYearExp[0];
-            } else {
-                $finYear = date("Y");
-            }
-            if ($documentMaster) {
-                $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-                $input['BPVcode'] = $documentCode;
-            }
-            $input['serialNo'] = $lastSerialNumber;
-
-            if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
-                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
-
-                $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
-
-                if ($supDetail) {
-                    $input['supplierGLCode'] = $supDetail->liabilityAccount;
-                    $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
-                    $input['VATPercentage'] = $supDetail->vatPercentage;
-
-                }
-                $input['supplierTransCurrencyER'] = 1;
-                if ($supCurrency) {
-                    $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
-                    $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
-                    if ($currencyConversionDefaultMaster) {
-                        $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
-                    }
-                }
-                $supplier = SupplierMaster::find($input['BPVsupplierID']);
-                $input['directPaymentPayee'] = $supplier->supplierName;
-            } else {
-                $input['supplierTransCurrencyER'] = 1;
-                $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
-                $input['supplierDefCurrencyER'] = 1;
-            }
-
-            $bankAccount = BankAccount::find($input['BPVAccount']);
-            if ($bankAccount) {
-                $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
-                $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
-                if ($currencyConversionDefaultMaster) {
-                    $input['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
-                }
-            }
-
-            $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
-            if ($companyCurrency) {
-                $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
-                if ($companyCurrencyConversion) {
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                }
-            }
-
-            if ($input['invoiceType'] == 3) {
-                if ($input['payeeType'] == 3) {
-                    $input['directPaymentpayeeYN'] = -1;
-                    $input['directPaymentPayeeSelectEmp'] = 0;
-                    $input['directPaymentPayeeEmpID'] = null;
-                }
-                if ($input['payeeType'] == 2) {
-                    $input['directPaymentPayeeSelectEmp'] = -1;
-                    $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                    $input['directPaymentPayee'] = $emp->empFullName;
-                }
-            }
-            if ($input['invoiceType'] == 5) {
-
-
-                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
-
-                if($supDetail)
-                {
-                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
-                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
-                }
-          
-            }
-
-            if ($input['invoiceType'] == 7) {
-                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
-
-                if (is_null($checkEmployeeControlAccount)) {
-                    return $this->sendError('Please configure Employee control account for this company', 500);
-                }
-
-                $input['AdvanceAccount'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
-                $input['advanceAccountSystemID'] = $checkEmployeeControlAccount;
-
-                $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
-
-                if (is_null($isEmpAdvConfigured)) {
-                    return $this->sendError('Please configure employee advance account for this company', 500, array('type' => 'create'));
-                }
-
-                $input['employeeAdvanceAccount'] = ChartOfAccount::getAccountCode($isEmpAdvConfigured);
-                $input['employeeAdvanceAccountSystemID'] = $isEmpAdvConfigured;
-
-                $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                $input['directPaymentPayee'] = $emp->empFullName;
-            }
-
-
-
-            if ($input['invoiceType'] == 6) {
-                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
-
-                if (is_null($checkEmployeeControlAccount)) {
-                    return $this->sendError('Please configure Employee control account for this company', 500);
-                }
-
-                $input['supplierGLCodeSystemID'] = $checkEmployeeControlAccount;
-                $input['supplierGLCode'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
-                $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                $input['directPaymentPayee'] = $emp->empFullName;
-            }
-
-            if (isset($input['paymentMode'])) {
-                if ($input['paymentMode'] == 2) {
-                    $input['chequePaymentYN'] = -1;
-                } else {
-                    $input['chequePaymentYN'] = 0;
-                }
-            } else {
-                $input['chequePaymentYN'] = 0;
-            }
-
-            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
-                $input['chequePaymentYN'] = 0;
-                $input['BPVchequeDate'] = null;
-            } else {
-                $input['pdcChequeYN'] = 0;
-            }
-
-            $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
-
-            $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-
-            $input['payment_mode'] = $input['paymentMode'];
-            unset($input['paymentMode']);
-
-            $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
-
-            DB::commit();
-            return $this->sendResponse($paySupplierInvoiceMasters->toArray(), 'Pay Supplier Invoice Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
