@@ -54,21 +54,22 @@ class UsersWebHook implements ShouldQueue
         CommonJobService::db_switch($this->dataBase);
 
         $userData = $this->getUserId($this->id);
+        $empId = $this->id;
 
         if (empty($userData->userId)){
             $logData = ['message' => 'User data does not exists', 'Employee Id' => $this->id ];
             return $this->insertToLogTb($logData, 'error', 'User', $this->thirdPartyData['company_id']);
         }
 
-        $service = new UserService($this->dataBase, $userData->userId, $this->postType, $this->thirdPartyData);
+        $service = new UserService($this->dataBase, $userData->userId, $empId, $this->postType, $this->thirdPartyData);
         $resp = $service->execute();
 
         if(isset($resp['status']) && !$resp['status']){
-            $this->callUserService($resp['code'], 'User', $userData->userId);
+            $this->callUserService($resp['code'], 'User', $userData->userId, $empId);
         }
     }
 
-    function callUserService($statusCode, $desc, $userId)
+    function callUserService($statusCode, $desc, $userId, $empId)
     {
         if (!in_array($statusCode, [200, 201])) {
             for ($i = 1; $i <= 3; $i++) {
@@ -76,7 +77,7 @@ class UsersWebHook implements ShouldQueue
                 $this->insertToLogTb($logData, 'info', $desc, $this->thirdPartyData['company_id']);
 
                 $service = new UserService(
-                    $this->dataBase, $userId, $this->postType, $this->thirdPartyData
+                    $this->dataBase, $userId, $empId, $this->postType, $this->thirdPartyData
                 );
 
                 $resp = $service->execute();
