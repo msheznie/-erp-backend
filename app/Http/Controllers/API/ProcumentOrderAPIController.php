@@ -1161,19 +1161,12 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
             //getting total sum of Po Payment Terms
-            $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum'))
+            $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum, IFNULL(SUM(comPercentage),0) as paymentTotalPercentage'))
                 ->where('poID', $input['purchaseOrderID'])
                 ->first();
 
-
-            //return floatval($poMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
-
-            // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
-
             $paymentTotalSumComp = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $paymentTotalSum['paymentTotalSum']));
-
-
-            if ($paymentTotalSumComp > 0) {
+            if ($paymentTotalSumComp > 0 && $paymentTotalSum['paymentTotalPercentage'] != 100) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
                 } else {
                     return $this->sendError('Payment terms total is not matching with the PO total');
