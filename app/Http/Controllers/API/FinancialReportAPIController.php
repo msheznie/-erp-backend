@@ -1111,20 +1111,7 @@ class FinancialReportAPIController extends AppBaseController
                                 $totalExpense = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
                                     $query->where('controlAccountsSystemID', 2);
                                 })->first();
-
-                                if ($keyCom > 0) {
-                                    $previousCompanyID = $companyArray[$keyCom - 1]['companySystemID'];
-                                    if($groupCompanySystemID != $previousCompanyID) {
-
-                                        $previousCompany = Company::find($previousCompanyID);
-
-                                        $companyHoldingPercentage = ($previousCompany->holding_percentage + $company['holding_percentage']) / 2;
-
-                                        if($companyHoldingPercentage < 50) {
-                                            $company['group_type'] = 2;
-                                        }
-                                    }
-                                }
+                                
 
                                 if($company['group_type'] == 2 || $company['group_type'] == 3) {
 
