@@ -1123,6 +1123,7 @@ class FinancialReportAPIController extends AppBaseController
                                     $holdingPercentage = $company['holding_percentage'];
                                 }
 
+
                                 $totalIncome = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
                                     $query->where('controlAccountsSystemID', 1);
                                 })->first();
