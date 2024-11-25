@@ -1410,7 +1410,7 @@ class BankReconciliationAPIController extends AppBaseController
         $documentDate = Carbon::parse($input['documentDate'])->format('Y-m-d');
         $documentDateYearActive = CompanyFinanceYear::active_finance_year($input['companySystemID'], $documentDate);
         if($documentDateYearActive) {
-            if ($documentDateYearActive['isCurrent'] != -1) {
+            if ($documentDateYearActive['isCurrent'] == -1) {
                 $input['companyFinanceYearID'] = $documentDateYearActive['companyFinanceYearID'];
                 $documentDateMonthActive = CompanyFinancePeriod::activeFinancePeriod($input['companySystemID'], $departmentSystemId, $documentDate);
                 if(!$documentDateMonthActive) {
