@@ -473,7 +473,7 @@ class BudjetdetailsAPIController extends AppBaseController
         }
 
         /** @var BudgetMaster $budgetMaster */
-        $budgetMaster = $this->budgetMasterRepository->with(['segment_by', 'template_master', 'finance_year_by'])->findWithoutFail(3612);
+        $budgetMaster = $this->budgetMasterRepository->with(['segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($input['id']);
 
         if (empty($budgetMaster)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_master')]));
