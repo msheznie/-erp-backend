@@ -458,17 +458,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
 
-        if ($bookInvSuppMaster->whtApplicable) {
-            if ($bookInvSuppMaster->documentType != 4) {
-                $taxSetup = Tax::where('taxMasterAutoID',$bookInvSuppMaster->whtType)->first();
-                    if($taxSetup)
-                    {
-                        if($taxSetup->authorityAutoID <= 0 ||  $taxSetup->authorityAutoID == null){
-                            return $this->sendError("Tax Authority not assigned to Withholding Tax (WHT) setup", 500);
-                        }
-                    }
-                }
-            }
 
         $supplier_id = $input['supplierID'];
         $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
@@ -713,6 +702,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
             
             if ($validatorSupp->fails()) {
                 return $this->sendError($validator->messages(), 422);
+            }
+
+            $taxSetup = Tax::where('taxMasterAutoID',$bookInvSuppMaster->whtType)->first();
+            if($bookInvSuppMaster->whtApplicable && $bookInvSuppMaster->documentType != 4  && $taxSetup)
+            {
+                if($taxSetup->authorityAutoID <= 0 ||  $taxSetup->authorityAutoID == null){
+                    return $this->sendError("Tax Authority not assigned to Withholding Tax (WHT) setup", 500);
+                }
             }
 
             /*

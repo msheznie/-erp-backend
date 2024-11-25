@@ -141,7 +141,7 @@ class AccountsPayableReportJob implements ShouldQueue
                                 finalAgingDetail.CompanyName,
                                 finalAgingDetail.documentSystemID,
                                 finalAgingDetail.documentSystemCode,
-                                finalAgingDetail.group,
+                                finalAgingDetail.group as supplierGroupName,
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentDate,
