@@ -759,7 +759,6 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             }
         }
 
-
         if(!empty($vatValidation)) {
             $error = $errorMessage . "</br> <ul style='list-style:none;'>".implode('',$vatValidation)."</ul>";
             return $this->sendError($error, 422);
