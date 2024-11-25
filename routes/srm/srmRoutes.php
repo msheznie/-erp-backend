@@ -215,7 +215,11 @@ Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsContr
 Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment')->name("Confirm final bid award comment");
 Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail')->name("Send tender award email");
 Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList')->name("Get negotiation started tender list");
-
+Route::post('getContractTypes', 'TenderMasterAPIController@getContractTypes')->name("Get Contract Types");
+Route::post('createContract', 'TenderMasterAPIController@createContract')->name("Create Contract");
+Route::post('viewContract', 'TenderMasterAPIController@viewContract')->name("View Contract");
+Route::post('addAttachment', 'TenderMasterAPIController@addAttachment')->name("Add Attachment");
+Route::post('deleteAttachment', 'TenderMasterAPIController@deleteAttachment')->name("Delete Attachment");
 
 Route::resource('document_modify_requests', 'DocumentModifyRequestAPIController');
 
@@ -295,4 +299,9 @@ Route::post('rejectSupplierWiseTender', 'TenderMasterAPIController@rejectSupplie
 Route::post('getSupplierWiseProofApproved', 'TenderMasterAPIController@getSupplierWiseProofApproved');
 Route::post('updateTenderCalendarDays', 'TenderMasterAPIController@updateTenderCalendarDays');
 Route::post('getTenderCalendarValidation', 'TenderMasterAPIController@getTenderCalendarValidation');
+Route::post('getNegotiationStartedSupplierList', 'TenderNegotiationController@getNegotiationStartedSupplierList')->name("Get tender negotiated supplier list");
+Route::post('saveCustomEmail', 'TenderCustomEmailController@store')->name("create Custom tender email");
+Route::post('getSupplierListCustomEmail', 'TenderCustomEmailController@getSupplierListCustomEmail')->name("Get Negotiation Custom Email Supplier List");
+Route::post('removeCustomEmailSupplier', 'TenderCustomEmailController@deleteBySupplierId')->name("Remove Negotiation Supplier Custom Email");
+Route::post('getCustomEmailSupplier', 'TenderCustomEmailController@getCustomEmailSupplier')->name("Get Negotiation Supplier Custom Email");
 /*TenderPaymentDetailAPIController*/
