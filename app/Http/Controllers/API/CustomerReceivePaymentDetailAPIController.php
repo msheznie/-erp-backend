@@ -719,6 +719,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         }
 
         $itemExistArray = array();
+        $vatValidation = array();
 
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
@@ -742,17 +743,26 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $itemExistArray[] = [$itemDrt];
                 }
 
-                if ($matchDocumentMasterData->documentSystemID == 21 && $vatTotal > 0) {
+                if ($matchDocumentMasterData->documentSystemID == 21) {
                     $invoice = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$itemExist['bookingInvCodeSystem'])->select('VATAmount')->first();
-                    if($invoice->VATAmount <= 0) {
-                        $itemDrt = "The Customer invoice " . $itemExist['bookingInvDocCode'] . " does not includes VAT, you cannot match it with the Receipt voucher that does include VAT";
-                        $itemExistArray[] = [$itemDrt];
+                    if($invoice->VATAmount <= 0 && $vatTotal > 0) {
+                        $vatValidation[] = "<li>" . $itemExist['bookingInvDocCode'] . "</li>";
+                        $errorMessage = "The receipt voucher does include VAT, you cannot match it with customer invoice which does not include VAT";
+                    } else if ($invoice->VATAmount > 0 && $vatTotal <= 0) {
+                        $errorMessage = "The receipt voucher does not include VAT, you cannot match it with customer invoice which does include VAT";
+                        $vatValidation[] = "<li>" . $itemExist['bookingInvDocCode'] . "</li>";
                     }
                 }
             }
         }
 
+        if(!empty($vatValidation)) {
+            $error = $errorMessage . "</br> <ul style='list-style:none; text-align: left'>".implode('',$vatValidation)."</ul>";
+            return $this->sendError($error, 422);
+        }
+
         if (!empty($itemExistArray)) {
+            $itemExistArray = implode(', ', $itemExistArray);
             return $this->sendError($itemExistArray, 422);
         }
         DB::beginTransaction();
