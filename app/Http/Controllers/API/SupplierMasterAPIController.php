@@ -57,6 +57,7 @@ use App\Models\SupplierContactType;
 use App\Models\BankMemoTypes;
 use App\Models\SupplierMasterRefferedBack;
 use App\Repositories\SupplierMasterRepository;
+use App\Services\SRMService;
 use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -85,6 +86,7 @@ use App\Models\RegisterSupplierSubcategoryAssign;
 use App\Repositories\SupplierBlockRepository;
 use App\Models\SupplierBlock;
 use App\Traits\AuditLogsTrait;
+use App\Http\Requests\RequestSubmitKycRequest;
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -98,12 +100,16 @@ class SupplierMasterAPIController extends AppBaseController
     private $supplierBlockRepository;
     use AuditLogsTrait;
 
-    public function __construct(SupplierBlockRepository $supplierBlockRepo,SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
+    private $srmService;
+    public function __construct(SupplierBlockRepository $supplierBlockRepo,SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo, SupplierRegistrationLinkRepository $registrationLinkRepository,
+                                SRMService $srmService
+    )
     {
         $this->supplierMasterRepository = $supplierMasterRepo;
         $this->userRepository = $userRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
         $this->supplierBlockRepository = $supplierBlockRepo;
+        $this->srmService = $srmService;
     }
 
     /**
@@ -2661,4 +2667,68 @@ class SupplierMasterAPIController extends AppBaseController
 
         return $this->sendResponse($data, 'Supplier Category Subs retrieved successfully');
     }
+
+    public function requestSubmitKyc(RequestSubmitKycRequest $request)
+    {
+        try {
+            $loginUrl = env('SRM_URL');
+            $result = $this->updateBidTenderStatus(
+                $request->api_key,
+                $request->uuid,
+                $request->email,
+                $request->name
+            );
+
+            if (!$result->success) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result->data == 0
+                        ? $result->message
+                        : "Something went wrong! Supplier Bid Tender status couldn't be updated."
+                ], 400);
+            }
+
+            $kycResult = $this->supplierMasterRepository->requestKycEnable(
+                $loginUrl,
+                $request->name,
+                $request->title,
+                $request->tenderCode,
+                $request->companyId,
+                $request->email
+            );
+
+            if ($kycResult) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'KYC Enable Request sent successfully',
+                    'loginUrl' => $loginUrl
+                ], 200);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An unexpected error occurred. Please try again later.',
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred.',
+            ], 500);
+        }
+    }
+
+
+    private function updateBidTenderStatus($apiKey, $uuid, $email, $name)
+    {
+        return $this->srmService->callSRMAPIs([
+            'apiKey' => $apiKey,
+            'request' => 'UPDATE_BID_TENDER_STATUS',
+            'extra' => [
+                'uuid' => $uuid,
+                'email' => $email,
+                'name' => $name
+            ]
+        ]);
+    }
+
 }

@@ -4595,7 +4595,15 @@ ORDER BY
             if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
                $q->whereIn('bid_id', $bidSubmissionMasterIds);
             }
-            $q->where('award', 1)->with('supplier');
+            $q->where('award', 1)->with([
+                'supplier' => function ($supplierQuery) {
+                    $supplierQuery->with([
+                        'supplier' => function ($masterQuery) {
+                            $masterQuery->select('supplierCodeSystem', 'approvedYN', 'supplierConfirmedYN', 'isActive');
+                        }
+                    ]);
+                }
+            ]);
         }])->first();
 
         return $this->sendResponse($tender, 'data retrieved successfully');
