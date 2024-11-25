@@ -231,6 +231,40 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 DB::rollBack();
                 return $this->sendError($resultData['message'], 500, $resultData['type']);
             }
+
+            $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
+
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+
+            $input['payment_mode'] = $input['paymentMode'];
+            unset($input['paymentMode']);
+
+            $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
+
+            $is_exist_policy_GCNFCR = Helper::checkPolicy($input['companySystemID'], 35);
+
+            if($input['payment_mode'] == 2 && !$input['pdcChequeYN'] && $is_exist_policy_GCNFCR) {
+                $checkRegisterDetails = ChequeRegisterDetail::where('id',$input['BPVchequeNoDropdown'])
+                    ->where('company_id',$input['companySystemID'])
+                    ->first();
+
+                if($checkRegisterDetails) {
+                    $data['BPVchequeNo'] = $checkRegisterDetails->cheque_no;
+
+                    /*update cheque detail table */
+                    $checkRegisterDetails->document_id = $paySupplierInvoiceMasters->PayMasterAutoId;
+                    $checkRegisterDetails->document_master_id = $paySupplierInvoiceMasters->documentSystemID;
+                    $checkRegisterDetails->status = 1;
+                    $checkRegisterDetails->save();
+                }
+
+                $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->update($data,$paySupplierInvoiceMasters->PayMasterAutoId);
+            }
+
+            DB::commit();
+            return $this->sendResponse($paySupplierInvoiceMasters->toArray(), 'Pay Supplier Invoice Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -326,6 +360,24 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $paySupplierInvoiceMaster['BPVbankCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['BPVbankCurrency'])->first()->CurrencyCode;
         $paySupplierInvoiceMaster['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['companyRptCurrencyID'])->first()->CurrencyCode;
         $paySupplierInvoiceMaster['localCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['localCurrencyID'])->first()->CurrencyCode;
+        $paySupplierInvoiceMaster['BPVchequeNoID'] = null;
+
+        if($paySupplierInvoiceMaster['payment_mode'] == 2 && $paySupplierInvoiceMaster['pdcChequeYN'] == 0 && !empty($paySupplierInvoiceMaster['BPVchequeNo'])) {
+            $chequeRegisterData = ChequeRegister::where('bank_id',$paySupplierInvoiceMaster['BPVbank'])
+                ->where('bank_account_id',$paySupplierInvoiceMaster['BPVAccount'])
+                ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                ->where('started_cheque_no', '<=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                ->where('ended_cheque_no', '>=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                ->first();
+
+            $checkRegisterDetails = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
+                ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
+                ->first();
+
+            $paySupplierInvoiceMaster['BPVchequeNoID'] = $checkRegisterDetails->id;
+        }
+
         return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'Pay Supplier Invoice Master retrieved successfully');
     }
 
@@ -1581,6 +1633,47 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['BPVdate'] = new Carbon($input['BPVdate']);
             $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
             Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
+
+            $changeChequeNoBaseOnPolicy = false;
+            $is_exist_policy_GCNFCR = Helper::checkPolicy($companySystemID, 35);
+
+            if($input['paymentMode'] == 2 && !$input['pdcChequeYN'] && $is_exist_policy_GCNFCR) {
+                $checkRegisterDetails = ChequeRegisterDetail::where('id',$input['BPVchequeNoDropdown'])
+                    ->where('company_id',$companySystemID)
+                    ->first();
+
+                if($checkRegisterDetails) {
+                    $input['BPVchequeNo'] = $checkRegisterDetails->cheque_no;
+                    $changeChequeNoBaseOnPolicy = true;
+
+                    /*update cheque detail table */
+                    $checkRegisterDetails->document_id = $id;
+                    $checkRegisterDetails->document_master_id = $documentSystemID;
+                    $checkRegisterDetails->status = 1;
+                    $checkRegisterDetails->save();
+
+                    if($paySupplierInvoiceMaster->BPVchequeNo != $checkRegisterDetails->cheque_no) {
+                        $chequeRegisterData = ChequeRegister::where('bank_id',$paySupplierInvoiceMaster['BPVbank'])
+                            ->where('bank_account_id',$paySupplierInvoiceMaster['BPVAccount'])
+                            ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                            ->where('started_cheque_no', '<=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                            ->where('ended_cheque_no', '>=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                            ->first();
+
+                        $checkRegisterDetails = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
+                            ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                            ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
+                            ->first();
+
+                        $checkRegisterDetails->document_id = null;
+                        $checkRegisterDetails->document_master_id = null;
+                        $checkRegisterDetails->status = 0;
+                        $checkRegisterDetails->save();
+                    }
+                }
+                unset($checkRegisterDetails);
+            }
+
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 // checking minus value
@@ -2354,71 +2447,80 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
 
                 $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
-                if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
-                    if ($input['chequePaymentYN'] == -1 &&  $input['pdcChequeYN'] == 0) {
-                        $bankAccount = BankAccount::find($input['BPVAccount']);
-                        /*
-                         * check 'Get cheque number from cheque register' policy exist
-                         * if policy exist - cheque no should get from erp_cheque register details - Get cheque number from cheque register
-                         * else - usual method
-                         *
-                         * */
-                        $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $companySystemID)
-                            ->where('companyPolicyCategoryID', 35)
-                            ->where('isYesNO', 1)
-                            ->first();
-                        if (!empty($is_exist_policy_GCNFCR)) {
-
-                            $usedCheckID = $this->paySupplierInvoiceMasterRepository->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
-
-                            $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
-                                $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
-                                    ->where('company_id', $companySystemID)
-                                    ->where('isActive', 1);
-                            })
-                                ->where('status', 0)
-                                ->where(function ($q) use ($usedCheckID) {
-                                    if ($usedCheckID) {
-                                        $q->where('id', '>', $usedCheckID);
-                                    }
-                                })
-                                ->orderBy('id', 'ASC')
+                if(!$changeChequeNoBaseOnPolicy) {
+                    if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
+                        if ($input['chequePaymentYN'] == -1 &&  $input['pdcChequeYN'] == 0) {
+                            $bankAccount = BankAccount::find($input['BPVAccount']);
+                            /*
+                             * check 'Get cheque number from cheque register' policy exist
+                             * if policy exist - cheque no should get from erp_cheque register details - Get cheque number from cheque register
+                             * else - usual method
+                             *
+                             * */
+                            $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $companySystemID)
+                                ->where('companyPolicyCategoryID', 35)
+                                ->where('isYesNO', 1)
                                 ->first();
+                            if (!empty($is_exist_policy_GCNFCR)) {
 
-                            if (!empty($unUsedCheque)) {
-                                $nextChequeNo = $unUsedCheque->cheque_no;
-                                $input['BPVchequeNo'] = $nextChequeNo;
-                                /*update cheque detail table */
-                                $update_array = [
-                                    'document_id' => $id,
-                                    'document_master_id' => $documentSystemID,
-                                    'status' => 1,
-                                ];
-                                ChequeRegisterDetail::where('id', $unUsedCheque->id)->update($update_array);
+                                $usedCheckID = $this->paySupplierInvoiceMasterRepository->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
+
+                                $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
+                                    $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
+                                        ->where('company_id', $companySystemID)
+                                        ->where('isActive', 1);
+                                })
+                                    ->where('status', 0)
+                                    ->where(function ($q) use ($usedCheckID) {
+                                        if ($usedCheckID) {
+                                            $q->where('id', '>', $usedCheckID);
+                                        }
+                                    })
+                                    ->orderBy('id', 'ASC')
+                                    ->first();
+
+                                if (!empty($unUsedCheque)) {
+                                    $nextChequeNo = $unUsedCheque->cheque_no;
+                                    $input['BPVchequeNo'] = $nextChequeNo;
+                                    /*update cheque detail table */
+                                    $update_array = [
+                                        'document_id' => $id,
+                                        'document_master_id' => $documentSystemID,
+                                        'status' => 1,
+                                    ];
+                                    ChequeRegisterDetail::where('id', $unUsedCheque->id)->update($update_array);
+
+                                } else {
+                                    return $this->sendError('Could not found any unassigned cheques. Please add cheques to cheque registry', 500, ['type' => 'confirm']);
+                                }
 
                             } else {
-                                return $this->sendError('Could not found any unassigned cheques. Please add cheques to cheque registry', 500, ['type' => 'confirm']);
+                                $nextChequeNo = $bankAccount->chquePrintedStartingNo + 1;
+                            }
+                            /*code ended here*/
+
+                            $checkChequeNoDuplicate = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('BPVbank', $input['BPVbank'])->where('BPVAccount', $input['BPVAccount'])->where('BPVchequeNo', $nextChequeNo)->first();
+
+                            if ($checkChequeNoDuplicate) {
+                                //return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
                             }
 
+                            if ($bankAccount->isPrintedActive == 1 && empty($is_exist_policy_GCNFCR)) {
+                                $input['BPVchequeNo'] = $nextChequeNo;
+                                $bankAccount->chquePrintedStartingNo = $nextChequeNo;
+                                $bankAccount->save();
+
+                                Log::info('Cheque No:' . $input['BPVchequeNo']);
+                                Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
+                                Log::info('-------------------------------------------------------');
+                            }
                         } else {
-                            $nextChequeNo = $bankAccount->chquePrintedStartingNo + 1;
-                        }
-                        /*code ended here*/
-
-                        $checkChequeNoDuplicate = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('BPVbank', $input['BPVbank'])->where('BPVAccount', $input['BPVAccount'])->where('BPVchequeNo', $nextChequeNo)->first();
-
-                        if ($checkChequeNoDuplicate) {
-                            //return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
-                        }
-
-                        if ($bankAccount->isPrintedActive == 1 && empty($is_exist_policy_GCNFCR)) {
-                            $input['BPVchequeNo'] = $nextChequeNo;
-                            $bankAccount->chquePrintedStartingNo = $nextChequeNo;
-                            $bankAccount->save();
-
-                            Log::info('Cheque No:' . $input['BPVchequeNo']);
-                            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-                            Log::info('-------------------------------------------------------');
+                            $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
+                            if ($chkCheque) {
+                                $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
+                            } else {
+                                $input['BPVchequeNo'] = 1;
+                            }
                         }
                     } else {
                         $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
@@ -2427,13 +2529,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         } else {
                             $input['BPVchequeNo'] = 1;
                         }
-                    }
-                } else {
-                    $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
-                    if ($chkCheque) {
-                        $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
-                    } else {
-                        $input['BPVchequeNo'] = 1;
                     }
                 }
 
@@ -5155,6 +5250,48 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
   
        
        
+    }
+
+    public function getAvailableChequeNumbers(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $chequeRegisterData = ChequeRegister::where('bank_id',$input['bankID'])
+            ->where('bank_account_id',$input['accountID'])
+            ->where('company_id',$input['company_id'])
+            ->where('isActive',1)
+            ->first();
+
+        $checkRegisterDetails = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData['id'])
+            ->where('company_id',$input['company_id'])
+            ->where('status',0)
+            ->get();
+
+        if(isset($input['documentAutoID'])) {
+            $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['documentAutoID']);
+
+            if(!empty($paySupplierInvoiceMaster['BPVchequeNo'])) {
+                $chequeRegisterData = ChequeRegister::where('bank_id',$paySupplierInvoiceMaster['BPVbank'])
+                    ->where('bank_account_id',$paySupplierInvoiceMaster['BPVAccount'])
+                    ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                    ->where('started_cheque_no', '<=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                    ->where('ended_cheque_no', '>=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                    ->first();
+
+                $checkRegisterDetailsOldRecord = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
+                    ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                    ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
+                    ->first();
+
+                $checkRegisterDetails->push($checkRegisterDetailsOldRecord);
+
+                $sorted = $checkRegisterDetails->sortBy('cheque_no');
+                $checkRegisterDetails = $sorted->values()->all();
+            }
+        }
+
+        return $this->sendResponse($checkRegisterDetails, 'Data fetched successfully');
     }
 
 
