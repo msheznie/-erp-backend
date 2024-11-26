@@ -220,6 +220,10 @@ class EmployeeService
     {
         $userData = $this->getUserId($id);
         if (!empty($userData->userId)){
+            $userReferenceId = $this->checkReferenceId($userData->userId);
+            if (empty($userReferenceId)){
+                $this->postType = 'POST';
+            }
             UsersWebHook::dispatch($this->dataBase, $this->postType, $id, $this->thirdPartyData);
         }
     }
@@ -229,5 +233,14 @@ class EmployeeService
         return User::where('employee_id', $empId)
             ->select('id as userId')
             ->first();
+    }
+
+    function checkReferenceId($userId)
+    {
+        return DB::table('third_party_pivot_record')
+            ->where('pivot_table_id', 6)
+            ->where('system_id', $userId)
+            ->where('third_party_sys_det_id', $this->detailId)
+            ->value('reference_id');
     }
 }
