@@ -763,8 +763,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $controlAccounts = ControlAccount::all();
 
         /** all Account Types */
-        $accountsType = AccountsType::where('accountsType', '!=', 3)
-            ->get();
+        $accountsType = AccountsType::whereNotIn('accountsType', [3, 4])->get();
 
         /** all allocation Types */
         $allocationType = AllocationMaster::where('isActive', 1)->get();
