@@ -259,6 +259,7 @@ class ReportTemplateDetails extends Model
 
         }
 
+
         return $monthlySums;
 
     }
