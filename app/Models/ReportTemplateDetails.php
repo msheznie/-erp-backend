@@ -236,30 +236,29 @@ class ReportTemplateDetails extends Model
     {
         $monthlySums =[];
 
-        for ($i = 0; $i < 13; $i++) {
-            $monthlySums[$i] = ['total' => null];
-        }
+        $monthlySums = array_fill(0, 13, ['total' => 0]);
 
         if($this->itemType === 2 && $this->isFinalLevel === 1)
         {
                foreach ($this->gl_codes as $glcode)
                {
-                   $monthlySum = $glcode->items->where('companySystemID',1)->where('serviceLineSystemID', 1)->where('companyFinanceYearID',68)->groupBy('month')->map(function ($group,$month)  {
-                       return  $group->sum('budjetAmtRpt');
-                   });
+                   $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',1)->where('serviceLineSystemID', 1)->where('companyFinanceYearID',68)->where('budjetAmtRpt','>',0)->groupBy('month')->orderBy('month')->get();
 
-                   foreach ($monthlySum as $month => $sum) {
-                       if (!isset($monthlySums[$month-1])) {
-                           $monthlySums[$month-1]['total'] = 0;
+
+                       foreach ($monthlySum as $month) {
+                           if (!isset($monthlySums[$month->month-1])) {
+                               $monthlySums[$month->month-1]['total'] = 0;
+                           }
+                           $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
                        }
-                       $monthlySums[$month-1]['total'] += $sum;
-                   }
+
                }
 
                // 13 th column as total
                 $monthlySums[12]['total'] = (collect($monthlySums)->sum('total') == 0) ? 0 : collect($monthlySums)->sum('total') ;
 
         }
+
 
         return $monthlySums;
 
