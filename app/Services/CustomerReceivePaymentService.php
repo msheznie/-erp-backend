@@ -40,7 +40,7 @@ class CustomerReceivePaymentService
                 ];
             }
 
-            $input['narration'] = $input['narration'] . ' (' . $input['bankRecCode'] . ')';
+            $input['narration'] = $input['narration'] . '(' . $input['bankRecCode'] . ')';
             $input['custPaymentReceiveDate'] = $input['documentDate'];
             $input['documentType'] = 14;
             $input['payeeTypeID'] = 3;
