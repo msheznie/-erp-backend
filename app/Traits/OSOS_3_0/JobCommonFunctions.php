@@ -83,6 +83,21 @@ trait JobCommonFunctions{
                     ? "v2/api/hrm/fieldOfStudy/{$this->masterUuId}"
                     : 'v2/api/hrm/fieldOfStudy';
                 break;
+            case 'education':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/hrm/education/{$this->masterUuId}"
+                    : 'v2/api/hrm/education';
+                break;
+            case 'certificate':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/hrm/certificate/{$this->masterUuId}"
+                    : 'v2/api/hrm/certificate';
+                break;
+            case 'experience':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/hrm/experience/{$this->masterUuId}"
+                    : 'v2/api/hrm/experience';
+                break;
             default:
                 $this->url = '';
                 break;

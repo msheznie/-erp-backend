@@ -5,7 +5,10 @@ use App\Http\Controllers\AppBaseController;
 use App\Jobs\OSOS_3_0\DepartmentWebHook;
 use App\Jobs\OSOS_3_0\DesignationWebHook;
 use App\Jobs\OSOS_3_0\FieldOfStudyWebHook;
+use App\Jobs\OSOS_3_0\ExperienceWebHook;
 use App\Jobs\OSOS_3_0\LocationWebHook;
+use App\Jobs\OSOS_3_0\EducationWebHook;
+use App\Jobs\OSOS_3_0\CertificateWebHook;
 use App\Models\ThirdPartyIntegrationKeys;
 use Illuminate\Http\Request;
 use App\Traits\OSOS_3_0\JobCommonFunctions;
@@ -156,6 +159,99 @@ class JobInvokeAPIController extends AppBaseController
             $comId = $this->thirdParty['company_id'] ?? 0;
             $logData = ['message' => $error];
             $this->insertToLogTb($logData, 'error', 'Field of Study', $comId);
+
+            return $this->sendError($msg, 500);
+        }
+    }
+
+    public function education(Request $request){
+        try {
+            $this->verifyIntegration();
+            $valResp = $this->commonValidations($request);
+            if(!$valResp['status']){
+                $logData = ['message' => $valResp['message']];
+                $this->insertToLogTb($logData , 'error', 'Education', $this->thirdParty['company_id']);
+
+                return $this->sendError($valResp['message'], 500);
+            }
+
+            $postType = $request->postType;
+            $ids =is_array($request->educationId) ? $request->educationId : [$request->educationId];
+            $db = isset($request->db) ? $request->db : "";
+
+            foreach ($ids as $id) {
+                EducationWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+            }
+
+            return $this->sendResponse([], 'OSOS 3.0 education triggered');
+        } catch(\Exception $e) {
+            $msg = $e->getMessage();
+            $error = $msg.' Error Line No: ' . $e->getLine();
+            $comId = $this->thirdParty['company_id'] ?? 0;
+            $logData = ['message' => $error];
+            $this->insertToLogTb($logData, 'error', 'Education', $comId);
+
+            return $this->sendError($msg, 500);
+        }
+    }
+
+    public function certificate(Request $request){
+        try {
+            $this->verifyIntegration();
+            $valResp = $this->commonValidations($request);
+            if(!$valResp['status']){
+                $logData = ['message' => $valResp['message']];
+                $this->insertToLogTb($logData , 'error', 'Certificate', $this->thirdParty['company_id']);
+
+                return $this->sendError($valResp['message'], 500);
+            }
+
+            $postType = $request->postType;
+            $ids =is_array($request->certificateId) ? $request->certificateId : [$request->certificateId];
+            $db = isset($request->db) ? $request->db : "";
+
+            foreach ($ids as $id) {
+                CertificateWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+            }
+
+            return $this->sendResponse([], 'OSOS 3.0 certificate triggered');
+        } catch(\Exception $e) {
+            $msg = $e->getMessage();
+            $error = $msg.' Error Line No: ' . $e->getLine();
+            $comId = $this->thirdParty['company_id'] ?? 0;
+            $logData = ['message' => $error];
+            $this->insertToLogTb($logData, 'error', 'Certificate', $comId);
+
+            return $this->sendError($msg, 500);
+        }
+    }
+
+    public function experience(Request $request){
+        try {
+            $this->verifyIntegration();
+            $valResp = $this->commonValidations($request);
+            if(!$valResp['status']){
+                $logData = ['message' => $valResp['message']];
+                $this->insertToLogTb($logData , 'error', 'Experience', $this->thirdParty['company_id']);
+
+                return $this->sendError($valResp['message'], 500);
+            }
+
+            $postType = $request->postType;
+            $ids =is_array($request->expId) ? $request->expId : [$request->expId];
+            $db = isset($request->db) ? $request->db : "";
+
+            foreach ($ids as $id) {
+                ExperienceWebHook::dispatch($db, $postType, $id, $this->thirdParty);
+            }
+
+            return $this->sendResponse([], 'OSOS 3.0 experience triggered');
+        } catch(\Exception $e) {
+            $msg = $e->getMessage();
+            $error = $msg.' Error Line No: ' . $e->getLine();
+            $comId = $this->thirdParty['company_id'] ?? 0;
+            $logData = ['message' => $error];
+            $this->insertToLogTb($logData, 'error', 'Experience', $comId);
 
             return $this->sendError($msg, 500);
         }

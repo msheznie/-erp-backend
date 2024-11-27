@@ -3,6 +3,7 @@
 namespace App\Services\OSOS_3_0;
 
 use App\Models\User;
+use DateTime;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
 use App\Traits\OSOS_3_0\JobCommonFunctions;
@@ -166,9 +167,12 @@ class EmployeeService
     {
         $data = DB::table('srp_employeesdetails as e')
             ->selectRaw("e.ECode, e.Ename2, '' as Description, e.Erp_companyID, l.location_id,
-                    IF(e.isDischarged = 1, 1, 0) as Status, 
+                    IF(e.isDischarged = 1, 2, 1) as empStatus, e.isActive as status, 
                     e.isDischarged, e.EEmail, e.EcMobile, d.DesignationID,
-                    IFNULL(dep.DepartmentMasterID,0) as DepartmentMasterID, em.managerID")
+                    IFNULL(dep.DepartmentMasterID,0) as DepartmentMasterID, em.managerID,
+                    CONCAT(IFNULL(e.EDOB, '2000-01-01'), 'T18:30:00.000Z') as dateOfBirth,
+                    CONCAT(e.EDOJ, 'T18:30:00.000Z') as dateOfJoin, e.isDischarged, e.lastWorkingDate,
+                    e.EmpImage as imageUrl")
             ->leftJoin('hr_location_emp as l', function ($join) {
                 $join->on('l.emp_id', '=', 'e.EIdNo')
                     ->where('l.is_active', '=', 1)
@@ -196,10 +200,34 @@ class EmployeeService
             return;
         }
 
+        $today = date('Y-m-d');
+        $join = $data->dateOfJoin;
+        $lastWorkingDate =$data->lastWorkingDate;
+        $toDate = ($data->isDischarged == 1) ? date('Y-m-d', strtotime($lastWorkingDate)) : $today;
+        if ($toDate >= $join) {
+            $toDate = new DateTime($toDate);
+            $join = new DateTime($join);
+
+            $interval = $toDate->diff($join);
+            $y = ($interval->y) ? $interval->y . 'y' : '';
+            $m = ($interval->m) ? $interval->m . 'm' : '';
+            $d = ($interval->d) ? $interval->d . 'd' : '';
+
+            $periodDisplay = $y;
+            $periodDisplay .= ($periodDisplay != '' && $m != '') ? ' - ' . $m : $m;
+            $periodDisplay .= ($periodDisplay != '' && $d != '') ? ' - ' . $d : $d;
+
+            $data->servicePeriod = $periodDisplay;
+        }
+
          $this->employeeData = [
              "Code" => $data->ECode,
              "Name" => $data->Ename2,
-             "Status" => $data->Status,
+             "employeeStatus" => $data->empStatus,
+             "dateOfJoined" => $data->dateOfJoin,
+             "servicePeriod" => $data->servicePeriod,
+             "dateOfBirth" => $data->dateOfBirth,
+             "imageUrl" => $data->imageUrl,
              "ContactEmail" => $data->EEmail,
              "ContactNumber" => $data->EcMobile,
              "IsDeleted" => false,
@@ -207,7 +235,8 @@ class EmployeeService
              "ReportingManagerId" => $this->getOtherReferenceId($data->managerID, 4),
              "LocationId" => $this->getOtherReferenceId($data->location_id, 1),
              "DesignationId" => $this->getOtherReferenceId($data->DesignationID, 2),
-             "CompanyId" => $this->getOtherReferenceId($data->Erp_companyID, 5)
+             "CompanyId" => $this->getOtherReferenceId($data->Erp_companyID, 5),
+             "status" => $data->status
          ];
 
         if ($this->postType != "POST") {
