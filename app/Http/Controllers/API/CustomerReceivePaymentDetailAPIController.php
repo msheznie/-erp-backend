@@ -743,21 +743,24 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $itemExistArray[] = [$itemDrt];
                 }
 
-                if ($matchDocumentMasterData->documentSystemID == 21) {
-                    $invoice = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$itemExist['bookingInvCodeSystem'])->select('VATAmount')->first();
-                    if($invoice->VATAmount <= 0 && $vatTotal > 0) {
+                if ($matchDocumentMasterData->documentSystemID == 21 && $vatTotal > 0) {
+                    $detailWithoutVAT = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $itemExist['bookingInvCodeSystem'])
+                        ->where(function ($query) {
+                            $query->where('VATAmount', 0)
+                                ->orWhereNull('VATAmount');
+                        })
+                        ->get();
+
+                    if(!$detailWithoutVAT->isEmpty()) {
                         $vatValidation[] = "<li>" . $itemExist['bookingInvDocCode'] . "</li>";
                         $errorMessage = "The receipt voucher does include VAT, you cannot match it with customer invoice which does not include VAT";
-                    } else if ($invoice->VATAmount > 0 && $vatTotal <= 0) {
-                        $errorMessage = "The receipt voucher does not include VAT, you cannot match it with customer invoice which does include VAT";
-                        $vatValidation[] = "<li>" . $itemExist['bookingInvDocCode'] . "</li>";
                     }
                 }
             }
         }
 
         if(!empty($vatValidation)) {
-            $error = $errorMessage . "</br> <ul style='list-style:none; text-align: left'>".implode('',$vatValidation)."</ul>";
+            $error = $errorMessage . "</br> <ul style='list-style:none;'>".implode('',$vatValidation)."</ul>";
             return $this->sendError($error, 422);
         }
 
