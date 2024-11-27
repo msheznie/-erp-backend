@@ -280,7 +280,7 @@ class BankLedgerAPIController extends AppBaseController
         $input = $request->all();
 
         /** @var BankLedger $bankLedger */
-        $bankLedger = $this->bankLedgerRepository->with(['bank_account'])->findWithoutFail($id);
+        $bankLedger = $this->bankLedgerRepository->with(['bank_account', 'reporting_currency'])->findWithoutFail($id);
 
         if (empty($bankLedger)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_ledgers')]));
@@ -303,9 +303,7 @@ class BankLedgerAPIController extends AppBaseController
                     return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed'), 500);
                 }
 
-                $checkGLAmount = GeneralLedger::selectRaw('SUM(documentRptAmount) as documentRptAmount')
-                    ->join('currencymaster as transCurrency', 'transCurrency.currencyID', '=', 'documentTransCurrencyID')
-                    ->join('currencymaster as localCurrency', 'localCurrency.currencyID', '=', 'documentLocalCurrencyID')
+                $checkGLAmount = GeneralLedger::selectRaw('round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmount')
                     ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
                     ->where('companySystemID', $bankLedger->companySystemID)
                     ->where('documentSystemID', $bankLedger->documentSystemID)
@@ -320,7 +318,7 @@ class BankLedgerAPIController extends AppBaseController
                     $glAmount = 0;
                     $conditionChecking = true;
                     $glAmount = $checkGLAmount->documentRptAmount;
-                    $a = abs($bankLedger->payAmountCompRpt);
+                    $a = abs(round($bankLedger->payAmountCompRpt, $bankLedger->reporting_currency->DecimalPlaces));
                     $b = abs($glAmount);
                     $epsilon = 0.00001;
                     if ((abs($a-$b) > $epsilon)) {
@@ -424,7 +422,7 @@ class BankLedgerAPIController extends AppBaseController
                     }
 
 
-                    $checkGLAmount = GeneralLedger::selectRaw('round(SUM(documentLocalAmount), localCurrency.DecimalPlaces) as documentLocalAmount, round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmount, round(SUM(documentTransAmount), transCurrency.DecimalPlaces) as documentTransAmount, documentLocalCurrencyID, documentRptCurrencyID, documentTransCurrencyID')
+                    $checkGLAmount = GeneralLedger::selectRaw('round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmount')
                         ->join('currencymaster as transCurrency', 'transCurrency.currencyID', '=', 'documentTransCurrencyID')
                         ->join('currencymaster as localCurrency', 'localCurrency.currencyID', '=', 'documentLocalCurrencyID')
                         ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
@@ -441,7 +439,7 @@ class BankLedgerAPIController extends AppBaseController
                         $glAmount = 0;
                         $conditionChecking = true;
                         $glAmount = $checkGLAmount->documentRptAmount;
-                        $a = abs($bankLedger->payAmountCompRpt);
+                        $a = abs(round($bankLedger->payAmountCompRpt, $bankLedger->reporting_currency->DecimalPlaces));
                         $b = abs($glAmount);
                         $epsilon = 0.00001;
 
