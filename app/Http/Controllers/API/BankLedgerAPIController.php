@@ -303,7 +303,7 @@ class BankLedgerAPIController extends AppBaseController
                     return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed'), 500);
                 }
 
-                $checkGLAmount = GeneralLedger::selectRaw('round(SUM(documentLocalAmount), localCurrency.DecimalPlaces) as documentLocalAmount, round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmount, round(SUM(documentTransAmount), transCurrency.DecimalPlaces) as documentTransAmount, documentLocalCurrencyID, documentRptCurrencyID, documentTransCurrencyID')
+                $checkGLAmount = GeneralLedger::selectRaw('SUM(documentRptAmount) as documentRptAmount')
                     ->join('currencymaster as transCurrency', 'transCurrency.currencyID', '=', 'documentTransCurrencyID')
                     ->join('currencymaster as localCurrency', 'localCurrency.currencyID', '=', 'documentLocalCurrencyID')
                     ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
@@ -323,7 +323,6 @@ class BankLedgerAPIController extends AppBaseController
                     $a = abs($bankLedger->payAmountCompRpt);
                     $b = abs($glAmount);
                     $epsilon = 0.00001;
-
                     if ((abs($a-$b) > $epsilon)) {
                         return $this->sendError(trans('custom.bank_amount_is_not_matching_with_gl_amount'), 500);
                     }
