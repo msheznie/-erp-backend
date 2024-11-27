@@ -423,8 +423,6 @@ class BankLedgerAPIController extends AppBaseController
 
 
                     $checkGLAmount = GeneralLedger::selectRaw('round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmount')
-                        ->join('currencymaster as transCurrency', 'transCurrency.currencyID', '=', 'documentTransCurrencyID')
-                        ->join('currencymaster as localCurrency', 'localCurrency.currencyID', '=', 'documentLocalCurrencyID')
                         ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
                         ->where('companySystemID', $bankLedger->companySystemID)
                         ->where('documentSystemID', $bankLedger->documentSystemID)
