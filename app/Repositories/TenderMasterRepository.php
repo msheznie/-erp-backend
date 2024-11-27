@@ -11,6 +11,7 @@ use App\Models\PurchaseRequestDetails;
 use App\Models\TenderBoqItems;
 use App\Models\TenderMaster;
 use App\Models\TenderType;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Http\Request;
@@ -233,5 +234,21 @@ class TenderMasterRepository extends BaseRepository
             'unitShortCode' => $data['uom']['UnitShortCode'],
             'item_id' => $data['itemCode']
         ];
+    }
+
+    public static function getTenderDidOpeningDates($tenderId, $companyId)
+    {
+        $current_date = Carbon::now();
+        $tender = TenderMaster::getTenderDidOpeningDates($tenderId, $companyId);
+
+        if (!$tender) {
+            return [
+                'error' => 'Tender not found.',
+            ];
+        }
+
+        $opening_date_comp = $tender->stage === 1 ? $tender->bid_opening_date : $tender->technical_bid_opening_date;
+        $opening_date_comp_end = $tender->stage === 1 ? $tender->bid_opening_end_date : $tender->technical_bid_closing_date;
+        return $current_date->gt($opening_date_comp) && ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
     }
 }
