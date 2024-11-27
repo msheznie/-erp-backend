@@ -7,6 +7,7 @@ use App\helper\PaySupplier;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\ChartOfAccount;
+use App\Models\ChequeRegisterDetail;
 use App\Models\Company;
 use App\Models\CompanyFinanceYear;
 use App\Models\DirectPaymentDetails;
@@ -316,9 +317,30 @@ class PaymentVoucherServices
 
         $paySupplierInvoiceMasters = PaySupplierInvoiceMaster::create($input);
 
+        $is_exist_policy_GCNFCR = Helper::checkPolicy($input['companySystemID'], 35);
+
+        if($input['payment_mode'] == 2 && !$input['pdcChequeYN'] && $is_exist_policy_GCNFCR) {
+            $checkRegisterDetails = ChequeRegisterDetail::where('id',$input['BPVchequeNoDropdown'])
+                ->where('company_id',$input['companySystemID'])
+                ->first();
+
+            if($checkRegisterDetails) {
+                /*update cheque detail table */
+                $checkRegisterDetails->document_id = $paySupplierInvoiceMasters->PayMasterAutoId;
+                $checkRegisterDetails->document_master_id = $paySupplierInvoiceMasters->documentSystemID;
+                $checkRegisterDetails->status = 1;
+                $checkRegisterDetails->save();
+
+
+                PaySupplierInvoiceMaster::find($paySupplierInvoiceMasters->PayMasterAutoId)->update([
+                    'BPVchequeNo' => $checkRegisterDetails->cheque_no
+                ]);
+            }
+        }
+
         return [
             'status' => true,
-            'data' => $paySupplierInvoiceMasters->toArray(),
+            'data' => $paySupplierInvoiceMasters->refresh()->toArray(),
             'message' => 'Pay Supplier Invoice Master saved successfully'
         ];
     }

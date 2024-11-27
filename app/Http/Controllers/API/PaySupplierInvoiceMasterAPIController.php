@@ -231,40 +231,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 DB::rollBack();
                 return $this->sendError($resultData['message'], 500, $resultData['type']);
             }
-
-            $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
-
-            $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-
-            $input['payment_mode'] = $input['paymentMode'];
-            unset($input['paymentMode']);
-
-            $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
-
-            $is_exist_policy_GCNFCR = Helper::checkPolicy($input['companySystemID'], 35);
-
-            if($input['payment_mode'] == 2 && !$input['pdcChequeYN'] && $is_exist_policy_GCNFCR) {
-                $checkRegisterDetails = ChequeRegisterDetail::where('id',$input['BPVchequeNoDropdown'])
-                    ->where('company_id',$input['companySystemID'])
-                    ->first();
-
-                if($checkRegisterDetails) {
-                    $data['BPVchequeNo'] = $checkRegisterDetails->cheque_no;
-
-                    /*update cheque detail table */
-                    $checkRegisterDetails->document_id = $paySupplierInvoiceMasters->PayMasterAutoId;
-                    $checkRegisterDetails->document_master_id = $paySupplierInvoiceMasters->documentSystemID;
-                    $checkRegisterDetails->status = 1;
-                    $checkRegisterDetails->save();
-                }
-
-                $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->update($data,$paySupplierInvoiceMasters->PayMasterAutoId);
-            }
-
-            DB::commit();
-            return $this->sendResponse($paySupplierInvoiceMasters->toArray(), 'Pay Supplier Invoice Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1599,6 +1565,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['BPVchequeNo'] = null;
                 $input['expenseClaimOrPettyCash'] = null;
 
+                ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])->where('document_master_id', $input['documentSystemID'])->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+
             } else {
                 $input['pdcChequeYN'] = 0;
             }
@@ -1652,7 +1620,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $checkRegisterDetails->status = 1;
                     $checkRegisterDetails->save();
 
-                    if($paySupplierInvoiceMaster->BPVchequeNo != $checkRegisterDetails->cheque_no) {
+                    if(!is_null($paySupplierInvoiceMaster->BPVchequeNo) && ($paySupplierInvoiceMaster->BPVchequeNo != $checkRegisterDetails->cheque_no)) {
                         $chequeRegisterData = ChequeRegister::where('bank_id',$paySupplierInvoiceMaster['BPVbank'])
                             ->where('bank_account_id',$paySupplierInvoiceMaster['BPVAccount'])
                             ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
