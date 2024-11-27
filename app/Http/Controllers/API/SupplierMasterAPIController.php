@@ -231,8 +231,6 @@ class SupplierMasterAPIController extends AppBaseController
             $x++;
             $data[$x]['Supplier Code'] = $val->primarySupplierCode;
             $data[$x]['Supplier Name'] = $val->supplierName;
-            $data[$x]['Supplier Group'] = $val['supplier_group']['group'];
-            $data[$x]['Registration Number'] = $val->registrationNumber;
             $currency = "";
             $country = "";
             $businessCategory = "";
@@ -298,6 +296,8 @@ class SupplierMasterAPIController extends AppBaseController
             }
 
             $data[$x]['Country'] = $country;
+            $data[$x]['Supplier Group'] = $val['supplier_group']['group'];
+            $data[$x]['Registration Number'] = $val->registrationNumber;
             $data[$x]['Supplier Business Category'] = $businessCategory;
             $data[$x]['Supplier Business Sub Category'] = $businessSubCategory;
             $data[$x]['Category'] = ($val->categoryMaster!=null && isset($val->categoryMaster->categoryDescription))?$val->categoryMaster->categoryDescription:'-';
