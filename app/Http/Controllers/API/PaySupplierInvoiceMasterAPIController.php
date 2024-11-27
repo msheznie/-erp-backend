@@ -1620,7 +1620,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $checkRegisterDetails->status = 1;
                     $checkRegisterDetails->save();
 
-                    if(!is_null($paySupplierInvoiceMaster->BPVchequeNo) && ($paySupplierInvoiceMaster->BPVchequeNo != $checkRegisterDetails->cheque_no)) {
+                    if((!is_null($paySupplierInvoiceMaster->BPVchequeNo) && $paySupplierInvoiceMaster->BPVchequeNo != 0) && ($paySupplierInvoiceMaster->BPVchequeNo != $checkRegisterDetails->cheque_no)) {
                         $chequeRegisterData = ChequeRegister::where('bank_id',$paySupplierInvoiceMaster['BPVbank'])
                             ->where('bank_account_id',$paySupplierInvoiceMaster['BPVAccount'])
                             ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
@@ -2522,7 +2522,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['payAmountSuppTrans'] = \Helper::roundValue($supplierPaymentAmount);
                         $input['payAmountSuppDef'] = \Helper::roundValue($supplierPaymentAmount);
                         $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount + $bankChargeTotal->localAmount);
-                        $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount + $bankCharge->comRptAmount);
+                        $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount + $bankChargeTotal->comRptAmount);
                         $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
                         $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
                     } else {
