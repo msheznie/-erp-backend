@@ -231,40 +231,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 DB::rollBack();
                 return $this->sendError($resultData['message'], 500, $resultData['type']);
             }
-
-            $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
-
-            $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-
-            $input['payment_mode'] = $input['paymentMode'];
-            unset($input['paymentMode']);
-
-            $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
-
-            $is_exist_policy_GCNFCR = Helper::checkPolicy($input['companySystemID'], 35);
-
-            if($input['payment_mode'] == 2 && !$input['pdcChequeYN'] && $is_exist_policy_GCNFCR) {
-                $checkRegisterDetails = ChequeRegisterDetail::where('id',$input['BPVchequeNoDropdown'])
-                    ->where('company_id',$input['companySystemID'])
-                    ->first();
-
-                if($checkRegisterDetails) {
-                    $data['BPVchequeNo'] = $checkRegisterDetails->cheque_no;
-
-                    /*update cheque detail table */
-                    $checkRegisterDetails->document_id = $paySupplierInvoiceMasters->PayMasterAutoId;
-                    $checkRegisterDetails->document_master_id = $paySupplierInvoiceMasters->documentSystemID;
-                    $checkRegisterDetails->status = 1;
-                    $checkRegisterDetails->save();
-                }
-
-                $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->update($data,$paySupplierInvoiceMasters->PayMasterAutoId);
-            }
-
-            DB::commit();
-            return $this->sendResponse($paySupplierInvoiceMasters->toArray(), 'Pay Supplier Invoice Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
