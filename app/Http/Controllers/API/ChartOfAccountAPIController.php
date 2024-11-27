@@ -166,13 +166,13 @@ class ChartOfAccountAPIController extends AppBaseController
         if (isset($input['isMasterAccount']) && $input['isMasterAccount']) {
             $input['masterAccount'] = $accountCode;
         }
-
+        
 
         DB::beginTransaction();
         try {
             if (array_key_exists('chartOfAccountSystemID', $input)) {
-
-
+                
+              
                 $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
 
                 if (empty($chartOfAccount)) {
@@ -180,6 +180,17 @@ class ChartOfAccountAPIController extends AppBaseController
                 }
 
                 $input = $this->convertArrayToValue($input);
+
+
+                $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('chartOfAccountSystemID' ,'!=' ,$input['chartOfAccountSystemID'])->where('primaryCompanySystemID',$input['primaryCompanySystemID'])->where('isActive',1)->where('isApproved',1);
+                       
+
+                if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings'])  && (isset($input['isActive']) && $input['isActive'] == 1))
+                {
+                    $retainEarningCode = $isRetainedEarningExists->first();
+                    return $this->sendError('There is an active Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
+                }
+
 
                 if ($chartOfAccount->reportTemplateCategory != $input['reportTemplateCategory']) {
                     $availability = FALSE;
@@ -391,6 +402,13 @@ class ChartOfAccountAPIController extends AppBaseController
                     }
                 }
             } else {
+
+                $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('primaryCompanySystemID',$input['primaryCompanySystemID'])->where('isActive',1)->where('isApproved',1);
+                if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings'])  && (isset($input['isActive']) && $input['isActive'] == 1))
+                {
+                    $retainEarningCode = $isRetainedEarningExists->first();
+                    return $this->sendError('There is an active Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
+                }
                 $availability = FALSE;
                 while (!$availability) {
                     $accountCode = DocumentCodeGenerate::generateAccountCode($input['reportTemplateCategory'])['data'];
