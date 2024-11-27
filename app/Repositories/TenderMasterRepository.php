@@ -3,9 +3,16 @@
 namespace App\Repositories;
 
 use App\helper\Helper;
+use App\Helpers\General;
+use App\Models\CodeConfigurations;
+use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\ContractMaster;
+use App\Models\ContractTypes;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
+use App\Models\DocumentAttachments;
+use App\Models\DocumentMaster;
 use App\Models\EnvelopType;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
@@ -14,12 +21,17 @@ use App\Models\PurchaseRequestDetails;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SRMTenderCalendarLog;
 use App\Models\SRMTenderPaymentProof;
+use App\Models\SRMTenderTechnicalEvaluationAttachment;
 use App\Models\TenderBoqItems;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
 use App\Models\TenderType;
+use App\Services\GeneralService;
+use App\Services\SRMService;
+use App\Utilities\ContractManagementUtils;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -374,6 +386,12 @@ class TenderMasterRepository extends BaseRepository
         $data['rejectedComments'] = ($input['rejectedComments']) ?? null;
 
         $approve = \Helper::rejectDocument($data);
+
+        if($approve['success'])
+        {
+            SRMService::reopenPaymentProof($input['uuid']);
+        }
+
         return ['success' => $approve["success"], 'message' => $approve["message"], 'data'=> $approve];
     }
 
@@ -741,6 +759,304 @@ class TenderMasterRepository extends BaseRepository
                 'descriptionDate' => 'Commercial bid opening to date',
                 'descriptionTime' => 'Commercial bid opening to time',
             ],
+        ];
+    }
+
+    public function getContractTypes($companySystemID)
+    {
+        $contractTypes = ContractTypes::getContractTypes($companySystemID);
+        return $contractTypes;
+    }
+
+    public function createContract($request)
+    {
+        $input = $request->all();
+        $companySystemId = $input['companySystemID'];
+
+        try {
+            DB::transaction(function () use ($input, $companySystemId, $request) {
+
+                $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
+                if (empty($tenderData)) {
+                    return ['success' => false, 'message' => 'Tender not found'];
+                }
+
+                $contractType = ContractTypes::getContractTypeId($input['contractType']);
+                if (empty($contractType)) {
+                    return ['success' => false, 'message' => 'Contract Type not found'];
+                }
+
+                $contractCodeData = $this->generateContractCode($companySystemId);
+                $insertArray = [];
+
+                $insertArray = [
+                    'contractCode' => $contractCodeData['contractCode'],
+                    'title' => $input['title'],
+                    'serial_no' => $contractCodeData['lastSerialNumber'],
+                    'contractType' => $contractType["contract_typeId"],
+                    'counterParty' => $contractType["cmCounterParty_id"],
+                    'uuid' => bin2hex(random_bytes(16)),
+                    'documentMasterId' => 123,
+                    'companySystemID' => $companySystemId,
+                    'tender_id' => $tenderData['id'],
+                    'created_by' => Helper::getEmployeeSystemID(),
+                    'created_at' => Carbon::now()
+                ];
+
+                $contractMaster = ContractMaster::create($insertArray);
+
+                if($contractMaster)
+                {
+                    $data = [
+                        'contract_id' => $contractMaster['id'] ?? null,
+                    ];
+
+                    TenderMaster::where('uuid',$input['tenderId'])->update($data);
+                }
+            });
+
+            return [
+                'success' => true,
+                'message' => 'Contract Master Created successfully.',
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function generateContractCode($companySystemID)
+    {
+        $lastSerialNumber = ContractMaster::where('companySystemID', $companySystemID)
+            ->max('serial_no');
+
+        $lastSerialNumber = $lastSerialNumber ? intval($lastSerialNumber) + 1 : 1;
+        $codePattern = CodeConfigurations::getDocumentCodePattern($companySystemID, 1);
+        if($codePattern)
+        {
+            $companyId = Helper::getCompanyById($companySystemID);
+            $contractCode = self::generateDocumentCode($codePattern, $companyId, $lastSerialNumber);
+        } else
+        {
+            $contractCode =  self::generateCode($lastSerialNumber,'CO',4);
+        }
+
+        return ['contractCode' => $contractCode, 'lastSerialNumber' => $lastSerialNumber];
+
+    }
+
+    public function generateDocumentCode($pattern, $companyId, $serialNumber = 1)
+    {
+        $year = Carbon::now()->year;
+        $serialNumberFormatted = str_pad($serialNumber, 4, '0', STR_PAD_LEFT);
+
+        preg_match_all('/#_([A-Za-z0-9]+)\b/', $pattern, $matches);
+        $prefixes = $matches[1] ?? [];
+
+        $replacements = [
+            '#Company ID' => $companyId,
+            '#Year' => $year,
+            '#SN' => $serialNumberFormatted,
+            '#/' => '/',
+            '#-' => '-'
+        ];
+
+        $prefixReplacements = array();
+        foreach ($prefixes as $prefix) {
+            $prefixReplacements["#_{$prefix}"] = $prefix;
+        }
+        $replacements = array_merge($replacements, $prefixReplacements);
+        return  strtr($pattern, $replacements);
+    }
+
+    public static function generateCode($lastSerialNumber, $documentCode, $length=4) : string
+    {
+        return $documentCode . str_pad($lastSerialNumber, $length, '0', STR_PAD_LEFT);
+    }
+
+    public function viewContract($input)
+    {
+        $companySystemId = $input['companySystemId'];
+        $contractId = $input['contractId'];
+        $contractUuid = ContractMaster::getContractUuid($companySystemId, $contractId);
+
+        if (env('IS_MULTI_TENANCY') == true) {
+            $url = $_SERVER['HTTP_HOST'];
+            $url_array = explode('.', parse_url($url, PHP_URL_HOST));
+            $subDomain = $url_array[0];
+
+            $tenantDomain = explode('-', $subDomain);
+            $tenantPrefix = $tenantDomain[0];
+
+            $newSubDomain = $tenantPrefix . '-cms-' . $tenantDomain[2];
+
+            $redirectUrl = str_replace($subDomain, $newSubDomain, $url);
+
+            $redirectUrlNew = rtrim($redirectUrl, '/') . '/contracts/edit/';
+        }
+
+        return [
+            'contractUrl' => $redirectUrlNew . $contractUuid['uuid'],
+        ];
+    }
+
+    public function addAttachment($request){
+
+        $input = $request->all();
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+
+        $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
+        if (empty($tenderData)) {
+            return ['success' => false, 'message' => 'Tender not found'];
+        }
+        $documentSystemCode = $tenderData['id'];
+
+        $documentMaster = DocumentMaster::getDocumentData($documentSystemID);
+        if ($documentMaster) {
+            $documentID = $documentMaster->documentID;
+        }
+
+        $companyID = Company::getComanyCode($companySystemID);
+
+        try {
+            DB::transaction(function () use ($input, $companySystemID, $documentSystemID, $documentSystemCode,
+                $documentID, $companyID) {
+
+                if (isset($input['Attachment']) && !empty($input['Attachment'])) {
+
+                    $getAttachmentData = self::getAttachmentData($input['Attachment'], $companySystemID,
+                        $documentSystemID, $documentSystemCode, $documentID, $companyID);
+
+                    DocumentAttachments::create($getAttachmentData);
+                }
+
+                $evaluationData = SRMTenderTechnicalEvaluationAttachment::getEvaluationData(
+                    $companySystemID,$documentSystemCode);
+
+                $data = [
+                    'comment' => $input['comment'],
+                ];
+
+                if ($evaluationData) {
+                    $data += [
+                        'updated_by' =>  Helper::getEmployeeSystemID(),
+                    ];
+
+                    SRMTenderTechnicalEvaluationAttachment::where('uuid', $evaluationData['uuid'])->update($data);
+
+                } else {
+
+                    $data += [
+                        'uuid' => self::generateUuid(),
+                        'comment' => $input['comment'],
+                        'document_system_id' => $documentSystemID,
+                        'document_id' => $documentID,
+                        'tender_id' => $documentSystemCode,
+                        'company_id' =>  $companySystemID,
+                        'created_by' =>  Helper::getEmployeeSystemID(),
+                    ];
+
+                    if (isset($input['comment']) && !empty($input['comment'])) {
+
+                        SRMTenderTechnicalEvaluationAttachment::create($data);
+                    }
+                }
+            });
+
+            return [
+                'success' => true,
+                'message' => 'Technical Evaluation Attachment Created successfully.',
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public static function generateUuid($length=16) : string
+    {
+        return bin2hex(random_bytes($length));
+    }
+
+    public static function blockExtensions(){
+        return [
+            'ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd',
+            'cnt', 'com', 'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta',
+            'htc', 'inf', 'ins', 'isp', 'its', 'jar', 'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq',
+            'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt', 'mdw', 'mdz', 'mht', 'mhtml',
+            'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
+            'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2',
+            'pst', 'reg', 'scf', 'scr', 'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros',
+            'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml', 'xbap', 'xnk', 'php'
+        ];
+    }
+
+    public function getAttachmentData($attachment, $companySystemID, $documentSystemID, $documentSystemCode,
+                                      $documentID, $companyID) {
+        if (!empty($attachment) && isset($attachment['file'])) {
+
+            $extension = $attachment['fileType'];
+            $blockExtensions = self::blockExtensions();
+            if (in_array($extension, $blockExtensions)) {
+                return $this->sendError('This type of file not allow to upload.', 500);
+            }
+
+            if (isset($attachment['sizeInKbs'])) {
+                if ($attachment['sizeInKbs'] > 2097152) {
+                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                }
+            }
+
+            $file = $attachment['file'];
+            $decodeFile = base64_decode($file);
+
+            $attch = time() . '_TechnicalEvaluationAttachment.' . $extension;
+            $path = $companySystemID . '/TechnicalEvaluation/' . $attch;
+            $myFileName = $companyID . '_' . time() . '_TechnicalEvaluation.' . $extension;
+
+            Storage::disk(Helper::policyWiseDisk($companySystemID, 'public'))->put($path, $decodeFile);
+
+            $data = [
+                'companySystemID' => $companySystemID,
+                'companyID' =>  $companyID,
+                'documentSystemID' => $documentSystemID,
+                'documentID' => $documentID,
+                'documentSystemCode' => $documentSystemCode,
+                'attachmentDescription' => 'Tender Technical Evaluation Attachment',
+                'path' => $path,
+                'originalFileName' => $attachment['originalFileName'],
+                'myFileName' => $myFileName,
+                'attachmentType' => 11,
+                'sizeInKbs' => $attachment['sizeInKbs'],
+                'isUploaded' => 1,
+            ];
+
+            return $data;
+        }
+    }
+
+    public function deleteAttachment($request) {
+
+        $input = $request->all();
+        $companySystemID = $input['companySystemID'];
+        $attachmentId = $input['attachmentId'];
+
+        $attachment = DocumentAttachments::documentAttachmentById($attachmentId);
+        if (!$attachment) {
+            return ['success' => false, 'message' => 'Attachment not found.'];
+        }
+
+        $path = $attachment->path;
+        $disk = Helper::policyWiseDisk($companySystemID, 'public');
+
+        if (Storage::disk($disk)->exists($path)) {
+            Storage::disk($disk)->delete($path);
+        }
+
+        $attachment->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Attachment Deleted successfully.',
         ];
     }
 }
