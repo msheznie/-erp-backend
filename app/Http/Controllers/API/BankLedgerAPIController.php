@@ -303,7 +303,6 @@ class BankLedgerAPIController extends AppBaseController
                     return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed'), 500);
                 }
 
-
                 $checkGLAmount = GeneralLedger::selectRaw('SUM(documentRptAmount) as documentRptAmount, reportingCurrency.DecimalPlaces as DecimalPlaces')
                     ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
                     ->where('companySystemID', $bankLedger->companySystemID)
