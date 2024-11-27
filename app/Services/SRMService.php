@@ -1493,7 +1493,7 @@ class SRMService
         }
 
         if ($request->input('extra.tender_status') == 1) {
-            $query = TenderMaster::select('id', 'title', 'description', 'document_sales_start_date',
+            $query = TenderMaster::select('id','uuid', 'title', 'description', 'document_sales_start_date',
                 'pre_bid_clarification_start_date', 'bid_submission_opening_date', 'published_yn',
                 'final_tender_awarded', 'tender_type_id', 'currency_id', 'document_sales_end_date',
                 'pre_bid_clarification_end_date', 'bid_submission_closing_date', 'pre_bid_clarification_method',
