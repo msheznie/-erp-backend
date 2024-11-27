@@ -303,7 +303,10 @@ class BankLedgerAPIController extends AppBaseController
                     return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed'), 500);
                 }
 
-                $checkGLAmount = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount, SUM(documentTransAmount) as documentTransAmount, documentLocalCurrencyID, documentRptCurrencyID, documentTransCurrencyID')
+                $checkGLAmount = GeneralLedger::selectRaw('round(SUM(documentLocalAmount), localCurrency.DecimalPlaces) as documentLocalAmount, round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmount, round(SUM(documentTransAmount), transCurrency.DecimalPlaces) as documentTransAmount, documentLocalCurrencyID, documentRptCurrencyID, documentTransCurrencyID')
+                    ->join('currencymaster as transCurrency', 'transCurrency.currencyID', '=', 'documentTransCurrencyID')
+                    ->join('currencymaster as localCurrency', 'localCurrency.currencyID', '=', 'documentLocalCurrencyID')
+                    ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
                     ->where('companySystemID', $bankLedger->companySystemID)
                     ->where('documentSystemID', $bankLedger->documentSystemID)
                     ->where('documentSystemCode', $bankLedger->documentSystemCode)
@@ -422,7 +425,10 @@ class BankLedgerAPIController extends AppBaseController
                     }
 
 
-                    $checkGLAmount = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount, SUM(documentTransAmount) as documentTransAmount, documentLocalCurrencyID, documentRptCurrencyID, documentTransCurrencyID')
+                    $checkGLAmount = GeneralLedger::selectRaw('round(SUM(documentLocalAmount), localCurrency.DecimalPlaces) as documentLocalAmount, round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmount, round(SUM(documentTransAmount), transCurrency.DecimalPlaces) as documentTransAmount, documentLocalCurrencyID, documentRptCurrencyID, documentTransCurrencyID')
+                        ->join('currencymaster as transCurrency', 'transCurrency.currencyID', '=', 'documentTransCurrencyID')
+                        ->join('currencymaster as localCurrency', 'localCurrency.currencyID', '=', 'documentLocalCurrencyID')
+                        ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
                         ->where('companySystemID', $bankLedger->companySystemID)
                         ->where('documentSystemID', $bankLedger->documentSystemID)
                         ->where('documentSystemCode', $bankLedger->documentSystemCode)
