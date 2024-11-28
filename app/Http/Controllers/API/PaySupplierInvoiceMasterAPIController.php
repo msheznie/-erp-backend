@@ -1565,7 +1565,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['BPVchequeNo'] = null;
                 $input['expenseClaimOrPettyCash'] = null;
 
-                ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])->where('document_master_id', $input['documentSystemID'])->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+                if(!is_null($paySupplierInvoiceMaster->BPVchequeNo) && ($paySupplierInvoiceMaster->BPVchequeNo != 0)) {
+                    ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])
+                        ->where('document_master_id', $input['documentSystemID'])
+                        ->where('company_id', $companySystemID)
+                        ->where('cheque_no', $paySupplierInvoiceMaster->BPVchequeNo)
+                        ->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+                }
 
             } else {
                 $input['pdcChequeYN'] = 0;
