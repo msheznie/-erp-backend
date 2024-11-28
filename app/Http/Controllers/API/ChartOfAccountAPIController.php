@@ -815,6 +815,7 @@ class ChartOfAccountAPIController extends AppBaseController
             $isAmmendable = false;
         }
 
+
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,
             'yesNoSelection' => $yesNoSelection,
