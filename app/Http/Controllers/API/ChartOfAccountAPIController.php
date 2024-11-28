@@ -806,12 +806,27 @@ class ChartOfAccountAPIController extends AppBaseController
         /**  Companies by group  Drop Down */
         $allCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup", 0)->get();
 
+        $isAmmendable = true;
+        if(isset($request['id']) && !empty($request['id']))
+        {
+            $chartOfAccountData = $this->chartOfAccountRepository->find($request['id']);
+            if(isset($chartOfAccountData) && $chartOfAccountData->is_retained_earnings == 1)
+            {
+                $isTransactionExists = GeneralLedger::where('chartOfAccountSystemID',$chartOfAccountData->chartOfAccountSystemID)->first();
+                if($isTransactionExists)
+                {
+                    $isAmmendable = false;
+                }
+            }
+        }
+
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,
             'yesNoSelection' => $yesNoSelection,
             'chartOfAccount' => $chartOfAccount,
             'allCompanies' => $allCompanies,
             'allocationType' => $allocationType,
+            'isAmmendable' => $isAmmendable,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
