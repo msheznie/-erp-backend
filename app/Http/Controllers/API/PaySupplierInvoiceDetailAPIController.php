@@ -1275,8 +1275,17 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 }
                 
                 // check supplier invoice has VAT
+                $allRecordsHaveVAT = false;
                 $supplierInvoiceMaster  = BookInvSuppMaster::find($itemExist['bookingInvSystemCode']);
-                if(($supplierInvoiceMaster->VATAmount == 0) && ($isPVHasVAT)) {
+                if(!empty($supplierInvoiceMaster->directdetail))
+                {
+                    $allRecordsHaveVAT = $supplierInvoiceMaster->directdetail->pluck('VATAmount')->every(function ($vatAmount) {
+                        return $vatAmount > 0;
+                    });
+                }
+
+
+                if(!$allRecordsHaveVAT && ($isPVHasVAT)) {
                     array_push($supplierInvoiceWithoutVAT,"<li>".$itemExist['bookingInvDocCode']."</li>");
                 }
             }
