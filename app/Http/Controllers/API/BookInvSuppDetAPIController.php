@@ -982,7 +982,7 @@ class BookInvSuppDetAPIController extends AppBaseController
             }
             else
             {
-                $examptVal = TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
+                $examptVal =  TaxService::processGRVVATForUnbilled($details)['totalTransVATAmount'];
             }
 
             $totalVATAmount = ($unbilledData['logisticYN']) ? TaxService::poLogisticVATDistributionForGRV($grvDetail->grvAutoID,0,$grvDetail->supplierID)['vatOnPOTotalAmountTrans'] : $examptVal;

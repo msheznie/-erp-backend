@@ -1156,10 +1156,14 @@ class TaxService
 
     public static function processGRVVATForUnbilled($grvData)
     {
-        $grvDetails = GRVDetails::where('grvAutoID', $grvData->grvAutoID)
-                                ->where('purchaseOrderMastertID', $grvData->purchaseOrderID)
-                                ->with(['vat_sub_category'])
-                                ->get();
+        $grvAutoID = is_array($grvData) ? $grvData['grvAutoID'] : $grvData->grvAutoID;
+        $purchaseOrderID = is_array($grvData) ? $grvData['purchaseOrderID'] : $grvData->purchaseOrderID;
+
+        $grvDetails = GRVDetails::where('grvAutoID', $grvAutoID)
+            ->where('purchaseOrderMastertID', $purchaseOrderID)
+            ->with(['vat_sub_category'])
+            ->get();
+
 
         $totalTransAmount = 0;
         $totalRptAmount = 0;
