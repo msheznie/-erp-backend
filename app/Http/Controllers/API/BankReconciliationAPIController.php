@@ -503,6 +503,11 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
 
+        $validateAdditionalEntryApproved = $this->bankReconciliationDocument->validateConfirmation($id, $bankReconciliation->companySystemID);
+        if(!$validateAdditionalEntryApproved->isEmpty()) {
+            return $this->sendError('There are some pending additional entries to approve', 500);
+        }
+
         $bankLedgerData = BankLedger::where('bankAccountID', $bankReconciliation->bankAccountAutoID)
             ->where('companySystemID', $bankReconciliation->companySystemID)
             ->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
