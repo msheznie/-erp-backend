@@ -15,6 +15,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\PaySupplier;
+use App\helper\SupplierInvoice;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateDirectPaymentDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDirectPaymentDetailsAPIRequest;
@@ -736,6 +737,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $directPaymentDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->delete();
 
+        SupplierInvoice::updateMaster($id);
         return $this->sendResponse($directPaymentDetails, 'Successfully delete');
     }
 
