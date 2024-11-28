@@ -142,7 +142,7 @@ class CertificateService{
             return ['status' =>false, 'message'=> $error];
         }
 
-        if(empty($this->empRefId)){
+        if(empty($this->empRefId) && $this->postType != 'DELETE'){
             $error = 'Employee reference id not found';
             return ['status' =>false, 'message'=> $error];
         }
@@ -163,8 +163,6 @@ class CertificateService{
             ->where('certificateID', $this->id)
             ->first();
 
-        $this->getEmployeeReferenceId($data->empId);
-
         if($this->postType != "POST") {
             $this->getReferenceId();
             $this->certificateData['id'] = $this->masterUuId;
@@ -174,15 +172,16 @@ class CertificateService{
             return;
         }
 
+        $this->getEmployeeReferenceId($data->empId);
         $this->certificateData = array_merge(
             [
                 "name" => $data->name,
-                "gpa" => $data->gpa,
+                "gpa" => empty($data->gpa) ? null : $data->gpa,
                 "institution" => $data->institution,
                 "employeeId" => $this->empRefId,
                 "status" => 1
             ],
-            $data->awardedDate !== null ? ["awardedDate" => $data->awardedDate] : [],
+            !empty($data->awardedDate) ? ["awardedDate" => $data->awardedDate] : [],
             $this->certificateData
         );
     }

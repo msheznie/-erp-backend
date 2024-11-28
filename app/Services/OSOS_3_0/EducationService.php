@@ -148,7 +148,7 @@ class EducationService{
             return ['status' =>false, 'message'=> $error];
         }
 
-        if(empty($this->empRefId)){
+        if(empty($this->empRefId) && $this->postType != 'DELETE'){
             $error = 'Employee reference id not found';
             return ['status' =>false, 'message'=> $error];
         }
@@ -170,10 +170,6 @@ class EducationService{
             ->where('id', $this->id)
             ->first();
 
-        $this->getEmployeeReferenceId($data->empId);
-        $this->fieldOfStudyId = $this->getOtherReferenceId($data->fieldOfStudyId, 10);
-        $grade =  ((int)$data->grade == 0) ? null : $data->grade;
-
         if($this->postType != "POST") {
             $this->getReferenceId();
             $this->educationData['id'] = $this->masterUuId;
@@ -183,6 +179,9 @@ class EducationService{
             return;
         }
 
+        $this->fieldOfStudyId = $this->getOtherReferenceId($data->fieldOfStudyId, 10);
+        $grade =  ((int)$data->grade == 0) ? null : $data->grade;
+        $this->getEmployeeReferenceId($data->empId);
         $this->educationData = array_merge([
             "institution" => $data->institution,
             "degree" => $data->degree,

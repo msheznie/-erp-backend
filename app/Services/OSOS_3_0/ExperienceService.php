@@ -142,7 +142,7 @@ class ExperienceService{
             return ['status' =>false, 'message'=> $error];
         }
 
-        if(empty($this->empRefId)){
+        if(empty($this->empRefId) && $this->postType != 'DELETE'){
             $error = 'Employee reference id not found';
             return ['status' =>false, 'message'=> $error];
         }
@@ -163,9 +163,6 @@ class ExperienceService{
             ->where('id', $this->id)
             ->first();
 
-        $this->getEmployeeReferenceId($data->empId);
-        $isCurrent = $data->isCurrent == 1;
-
         if($this->postType != "POST") {
             $this->getReferenceId();
             $this->experienceData['id'] = $this->masterUuId;
@@ -175,6 +172,8 @@ class ExperienceService{
             return;
         }
 
+        $isCurrent = $data->isCurrent == 1;
+        $this->getEmployeeReferenceId($data->empId);
         $this->experienceData = array_merge([
             "title" => $data->title,
             "companyName" => $data->companyName,
