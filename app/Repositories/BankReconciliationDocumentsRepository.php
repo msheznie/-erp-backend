@@ -40,6 +40,43 @@ class BankReconciliationDocumentsRepository extends BaseRepository
         $companyId = $request['companyId'];
         $bankRecAutoID = $request['bankRecAutoID'];
 
+        $bindings = [
+            'companyId' => $companyId,
+            'bankRecAutoID' => $bankRecAutoID,
+            'BPVcompanyId' => $companyId,
+            'BPVbankRecAutoID' => $bankRecAutoID,
+        ];
+
+        $search = $request->input('search.value');
+
+        $searchWherePV = $searchWhereRV = '';
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $searchWherePV = ' AND (
+                BPVcode LIKE :searchPV1 OR
+                BPVNarration LIKE :searchPV2 OR
+                directPaymentPayee LIKE :searchPV3 OR
+                netAmount LIKE :searchPV4
+            )';
+
+            $searchWhereRV = ' AND (
+                custPaymentReceiveCode LIKE :searchRV1 OR
+                PayeeName LIKE :searchRV2 OR
+                narration LIKE :searchRV3 OR
+                netAmount LIKE :searchRV4
+            )';
+
+            $bindings['searchPV1'] = "%{$search}%";
+            $bindings['searchPV2'] = "%{$search}%";
+            $bindings['searchPV3'] = "%{$search}%";
+            $bindings['searchPV4'] = "%{$search}%";
+
+            $bindings['searchRV1'] = "%{$search}%";
+            $bindings['searchRV2'] = "%{$search}%";
+            $bindings['searchRV3'] = "%{$search}%";
+            $bindings['searchRV4'] = "%{$search}%";
+        }
+
         $query = "
             SELECT
                 bank_reconciliation_documents.*,
@@ -61,7 +98,7 @@ class BankReconciliationDocumentsRepository extends BaseRepository
             WHERE
                 companySystemID = :companyId
                 AND bankRecAutoID = :bankRecAutoID
-                AND approved != -1
+                AND approved != -1 {$searchWhereRV}
             UNION ALL
             SELECT
                 bank_reconciliation_documents.*,
@@ -83,17 +120,11 @@ class BankReconciliationDocumentsRepository extends BaseRepository
             WHERE
                 companySystemID = :BPVcompanyId
                 AND bankRecAutoID = :BPVbankRecAutoID
-                AND approved != -1
+                AND approved != -1 {$searchWherePV}
         ";
 
-        $results = DB::select($query, [
-            'companyId' => $companyId,
-            'bankRecAutoID' => $bankRecAutoID,
-            'BPVcompanyId' => $companyId,
-            'BPVbankRecAutoID' => $bankRecAutoID,
-        ]);
-
-        return collect($results);
+        return DB::select($query, $bindings);
+        // return collect($results);
     }
 
     public function validateConfirmation($id, $companySystemID)

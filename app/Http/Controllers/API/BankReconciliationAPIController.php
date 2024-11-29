@@ -1384,9 +1384,23 @@ class BankReconciliationAPIController extends AppBaseController
 
     public function getBankReconciliationAdditionalEntries(Request $request)
     {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $additionalEntryQuery = $this->bankReconciliationDocument->getAdditionalEntryView($request);
-        return \DataTables::collection($additionalEntryQuery)
+
+        $data['order'] = [];
+        $data['search']['value'] = '';
+        $request->merge($data);
+        $request->request->remove('search.value');
+
+        return \DataTables::of($additionalEntryQuery)
             ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->make(true);
     }
 
