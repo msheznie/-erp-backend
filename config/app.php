@@ -115,7 +115,7 @@ return [
      | Memory and Execution Limits
      |-------------------------------------------------------------------------
      */
-    'report_max_memory_limit' => env('REPORT_MAX_MEMORY_LIMIT', '512M'),
+    'report_max_memory_limit' => env('REPORT_MAX_MEMORY_LIMIT', '1024M'),
     'report_max_execution_limit' => env('REPORT_MAX_EXECUTION_LIMIT', '60'),
 
     /*

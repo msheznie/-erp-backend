@@ -4725,6 +4725,7 @@ class FinancialReportAPIController extends AppBaseController
                             INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                         WHERE
                             erp_generalledger.glAccountType = "BS" 
+                            AND chartofaccounts.is_retained_earnings != 1
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                             AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
@@ -4907,6 +4908,7 @@ class FinancialReportAPIController extends AppBaseController
                             INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                         WHERE
                             erp_generalledger.glAccountType = "BS" 
+                            AND chartofaccounts.is_retained_earnings != 1
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                             AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
@@ -5705,6 +5707,7 @@ class FinancialReportAPIController extends AppBaseController
         $glCodes = (array)$request->glCodes;
 
         $type = $request->type;
+        $chartOfAccountIdAll = collect($glCodes)->pluck('chartOfAccountSystemID')->toArray();
         $chartOfAccountId = collect($glCodes)->pluck('chartOfAccountSystemID')->toArray();
         $departments = (array)$request->departments;
         $serviceLineId = array_filter(collect($departments)->pluck('serviceLineSystemID')->toArray());
@@ -5713,7 +5716,17 @@ class FinancialReportAPIController extends AppBaseController
                 ->first();
         array_push($serviceLineId, 24);
         $chartOfAccountIdRetained = $chartOfAccountIdRetainedVal ? $chartOfAccountIdRetainedVal['chartOfAccountSystemID'] : 0;
-        
+       
+        $chartOfAccountIdCount = count($chartOfAccountId);
+
+        if($chartOfAccountIdRetained != 0 && count($chartOfAccountId) > 1)
+        {
+            $chartOfAccountId= array_filter($chartOfAccountId, function ($item) use($chartOfAccountIdRetained){
+                return $item !== $chartOfAccountIdRetained;
+            });
+            $chartOfAccountId = array_values($chartOfAccountId);
+        }
+
         $contracts = (array)$request->contracts;
         $contractsId = array_filter(collect($contracts)->pluck('contractUID')->toArray());
         array_push($contractsId, 159);
@@ -5796,7 +5809,7 @@ class FinancialReportAPIController extends AppBaseController
                                     WHERE
                                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                         AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
-                                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
+                                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountIdAll) . ')
                                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
                                 ) AS erp_qry_GL UNION ALL
                             SELECT
@@ -5880,6 +5893,128 @@ class FinancialReportAPIController extends AppBaseController
 
 
                                 UNION ALL
+                                SELECT
+                                * 
+                            FROM
+                                (
+                                    SELECT
+                                        erp_generalledger.companySystemID,
+                                        erp_generalledger.companyID,
+                                        erp_generalledger.serviceLineSystemID,
+                                        erp_generalledger.serviceLineCode,
+                                        "" AS documentSystemID,
+                                        "" AS documentID,
+                                        "" AS documentSystemCode,
+                                        "" AS documentCode,
+                                        "" AS documentDate,
+                                        "" AS chartOfAccountSystemID,
+                                        "" AS glCode,
+                                        "BS" AS glAccountType,
+                                        "Retained Earnings system calculated" AS documentNarration,
+                                        "" AS clientContractID,
+                                        "" AS supplierCodeSystem,
+                                        erp_generalledger.documentLocalCurrencyID,
+                                        "Retained Earnings Automated" AS AccountDescription,
+                                        companymaster.CompanyName,
+                                        erp_templatesglcode.templatesDetailsAutoID,
+                                        approveEmp.empName as approvedBy,
+                                        confirmEmp.empName as confirmedBy,
+                                        erp_generalledger.documentConfirmedDate,
+                                        erp_generalledger.documentFinalApprovedDate,
+                                        erp_templatesglcode.templateMasterID,
+                                        erp_templatesdetails.templateDetailDescription,
+                                        erp_companyreporttemplatedetails.description as templateDescription,
+                                        SUM(
+                                            CASE
+                                                WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                    erp_generalledger.documentLocalAmount
+                                                ELSE 
+                                                    0
+                                            END
+                                        ) - 
+                                        SUM(
+                                            CASE
+                                                WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                    erp_generalledger.documentLocalAmount
+                                                ELSE 
+                                                    0
+                                            END
+                                        ) AS localDebit,
+                                        SUM(
+                                            CASE
+                                                WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                    erp_generalledger.documentLocalAmount
+                                                ELSE 
+                                                    0
+                                            END
+                                        ) - 
+                                        SUM(
+                                            CASE
+                                                WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                    erp_generalledger.documentLocalAmount
+                                                ELSE 
+                                                    0
+                                            END
+                                        ) AS localCredit,
+                                        0 AS doucmentLocalBalanceAmount,
+                                        erp_generalledger.documentRptCurrencyID,
+                                       SUM(
+                                            CASE
+                                                WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                    erp_generalledger.documentRptAmount
+                                                ELSE 
+                                                    0
+                                            END
+                                        ) - 
+                                        SUM(
+                                            CASE
+                                                WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                    erp_generalledger.documentRptAmount
+                                                ELSE 
+                                                    0
+                                            END
+                                        ) AS rptDebit,
+                                        SUM(
+                                            CASE
+                                                WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                    erp_generalledger.documentRptAmount
+                                                ELSE 
+                                                    0
+                                            END
+                                        ) - 
+                                        SUM(
+                                            CASE
+                                                WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                    erp_generalledger.documentRptAmount
+                                                ELSE 
+                                                    0
+                                            END
+                                        ) AS rptCredit,
+                                        0 AS documentRptBalanceAmount,
+                                        "" AS isCustomer
+                                    FROM
+                                        erp_generalledger
+                                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
+                                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                                        )
+                                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
+                                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
+                                        WHERE
+                                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                                         AND ' . intval($chartOfAccountIdRetained) . ' != 0
+                                        HAVING
+                                        localDebit != 0 OR localCredit != 0 OR doucmentLocalBalanceAmount != 0 OR rptDebit != 0 OR rptCredit != 0 OR documentRptBalanceAmount != 0
+                                ) AS erp_retained_earning_automate        
+                            UNION ALL
                             SELECT
                                 * 
                             FROM
@@ -5897,11 +6032,11 @@ class FinancialReportAPIController extends AppBaseController
                                         erp_generalledger.chartOfAccountSystemID,
                                         erp_generalledger.glCode,
                                         "BS" AS glAccountType,
-                                        "Opening Linked GL" AS documentNarration,
+                                        "Opening Linked" AS documentNarration,
                                         "" AS clientContractID,
                                         "" AS supplierCodeSystem,
                                         erp_generalledger.documentLocalCurrencyID,
-                                        "Retained Earnings(Linked GL)" AS AccountDescription,
+                                        "Retained Earnings" AS AccountDescription,
                                         companymaster.CompanyName,
                                         erp_templatesglcode.templatesDetailsAutoID,
                                         approveEmp.empName as approvedBy,
@@ -5953,90 +6088,10 @@ class FinancialReportAPIController extends AppBaseController
                                         AND erp_generalledger.chartOfAccountSystemID = ' . $chartOfAccountIdRetained . '
                                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
                                         AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                                          AND ' . intval($chartOfAccountIdCount) . ' > 1
                                     GROUP BY
                                         erp_generalledger.chartOfAccountSystemID
-                                ) AS erp_retained_earning_manual
-
-                                   UNION ALL
-                            SELECT
-                                * 
-                            FROM
-                                (
-                                    SELECT
-                                        erp_generalledger.companySystemID,
-                                        erp_generalledger.companyID,
-                                        erp_generalledger.serviceLineSystemID,
-                                        erp_generalledger.serviceLineCode,
-                                        "" AS documentSystemID,
-                                        "" AS documentID,
-                                        "" AS documentSystemCode,
-                                        "" AS documentCode,
-                                        "" AS documentDate,
-                                        "" AS chartOfAccountSystemID,
-                                        "" AS glCode,
-                                        "BS" AS glAccountType,
-                                        "Retained Earnings system calculated" AS documentNarration,
-                                        "" AS clientContractID,
-                                        "" AS supplierCodeSystem,
-                                        erp_generalledger.documentLocalCurrencyID,
-                                        "Retained Earnings(Linked GL)" AS AccountDescription,
-                                        companymaster.CompanyName,
-                                        erp_templatesglcode.templatesDetailsAutoID,
-                                        approveEmp.empName as approvedBy,
-                                        confirmEmp.empName as confirmedBy,
-                                        erp_generalledger.documentConfirmedDate,
-                                        erp_generalledger.documentFinalApprovedDate,
-                                        erp_templatesglcode.templateMasterID,
-                                        erp_templatesdetails.templateDetailDescription,
-                                        erp_companyreporttemplatedetails.description as templateDescription,
-                                        SUM(CASE WHEN chartofaccounts.controlAccountsSystemID = 1 THEN erp_generalledger.documentLocalAmount ELSE 0 END) -
-                                        SUM(CASE WHEN chartofaccounts.controlAccountsSystemID = 2 THEN erp_generalledger.documentLocalAmount ELSE 0 END) AS localDebit,
-                                        SUM(CASE WHEN chartofaccounts.controlAccountsSystemID = 2 THEN (erp_generalledger.documentLocalAmount * -1) ELSE 0 END) - 
-                                        SUM(CASE WHEN chartofaccounts.controlAccountsSystemID = 1 THEN (erp_generalledger.documentLocalAmount * -1) ELSE 0 END) AS localCredit,
-                                        CASE	
-                                            WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
-                                            (
-                                                sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) )) - (
-                                                sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) )) ELSE (
-                                                sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) - (
-                                                sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ))) 
-                                        END AS doucmentLocalBalanceAmount,
-                                        erp_generalledger.documentRptCurrencyID,
-                                        SUM(CASE WHEN chartofaccounts.controlAccountsSystemID = 1 THEN erp_generalledger.documentRptAmount ELSE 0 END) -
-                                        SUM(CASE WHEN chartofaccounts.controlAccountsSystemID = 2 THEN erp_generalledger.documentRptAmount ELSE 0 END) AS rptDebit,
-                                        SUM(CASE WHEN chartofaccounts.controlAccountsSystemID = 2 THEN (erp_generalledger.documentRptAmount * -1) ELSE 0 END) - 
-                                        SUM(CASE WHEN chartofaccounts.controlAccountsSystemID = 1 THEN (erp_generalledger.documentRptAmount * -1) ELSE 0 END) AS rptCredit,
-                                        CASE
-                                            WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
-                                            (
-                                                sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) )) - (
-                                                sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) )) ELSE (
-                                                sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) - (
-                                                sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ))) 
-                                        END AS documentRptBalanceAmount,
-                                        "" AS isCustomer
-                                    FROM
-                                        erp_generalledger
-                                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
-                                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
-                                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
-                                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
-                                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
-                                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
-                                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
-                                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
-                                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
-                                        )
-                                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
-                                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
-                                        WHERE
-                                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
-                                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
-                                        HAVING
-                                        localDebit != 0 OR localCredit != 0 OR doucmentLocalBalanceAmount != 0 OR rptDebit != 0 OR rptCredit != 0 OR documentRptBalanceAmount != 0
-                                ) AS erp_retained_earning_automate           
+                                ) AS erp_retained_earning_manual                               
 
                     ) AS GL_final 
                     ORDER BY
