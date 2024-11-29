@@ -70,6 +70,15 @@ class PaySupplier
                 $newVat['rptCurrencyER'] = $paySuppMaster->companyRptCurrencyER;
                 $newVat['rptAmount'] = $paySuppMaster['VATAmountRpt'];
                 Taxdetail::create($newVat);
+            } else {
+                $paySuppMaster['netAmount'] = 0;
+                $paySuppMaster['netAmountLocal'] = 0;
+                $paySuppMaster['netAmountRpt'] = 0;
+                $paySuppMaster['VATAmount'] = 0;
+                $paySuppMaster['VATAmountBank'] = 0;
+                $paySuppMaster['VATAmountLocal'] = 0;
+                $paySuppMaster['VATAmountRpt'] = 0;
+                $paySuppMaster->save();
             }
         }
     }

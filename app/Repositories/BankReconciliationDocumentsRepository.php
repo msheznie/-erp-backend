@@ -70,7 +70,7 @@ class BankReconciliationDocumentsRepository extends BaseRepository
                 BPVNarration AS narration,
                 directPaymentPayee AS payeeName,
                 'Payment' AS documentType,
-                netAmount AS documentAmount,
+                (netAmount + VATAmount) AS documentAmount,
                 cancelYN,
                 refferedBackYN,
                 confirmedYN,

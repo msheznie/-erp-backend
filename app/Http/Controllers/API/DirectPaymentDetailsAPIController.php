@@ -737,7 +737,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $directPaymentDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->delete();
 
-        SupplierInvoice::updateMaster($id);
+        PaySupplier::updateMaster($id);
         return $this->sendResponse($directPaymentDetails, 'Successfully delete');
     }
 
