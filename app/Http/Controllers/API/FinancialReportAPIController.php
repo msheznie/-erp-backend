@@ -1115,7 +1115,6 @@ class FinancialReportAPIController extends AppBaseController
                                     $holdingPercentage = $childCompany->holding_percentage ?? $company['holding_percentage'];
 
 
-
                                 $totalIncome = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
                                     $query->where('controlAccountsSystemID', 1);
                                 })->first();
@@ -10263,7 +10262,6 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         srp_erp_payrollmaster.approvedYN = 1 GROUP BY masterID
        ) AS t1");
     }
-
 
     public function getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas) {
         $typeID = join(",",json_decode($typeID));
