@@ -743,7 +743,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 } else {
                     $sort = 'desc';
                 }
-                
+
                 $search = $request->input('search.value');
 
                 $convertedRequest = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -768,7 +768,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $data['search']['value'] = '';
                 $request->merge($data);
                 $request->request->remove('search.value');
-                
+
                 return \DataTables::of($output)
                         ->order(function ($query) use ($input) {
                             if (request()->has('order')) {
@@ -911,7 +911,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $data = array();
                 $type = $request->type;
 
-             
+
                 $company = Company::find($request->companySystemID);
                 $company_name = $company->CompanyName;
 
@@ -1129,7 +1129,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                              'companyName' => $checkIsGroup->CompanyName,
                              'balanceAmount' => $balanceAmount,
                              'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 
-                             'paidAmount' => $paidAmount, 
+                             'paidAmount' => $paidAmount,
                              'invoiceAmount' => $invoiceAmount,
                              'fromDate' =>  $request->fromDate,);
 
@@ -1165,9 +1165,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                         }
                     }
-                    $outputData = array('reportData' => $outputArr, 
-                                    'companyName' => $checkIsGroup->CompanyName, 
-                                    'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 
+                    $outputData = array('reportData' => $outputArr,
+                                    'companyName' => $checkIsGroup->CompanyName,
+                                    'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,
                                     'invoiceAmount' => $invoiceAmount,
                                     'fromDate' =>  $request->fromDate,
                                     'toDate' =>  $request->toDate);
@@ -1183,12 +1183,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         });
                     })->download('xlsx');
                 }
-                
+
 
                 break;
             case 'CBSUM': //Customer Balance Summery
                 $reportTypeID = $request->reportTypeID;
-                
+
                 $from_date = $request->fromDate;
                 $to_date = $request->fromDate;
                 $company = Company::find($request->companySystemID);
@@ -1306,10 +1306,10 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     //$outputOutstanding = $this->getCustomerSummaryOutstandingQRY($request);
                     $outputOutstanding = array(); //$this->getCustomerSummaryOutstandingUpdatedQRY($request);
                     $outputServiceLine = $this->getCustomerSummaryRevenueServiceLineBaseQRY($request);
-    
+
                     $decimalPlaceCollect = collect($outputRevenue)->pluck('documentRptCurrencyID')->toArray();
                     $decimalPlaceUnique = array_unique($decimalPlaceCollect);
-    
+
                     $selectedCurrency = $request->currencyID;
                     if ($selectedCurrency == 2) {
                         $currencyId = $checkIsGroup->localCurrencyID;
@@ -1318,16 +1318,16 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     } else {
                         $currencyId = $checkIsGroup->localCurrencyID;
                     }
-    
+
                     $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
-    
+
                     $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
-    
+
                     $revenueTotal = array();
                     $collectionTotal = array();
                     $outstandingTotal = array();
                     $serviceLineTotal = array();
-    
+
                     //revenue total calculation
                     $revenueTotal['Jan'] = array_sum(collect($outputRevenue)->pluck('Jan')->toArray());
                     $revenueTotal['Feb'] = array_sum(collect($outputRevenue)->pluck('Feb')->toArray());
@@ -1342,7 +1342,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $revenueTotal['Nov'] = array_sum(collect($outputRevenue)->pluck('Nov')->toArray());
                     $revenueTotal['Dece'] = array_sum(collect($outputRevenue)->pluck('Dece')->toArray());
                     $revenueTotal['Total'] = array_sum(collect($outputRevenue)->pluck('Total')->toArray());
-    
+
                     //collection total calculation
                     $collectionTotal['Jan'] = array_sum(collect($outputCollection)->pluck('Jan')->toArray());
                     $collectionTotal['Feb'] = array_sum(collect($outputCollection)->pluck('Feb')->toArray());
@@ -1357,7 +1357,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $collectionTotal['Nov'] = array_sum(collect($outputCollection)->pluck('Nov')->toArray());
                     $collectionTotal['Dece'] = array_sum(collect($outputCollection)->pluck('Dece')->toArray());
                     $collectionTotal['Total'] = array_sum(collect($outputCollection)->pluck('Total')->toArray());
-    
+
                     //outstanding total calculation
                     $outstandingTotal['Jan'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountJan')->toArray());
                     $outstandingTotal['Feb'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountFeb')->toArray());
@@ -1372,7 +1372,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $outstandingTotal['Nov'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountNov')->toArray());
                     $outstandingTotal['Dece'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountDec')->toArray());
                     $outstandingTotal['Total'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountTot')->toArray());
-    
+
                     //Revenue ServiceLine total calculation
                     $serviceLineTotal['Jan'] = array_sum(collect($outputServiceLine)->pluck('Jan')->toArray());
                     $serviceLineTotal['Feb'] = array_sum(collect($outputServiceLine)->pluck('Feb')->toArray());
@@ -1411,7 +1411,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $path = 'accounts-receivable/report/customer-summary/excel/';
                     $file_type = $request->type;
                     $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
-            
+
                     if($basePath == '')
                     {
                         return $this->sendError('Unable to export excel');
@@ -1425,7 +1425,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             case 'CSR': //Customer Sales Register
                 $type = $request->type;
 
-                
+
                 $from_date = $request->fromDate;
                 $to_date = $request->toDate;
                 $company = Company::find($request->companySystemID);
@@ -1605,7 +1605,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
-               
+
 
                 if($basePath == '')
                 {
@@ -1705,7 +1705,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
                     $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-    
+
                     if($basePath == '')
                     {
                          return $this->sendError('Unable to export excel');
@@ -1783,7 +1783,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$from_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$cure,'title'=>$title);
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
-    
+
                     if($basePath == '')
                     {
                          return $this->sendError('Unable to export excel');
@@ -1855,7 +1855,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-   
+
                 $fileName = 'Credit Note Register';
                 $title = 'Credit Note Register';
                 $path = 'accounts-receivable/report/credit_note_register/excel/';
@@ -2281,7 +2281,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             }
 
             $html = view('print.customer_statement_of_account_pdf', $dataArr);
-            
+
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);
 
@@ -2933,15 +2933,27 @@ SELECT
 	erp_generalledger.documentTransCurrencyID,
 	currTrans.CurrencyCode as documentTransCurrency,
 	currTrans.DecimalPlaces as documentTransDecimalPlaces,
-	SUM(erp_generalledger.documentTransAmount) as documentTransAmount,
+	CASE 
+        WHEN erp_generalledger.documentSystemID = 19 THEN 
+        SUM(erp_generalledger.documentLocalAmount + (SELECT sum(bookingAmountLocal) from erp_custreceivepaymentdet WHERE custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        ELSE SUM(erp_generalledger.documentLocalAmount)
+    END AS documentLocalAmount,
+	CASE 
+        WHEN erp_generalledger.documentSystemID = 19 THEN 
+        SUM(erp_generalledger.documentTransAmount + (SELECT sum(bookingAmountTrans) from erp_custreceivepaymentdet WHERE custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        ELSE SUM(erp_generalledger.documentTransAmount)
+    END AS documentTransAmount,
+	CASE 
+        WHEN erp_generalledger.documentSystemID = 19 THEN 
+        SUM(erp_generalledger.documentRptAmount + (SELECT sum(bookingAmountRpt) from erp_custreceivepaymentdet WHERE custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        ELSE SUM(erp_generalledger.documentRptAmount)
+    END AS documentRptAmount,
 	erp_generalledger.documentLocalCurrencyID,
 	currLocal.CurrencyCode as documentLocalCurrency,
 	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
-	SUM(erp_generalledger.documentLocalAmount) as documentLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
 	currRpt.CurrencyCode as documentRptCurrency,
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
-	SUM(erp_generalledger.documentRptAmount) as documentRptAmount,
 	erp_generalledger.documentType,
 	erp_custinvoicedirect.PONumber,
 	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName
@@ -3374,9 +3386,21 @@ SELECT
 	currLocal.CurrencyCode as documentLocalCurrency,
 	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
 	erp_generalledger.documentLocalAmount as documentLocalAmount,
-	SUM(erp_generalledger.documentLocalAmount) as documentLocalAmount2,
-	SUM(erp_generalledger.documentTransAmount) as documentTransAmount2,
-	SUM(erp_generalledger.documentRptAmount) as documentRptAmount2,
+	CASE 
+        WHEN erp_generalledger.documentSystemID = 19 THEN 
+        SUM(erp_generalledger.documentLocalAmount + (SELECT sum(bookingAmountLocal) from erp_custreceivepaymentdet WHERE custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        ELSE SUM(erp_generalledger.documentLocalAmount)
+    END AS documentLocalAmount2,
+	CASE 
+        WHEN erp_generalledger.documentSystemID = 19 THEN 
+        SUM(erp_generalledger.documentTransAmount + (SELECT sum(bookingAmountTrans) from erp_custreceivepaymentdet WHERE custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        ELSE SUM(erp_generalledger.documentTransAmount)
+    END AS documentTransAmount2,
+	CASE 
+        WHEN erp_generalledger.documentSystemID = 19 THEN 
+        SUM(erp_generalledger.documentRptAmount + (SELECT sum(bookingAmountRpt) from erp_custreceivepaymentdet WHERE custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        ELSE SUM(erp_generalledger.documentRptAmount)
+    END AS documentRptAmount2,
 	erp_generalledger.documentRptCurrencyID,
 	currRpt.CurrencyCode as documentRptCurrency,
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
@@ -7235,7 +7259,7 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
                 case 'CH Approved':
                     $whereStatus.=' WHERE final.myClientapprovedDate IS NOT NULL AND final.mySubmittedDate IS NOT NULL AND final.myApprovedDate IS NOT NULL AND final.ReceiptDate IS NULL';
                     break;
-                
+
                 default:
                     $whereStatus = '';
                     break;
@@ -7496,7 +7520,9 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             case 'CA':
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
-                $db = isset($request->db) ? $request->db : ""; 
+
+                $db = isset($request->db) ? $request->db : "";
+
 
                 $employeeID = \Helper::getEmployeeSystemID();
                 AccountsReceivablePdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
