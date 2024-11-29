@@ -167,7 +167,8 @@ class EmployeeService
     {
         $data = DB::table('srp_employeesdetails as e')
             ->selectRaw("e.ECode, e.Ename2, '' as Description, e.Erp_companyID, l.location_id,
-                    IF(e.isDischarged = 1, 2, 1) as empStatus, e.isActive as status, 
+                    IF(e.isDischarged = 1, 2, 1) as empStatus,
+                    IF(e.isActive = 1, 0, 1) as status, 
                     e.isDischarged, e.EEmail, e.EcMobile, d.DesignationID,
                     IFNULL(dep.DepartmentMasterID,0) as DepartmentMasterID, em.managerID,
                     CONCAT(IFNULL(e.EDOB, '2000-01-01'), 'T18:30:00.000Z') as dateOfBirth,

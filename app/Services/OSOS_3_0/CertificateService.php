@@ -172,11 +172,12 @@ class CertificateService{
             return;
         }
 
+        $gpa =  ((int)$data->gpa == 0) ? null : $data->gpa;
         $this->getEmployeeReferenceId($data->empId);
         $this->certificateData = array_merge(
             [
                 "name" => $data->name,
-                "gpa" => empty($data->gpa) ? null : $data->gpa,
+                "gpa" => empty($gpa) ? null : $gpa,
                 "institution" => $data->institution,
                 "employeeId" => $this->empRefId,
                 "status" => 1
