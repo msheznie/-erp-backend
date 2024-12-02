@@ -1794,8 +1794,15 @@ class SRMService
 
     public function saveTenderPurchase(Request $request)
     {
-        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierUuid = $request->input('extra.supplierUuid') ?? $request->input('supplier_uuid');
+        $supplierRegId = self::getSupplierRegIdByUUID($supplierUuid);
         $tenderMasterId = $request->input('extra.tenderId');
+        if ($request->filled('extra.tenderUuid')) {
+            $tender = TenderMaster::getTenderByUuid($request->input('extra.tenderUuid'));
+            $tenderMasterId = $tender ? $tender->id : null;
+
+        }
+
         $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
         DB::beginTransaction();
         try {
