@@ -2935,17 +2935,17 @@ SELECT
 	currTrans.DecimalPlaces as documentTransDecimalPlaces,
 CASE 
         WHEN erp_generalledger.documentSystemID = 19 THEN 
-        SUM(erp_generalledger.documentLocalAmount + (SELECT IFNULL(sum(erp_custreceivepaymentdet.bookingAmountLocal),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        SUM(erp_generalledger.documentLocalAmount + (SELECT IFNULL(sum(matchLocalAmount),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
         ELSE SUM(erp_generalledger.documentLocalAmount)
     END AS documentLocalAmount,
 	CASE 
         WHEN erp_generalledger.documentSystemID = 19 THEN 
-        SUM(erp_generalledger.documentTransAmount + (SELECT IFNULL(sum(erp_custreceivepaymentdet.bookingAmountTrans),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode))
+        SUM(erp_generalledger.documentTransAmount + (SELECT IFNULL(sum(matchedAmount),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode))
         ELSE SUM(erp_generalledger.documentTransAmount)
     END AS documentTransAmount,
 	CASE 
         WHEN erp_generalledger.documentSystemID = 19 THEN 
-        SUM(erp_generalledger.documentRptAmount + (SELECT IFNULL(sum(erp_custreceivepaymentdet.bookingAmountRpt),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        SUM(erp_generalledger.documentRptAmount + (SELECT IFNULL(sum(matchRptAmount),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
         ELSE SUM(erp_generalledger.documentRptAmount)
     END AS documentRptAmount,
 	erp_generalledger.documentLocalCurrencyID,
@@ -3388,17 +3388,17 @@ SELECT
 	erp_generalledger.documentLocalAmount as documentLocalAmount,
 	CASE 
         WHEN erp_generalledger.documentSystemID = 19 THEN 
-        SUM(erp_generalledger.documentLocalAmount + (SELECT IFNULL(sum(erp_custreceivepaymentdet.bookingAmountLocal),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        SUM(erp_generalledger.documentLocalAmount + (SELECT IFNULL(sum(matchLocalAmount),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
         ELSE SUM(erp_generalledger.documentLocalAmount)
     END AS documentLocalAmount2,
 	CASE 
         WHEN erp_generalledger.documentSystemID = 19 THEN 
-        SUM(erp_generalledger.documentTransAmount + (SELECT IFNULL(sum(erp_custreceivepaymentdet.bookingAmountTrans),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode))
+        SUM(erp_generalledger.documentTransAmount + (SELECT IFNULL(sum(matchedAmount),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode))
         ELSE SUM(erp_generalledger.documentTransAmount)
     END AS documentTransAmount2,
 	CASE 
         WHEN erp_generalledger.documentSystemID = 19 THEN 
-        SUM(erp_generalledger.documentRptAmount + (SELECT IFNULL(sum(erp_custreceivepaymentdet.bookingAmountRpt),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
+        SUM(erp_generalledger.documentRptAmount + (SELECT IFNULL(sum(matchRptAmount),0) from erp_custreceivepaymentdet INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID WHERE erp_custreceivepaymentdet.custReceivePaymentAutoID=erp_generalledger.documentSystemCode)) 
         ELSE SUM(erp_generalledger.documentRptAmount)
     END AS documentRptAmount2,
 	erp_generalledger.documentRptCurrencyID,
@@ -3696,8 +3696,6 @@ WHERE
         ';
 
         $fullyMatchedCreditNotes = \DB::select($creditNoteQuery);
-
-
 
         $array = array();
         foreach ($fullyMatchedBrvs as $item) {
