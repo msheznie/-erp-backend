@@ -478,9 +478,9 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
 
             $poTotalAmountTrans = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'] + $poMasterVATSum['masterTotalVATSum'];
-            $poTotalAmountTransRounded = round($poTotalAmountTrans, (isset($procumentOrder->transactioncurrency->DecimalPlaces) ? $procumentOrder->transactioncurrency->DecimalPlaces : 2));
 
-            $poConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $procumentOrder->supplierTransactionCurrencyID, $procumentOrder->supplierTransactionCurrencyID, $poTotalAmountTransRounded);
+
+            $poConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $procumentOrder->supplierTransactionCurrencyID, $procumentOrder->supplierTransactionCurrencyID, $poTotalAmountTrans);
 
 
             $poComareAmountRpt += $poConversion['reportingAmount'];
