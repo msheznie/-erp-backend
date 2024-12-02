@@ -1446,11 +1446,12 @@ class SRMService
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
         $is_rfx = $request->input('extra.rfx');
+        $supplierData =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'),true);
 
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
-        $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
+
 
         //Get Purchased tenders for user
         $purchasedTenderIds = TenderMasterSupplier::select(DB::raw('DISTINCT tender_master_id'))->whereIn('purchased_by', $registrationLinkIds)->get()->toArray();
@@ -1673,7 +1674,7 @@ class SRMService
         }
 
 
-        $data = DataTables::eloquent($query)
+        $data['tenderList'] = DataTables::eloquent($query)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1685,6 +1686,8 @@ class SRMService
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
+
+        $data['tenderPurchasePolicy'] = Helper::checkPolicy($supplierData->company_id, 98);
 
         return [
             'success' => true,
@@ -1817,18 +1820,20 @@ class SRMService
         }
     }
 
-    public static function getSupplierRegIdByUUID($uuid)
+    public static function getSupplierRegIdByUUID($uuid,$getAllRecords = false)
     {
 
-        if ($uuid) {
-            $supplier = SupplierRegistrationLink::where('uuid', $uuid)
-                ->first();
-
-            if (!empty($supplier)) {
-                return $supplier->id;
-            }
+        if (empty($uuid)) {
+            return 0;
         }
-        return 0;
+
+        $supplier = SupplierRegistrationLink::where('uuid', $uuid)->first();
+
+        if (!$getAllRecords) {
+            return optional($supplier)->id ?? 0;
+        }
+
+        return $supplier ?? 0;
     }
 
     public static function getAllSupplierRegIdByUUID($uuid)
