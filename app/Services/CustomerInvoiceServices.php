@@ -23,7 +23,7 @@ class CustomerInvoiceServices
         $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
     }
 
-    public static function amendCustomerInvoice($input,$id,$masterData,$isFromAPI = false)
+    public function amendCustomerInvoice($input,$id,$masterData,$isFromAPI = false)
 	{
 
             // checking document matched in machmaster
@@ -85,7 +85,7 @@ class CustomerInvoiceServices
             }
 
             if($returnFilledDetailID != null){
-                self::$vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
+                $this->vatReturnFillingMasterRepo->updateVatReturnFillingDetails($returnFilledDetailID);
             }
 
             // updating fields
