@@ -4280,7 +4280,6 @@ ORDER BY
             $masterData->matchingConfirmedByEmpID = null;
             $masterData->matchingConfirmedByName = null;
             $masterData->matchingConfirmedDate = null;
-            $masterData->save();
 
             if($masterData->documentSystemID == 4){
                 $paySupplierInvoice = PaySupplierInvoiceMaster::find($masterData->PayMasterAutoId);
@@ -4301,7 +4300,19 @@ ORDER BY
                     $receiveVoucher->matchInvoice = 0;
                     $receiveVoucher->save();
                 }
+            }else if($masterData->documentSystemID == 19){
+                $creditNoteMaster = CreditNote::find($masterData->PayMasterAutoId);
+                if (!empty($creditNoteMaster)) {
+                    $creditNoteMaster->matchInvoice = 0;
+                    $creditNoteMaster->save();
+
+                    $masterData->matchedAmount = null;
+                    $masterData->matchLocalAmount = null;
+                    $masterData->matchRptAmount = null;
+                }
             }
+
+            $masterData->save();
 
             if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15 || $masterData->documentSystemID == 21 || $masterData->documentSystemID == 19){
                 GeneralLedger::where('documentSystemID',$masterData->documentSystemID)
