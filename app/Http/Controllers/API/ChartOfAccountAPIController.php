@@ -182,13 +182,13 @@ class ChartOfAccountAPIController extends AppBaseController
                 $input = $this->convertArrayToValue($input);
 
 
-                $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('chartOfAccountSystemID' ,'!=' ,$input['chartOfAccountSystemID'])->where('primaryCompanySystemID',$input['primaryCompanySystemID'])->where('isActive',1)->where('isApproved',1);
+                $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('chartOfAccountSystemID' ,'!=' ,$input['chartOfAccountSystemID'])->where('primaryCompanySystemID',$input['primaryCompanySystemID']);
                        
 
-                if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings'])  && (isset($input['isActive']) && $input['isActive'] == 1))
+                if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings']))
                 {
                     $retainEarningCode = $isRetainedEarningExists->first();
-                    return $this->sendError('There is an active Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
+                    return $this->sendError('There is an Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
                 }
 
 
@@ -403,11 +403,11 @@ class ChartOfAccountAPIController extends AppBaseController
                 }
             } else {
 
-                $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('primaryCompanySystemID',$input['primaryCompanySystemID'])->where('isActive',1)->where('isApproved',1);
-                if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings'])  && (isset($input['isActive']) && $input['isActive'] == 1))
+                $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('primaryCompanySystemID',$input['primaryCompanySystemID']);
+                if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings']))
                 {
                     $retainEarningCode = $isRetainedEarningExists->first();
-                    return $this->sendError('There is an active Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
+                    return $this->sendError('There is an Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
                 }
                 $availability = FALSE;
                 while (!$availability) {
@@ -807,17 +807,11 @@ class ChartOfAccountAPIController extends AppBaseController
         $allCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup", 0)->get();
 
         $isAmmendable = true;
-        if(isset($request['id']) && !empty($request['id']))
+        $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('primaryCompanySystemID',$selectedCompanyId)->first();
+
+        if($isRetainedEarningExists)
         {
-            $chartOfAccountData = $this->chartOfAccountRepository->find($request['id']);
-            if(isset($chartOfAccountData) && $chartOfAccountData->is_retained_earnings == 1)
-            {
-                $isTransactionExists = GeneralLedger::where('chartOfAccountSystemID',$chartOfAccountData->chartOfAccountSystemID)->first();
-                if($isTransactionExists)
-                {
-                    $isAmmendable = false;
-                }
-            }
+            $isAmmendable = false;
         }
 
         $output = array('controlAccounts' => $controlAccounts,
