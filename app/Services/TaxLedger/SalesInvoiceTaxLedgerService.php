@@ -124,7 +124,9 @@ class SalesInvoiceTaxLedgerService
                 $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
                 $ledgerData['transCurrencyID'] = $value->sellingCurrencyID;
 
-                array_push($finalData, $ledgerData);
+                if ($ledgerData['transAmount'] != 0) {
+                    array_push($finalData, $ledgerData);
+                }
             }
 
 
@@ -190,7 +192,10 @@ class SalesInvoiceTaxLedgerService
                 $ledgerDetailsData['localCurrencyID'] = $value->localCurrencyID;
                 $ledgerDetailsData['rptCurrencyID'] = $value->reportingCurrencyID;
 
-                array_push($finalDetailData, $ledgerDetailsData);
+                if ($ledgerDetailsData['VATAmount'] != 0) {
+                    array_push($finalDetailData, $ledgerDetailsData);
+                }
+
             }
         } else if ($masterData->isPerforma == 0 || $masterData->isPerforma == 1) {
             $details = CustomerInvoiceDirectDetail::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount*invoiceQty) as transVATAmount,SUM(VATAmountLocal*invoiceQty) as localVATAmount ,SUM(VATAmountRpt*invoiceQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency, localCurrencyER, comRptCurrency, comRptCurrencyER, invoiceAmountCurrency, invoiceAmountCurrencyER')
@@ -235,7 +240,9 @@ class SalesInvoiceTaxLedgerService
                 $ledgerData['rptCurrencyID'] = $value->comRptCurrency;
                 $ledgerData['transCurrencyID'] = $value->invoiceAmountCurrency;
 
-                array_push($finalData, $ledgerData);
+                if ($ledgerData['transAmount'] != 0) {
+                    array_push($finalData, $ledgerData);
+                }
             }
 
 
@@ -302,7 +309,9 @@ class SalesInvoiceTaxLedgerService
                 $ledgerDetailsData['localCurrencyID'] = $value->localCurrency;
                 $ledgerDetailsData['rptCurrencyID'] = $value->comRptCurrency;
 
-                array_push($finalDetailData, $ledgerDetailsData);
+                if ($ledgerDetailsData['VATAmount'] != 0) {
+                    array_push($finalDetailData, $ledgerDetailsData);
+                }
             }
         }
 
