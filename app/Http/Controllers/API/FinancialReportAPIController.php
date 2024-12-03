@@ -1236,7 +1236,7 @@ class FinancialReportAPIController extends AppBaseController
                     foreach ($details as $key2 => $val2) {
                         if ($val2->isFinalLevel == 1) {
                             $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
-                            if($val2->detDescription == "Retained Earning" && $showRetained == false) {
+                            if (strpos($val2->detDescription, "Retained Earning") !== false && $showRetained == false) {
                                 $val2->glCodes = null;
                             }
                         } else {
@@ -1487,7 +1487,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                     $output = $result;
                 }
-               
+                
                 $sort = 'asc';
                 $dataArrayNew = array();
 
@@ -5914,7 +5914,7 @@ class FinancialReportAPIController extends AppBaseController
                                         "" AS clientContractID,
                                         "" AS supplierCodeSystem,
                                         erp_generalledger.documentLocalCurrencyID,
-                                        "Retained Earnings Automated" AS AccountDescription,
+                                        "Retained Earnings (Automated)" AS AccountDescription,
                                         companymaster.CompanyName,
                                         erp_templatesglcode.templatesDetailsAutoID,
                                         approveEmp.empName as approvedBy,
