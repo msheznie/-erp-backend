@@ -697,8 +697,7 @@ class CustomerInvoiceGlService
                 ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
                 ->where('documentSystemID', 20)
                 ->get();
-            if (!empty($erp_taxdetail)) {
-
+            if (count($erp_taxdetail) > 0) {
                 // Input VAT control
                 $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
                 if (!empty($taxConfigData)) {
