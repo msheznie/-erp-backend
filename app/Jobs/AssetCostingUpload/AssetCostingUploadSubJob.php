@@ -16,6 +16,7 @@ use App\Models\SegmentMaster;
 use App\Models\UploadAssetCosting;
 use App\Services\GeneralLedger\AssetCreationService;
 use App\Validations\AssetManagement\ValidateAssetCreation;
+use DateTime;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -200,7 +201,17 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     throw new AssetCostingException("Dep Start Date is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
-                if($assetCostingValue[11] < $assetCostingValue[5]){
+
+                $dateAcquired = DateTime::createFromFormat('m/d/Y', $assetCostingValue[5]);
+                $depStartDate = DateTime::createFromFormat('m/d/Y', $assetCostingValue[11]);
+
+                if (!$dateAcquired || !$depStartDate) {
+                    $invalidDate = !$dateAcquired ? 'Date Acquired' : 'Dep Start Date';
+                    throw new AssetCostingException("$invalidDate is invalid or not in the expected format.",
+                        $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if($depStartDate < $dateAcquired){
                     throw new AssetCostingException("Date Acquired cannot be greater than Dep Start Date ", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
