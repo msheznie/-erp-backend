@@ -7,6 +7,7 @@ use App\Jobs\CustomerInvoiceUpload\CustomerInvoiceUploadSubJob;
 use App\Models\AssetFinanceCategory;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
+use App\Models\FinanceCategorySerial;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetMaster;
@@ -81,6 +82,7 @@ class AssetCostingUpload implements ShouldQueue
 
 
         $assetFinanceCategory = AssetFinanceCategory::with(['costaccount', 'accdepaccount', 'depaccount', 'disaccount'])->find($auditCategory);
+        $allSerialRecords = FinanceCategorySerial::all()->toArray();
 
         $sheet  = $objPHPExcel->getActiveSheet();
         $startRow = 13;
@@ -130,7 +132,7 @@ class AssetCostingUpload implements ShouldQueue
 
         $detailRows = collect($detailRows)->chunk(100);
 
-        $jobData = ['logUploadAssetCosting' => $logUploadAssetCosting, 'assetFinanceCategory' => $assetFinanceCategory, 'startRow' => $startRow, 'totalRecords' => $totalRecords];
+        $jobData = ['logUploadAssetCosting' => $logUploadAssetCosting, 'assetFinanceCategory' => $assetFinanceCategory, 'startRow' => $startRow, 'totalRecords' => $totalRecords, 'allSerialRecords' => $allSerialRecords];
 
         foreach($detailRows as  $data) {
             foreach($data as  $assetData) {

@@ -2105,7 +2105,6 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
 
         UploadAssetCosting::where('id', $request->assetCostingUploadID)->update(['isCancelled' => 1, 'uploadStatus' => 0]);
-        app(AssetCreationService::class)->assetDeletion($request->assetCostingUploadID);
 
         return $this->sendResponse([], 'Asset costing cancelled successfully');
 
@@ -2122,7 +2121,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError('Unable to delete as asset costing is already successfully uploaded');
         }
 
-        app(AssetCreationService::class)->assetDeletion($request->assetCostingUploadID);
+        app(AssetCreationService::class)->assetDeletion($request->assetCostingUploadID, null);
 
 
         UploadAssetCosting::where('id', $request->assetCostingUploadID)->delete();

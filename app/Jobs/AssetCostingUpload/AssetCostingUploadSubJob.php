@@ -77,6 +77,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
         $jobData = $this->jobData;
         $index = $this->index;
         $startRow = $jobData['startRow'];
+        $allSerialRecords = $jobData['allSerialRecords'];
         $logUploadAssetCosting = $jobData['logUploadAssetCosting'];
         $assetFinanceCategory = $jobData['assetFinanceCategory'];
         $totalRecords = $jobData['totalRecords'];
@@ -340,7 +341,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
             Log::info('on catch');
 
             app(AssetCreationService::class)->assetUploadErrorLog($excelRow, $errorMessage, $assetCostingUploadID);
-            app(AssetCreationService::class)->assetDeletion($assetCostingUploadID);
+            app(AssetCreationService::class)->assetDeletion($assetCostingUploadID, $allSerialRecords);
 
 
             Log::error('Error Message' . $errorMessage);
@@ -354,7 +355,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
         if($uploadStatus === 0){
             Log::info('Cancelled - job');
 
-            app(AssetCreationService::class)->assetDeletion($logUploadAssetCosting->assetCostingUploadID);
+            app(AssetCreationService::class)->assetDeletion($logUploadAssetCosting->assetCostingUploadID, $allSerialRecords);
         }
     }
 }

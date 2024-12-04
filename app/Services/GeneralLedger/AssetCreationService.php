@@ -10,6 +10,7 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
+use App\Models\FinanceCategorySerial;
 use App\Models\FixedAssetCost;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetDepreciationPeriod;
@@ -65,20 +66,23 @@ class AssetCreationService extends AppBaseController
         }
     }
 
-    public function assetDeletion($assetCostingUploadID)
+    public function assetDeletion($assetCostingUploadID, $allSerialRecords)
     {
         $createdFAs = FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->get();
         foreach ($createdFAs as $createdFA){
+
+            if($allSerialRecords) {
+                FinanceCategorySerial::truncate();
+
+                FinanceCategorySerial::insert($allSerialRecords);
+            }
             GeneralLedger::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
             DocumentApproved::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
             FixedAssetCost::where('faID', $createdFA->faID)->delete();
             $fixedDeps = FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->get();
-            foreach ($fixedDeps as $fixedDep){
-                FixedAssetDepreciationMaster::where('depMasterAutoID', $fixedDep->depMasterAutoID)->delete();
-                GeneralLedger::where('documentSystemID', 23)->where('documentSystemCode', $fixedDep->depMasterAutoID)->delete();
-            }
-
-
+            $depMasterAutoIDs = $fixedDeps->pluck('depMasterAutoID');
+            GeneralLedger::where('documentSystemID', 23)->whereIn('documentSystemCode', $depMasterAutoIDs)->delete();
+            FixedAssetDepreciationMaster::whereIn('depMasterAutoID', $depMasterAutoIDs)->delete();
             FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->delete();
         }
         FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->forceDelete();

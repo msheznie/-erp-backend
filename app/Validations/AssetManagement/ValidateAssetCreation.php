@@ -155,8 +155,8 @@ class ValidateAssetCreation
         if($date == null){
             return self::sendJsonResponse(false,"Please check date of column", 500);
         }
-        $datetime = \DateTime::createFromFormat('d-m-Y', $date);
-        if ($datetime && $datetime->format('d-m-Y') === $date) {
+        $datetime = \DateTime::createFromFormat('d/m/Y', $date);
+        if ($datetime && $datetime->format('d/m/Y') === $date) {
             $date = $datetime->format('m/d/Y');
 
             return self::sendJsonResponse(true,'Date format validation passed',200, $date);
