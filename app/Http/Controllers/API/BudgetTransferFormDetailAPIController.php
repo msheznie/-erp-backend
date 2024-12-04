@@ -321,9 +321,8 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->where('chartOfAccountID',$input['fromChartOfAccountSystemID'])
             ->where('serviceLineSystemID',$input['fromServiceLineSystemID'])
             ->where('templateDetailID',$input['fromTemplateDetailID'])
-            ->where('Year',$budgetTransferMaster->year)
+            ->where('companyFinanceYearID',$budgetTransferMaster->companyFinanceYearID)
             ->count();
-
 
         if($fromDataBudgetCheck == 0){
             throw new \Exception("Selected account code is not available in the budget. 
@@ -363,7 +362,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         })
         ->whereHas('master',function ($q) use ($budgetTransferMaster) {
             $q->where('companySystemID', $budgetTransferMaster->companySystemID)
-                ->where('year', $budgetTransferMaster->year)
+                ->where('companyFinanceYearID', $budgetTransferMaster->companyFinanceYearID)
                 ->where('approvedYN', 0);
         })
         ->with(['master'])
@@ -390,7 +389,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                                        "))
             ->where('erp_budjetdetails.companySystemID', $budgetTransferMaster->companySystemID)
             ->where('erp_budjetdetails.serviceLineSystemID', $input['fromServiceLineSystemID'])
-            ->where('erp_budjetdetails.Year', $budgetTransferMaster->year)
+            ->where('erp_budjetdetails.companyFinanceYearID', $budgetTransferMaster->companyFinanceYearID)
             ->where('erp_budjetdetails.templateDetailID', $input['fromTemplateDetailID'])
             ->where('erp_companyreporttemplatedetails.companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
             ->where('erp_budjetdetails.chartOfAccountID', $input['fromChartOfAccountSystemID'])
@@ -421,7 +420,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                         ->on('erp_budjetdetails.chartOfAccountID', '=', 'ppo.financeGLcodePLSystemID');
                 })
             ->groupBy(['erp_budjetdetails.companySystemID', 'erp_budjetdetails.serviceLineSystemID',
-                'erp_budjetdetails.chartOfAccountID', 'erp_budjetdetails.Year'])
+                'erp_budjetdetails.chartOfAccountID', 'erp_budjetdetails.companyFinanceYearID'])
             ->first();
 
         $transferAmount = collect($budgetTransferToData)->sum('adjustmentAmountRpt');
