@@ -731,111 +731,89 @@ class SupplierInvoiceCreation implements ShouldQueue
                                 }
                             }
 
+                            $invAttachment['isAttachmentAvailable'] = true;
                             $documentAttachment = $invMaster['attachment'] ?? null;
                             if (!is_null($documentAttachment)) {
-                                $attachmentApplicable = $documentAttachment['attachmentApplicable'] ?? null;
-                                if(!is_null($attachmentApplicable)) {
-                                    $attachmentApplicable = strtolower($attachmentApplicable);
-                                    if(in_array($attachmentApplicable,["yes","no"])) {
-                                        $invAttachment['attachmentApplicable'] = $attachmentApplicable == "yes";
-                                        if($attachmentApplicable == "yes") {
-                                            $attachmentDescription = $documentAttachment['attachmentDescription'] ?? null;
-                                            if(!is_null($attachmentDescription)) {
-                                                $invAttachment['attachmentDescription'] = $attachmentDescription;
-                                                $attachmentType = $documentAttachment['attachmentType'] ?? null;
-                                                if(!is_null($attachmentType)) {
-                                                    $isAttachmentTypeExists = DocumentAttachmentType::where('description',$attachmentType)->first();
-                                                    if($isAttachmentTypeExists) {
-                                                        $invAttachment['attachmentType'] = $isAttachmentTypeExists->travelClaimAttachmentTypeID;
-                                                    }
-                                                    else {
-                                                        $headerDataError[] = [
-                                                            'field' => 'attachmentType',
-                                                            'message' => 'The Attachment Type ' . $attachmentType . ' does not exists'
-                                                        ];
-                                                    }
-                                                }
-                                            }
-                                            else{
-                                                $validationError[] = [
-                                                    'field' => 'attachmentDescription',
-                                                    'message' => 'Attachment Description field is required'
-                                                ];
-                                            }
+                                $attachmentDescription = $documentAttachment['attachmentDescription'] ?? null;
+                                if(!is_null($attachmentDescription)) {
+                                    $invAttachment['attachmentDescription'] = $attachmentDescription;
+                                }
+                                else{
+                                    $validationError[] = [
+                                        'field' => 'attachmentDescription',
+                                        'message' => 'Attachment Description field is required'
+                                    ];
+                                }
 
-                                            $docExpiryDate = $documentAttachment['docExpiryDate'] ?? null;
-                                            if($docExpiryDate != null) {
-                                                $invAttachment['docExpirtyDate'] = $docExpiryDate;
-                                            }
-
-                                            $file = $documentAttachment['file'] ?? null;
-                                            if($file != null) {
-                                                $fileSizeData = strlen(base64_decode($file));
-                                                if($fileSizeData < config('app.attach_upload_size_limit')) {
-                                                    $invAttachment['file'] = $file;
-                                                    $invAttachment['sizeInKbs'] = $fileSizeData;
-                                                }
-                                                else {
-                                                    $headerDataError[] = [
-                                                        'field' => 'file',
-                                                        'message' => 'The maximum limit of size is exceeded for the attachment'
-                                                    ];
-                                                }
-                                            }
-                                            else {
-                                                $validationError[] = [
-                                                    'field' => 'file',
-                                                    'message' => 'File field is required'
-                                                ];
-                                            }
-
-                                            $fileName = $documentAttachment['fileNameWithExtension'] ?? null;
-                                            if($fileName != null) {
-                                                $fileNameData = explode(".",$fileName);
-                                                if(count($fileNameData) > 1) {
-                                                    $invAttachment['originalFilename'] = $fileName;
-                                                    $invAttachment['fileType'] = $fileNameData[1];
-                                                }
-                                                else {
-                                                    $headerDataError[] = [
-                                                        'field' => 'fileNameWithExtension',
-                                                        'message' => 'File name with extension format is invalid'
-                                                    ];
-                                                }
-                                            }
-                                            else {
-                                                $validationError[] = [
-                                                    'field' => 'fileNameWithExtension',
-                                                    'message' => 'File name with extension field is required'
-                                                ];
-                                            }
-                                        }
-                                        else if ($isAttachmentRequired) {
-                                            $headerDataError[] = [
-                                                'field' => 'attachmentApplicable',
-                                                'message' => 'There is no attachment. Attachment is mandatory for this document'
-                                            ];
-                                        }
+                                $attachmentType = $documentAttachment['attachmentType'] ?? null;
+                                if(!is_null($attachmentType)) {
+                                    $isAttachmentTypeExists = DocumentAttachmentType::where('description',$attachmentType)->first();
+                                    if($isAttachmentTypeExists) {
+                                        $invAttachment['attachmentType'] = $isAttachmentTypeExists->travelClaimAttachmentTypeID;
                                     }
                                     else {
                                         $headerDataError[] = [
-                                            'field' => 'attachmentApplicable',
-                                            'message' => 'Attachment Applicable format is invalid'
+                                            'field' => 'attachmentType',
+                                            'message' => 'The Attachment Type ' . $attachmentType . ' does not exists'
+                                        ];
+                                    }
+                                }
+
+                                $docExpiryDate = $documentAttachment['docExpiryDate'] ?? null;
+                                if($docExpiryDate != null) {
+                                    $invAttachment['docExpirtyDate'] = $docExpiryDate;
+                                }
+
+                                $file = $documentAttachment['file'] ?? null;
+                                if($file != null) {
+                                    $fileSizeData = strlen(base64_decode($file));
+                                    if($fileSizeData < config('app.attach_upload_size_limit')) {
+                                        $invAttachment['file'] = $file;
+                                        $invAttachment['sizeInKbs'] = $fileSizeData;
+                                    }
+                                    else {
+                                        $headerDataError[] = [
+                                            'field' => 'file',
+                                            'message' => 'The maximum limit of size is exceeded for the attachment'
                                         ];
                                     }
                                 }
                                 else {
                                     $validationError[] = [
-                                        'field' => 'attachmentApplicable',
-                                        'message' => 'Attachment Applicable field is required'
+                                        'field' => 'file',
+                                        'message' => 'File field is required'
+                                    ];
+                                }
+
+                                $fileName = $documentAttachment['fileNameWithExtension'] ?? null;
+                                if($fileName != null) {
+                                    $fileNameData = explode(".",$fileName);
+                                    if(count($fileNameData) > 1) {
+                                        $invAttachment['originalFilename'] = $fileName;
+                                        $invAttachment['fileType'] = $fileNameData[1];
+                                    }
+                                    else {
+                                        $headerDataError[] = [
+                                            'field' => 'fileNameWithExtension',
+                                            'message' => 'File name with extension format is invalid'
+                                        ];
+                                    }
+                                }
+                                else {
+                                    $validationError[] = [
+                                        'field' => 'fileNameWithExtension',
+                                        'message' => 'File name with extension field is required'
                                     ];
                                 }
                             }
-                            else {
+                            else if($isAttachmentRequired) {
                                 $validationError[] = [
                                     'field' => 'attachment',
-                                    'message' => 'Attachment field is required'
+                                    'message' => 'There is no attachment. Attachment is mandatory for this document'
                                 ];
+                            }
+                            else {
+                                $invAttachment['isAttachmentAvailable'] = false;
                             }
 
                             unset($invMaster['details']);
@@ -1100,7 +1078,7 @@ class SupplierInvoiceCreation implements ShouldQueue
             }
 
             //store document attachment
-            if($invAttachment['attachmentApplicable']) {
+            if($invAttachment['isAttachmentAvailable']) {
                 $invAttachment['companySystemID'] = $compId;
                 $invAttachment['documentSystemID'] = 11;
                 $invAttachment['documentSystemCode'] = $returnData['bookingSuppMasInvAutoID'];
@@ -1131,7 +1109,7 @@ class SupplierInvoiceCreation implements ShouldQueue
             );
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
-                if($invAttachment['attachmentApplicable']) {
+                if($invAttachment['isAttachmentAvailable']) {
                     $attachment = DocumentAttachments::where('attachmentID', $supplierInvoiceAttachmentStoreData['data']['attachmentID'])->first();
                     if($attachment) {
                         $supplierInvoiceAttachmentDestroyData = $controller->deleteAttachmentData($attachment);
@@ -1173,7 +1151,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                     ];
                 }
                 else {
-                    if($invAttachment['attachmentApplicable']) {
+                    if($invAttachment['isAttachmentAvailable']) {
                         $attachment = DocumentAttachments::where('attachmentID', $supplierInvoiceAttachmentStoreData['data']['attachmentID'])->first();
                         if($attachment) {
                             $supplierInvoiceAttachmentDestroyData = $controller->deleteAttachmentData($attachment);
