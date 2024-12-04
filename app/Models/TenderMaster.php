@@ -691,9 +691,50 @@ class TenderMaster extends Model
             ->where('company_id', $companyId)
             ->first();
     }
+
     public static function getTenderByUuid($tenderUuid)
     {
         return self::where('uuid', $tenderUuid)
             ->first();
     }
+
+    public static function getTenderPOData($tenderId, $companyId)
+    {
+        $tender = TenderMaster::select('id', 'title', 'tender_code', 'currency_id')
+            ->with(['ranking_supplier' => function ($q) {
+                $q->select('id', 'supplier_id', 'tender_id')->where('award', 1)
+                    ->with(['supplier' => function ($q) {
+                        $q->select('id', 'supplier_master_id');
+                    }]);
+            }])
+            ->where('uuid', $tenderId)
+            ->where('company_id', $companyId)
+            ->first();
+
+        if (!$tender) {
+            return null;
+        }
+
+        return [
+            'title' => $tender->title,
+            'tender_code' => $tender->tender_code,
+            'currency_id' => $tender->currency_id,
+            'ranking_supplier' => $tender->ranking_supplier ? [
+                'id' => $tender->ranking_supplier->id,
+                'supplier_id' => $tender->ranking_supplier->supplier_id,
+                'supplier' => $tender->ranking_supplier->supplier ? [
+                    'id' => $tender->ranking_supplier->supplier->id,
+                    'supplier_master_id' => $tender->ranking_supplier->supplier->supplier_master_id,
+                ] : null,
+            ] : null,
+        ];
+
+    }
+
+
+    public function srmTenderPo()
+    {
+        return $this->hasOne('App\Models\SrmTenderPo', 'tender_id', 'id')->where('status', 1);
+    }
+
 }

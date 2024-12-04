@@ -2546,8 +2546,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         }
 
-
-        $purchaseOrder = ProcumentOrder::where('supplierID',$id)->where('approved',0)->where('poTypeID',2);
+        $purchaseOrder = ProcumentOrder::where('supplierID',$id)->where('approved',0)->whereIn('poTypeID', [2, 3]);
         if($purchaseOrder->count() > 0)
         {
            $PO =  $purchaseOrder->pluck('purchaseOrderCode')->toArray();

@@ -4520,7 +4520,13 @@ ORDER BY
         $companyId = $request['companyId'];
         $filters = $this->getFilterData($input);
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
+        $hasPolicyToCreatePOFromTender = Helper::checkPolicy($companyId, 97);
+
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier', 'srmTenderPo' => function ($q) {
+            $q->select('id', 'tender_id', 'po_id')->with(['procument_order' => function ($po) {
+                $po->select('purchaseOrderID', 'purchaseOrderCode');
+            }]);
+        }])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('is_awarded', 1)->where(function ($query) {
                 $query->where('negotiation_published', 0)
                     ->orWhere('is_negotiation_closed', 1);
@@ -4571,6 +4577,7 @@ ORDER BY
                 }
             })
             ->addIndexColumn()
+            ->addColumn('hasPolicyToCreatePOFromTender', $hasPolicyToCreatePOFromTender)
             ->with('orderCondition', $sort)
             ->make(true);
     }
@@ -5674,6 +5681,18 @@ ORDER BY
                 return $budgetItem ? $budgetItem->budget_amount : 0;
             }
         })->sum();
+    }
+
+    public function getTenderPOData(Request $request)
+    {
+        try {
+            $result = TenderMasterRepository::getTenderPOData($request['tenderUUID'], $request['companySystemID']);
+
+            return $this->sendResponse($result, 'Success' );
+        } catch (\Exception $e) {
+            $statusCode = $e->getCode() ?: 500;
+            return $this->sendError($e->getMessage(), $statusCode);
+        }
     }
 
 } 

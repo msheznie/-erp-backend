@@ -287,3 +287,4 @@ Route::post('getPublicSupplierLinkData', 'SRMPublicLinkAPIController@getPublicSu
 Route::post('saveSupplierPublicLink', 'SRMPublicLinkAPIController@saveSupplierPublicLink');
 Route::post('requestKycSubmit', 'SupplierMasterAPIController@requestSubmitKyc')->name("KYC Request");
 Route::post('checkBidOpeningDateValidation', 'BidSubmissionMasterAPIController@checkDateDisabled')->name("Bid Date Validation");
+Route::post('getTenderPOData', 'TenderMasterAPIController@getTenderPOData')->name("Create PO From Tender");

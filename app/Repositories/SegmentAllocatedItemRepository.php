@@ -126,7 +126,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
             return ['status' => false, 'message' => 'No remaining quantity to allocate'];
         }
 
-        if ($procumentOrder && $procumentOrder->poTypeID == 2) {
+        if ($procumentOrder && in_array($procumentOrder->poTypeID, [2, 3])) {
 
             $allocationData = [
                 'documentSystemID' => $input['documentSystemID'],

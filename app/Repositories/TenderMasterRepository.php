@@ -251,4 +251,9 @@ class TenderMasterRepository extends BaseRepository
         $opening_date_comp_end = $tender->stage === 1 ? $tender->bid_opening_end_date : $tender->technical_bid_closing_date;
         return $current_date->gt($opening_date_comp) && ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
     }
+
+    public static function getTenderPOData($tenderId, $companyId)
+    {
+        return TenderMaster::getTenderPOData($tenderId, $companyId);
+    }
 }
