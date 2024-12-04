@@ -1,11 +1,13 @@
 <?php
+
 namespace App\Services\OSOS_3_0;
 
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
 use App\Traits\OSOS_3_0\JobCommonFunctions;
 
-class UserService{
+class UserService
+{
     protected $apiExternalKey;
     protected $apiExternalUrl;
     protected $userData;
@@ -21,14 +23,17 @@ class UserService{
     protected $operation;
     protected $pivotTableId;
     protected $masterUuId;
+    protected $empId;
 
     use JobCommonFunctions;
 
-    public function __construct($dataBase, $id, $postType, $thirdPartyData){
+    public function __construct($dataBase, $id, $empId, $postType, $thirdPartyData)
+    {
 
         $this->dataBase = $dataBase;
-        $this->postType = trim(strtoupper($postType),'"');
+        $this->postType = trim(strtoupper($postType), '"');
         $this->id = $id;
+        $this->empId = $empId;
         $this->detailId = $thirdPartyData['id'];
         $this->apiKey = $thirdPartyData['api_key'];
         $this->apiExternalKey = $thirdPartyData['api_external_key'];
@@ -42,18 +47,19 @@ class UserService{
         $this->getUrl('user');
     }
 
-    function execute(){
+    function execute()
+    {
         try {
 
-            $valResp =$this->validateApiResponse();
+            $valResp = $this->validateApiResponse();
 
-            if(!$valResp['status']){
-                $logData = ['message' => $valResp['message'], 'id' => $this->id ];
+            if (!$valResp['status']) {
+                $logData = ['message' => $valResp['message'], 'id' => $this->id];
                 return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
             }
 
             $logData = [
-                'message' => "User about to trigger: " . $this->id . ' - '. $this->userData['fullName'],
+                'message' => "User about to trigger: " . $this->id . ' - ' . $this->userData['fullName'],
                 'id' => $this->id
             ];
 
@@ -62,8 +68,8 @@ class UserService{
             $client = new Client();
             $headers = [
                 'content-type' => 'application/json',
-                'auth-key' =>  $this->apiExternalKey,
-                'menu-id' =>  'defualt'
+                'auth-key' => $this->apiExternalKey,
+                'menu-id' => 'defualt'
             ];
 
             $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
@@ -78,13 +84,13 @@ class UserService{
 
                 $je = json_decode($body, true);
 
-                if(!isset($je['id'])){
-                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id ];
+                if (!isset($je['id'])) {
+                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id];
                     return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
                 }
 
                 $this->insertOrUpdateThirdPartyPivotTable($je['id']);
-                $logData = ['message' => "Api user {$this->operation} successfully processed", 'id' => $this->id ];
+                $logData = ['message' => "Api user {$this->operation} successfully processed", 'id' => $this->id];
                 $this->insertToLogTb($logData, 'info', 'User', $this->companyId);
                 return ['status' => true, 'message' => $logData['message'], 'code' => $statusCode];
 
@@ -100,63 +106,64 @@ class UserService{
             $exStatusCode = $e->getCode();
             if ($exStatusCode == 400) {
                 $msg = $e->getMessage();
-                $logData = ['message' => $msg, 'id' => $this->id ];
+                $logData = ['message' => $msg, 'id' => $this->id];
                 return $this->capture400Err($logData, 'User');
             }
 
             $msg = "Exception \n";
-            $msg .= "operation : ".$this->operation."\n";
-            $msg .= "message : ".$e->getMessage()."\n";
-            $msg .= "file : ".$e->getFile()."\n";;
-            $msg .= "line no : ".$e->getLine()."\n";
+            $msg .= "operation : " . $this->operation . "\n";
+            $msg .= "message : " . $e->getMessage() . "\n";
+            $msg .= "file : " . $e->getFile() . "\n";;
+            $msg .= "line no : " . $e->getLine() . "\n";
 
-            $logData = ['message' =>  $msg, 'id' => $this->id ];
+            $logData = ['message' => $msg, 'id' => $this->id];
             $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
 
             return ['status' => false, 'message' => $msg, 'code' => $exStatusCode];
         }
     }
 
-    function validateApiResponse(){
+    function validateApiResponse()
+    {
 
-        if(empty($this->id)){
+        if (empty($this->id)) {
             $error = 'User id is required';
-            return ['status' =>false, 'message'=> $error];
+            return ['status' => false, 'message' => $error];
         }
 
-        if(empty($this->pivotTableId)){
+        if (empty($this->pivotTableId)) {
             $error = 'Pivot table reference not found check pivot_tbl_reference.id';
-            return ['status' =>false, 'message'=> $error];
+            return ['status' => false, 'message' => $error];
         }
 
         if (empty($this->userData)) {
             $error = 'User not found';
-            return ['status' =>false, 'message'=> $error];
+            return ['status' => false, 'message' => $error];
         }
 
-        if($this->postType != 'POST'){
-            if(empty($this->userData['id'])){
+        if ($this->postType != 'POST') {
+            if (empty($this->userData['id'])) {
                 $error = 'Reference id not found';
-                return ['status' =>false, 'message'=> $error];
+                return ['status' => false, 'message' => $error];
             }
         }
 
-        if (empty($this->userData['userName'])){
+        if (empty($this->userData['userName'])) {
             $error = 'Username is required';
-            return ['status' =>false, 'message'=> $error];
+            return ['status' => false, 'message' => $error];
         }
 
-        if ($this->validateUserName() > 1){
+        if ($this->validateUserName() > 1) {
             $error = 'Username is not unique';
-            return ['status' =>false, 'message'=> $error];
+            return ['status' => false, 'message' => $error];
         }
 
-        if(empty($this->validateCompanyReference())){
+        if (empty($this->validateCompanyReference())) {
             $error = 'Company reference not found';
-            return ['status' =>false, 'message'=> $error];
+            return ['status' => false, 'message' => $error];
         }
 
-        return ['status' =>true, 'message'=> 'success'];
+        return ['status' => true, 'message' => 'success'];
     }
 
     function getUserData()
@@ -176,29 +183,31 @@ class UserService{
                     END as empTitle,
                     CONCAT(IFNULL(e.EDOB, '2000-01-01'), 'T18:30:00.000Z') as dateOfBirth,
                     DATE_FORMAT(IFNULL(e.EDOB, '2000-01-01'), '%d/%m/%Y') as hiddenDateOfBirth")
-            ->join('srp_employeesdetails as e', function($join) {
+            ->join('srp_employeesdetails as e', function ($join) {
                 $join->on('e.EIdNo', '=', 'u.employee_id');
             })
-            ->join('employees as emp', function($join) {
+            ->join('employees as emp', function ($join) {
                 $join->on('emp.employeeSystemID', '=', 'u.employee_id');
             })
-            ->leftJoin('hrms_gender as g', function($join) {
+            ->leftJoin('hrms_gender as g', function ($join) {
                 $join->on('g.genderID', '=', 'e.Gender');
             })
             ->where('u.id', $this->id)
             ->first();
 
-        if(empty($data)){
+        if (empty($data)) {
             return;
         }
 
         $companyId = $this->getOtherReferenceId($data->companyId, 5);
+        $employeeId = $this->getOtherReferenceId($this->empId, 4);
 
         $this->userData = [
-            "activeCompany" =>$companyId,
+            "activeCompany" => $companyId,
             "company" => [
                 "id" => $companyId
             ],
+            "EmployeeId" => $employeeId,
             "configuration" => [],
             "userName" => $data->username,
             "email" => $data->EEmail,
@@ -215,13 +224,14 @@ class UserService{
             "userType" => "EssUser"
         ];
 
-        if($this->postType != "POST"){
+        if ($this->postType != "POST") {
             $this->getReferenceId();
             $this->userData['id'] = $this->masterUuId;
         }
     }
 
-    function validateUserName(){
+    function validateUserName()
+    {
         return DB::table('users')
             ->where('username', trim($this->userData['userName']))
             ->count();

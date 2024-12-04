@@ -3,16 +3,15 @@
 namespace App\Jobs\OSOS_3_0;
 
 use App\helper\CommonJobService;
-use App\Services\OSOS_3_0\UserService;
+use App\Services\OSOS_3_0\EducationService;
 use App\Traits\OSOS_3_0\JobCommonFunctions;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
-class UsersWebHook implements ShouldQueue
+class EducationWebHook implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $id;
@@ -53,31 +52,23 @@ class UsersWebHook implements ShouldQueue
     {
         CommonJobService::db_switch($this->dataBase);
 
-        $userData = $this->getUserId($this->id);
-        $empId = $this->id;
-
-        if (empty($userData->userId)){
-            $logData = ['message' => 'User data does not exists', 'Employee Id' => $this->id ];
-            return $this->insertToLogTb($logData, 'error', 'User', $this->thirdPartyData['company_id']);
-        }
-
-        $service = new UserService($this->dataBase, $userData->userId, $empId, $this->postType, $this->thirdPartyData);
+        $service = new EducationService($this->dataBase, $this->id, $this->postType, $this->thirdPartyData);
         $resp = $service->execute();
 
         if(isset($resp['status']) && !$resp['status']){
-            $this->callUserService($resp['code'], 'User', $userData->userId, $empId);
+            $this->callEducationService($resp['code'], 'Education');
         }
     }
 
-    function callUserService($statusCode, $desc, $userId, $empId)
+    function callEducationService($statusCode, $desc)
     {
         if (!in_array($statusCode, [200, 201])) {
             for ($i = 1; $i <= 3; $i++) {
-                $logData = ['message' => 'Api User attempt'. $i, 'id' => $userId ];
+                $logData = ['message' => 'Api Education attempt'. $i, 'id' => $this->id ];
                 $this->insertToLogTb($logData, 'info', $desc, $this->thirdPartyData['company_id']);
 
-                $service = new UserService(
-                    $this->dataBase, $userId, $empId, $this->postType, $this->thirdPartyData
+                $service = new EducationService(
+                    $this->dataBase, $this->id, $this->postType, $this->thirdPartyData
                 );
 
                 $resp = $service->execute();
@@ -88,13 +79,5 @@ class UsersWebHook implements ShouldQueue
         }
 
         return true;
-    }
-
-    function getUserId($empId)
-    {
-        return DB::table('users')
-            ->selectRaw('id as userId')
-            ->where('employee_id', $empId)
-            ->first();
     }
 }

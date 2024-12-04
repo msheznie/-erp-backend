@@ -331,8 +331,22 @@ class LeaveAccrualService
 
         }
 
-        if (!empty($detail)) {
-            LeaveAccrualDetail::insert($detail);
+        $chunkSize = 500;
+
+        if (empty($detail) || !is_array($detail)) {
+            Log::info('No accrual details found');
+            return;
+        }
+
+        $chunks = array_chunk($detail, $chunkSize);
+
+        foreach ($chunks as $chunk) {
+            try {
+                LeaveAccrualDetail::insert($chunk);
+            } catch (\Exception $e) {
+                Log::error('Error inserting leave accrual record: ' . $e->getMessage());
+                continue;
+            }
         }
 
     }
