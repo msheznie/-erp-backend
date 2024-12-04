@@ -1237,6 +1237,26 @@ class FinancialReportAPIController extends AppBaseController
                         if ($val2->isFinalLevel == 1) {
                             $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
                             if (strpos($val2->detDescription, "Retained Earning") !== false && $showRetained == false) {
+                                if($val2->detDescription == "Retained Earning")
+                                {
+                                    $retainedCode = '';
+                                    $retainedDes = '';
+                                    if (!empty($val2->glCodes)) {
+                                        $glAutoIDs = collect($val2->glCodes)->pluck('glAutoID');
+                                        
+                                        if ($glAutoIDs->isNotEmpty()) {
+                                            $isRetained = ChartOfAccount::whereIn('chartOfAccountSystemID', $glAutoIDs)
+                                                ->where('is_retained_earnings', 1)
+                                                ->first();
+                                    
+                                            if ($isRetained) {
+                                                $retainedCode = $isRetained->AccountCode;
+                                                $retainedDes = $isRetained->AccountDescription;
+                                            }
+                                        }
+                                    }
+                                    $val2->detDescription = $val2->detDescription.' ('.$retainedCode.' -'.$retainedDes.')';
+                                }
                                 $val2->glCodes = null;
                             }
                         } else {
@@ -5734,6 +5754,308 @@ class FinancialReportAPIController extends AppBaseController
         $query = 'SELECT * 
                     FROM
                         (
+                                SELECT
+                                * 
+                            FROM
+                                (
+                                    SELECT
+                                        erp_generalledger.companySystemID,
+                                        erp_generalledger.companyID,
+                                        erp_generalledger.serviceLineSystemID,
+                                        erp_generalledger.serviceLineCode,
+                                        "" AS documentSystemID,
+                                        "" AS documentID,
+                                        "" AS documentSystemCode,
+                                        "" AS documentCode,
+                                        "" AS documentDate,
+                                        "" AS chartOfAccountSystemID,
+                                        "" AS glCode,
+                                        "BS" AS glAccountType,
+                                        "Retained Earnings system calculated" AS documentNarration,
+                                        "" AS clientContractID,
+                                        "" AS supplierCodeSystem,
+                                        erp_generalledger.documentLocalCurrencyID,
+                                        "Retained Earnings (Automated)" AS AccountDescription,
+                                        companymaster.CompanyName,
+                                        erp_templatesglcode.templatesDetailsAutoID,
+                                        approveEmp.empName as approvedBy,
+                                        confirmEmp.empName as confirmedBy,
+                                        erp_generalledger.documentConfirmedDate,
+                                        erp_generalledger.documentFinalApprovedDate,
+                                        erp_templatesglcode.templateMasterID,
+                                        erp_templatesdetails.templateDetailDescription,
+                                        erp_companyreporttemplatedetails.description as templateDescription,
+                                        CASE 
+                                        WHEN 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) > 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) 
+                                        THEN 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            )
+                                        ELSE 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            )
+                                    END AS localDebit,
+                                    CASE 
+                                        WHEN 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) > 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) 
+                                        THEN 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            )
+                                        ELSE 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount < 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount > 0 THEN 
+                                                        erp_generalledger.documentLocalAmount 
+                                                    ELSE 0 
+                                                END
+                                            )
+                                        END AS localCredit,
+                                        0 AS doucmentLocalBalanceAmount,
+                                        erp_generalledger.documentRptCurrencyID,
+                                        CASE 
+                                        WHEN 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) > 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) 
+                                        THEN 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            )
+                                        ELSE 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            )
+                                    END AS rptDebit,
+                                    CASE 
+                                        WHEN 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) > 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) 
+                                        THEN 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            )
+                                        ELSE 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount < 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            ) - 
+                                            SUM(
+                                                CASE 
+                                                    WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount > 0 THEN 
+                                                        erp_generalledger.documentRptAmount 
+                                                    ELSE 0 
+                                                END
+                                            )
+                                        END AS rptCredit,
+                                        0 AS documentRptBalanceAmount,
+                                        "" AS isCustomer
+                                    FROM
+                                        erp_generalledger
+                                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
+                                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                                        )
+                                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
+                                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
+                                        WHERE
+                                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                                         AND ' . intval($chartOfAccountIdRetained) . ' != 0
+                                        HAVING
+                                        localDebit != 0 OR localCredit != 0 OR doucmentLocalBalanceAmount != 0 OR rptDebit != 0 OR rptCredit != 0 OR documentRptBalanceAmount != 0
+                                ) AS erp_retained_earning_automate   
+                              UNION ALL
                             SELECT
                                 * 
                             FROM
@@ -5889,131 +6211,7 @@ class FinancialReportAPIController extends AppBaseController
                                         erp_generalledger.companySystemID,
                                         erp_generalledger.serviceLineSystemID,
                                         erp_generalledger.chartOfAccountSystemID
-                                ) AS erp_qry_gl_bf
-
-
-                                UNION ALL
-                                SELECT
-                                * 
-                            FROM
-                                (
-                                    SELECT
-                                        erp_generalledger.companySystemID,
-                                        erp_generalledger.companyID,
-                                        erp_generalledger.serviceLineSystemID,
-                                        erp_generalledger.serviceLineCode,
-                                        "" AS documentSystemID,
-                                        "" AS documentID,
-                                        "" AS documentSystemCode,
-                                        "" AS documentCode,
-                                        "" AS documentDate,
-                                        "" AS chartOfAccountSystemID,
-                                        "" AS glCode,
-                                        "BS" AS glAccountType,
-                                        "Retained Earnings system calculated" AS documentNarration,
-                                        "" AS clientContractID,
-                                        "" AS supplierCodeSystem,
-                                        erp_generalledger.documentLocalCurrencyID,
-                                        "Retained Earnings (Automated)" AS AccountDescription,
-                                        companymaster.CompanyName,
-                                        erp_templatesglcode.templatesDetailsAutoID,
-                                        approveEmp.empName as approvedBy,
-                                        confirmEmp.empName as confirmedBy,
-                                        erp_generalledger.documentConfirmedDate,
-                                        erp_generalledger.documentFinalApprovedDate,
-                                        erp_templatesglcode.templateMasterID,
-                                        erp_templatesdetails.templateDetailDescription,
-                                        erp_companyreporttemplatedetails.description as templateDescription,
-                                        SUM(
-                                            CASE
-                                                WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount < 0 THEN 
-                                                    erp_generalledger.documentLocalAmount
-                                                ELSE 
-                                                    0
-                                            END
-                                        ) - 
-                                        SUM(
-                                            CASE
-                                                WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount > 0 THEN 
-                                                    erp_generalledger.documentLocalAmount
-                                                ELSE 
-                                                    0
-                                            END
-                                        ) AS localDebit,
-                                        SUM(
-                                            CASE
-                                                WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount > 0 THEN 
-                                                    erp_generalledger.documentLocalAmount
-                                                ELSE 
-                                                    0
-                                            END
-                                        ) - 
-                                        SUM(
-                                            CASE
-                                                WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount < 0 THEN 
-                                                    erp_generalledger.documentLocalAmount
-                                                ELSE 
-                                                    0
-                                            END
-                                        ) AS localCredit,
-                                        0 AS doucmentLocalBalanceAmount,
-                                        erp_generalledger.documentRptCurrencyID,
-                                       SUM(
-                                            CASE
-                                                WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount < 0 THEN 
-                                                    erp_generalledger.documentRptAmount
-                                                ELSE 
-                                                    0
-                                            END
-                                        ) - 
-                                        SUM(
-                                            CASE
-                                                WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount > 0 THEN 
-                                                    erp_generalledger.documentRptAmount
-                                                ELSE 
-                                                    0
-                                            END
-                                        ) AS rptDebit,
-                                        SUM(
-                                            CASE
-                                                WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount > 0 THEN 
-                                                    erp_generalledger.documentRptAmount
-                                                ELSE 
-                                                    0
-                                            END
-                                        ) - 
-                                        SUM(
-                                            CASE
-                                                WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount < 0 THEN 
-                                                    erp_generalledger.documentRptAmount
-                                                ELSE 
-                                                    0
-                                            END
-                                        ) AS rptCredit,
-                                        0 AS documentRptBalanceAmount,
-                                        "" AS isCustomer
-                                    FROM
-                                        erp_generalledger
-                                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
-                                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
-                                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
-                                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
-                                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
-                                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
-                                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
-                                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
-                                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
-                                        )
-                                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
-                                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
-                                        WHERE
-                                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
-                                         AND ' . intval($chartOfAccountIdRetained) . ' != 0
-                                        HAVING
-                                        localDebit != 0 OR localCredit != 0 OR doucmentLocalBalanceAmount != 0 OR rptDebit != 0 OR rptCredit != 0 OR documentRptBalanceAmount != 0
-                                ) AS erp_retained_earning_automate        
+                                ) AS erp_qry_gl_bf   
                             UNION ALL
                             SELECT
                                 * 
