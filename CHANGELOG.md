@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.54.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.53.3...v10.54.0) (2024-12-04)
+
+
+### Features
+
+* **API:** 3.0 API - Education Masters [GHR-2208] ([#7158](https://github.com/pbsgears/Gears_BackEnd/issues/7158)) ([4e04668](https://github.com/pbsgears/Gears_BackEnd/commit/4e046684fb36bb4c0e1fde15ac442bdb0ab00379))
+* **OSOS 3.0:** HRMS | OSOS 3.0 | Employee User Mapping [GHR-2341] ([#7175](https://github.com/pbsgears/Gears_BackEnd/issues/7175)) ([42801c2](https://github.com/pbsgears/Gears_BackEnd/commit/42801c22642e0dda0b26d8bd64631cf65c40c6e9))
+* **OSOS 3.0:** HRMS | OSOS 3.0 | Modifications in Employee API Education and Certificates [GHR-2340] ([#7199](https://github.com/pbsgears/Gears_BackEnd/issues/7199)) ([8cb49de](https://github.com/pbsgears/Gears_BackEnd/commit/8cb49de919689f5d8bd5bcb235d962d0a729be61))
+
+
+### Bug Fixes
+
+* **Leave Accrual:** Monthly Accrual not run based on the policy of End of Month[GHR-2343] ([#7146](https://github.com/pbsgears/Gears_BackEnd/issues/7146)) ([9316de6](https://github.com/pbsgears/Gears_BackEnd/commit/9316de6f52b15bfbd6dda03df99fbca8554d276f))
+* **OSOS 3.0:** Change Employee API status values [GHR-2418] ([#7212](https://github.com/pbsgears/Gears_BackEnd/issues/7212)) ([9d5c3fa](https://github.com/pbsgears/Gears_BackEnd/commit/9d5c3fa4974e84fea2d3416b1fd0141e8dec250e))
+
 ## [10.53.3](https://github.com/pbsgears/Gears_BackEnd/compare/v10.53.2...v10.53.3) (2024-11-19)
 
 
