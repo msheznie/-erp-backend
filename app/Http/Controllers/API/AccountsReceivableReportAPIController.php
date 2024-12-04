@@ -7653,6 +7653,7 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
         return DB::select($sql);
     }
 
+ 
     function pdfExportCAReport(Request $request)
     {
         $reportID = $request->reportID;
