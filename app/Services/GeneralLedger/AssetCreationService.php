@@ -18,6 +18,7 @@ use App\Models\FixedAssetMaster;
 use App\Models\GeneralLedger;
 use App\Models\LogUploadAssetCosting;
 use App\Models\SegmentMaster;
+use App\Models\TemporaryAssetSerial;
 use App\Models\UploadAssetCosting;
 use App\Repositories\FixedAssetMasterRepository;
 use App\Traits\JsonResponseTrait;
@@ -66,16 +67,27 @@ class AssetCreationService extends AppBaseController
         }
     }
 
-    public function assetDeletion($assetCostingUploadID, $allSerialRecords)
+    public function assetDeletion($assetCostingUploadID, $isFailed)
     {
         $createdFAs = FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->get();
         foreach ($createdFAs as $createdFA){
 
-            if (!empty($allSerialRecords)) {
-                FinanceCategorySerial::truncate();
 
-                FinanceCategorySerial::insert($allSerialRecords);
+            if($isFailed == 1) {
+                $allRecords = TemporaryAssetSerial::all();
+
+                foreach ($allRecords as $allRecord) {
+                    FinanceCategorySerial::where('id', $allRecord->serialID)->update(['lastSerialNo' => $allRecord->lastSerialNo]);
+                }
+
+                $financeSerialIds = TemporaryAssetSerial::pluck('serialID');
+
+                if ($financeSerialIds->isNotEmpty() && $allRecords->isNotEmpty()) {
+                    FinanceCategorySerial::whereNotIn('id', $financeSerialIds)->delete();
+                }
             }
+
+
             GeneralLedger::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
             DocumentApproved::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
             FixedAssetCost::where('faID', $createdFA->faID)->delete();
@@ -85,6 +97,7 @@ class AssetCreationService extends AppBaseController
             FixedAssetDepreciationMaster::whereIn('depMasterAutoID', $depMasterAutoIDs)->delete();
             FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->delete();
         }
+        TemporaryAssetSerial::truncate();
         FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->forceDelete();
     }
 
