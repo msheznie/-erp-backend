@@ -5804,6 +5804,7 @@ class FinancialReportAPIController extends AppBaseController
                                         erp_templatesglcode.templateMasterID,
                                         erp_templatesdetails.templateDetailDescription,
                                         erp_companyreporttemplatedetails.description as templateDescription,
+                                        1 As orderNo,
                                         CASE 
                                         WHEN 
                                             SUM(
