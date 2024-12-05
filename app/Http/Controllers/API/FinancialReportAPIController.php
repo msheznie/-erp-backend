@@ -1121,7 +1121,9 @@ class FinancialReportAPIController extends AppBaseController
 
                                             $previousCompany = Company::find($previousCompanyID);
 
-                                            $holdingPercentage = ($previousCompany->holding_percentage + $company['holding_percentage']) / 2;
+                                            if($previousCompany) {
+                                                $holdingPercentage = ($previousCompany->holding_percentage + $company['holding_percentage']) / 2;
+                                            }
                                         } else {
                                             $holdingPercentage = $company['holding_percentage'];
                                         }
@@ -1129,9 +1131,9 @@ class FinancialReportAPIController extends AppBaseController
 
 
                                     if ($currency == 1) {
-                                        $total += ($totalIncome->documentLocalAmount + $totalExpense->documentLocalAmount) * $holdingPercentage / 100;
+                                        $total += ($totalIncome->documentLocalAmount + $totalExpense->documentLocalAmount) * $company['holding_percentage'] / 100;
                                     } else {
-                                        $total += ($totalIncome->documentRptAmount + $totalExpense->documentRptAmount) * $holdingPercentage / 100;
+                                        $total += ($totalIncome->documentRptAmount + $totalExpense->documentRptAmount) * $company['holding_percentage'] / 100;
                                     }
                                 }
                             }
