@@ -13,6 +13,7 @@ use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetMaster;
 use App\Models\Location;
 use App\Models\SegmentMaster;
+use App\Models\TemporaryAssetSerial;
 use App\Models\UploadAssetCosting;
 use App\Services\GeneralLedger\AssetCreationService;
 use App\Validations\AssetManagement\ValidateAssetCreation;
@@ -327,6 +328,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
 
                 if ($newCounterValue == $totalRecords) {
                     UploadAssetCosting::where('id', $logUploadAssetCosting->assetCostingUploadID)->update(['uploadStatus' => 1]);
+                    TemporaryAssetSerial::truncate();
                 }
                 DB::commit();
             }
