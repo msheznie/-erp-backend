@@ -5888,7 +5888,7 @@ class FinancialReportAPIController extends AppBaseController
                                                 END
                                             ) 
                                         THEN 
-                                            SUM(
+                                            ABS( SUM(
                                                 CASE 
                                                     WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentLocalAmount > 0 THEN 
                                                         erp_generalledger.documentLocalAmount 
@@ -5901,9 +5901,9 @@ class FinancialReportAPIController extends AppBaseController
                                                         erp_generalledger.documentLocalAmount 
                                                     ELSE 0 
                                                 END
-                                            )
+                                            ))
                                         ELSE 
-                                            SUM(
+                                            ABS( SUM(
                                                 CASE 
                                                     WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentLocalAmount < 0 THEN 
                                                         erp_generalledger.documentLocalAmount 
@@ -5916,7 +5916,7 @@ class FinancialReportAPIController extends AppBaseController
                                                         erp_generalledger.documentLocalAmount 
                                                     ELSE 0 
                                                 END
-                                            )
+                                            ))
                                         END AS localCredit,
                                         0 AS doucmentLocalBalanceAmount,
                                         erp_generalledger.documentRptCurrencyID,
@@ -5951,7 +5951,7 @@ class FinancialReportAPIController extends AppBaseController
                                                 END
                                             ) 
                                         THEN 
-                                            SUM(
+                                             SUM(
                                                 CASE 
                                                     WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount < 0 THEN 
                                                         erp_generalledger.documentRptAmount 
@@ -6012,7 +6012,7 @@ class FinancialReportAPIController extends AppBaseController
                                                 END
                                             ) 
                                         THEN 
-                                            SUM(
+                                             ABS(SUM(
                                                 CASE 
                                                     WHEN chartofaccounts.controlAccountsSystemID = 2 AND erp_generalledger.documentRptAmount > 0 THEN 
                                                         erp_generalledger.documentRptAmount 
@@ -6025,9 +6025,9 @@ class FinancialReportAPIController extends AppBaseController
                                                         erp_generalledger.documentRptAmount 
                                                     ELSE 0 
                                                 END
-                                            )
+                                            ))
                                         ELSE 
-                                            SUM(
+                                             ABS(SUM(
                                                 CASE 
                                                     WHEN chartofaccounts.controlAccountsSystemID = 1 AND erp_generalledger.documentRptAmount < 0 THEN 
                                                         erp_generalledger.documentRptAmount 
@@ -6040,7 +6040,7 @@ class FinancialReportAPIController extends AppBaseController
                                                         erp_generalledger.documentRptAmount 
                                                     ELSE 0 
                                                 END
-                                            )
+                                            ))
                                         END AS rptCredit,
                                         0 AS documentRptBalanceAmount,
                                         "" AS isCustomer
