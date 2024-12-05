@@ -71,7 +71,7 @@ class AssetCreationService extends AppBaseController
         $createdFAs = FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->get();
         foreach ($createdFAs as $createdFA){
 
-            if($allSerialRecords) {
+            if (!empty($allSerialRecords)) {
                 FinanceCategorySerial::truncate();
 
                 FinanceCategorySerial::insert($allSerialRecords);
