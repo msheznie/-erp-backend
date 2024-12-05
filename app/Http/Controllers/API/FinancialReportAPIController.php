@@ -5785,6 +5785,7 @@ class FinancialReportAPIController extends AppBaseController
                                         erp_templatesglcode.templateMasterID,
                                         erp_templatesdetails.templateDetailDescription,
                                         erp_companyreporttemplatedetails.description as templateDescription,
+                                        1 As orderNo,
                                         CASE 
                                         WHEN 
                                             SUM(
@@ -6087,6 +6088,7 @@ class FinancialReportAPIController extends AppBaseController
                                         erp_templatesglcode.templateMasterID,
                                         erp_templatesdetails.templateDetailDescription,
                                         erp_companyreporttemplatedetails.description as templateDescription,
+                                        4 As orderNo,
                                     IF
                                         ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
                                     IF
@@ -6165,6 +6167,7 @@ class FinancialReportAPIController extends AppBaseController
                                         erp_templatesglcode.templateMasterID,
                                         erp_templatesdetails.templateDetailDescription,
                                         erp_companyreporttemplatedetails.description as templateDescription,
+                                        3 As orderNo,
                                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
                                         CASE	
@@ -6244,6 +6247,7 @@ class FinancialReportAPIController extends AppBaseController
                                         erp_templatesglcode.templateMasterID,
                                         erp_templatesdetails.templateDetailDescription,
                                         erp_companyreporttemplatedetails.description as templateDescription,
+                                        2 As orderNo,
                                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
                                         CASE	
@@ -6293,7 +6297,7 @@ class FinancialReportAPIController extends AppBaseController
 
                     ) AS GL_final 
                     ORDER BY
-                        documentDate ASC';
+                        orderNo ASC';
 
         return  \DB::select($query);
     }
