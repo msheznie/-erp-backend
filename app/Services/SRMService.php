@@ -5021,7 +5021,7 @@ class SRMService
         $acc_d = DeliveryAppointmentInvoice::dispatch($data);
         return [
             'success' => true,
-            'message' => 'Invoice created successfully',
+            'message' => 'Invoice created successfully ',
             'data' => $data
         ];
 
