@@ -5109,7 +5109,7 @@ class Helper
                             if ($input["documentSystemID"] == 21) {
                                 //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
                                 if ($sourceModel->pdcChequeYN == 0) {
-                                    $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
+                                    $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"], $input['isAutoCreateDocument'] ?? false);
                                 }
                             }
                             if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
@@ -8191,7 +8191,7 @@ class Helper
         }
     }
 
-    public static function appendToBankLedger($autoID)
+    public static function appendToBankLedger($autoID, $isAutoCreateDoc = false)
     {
         $custReceivePayment = Models\CustomerReceivePayment::with('finance_period_by')->find($autoID);
         if ($custReceivePayment) {
@@ -8248,8 +8248,7 @@ class Helper
 
             $documentFromBankReconciliation = Models\BankReconciliationDocuments::where('documentSystemID', $custReceivePayment->documentSystemID)->where('documentAutoId', $custReceivePayment->custReceivePaymentAutoID)->first();
             if (!empty($treasuryClearPolicy) || !empty($documentFromBankReconciliation)) {
-                $empId = \Helper::getEmployeeSystemID();
-                $empID = Employee::find($empId);
+                $empID = $isAutoCreateDoc ? UserTypeService::getSystemEmployee() : \Helper::getEmployeeInfo();
                 $data['trsClearedYN'] = -1;
                 $data['trsClearedDate'] = NOW();
                 $data['trsClearedByEmpSystemID'] = $empID->employeeSystemID;
