@@ -4885,10 +4885,10 @@ class FinancialReportAPIController extends AppBaseController
                         "Retained Earnings" AS AccountDescription,
                         erp_generalledger.documentLocalCurrencyID,
                         erp_generalledger.documentLocalCurrencyER,
-                        sum( erp_generalledger.documentLocalAmount *- 1 ) AS documentLocalAmount,
+                        sum( erp_generalledger.documentLocalAmount) AS documentLocalAmount,
                         erp_generalledger.documentRptCurrencyID,
                         erp_generalledger.documentRptCurrencyER,
-                        sum( erp_generalledger.documentRptAmount * - 1 ) documentRptAmount,
+                        sum( erp_generalledger.documentRptAmount) documentRptAmount,
                         2 as order_no  
                     FROM
                         erp_generalledger
