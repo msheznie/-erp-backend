@@ -1355,13 +1355,21 @@ class PaymentVoucherGlService
                     $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                     $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
 
-                    if ($diffTrans > 0 || $diffLocal > 0 || $diffRpt > 0) {
+                    if ($diffTrans > 0) {
                         $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * -1;
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * -1;
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * -1;
                     } else {
                         $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans));
+                    }
+
+                    if ($diffLocal > 0) {
+                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * -1;
+                    } else {
                         $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal));
+                    }
+
+                    if ($diffRpt > 0) {
+                        $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * -1;
+                    } else {
                         $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt));
                     }
 
