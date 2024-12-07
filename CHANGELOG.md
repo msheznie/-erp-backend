@@ -1,5 +1,65 @@
 # Changelog
 
+## [10.55.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.54.1...v10.55.0) (2024-12-07)
+
+
+### Features
+
+* **accounts payable:** Added Supplier Group in Accounts Payable Reports [GCP-4920] ([#7125](https://github.com/pbsgears/Gears_BackEnd/issues/7125)) ([b58ea4d](https://github.com/pbsgears/Gears_BackEnd/commit/b58ea4d1559d9e9e569bb0b4e3c38c79d9736dd4))
+* **accounts payable:** payment voucher matching error message structure changed [GCP-5376] ([#7168](https://github.com/pbsgears/Gears_BackEnd/issues/7168)) ([3d511f6](https://github.com/pbsgears/Gears_BackEnd/commit/3d511f62e155b0d2b333cd19463252809c51bed4))
+* **accounts payable:** pV matching SI one item having VAT error message handled [GCP-5433] ([#7200](https://github.com/pbsgears/Gears_BackEnd/issues/7200)) ([38e906e](https://github.com/pbsgears/Gears_BackEnd/commit/38e906e7f00348356c7ddb4d3318a144043c5379))
+* **accounts payable:** Supplier invoice API attachment configuration [GCP-5001] ([#7149](https://github.com/pbsgears/Gears_BackEnd/issues/7149)) ([c84b3b5](https://github.com/pbsgears/Gears_BackEnd/commit/c84b3b5a7374d1299b17c851772ee76d4b7d914e))
+* **accounts payable:** supplier invoice API attachment validation update [GCP-5505] ([#7243](https://github.com/pbsgears/Gears_BackEnd/issues/7243)) ([9349675](https://github.com/pbsgears/Gears_BackEnd/commit/93496758eb398380ffd175a086eecea88ebee8f1))
+* **accounts payable:** Supplier payment voucher bank charge and other configuration [GCP-1245] ([#7114](https://github.com/pbsgears/Gears_BackEnd/issues/7114)) ([af35f2d](https://github.com/pbsgears/Gears_BackEnd/commit/af35f2d3faaf232cbbf3d0039afc200e96b864d7))
+* **accounts receivable:** Date filter for customer invoice [GCP-3167] ([#7093](https://github.com/pbsgears/Gears_BackEnd/issues/7093)) ([a751499](https://github.com/pbsgears/Gears_BackEnd/commit/a751499da27d65f4291d2068ce28398987d61be1))
+* **accounts receivable:** direct receipt employee payee type added for the API [GCP-4788] ([#7111](https://github.com/pbsgears/Gears_BackEnd/issues/7111)) ([3bc8ed2](https://github.com/pbsgears/Gears_BackEnd/commit/3bc8ed23a458f56563bfa26f34f7e7670752112d))
+* **accounts receivable:** Filter data if To date only selected [GCP-5389] ([#7173](https://github.com/pbsgears/Gears_BackEnd/issues/7173)) ([47ad67e](https://github.com/pbsgears/Gears_BackEnd/commit/47ad67e22a26d9cfcec00984dd85922774a15947))
+* **configuration:** statement of Change in Equity [GCP-3693] ([#7097](https://github.com/pbsgears/Gears_BackEnd/issues/7097)) ([f1a2c4d](https://github.com/pbsgears/Gears_BackEnd/commit/f1a2c4d94f4969d1cb186a5473eb3ac8a2298ba7))
+* **general ledger:** Group company consolidation company type change removed [GCP-4982] ([#7180](https://github.com/pbsgears/Gears_BackEnd/issues/7180)) ([c25418f](https://github.com/pbsgears/Gears_BackEnd/commit/c25418fdb9c7f61f43cb12edcb0ddcc39db7bf8f))
+* **general ledger:** Group company consolidation report modified according to sub associate company structure [GCP-4981] ([#7166](https://github.com/pbsgears/Gears_BackEnd/issues/7166)) ([b154c01](https://github.com/pbsgears/Gears_BackEnd/commit/b154c01d8fd116e7aee68ae08b4d85cf33023dd9))
+* **general ledger:** Option to create and link a manual GL code for Retained Earnings [GCP-1114] ([#7153](https://github.com/pbsgears/Gears_BackEnd/issues/7153)) ([dc81dae](https://github.com/pbsgears/Gears_BackEnd/commit/dc81daee955b3d2e5e1ea898811fa44bc7d646bf))
+* **general ledger:** the credit shouldn't in negative & the balance sheet [GCP-5511] ([#7255](https://github.com/pbsgears/Gears_BackEnd/issues/7255)) ([eb77931](https://github.com/pbsgears/Gears_BackEnd/commit/eb779319e634f166c59a39f64562d689f7749678))
+* **inventory:** Rounded GRV qty & Amount to 8 Decimals [GCP-5373] ([#7169](https://github.com/pbsgears/Gears_BackEnd/issues/7169)) ([4e668a1](https://github.com/pbsgears/Gears_BackEnd/commit/4e668a1017cae74c654d5d13a07a22771ca84ba1))
+* **system admin:** Add group & registration number in Supplier Master Export [GCP-4921] ([#7128](https://github.com/pbsgears/Gears_BackEnd/issues/7128)) ([7ff2861](https://github.com/pbsgears/Gears_BackEnd/commit/7ff286161aac32d7e501fca26252dafd6707f991))
+* **system admin:** Add new filter supplier business category and show categories in list [GCP-4819] ([#7143](https://github.com/pbsgears/Gears_BackEnd/issues/7143)) ([22d2134](https://github.com/pbsgears/Gears_BackEnd/commit/22d213416d91d7b354f197a7fd0d108796b2ffb6))
+* **system admin:** Finance Sub Category Mandatory fields update [GCP-4933] ([#7147](https://github.com/pbsgears/Gears_BackEnd/issues/7147)) ([cb8adfa](https://github.com/pbsgears/Gears_BackEnd/commit/cb8adfa38443a27a8756d9b3910425c3802c560b))
+* **treasury management:** Additional entry BRV & PV generation [GCP-4958] ([#7171](https://github.com/pbsgears/Gears_BackEnd/issues/7171)) ([3da8dd5](https://github.com/pbsgears/Gears_BackEnd/commit/3da8dd577625911a0226fa07585391c18e58c7a3))
+* **treasury management:** Additional entry option in bank reconciliation [GCP-4956] ([#7121](https://github.com/pbsgears/Gears_BackEnd/issues/7121)) ([e0dad5e](https://github.com/pbsgears/Gears_BackEnd/commit/e0dad5e16e74c5db4af50005f804c783276e1d2b))
+* **treasury management:** Option to clear treasury for PV & RV documents based on policy [GCP-4932] ([#7069](https://github.com/pbsgears/Gears_BackEnd/issues/7069)) ([a51aae1](https://github.com/pbsgears/Gears_BackEnd/commit/a51aae11ebe4fab318265f7acc4fe67f1d04f9b9))
+
+
+### Bug Fixes
+
+* **accounts payable:** Balance amount showing incorrectly when already matched with debit note fixed [GCP-5465] ([#7225](https://github.com/pbsgears/Gears_BackEnd/issues/7225)) ([876e195](https://github.com/pbsgears/Gears_BackEnd/commit/876e195b6511baa8e4602ebadfed3839c75dc954))
+* **accounts payable:** cannot pull logistic based po to supplier invoice [GCP-5440] ([#7205](https://github.com/pbsgears/Gears_BackEnd/issues/7205)) ([8fcaf2d](https://github.com/pbsgears/Gears_BackEnd/commit/8fcaf2d320be367bb4ae2f973c4dd649320d3e11))
+* **accounts payable:** Fix bank currency update when adding PV interbank exchange details [GCP-4958] ([#7176](https://github.com/pbsgears/Gears_BackEnd/issues/7176)) ([108f04d](https://github.com/pbsgears/Gears_BackEnd/commit/108f04d0778455b27af9c8a384aee3a3c9f5532b))
+* **accounts payable:** Fixed interbank transfer entry issue [GCP-5498] ([#7257](https://github.com/pbsgears/Gears_BackEnd/issues/7257)) ([96b5306](https://github.com/pbsgears/Gears_BackEnd/commit/96b53065c0ffff53398587fbc396a1de99e68dcc))
+* **accounts payable:** Fixed PV VAT entry update on details deletion [GCP-5080] ([#7021](https://github.com/pbsgears/Gears_BackEnd/issues/7021)) ([f670e8b](https://github.com/pbsgears/Gears_BackEnd/commit/f670e8be482396770925e03ceb0c0424b46c045d))
+* **accounts payable:** Fixed WHT tax authority issue in Supplier Invoice [GCP-5349] ([#7152](https://github.com/pbsgears/Gears_BackEnd/issues/7152)) ([ddbfdb3](https://github.com/pbsgears/Gears_BackEnd/commit/ddbfdb36ab4151e1ac1144d36b500595c37c2cb5))
+* **accounts payable:** GL entry posting with wrong ER conversion fixed [GCP-5167] ([4a80c4c](https://github.com/pbsgears/Gears_BackEnd/commit/4a80c4cada7da23bc4d896a9b6ad29c789c06dce))
+* **accounts payable:** GL entry posting with wrong ER conversion fixed [GCP-5167] ([f652973](https://github.com/pbsgears/Gears_BackEnd/commit/f652973a9e88cb1ca53cbc07f97bf2b731c857d9))
+* **accounts payable:** GL entry posting with wrong ER conversion fixed [GCP-5167] ([#7059](https://github.com/pbsgears/Gears_BackEnd/issues/7059)) ([a885746](https://github.com/pbsgears/Gears_BackEnd/commit/a885746efe9c5d705d9970751d9cb7347bfd427c))
+* **accounts payable:** pV matchinh show error msg when SI includes VAT and PV nothave VAT [GCP-2200] ([#7112](https://github.com/pbsgears/Gears_BackEnd/issues/7112)) ([a057861](https://github.com/pbsgears/Gears_BackEnd/commit/a0578618706ed08ea621b920961d393d2c5586df))
+* **accounts payable:** supplier payment voucher bank charge and other configuration [GCP-4756] ([#7179](https://github.com/pbsgears/Gears_BackEnd/issues/7179)) ([bd09a89](https://github.com/pbsgears/Gears_BackEnd/commit/bd09a89ebffd1cd017ba5566a39c93c3720725f6))
+* **accounts receivable:** Amend customer invoice with VAT return [GCP-5456] ([#7224](https://github.com/pbsgears/Gears_BackEnd/issues/7224)) ([32c8323](https://github.com/pbsgears/Gears_BackEnd/commit/32c832362bcaa9697df9bda377c7059239bdef41))
+* **accounts receivable:** customer aging report not showing corret value for CN [GCP-5317] ([#7215](https://github.com/pbsgears/Gears_BackEnd/issues/7215)) ([47f1938](https://github.com/pbsgears/Gears_BackEnd/commit/47f1938a42c3f80a27d6a5ffbecda748487ae3d0))
+* **accounts receivable:** General ledger entries showing incorrectly when CINV are uploaded fixed [GCP-4968] ([#7025](https://github.com/pbsgears/Gears_BackEnd/issues/7025)) ([8701f24](https://github.com/pbsgears/Gears_BackEnd/commit/8701f2433a71d6f017ee3a096cf225004967ed45))
+* **accounts receivable:** Validated RV matching of BRV with VAT and INV without VAT [GCP-2873] ([#7079](https://github.com/pbsgears/Gears_BackEnd/issues/7079)) ([077e624](https://github.com/pbsgears/Gears_BackEnd/commit/077e6245ba5dc8f1cde0408a8eaa7df8d703499e))
+* **asset management:** Asset costing bulk upload validation issues with date fixed [GCP-5484] ([24d894c](https://github.com/pbsgears/Gears_BackEnd/commit/24d894c09c0286a29d2f87a39ed1e421f2432338))
+* **asset management:** asset register detail report NBV negative value issue [GCP-5100] ([#7052](https://github.com/pbsgears/Gears_BackEnd/issues/7052)) ([2039307](https://github.com/pbsgears/Gears_BackEnd/commit/2039307a6a0c741e77b928e77413791816b33997))
+* **asset management:** barcode company id and logo aligned and font changed [GCP-5206] ([#7077](https://github.com/pbsgears/Gears_BackEnd/issues/7077)) ([89f36cd](https://github.com/pbsgears/Gears_BackEnd/commit/89f36cd2e2e18ab83d2487e724801f39da26d2e8))
+* **asset management:** Changed date format and serial number increment issue fixed [GCP-5415] ([5dd396f](https://github.com/pbsgears/Gears_BackEnd/commit/5dd396f8d18c5fa9704fdb43ddb02266b9118591))
+* **budget:** budget transfer add details amount calculation bug fixed [GCP-5225] ([#7084](https://github.com/pbsgears/Gears_BackEnd/issues/7084)) ([734bb50](https://github.com/pbsgears/Gears_BackEnd/commit/734bb50d159fb32831727bc8d3131eff3f56a97a))
+* **budget:** budget upload service unavailable issue handled [GCP-5008] ([#7167](https://github.com/pbsgears/Gears_BackEnd/issues/7167)) ([6b7733e](https://github.com/pbsgears/Gears_BackEnd/commit/6b7733ef8067eb7e361bafe593cd5378b581df0d))
+* **general ledger:** ageing reports not able to generate [GCP-5340] ([#7160](https://github.com/pbsgears/Gears_BackEnd/issues/7160)) ([05507f7](https://github.com/pbsgears/Gears_BackEnd/commit/05507f787894a83a2a1d5cf30a5ca3e9490a9d29))
+* **general-ledger:** fix the approval duplication issue in JV [GCP-3206] ([#7120](https://github.com/pbsgears/Gears_BackEnd/issues/7120)) ([d235da8](https://github.com/pbsgears/Gears_BackEnd/commit/d235da8fb5e023774a1cb2abbf144dc7402f0cd6))
+* **inventory:** GRV pull from PO decimal issue [GCP-4965] ([#7051](https://github.com/pbsgears/Gears_BackEnd/issues/7051)) ([07c7d5e](https://github.com/pbsgears/Gears_BackEnd/commit/07c7d5e9317a0a3c4b5e97243116db2225e38d45))
+* **inventory:** Round off to 6 decimals [GCP-5407] ([#7184](https://github.com/pbsgears/Gears_BackEnd/issues/7184)) ([15513d9](https://github.com/pbsgears/Gears_BackEnd/commit/15513d9c76d2c716eb0b21a37a1ea3928637f3cf))
+* **procurement:** Fixed issue in Portal PR amend [GCP-4049] ([#7020](https://github.com/pbsgears/Gears_BackEnd/issues/7020)) ([b1724d5](https://github.com/pbsgears/Gears_BackEnd/commit/b1724d537d24c97fdb349ac9c99557ba1721888e))
+* **procurement:** pO discount percentage round off issue when enters discount amount [GCP-2615] ([#7156](https://github.com/pbsgears/Gears_BackEnd/issues/7156)) ([bdf71d5](https://github.com/pbsgears/Gears_BackEnd/commit/bdf71d5951a07971a374d5f90750cfc2b44a353d))
+* **procurement:** Validation added for PO confirmation on payment percentage not being 100 [GCP-5104] ([#7017](https://github.com/pbsgears/Gears_BackEnd/issues/7017)) ([23ca5e7](https://github.com/pbsgears/Gears_BackEnd/commit/23ca5e781238adbfe822834c2bfd2c62ccb55d8d))
+* **treasury management:** Bank ledger and general ledger amounts rounded for treasury clear option [GCP-5393] ([#7201](https://github.com/pbsgears/Gears_BackEnd/issues/7201)) ([479b0ba](https://github.com/pbsgears/Gears_BackEnd/commit/479b0ba364fcdcee038696cebae06354bd51ef25))
+
 ## [10.54.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.54.0...v10.54.1) (2024-12-06)
 
 
