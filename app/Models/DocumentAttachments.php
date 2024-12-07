@@ -64,7 +64,8 @@ class DocumentAttachments extends Model
         'pullFromAnotherDocument',
         'parent_id',
         'envelopType',
-        'order_number'
+        'order_number',
+        'isAutoCreateDocument'
     ];
 
     /**
@@ -88,6 +89,7 @@ class DocumentAttachments extends Model
         'path' => 'string',
         'pullFromAnotherDocument' => 'integer',
         'parent_id' => 'integer',
+        'isAutoCreateDocument' => 'integer',
         'envelopType' => 'string'
     ];
 

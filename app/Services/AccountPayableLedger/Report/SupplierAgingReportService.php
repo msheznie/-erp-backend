@@ -27,6 +27,9 @@ class SupplierAgingReportService
                 $objSupplierAgingDetail->setAccount($val->glCode . "-" . $val->AccountDescription);
                 $objSupplierAgingDetail->setSupplierCode($val->SupplierCode);
                 $objSupplierAgingDetail->setSupplierName($val->suppliername);
+                if($typeAging == 1){
+                    $objSupplierAgingDetail->setSupplierGroupName($val->supplierGroupName);
+                }
                 $objSupplierAgingDetail->setInvoiceNumber($val->invoiceNumber);
                 $objSupplierAgingDetail->setInvoiceDate($val->invoiceDate);
                 $objSupplierAgingDetail->setCurrency($val->documentCurrency);
@@ -75,6 +78,9 @@ class SupplierAgingReportService
                 $objSupplierAgingDetail->setAccount($val->glCode . "-" . $val->AccountDescription);
                 $objSupplierAgingDetail->setSupplierCode($val->SupplierCode);
                 $objSupplierAgingDetail->setSupplierName($val->suppliername);
+                if($typeAging == 1){
+                    $objSupplierAgingDetail->setSupplierGroupName($val->supplierGroupName);
+                }
                 $objSupplierAgingDetail->setCreditPeriod($val->creditPeriod);
                 $objSupplierAgingDetail->setCurrency($val->documentCurrency);
                 $objSupplierAgingDetail->setAgingDays($val->ageDays);
@@ -117,6 +123,9 @@ class SupplierAgingReportService
                 $objSupplierAgingDetail->setNarrtion($val->documentNarration);
                 $objSupplierAgingDetail->setSupplierCode($val->SupplierCode);
                 $objSupplierAgingDetail->setSupplierName($val->suppliername);
+                if($typeAging == 1){
+                    $objSupplierAgingDetail->setSupplierGroupName($val->supplierGroupName);
+                }
                 $objSupplierAgingDetail->setInvoiceNumber($val->invoiceNumber);
                 $objSupplierAgingDetail->setInvoiceDate($val->invoiceDate);
                 $objSupplierAgingDetail->setCurrency($val->documentCurrency);
@@ -156,6 +165,9 @@ class SupplierAgingReportService
                 $objSupplierAgingDetail->setAccount($val->glCode . "-" . $val->AccountDescription);
                 $objSupplierAgingDetail->setSupplierCode($val->SupplierCode);
                 $objSupplierAgingDetail->setSupplierName($val->suppliername);
+                if($typeAging == 1){
+                    $objSupplierAgingDetail->setSupplierGroupName($val->supplierGroupName);
+                }
                 $objSupplierAgingDetail->setCreditPeriod($val->creditPeriod);
                 $objSupplierAgingDetail->setCurrency($val->documentCurrency);
                 $objSupplierAgingDetail->setAgingDays($val->ageDays);

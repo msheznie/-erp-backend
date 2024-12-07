@@ -864,7 +864,7 @@ class CustomerInvoiceService
         $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
         $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
         $totalAmount = ($addToCusInvDetails['unitCost'] != ''?$addToCusInvDetails['unitCost']:0) * ($addToCusInvDetails['invoiceQty'] != ''?$addToCusInvDetails['invoiceQty']:0);
-        $totalAmount = $totalAmount - $addToCusInvDetails['discountAmountLine'];
+        $totalAmount = ($totalAmount - ($addToCusInvDetails['discountAmountLine'] != ''?$addToCusInvDetails['discountAmountLine']:0) * ($addToCusInvDetails['invoiceQty'] != ''?$addToCusInvDetails['invoiceQty']:0));
         $MyRptAmount = 0;
         if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
             $MyRptAmount = $totalAmount;

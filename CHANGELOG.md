@@ -48,7 +48,6 @@
 
 ## [10.53.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.52.1...v10.53.0) (2024-11-11)
 
-
 ### Features
 
 * **KYC Security issue:** Cross-site request forgery [GSUP-2009] ([#7028](https://github.com/pbsgears/Gears_BackEnd/issues/7028)) ([672dc09](https://github.com/pbsgears/Gears_BackEnd/commit/672dc0989a4124071af663014d0473aa02a26a62))

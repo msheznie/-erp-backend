@@ -3281,9 +3281,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount
                 FROM
                     erp_paysupplierinvoicedetail
-                INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
+                LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
                 LEFT JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID
-                WHERE erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7 AND (erp_debitnote.type = 1 OR erp_debitnote.debitNoteAutoID IS NULL)
+                WHERE (erp_paysupplierinvoicemaster.PayMasterAutoId IS NULL OR (erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7)) AND (erp_debitnote.type = 1 OR erp_debitnote.debitNoteAutoID IS NULL)
                 GROUP BY
                     erp_paysupplierinvoicedetail.apAutoID
                     ) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID
@@ -4280,7 +4280,6 @@ ORDER BY
             $masterData->matchingConfirmedByEmpID = null;
             $masterData->matchingConfirmedByName = null;
             $masterData->matchingConfirmedDate = null;
-            $masterData->save();
 
             if($masterData->documentSystemID == 4){
                 $paySupplierInvoice = PaySupplierInvoiceMaster::find($masterData->PayMasterAutoId);
@@ -4301,7 +4300,19 @@ ORDER BY
                     $receiveVoucher->matchInvoice = 0;
                     $receiveVoucher->save();
                 }
+            }else if($masterData->documentSystemID == 19){
+                $creditNoteMaster = CreditNote::find($masterData->PayMasterAutoId);
+                if (!empty($creditNoteMaster)) {
+                    $creditNoteMaster->matchInvoice = 0;
+                    $creditNoteMaster->save();
+
+                    $masterData->matchedAmount = null;
+                    $masterData->matchLocalAmount = null;
+                    $masterData->matchRptAmount = null;
+                }
             }
+
+            $masterData->save();
 
             if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15 || $masterData->documentSystemID == 21 || $masterData->documentSystemID == 19){
                 GeneralLedger::where('documentSystemID',$masterData->documentSystemID)

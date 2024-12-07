@@ -79,7 +79,9 @@ class GeneratePdfJob implements ShouldQueue
 
         $outputArr = array();
         foreach ($output as $val) {
-            $outputArr[$val->concatCompany][$val->concatSupplierName][] = $val;
+            if(isset($val->supplierGroupName)){
+                $outputArr[$val->concatCompany][$val->concatSupplierName][$val->supplierGroupName][] = $val;
+            }
         }
 
         $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => false);

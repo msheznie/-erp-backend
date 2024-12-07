@@ -13,9 +13,11 @@ use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetMaster;
 use App\Models\Location;
 use App\Models\SegmentMaster;
+use App\Models\TemporaryAssetSerial;
 use App\Models\UploadAssetCosting;
 use App\Services\GeneralLedger\AssetCreationService;
 use App\Validations\AssetManagement\ValidateAssetCreation;
+use DateTime;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -76,6 +78,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
         $jobData = $this->jobData;
         $index = $this->index;
         $startRow = $jobData['startRow'];
+        $allSerialRecords = $jobData['allSerialRecords'];
         $logUploadAssetCosting = $jobData['logUploadAssetCosting'];
         $assetFinanceCategory = $jobData['assetFinanceCategory'];
         $totalRecords = $jobData['totalRecords'];
@@ -200,7 +203,17 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     throw new AssetCostingException("Dep Start Date is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
-                if($assetCostingValue[11] < $assetCostingValue[5]){
+
+                $dateAcquired = DateTime::createFromFormat('m/d/Y', $assetCostingValue[5]);
+                $depStartDate = DateTime::createFromFormat('m/d/Y', $assetCostingValue[11]);
+
+                if (!$dateAcquired || !$depStartDate) {
+                    $invalidDate = !$dateAcquired ? 'Date Acquired' : 'Dep Start Date';
+                    throw new AssetCostingException("$invalidDate is invalid or not in the expected format.",
+                        $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
+                }
+
+                if($depStartDate < $dateAcquired){
                     throw new AssetCostingException("Date Acquired cannot be greater than Dep Start Date ", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
@@ -315,6 +328,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
 
                 if ($newCounterValue == $totalRecords) {
                     UploadAssetCosting::where('id', $logUploadAssetCosting->assetCostingUploadID)->update(['uploadStatus' => 1]);
+                    TemporaryAssetSerial::truncate();
                 }
                 DB::commit();
             }
@@ -329,7 +343,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
             Log::info('on catch');
 
             app(AssetCreationService::class)->assetUploadErrorLog($excelRow, $errorMessage, $assetCostingUploadID);
-            app(AssetCreationService::class)->assetDeletion($assetCostingUploadID);
+            app(AssetCreationService::class)->assetDeletion($assetCostingUploadID, 1);
 
 
             Log::error('Error Message' . $errorMessage);
@@ -343,7 +357,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
         if($uploadStatus === 0){
             Log::info('Cancelled - job');
 
-            app(AssetCreationService::class)->assetDeletion($logUploadAssetCosting->assetCostingUploadID);
+            app(AssetCreationService::class)->assetDeletion($logUploadAssetCosting->assetCostingUploadID, 1);
         }
     }
 }

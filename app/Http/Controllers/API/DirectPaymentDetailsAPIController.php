@@ -15,6 +15,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\PaySupplier;
+use App\helper\SupplierInvoice;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateDirectPaymentDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDirectPaymentDetailsAPIRequest;
@@ -248,7 +249,6 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 $input['bankCurrencyID'] = $account->accountCurrencyID;
                 $conversionAmount = \Helper::currencyConversion($input['companySystemID'], $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
                 $input['bankCurrencyER'] = $conversionAmount["transToDocER"];
-                $input['expense_claim_er'] = $conversionAmount['transToDocER'];
             }else{
                 return $this->sendError('No bank account found for the selected GL code.');
             }
@@ -690,19 +690,8 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $directPaymentDetails->delete();
 
-        $paySuppMaster = PaySupplierInvoiceMaster::find($directPaymentDetails->directPaymentAutoID);
-        if(!empty($paySuppMaster) && ($paySuppMaster->invoiceType == 3)) 
-        {
-            $paySuppMaster['netAmount'] = 0;
-            $paySuppMaster['netAmountLocal'] = 0;
-            $paySuppMaster['netAmountRpt'] = 0;
-            $paySuppMaster['VATAmount'] = 0;
-            $paySuppMaster['VATAmountBank'] = 0;
-            $paySuppMaster['VATAmountLocal'] = 0;
-            $paySuppMaster['VATAmountRpt'] = 0;
-            $paySuppMaster->save();
-        }
- 
+        // update master table
+        PaySupplier::updateMaster($directPaymentDetails->directPaymentAutoID);
 
         return $this->sendResponse($id, 'Direct Payment Details deleted successfully');
     }
@@ -745,6 +734,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $directPaymentDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->delete();
 
+        PaySupplier::updateMaster($id);
         return $this->sendResponse($directPaymentDetails, 'Successfully delete');
     }
 

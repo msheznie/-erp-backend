@@ -14,6 +14,7 @@ class SupplierAgingDetailReport
     public $account;
     public $supplierCode;
     public $supplierName;
+    public $supplierGroupName;
     public $invoiceNumber;
     public $invoiceDate;
     public $currency;
@@ -47,6 +48,7 @@ class SupplierAgingDetailReport
                 'Account',
                 'Supplier Code',
                 'Supplier Name',
+                'Supplier Group',
                 'Invoice Number',
                 'Invoice Date',
                 'Currency',
@@ -135,6 +137,13 @@ class SupplierAgingDetailReport
         $this->supplierName = $supplierName;
     }
 
+    /**
+     * @param mixed $supplierGroupName
+     */
+    public function setsupplierGroupName($supplierGroupName): void
+    {
+        $this->supplierGroupName = $supplierGroupName;
+    }
     /**
      * @param mixed $invoiceNumber
      */

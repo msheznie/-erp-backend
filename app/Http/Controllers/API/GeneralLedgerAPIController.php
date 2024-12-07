@@ -383,7 +383,6 @@ class GeneralLedgerAPIController extends AppBaseController
     }
 
 
-
     public function updateNotPostedPVGLEntries(Request $request)
     {
         $input = $request->all();

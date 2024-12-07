@@ -115,12 +115,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 {
     /** @var  CustomerInvoiceDirectRepository */
     private $customerInvoiceDirectRepository;
+    private $customerInvoiceService;
     private $vatReturnFillingMasterRepo;
 
-    public function __construct(CustomerInvoiceDirectRepository $customerInvoiceDirectRepo,VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
+    public function __construct(CustomerInvoiceServices $customerInvoiceService,CustomerInvoiceDirectRepository $customerInvoiceDirectRepo,VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
     {
         $this->customerInvoiceDirectRepository = $customerInvoiceDirectRepo;
         $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
+        $this->customerInvoiceService = $customerInvoiceService;
     }
 
     /**
@@ -3980,7 +3982,7 @@ WHERE
         try {
 
             if ($masterData->approved == -1) {
-                $amendCustomerInvoice = CustomerInvoiceServices::amendCustomerInvoice($input,$id,$masterData,$isFromAPI = true);
+                $amendCustomerInvoice = $this->customerInvoiceService->amendCustomerInvoice($input,$id,$masterData,$isFromAPI = true);
 
                 if(isset($amendCustomerInvoice['status']) && $amendCustomerInvoice['status'] == false){
                    $errorMessage = $errorMessageAPI . $amendCustomerInvoice['message'];
@@ -4094,7 +4096,7 @@ WHERE
         DB::beginTransaction();
         try {
 
-             $amendCI = CustomerInvoiceServices::amendCustomerInvoice($input,$id,$masterData);
+             $amendCI = $this->customerInvoiceService->amendCustomerInvoice($input,$id,$masterData);
 
              if(isset($amendCI['status']) && $amendCI['status'] == false){
                 $errorMessage = "Customer Invoice " . $amendCI['message'];

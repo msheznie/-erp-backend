@@ -177,6 +177,22 @@ class PurchaseRequestReferredAPIController extends AppBaseController
         return $this->sendResponse($purchaseRequestReferred->toArray(), 'Purchase Request Referred retrieved successfully');
     }
 
+
+    public function get_purchase_request_referreds(Request $request)
+    {
+
+        $id = $request['id'];
+        /** @var PurchaseRequestReferred $purchaseRequestReferred */
+        $purchaseRequestReferred = $this->purchaseRequestReferredRepository->with(['created_by', 'confirmed_by', 'segment'])->findWithoutFail($id);
+
+        if (empty($purchaseRequestReferred)) {
+            return $this->sendError('Purchase Request Referred not found');
+        }
+
+        return $this->sendResponse($purchaseRequestReferred, 'Purchase Request Referred retrieved successfully');
+
+    }
+
     /**
      * @param int $id
      * @param UpdatePurchaseRequestReferredAPIRequest $request

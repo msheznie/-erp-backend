@@ -98,7 +98,8 @@ class ChartOfAccount extends Model
         'reportTemplateCategory',
         'isMasterAccount',
         'timesReferred',
-         'isDelegation'
+        'isDelegation',
+        'is_retained_earnings'
     ];
 
     /**

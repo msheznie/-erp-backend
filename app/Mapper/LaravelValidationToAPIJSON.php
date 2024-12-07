@@ -9,6 +9,8 @@ use App\Classes\CustomValidation\Validation;
 class LaravelValidationToAPIJSON
 {
 
+    public $fieledError = array();
+
     public function getMessage($validator)
     {
 
@@ -80,14 +82,22 @@ class LaravelValidationToAPIJSON
 
         $data = collect($result)->map(function($res,$key)  use ($resultArray) {
             $errors = [];
-
+            $narrationMessage = array();
             foreach ($res['error'] as $errorArray) {
-                $errors[] = new Error($errorArray['field'], $errorArray['message'], $errorArray['index']);
+
+                if($errorArray['field'] == "narration")
+                {
+                    array_push($narrationMessage,$errorArray['message']);
+                }else {
+                    $errors[] = new Error($errorArray['field'], $errorArray['message'], $errorArray['index']);
+
+                }
+
             }
 
             return [
                 "identifier" => new Identifier($res['index'],$key+1),
-                "fieldErrors" => [],
+                "fieldErrors" => (!empty($narrationMessage)) ? [ 'field' => "narration" , 'message' => $narrationMessage]: [],
                 "headerData" => [
                     'status' => false,
                     'errors' =>  $errors

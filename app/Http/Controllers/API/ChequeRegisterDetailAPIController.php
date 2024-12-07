@@ -587,7 +587,10 @@ class ChequeRegisterDetailAPIController extends AppBaseController
                 PdcLog::where('documentSystemID', $from_cheque_details->document_master_id)
                           ->where('documentmasterAutoID', $from_cheque_details->document_id)
                           ->where('chequeNo', $from_cheque_details->cheque_no)
-                          ->update(['chequeNo' => $to_cheque_details->cheque_no]);
+                          ->update([
+                              'chequeNo' => $to_cheque_details->cheque_no,
+                              'chequeRegisterAutoID' => $to_cheque_details->id
+                          ]);
             }
             
             if ($to_cheque_details->document->pdcChequeYN == 0) {
@@ -599,7 +602,10 @@ class ChequeRegisterDetailAPIController extends AppBaseController
                           ->when($fromPdcID > 0, function($query) use ($fromPdcID) {
                                 $query->where('id', '!=', $fromPdcID);
                           })
-                          ->update(['chequeNo' => $from_cheque_details->cheque_no]);
+                          ->update([
+                              'chequeNo' => $from_cheque_details->cheque_no,
+                              'chequeRegisterAutoID' => $from_cheque_details->id
+                          ]);
             }
 
 

@@ -473,6 +473,8 @@ class ProcumentOrderAPIController extends AppBaseController
         ->where('isYesNO', 1)
         ->exists();
         $procumentOrder->isExpectedDeliveryDateEnabled = $isExpectedDeliveryDateEnabled;
+        $procumentOrder['poDiscountPercentageToTooltip'] = $procumentOrder->poDiscountPercentage;
+        $procumentOrder->poDiscountPercentage = round($procumentOrder->poDiscountPercentage,2);
 
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
@@ -495,11 +497,25 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input = $request->all();
 
-       
         $isAmendAccess = $input['isAmendAccess'];
 
+        $poDiscountPercenrtageToUpdate = 0;
+        if( strlen((string) $input['poDiscountPercentage'] ) > strlen((string)$input['poDiscountPercentageToTooltip']))
+        {
+            $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
 
-        $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location']);
+        }else {
+            if(round($input['poDiscountPercentageToTooltip'],2) != $input['poDiscountPercentage'])
+            {
+                $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
+            }else {
+                $poDiscountPercenrtageToUpdate = $input['poDiscountPercentageToTooltip'];
+            }
+        }
+
+        $input['poDiscountPercentage'] = $poDiscountPercenrtageToUpdate;
+
+        $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location','poDiscountPercentageToTooltip']);
         $input = $this->convertArrayToValue($input);
 
         
@@ -552,11 +568,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
         $newlyUpdatedPoTotalAmountCheck = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRoundForComp));
         $advancedPaymentCheckAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $advancedPayment));
-    
+
+        $advancedPaymentPercentage = PoPaymentTerms::where('poID',$id)->sum('comPercentage');
         if(isset($input['isConfirm']) && $input['isConfirm']) {
-            $epsilon = 0.00001;
-     
-            if(abs($advancedPaymentCheckAmount - $newlyUpdatedPoTotalAmountCheck) > $epsilon) {
+            if($advancedPaymentPercentage != 100) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
         }
@@ -767,7 +782,6 @@ class ProcumentOrderAPIController extends AppBaseController
         //updating PO Master
         $updateDetailDiscount = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();
-
 
         // calculate total Tax for item if
         //$input['supplierVATEligible'] == 1 && $input['vatRegisteredYN'] == 0
@@ -1147,19 +1161,12 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
             //getting total sum of Po Payment Terms
-            $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum'))
+            $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum, IFNULL(SUM(comPercentage),0) as paymentTotalPercentage'))
                 ->where('poID', $input['purchaseOrderID'])
                 ->first();
 
-
-            //return floatval($poMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
-
-            // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
-
             $paymentTotalSumComp = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $paymentTotalSum['paymentTotalSum']));
-
-
-            if ($paymentTotalSumComp > 0) {
+            if ($paymentTotalSumComp > 0 && $paymentTotalSum['paymentTotalPercentage'] != 100) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
                 } else {
                     return $this->sendError('Payment terms total is not matching with the PO total');
@@ -1217,6 +1224,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 }
             }
         }
+
 
         $procumentOrderUpdate->save();
 

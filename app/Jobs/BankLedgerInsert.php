@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\helper\TaxService;
 use App\Models\BankAccount;
 use App\Models\BankLedger;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\Employee;
@@ -14,6 +15,7 @@ use App\Models\POSGLEntries;
 use App\Models\POSInvoiceSource;
 use App\Models\POSSourceMenuSalesMaster;
 use App\Models\SupplierMaster;
+use App\Models\BankReconciliationDocuments;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -148,6 +150,21 @@ class BankLedgerInsert implements ShouldQueue
                             $data['chequePaymentYN'] = $masterData->chequePaymentYN;
                         }
 
+                        $treasuryClearPolicy = CompanyPolicyMaster::where('companySystemID', $masterData->companySystemID)
+                            ->where('companyPolicyCategoryID', 96)
+                            ->where('isYesNO', 1)
+                            ->first();
+
+                        $documentFromBankReconciliation = BankReconciliationDocuments::where('documentSystemID', $masterData->documentSystemID)->where('documentAutoId', $masterModel["autoID"])->first();
+                        if (!empty($treasuryClearPolicy) || !empty($documentFromBankReconciliation)) {
+                            $data['trsClearedYN'] = -1;
+                            $data['trsClearedDate'] = NOW();
+                            $data['trsClearedByEmpSystemID'] = $empID->employeeSystemID;
+                            $data['trsClearedByEmpName'] = $empID->empFullName;
+                            $data['trsClearedByEmpID'] = $empID->empID;
+                            $data['trsClearedAmount'] = $data['payAmountBank'];
+                        }
+
                         if ($masterData->trsCollectedYN == 0) {
                             $data['trsCollectedYN'] = -1;
                         } else {
@@ -217,6 +234,21 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ABS($custReceivePayment->localAmount) : ABS($custReceivePayment->localAmount) * -1;
                                 $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ABS($custReceivePayment->companyRptAmount) : ABS($custReceivePayment->companyRptAmount) * -1;
                                 $data['chequePaymentYN'] = -1;
+
+                                $treasuryClearPolicy = CompanyPolicyMaster::where('companySystemID', $masterData->companySystemID)
+                                    ->where('companyPolicyCategoryID', 96)
+                                    ->where('isYesNO', 1)
+                                    ->first();
+
+                                $documentFromBankReconciliation = BankReconciliationDocuments::where('documentSystemID', $custReceivePayment->documentSystemID)->where('documentAutoId', $custReceivePayment->custReceivePaymentAutoID)->first();
+                                if (!empty($treasuryClearPolicy)) {
+                                    $data['trsClearedYN'] = -1;
+                                    $data['trsClearedDate'] = NOW();
+                                    $data['trsClearedByEmpSystemID'] = $empID->employeeSystemID;
+                                    $data['trsClearedByEmpName'] = $empID->empFullName;
+                                    $data['trsClearedByEmpID'] = $empID->empID;
+                                    $data['trsClearedAmount'] = $data['payAmountBank'];
+                                }
 
                                 if ($custReceivePayment->trsCollectedYN == 0) {
                                     $data['trsCollectedYN'] = -1;

@@ -10,6 +10,7 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
+use App\Models\FinanceCategorySerial;
 use App\Models\FixedAssetCost;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetDepreciationPeriod;
@@ -17,6 +18,7 @@ use App\Models\FixedAssetMaster;
 use App\Models\GeneralLedger;
 use App\Models\LogUploadAssetCosting;
 use App\Models\SegmentMaster;
+use App\Models\TemporaryAssetSerial;
 use App\Models\UploadAssetCosting;
 use App\Repositories\FixedAssetMasterRepository;
 use App\Traits\JsonResponseTrait;
@@ -65,22 +67,37 @@ class AssetCreationService extends AppBaseController
         }
     }
 
-    public function assetDeletion($assetCostingUploadID)
+    public function assetDeletion($assetCostingUploadID, $isFailed)
     {
         $createdFAs = FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->get();
         foreach ($createdFAs as $createdFA){
+
+
+            if($isFailed == 1) {
+                $allRecords = TemporaryAssetSerial::all();
+
+                foreach ($allRecords as $allRecord) {
+                    FinanceCategorySerial::where('id', $allRecord->serialID)->update(['lastSerialNo' => $allRecord->lastSerialNo]);
+                }
+
+                $financeSerialIds = TemporaryAssetSerial::pluck('serialID');
+
+                if ($financeSerialIds->isNotEmpty() && $allRecords->isNotEmpty()) {
+                    FinanceCategorySerial::whereNotIn('id', $financeSerialIds)->delete();
+                }
+            }
+
+
             GeneralLedger::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
             DocumentApproved::where('documentSystemID', 22)->where('documentSystemCode', $createdFA->faID)->delete();
             FixedAssetCost::where('faID', $createdFA->faID)->delete();
             $fixedDeps = FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->get();
-            foreach ($fixedDeps as $fixedDep){
-                FixedAssetDepreciationMaster::where('depMasterAutoID', $fixedDep->depMasterAutoID)->delete();
-                GeneralLedger::where('documentSystemID', 23)->where('documentSystemCode', $fixedDep->depMasterAutoID)->delete();
-            }
-
-
+            $depMasterAutoIDs = $fixedDeps->pluck('depMasterAutoID');
+            GeneralLedger::where('documentSystemID', 23)->whereIn('documentSystemCode', $depMasterAutoIDs)->delete();
+            FixedAssetDepreciationMaster::whereIn('depMasterAutoID', $depMasterAutoIDs)->delete();
             FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->delete();
         }
+        TemporaryAssetSerial::truncate();
         FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->forceDelete();
     }
 

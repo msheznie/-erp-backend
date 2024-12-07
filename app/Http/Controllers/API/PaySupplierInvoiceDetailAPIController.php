@@ -21,6 +21,10 @@ use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppDet;
+use App\Models\ChartOfAccount;
+use App\Models\Company;
+use App\Models\PaymentVoucherBankChargeDetails;
+use App\Models\SegmentMaster;
 use App\Models\TaxVatCategories;
 use App\Models\DirectInvoiceDetails;
 use App\Models\SupplierInvoiceItemDetail;
@@ -1208,8 +1212,16 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
     function getPOPaymentDetails(Request $request)
     {
-        $data = PaySupplierInvoiceDetail::with(['pomaster'])->where('PayMasterAutoId', $request->payMasterAutoId)->where('matchingDocID', 0)->get();
-        return $this->sendResponse($data, 'Payment details saved successfully');
+        $input = $request->all();
+        $supplierPaymentVouchers = PaySupplierInvoiceDetail::with(['pomaster'])->where('PayMasterAutoId', $input['payMasterAutoId'])->where('matchingDocID', 0)->get();
+
+        $bankChargeAndOthers = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$input['payMasterAutoId'])->get();
+
+        $finalData = [
+            'supplierPaymentVoucher' => $supplierPaymentVouchers,
+            'bankChargeAndOthers' => $bankChargeAndOthers
+        ];
+        return $this->sendResponse($finalData, 'Payment details saved successfully');
     }
 
     function getMatchingPaymentDetails(Request $request)
@@ -1229,6 +1241,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
 
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
+        $isPVHasVAT = false;
+
+        if(PaySupplierInvoiceMaster::find($matchDocumentMasterData->PayMasterAutoId)->applyVAT)
+        {
+            $isPVHasVAT = true;
+        }
 
         $user_type = $matchDocumentMasterData->user_type;
 
@@ -1241,10 +1259,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         $itemExistArray = array();
+        $supplierInvoiceWithoutVAT = [];
+        $supplierInvoiceAlreadyAdded = [];
 
         //check supplier invoice all ready exist
         foreach ($input['detailTable'] as $itemExist) {
-
             if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
                 $siDetailExistPS = PaySupplierInvoiceDetail::where('matchingDocID', $matchDocumentMasterAutoID)
                     ->where('companySystemID', $itemExist['companySystemID'])
@@ -1252,11 +1271,35 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     ->first();
 
                 if (!empty($siDetailExistPS)) {
-                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is all ready added. Please check again";
-                    $itemExistArray[] = [$itemDrt];
+                    array_push($supplierInvoiceAlreadyAdded,"<li>".$itemExist['bookingInvDocCode']."</li>");
+                }
+                
+                // check supplier invoice has VAT
+                $allRecordsHaveVAT = false;
+                $supplierInvoiceMaster  = BookInvSuppMaster::find($itemExist['bookingInvSystemCode']);
+                if(!empty($supplierInvoiceMaster->directdetail))
+                {
+                    $allRecordsHaveVAT = $supplierInvoiceMaster->directdetail->pluck('VATAmount')->every(function ($vatAmount) {
+                        return $vatAmount > 0;
+                    });
+                }
+
+
+                if(!$allRecordsHaveVAT && ($isPVHasVAT)) {
+                    array_push($supplierInvoiceWithoutVAT,"<li>".$itemExist['bookingInvDocCode']."</li>");
                 }
             }
         }
+
+        if (!empty($supplierInvoiceWithoutVAT)) {
+            return $this->sendError("The supplier invoice without VAT you cannot be matched with a payment voucher that includes VAT <br/>. <ul style='list-style:none;'>".implode('',$supplierInvoiceWithoutVAT)."</ul>", 422);
+        }
+
+        if (!empty($supplierInvoiceAlreadyAdded)) {
+            return $this->sendError("Selected Invoice is already added. Please check again </br>. <ul style='list-style:none'>".implode('',$supplierInvoiceAlreadyAdded)."</ul>", 422);
+        }
+
+        $notUpdatedInGL = [];
 
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
@@ -1268,14 +1311,20 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                        $itemExistArray[] = [$itemDrt];
+                        array_push($notUpdatedInGL,$itemExist['bookingInvDocCode']);
                     }
                 } else {
                     $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                    $itemExistArray[] = [$itemDrt];
+                    array_push($notUpdatedInGL,$itemExist['bookingInvDocCode']);
                 }
             }
         }
+
+        if (!empty($notUpdatedInGL)) {
+            return $this->sendError("Selected Invoice is not updated in general ledger. Please check again </br>. <ul style='list-style:none'>".implode('',$notUpdatedInGL)."</ul>", 422);
+        }
+
+        $moreThanBookingInvoiceAmount = [];
 
         foreach ($input['detailTable'] as $item) {
             if (isset($item['isChecked']) && $item['isChecked']) {
@@ -1306,17 +1355,17 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     //supplier invoice
                     if ($payDetailMoreBooked->supplierPaymentAmount > $item['supplierInvoiceAmount']) {
 
-                        $itemDrt = "Selected invoice " . $item['bookingInvDocCode'] . " booked more than the invoice amount.";
-                        $itemExistArray[] = [$itemDrt];
+                        array_push($moreThanBookingInvoiceAmount,$item['bookingInvDocCode']);
 
                     }
                 }
             }
         }
-        
-        if (!empty($itemExistArray)) {
-            return $this->sendError($itemExistArray, 422);
+
+        if (!empty($moreThanBookingInvoiceAmount)) {
+            return $this->sendError("Selected Invoice booked more than the invoice amount. </br>. <ul style='list-style:none'>".implode('',$moreThanBookingInvoiceAmount)."</ul>", 422);
         }
+
         DB::beginTransaction();
         try {
             foreach ($input['detailTable'] as $new) {
@@ -1780,6 +1829,139 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
   
         }
         return $this->sendResponse($paySupplierInvoiceDetail->toArray(), 'PaySupplierInvoiceDetail updated successfully');
+    }
+
+    public function storePaymentVoucherBankChargeDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $messages = [
+            'companySystemID.required' => 'Company is required.',
+            'payMasterAutoID.required' => 'ID is required.',
+            'glCode.required' => 'GL Account is required.',
+        ];
+
+        $validator = \Validator::make($request->all(), [
+            'companySystemID' => 'required|numeric|min:1',
+            'payMasterAutoID' => 'required|numeric|min:1',
+            'glCode' => 'required|numeric|min:1'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $companySystemID = $input['companySystemID'];
+        $glCode = $input['glCode'] ?? 0;
+        $payMasterAutoID = $input['payMasterAutoID'];
+
+        $master = PaySupplierInvoiceMaster::where('PayMasterAutoId', $payMasterAutoID)->first();
+
+        if(empty($master)){
+            return $this->sendError('Payment Voucher not found.');
+        }
+
+        if($master->confirmedYN){
+            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+        }
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if($glCode){
+            $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')
+                ->where('chartOfAccountSystemID', $glCode)
+                ->first();
+
+            $inputData['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+            $inputData['glCode'] = $chartOfAccount->AccountCode;
+            $inputData['glCodeDescription'] = $chartOfAccount->AccountDescription;
+        }
+
+        $inputData['payMasterAutoID'] = $payMasterAutoID;
+        $inputData['companyID'] = $company->CompanyID;
+        $inputData['companySystemID'] = $companySystemID;
+
+        $inputData['dpAmountCurrency'] = $master->supplierTransCurrencyID;
+        $inputData['dpAmountCurrencyER'] = $master->supplierTransCurrencyER;
+        $inputData['dpAmount'] = 0;
+        $inputData['localCurrency'] = $master->localCurrencyID;
+        $inputData['localCurrencyER'] = $master->localCurrencyER;
+        $inputData['localAmount'] = 0;
+        $inputData['comRptCurrency'] = $master->companyRptCurrencyID;
+        $inputData['comRptCurrencyER'] = $master->companyRptCurrencyER;
+        $inputData['comRptAmount'] = 0;
+
+        DB::beginTransaction();
+
+        try {
+            PaymentVoucherBankChargeDetails::create($inputData);
+            DB::commit();
+            return $this->sendResponse(null, 'successfully created');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError($exception->getLine());
+        }
+
+    }
+
+    public function updatePaymentVoucherBankChargeDetails(request $request)
+    {
+        $input = $request->all();
+
+        $input = $this->convertArrayToValue($input);
+        $id = $input['id'];
+
+        $input = array_except($input, ['id']);
+
+        $detail = PaymentVoucherBankChargeDetails::where('id', $id)->first();
+
+        if (empty($detail)) {
+            return $this->sendError('Payment voucher bank detail not found', 500);
+        }
+
+        $master = PaySupplierInvoiceMaster::where('PayMasterAutoId', $detail->payMasterAutoID)->first();
+
+        if(empty($master)){
+            return $this->sendError('Payment Voucher not found.');
+        }
+
+        if($master->confirmedYN){
+            return $this->sendError('You cannot update detail, this document already confirmed', 500);
+        }
+
+        if($input['serviceLineSystemID'] == 0){
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
+        }
+        else if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID){
+            $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+            $input['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
+            $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
+        }
+
+        $myCurr = $master->supplierTransCurrencyID;
+        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+
+        $input['dpAmountCurrency'] = $master->supplierTransCurrencyID;
+        $input['dpAmountCurrencyER'] = $master->supplierTransCurrencyER;
+        $totalAmount = $input['dpAmount'];
+        $input['dpAmount'] = round($input['dpAmount'], $decimal);
+
+        try {
+            $currency = \Helper::convertAmountToLocalRpt(203, $detail->payMasterAutoID, $totalAmount);
+            $input["comRptAmount"] = \Helper::roundValue($currency['reportingAmount']);
+            $input["localAmount"] = \Helper::roundValue($currency['localAmount']);
+
+            DB::beginTransaction();
+
+            PaymentVoucherBankChargeDetails::where('id', $id)->update($input);
+
+            DB::commit();
+            return $this->sendResponse('s', 'successfully updated');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }

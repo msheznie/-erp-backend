@@ -33,9 +33,12 @@ Route::group([], function() {
     Route::post('bankReconciliationReferBack', 'BankReconciliationAPIController@bankReconciliationReferBack')->name('Bank reconciliation refer back');
     Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount')->name('Get all bank reconciliation by bank account');
     Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec')->name('Get refer back history by bank reconciliation');
-    
+    Route::post('getBankReconciliationAdditionalEntries', 'BankReconciliationAPIController@getBankReconciliationAdditionalEntries')->name('Get bank reconciliations additional entry');
+    Route::post('saveAdditionalEntry', 'BankReconciliationAPIController@saveAdditionalEntry')->name('Add bank reconciliation additional entry');
+
     Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData')->name('Get bank reconciliation form data');
     Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate')->name('Get check before create');
+    Route::get('getAllSegments', 'BankReconciliationAPIController@getAllActiveSegments')->name('Get all active segments');
 
     Route::resource('bank_accounts', 'BankAccountAPIController');
     Route::resource('bank_ledgers', 'BankLedgerAPIController');

@@ -32,6 +32,7 @@ use App\Repositories\BudgetMasterRepository;
 use App\Repositories\BudjetdetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Collection;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -457,6 +458,96 @@ class BudjetdetailsAPIController extends AppBaseController
 
 
         return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
+    }
+
+
+    public function getDetailsByBudgetNew(Request $request)
+    {
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        /** @var BudgetMaster $budgetMaster */
+        $budgetMaster = $this->budgetMasterRepository->with(['segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($input['id']);
+
+        if (empty($budgetMaster)) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_master')]));
+        }
+
+
+        $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected financial year is not found.', 500);
+        }
+
+        $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
+        $monthArray = [];
+        foreach ($result as $dt) {
+            $temp['year'] = $dt->format("Y");
+            $temp['monthID'] = floatval($dt->format("m"));
+            $temp['monthName'] = (Months::find(floatval($dt->format("m")))) ? Months::find(floatval($dt->format("m")))->monthDes : "";
+
+            $monthArray[] = $temp;
+        }
+
+        $finalArray = ReportTemplateDetails::with(['subcategory' => function ($q) {
+            $q->select('detID', 'masterID', 'description', 'companyReportTemplateID', 'isFinalLevel','itemType','hideHeader','bgColor')
+                ->with(['subcategory' => function ($subcategory) {
+                    $subcategory->select('detID', 'masterID', 'description', 'companyReportTemplateID', 'isFinalLevel','itemType','hideHeader','bgColor')
+                        ->with(['subcategory' => function ($subcategory1) {
+                            $subcategory1->select('detID', 'masterID', 'description', 'companyReportTemplateID', 'isFinalLevel','itemType','hideHeader','bgColor')
+                                ->with(['subcategory' => function ($subcategory2) {
+                                    $subcategory2->select('detID', 'masterID', 'description', 'companyReportTemplateID', 'isFinalLevel','itemType','hideHeader','bgColor')
+                                        ->with('subcategory')
+                                        ->orderBy('sortOrder', 'asc');
+                                }])
+                                ->orderBy('sortOrder', 'asc');
+                        }])
+                        ->orderBy('sortOrder', 'asc');
+                }])
+                ->orderBy('sortOrder', 'asc');
+        }])
+            ->select('detID', 'masterID', 'description', 'companyReportTemplateID', 'isFinalLevel','itemType','hideHeader','bgColor')
+            ->OfMaster($budgetMaster->templateMasterID)
+            ->whereNull('masterID')
+            ->orderBy('sortOrder')
+            ->get();
+
+
+
+
+        return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
+    }
+
+    public function  getGLCodesByBudgetCategory(Request  $request)
+    {
+        $reportTemplateDetailsID = $request->input('id');
+
+        $glCodes = ReportTemplateDetails::find($reportTemplateDetailsID)->gl_codes()->with(['items' => function($query) {
+            $query->where('companySystemID',1)->where('serviceLineSystemID', 1)->where('companyFinanceYearID',68)->orderBy('month');
+        }])->get();
+
+
+        foreach ($glCodes as $glCode) {
+            if ($glCode->items->isEmpty()) {
+                $defaultItems = Collection::times(12, function ($month) {
+                    return [
+                        'month' => $month,
+                        'budjetAmtRpt' => 0, // Default value
+                    ];
+                });
+                $glCode->setRelation('items', $defaultItems);
+            }
+            $budjetAmtRptSum = $glCode->items->sum('budjetAmtRpt');
+            $glCode->items->push(['budjetAmtRpt' => $budjetAmtRptSum,'isText' => true]);
+        }
+
+        return $this->sendResponse(['glCodes' => $glCodes],"Data reterived successfully");
     }
 
     public function exportReport(Request $request)

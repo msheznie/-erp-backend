@@ -376,15 +376,22 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             $q->where('isApproved', 1);
         })->where('companySystemID', $companyID)
             ->where('isAssigned', -1)
-            ->where('controllAccountYN', 0)
-            ->where('controlAccountsSystemID', '<>', 1)
-            ->where('isActive', 1)
-            ->when((isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] == 15), function ($query) {
-                $query->where('isBank',1);
-            })
-            ->when((!isset($input['expenseClaimOrPettyCash']) || (isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] != 15)), function ($query) {
-                $query->where('isBank',0);
-            });
+            ->where('isActive', 1);
+
+        if($input['isBankCharge']) {
+            $items->where('catogaryBLorPLID', 2);
+        }
+        else {
+            $items->where('controlAccountsSystemID', '<>', 1)
+                ->where('controllAccountYN', 0)
+
+                ->when((isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] == 15), function ($query) {
+                    $query->where('isBank',1);
+                })
+                ->when((!isset($input['expenseClaimOrPettyCash']) || (isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] != 15)), function ($query) {
+                    $query->where('isBank',0);
+                });
+        }
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];

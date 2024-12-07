@@ -64,7 +64,7 @@ class GeneralLedgerPdfJob implements ShouldQueue
         $reportCount = 1;
 
         foreach ($outputChunkData as $key1 => $output1) {
-            GenerateGlPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root);
+            GenerateGlPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root)->onQueue('single');
             $reportCount++;
         }
     }

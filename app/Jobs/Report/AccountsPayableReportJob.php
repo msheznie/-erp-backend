@@ -70,7 +70,7 @@ class AccountsPayableReportJob implements ShouldQueue
 
                 foreach ($outputChunkData as $output1)
                 {
-                    GeneratePdfJob::dispatch($db,$request,$reportCount,$this->userIds,$output1,count($outputChunkData), $root);
+                    GeneratePdfJob::dispatch($db,$request,$reportCount,$this->userIds,$output1,count($outputChunkData), $root)->onQueue('single');
 
                     $reportCount++;
                 }
@@ -141,6 +141,7 @@ class AccountsPayableReportJob implements ShouldQueue
                                 finalAgingDetail.CompanyName,
                                 finalAgingDetail.documentSystemID,
                                 finalAgingDetail.documentSystemCode,
+                                finalAgingDetail.group as supplierGroupName,
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentDate,
@@ -168,6 +169,7 @@ class AccountsPayableReportJob implements ShouldQueue
                                 companymaster.CompanyName,
                                 MAINQUERY.documentSystemID,
                                 MAINQUERY.documentSystemCode,
+                                MAINQUERY.group,
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentDate,
@@ -210,6 +212,7 @@ class AccountsPayableReportJob implements ShouldQueue
                                 erp_generalledger.documentSystemID,
                                 erp_generalledger.documentID,
                                 erp_generalledger.documentSystemCode,
+                                supplier_groups.group,
                                 erp_generalledger.documentCode,
                                 erp_generalledger.documentDate,
                                 erp_generalledger.chartOfAccountSystemID,
@@ -252,6 +255,8 @@ class AccountsPayableReportJob implements ShouldQueue
                                 ( debitNoteMatched.debitNoteMatchedAmountRpt IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountRpt ) AS debitNoteMatchedAmountRpt
                             FROM
                                 erp_generalledger
+                                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
                                 LEFT JOIN (-- payment voucher matched with invoice or debit note
                             SELECT
                                 erp_paysupplierinvoicedetail.companySystemID,

@@ -17,7 +17,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerReceivePaymentDetailAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentDetailAPIRequest;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DirectReceiptDetail;
 use App\Models\SegmentMaster;
 use App\Repositories\UserRepository;
 use App\Models\CustomerReceivePayment;
@@ -702,7 +704,22 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             return $this->sendError('You cannot add detail, this document already confirmed', 500);
         }
 
+        $vatTotal = 0;
+        if ($matchDocumentMasterData->documentSystemID == 21) {
+            if ($matchDocumentMasterData->tableType == 1) {
+                $vatTotal = DirectReceiptDetail::where('directReceiptAutoID',$matchDocumentMasterData->PayMasterAutoId)
+                    ->where('serviceLineSystemID',$matchDocumentMasterData->serviceLineSystemID)
+                    ->sum('VATAmount');
+            }
+            if ($matchDocumentMasterData->tableType == 2) {
+                $vatTotal = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$matchDocumentMasterData->PayMasterAutoId)
+                    ->where('serviceLineSystemID',$matchDocumentMasterData->serviceLineSystemID)
+                    ->sum('VATAmount');
+            }
+        }
+
         $itemExistArray = array();
+        $vatValidation = array();
 
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
@@ -725,10 +742,30 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
                     $itemExistArray[] = [$itemDrt];
                 }
+
+                if ($matchDocumentMasterData->documentSystemID == 21 && $vatTotal > 0) {
+                    $detailWithoutVAT = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $itemExist['bookingInvCodeSystem'])
+                        ->where(function ($query) {
+                            $query->where('VATAmount', 0)
+                                ->orWhereNull('VATAmount');
+                        })
+                        ->get();
+
+                    if(!$detailWithoutVAT->isEmpty()) {
+                        $vatValidation[] = "<li>" . $itemExist['bookingInvDocCode'] . "</li>";
+                        $errorMessage = "The receipt voucher does include VAT, you cannot match it with customer invoice which does not include VAT";
+                    }
+                }
             }
         }
 
+        if(!empty($vatValidation)) {
+            $error = $errorMessage . "</br> <ul style='list-style:none;'>".implode('',$vatValidation)."</ul>";
+            return $this->sendError($error, 422);
+        }
+
         if (!empty($itemExistArray)) {
+            $itemExistArray = implode(', ', $itemExistArray);
             return $this->sendError($itemExistArray, 422);
         }
         DB::beginTransaction();

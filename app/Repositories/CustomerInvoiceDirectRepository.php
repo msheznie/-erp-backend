@@ -278,6 +278,23 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                 $invMaster->whereYear('erp_custinvoicedirect.bookingDate', '=', $input['year']);
             }
         }
+
+        if (array_key_exists('fromDate', $input) && array_key_exists('toDate', $input)) {
+            if (($input['fromDate'] && !is_null($input['fromDate'])) && ($input['toDate'] && !is_null($input['toDate']))) {
+                $fromDate = Carbon::parse($input['fromDate'])->format('Y-m-d') . ' 00:00:00';
+                $toDate = Carbon::parse($input['toDate'])->format('Y-m-d') . ' 23:59:59';
+
+                $invMaster->whereBetween('erp_custinvoicedirect.bookingDate', [$fromDate, $toDate]);
+            }
+        }
+
+        if (!isset($input['fromDate']) && array_key_exists('toDate', $input)) {
+            if (($input['toDate'] && !is_null($input['toDate']))) {
+                $toDate = Carbon::parse($input['toDate'])->format('Y-m-d') . ' 23:59:59';
+                $invMaster->where('erp_custinvoicedirect.bookingDate', '<=' , $toDate);
+            }
+        }
+
         /*  if (array_key_exists('year', $input)) {
               if ($input['year'] && !is_null($input['year'])) {
                   $invoiceDate = $input['year'] . '-12-31';

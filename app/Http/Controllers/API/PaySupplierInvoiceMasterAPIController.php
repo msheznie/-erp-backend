@@ -19,6 +19,8 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
+use App\Models\PaymentVoucherBankChargeDetails;
+use App\Services\PaymentVoucherServices;
 use ExchangeSetupConfig;
 use App\helper\Helper;
 use App\helper\TaxService;
@@ -209,9 +211,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'BPVAccount' => 'required',
                 'BPVdate' => 'required|date',
             ];
- 
+
             if (isset($input['pdcChequeYN']) && !$input['pdcChequeYN']) {
-                $conditions['BPVchequeDate'] = 'required|date';               
+                $conditions['BPVchequeDate'] = 'required|date';
             }
 
             $validator = \Validator::make($request->all(), $conditions);
@@ -220,218 +222,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-            if (!$companyFinanceYear["success"]) {
-                return $this->sendError($companyFinanceYear["message"], 500);
-            } else {
-                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+            $resultData = PaymentVoucherServices::createPaymentVoucher($input);
+            if($resultData['status']){
+                DB::commit();
+                return $this->sendResponse($resultData['data'], $resultData['message']);
             }
-
-            $inputParam = $input;
-            $inputParam["departmentSystemID"] = 1;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-            if (!$companyFinancePeriod["success"]) {
-                return $this->sendError($companyFinancePeriod["message"], 500);
-            } else {
-                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+            else{
+                DB::rollBack();
+                return $this->sendError($resultData['message'], 500, $resultData['type']);
             }
-
-
-            unset($inputParam);
-
-            $input['BPVdate'] = new Carbon($input['BPVdate']);
-            $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
-
-            $monthBegin = $input['FYPeriodDateFrom'];
-            $monthEnd = $input['FYPeriodDateTo'];
-
-            if (($input['BPVdate'] >= $monthBegin) && ($input['BPVdate'] <= $monthEnd)) {
-            } else {
-                return $this->sendError('Payment voucher date is not within financial period!', 500,array('type' => 'finance_period'));
-            }
-
-            if (isset($input['invoiceType']) && $input['invoiceType'] == 3 && isset($input['preCheck']) && $input['preCheck'] &&  !Helper::isLocalSupplier($input['BPVsupplierID'], $input['companySystemID'])) {
-                $company = Company::where('companySystemID', $input['companySystemID'])->first();
-                if (!empty($company) && $company->vatRegisteredYN == 1) {
-                    return $this->sendError('Do you want to activate Reverse Charge Mechanism for this Invoice', 500, array('type' => 'rcm_confirm'));
-                }
-            }
-
-            $company = Company::find($input['companySystemID']);
-            if ($company) {
-                $input['companyID'] = $company->CompanyID;
-            }
-
-            $documentMaster = DocumentMaster::find($input['documentSystemID']);
-            if ($documentMaster) {
-                $input['documentID'] = $documentMaster->documentID;
-            }
-
-            $lastSerial = PaySupplierInvoiceMaster::where('companySystemID', $input['companySystemID'])
-                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-                ->orderBy('serialNo', 'desc')
-                ->first();
-
-            $lastSerialNumber = 1;
-            if ($lastSerial) {
-                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-            }
-
-            if ($companyFinanceYear["message"]) {
-                $startYear = $companyFinanceYear["message"]['bigginingDate'];
-                $finYearExp = explode('-', $startYear);
-                $finYear = $finYearExp[0];
-            } else {
-                $finYear = date("Y");
-            }
-            if ($documentMaster) {
-                $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-                $input['BPVcode'] = $documentCode;
-            }
-            $input['serialNo'] = $lastSerialNumber;
-
-            if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
-                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
-
-                $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
-
-                if ($supDetail) {
-                    $input['supplierGLCode'] = $supDetail->liabilityAccount;
-                    $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
-                    $input['VATPercentage'] = $supDetail->vatPercentage;
-
-                }
-                $input['supplierTransCurrencyER'] = 1;
-                if ($supCurrency) {
-                    $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
-                    $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
-                    if ($currencyConversionDefaultMaster) {
-                        $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
-                    }
-                }
-                $supplier = SupplierMaster::find($input['BPVsupplierID']);
-                $input['directPaymentPayee'] = $supplier->supplierName;
-            } else {
-                $input['supplierTransCurrencyER'] = 1;
-                $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
-                $input['supplierDefCurrencyER'] = 1;
-            }
-
-            $bankAccount = BankAccount::find($input['BPVAccount']);
-            if ($bankAccount) {
-                $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
-                $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
-                if ($currencyConversionDefaultMaster) {
-                    $input['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
-                }
-            }
-
-            $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
-            if ($companyCurrency) {
-                $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
-                if ($companyCurrencyConversion) {
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                }
-            }
-
-            if ($input['invoiceType'] == 3) {
-                if ($input['payeeType'] == 3) {
-                    $input['directPaymentpayeeYN'] = -1;
-                    $input['directPaymentPayeeSelectEmp'] = 0;
-                    $input['directPaymentPayeeEmpID'] = null;
-                }
-                if ($input['payeeType'] == 2) {
-                    $input['directPaymentPayeeSelectEmp'] = -1;
-                    $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                    $input['directPaymentPayee'] = $emp->empFullName;
-                }
-            }
-            if ($input['invoiceType'] == 5) {
-
-
-                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
-
-                if($supDetail)
-                {
-                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
-                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
-                }
-          
-            }
-
-            if ($input['invoiceType'] == 7) {
-                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
-
-                if (is_null($checkEmployeeControlAccount)) {
-                    return $this->sendError('Please configure Employee control account for this company', 500);
-                }
-
-                $input['AdvanceAccount'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
-                $input['advanceAccountSystemID'] = $checkEmployeeControlAccount;
-
-                $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
-
-                if (is_null($isEmpAdvConfigured)) {
-                    return $this->sendError('Please configure employee advance account for this company', 500, array('type' => 'create'));
-                }
-
-                $input['employeeAdvanceAccount'] = ChartOfAccount::getAccountCode($isEmpAdvConfigured);
-                $input['employeeAdvanceAccountSystemID'] = $isEmpAdvConfigured;
-
-                $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                $input['directPaymentPayee'] = $emp->empFullName;
-            }
-
-
-
-            if ($input['invoiceType'] == 6) {
-                $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
-
-                if (is_null($checkEmployeeControlAccount)) {
-                    return $this->sendError('Please configure Employee control account for this company', 500);
-                }
-
-                $input['supplierGLCodeSystemID'] = $checkEmployeeControlAccount;
-                $input['supplierGLCode'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
-                $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                $input['directPaymentPayee'] = $emp->empFullName;
-            }
-
-            if (isset($input['paymentMode'])) {
-                if ($input['paymentMode'] == 2) {
-                    $input['chequePaymentYN'] = -1;
-                } else {
-                    $input['chequePaymentYN'] = 0;
-                }
-            } else {
-                $input['chequePaymentYN'] = 0;
-            }
-
-            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
-                $input['chequePaymentYN'] = 0;
-                $input['BPVchequeDate'] = null;
-            } else {
-                $input['pdcChequeYN'] = 0;
-            }
-
-            $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
-
-            $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-
-            $input['payment_mode'] = $input['paymentMode'];
-            unset($input['paymentMode']);
-
-            $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
-
-            DB::commit();
-            return $this->sendResponse($paySupplierInvoiceMasters->toArray(), 'Pay Supplier Invoice Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -507,7 +306,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
-        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by', 'bankaccount', 'financeperiod_by' => function ($query) {
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['transactioncurrency', 'confirmed_by', 'bankaccount', 'financeperiod_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
@@ -527,6 +326,24 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $paySupplierInvoiceMaster['BPVbankCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['BPVbankCurrency'])->first()->CurrencyCode;
         $paySupplierInvoiceMaster['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['companyRptCurrencyID'])->first()->CurrencyCode;
         $paySupplierInvoiceMaster['localCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['localCurrencyID'])->first()->CurrencyCode;
+        $paySupplierInvoiceMaster['BPVchequeNoID'] = null;
+
+        if($paySupplierInvoiceMaster['payment_mode'] == 2 && $paySupplierInvoiceMaster['pdcChequeYN'] == 0 && !empty($paySupplierInvoiceMaster['BPVchequeNo'])) {
+            $chequeRegisterData = ChequeRegister::where('bank_id',$paySupplierInvoiceMaster['BPVbank'])
+                ->where('bank_account_id',$paySupplierInvoiceMaster['BPVAccount'])
+                ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                ->where('started_cheque_no', '<=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                ->where('ended_cheque_no', '>=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                ->first();
+
+            $checkRegisterDetails = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
+                ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
+                ->first();
+
+            $paySupplierInvoiceMaster['BPVchequeNoID'] = $checkRegisterDetails->id;
+        }
+
         return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'Pay Supplier Invoice Master retrieved successfully');
     }
 
@@ -1748,6 +1565,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['BPVchequeNo'] = null;
                 $input['expenseClaimOrPettyCash'] = null;
 
+                if(!is_null($paySupplierInvoiceMaster->BPVchequeNo) && ($paySupplierInvoiceMaster->BPVchequeNo != 0)) {
+                    ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])
+                        ->where('document_master_id', $input['documentSystemID'])
+                        ->where('company_id', $companySystemID)
+                        ->where('cheque_no', $paySupplierInvoiceMaster->BPVchequeNo)
+                        ->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+                }
+
             } else {
                 $input['pdcChequeYN'] = 0;
             }
@@ -1782,8 +1607,115 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['BPVdate'] = new Carbon($input['BPVdate']);
             $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
             Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
+
+            $changeChequeNoBaseOnPolicy = false;
+            $is_exist_policy_GCNFCR = Helper::checkPolicy($companySystemID, 35);
+
+            if($input['paymentMode'] == 2 && !$input['pdcChequeYN'] && $is_exist_policy_GCNFCR) {
+                $checkRegisterDetails = ChequeRegisterDetail::where('id',$input['BPVchequeNoDropdown'])
+                    ->where('company_id',$companySystemID)
+                    ->first();
+
+                if($checkRegisterDetails) {
+                    $input['BPVchequeNo'] = $checkRegisterDetails->cheque_no;
+                    $changeChequeNoBaseOnPolicy = true;
+
+                    /*update cheque detail table */
+                    $checkRegisterDetails->document_id = $id;
+                    $checkRegisterDetails->document_master_id = $documentSystemID;
+                    $checkRegisterDetails->status = 1;
+                    $checkRegisterDetails->save();
+
+                    if((!is_null($paySupplierInvoiceMaster->BPVchequeNo) && $paySupplierInvoiceMaster->BPVchequeNo != 0) && ($paySupplierInvoiceMaster->BPVchequeNo != $checkRegisterDetails->cheque_no)) {
+                        $chequeRegisterData = ChequeRegister::where('bank_id',$paySupplierInvoiceMaster['BPVbank'])
+                            ->where('bank_account_id',$paySupplierInvoiceMaster['BPVAccount'])
+                            ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                            ->where('started_cheque_no', '<=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                            ->where('ended_cheque_no', '>=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                            ->first();
+
+                        $checkRegisterDetails = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
+                            ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                            ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
+                            ->first();
+
+                        $checkRegisterDetails->document_id = null;
+                        $checkRegisterDetails->document_master_id = null;
+                        $checkRegisterDetails->status = 0;
+                        $checkRegisterDetails->save();
+                    }
+                }
+                unset($checkRegisterDetails);
+            }
+
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
+                // checking minus value
+                if ($input['invoiceType'] == 2) {
+
+                    $checkBankChargeTotal = PaymentVoucherBankChargeDetails::where('payMasterAutoID', $input['PayMasterAutoId'])->sum('dpAmount');
+
+                    $checkInvoiceDetailTotal = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input['PayMasterAutoId'])->sum('supplierPaymentAmount');
+
+                    $netMinustot = $checkBankChargeTotal + $checkInvoiceDetailTotal;
+
+                    if ($netMinustot < 0) {
+                        return $this->sendError('Net amount cannot be negative value', 500);
+                    }
+
+                    $checkQuantity = PaymentVoucherBankChargeDetails::where('payMasterAutoID', $input['PayMasterAutoId'])
+                        ->where(function ($q) {
+                            $q->where('dpAmount', '=', 0)
+                                ->orWhere('localAmount', '=', 0)
+                                ->orWhere('comRptAmount', '=', 0)
+                                ->orWhereNull('dpAmount')
+                                ->orWhereNull('localAmount')
+                                ->orWhereNull('comRptAmount');
+                        })->count();
+
+                    if ($checkQuantity > 0) {
+                        return $this->sendError('Amount should be have value', 500);
+                    }
+
+                    $pvBankChargeDetail = PaymentVoucherBankChargeDetails::where('payMasterAutoID', $input['PayMasterAutoId'])->get();
+
+                    $finalError = array(
+                        'amount_zero' => array(),
+                        'amount_neg' => array(),
+                        'required_serviceLine' => array(),
+                        'active_serviceLine' => array()
+                    );
+
+                    $error_count = 0;
+
+                    foreach ($pvBankChargeDetail as $item) {
+
+                        $updateItem = PaymentVoucherBankChargeDetails::find($item['id']);
+
+                        if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                            $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                                ->where('isActive', 1)
+                                ->first();
+                            if (empty($checkDepartmentActive)) {
+                                $updateItem->serviceLineSystemID = null;
+                                $updateItem->serviceLineCode = null;
+                                array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                                $error_count++;
+                            }
+                        } else {
+                            array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                            $error_count++;
+                        }
+
+                        $updateItem->save();
+                    }
+
+                    $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+                    if ($error_count > 0) {
+                        return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                    }
+                }
                 
                 if(($input['isSupplierBlocked']) && ($paySupplierInvoiceMaster->invoiceType == 2))
                 {
@@ -1854,14 +1786,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
 
                 if ($input['invoiceType'] == 2 || $input['invoiceType'] == 6) {
+                    $bankCharge = PaymentVoucherBankChargeDetails::selectRaw("SUM(dpAmount) as dpAmount, SUM(localAmount) as localAmount,SUM(comRptAmount) as comRptAmount")->WHERE('payMasterAutoID', $paySupplierInvoiceMaster->PayMasterAutoId)->first();
                     $si = PaySupplierInvoiceDetail::selectRaw("SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER")->WHERE('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->WHERE('matchingDocID', 0)->first();
-                    $convertAmount = \Helper::convertAmountToLocalRpt(203, $paySupplierInvoiceMaster->PayMasterAutoId, $si->transAmount);
 
-                    $masterTransAmountTotal = $si->transAmount;
-                    $masterLocalAmountTotal = $si->localAmount;
-                    $masterRptAmountTotal = $si->rptAmount;
+                    $masterTransAmountTotal = $si->transAmount + $bankCharge->dpAmount;
+                    $masterLocalAmountTotal = $si->localAmount + $bankCharge->localAmount;
+                    $masterRptAmountTotal = $si->rptAmount + $bankCharge->comRptAmount;
 
-                    $transAmountTotal = $si->transAmount;
+                    $convertAmount = \Helper::convertAmountToLocalRpt(203, $paySupplierInvoiceMaster->PayMasterAutoId, $masterTransAmountTotal);
+
+                    $transAmountTotal = $masterTransAmountTotal;
                     $localAmountTotal = $convertAmount["localAmount"];
                     $rptAmountTotal = $convertAmount["reportingAmount"];
 
@@ -2446,6 +2380,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 $amountForApproval = 0;
                 if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
+                    $bankCharge = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$id)->selectRaw('SUM(localAmount) as total')->first();
                     $totalAmountForApprovalData = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
                                                                     ->selectRaw('SUM(paymentLocalAmount) as total, SUM(retentionVatAmount) as retentionVatAmount, supplierTransCurrencyID, localCurrencyID')
                                                                     ->first();
@@ -2456,7 +2391,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $retLocal = $currencyConversionRetAmount['localAmount'];
                         
 
-                        $amountForApproval = $totalAmountForApprovalData->total + $retLocal;
+                        $amountForApproval = $totalAmountForApprovalData->total + $bankCharge->total + $retLocal;
                     }
 
 
@@ -2486,71 +2421,80 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
 
                 $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
-                if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
-                    if ($input['chequePaymentYN'] == -1 &&  $input['pdcChequeYN'] == 0) {
-                        $bankAccount = BankAccount::find($input['BPVAccount']);
-                        /*
-                         * check 'Get cheque number from cheque register' policy exist
-                         * if policy exist - cheque no should get from erp_cheque register details - Get cheque number from cheque register
-                         * else - usual method
-                         *
-                         * */
-                        $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $companySystemID)
-                            ->where('companyPolicyCategoryID', 35)
-                            ->where('isYesNO', 1)
-                            ->first();
-                        if (!empty($is_exist_policy_GCNFCR)) {
-
-                            $usedCheckID = $this->paySupplierInvoiceMasterRepository->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
-
-                            $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
-                                $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
-                                    ->where('company_id', $companySystemID)
-                                    ->where('isActive', 1);
-                            })
-                                ->where('status', 0)
-                                ->where(function ($q) use ($usedCheckID) {
-                                    if ($usedCheckID) {
-                                        $q->where('id', '>', $usedCheckID);
-                                    }
-                                })
-                                ->orderBy('id', 'ASC')
+                if(!$changeChequeNoBaseOnPolicy) {
+                    if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
+                        if ($input['chequePaymentYN'] == -1 &&  $input['pdcChequeYN'] == 0) {
+                            $bankAccount = BankAccount::find($input['BPVAccount']);
+                            /*
+                             * check 'Get cheque number from cheque register' policy exist
+                             * if policy exist - cheque no should get from erp_cheque register details - Get cheque number from cheque register
+                             * else - usual method
+                             *
+                             * */
+                            $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $companySystemID)
+                                ->where('companyPolicyCategoryID', 35)
+                                ->where('isYesNO', 1)
                                 ->first();
+                            if (!empty($is_exist_policy_GCNFCR)) {
 
-                            if (!empty($unUsedCheque)) {
-                                $nextChequeNo = $unUsedCheque->cheque_no;
-                                $input['BPVchequeNo'] = $nextChequeNo;
-                                /*update cheque detail table */
-                                $update_array = [
-                                    'document_id' => $id,
-                                    'document_master_id' => $documentSystemID,
-                                    'status' => 1,
-                                ];
-                                ChequeRegisterDetail::where('id', $unUsedCheque->id)->update($update_array);
+                                $usedCheckID = $this->paySupplierInvoiceMasterRepository->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
+
+                                $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
+                                    $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
+                                        ->where('company_id', $companySystemID)
+                                        ->where('isActive', 1);
+                                })
+                                    ->where('status', 0)
+                                    ->where(function ($q) use ($usedCheckID) {
+                                        if ($usedCheckID) {
+                                            $q->where('id', '>', $usedCheckID);
+                                        }
+                                    })
+                                    ->orderBy('id', 'ASC')
+                                    ->first();
+
+                                if (!empty($unUsedCheque)) {
+                                    $nextChequeNo = $unUsedCheque->cheque_no;
+                                    $input['BPVchequeNo'] = $nextChequeNo;
+                                    /*update cheque detail table */
+                                    $update_array = [
+                                        'document_id' => $id,
+                                        'document_master_id' => $documentSystemID,
+                                        'status' => 1,
+                                    ];
+                                    ChequeRegisterDetail::where('id', $unUsedCheque->id)->update($update_array);
+
+                                } else {
+                                    return $this->sendError('Could not found any unassigned cheques. Please add cheques to cheque registry', 500, ['type' => 'confirm']);
+                                }
 
                             } else {
-                                return $this->sendError('Could not found any unassigned cheques. Please add cheques to cheque registry', 500, ['type' => 'confirm']);
+                                $nextChequeNo = $bankAccount->chquePrintedStartingNo + 1;
+                            }
+                            /*code ended here*/
+
+                            $checkChequeNoDuplicate = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('BPVbank', $input['BPVbank'])->where('BPVAccount', $input['BPVAccount'])->where('BPVchequeNo', $nextChequeNo)->first();
+
+                            if ($checkChequeNoDuplicate) {
+                                //return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
                             }
 
+                            if ($bankAccount->isPrintedActive == 1 && empty($is_exist_policy_GCNFCR)) {
+                                $input['BPVchequeNo'] = $nextChequeNo;
+                                $bankAccount->chquePrintedStartingNo = $nextChequeNo;
+                                $bankAccount->save();
+
+                                Log::info('Cheque No:' . $input['BPVchequeNo']);
+                                Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
+                                Log::info('-------------------------------------------------------');
+                            }
                         } else {
-                            $nextChequeNo = $bankAccount->chquePrintedStartingNo + 1;
-                        }
-                        /*code ended here*/
-
-                        $checkChequeNoDuplicate = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('BPVbank', $input['BPVbank'])->where('BPVAccount', $input['BPVAccount'])->where('BPVchequeNo', $nextChequeNo)->first();
-
-                        if ($checkChequeNoDuplicate) {
-                            //return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
-                        }
-
-                        if ($bankAccount->isPrintedActive == 1 && empty($is_exist_policy_GCNFCR)) {
-                            $input['BPVchequeNo'] = $nextChequeNo;
-                            $bankAccount->chquePrintedStartingNo = $nextChequeNo;
-                            $bankAccount->save();
-
-                            Log::info('Cheque No:' . $input['BPVchequeNo']);
-                            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-                            Log::info('-------------------------------------------------------');
+                            $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
+                            if ($chkCheque) {
+                                $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
+                            } else {
+                                $input['BPVchequeNo'] = 1;
+                            }
                         }
                     } else {
                         $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
@@ -2559,13 +2503,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         } else {
                             $input['BPVchequeNo'] = 1;
                         }
-                    }
-                } else {
-                    $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
-                    if ($chkCheque) {
-                        $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
-                    } else {
-                        $input['BPVchequeNo'] = 1;
                     }
                 }
 
@@ -2578,32 +2515,34 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
+                $bankChargeTotal = PaymentVoucherBankChargeDetails::selectRaw("SUM(dpAmount) as dpAmount, SUM(localAmount) as localAmount,SUM(comRptAmount) as comRptAmount")->WHERE('payMasterAutoID', $id)->first();
 
                 $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(retentionVatAmount) as retentionVatAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")
                     ->where('PayMasterAutoId', $id)
                     ->where('matchingDocID', 0)
                     ->first();
-                if (!empty($totalAmount->supplierPaymentAmount)) {
+                $supplierPaymentAmount = $totalAmount->supplierPaymentAmount + $bankChargeTotal->dpAmount;
+                if (!empty($supplierPaymentAmount)) {
                     if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->supplierTransCurrencyID) {
-                        $input['payAmountBank'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount);
-                        $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount);
-                        $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                        $input['payAmountBank'] = \Helper::roundValue($supplierPaymentAmount);
+                        $input['payAmountSuppTrans'] = \Helper::roundValue($supplierPaymentAmount);
+                        $input['payAmountSuppDef'] = \Helper::roundValue($supplierPaymentAmount);
+                        $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount + $bankChargeTotal->localAmount);
+                        $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount + $bankChargeTotal->comRptAmount);
+                        $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
                         $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
                     } else {
-                        $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
+                        $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
                         $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
-                        $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                        $input['payAmountSuppTrans'] = \Helper::roundValue($supplierPaymentAmount);
+                        $input['payAmountSuppDef'] = \Helper::roundValue($supplierPaymentAmount);
                         $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
                         $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
-                        $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                        $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
                         $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
 
                     }
-                    $exchangeAmount =\Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
+                    $exchangeAmount =\Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
                     $input['payAmountBank'] = $exchangeAmount["defaultAmount"];
                     $input['payAmountCompLocal'] = \Helper::roundValue($exchangeAmount["localAmount"]);
                     $input['payAmountCompRpt'] = \Helper::roundValue($exchangeAmount["reportingAmount"]);
@@ -3260,6 +3199,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
 
             $contractEnablePolicy = Helper::checkPolicy($companyId, 93);
+            $sendToTreasuryPolicy = Helper::checkPolicy($companyId, 96);
 
             $output = array(
                 'financialYears' => $financialYears,
@@ -3288,7 +3228,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'isVATEligible' => $isVATEligible,
                 'projects' => $projects,
                 'payeeAll' => $payeeAll,
-                'contractEnablePolicy' => $contractEnablePolicy
+                'contractEnablePolicy' => $contractEnablePolicy,
+                'sendToTreasuryPolicy' => $sendToTreasuryPolicy
             );
         }
 
@@ -5283,6 +5224,48 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
   
        
        
+    }
+
+    public function getAvailableChequeNumbers(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $chequeRegisterData = ChequeRegister::where('bank_id',$input['bankID'])
+            ->where('bank_account_id',$input['accountID'])
+            ->where('company_id',$input['company_id'])
+            ->where('isActive',1)
+            ->first();
+
+        $checkRegisterDetails = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData['id'])
+            ->where('company_id',$input['company_id'])
+            ->where('status',0)
+            ->get();
+
+        if(isset($input['documentAutoID'])) {
+            $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['documentAutoID']);
+
+            if(!empty($paySupplierInvoiceMaster['BPVchequeNo'])) {
+                $chequeRegisterData = ChequeRegister::where('bank_id',$paySupplierInvoiceMaster['BPVbank'])
+                    ->where('bank_account_id',$paySupplierInvoiceMaster['BPVAccount'])
+                    ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                    ->where('started_cheque_no', '<=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                    ->where('ended_cheque_no', '>=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
+                    ->first();
+
+                $checkRegisterDetailsOldRecord = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
+                    ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                    ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
+                    ->first();
+
+                $checkRegisterDetails->push($checkRegisterDetailsOldRecord);
+
+                $sorted = $checkRegisterDetails->sortBy('cheque_no');
+                $checkRegisterDetails = $sorted->values()->all();
+            }
+        }
+
+        return $this->sendResponse($checkRegisterDetails, 'Data fetched successfully');
     }
 
 

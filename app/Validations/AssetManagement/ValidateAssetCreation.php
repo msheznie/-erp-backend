@@ -8,6 +8,7 @@ use App\Models\UploadAssetCosting;
 use App\Services\GeneralLedger\AssetCreationService;
 use App\Traits\JsonResponseTrait;
 use Carbon\Carbon;
+use DateTime;
 
 
 class ValidateAssetCreation
@@ -154,8 +155,8 @@ class ValidateAssetCreation
         if($date == null){
             return self::sendJsonResponse(false,"Please check date of column", 500);
         }
-        $datetime = \DateTime::createFromFormat('d-m-Y', $date);
-        if ($datetime && $datetime->format('d-m-Y') === $date) {
+        $datetime = \DateTime::createFromFormat('d/m/Y', $date);
+        if ($datetime && $datetime->format('d/m/Y') === $date) {
             $date = $datetime->format('m/d/Y');
 
             return self::sendJsonResponse(true,'Date format validation passed',200, $date);
@@ -236,8 +237,17 @@ class ValidateAssetCreation
             return self::sendJsonResponse(false,'The Accumulated Depreciation Date is mandatory',500);
         }
 
-        if ($accumulatedDate != null && ($depDate > $accumulatedDate)) {
-            return self::sendJsonResponse(false,'Accumulated Depreciation Date should greater than Dep Start Date',500);
+        if ($accumulatedDate !== null) {
+            $accumulatedDateObj = DateTime::createFromFormat('m/d/Y', $accumulatedDate);
+            $depDateObj = DateTime::createFromFormat('m/d/Y', $depDate);
+
+            if ($accumulatedDateObj && $depDateObj) {
+                if ($depDateObj > $accumulatedDateObj) {
+                    return self::sendJsonResponse(false,'Accumulated Depreciation Date should be greater than Dep Start Date',500);
+                }
+            } else {
+                return self::sendJsonResponse(false, 'Invalid date format provided.', 500);
+            }
         }
 
     }

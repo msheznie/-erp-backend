@@ -175,53 +175,63 @@
                         <td colspan="9"><span style="font-size: 9px; font-weight: bold">{{$key2}}</span></td>
                     @endif
                 </tr>
-                <tr style="width:100%">
-                    <th>Doc ID</th>
-                    <th>Document Code</th>
-                    <th>Doc Date</th>
-                    <th>Account</th>
-                    @if(!$sentEmail)
-                        <th>Narration</th>
-                    @endif
-                    <th>Invoice Number</th>
-                    <th>Invoice Date</th>
-                    <th>Currency</th>
-                    <th>Age Days</th>
-                    <th>Doc Amount</th>
-                    <th>BalanceAmount</th>
-                </tr>
-                <tbody>
-                {{ $lineTotal = 0 }}
-                @foreach ($val2 as $det2)
+                @foreach ($val2 as $key3 => $val3)
                     <tr style="width:100%">
-                        <td>{{ $det2->documentID }}</td>
-                        <td>{{ $det2->documentCode }}</td>
-                        <td>{{ \App\helper\Helper::dateFormat($det2->documentDate)}}</td>
-                        <td>{{ $det2->glCode }} - {{ $det2->AccountDescription }}</td>
-                         @if(!$sentEmail)
-                            <td class="white-space-pre-line">{{ $det2->documentNarration }}</td>
-                         @endif
-                        <td class="white-space-pre-line">{{ $det2->invoiceNumber }}</td>
-                        <td> {{ \App\helper\Helper::dateFormat($det2->invoiceDate)}}</td>
-                        <td>{{ $det2->documentCurrency }}</td>
-                        <td class="text-right">{{ $det2->ageDays }}</td>
-                        <td class="text-right">{{ number_format($det2->invoiceAmount, $currencyDecimalPlace) }}</td>
-                        <td class="text-right">{{ number_format($det2->balanceAmount, $currencyDecimalPlace) }}</td>
+                        @if(!$sentEmail)
+                            <td colspan="10"><span style="font-size: 9px; font-weight: bold">Supplier Group: {{$key3}}</span></td>
+                        @endif
+                        @if($sentEmail)
+                            <td colspan="9"><span style="font-size: 9px; font-weight: bold">Supplier Group: {{$key3}}</span></td>
+                        @endif
                     </tr>
-                    {{$lineTotal += $det2->balanceAmount}}
+                    <tr style="width:100%">
+                        <th>Doc ID</th>
+                        <th>Document Code</th>
+                        <th>Doc Date</th>
+                        <th>Account</th>
+                        @if(!$sentEmail)
+                            <th>Narration</th>
+                        @endif
+                        <th>Invoice Number</th>
+                        <th>Invoice Date</th>
+                        <th>Currency</th>
+                        <th>Age Days</th>
+                        <th>Doc Amount</th>
+                        <th>BalanceAmount</th>
+                    </tr>
+                    <tbody>
+                    {{ $lineTotal = 0 }}
+                    @foreach ($val3 as $det2)
+                        <tr style="width:100%">
+                            <td>{{ $det2->documentID }}</td>
+                            <td>{{ $det2->documentCode }}</td>
+                            <td>{{ \App\helper\Helper::dateFormat($det2->documentDate)}}</td>
+                            <td>{{ $det2->glCode }} - {{ $det2->AccountDescription }}</td>
+                            @if(!$sentEmail)
+                                <td class="white-space-pre-line">{{ $det2->documentNarration }}</td>
+                            @endif
+                            <td class="white-space-pre-line">{{ $det2->invoiceNumber }}</td>
+                            <td> {{ \App\helper\Helper::dateFormat($det2->invoiceDate)}}</td>
+                            <td>{{ $det2->documentCurrency }}</td>
+                            <td class="text-right">{{ $det2->ageDays }}</td>
+                            <td class="text-right">{{ number_format($det2->invoiceAmount, $currencyDecimalPlace) }}</td>
+                            <td class="text-right">{{ number_format($det2->balanceAmount, $currencyDecimalPlace) }}</td>
+                        </tr>
+                        {{$lineTotal += $det2->balanceAmount}}
+                    @endforeach
+                    <tr width="100%">
+                        @if(!$sentEmail)
+                            <td colspan="10" style="border-bottom-color:white !important;border-left-color:white !important"
+                                class="text-right"><b>Total:</b></td>
+                        @endif
+                        @if($sentEmail)
+                            <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
+                                class="text-right"><b>Total:</b></td>
+                        @endif
+                        <td style="text-align: right"><b>{{ number_format($lineTotal, $currencyDecimalPlace) }}</b></td>
+                    </tr>
+                    </tbody>
                 @endforeach
-                <tr width="100%">
-                    @if(!$sentEmail)
-                        <td colspan="10" style="border-bottom-color:white !important;border-left-color:white !important"
-                            class="text-right"><b>Total:</b></td>
-                    @endif
-                    @if($sentEmail)
-                        <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
-                            class="text-right"><b>Total:</b></td>
-                    @endif
-                    <td style="text-align: right"><b>{{ number_format($lineTotal, $currencyDecimalPlace) }}</b></td>
-                </tr>
-                </tbody>
             @endforeach
         @endforeach
         <tfoot>

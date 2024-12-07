@@ -106,7 +106,10 @@ class ReportTemplateDetails extends Model
 {
 
     public $table = 'erp_companyreporttemplatedetails';
-    
+
+    protected $appends = ['total'];
+
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
 
@@ -225,5 +228,39 @@ class ReportTemplateDetails extends Model
     public function gl_codes()
     {
         return $this->gllink();
+    }
+
+
+
+    public function getTotalAttribute()
+    {
+        $monthlySums =[];
+
+        $monthlySums = array_fill(0, 13, ['total' => 0]);
+
+        if($this->itemType === 2 && $this->isFinalLevel === 1)
+        {
+               foreach ($this->gl_codes as $glcode)
+               {
+                   $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',1)->where('serviceLineSystemID', 1)->where('companyFinanceYearID',68)->where('budjetAmtRpt','>',0)->groupBy('month')->orderBy('month')->get();
+
+
+                       foreach ($monthlySum as $month) {
+                           if (!isset($monthlySums[$month->month-1])) {
+                               $monthlySums[$month->month-1]['total'] = 0;
+                           }
+                           $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
+                       }
+
+               }
+
+               // 13 th column as total
+                $monthlySums[12]['total'] = (collect($monthlySums)->sum('total') == 0) ? 0 : collect($monthlySums)->sum('total') ;
+
+        }
+
+
+        return $monthlySums;
+
     }
 }

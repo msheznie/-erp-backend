@@ -46,6 +46,7 @@ Route::group([], function(){
     Route::get('getReportHeaderData', 'ReportTemplateAPIController@getReportHeaderData')->name("Get report template header data");
     Route::get('getTemplateColumnLinks', 'ReportTemplateColumnLinkAPIController@getTemplateColumnLinks')->name("Get report template column links");
     Route::get('reportTemplateFormulaColumn', 'ReportTemplateColumnLinkAPIController@reportTemplateFormulaColumn')->name("Get report template formula column");
+    Route::resource('report_template_equities', 'ReportTemplateEquityAPIController');
 });
 
 
@@ -71,6 +72,7 @@ Route::group([], function(){
 //document policy
 Route::group([], function(){
 
+Route::get('checkPendingTreasuryClearance', 'CompanyPolicyMasterAPIController@checkPendingTreasuryClearance')->name('Get pending treasury clearance documents');
 Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions')->name('Get company policy filter options');
 Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy')->name('Get all company policy');
 Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy')->name('Get all company email sending policy');

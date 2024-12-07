@@ -173,13 +173,13 @@ class ReportTemplateAPIController extends AppBaseController
                 $data['createdPCID'] = gethostname();
                 $data['createdUserID'] = \Helper::getEmployeeID();
                 $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                $reportTemplateDetails = ReportTemplateDetails::create($data);
+                $reportTemplateDetailsMaster = ReportTemplateDetails::create($data);
 
                 $data2['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
-                $data2['description'] = 'Retained Earning';
+                $data2['description'] = 'Retained Earning (Automated)';
                 $data2['itemType'] = 4;
                 $data2['sortOrder'] = 1;
-                $data2['masterID'] = $reportTemplateDetails->detID;
+                $data2['masterID'] = $reportTemplateDetailsMaster->detID;
                 $data2['companySystemID'] = $input['companySystemID'];
                 $data2['companyID'] = $input['companyID'];
                 $data2['createdPCID'] = gethostname();
@@ -187,24 +187,57 @@ class ReportTemplateAPIController extends AppBaseController
                 $data2['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $reportTemplateDetails = ReportTemplateDetails::create($data2);
 
+                $data3['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                $data3['description'] = 'Retained Earning';
+                $data3['itemType'] = 4;
+                $data3['sortOrder'] = 2;
+                $data3['masterID'] = $reportTemplateDetailsMaster->detID;
+                $data3['companySystemID'] = $input['companySystemID'];
+                $data3['companyID'] = $input['companyID'];
+                $data3['createdPCID'] = gethostname();
+                $data3['createdUserID'] = \Helper::getEmployeeID();
+                $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $reportTemplateDetailsRetained = ReportTemplateDetails::create($data3);
+
                 $chartofaccount = ChartOfAccount::where('isApproved', 1)->where('catogaryBLorPL', 'PL')->get();
                 if (count($chartofaccount) > 0) {
                     foreach ($chartofaccount as $key => $val) {
-                        $data3['templateMasterID'] = $reportTemplates->companyReportTemplateID;
-                        $data3['templateDetailID'] = $reportTemplateDetails->detID;
-                        $data3['sortOrder'] = $key + 1;
-                        $data3['glAutoID'] = $val['chartOfAccountSystemID'];
-                        $data3['glCode'] = $val['AccountCode'];
-                        $data3['glDescription'] = $val['AccountDescription'];
-                        $data3['companySystemID'] = $input['companySystemID'];
-                        $data3['companyID'] = $input['companyID'];
-                        $data3['createdPCID'] = gethostname();
-                        $data3['createdUserID'] = \Helper::getEmployeeID();
-                        $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                        ReportTemplateLinks::create($data3);
+                        $data4['templateMasterID'] = $reportTemplates->companyReportTemplateID;
+                        $data4['templateDetailID'] = $reportTemplateDetails->detID;
+                        $data4['sortOrder'] = $key + 1;
+                        $data4['glAutoID'] = $val['chartOfAccountSystemID'];
+                        $data4['glCode'] = $val['AccountCode'];
+                        $data4['glDescription'] = $val['AccountDescription'];
+                        $data4['companySystemID'] = $input['companySystemID'];
+                        $data4['companyID'] = $input['companyID'];
+                        $data4['createdPCID'] = gethostname();
+                        $data4['createdUserID'] = \Helper::getEmployeeID();
+                        $data4['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        ReportTemplateLinks::create($data4);
                     }
 
                     $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateDetails->detID)->update(['isFinalLevel' => 1]);
+                }
+
+
+                $chartofaccountRetained = ChartOfAccount::where('isApproved', 1)->where('catogaryBLorPL', 'BS')->where('is_retained_earnings',1)->first();
+                if ($chartofaccountRetained) {
+                  
+                        $data5['templateMasterID'] = $reportTemplates->companyReportTemplateID;
+                        $data5['templateDetailID'] = $reportTemplateDetailsRetained->detID;
+                        $data5['sortOrder'] = 1;
+                        $data5['glAutoID'] = $chartofaccountRetained->chartOfAccountSystemID;
+                        $data5['glCode'] = $chartofaccountRetained->AccountCode;
+                        $data5['glDescription'] = $chartofaccountRetained->AccountDescription;
+                        $data5['companySystemID'] = $input['companySystemID'];
+                        $data5['companyID'] = $input['companyID'];
+                        $data5['createdPCID'] = gethostname();
+                        $data5['createdUserID'] = \Helper::getEmployeeID();
+                        $data5['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        ReportTemplateLinks::create($data5);
+                    
+
+                    $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateDetailsRetained->detID)->update(['isFinalLevel' => 1]);
                 }
 
             }
@@ -258,7 +291,30 @@ class ReportTemplateAPIController extends AppBaseController
                 $data8['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $reportTemplateDetails4 = ReportTemplateDetails::create($data8);
             }
+            if ($input['reportID'] == 4) {
 
+                $equity = [
+                    ["name" => "Opening Balance"],
+                    ["name" => "Profit after tax"],
+                    ["name" => "Comprehensive income"],
+                    ["name" => "Other changes"],
+                    ["name" => "Closing balance"]
+                ];
+                foreach($equity as $det)
+                {
+                    $data['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                    $data['description'] = $det['name'];
+                    $data['itemType'] = 4;
+                    $data['sortOrder'] = 1;
+                    $data['companySystemID'] = $input['companySystemID'];
+                    $data['companyID'] = $input['companyID'];
+                    $data['createdPCID'] = gethostname();
+                    $data['createdUserID'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $reportTemplateDetails = ReportTemplateDetails::create($data);
+                }
+
+            }
             DB::commit();
             return $this->sendResponse($reportTemplates->toArray(), 'Report Template saved successfully');
         } catch (\Exception $exception) {

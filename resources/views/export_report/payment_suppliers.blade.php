@@ -33,8 +33,11 @@
     @foreach($reportData as $name => $key)
     <div>
         <h4>{{ $name }}</h4>
+        <h4>Supplier Group :    @if (isset($reportData[$name]['supplierGroupName']))
+                                    {{ $reportData[$name]['supplierGroupName'] }}</h4>
+                                @endif
     </div>
-    @foreach($reportData[$name] as $currencyKey => $key)
+    @foreach($reportData[$name]['data'] as $currencyKey => $key)
 
         <table>
         <thead>
@@ -53,7 +56,7 @@
     @php
         $total = 0.00;
     @endphp
-    @foreach($reportData[$name][$currencyKey] as $data)
+    @foreach($reportData[$name]['data'][$currencyKey] as $data)
         <tr>
         <td>{{ $data->documentCode }}</td>
             @if($data->documentDate != null)

@@ -276,7 +276,8 @@ class ChartOfAccountsRefferedBack extends Model
         'modifiedPc',
         'modifiedUser',
         'timestamp',
-          'isDelegation'
+        'isDelegation',
+        'is_retained_earnings'
     ];
 
     /**

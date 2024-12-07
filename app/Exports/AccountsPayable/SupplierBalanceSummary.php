@@ -10,6 +10,7 @@ class SupplierBalanceSummary
     public $account;
     public $supplierCode;
     public $supplierName;
+    public $supplierGroupName;
     public $currency;
     public $amount;
 
@@ -21,6 +22,7 @@ class SupplierBalanceSummary
           'Account',
           'Supplier Code',
           'Supplier Name',
+          'Supplier Group',
           'Currency',
           'Amount'
         ];
@@ -64,6 +66,14 @@ class SupplierBalanceSummary
     public function setSupplierName($supplierName): void
     {
         $this->supplierName = $supplierName;
+    }
+
+    /**
+     * @param mixed $supplierGroupName
+     */
+    public function setSupplierGroupName($supplierGroupName): void
+    {
+        $this->supplierGroupName = $supplierGroupName;
     }
 
     /**

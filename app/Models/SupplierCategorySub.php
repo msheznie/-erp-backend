@@ -86,5 +86,10 @@ class SupplierCategorySub extends Model
         
     ];
 
+
+    public function scopeIsActive($query)
+    {
+        return $query->where('isActive',1);
+    }
     
 }

@@ -298,7 +298,16 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $masterID = $directReceiptDetail->directReceiptAutoID;
 
         $directReceiptDetail->delete();
-        $details = DirectReceiptDetail::select(DB::raw("IFNULL(SUM(DRAmount),0) as receivedAmount"), DB::raw("IFNULL(SUM(localAmount),0) as localAmount"), DB::raw("IFNULL(SUM(DRAmount),0) as bankAmount"), DB::raw("IFNULL(SUM(comRptAmount),0) as companyRptAmount"))->where('directReceiptAutoID', $id)->first()->toArray();
+
+        $details = DirectReceiptDetail::select(
+            DB::raw("IFNULL(SUM(DRAmount),0) as receivedAmount"),
+            DB::raw("IFNULL(SUM(localAmount),0) as localAmount"),
+            DB::raw("IFNULL(SUM(DRAmount),0) as bankAmount"),
+            DB::raw("IFNULL(SUM(comRptAmount),0) as companyRptAmount"),
+            DB::raw("IFNULL(SUM(netAmount),0) as netAmount"),
+            DB::raw("IFNULL(SUM(netAmountLocal),0) as netAmountLocal"),
+            DB::raw("IFNULL(SUM(netAmountRpt),0) as netAmountRpt")
+        )->where('directReceiptAutoID', $masterID)->first()->toArray();
 
         CustomerReceivePayment::where('custReceivePaymentAutoID', $masterID)->update($details);
 

@@ -431,8 +431,27 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if ($output) {
                     foreach ($output as $val) {
                         $outputArr[$val->SupplierCode . " - " . $val->suppliername][$val->documentCurrency][] = $val;
+                        $outputArr[$val->SupplierCode . " - " . $val->suppliername]['supplierGroupName'] = $val->supplierGroupName;
                     }
                 }
+
+                if ($output) {
+                    foreach ($output as $val) {
+                        $supplierKey = $val->SupplierCode . " - " . $val->suppliername;
+                
+                        // Initialize structure if not already set
+                        if (!isset($outputArr[$supplierKey])) {
+                            $outputArr[$supplierKey] = [
+                                'supplierGroupName' => $val->supplierGroupName,
+                                'finalData' => []
+                            ];
+                        }
+                
+                        // Add the data entry under the correct currency in finalData
+                        $outputArr[$supplierKey]['finalData'][$val->documentCurrency][] = $val;
+                    }
+                }
+                
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount);
                 break;
             case 'APSS': //Supplier Statement Report
@@ -457,8 +476,26 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($output) {
                         foreach ($output as $val) {
                             $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
+                            $outputArr[$val->concatSupplierName]['supplierGroupName'] = $val->supplierGroupName;
                         }
                     }
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $supplierKey = $val->concatSupplierName;
+                    
+                            // Initialize structure if not already set
+                            if (!isset($outputArr[$supplierKey])) {
+                                $outputArr[$supplierKey] = [
+                                    'supplierGroupName' => $val->supplierGroupName,
+                                    'finalData' => []
+                                ];
+                            }
+                    
+                            // Add the data entry under the correct currency in finalData
+                            $outputArr[$supplierKey]['finalData'][$val->documentCurrency][] = $val;
+                        }
+                    }
+
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 } else if ($reportTypeID == 'SSD') {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -881,6 +918,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'supplier_currency' => $val->CurrencyName,
                         'payable_account' => $val->payableAccount,
                         'prePayment_account' => $val->prePaymentAccount,
+                        'supplierGroupName' => $val->group,
                         'open_invoices' => 0,
                         'open_advances' => 0,
                         'open_debit_notes' => 0,
@@ -971,6 +1009,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     $data[$x]['Payment Document Number'] = $val->documentCode;
                                     $data[$x]['Supplier Code'] = $val->supplierCode;
                                     $data[$x]['Supplier Name'] = $val->supplierName;
+                                    $data[$x]['Supplier Group'] = $val->supplierGroupName;
 
                                     if ($currency == 2) {
                                         $data[$x]['Currency'] = $val->documentLocalCurrency;
@@ -988,6 +1027,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     $data[$x]['Company Name'] = $val->CompanyName;
                                     $data[$x]['Supplier Code'] = $val->supplierCode;
                                     $data[$x]['Supplier Name'] = $val->supplierName;
+                                    $data[$x]['Supplier Group'] = $val->supplierGroupName;
                                     $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
                                     $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
                                     $data[$x]['March'] = round($val->March, $decimalPlace);
@@ -1180,6 +1220,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $supplierStatementReport->setCompanyName($val->CompanyName);
                                 $supplierStatementReport->setSupplierCode($val->SupplierCode);
                                 $supplierStatementReport->setSupplierName($val->suppliername);
+                                $supplierStatementReport->setsupplierGroupName($val->supplierGroupName);
                                 $supplierStatementReport->setDocumentId($val->documentID);
                                 $supplierStatementReport->setDocumentCode($val->documentCode);
                                 $supplierStatementReport->setDocumentDate($val->documentDate);
@@ -1222,6 +1263,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $supplierStatementDetails->setPrepaymentAccount($val['prePayment_account']);
                                 $supplierStatementDetails->setCurrency($val['supplier_currency']);
                                 $supplierStatementDetails->setSupplierName($key);
+                                $supplierStatementDetails->setsupplierGroupName($val['supplierGroupName']);
                                 $supplierStatementDetails->setOpenSupplierInvoices(CurrencyService::convertNumberFormatToNumber(number_format($val['open_invoices'],2)));
                                 $supplierStatementDetails->setOpenAdvanceToSuppliers(CurrencyService::convertNumberFormatToNumber(number_format($val['open_advances'],2)));
                                 $supplierStatementDetails->setOpenDebitNotes(CurrencyService::convertNumberFormatToNumber(number_format($val['open_debit_notes'],2)));
@@ -1241,7 +1283,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                             $supplierStatementDetailsFooter = new SupplierStatementDetails();
 
-                            $supplierStatementDetailsFooter->setSupplierName("Total");
+                            $supplierStatementDetailsFooter->setsupplierGroupName("Total");
                             $supplierStatementDetailsFooter->setOpenSupplierInvoices(CurrencyService::convertNumberFormatToNumber(number_format($totalInvoices,2)));
                             $supplierStatementDetailsFooter->setOpenAdvanceToSuppliers(CurrencyService::convertNumberFormatToNumber(number_format($totalAdvances,2)));
                             $supplierStatementDetailsFooter->setOpenDebitNotes(CurrencyService::convertNumberFormatToNumber(number_format($totalDebitNotes,2)));
@@ -1353,7 +1395,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $data = $this->mapOutputWithSupplierLedgerReportObj($output);
                     if ($data) {
                         foreach ($data as $val) {
-                            $outputArr[$val->supplierCode . " - " . $val->supplierName][$val->currency][] = $val;
+                            $outputArr[$val->supplierCode . " - " . $val->supplierName]['supplierGroupName'] = $val->supplierGroupName;        
+                            $outputArr[$val->supplierCode . " - " . $val->supplierName]['data'][$val->currency][] = $val;    
                         }
                     }
 
@@ -1405,6 +1448,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $supplierBalanceSummary->setAccount($val->AccountCode . "-" . $val->AccountDescription);
                             $supplierBalanceSummary->setSupplierCode($val->SupplierCode);
                             $supplierBalanceSummary->setSupplierName($val->supplierName);
+                            $supplierBalanceSummary->setSupplierGroupName($val->supplierGroupName);
                             $supplierBalanceSummary->setCurrency( $val->documentCurrency);
                             $supplierBalanceSummary->setAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->documentAmount,$val->balanceDecimalPlaces)));
                             array_push($data,collect($supplierBalanceSummary)->toArray());
@@ -1757,6 +1801,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $supplierLedgerReport->setInvoiceAmount(CurrencyService::convertNumberFormatToNumber(number_format($dt->invoiceAmount,$dt->balanceDecimalPlaces)));
             $supplierLedgerReport->setInvoiceAmountOrg($dt->invoiceAmount);
             $supplierLedgerReport->setBalanceDecimalPlaces($dt->balanceDecimalPlaces);
+            $supplierLedgerReport->setsupplierGroupName($dt->supplierGroupName);
             if($dt->documentSystemCode != "1970-01-01") {
                 $supplierLedgerReport->setDocumentDate($dt->documentDate);
             }else {
@@ -1829,7 +1874,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     ' . $currencyQry . ',
                     ' . $decimalPlaceQry . ',
                     finalAgingDetail.glCode,
-                    finalAgingDetail.AccountDescription
+                    finalAgingDetail.AccountDescription,
+                    finalAgingDetail.supplierGroupName
                 FROM
                 (
                 SELECT
@@ -1858,7 +1904,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     MAINQUERY.docRptAmount AS documentAmountRpt,
                     MAINQUERY.chartOfAccountSystemID AS chartOfAccountSystemID,
                     MAINQUERY.glCode AS glCode,
-                    chartofaccounts.AccountDescription
+                    chartofaccounts.AccountDescription,
+                    MAINQUERY.supplierGroupName AS supplierGroupName
                 FROM
                     (
                 SELECT
@@ -1884,9 +1931,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                     erp_generalledger.documentLocalCurrencyID,
                     erp_generalledger.documentLocalAmount AS docLocalAmount,
                     erp_generalledger.documentRptCurrencyID,
-                    erp_generalledger.documentRptAmount AS docRptAmount
+                    erp_generalledger.documentRptAmount AS docRptAmount,
+                    supplier_groups.group AS supplierGroupName
                 FROM
                     erp_generalledger
+                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
+
                 WHERE
                     DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
@@ -1927,7 +1978,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                     SUM(IFNULL(MAINQUERY.docRptAmount,0)) AS documentAmountRpt,
                     MAINQUERY.chartOfAccountSystemID,
                     MAINQUERY.glCode,
-                    chartofaccounts.AccountDescription
+                    chartofaccounts.AccountDescription,
+                    MAINQUERY.supplierGroupName AS supplierGroupName
+
                 FROM
                     (
                 SELECT
@@ -1953,9 +2006,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                     erp_generalledger.documentLocalCurrencyID,
                     erp_generalledger.documentLocalAmount AS docLocalAmount,
                     erp_generalledger.documentRptCurrencyID,
-                    erp_generalledger.documentRptAmount AS docRptAmount
+                    erp_generalledger.documentRptAmount AS docRptAmount,
+                    supplier_groups.group AS supplierGroupName
                 FROM
                     erp_generalledger
+                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
+
                 WHERE
                     DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
@@ -2073,6 +2130,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.documentDate,
                                 finalAgingDetail.documentNarration,
                                 finalAgingDetail.supplierCodeSystem,
+                                finalAgingDetail.group AS supplierGroupName,
                                 finalAgingDetail.SupplierCode,
                                 finalAgingDetail.suppliername,
                                 finalAgingDetail.invoiceNumber,
@@ -2100,6 +2158,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentDate,
                                 MAINQUERY.documentNarration,
                                 MAINQUERY.supplierCodeSystem,
+                                MAINQUERY.group,
                                 suppliermaster.primarySupplierCode AS SupplierCode,
                                 suppliermaster.suppliername,
                                 MAINQUERY.invoiceNumber,
@@ -2147,6 +2206,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceNumber,
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
+                                supplier_groups.group,
                                 erp_generalledger.documentTransCurrencyID,
                                 SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
@@ -2179,6 +2239,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ( debitNoteMatched.debitNoteMatchedAmountRpt IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountRpt ) AS debitNoteMatchedAmountRpt
                             FROM
                                 erp_generalledger
+                                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
                                 LEFT JOIN (-- payment voucher matched with invoice or debit note
                             SELECT
                                 erp_paysupplierinvoicedetail.companySystemID,
@@ -2356,6 +2418,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.documentSystemID,
                                 finalAgingDetail.documentSystemCode,
+                                finalAgingDetail.group,
                                 finalAgingDetail.supplierCodeSystem,
                                 finalAgingDetail.SupplierCode,
                                 finalAgingDetail.suppliername,
@@ -2373,6 +2436,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentSystemID,
                                 MAINQUERY.documentSystemCode,
                                 MAINQUERY.supplierCodeSystem,
+                                MAINQUERY.group,
                                 MAINQUERY.chartOfAccountSystemID,
                                 suppliermaster.primarySupplierCode AS SupplierCode,
                                 suppliermaster.suppliername,
@@ -2408,6 +2472,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.documentSystemCode,
                                 erp_generalledger.documentSystemID,
                                 erp_generalledger.supplierCodeSystem,
+                                supplier_groups.group,
                                 erp_generalledger.documentTransCurrencyID,
                                 SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
@@ -2440,7 +2505,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ( debitNoteMatched.debitNoteMatchedAmountRpt IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountRpt ) AS debitNoteMatchedAmountRpt
                             FROM
                                 erp_generalledger
+                                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
+
                                 LEFT JOIN (-- payment voucher matched with invoice or debit note
+
                             SELECT
                                 erp_paysupplierinvoicedetail.companySystemID,
                                 
@@ -2621,6 +2690,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     paymentsBySupplierSummary.companySystemID,
                                     paymentsBySupplierSummary.companyID,
                                     paymentsBySupplierSummary.supplierCodeSystem,
+                                    paymentsBySupplierSummary.group AS supplierGroupName,
                                     paymentsBySupplierSummary.supplierCode,
                                     paymentsBySupplierSummary.supplierName,
                                     paymentsBySupplierSummary.PaymentType,
@@ -2637,6 +2707,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     MAINQUERY.companyID,
                                     MAINQUERY.companySystemID,
                                     MAINQUERY.supplierCodeSystem,
+                                    MAINQUERY.group,
                                     MAINQUERY.supplierCode,
                                     MAINQUERY.supplierName,
                                     MAINQUERY.PaymentType,
@@ -2655,6 +2726,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     erp_generalledger.documentSystemID,
                                     erp_generalledger.documentID,
                                     erp_generalledger.documentSystemCode,
+                                    supplier_groups.group,
                                     erp_generalledger.documentCode,
                                     erp_generalledger.supplierCodeSystem,
                                     suppliermaster.primarySupplierCode AS supplierCode,
@@ -2677,6 +2749,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
                                     LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
                                     LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem 
+                                    LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
                                     WHERE erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
                                     AND erp_generalledger.documentSystemID = 4
                                     AND erp_generalledger.supplierCodeSystem > 0 
@@ -2692,6 +2765,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 paymentsBySupplierSummary.companySystemID,
                                 paymentsBySupplierSummary.companyID,
                                 paymentsBySupplierSummary.supplierCodeSystem,
+                                paymentsBySupplierSummary.group AS supplierGroupName,
                                 paymentsBySupplierSummary.supplierCode,
                                 paymentsBySupplierSummary.supplierName,
                                 paymentsBySupplierSummary.DocYEAR,
@@ -2717,6 +2791,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.companyID,
                                 MAINQUERY.companySystemID,
                                 MAINQUERY.supplierCodeSystem,
+                                MAINQUERY.group,
                                 MAINQUERY.supplierCode,
                                 MAINQUERY.supplierName,
                                 MAINQUERY.DocYEAR,
@@ -2758,6 +2833,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.documentSystemCode,
                                 erp_generalledger.documentCode,
                                 erp_generalledger.supplierCodeSystem,
+                                supplier_groups.group,
                                 suppliermaster.primarySupplierCode AS supplierCode,
                                 suppliermaster.supplierName,
                                 erp_generalledger.documentDate,
@@ -2776,6 +2852,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger
                                 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                                 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
                                 WHERE erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
                                 AND erp_generalledger.documentSystemID = 4
                                 AND erp_generalledger.supplierCodeSystem > 0 
@@ -3289,6 +3366,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         erp_generalledger.supplierCodeSystem,
                         suppliermaster.primarySupplierCode AS SupplierCode,
                         suppliermaster.supplierName,
+                        supplier_groups.group AS supplierGroupName,
                         erp_generalledger.documentLocalCurrencyID,
                         ' . $invoiceAmountQry . ',
                         ' . $currencyQry . ',
@@ -3302,6 +3380,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     LEFT JOIN currencymaster AS localCurrencyDet ON localCurrencyDet.currencyID = erp_generalledger.documentLocalCurrencyID
                     LEFT JOIN currencymaster AS rptCurrencyDet ON rptCurrencyDet.currencyID = erp_generalledger.documentRptCurrencyID
                     LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                    LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
                     WHERE
                         DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
@@ -3440,6 +3519,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.CompanyName,
                                 finalAgingDetail.documentSystemID,
                                 finalAgingDetail.documentSystemCode,
+                                finalAgingDetail.group AS supplierGroupName,
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentDate,
@@ -3467,6 +3547,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 companymaster.CompanyName,
                                 MAINQUERY.documentSystemID,
                                 MAINQUERY.documentSystemCode,
+                                MAINQUERY.group,
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentDate,
@@ -3509,6 +3590,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.documentSystemID,
                                 erp_generalledger.documentID,
                                 erp_generalledger.documentSystemCode,
+                                supplier_groups.group,
                                 erp_generalledger.documentCode,
                                 erp_generalledger.documentDate,
                                 erp_generalledger.chartOfAccountSystemID,
@@ -3552,6 +3634,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ( debitNoteMatched.debitNoteMatchedAmountRpt IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountRpt ) AS debitNoteMatchedAmountRpt
                             FROM
                                 erp_generalledger
+                                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
                                 LEFT JOIN (-- payment voucher matched with invoice or debit note
                             SELECT
                                 erp_paysupplierinvoicedetail.companySystemID,
@@ -3818,6 +3902,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentSystemCode,
+                                finalAgingDetail.group AS supplierGroupName,
                                 finalAgingDetail.documentDate,
                                 finalAgingDetail.documentNarration,
                                 '.$typeSupEmpQry1.',
@@ -3848,6 +3933,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentSystemCode,
+                                MAINQUERY.group,
                                 MAINQUERY.documentDate,
                                 MAINQUERY.documentNarration,
                                 '.$typeSupEmpQryMain1.',
@@ -3890,6 +3976,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.documentSystemID,
                                 erp_generalledger.documentID,
                                 erp_generalledger.documentSystemCode,
+                                supplier_groups.group,
                                 erp_generalledger.documentCode,
                                 erp_generalledger.documentDate,
                                 erp_generalledger.chartOfAccountSystemID,
@@ -3933,6 +4020,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ( debitNoteMatched.debitNoteMatchedAmountRpt IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountRpt ) AS debitNoteMatchedAmountRpt
                             FROM
                                 erp_generalledger
+                                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
                                 LEFT JOIN (-- payment voucher matched with invoice or debit note
                             SELECT
                                 erp_paysupplierinvoicedetail.companySystemID,
@@ -4185,6 +4274,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.CompanyName,
                                 finalAgingDetail.documentSystemID,
                                 finalAgingDetail.documentSystemCode,
+                                finalAgingDetail.group AS supplierGroupName,
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentDate,
@@ -4212,6 +4302,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 companymaster.CompanyName,
                                 MAINQUERY.documentSystemID,
                                 MAINQUERY.documentSystemCode,
+                                MAINQUERY.group,
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentDate,
@@ -4255,6 +4346,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.documentSystemID,
                                 erp_generalledger.documentID,
                                 erp_generalledger.documentSystemCode,
+                                supplier_groups.group,
                                 erp_generalledger.documentCode,
                                 erp_generalledger.documentDate,
                                 erp_generalledger.chartOfAccountSystemID,
@@ -4298,6 +4390,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ( debitNoteMatched.debitNoteMatchedAmountRpt IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountRpt ) AS debitNoteMatchedAmountRpt
                             FROM
                                 erp_generalledger
+                                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
                                 LEFT JOIN (-- payment voucher matched with invoice or debit note
                             SELECT
                                 erp_paysupplierinvoicedetail.companySystemID,
@@ -4554,6 +4648,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentSystemCode,
+                                finalAgingDetail.group AS supplierGroupName,
                                 finalAgingDetail.documentDate,
                                 finalAgingDetail.documentNarration,
                                 '.$typeSupEmpQry1.',
@@ -4583,6 +4678,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentSystemCode,
+                                MAINQUERY.group,
                                 MAINQUERY.documentDate,
                                 MAINQUERY.documentNarration,
                                 '.$typeSupEmpQryMain1.',
@@ -4625,6 +4721,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.documentSystemID,
                                 erp_generalledger.documentID,
                                 erp_generalledger.documentSystemCode,
+                                supplier_groups.group,
                                 erp_generalledger.documentCode,
                                 erp_generalledger.documentDate,
                                 erp_generalledger.chartOfAccountSystemID,
@@ -4668,6 +4765,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ( debitNoteMatched.debitNoteMatchedAmountRpt IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountRpt ) AS debitNoteMatchedAmountRpt
                             FROM
                                 erp_generalledger
+                                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                LEFT JOIN supplier_groups ON suppliermaster.supplier_group_id = supplier_groups.id
                                 LEFT JOIN (-- payment voucher matched with invoice or debit note
                             SELECT
                                 erp_paysupplierinvoicedetail.companySystemID,
@@ -6111,7 +6210,7 @@ ORDER BY
         $db = isset($request->db) ? $request->db : "";
         $employeeID = \Helper::getEmployeeSystemID();
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-        AccountsPayableReportJob::dispatch($db, $request, [$employeeID]);
+        AccountsPayableReportJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
         return $this->sendResponse([], "Supplier statement PDF report has been sent to queue");
     }
 
@@ -6179,7 +6278,9 @@ ORDER BY
 
         if ($output) {
             foreach ($output as $val) {
-                $outputArr[$val->concatCompany][$val->concatSupplierName][] = $val;
+                if(isset($val->supplierGroupName)){
+                    $outputArr[$val->concatCompany][$val->concatSupplierName][$val->supplierGroupName][] = $val;
+                }
             }
         }
 
@@ -6250,6 +6351,8 @@ ORDER BY
 
      public function sentSupplierLedger(Request $request)
     {
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
         $input = $request->all();
 
         if (!isset($input['suppliers'])) {
@@ -6377,7 +6480,7 @@ ORDER BY
 
         if ($output) {
             foreach ($output as $val) {
-                $outputArr[$val->SupplierCode . " - " . $val->suppliername][$val->documentCurrency][] = $val;
+                $outputArr[$val->SupplierCode . " - " . $val->suppliername . " (" . $val->supplierGroupName . ")"][$val->documentCurrency][] = $val;
             }
         }
         $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'companylogo' => $companyLogo, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate));

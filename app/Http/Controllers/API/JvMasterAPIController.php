@@ -1318,6 +1318,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
                 if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
                     $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                } else {
+                    $query->whereNull('employeesdepartments.ServiceLineSystemID');
                 }
                 $query->where('employeesdepartments.documentSystemID', 17)
                     ->where('employeesdepartments.companySystemID', $companyID)

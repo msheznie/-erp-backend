@@ -86,7 +86,7 @@ class Validation implements \JsonSerializable
     public function jsonSerialize()
     {
         return [
-            'indentifier' => $this->identifier,
+            'identifier' => $this->identifier,
             'fieldErrors' => $this->fieldErrors,
             'headerData' => $this->headerData,
             'detailData' => $this->detailData

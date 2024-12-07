@@ -69,7 +69,7 @@ class BankLedgerPdfJob implements ShouldQueue
                 }
             }
             
-            GenerateBankLedgerPdf::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root);
+            GenerateBankLedgerPdf::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root)->onQueue('single');
             $reportCount++;
         }
     }

@@ -166,6 +166,8 @@ Route::group([], function(){
     
     Route::post('budget_additions', 'ErpBudgetAdditionAPIController@index')->name('Get Budget Addition');
     Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget')->name('Get details by budget addition');
+    Route::post('getDetailsByBudgetNew', 'BudjetdetailsAPIController@getDetailsByBudgetNew')->name('Get details by budget addition new');
+    Route::post('getGLCodesByBudgetCategory', 'BudjetdetailsAPIController@getGLCodesByBudgetCategory')->name('Get glcodes by budget category');
     Route::post('exportDetailsByBudget', 'BudjetdetailsAPIController@exportReport')->name('Export details by budget addition');
     Route::post('removeBudgetDetails', 'BudjetdetailsAPIController@removeBudgetDetails')->name('Remove budget addition details');
     Route::post('bulkUpdateBudgetDetails', 'BudjetdetailsAPIController@bulkUpdateBudgetDetails')->name('Bulk update budget addition');

@@ -166,13 +166,13 @@ class ChartOfAccountAPIController extends AppBaseController
         if (isset($input['isMasterAccount']) && $input['isMasterAccount']) {
             $input['masterAccount'] = $accountCode;
         }
-
+        
 
         DB::beginTransaction();
         try {
             if (array_key_exists('chartOfAccountSystemID', $input)) {
-
-
+                
+              
                 $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
 
                 if (empty($chartOfAccount)) {
@@ -180,6 +180,17 @@ class ChartOfAccountAPIController extends AppBaseController
                 }
 
                 $input = $this->convertArrayToValue($input);
+
+
+                $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('chartOfAccountSystemID' ,'!=' ,$input['chartOfAccountSystemID'])->where('primaryCompanySystemID',$input['primaryCompanySystemID']);
+                       
+
+                if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings']))
+                {
+                    $retainEarningCode = $isRetainedEarningExists->first();
+                    return $this->sendError('There is an Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
+                }
+
 
                 if ($chartOfAccount->reportTemplateCategory != $input['reportTemplateCategory']) {
                     $availability = FALSE;
@@ -391,6 +402,13 @@ class ChartOfAccountAPIController extends AppBaseController
                     }
                 }
             } else {
+
+                $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('primaryCompanySystemID',$input['primaryCompanySystemID']);
+                if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings']))
+                {
+                    $retainEarningCode = $isRetainedEarningExists->first();
+                    return $this->sendError('There is an Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
+                }
                 $availability = FALSE;
                 while (!$availability) {
                     $accountCode = DocumentCodeGenerate::generateAccountCode($input['reportTemplateCategory'])['data'];
@@ -763,8 +781,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $controlAccounts = ControlAccount::all();
 
         /** all Account Types */
-        $accountsType = AccountsType::where('accountsType', '!=', 3)
-            ->get();
+        $accountsType = AccountsType::whereNotIn('accountsType', [3, 4])->get();
 
         /** all allocation Types */
         $allocationType = AllocationMaster::where('isActive', 1)->get();
@@ -789,12 +806,21 @@ class ChartOfAccountAPIController extends AppBaseController
         /**  Companies by group  Drop Down */
         $allCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup", 0)->get();
 
+        $isAmmendable = true;
+        $isRetainedEarningExists = ChartOfAccount::where('is_retained_earnings',1)->where('primaryCompanySystemID',$selectedCompanyId)->first();
+
+        if($isRetainedEarningExists)
+        {
+            $isAmmendable = false;
+        }
+
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,
             'yesNoSelection' => $yesNoSelection,
             'chartOfAccount' => $chartOfAccount,
             'allCompanies' => $allCompanies,
             'allocationType' => $allocationType,
+            'isAmmendable' => $isAmmendable,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

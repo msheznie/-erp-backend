@@ -7,11 +7,13 @@ use App\Jobs\CustomerInvoiceUpload\CustomerInvoiceUploadSubJob;
 use App\Models\AssetFinanceCategory;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
+use App\Models\FinanceCategorySerial;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetMaster;
 use App\Models\LogUploadAssetCosting;
 use App\Models\SegmentMaster;
+use App\Models\TemporaryAssetSerial;
 use App\Models\UploadAssetCosting;
 use App\Services\GeneralLedger\AssetCreationService;
 use App\Validations\AssetManagement\ValidateAssetCreation;
@@ -82,6 +84,14 @@ class AssetCostingUpload implements ShouldQueue
 
         $assetFinanceCategory = AssetFinanceCategory::with(['costaccount', 'accdepaccount', 'depaccount', 'disaccount'])->find($auditCategory);
 
+        $allSerialRecords = FinanceCategorySerial::select('id as serialID', 'lastSerialNo')->get();
+
+        $pushArray = $allSerialRecords->map(function ($record) {
+            return $record->toArray();
+        })->toArray();
+
+        TemporaryAssetSerial::insert($pushArray);
+
         $sheet  = $objPHPExcel->getActiveSheet();
         $startRow = 13;
         $highestRow = $sheet->getHighestRow();
@@ -130,7 +140,7 @@ class AssetCostingUpload implements ShouldQueue
 
         $detailRows = collect($detailRows)->chunk(100);
 
-        $jobData = ['logUploadAssetCosting' => $logUploadAssetCosting, 'assetFinanceCategory' => $assetFinanceCategory, 'startRow' => $startRow, 'totalRecords' => $totalRecords];
+        $jobData = ['logUploadAssetCosting' => $logUploadAssetCosting, 'assetFinanceCategory' => $assetFinanceCategory, 'startRow' => $startRow, 'totalRecords' => $totalRecords, 'allSerialRecords' => $allSerialRecords];
 
         foreach($detailRows as  $data) {
             foreach($data as  $assetData) {

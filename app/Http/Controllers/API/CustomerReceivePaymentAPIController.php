@@ -73,6 +73,7 @@ use App\Repositories\CustomerReceivePaymentRepository;
 use App\Repositories\VatReturnFillingMasterRepository;
 use App\Services\API\ApiPermissionServices;
 use App\Services\ChartOfAccountValidationService;
+use App\Services\CustomerReceivePaymentService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -181,164 +182,24 @@ class CustomerReceivePaymentAPIController extends AppBaseController
      */
     public function store(CreateCustomerReceivePaymentAPIRequest $request)
     {
-        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'documentType', 'companyFinanceYearID', 'custTransactionCurrencyID', 'customerID', 'employeeID'));
 
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'documentType', 'companyFinanceYearID', 'custTransactionCurrencyID', 'customerID', 'employeeID'));
-
-        $input['documentType'] = isset($input['documentType']) ? $input['documentType'] : 0;
-        $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
-
-        if(!isset($input['paymentType'])){
-            return $this->sendError("Payment Mode is required", 500);
-        }
-        $input['payment_type_id'] = $input['paymentType'];
-        unset($input['paymentType']);
-
-        if (($input['documentType'] == 13 || $input['documentType'] == 15 ) && $input['customerID'] == '') {
-            return $this->sendError("Customer is required", 500);
-        }
-
-        $company = Company::where('companySystemID', $input['companySystemID'])
-            ->first();
-
-        if (empty($company)) {
-            return $this->sendError('Company not found');
-        }
-
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
-        }
-
-        $inputParam = $input;
-        $inputParam["departmentSystemID"] = 4;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
-        } else {
-            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
-        }
-
-        unset($inputParam);
-
-        if (isset($input['custPaymentReceiveDate'])) {
-            if ($input['custPaymentReceiveDate']) {
-                $input['custPaymentReceiveDate'] = new Carbon($input['custPaymentReceiveDate']);
+            $resultData = CustomerReceivePaymentService::createCustomerReceivePayment($input);
+            if($resultData['status']){
+                DB::commit();
+                return $this->sendResponse($resultData['data'], $resultData['message']);
             }
-        }
-
-        $documentDate = $input['custPaymentReceiveDate'];
-        $monthBegin = $input['FYPeriodDateFrom'];
-        $monthEnd = $input['FYPeriodDateTo'];
-
-        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-        } else {
-            return $this->sendError('Document date is not within the financial period!', 500);
-        }
-
-        $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
-
-        $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        $serialNo = CustomerReceivePayment::where('documentSystemID', 21)
-            ->where('companySystemID', $input['companySystemID'])
-            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('serialNo', 'desc')
-            ->first();
-
-        $lastSerialNumber = 1;
-        if ($serialNo) {
-            $lastSerialNumber = intval($serialNo->serialNo) + 1;
-        }
-
-        $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
-
-        $custPaymentReceiveCode = ($company->CompanyID . '\\' . $y . '\\BRV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-
-        $input['documentSystemID'] = 21;
-        $input['documentID'] = 'BRV';
-        $input['serialNo'] = $lastSerialNumber;
-        $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
-        $input['FYEnd'] = $CompanyFinanceYear->endingDate;
-        $input['custPaymentReceiveCode'] = $custPaymentReceiveCode;
-        $input['custChequeDate'] = Carbon::now();
-
-        /*currency*/
-        $myCurr = $input['custTransactionCurrencyID'];
-
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $myCurr, $myCurr, 0);
-
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if ($company) {
-            $input['companyID'] = $company->CompanyID;
-            $input['localCurrencyID'] = $company->localCurrencyID;
-            $input['companyRptCurrencyID'] = $company->reportingCurrency;
-            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-
-        }
-
-        $input['custTransactionCurrencyER'] = 1;
-
-        $bank = BankAssign::select('bankmasterAutoID')
-            ->where('companySystemID', $company['companySystemID'])
-            ->where('isDefault', -1)
-            ->first();
-
-        if ($bank) {
-            $input['bankID'] = $bank->bankmasterAutoID;
-
-            $bankAccount = BankAccount::where('companySystemID', $company['companySystemID'])
-                ->where('bankmasterAutoID', $bank->bankmasterAutoID)
-                ->where('isDefault', 1)
-                ->where('accountCurrencyID', $myCurr)
-                ->first();
-
-            if ($bankAccount) {
-                $input['bankAccount'] = $bankAccount->bankAccountAutoID;
-
-                $input['bankCurrency'] = $myCurr;
-                $input['bankCurrencyER'] = 1;
+            else{
+                DB::rollBack();
+                return $this->sendError($resultData['message'], 500);
             }
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
-
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['createdUserID'] = \Helper::getEmployeeID();
-        $input['createdPcID'] = getenv('COMPUTERNAME');
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
-        $input['modifiedPc'] = getenv('COMPUTERNAME');
-
-        if ($input['documentType'] == 13 || $input['documentType'] == 15) {
-            /* Customer Invoice Receipt*/
-            $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-            $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
-            $input['customerGLCode'] = $customer->custGLaccount;
-            $input['custAdvanceAccountSystemID'] = $customer->custAdvanceAccountSystemID;
-            $input['custAdvanceAccount'] = $customer->custAdvanceAccount;
-        }
-
-        if ($input['documentType'] == 14) {
-            if($input['payeeTypeID'] != 1){
-                $input = array_except($input, 'customerID');
-            }
-            /* Direct Invoice*/
-        }
-        if(isset($input['employeeID'])){
-            $input['PayeeEmpID'] = $input['employeeID'];
-        }
-        if(isset($input['other'])){
-            $input['PayeeName'] = $input['other'];
-        }
-
-        if (($input['custPaymentReceiveDate'] >= $companyfinanceperiod->dateFrom) && ($input['custPaymentReceiveDate'] <= $companyfinanceperiod->dateTo)) {
-            $customerReceivePayments = $this->customerReceivePaymentRepository->create($input);
-            return $this->sendResponse($customerReceivePayments->toArray(), 'Receipt voucher created successfully');
-        } else {
-            return $this->sendError('Receipt voucher document date should be between financial period start and end date', 500);
-        }
-
     }
 
     /**

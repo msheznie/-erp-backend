@@ -1417,13 +1417,30 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $purchaseOrderID = isset($input['purchaseOrderID']) ? $input['purchaseOrderID'] : 0;
         $discountAmount = isset($input['discount']) ? $input['discount'] : 0;
-        $poDiscountPercentage = isset($input['poDiscountPercentage']) ? $input['poDiscountPercentage'] : 0;
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
             ->first();
+        $poDiscountPercenrtageToUpdate = 0;
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
         }
+
+
+        if( strlen((string) $input['poDiscountPercentage'] ) > strlen((string)$input['poDiscountPercentageToTooltip']))
+        {
+            $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
+
+        }else {
+            if(round($input['poDiscountPercentageToTooltip'],2) != $input['poDiscountPercentage'])
+            {
+                $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
+            }else {
+                $poDiscountPercenrtageToUpdate = $input['poDiscountPercentageToTooltip'];
+            }
+        }
+
+        $input['poDiscountPercentage'] = $poDiscountPercenrtageToUpdate;
+        $poDiscountPercentage = isset($input['poDiscountPercentage']) ? $input['poDiscountPercentage'] : 0;
 
         $purchaseOrder->update(
             [
@@ -1531,7 +1548,24 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->get();
 
         foreach ($details as $detail) {
-            $detail['grvAmount'] = 0;
+            if($detail['receivedQty'] > 0){
+                $currentGrvAmount = sprintf('%.6f', ($detail['netAmount'] / $detail['poQty']) * $detail['receivedQty']);
+                $balanceGrvAmount = sprintf('%.6f', ($detail['netAmount'] - $currentGrvAmount));
+
+                $balanceQty = sprintf('%.6f', ($detail['poQty'] - $detail['receivedQty']));
+
+                $detail['grvAmount'] = $balanceGrvAmount;
+                $detail['balanceGrvAmount'] = $balanceGrvAmount;
+                $detail['noQty'] = $balanceQty;
+                $detail['balanceQty'] = $balanceQty;
+
+            } else {
+
+                $detail['grvAmount'] = $detail['netAmount'];
+                $detail['balanceGrvAmount'] = $detail['netAmount'];
+                $detail['noQty'] = $detail['poQty'];
+                $detail['balanceQty'] = $detail['poQty'];
+            }
         }
 
 

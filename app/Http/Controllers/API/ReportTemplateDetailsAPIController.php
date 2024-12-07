@@ -31,6 +31,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\DocumentCodeGenerate;
+use App\Models\ReportTemplateEquity;
 
 /**
  * Class ReportTemplateDetailsController
@@ -526,6 +527,11 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
         $reportTemplateColLink = ReportTemplateColumnLink::ofTemplate($id)->orderBy('sortOrder', 'asc')->get();
         $reportTemplateMaster = ReportTemplate::find($id);
+        $reportTemplateEquity = ReportTemplateEquity::selectRaw('*,0 as expanded')->where('templateMasterID',$id)->with(['gllink' => function($q) use($id){
+            $q->where('templateMasterID',$id);
+        }])->orderBy('sort_order', 'asc')
+        ->get();
+
 
         $assignedGL = 0;
         $linkedGL = 0;
@@ -566,7 +572,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
         $remainingGLCount = $unAssignedGL->count();
 
-        $output = ['template' => $reportTemplateDetails->toArray(), 'columns' => $reportTemplateColLink->toArray(), 'remainingGLCount' => $remainingGLCount, 'columnTemplateID' => $reportTemplateMaster->columnTemplateID];
+        $output = ['equity' => $reportTemplateEquity->toArray(),'template' => $reportTemplateDetails->toArray(), 'columns' => $reportTemplateColLink->toArray(), 'remainingGLCount' => $remainingGLCount, 'columnTemplateID' => $reportTemplateMaster->columnTemplateID];
 
         return $this->sendResponse($output, 'Report Template Details retrieved successfully');
     }

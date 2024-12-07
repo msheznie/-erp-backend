@@ -4834,8 +4834,12 @@ class Helper
                                 $customerReceivePayment  = CustomerReceivePayment::find($input["documentSystemCode"]);
                                 if ($customerReceivePayment->documentType == 14) {
                                     $object = new ChartOfAccountValidationService();
-                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
-
+                                    if(isset($input['isAutoCreateDocument'])){
+                                        $empInfo = UserTypeService::getSystemEmployee();
+                                        $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $empInfo->employeeSystemID);
+                                    }else {
+                                        $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+                                    }
                                     if (isset($result) && !empty($result["accountCodes"])) {
                                         return ['success' => false, 'message' => $result["errorMsg"]];
                                     }
@@ -4930,11 +4934,11 @@ class Helper
                                             if($input['type'] == 2) {
                                                 $fxedAsset->LOCATION = $assetTransferDetailItem->to_location_id;
                                             }
-            
+
                                             if($input['type'] == 3) {
                                                     $fxedAsset->empID = $assetTransferDetailItem->to_emp_id;
                                             }
-    
+
                                             if($input['type'] == 4 || $input['type'] == 3) {
                                                     $assetTransferDetailItem->receivedYN = 1;
                                                     $assetTransferDetailItem->save();
@@ -5105,7 +5109,7 @@ class Helper
                             if ($input["documentSystemID"] == 21) {
                                 //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
                                 if ($sourceModel->pdcChequeYN == 0) {
-                                    $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
+                                    $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"], $input['isAutoCreateDocument'] ?? false);
                                 }
                             }
                             if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
@@ -5379,7 +5383,8 @@ class Helper
                                 $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                             }
                         }
-                     
+                        
+
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
@@ -8186,7 +8191,7 @@ class Helper
         }
     }
 
-    public static function appendToBankLedger($autoID)
+    public static function appendToBankLedger($autoID, $isAutoCreateDoc = false)
     {
         $custReceivePayment = Models\CustomerReceivePayment::with('finance_period_by')->find($autoID);
         if ($custReceivePayment) {
@@ -8235,6 +8240,22 @@ class Helper
             $data['payAmountCompRpt'] = Helper::roundValue($custReceivePayment->receivedAmount / $custReceivePayment->companyRptCurrencyER);
             $data['invoiceType'] = $custReceivePayment->documentType;
             $data['chequePaymentYN'] = -1;
+
+            $treasuryClearPolicy = CompanyPolicyMaster::where('companySystemID', $custReceivePayment->companySystemID)
+                ->where('companyPolicyCategoryID', 96)
+                ->where('isYesNO', 1)
+                ->first();
+
+            $documentFromBankReconciliation = Models\BankReconciliationDocuments::where('documentSystemID', $custReceivePayment->documentSystemID)->where('documentAutoId', $custReceivePayment->custReceivePaymentAutoID)->first();
+            if (!empty($treasuryClearPolicy) || !empty($documentFromBankReconciliation)) {
+                $empID = $isAutoCreateDoc ? UserTypeService::getSystemEmployee() : \Helper::getEmployeeInfo();
+                $data['trsClearedYN'] = -1;
+                $data['trsClearedDate'] = NOW();
+                $data['trsClearedByEmpSystemID'] = $empID->employeeSystemID;
+                $data['trsClearedByEmpName'] = $empID->empFullName;
+                $data['trsClearedByEmpID'] = $empID->empID;
+                $data['trsClearedAmount'] = $data['payAmountBank'];
+            }
 
             if ($custReceivePayment->trsCollectedYN == 0) {
                 $data['trsCollectedYN'] = -1;
