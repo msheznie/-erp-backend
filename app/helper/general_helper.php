@@ -5230,7 +5230,8 @@ class Helper
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
                                 }
                                 else if ($sourceModel->disposalType == 6) {
-                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase,$empInfo);
+                                    $isApproveState = isset($input['customerInvoiceDocumentStatus']) && $input['customerInvoiceDocumentStatus'] == 0;
+                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase,$empInfo,$isApproveState);
 
                                     if (!$message['status']) {
                                         DB::rollback();
