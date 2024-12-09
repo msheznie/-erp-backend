@@ -1759,6 +1759,16 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 127:
+                $docInforArr["modelName"] = 'SRMTenderPaymentProof';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approved_by_emp_id';
+                $docInforArr["approvedBySystemID"] = 'approved_emp_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1879,7 +1889,7 @@ class Helper
                             }
                         }
 
-                        if ($input['documentSystemID'] == 107) {
+                        if ($input['documentSystemID'] == 107 || $input['documentSystemID'] == 127) {
                             // pass below data for taking action in controller
                             $more_data = [
                                 'numberOfLevels' => $approvalLevel->noOfLevels,
@@ -2572,7 +2582,7 @@ class Helper
     public static function confirmDocument($params)
     {
         //Skip Employee Info when Confirming;
-        $empInfoSkip = array(106, 107); // 107 mean documentMaster id of "Supplier Registration" document in ERP
+        $empInfoSkip = array(106, 107, 127); // 107 mean documentMaster id of "Supplier Registration" document in ERP
 
         /** check document is already confirmed*/
         if (!array_key_exists('autoID', $params)) {
@@ -3159,6 +3169,17 @@ class Helper
                     $docInforArr["tableName"] = 'recurring_voucher_setup';
                     $docInforArr["modelName"] = 'RecurringVoucherSetup';
                     $docInforArr["primarykey"] = 'recurringVoucherAutoId';
+                    break;
+                case 127:
+                    $docInforArr["documentCodeColumnName"] = 'document_code';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmedBy"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_tender_payment_proof';
+                    $docInforArr["modelName"] = 'SRMTenderPaymentProof';
+                    $docInforArr["primarykey"] = 'id';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
@@ -4505,6 +4526,16 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 127:
+                $docInforArr["modelName"] = 'SRMTenderPaymentProof';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approved_by_emp_id';
+                $docInforArr["approvedBySystemID"] = 'approved_emp_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -4675,7 +4706,7 @@ class Helper
                             }
                         }
 
-                        if ($input['documentSystemID'] == 107) {
+                        if ($input['documentSystemID'] == 107 || $input['documentSystemID'] == 127) {
                             // pass below data for taking action in controller
                             $more_data = [
                                 'numberOfLevels' => $approvalLevel->noOfLevels,
@@ -5264,6 +5295,32 @@ class Helper
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
                             }
+
+                                if ($input["documentSystemID"] == 127) {
+
+                                    if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
+
+                                        $supplierName = $input["supplierName"];
+                                        $tenderCode = $input["tenderCode"];
+                                        $tenderTitle = $input["tenderTitle"];
+                                        $comment = $input["approvedComments"];
+
+                                        $temp = "<p>Dear {$supplierName},</p>
+                                    <p>The document attached for the tender purchase is reviewed and approved. Please find the comments provided for the document attached to the tender 
+                                    <strong>{$tenderCode}</strong>, <strong>{$tenderTitle}</strong>.</p>
+                                    <p><strong>Comment:</strong><br />{$comment}</p>
+                                    <p>Kindly submit the bid before the bid submission closing date.</p>
+                                    <p>Regards,</p>";
+
+                                        $dataEmail['empEmail'] = $docApproved->reference_email;
+                                        $dataEmail['companySystemID'] = $docApproved->companySystemID;
+
+                                        $dataEmail['alertMessage'] = "Payment Proof Document Approved";
+                                        $dataEmail['emailAlertMessage'] = $temp;
+                                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                                    }
+
+                                }
 
                             if ($input["documentSystemID"] == 106) {
 
@@ -6196,6 +6253,12 @@ class Helper
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                     break;
+                case 127:
+                    $docInforArr["tableName"] = 'srm_tender_payment_proof';
+                    $docInforArr["modelName"] = 'SRMTenderPaymentProof';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "approved_emp_system_id";
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -6289,7 +6352,7 @@ class Helper
                             ]);
                         }
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117, 119])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117, 119, 127])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
@@ -6426,7 +6489,7 @@ class Helper
                                 }
                             }
 
-                            if($input["documentSystemID"] == 107 || $input["documentSystemID"] == 106)
+                            if($input["documentSystemID"] == 107 || $input["documentSystemID"] == 106 || $input["documentSystemID"] == 127)
                             {
                                 if (isset($currentApproved->reference_email) && !empty($currentApproved->reference_email)) {
 
@@ -6449,6 +6512,24 @@ class Helper
                                     {
                                         $sub = "<p>Dear Supplier" . ',</p><p>Please be informed that your delivery appointment has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
                                         $msg = " Delivery Appointment Rejected";
+                                    }
+
+                                    else if ($input["documentSystemID"] == 127)
+                                    {
+                                        $supplierName = $input["supplierName"];
+                                        $tenderCode = $input["tenderCode"];
+                                        $tenderTitle = $input["tenderTitle"];
+                                        $comment = $input["rejectedComments"];
+
+                                        $sub = "<p>Dear $supplierName,</p>
+                                        <p>The document attached for the tender purchase has been reviewed and approved. Please find the comments provided for the document attached to the tender 
+                                        <b>$tenderCode</b>, <b>$tenderTitle</b>.</p>
+                                        <p><b>Comment:</b></p>
+                                        <p>$comment</p>
+                                        <p>Kindly submit the bid before the bid submission closing date.</p>
+                                        <p>Regards,</p>";
+
+                                        $msg = " Tender Payment Attachment Proof Referred Back";
                                     }
 
                                     $dataEmail['empEmail'] = $currentApproved->reference_email;

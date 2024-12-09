@@ -98,6 +98,11 @@ define('GET_EXTERNAL_LINK_DATA', 'GET_EXTERNAL_LINK_DATA');
 define('SAVE_SUPPLIER_INVITATION_STATUS', 'SAVE_SUPPLIER_INVITATION_STATUS');
 define('GET_PO_APPOINTMENT_CALENDAR', 'GET_PO_APPOINTMENT_CALENDAR');
 define('REMOVE_SRM_INVOICE_ATTACHMENT', 'REMOVE_SRM_INVOICE_ATTACHMENT');
+define('SAVE_PAYMENT_PROOF_DOCUMENT', 'SAVE_PAYMENT_PROOF_DOCUMENT');
+define('GET_PAYMENT_PROOF_RESULTS', 'GET_PAYMENT_PROOF_RESULTS');
+define('CONFIRM_PAYMENT_PROOF', 'CONFIRM_PAYMENT_PROOF');
+define('REOPEN_PAYMENT_PROOF', 'REOPEN_PAYMENT_PROOF');
+define('DELETE_PAYMENT_PROOF_ATTACHMENT', 'DELETE_PAYMENT_PROOF_ATTACHMENT');
 
 
 class APIController extends Controller
@@ -275,6 +280,16 @@ class APIController extends Controller
                 return $this->SRMService->getPoAppointments($request);
             case REMOVE_SRM_INVOICE_ATTACHMENT:
                 return $this->SRMService->removeDeliveryAppointmentAttachment($request);
+            case SAVE_PAYMENT_PROOF_DOCUMENT:
+                return $this->SRMService->savePaymentProofDocument($request);
+            case GET_PAYMENT_PROOF_RESULTS:
+                return $this->SRMService->getPaymentProofResults($request);
+            case CONFIRM_PAYMENT_PROOF:
+                return $this->SRMService->confirmPaymentProof($request);
+            case REOPEN_PAYMENT_PROOF:
+                return $this->SRMService->reopenPaymentProof($request);
+            case DELETE_PAYMENT_PROOF_ATTACHMENT:
+                return $this->SRMService->deletePaymentProofAttachment($request);
             default:
                 return [
                     'success'   => false,

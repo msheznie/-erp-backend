@@ -5683,6 +5683,7 @@ ORDER BY
         })->sum();
     }
 
+
     public function getTenderPOData(Request $request)
     {
         try {
@@ -5695,4 +5696,62 @@ ORDER BY
         }
     }
 
+
+    public function getPaymentProofDocumentApproval(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getPaymentProofDocumentApproval($request);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function getSupplierWiseProof(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getSupplierWiseProof($request);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function approveSupplierWiseTender(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->approveSupplierWiseTender($request);
+            if(!$data['success']) {
+                return $this->sendError($data['message']);
+            }
+            return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function rejectSupplierWiseTender(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->rejectSupplierWiseTender($request);
+            if(!$data['success']) {
+                return $this->sendError($data['message']);
+            }
+            return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
 } 

@@ -36,6 +36,7 @@ use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SRMSupplierValues;
+use App\Models\SRMTenderPaymentProof;
 use App\Models\SupplierCategory;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
@@ -90,6 +91,7 @@ use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use App\Models\GRVDetails;
 use App\Models\SupplierInvoiceItemDetail;
+use Illuminate\Support\Facades\Crypt;
 class SRMService
 {
     private $POService = null;
@@ -770,7 +772,7 @@ class SRMService
                             $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
                         }
                     }
-                      
+
                     $masterData['extraCharges'] = DirectInvoiceDetails::select(
                         [
                             'directInvoiceDetailsID',
@@ -924,7 +926,7 @@ class SRMService
         $documentSystemID = 107;
         $timesReferred = $kycFormDetails->timesReferred;
 
-        if($isApprovalAmmend == 1){ 
+        if($isApprovalAmmend == 1){
             $update['approved_yn'] = 0;
             SupplierRegistrationLink::where('uuid',$request->input('supplier_uuid'))->update($update);
         }
@@ -1439,7 +1441,7 @@ class SRMService
 
     public function getTenders(Request $request)
     {
-        
+
         $input = $request->all();
         $registrationLinkIds = array();
         $tenderMasterId = array();
@@ -3155,7 +3157,7 @@ class SRMService
             }
 
             $result = ($push['score']/$criteriaDetail['max_value'])*$criteriaDetail['weightage'];
-            
+
             $att['bid_master_id'] = $push['bid_master_id'];
             $att['evaluation_detail_id'] = $push['evaluation_detail_id'];
             $att['score'] = $push['score'];
@@ -5200,9 +5202,9 @@ class SRMService
     public function getPaymentVouchersDetails(Request $request)
     {
         $input = $request->all();
-    
+
         $masterData = $this->supplierService->getPaySupplierInvoiceDetails($input);
-    
+
         if (!empty($masterData)) {
             $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
                 ->where('companySystemID', $masterData->companySystemID)
@@ -5222,7 +5224,7 @@ class SRMService
                 'data' => []
             ];
         }
-    }    
+    }
 
     public function checkGrvCreation(Request $request)
     {
@@ -5403,7 +5405,7 @@ class SRMService
         return ($tenderNegotiationResults) ? $tenderNegotiationResults->area : null;
     }
 
-    public static function getNegotiationBids($tenderId){ 
+    public static function getNegotiationBids($tenderId){
         return TenderBidNegotiation::where('tender_id', $tenderId)
         ->pluck('bid_submission_master_id_new')
         ->toArray();
@@ -5546,7 +5548,308 @@ class SRMService
                 'data' => null,
             ];
         }
+    }
+
+    public function savePaymentProofDocument($request)
+    {
+        try
+        {
+            $params = $request->input('extra.data');
+            $supplierData = $this->getSupplierByUUID($request->input('supplier_uuid'));
+
+            if(!$supplierData['status'])
+            {
+                return $this->generateResponse(false, 'Supplier data not found', $supplierData);
+            }
+
+            $tenderData = TenderMaster::getTenderByUuid($params['tenderUuid']);
+
+            if (empty($tenderData)) {
+                return $this->generateResponse(false, 'Tender data not found', $tenderData);
+            }
 
 
+
+            $documentMasterData = DocumentMaster::getDocumentData(127);
+            $companyCode = Company::getComanyCode($supplierData['data']['company_id']);
+            $serialData = SRMTenderPaymentProof::fetchProofDocumentSerial($companyCode,$documentMasterData['documentID']);
+
+            $result = DB::transaction(function () use ($supplierData, $tenderData, $documentMasterData, $companyCode, $serialData, $params) {
+                $record = SRMTenderPaymentProof::firstOrCreate(
+                    [
+                        'srm_supplier_id' => $supplierData['data']['id'],
+                        'tender_id' => $tenderData['id'],
+                        'company_id' => $supplierData['data']['company_id']
+                    ],
+                    [
+                        'uuid' => Helper::generateSRMUuid(),
+                        'serial_no' => $serialData['nextSerial'],
+                        'document_system_id' => 127,
+                        'document_id' => $documentMasterData['documentID'],
+                        'document_code' => $serialData['documentCode'],
+                    ]
+                );
+
+                $uploadResponse = $this->uploadPaymentProofDocument($companyCode, $record ,$params);
+
+                if (!$uploadResponse['success']) {
+                    throw new \Exception($uploadResponse['message']);
+                }
+
+                return $record;
+            });
+            return $this->generateResponse(true, 'Payment proof attachment saved successfully', $result);
+        }
+        catch (\Exception $e)
+        {
+            return $this->generateResponse(false, 'Unexpected Error: ' . $e->getMessage());
+        }
+    }
+    protected function getSupplierByUUID($uuid)
+    {
+        $supplier = self::getSupplierRegIdByUUID($uuid,true);
+        if (!$supplier) {
+            return ['status' => false];
+        }
+        return ['status' => true, 'data' => $supplier];
+    }
+
+    protected function generateResponse($success, $message, $data = [])
+    {
+        return [
+            'success' =>  $success,
+            'message' => $message,
+            'data' => $data
+        ];
+    }
+
+    protected function uploadPaymentProofDocument($companyCode, $record, $params)
+    {
+        try {
+            $attachment = $params['attachment'];
+
+            if (empty($attachment) || !isset($attachment['file'])) {
+                return $this->generateResponse(false, 'No attachment provided.');
+            }
+
+            $extension = strtolower($attachment['fileType']);
+            $allowedExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+
+            if (!in_array($extension, $allowedExtensions)) {
+                return $this->generateResponse(false, 'This file type is not allowed to upload.');
+            }
+
+            if (!empty($attachment['sizeInKbs']) && $attachment['sizeInKbs'] > 5 * 1024 * 1024) {
+                return $this->generateResponse(false, 'Maximum allowed file size is 5 MB. Please upload a file smaller than 5 MB.');
+            }
+
+            $decodedFile = base64_decode($attachment['file']);
+            $timestamp = time();
+            $fileName = "{$timestamp}_tenderPaymentProof.{$extension}";
+            $path = "{$companyCode}/PDA/{$record['uuid']}/{$fileName}";
+
+            Storage::disk('s3')->put($path, $decodedFile);
+
+            $attachmentData = [
+                'companySystemID' => $record->company_id,
+                'companyID' => $companyCode,
+                'attachmentDescription' => $params['description'],
+                'documentSystemID' => $record->document_system_id,
+                'documentID' => $record->document_id,
+                'documentSystemCode' => $record->id,
+                'path' => $path,
+                'originalFileName' => $attachment['originalFileName'],
+                'myFileName' => "{$companyCode}_{$timestamp}_tenderPaymentProof.{$extension}",
+                'sizeInKbs' => round($attachment['sizeInKbs']),
+                'isUploaded' => 1,
+            ];
+
+            DocumentAttachments::create($attachmentData);
+
+            return $this->generateResponse(true, 'File uploaded successfully');
+
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function getPaymentProofResults($request)
+    {
+        try {
+            $supplierData = self::getSupplierRegIdByUUID($request->input('supplier_uuid'), true);
+            $tenderData = TenderMaster::getTenderByUuid($request->input('extra.uuid'));
+            $data = [];
+            if (empty($tenderData)) {
+                return $this->generateResponse(false, 'Tender data not found', $tenderData);
+            }
+
+            $paymentProofData = SRMTenderPaymentProof::getPaymentProofData(127,$supplierData['company_id'],$tenderData['id'],$supplierData['id']);
+
+            if(($paymentProofData))
+            {
+                $data = [
+                    'documentCode' => $paymentProofData->document_code,
+                    'proofUuid' => $paymentProofData->uuid,
+                    'confirm' => $paymentProofData->confirmed_yn,
+                    'approved' => $paymentProofData->approved_yn,
+                    'refferedBack' => $paymentProofData->refferedBackYN,
+                    'attachments' => $paymentProofData->documentAttachment->map(function ($attachment) {
+                        return [
+                            'attachmentUuid' => Crypt::encrypt(json_encode($attachment->attachmentID)),
+                            'description' => $attachment->attachmentDescription,
+                            'fileName' => $attachment->originalFileName,
+                            'path' => $attachment->path,
+                        ];
+                    })->toArray(),
+                ];
+
+            }
+
+            return $this->generateResponse(true, 'Payment proof data', $data);
+        }
+        catch(\Exception $e)
+        {
+            return $this->generateResponse(false, 'Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function confirmPaymentProof($request)
+    {
+        try {
+            $paymentProofData = SRMTenderPaymentProof::getPaymentProofDataByUuid($request->input('extra.uuid'));
+            $params = array(
+                'autoID' => $paymentProofData['id'],
+                'company' => $paymentProofData['company_id'],
+                'document' => $paymentProofData['document_system_id'],
+                'email' => $paymentProofData['srmSupplier']['email']
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+          /*  if($confirm['success'])
+            {
+                $this->sendSupplierNotification($params);
+            }*/
+
+            return $this->generateResponse($confirm['success'], $confirm['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->generateResponse(false, 'Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function sendSupplierNotification($params)
+    {
+        $body = "Dear Supplier,"."<br /><br />"." Document successfully attached. The document is under review. Access to the Tender will be provided shortly. Please wait.";
+        $dataEmail = [
+            'companySystemID' => $params['company'],
+            'alertMessage' => 'Payment Proof Attachment',
+            'empEmail' => $params['email'],
+            'emailAlertMessage' => $body,
+        ];
+
+        $sendEmail = \Email::sendEmailErp($dataEmail);
+    }
+
+    public function reopenPaymentProof($request)
+    {
+        $paymentProofUuid = $request->input('extra.uuid');
+
+        $paymentProofData = SRMTenderPaymentProof::getPaymentProofDataByUuid($paymentProofUuid);
+        if (!$paymentProofData) {
+            throw new Exception('Payment proof not found.');
+        }
+
+
+        $fetchDocumentApproved = DocumentApproved::getAllDocumentApprovedData(
+            $paymentProofData['id'],
+            $paymentProofData['document_system_id'],
+            $paymentProofData['company_id']
+        );
+
+         DB::transaction(function () use ($paymentProofData, $fetchDocumentApproved) {
+
+            $this->updatePaymentProof($paymentProofData['id']);
+
+            if (!empty($fetchDocumentApproved)) {
+                $this->processDocumentHistory($fetchDocumentApproved, $paymentProofData['timesReferred']);
+            }
+
+
+            $this->deleteDocumentApprovals($paymentProofData['document_system_id'], $paymentProofData['id']);
+        });
+
+        return $this->generateResponse(true, 'Payment proof reopened successfully');
+    }
+
+    protected function updatePaymentProof($paymentProofId)
+    {
+        $updated = SRMTenderPaymentProof::where('id', $paymentProofId)
+            ->update([
+                'confirmed_yn' => 0,
+                'RollLevForApp_curr' => 1,
+                'confirmed_date' => null,
+                'refferedBackYN' => 0,
+            ]);
+
+        if (!$updated) {
+            throw new Exception('Failed to update payment proof record.');
+        }
+    }
+
+    protected function processDocumentHistory($documentApprovals, $timesReferred)
+    {
+        if (!empty($documentApprovals)) {
+            foreach ($documentApprovals as $fetchDocumentApproved) {
+                $fetchDocumentApproved['refTimes'] =$timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $documentApprovals->toArray();
+        if (!empty($DocumentApprovedArray)) {
+            DocumentReferedHistory::insert($DocumentApprovedArray);
+        }
+    }
+
+    protected function deleteDocumentApprovals($documentSystemId, $documentSystemCode)
+    {
+        $deleted = DocumentApproved::where('documentSystemID', $documentSystemId)
+            ->where('documentSystemCode', $documentSystemCode)
+            ->delete();
+
+        if (!$deleted) {
+            throw new Exception('Failed to delete document approval record.');
+        }
+    }
+
+    public function deletePaymentProofAttachment($request)
+    {
+        $attachmentUuid = $request->input('extra.attachmentUuid');
+        $attachmentId = Crypt::decrypt($attachmentUuid);
+
+        $attachment = DocumentAttachments::find($attachmentId);
+
+        if (!$attachment) {
+            return $this->generateResponse(false, 'Attachment not found');
+        }
+
+        if (!Storage::disk('s3')->exists($attachment->path)) {
+            return $this->generateResponse(false, 'File not found in S3 storage');
+        }
+
+        $deleteSuccess = Storage::disk('s3')->delete($attachment->path);
+
+        if (!$deleteSuccess) {
+            return $this->generateResponse(false, 'Failed to delete attachment from S3');
+        }
+
+        $deleted = DocumentAttachments::where('attachmentID', $attachmentId)
+            ->delete();
+
+        if (!$deleted) {
+            throw new Exception('Failed to delete document approval record.');
+        }
+
+        return $this->generateResponse(true, 'Attachment deleted successfully', $attachment);
     }
 }

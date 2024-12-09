@@ -2,14 +2,19 @@
 
 namespace App\Repositories;
 
+use App\helper\Helper;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
+use App\Models\DocumentApproved;
 use App\Models\EnvelopType;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Models\SRMTenderPaymentProof;
 use App\Models\TenderBoqItems;
 use App\Models\TenderMaster;
+use App\Models\TenderMasterSupplier;
 use App\Models\TenderType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -252,8 +257,136 @@ class TenderMasterRepository extends BaseRepository
         return $current_date->gt($opening_date_comp) && ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
     }
 
+
     public static function getTenderPOData($tenderId, $companyId)
     {
         return TenderMaster::getTenderPOData($tenderId, $companyId);
+    }
+    public function getPaymentProofDocumentApproval($request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empId = \Helper::getEmployeeSystemID();
+        $tenderPaymentProof =  SRMTenderPaymentProof::getTenderPaymentReview($companyId,$empId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $tenderPaymentProof = $tenderPaymentProof->where(function($query) use ($search) {
+                $query->where('tm.title', 'LIKE', "%{$search}%")
+                    ->orWhere('tm.tender_code', 'LIKE', "%{$search}%");
+            });
+        }
+        return \DataTables::of($tenderPaymentProof)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function getSupplierWiseProof($request)
+    {
+        $input = $request->all();
+        $empId = \Helper::getEmployeeSystemID();
+        $companyId = $input['companyId'];
+        $tenderUuid = $input['uuid'];
+        $tenderData = TenderMaster::getTenderByUuid($tenderUuid);
+
+
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+
+        $supplierPaymentProof = SRMTenderPaymentProof::getSupplierWiseData($companyId,$empId,$tenderData['id']);
+        return \DataTables::of($supplierPaymentProof)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function approveSupplierWiseTender($request)
+    {
+        $input = $request->all();
+        $data = $this->prepareDocumentData($input);
+
+        unset($data['approvedComments']);
+        $data['approvedComments'] = ($input['approvedComments']) ?? null;
+
+        $approve = \Helper::approveDocument($data);
+
+        if ($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
+            $this->purchaseTender($request);
+        }
+
+        return ['success' => $approve["success"], 'message' => $approve["message"], 'data'=> $approve];
+    }
+
+    public function purchaseTender($request)
+    {
+        $input = $request->all();
+        $getPaymentProofDocument = SRMTenderPaymentProof::getPaymentProofDataByUuid($input['uuid']);
+        $result = DB::transaction(function () use ($getPaymentProofDocument) {
+                $data = [
+                    'tender_master_id' => $getPaymentProofDocument['tender_id'],
+                    'purchased_date' =>  Carbon::parse(now())->format('Y-m-d H:i:s'),
+                    'purchased_by' => $getPaymentProofDocument['srm_supplier_id'],
+                    'created_by' => $getPaymentProofDocument['srm_supplier_id']
+                ];
+            TenderMasterSupplier::create($data);
+        });
+    }
+
+    public function rejectSupplierWiseTender($request)
+    {
+        $input = $request->all();
+        $data = DocumentApproved::getDocumentApprovedData($input['documentApCode']);
+        $data = $this->prepareDocumentData($input);
+        unset($data['rejectedComments']);
+        $data['rejectedComments'] = ($input['rejectedComments']) ?? null;
+
+        $approve = \Helper::rejectDocument($data);
+        return ['success' => $approve["success"], 'message' => $approve["message"], 'data'=> $approve];
+    }
+
+    protected function prepareDocumentData($input)
+    {
+        $documentData = DocumentApproved::getDocumentApprovedData($input['documentApCode']);
+        $paymentProofData = SRMTenderPaymentProof::getPaymentProofDataByUuid($input['uuid']);
+        $tenderData = TenderMaster::getTenderDidOpeningDates(
+            $paymentProofData['tender_id'] ?? null,
+            $paymentProofData['company_id'] ?? null
+        );
+
+        $documentData->tenderCode = $tenderData->tender_code ?? null;
+        $documentData->tenderTitle = $tenderData->title ?? null;
+        $documentData->supplierName = $input['supplierName'] ?? null;
+
+        return $documentData;
     }
 }
