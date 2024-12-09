@@ -105,10 +105,17 @@ class CustomerInvoiceARLedgerService
 
                 array_push($finalData, $data);
             }else if( $masterData->isPerforma == 1){
-                $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount);
-                $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount));
-                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount));
-                array_push($finalData, $data);
+                 $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID')->get();
+                foreach ($detail as $item) {
+                    $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                    $data['serviceLineCode'] = $item->serviceLineCode;
+
+                    $data['custInvoiceAmount'] = ABS($item->invoiceAmount);
+                    $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount));
+                    $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount));
+                    array_push($finalData, $data);
+                }
+
             }else if ($masterData->isPerforma == 0) {
                 $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID')->get();
                 foreach ($detail as $item) {
