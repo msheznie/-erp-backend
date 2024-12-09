@@ -2032,6 +2032,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         }
 
         $input['unitCost'] = $input['salesPrice'] - $input["discountAmountLine"];
+        $unitCostForCalculation = ($vatCategories && $vatCategories->applicableOn == 1) ? $input['salesPrice'] : $input['unitCost'];
         if ($input['invoiceQty'] != $detail->invoiceQty || $input['unitCost'] != $detail->unitCost) {
             $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
             //$companyCurrency = \Helper::companyCurrency($myCurr);
@@ -2089,8 +2090,8 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             if(($input["VATAmount"] != 0) && ($input["VATPercentage"] != 0)){
-                $checkVatAmount = $input['unitCost'] * $input["VATPercentage"] / 100;
-                $checkVatPercentage = ($input["VATAmount"] / $input['unitCost']) * 100;
+                $checkVatAmount = $unitCostForCalculation * $input["VATPercentage"] / 100;
+                $checkVatPercentage = ($input["VATAmount"] / $unitCostForCalculation) * 100;
 
                 if(($checkVatAmount != $input["VATAmount"]) && ($checkVatPercentage != $input["VATPercentage"])){
                     return [
@@ -2100,10 +2101,10 @@ class CustomerInvoiceAPIService extends AppBaseController
                 }
             }
             elseif ($input["VATAmount"] != 0){
-                $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+                $input["VATPercentage"] = ($input["VATAmount"] / $unitCostForCalculation) * 100;
             }
             elseif ($input["VATPercentage"] != 0){
-                $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
+                $input["VATAmount"] = $unitCostForCalculation * $input["VATPercentage"] / 100;
             }
             else{
                 $input["VATAmount"] = 0;
@@ -2127,20 +2128,20 @@ class CustomerInvoiceAPIService extends AppBaseController
         else{
             if(isset($input['by']) && ($input['by'] == 'VATPercentage' || $input['by'] == 'VATAmount')){
                 if ($input['by'] === 'VATPercentage') {
-                    $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
+                    $input["VATAmount"] = $unitCostForCalculation * $input["VATPercentage"] / 100;
                 } else if ($input['by'] === 'VATAmount') {
-                    if($input['unitCost'] > 0){
-                        $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+                    if($unitCostForCalculation > 0){
+                        $input["VATPercentage"] = ($input["VATAmount"] / $unitCostForCalculation) * 100;
                     } else {
                         $input["VATPercentage"] = 0;
                     }
                 }
             } else {
                 if ($input['VATPercentage'] != 0) {
-                    $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
+                    $input["VATAmount"] = $unitCostForCalculation * $input["VATPercentage"] / 100;
                 } else if ($input['VATAmount'] != 0){
-                    if($input['unitCost'] > 0){
-                        $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+                    if($unitCostForCalculation > 0){
+                        $input["VATPercentage"] = ($input["VATAmount"] / $unitCostForCalculation) * 100;
                     } else {
                         $input["VATPercentage"] = 0;
                     }
@@ -2924,11 +2925,11 @@ class CustomerInvoiceAPIService extends AppBaseController
         $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
         $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
 
-
+        $unitCostForCalculation = ($vatCategories && $vatCategories->applicableOn == 1) ? $input['salesPrice'] : $input['sellingCostAfterMargin'];
         if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             if(($input["VATAmount"] != 0) && ($input["VATPercentage"] != 0)){
-                $checkVatAmount = $input['salesPrice'] * $input["VATPercentage"] / 100;
-                $checkVatPercentage = ($input["VATAmount"] / $input['salesPrice']) * 100;
+                $checkVatAmount = $unitCostForCalculation * $input["VATPercentage"] / 100;
+                $checkVatPercentage = ($input["VATAmount"] / $unitCostForCalculation) * 100;
 
                 if(($checkVatAmount != $input["VATAmount"]) && ($checkVatPercentage != $input["VATPercentage"])){
                     return [
@@ -2955,7 +2956,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 ];
             }
 
-            if($input['VATAmount'] > $input['salesPrice']){
+            if($input['VATAmount'] > $unitCostForCalculation){
                 return [
                     'status' => false,
                     'message' => 'Vat amount cannot be greater than sales price'
@@ -2965,10 +2966,10 @@ class CustomerInvoiceAPIService extends AppBaseController
         else{
             if(isset($input['by']) && ($input['by'] == 'VATPercentage' || $input['by'] == 'VATAmount')){
                 if ($input['by'] === 'VATPercentage') {
-                    $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
+                    $input["VATAmount"] = $unitCostForCalculation * $input["VATPercentage"] / 100;
                 } else if ($input['by'] === 'VATAmount') {
-                    if($input['sellingCostAfterMargin'] > 0){
-                        $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+                    if($unitCostForCalculation > 0){
+                        $input["VATPercentage"] = ($input["VATAmount"] / $unitCostForCalculation) * 100;
                     } else {
                         $input["VATPercentage"] = 0;
                     }
@@ -2976,10 +2977,10 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
             else {
                 if ($input['VATPercentage'] != 0) {
-                    $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
+                    $input["VATAmount"] = $unitCostForCalculation * $input["VATPercentage"] / 100;
                 } else {
-                    if($input['sellingCostAfterMargin'] > 0){
-                        $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+                    if($unitCostForCalculation > 0){
+                        $input["VATPercentage"] = ($input["VATAmount"] / $unitCostForCalculation) * 100;
                     } else {
                         $input["VATPercentage"] = 0;
                     }
