@@ -411,6 +411,7 @@ class CreateCustomerThirdPartyInvoice
                             $customerInvoice->update([
                                 'statusFromDisposal' => 1
                             ]);
+
                             DB::commit();
                             return ['status' => true, 'message' => "Customer invoice created successfully"];
                         }
