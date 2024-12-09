@@ -1623,7 +1623,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $assetCost = $assetCost->where(function ($query) use ($search) {
                 $query->where('faCode', 'LIKE', "%{$search}%")
-                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('faUnitSerialNo', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_fa_category.catDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_fa_categorysub.catDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('docOrigin', 'LIKE', "%{$search}%");
             });
         }
 
