@@ -4278,6 +4278,18 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
             $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
             if ($paySupplierInvoice->BPVbankCurrency == $paySupplierInvoice->localCurrencyID && $paySupplierInvoice->supplierTransCurrencyID == $paySupplierInvoice->localCurrencyID) {
+                if(isset($payInvoice->BPVchequeNo) && $payInvoice->BPVchequeNo > 0){
+                    $chequeRegisterDetailUpdate = ChequeRegisterDetail::where('cheque_no',$payInvoice->BPVchequeNo)
+                                                                        ->where('document_id' ,$paySupplierInvoice->PayMasterAutoId)
+                                                                        ->where('document_master_id' ,$paySupplierInvoice->documentSystemID)
+                                                                        ->first();
+                    if($chequeRegisterDetailUpdate){
+                        $chequeRegisterDetailUpdate->document_id = null;
+                        $chequeRegisterDetailUpdate->document_master_id = null;
+                        $chequeRegisterDetailUpdate->status = 0;
+                        $chequeRegisterDetailUpdate->save();
+                    }
+                }
                 if ($paySupplierInvoice->chequePaymentYN == -1) {
                     $bankAccount = BankAccount::find($paySupplierInvoice->BPVAccount);
                     if ($bankAccount->isPrintedActive == 1) {
