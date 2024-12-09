@@ -604,6 +604,7 @@ class SupplierInvoiceGlService
                 $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                     $query->where('companySystemID', $masterData->companySystemID);
                 })->where('isActive', 1)->first();
+
                     if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $exemptExpenseDetails->VATAmount != 0) {
                         $exemptVatTrans = $exemptExpenseDetails->VATAmount;
                         $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
