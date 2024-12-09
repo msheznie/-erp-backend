@@ -104,6 +104,7 @@ define('CONFIRM_PAYMENT_PROOF', 'CONFIRM_PAYMENT_PROOF');
 define('REOPEN_PAYMENT_PROOF', 'REOPEN_PAYMENT_PROOF');
 define('DELETE_PAYMENT_PROOF_ATTACHMENT', 'DELETE_PAYMENT_PROOF_ATTACHMENT');
 define('PO_REPORT', 'PO_REPORT');
+define('GET_PAYMENT_DETAILS', 'GET_PAYMENT_DETAILS');
 
 
 class APIController extends Controller
@@ -241,13 +242,13 @@ class APIController extends Controller
                 return $this->SRMService->getBidBoqData($request);
             case SAVE_BID_BOQ :
                 return $this->SRMService->saveBidBoq($request);
-            case SUBMIT_BID_TENDER : 
+            case SUBMIT_BID_TENDER :
                 return $this->SRMService->submitBidTender($request);
-            case BID_SUBMISSION_CREATE : 
+            case BID_SUBMISSION_CREATE :
                 return $this->SRMService->submitBidSubmissionCreate($request);
-            case GET_BID_SUBMITTED_DATA : 
-                return $this->SRMService->getBidSubmittedData($request);   
-            case BID_SUBMISSION_DELETE : 
+            case GET_BID_SUBMITTED_DATA :
+                return $this->SRMService->getBidSubmittedData($request);
+            case BID_SUBMISSION_DELETE :
                 return $this->SRMService->deleteBidData($request);
             case FAQ_CLARIFICATIONS :
                 return $this->SRMService->exportReport($request);
@@ -260,9 +261,9 @@ class APIController extends Controller
             case SAVE_INVOICE:
                 return $this->SRMService->createInvoice($request);
             case GET_PAYMENTVOUCHERS:
-                return $this->SRMService->getPaymentVouchers($request);   
+                return $this->SRMService->getPaymentVouchers($request);
             case GET_PAYMENT_VOUCHER_DETAILS:
-                return $this->SRMService->getPaymentVouchersDetails($request);  
+                return $this->SRMService->getPaymentVouchersDetails($request);
             case CHECK_GRV_CREATION:
                 return $this->SRMService->checkGrvCreation($request);
             case GET_NEGOTIATION_TENDERS:
@@ -293,6 +294,8 @@ class APIController extends Controller
                 return $this->SRMService->deletePaymentProofAttachment($request);
             case PO_REPORT:
                 return $this->SRMService->exportPOReport($request);
+            case GET_PAYMENT_DETAILS:
+                return $this->SRMService->getPaymentDetails($request);
             default:
                 return [
                     'success'   => false,
@@ -329,10 +332,10 @@ class APIController extends Controller
                         foreach ($data1->groups as $val2) {
                             foreach ($val2->controls as $val3) {
                                 foreach ($val3->field->values as $key1 => $val4) {
-                                    if ($val3->form_field_id == 1) { //Category 
+                                    if ($val3->form_field_id == 1) { //Category
                                         $category = SupplierCategoryMaster::select('categoryDescription', 'categoryCode','categoryName')->where('supCategoryMasterID', $val4->value)->first();
                                         $val4->value = $category['categoryName'];
-                                    } else if ($val3->form_field_id == 2) { // Sub Category 
+                                    } else if ($val3->form_field_id == 2) { // Sub Category
                                         $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode','categoryName')->where('supCategorySubID', $val4->value)->first();
                                         $val4->value = $subCategory['categoryName'];
                                     } else if ($val3->form_field_id == 74) {
@@ -368,7 +371,7 @@ class APIController extends Controller
 
             if ($request->input('request') == 'GET_SUPPLIER_HISTORY_DETAILS') {
                 if ($response->data) {
-                    foreach ($response->data  as $key1 => $data1) { 
+                    foreach ($response->data  as $key1 => $data1) {
                         $this->updateFieldValues($data1);
                     }
                 }
@@ -417,7 +420,7 @@ class APIController extends Controller
                 $category = ($data->form_field_id == 1) ?
                     SupplierCategoryMaster::select('categoryName')->where('supCategoryMasterID', $data->value)->first() :
                     SupplierCategorySub::select('categoryName')->where('supCategorySubID', $data->value)->first();
-    
+
                 $data->value = $category ? $category['categoryName'] : '';
                 break;
             case 28:
@@ -431,10 +434,10 @@ class APIController extends Controller
             case $data->form_data_id > 0 :
                 $data->value = $data->options->text;
                 break;
-            default: 
+            default:
                 break;
         }
-    
+
         if (isset($data->supplier_detail)) {
             switch ($data->supplier_detail->form_field_id) {
                 case 63:
@@ -445,7 +448,7 @@ class APIController extends Controller
                     $category = ($data->supplier_detail->form_field_id == 1) ?
                         SupplierCategoryMaster::select('categoryName')->where('supCategoryMasterID', $data->supplier_detail->value)->first() :
                         SupplierCategorySub::select('categoryName')->where('supCategorySubID', $data->supplier_detail->value)->first();
-    
+
                     $data->supplier_detail->value = $category ? $category['categoryName'] : '-';
                     break;
                 case 28:
@@ -459,7 +462,7 @@ class APIController extends Controller
                 case $data->form_data_id > 0 :
                     $data->supplier_detail->value = $data->supplier_detail->options->text;
                     break;
-                default: 
+                default:
                     break;
             }
         }
