@@ -636,12 +636,6 @@ class SupplierInvoiceGlService
                         $exemptVATRptAmount = isset($directVATDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['exemptVATRptAmount']) ? $directVATDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['exemptVATRptAmount'] : 0;
 
 
-                        if ($masterData->rcmActivated == 1) {
-                            $exemptVATTransAmount = 0;
-                            $exemptVATLocalAmount = 0;
-                            $exemptVATRptAmount = 0;
-                        }
-
                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                         $data['serviceLineCode'] = $val->serviceLineCode;
                         $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
@@ -654,6 +648,13 @@ class SupplierInvoiceGlService
                         $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                             $query->where('companySystemID', $masterData->companySystemID);
                         })->where('isActive', 1)->first();
+
+
+                        if ($masterData->rcmActivated == 1 && $expenseCOA->expenseGL == null && $exemptExpenseDIDetails->recordType == 2 && $exemptExpenseDIDetails->exempt_vat_portion > 0) {
+                            $exemptVATTransAmount = 0;
+                            $exemptVATLocalAmount = 0;
+                            $exemptVATRptAmount = 0;
+                        }
 
                         if(!empty($exemptExpenseDIDetails)){
                             if($exemptExpenseDIDetails->exempt_vat_portion > 0 && $exemptExpenseDIDetails->subCatgeoryType == 1 && $expenseCOA->expenseGL != null) {
