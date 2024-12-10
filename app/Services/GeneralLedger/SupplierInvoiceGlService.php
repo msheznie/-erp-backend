@@ -636,6 +636,12 @@ class SupplierInvoiceGlService
                         $exemptVATRptAmount = isset($directVATDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['exemptVATRptAmount']) ? $directVATDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['exemptVATRptAmount'] : 0;
 
 
+                        if ($masterData->rcmActivated == 1) {
+                            $exemptVATTransAmount = 0;
+                            $exemptVATLocalAmount = 0;
+                            $exemptVATRptAmount = 0;
+                        }
+
                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                         $data['serviceLineCode'] = $val->serviceLineCode;
                         $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
