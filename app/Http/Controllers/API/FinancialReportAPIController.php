@@ -10270,6 +10270,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
        ) AS t1");
     }
 
+
     public function getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas) {
         $typeID = join(",",json_decode($typeID));
         $employeeDatas = join(",",json_decode($employeeDatas));
