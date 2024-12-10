@@ -78,6 +78,7 @@ use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\PaymentType;
+use App\Services\GeneralLedgerService;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use App\Services\ValidateDocumentAmend;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -3351,6 +3352,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $documentAutoId = $id;
         $documentSystemID = $masterData->documentSystemID;
 
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
+
         if($masterData->approved == -1){
             $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
             if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
@@ -3366,10 +3374,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 }
             }
     
-            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
-            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                    return $this->sendError($validatePendingGlPost['message']);
+            if($allowValidateDocumentAmend){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
                 }
             }
 

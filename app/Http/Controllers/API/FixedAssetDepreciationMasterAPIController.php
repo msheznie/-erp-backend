@@ -43,6 +43,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\AssetDisposalMaster;
+use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 
 /**
@@ -1025,7 +1026,15 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $documentAutoId = $id;
         $documentSystemID = $masterData->documentSystemID;
-        if($masterData->approved == -1){
+
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
+
+        if($masterData->approved == -1 && $allowValidateDocumentAmend){
             $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
             if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
                 if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){

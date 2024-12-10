@@ -89,6 +89,7 @@ use Response;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\SupplierBlock;
+use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 
 /**
@@ -2120,7 +2121,14 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         $documentAutoId = $input['grvAutoID'];
         $documentSystemID = $MasterData->documentSystemID;
 
-        if($MasterData->approved == -1){
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
+
+        if($MasterData->approved == -1 && $allowValidateDocumentAmend){
             $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
             if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
                 if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){

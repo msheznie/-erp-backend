@@ -74,6 +74,7 @@ use App\Models\Employee;
 use App\Models\CurrencyMaster;
 use App\helper\Helper;
 use App\Models\SupplierBlock;
+use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 
 /**
@@ -2239,11 +2240,20 @@ UNION ALL
 
         $documentAutoId = $debitNoteAutoID;
         $documentSystemID = $debitNoteMasterData->documentSystemID;
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
+
         if($debitNoteMasterData->approved == -1){
-            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
-            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                    return $this->sendError($validatePendingGlPost['message']);
+            if($allowValidateDocumentAmend){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
                 }
             }
 

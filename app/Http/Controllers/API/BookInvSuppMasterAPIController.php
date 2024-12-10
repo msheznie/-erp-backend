@@ -108,6 +108,8 @@ use App\Models\SupplierBlock;
 use App\Services\ValidateDocumentAmend;
 use DateTime;
 use App\Models\Tax;
+use App\Services\GeneralLedgerService;
+
 /**
  * Class BookInvSuppMasterController
  * @package App\Http\Controllers\API
@@ -3151,6 +3153,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         $documentAutoId = $bookingSuppMasInvAutoID;
         $documentSystemID = $bookInvSuppMasterData->documentSystemID;
 
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
 
         $isAPIDocument = DocumentSystemMapping::where('documentId',$documentAutoId)->where('documentSystemID',11)->exists();
         if ($isAPIDocument){
@@ -3172,10 +3180,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 }
             }
     
-            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
-            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                    return $this->sendError($validatePendingGlPost['message']);
+            if($allowValidateDocumentAmend){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
                 }
             }
 
