@@ -3,6 +3,7 @@
 namespace App\Services\GeneralLedger;
 
 use App\helper\ExchangeSetupConfig;
+use App\helper\CurrencyConversionService;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Models\AdvancePaymentDetails;
@@ -314,13 +315,14 @@ class SupplierInvoiceGlService
                 if ($masterData->documentType != 4) {
 
                     if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
+                        $localWHT = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $masterData->whtAmount, ($data['documentTransAmount'] / $data['documentLocalAmount']));
+                        
+                        $rptWHT = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $masterData->whtAmount, ($data['documentTransAmount'] / $data['documentRptAmount']));
 
-                        $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
-                     
                       
-                        $whtAmountCon =  -1 *$masterData->whtAmount;
-                        $whtAmountConLocal =  -1 *\Helper::roundValue($currencyWht['localAmount']);
-                        $whtAmountConRpt =  -1 *\Helper::roundValue($currencyWht['reportingAmount']);
+                        $whtAmountCon =  -1 * $masterData->whtAmount;
+                        $whtAmountConLocal =  -1 * $localWHT;
+                        $whtAmountConRpt =  -1 * \Helper::roundValue($rptWHT);
 
 
                         $whtTrans = $whtAmountCon;
@@ -604,7 +606,6 @@ class SupplierInvoiceGlService
                 $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                     $query->where('companySystemID', $masterData->companySystemID);
                 })->where('isActive', 1)->first();
-
                     if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $exemptExpenseDetails->VATAmount != 0) {
                         $exemptVatTrans = $exemptExpenseDetails->VATAmount;
                         $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
@@ -635,12 +636,6 @@ class SupplierInvoiceGlService
                         $exemptVATLocalAmount = isset($directVATDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['exemptVATLocalAmount']) ? $directVATDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['exemptVATLocalAmount'] : 0;
                         $exemptVATRptAmount = isset($directVATDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['exemptVATRptAmount']) ? $directVATDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['exemptVATRptAmount'] : 0;
 
-
-                        if ($masterData->rcmActivated == 1) {
-                            $exemptVATTransAmount = 0;
-                            $exemptVATLocalAmount = 0;
-                            $exemptVATRptAmount = 0;
-                        }
 
                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                         $data['serviceLineCode'] = $val->serviceLineCode;
