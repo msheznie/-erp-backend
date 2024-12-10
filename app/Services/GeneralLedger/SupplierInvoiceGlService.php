@@ -2,6 +2,8 @@
 
 namespace App\Services\GeneralLedger;
 
+use App\helper\ExchangeSetupConfig;
+use App\helper\Helper;
 use App\helper\TaxService;
 use App\Models\AdvancePaymentDetails;
 use App\Models\AdvanceReceiptDetails;
@@ -1131,6 +1133,13 @@ class SupplierInvoiceGlService
                         Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                     }
 
+                }
+            }
+
+            if(($masterData->documentType == 0) || ($masterData->documentType == 2)) {
+                for ($i = 0; $i < count($finalData); $i++) {
+                    $finalData[$i]['documentLocalCurrencyER'] = ExchangeSetupConfig::calculateLocalER($finalData[$i]["documentTransAmount"],$finalData[$i]["documentLocalAmount"]);
+                    $finalData[$i]['documentRptCurrencyER'] = ExchangeSetupConfig::calculateReportingER($finalData[$i]["documentTransAmount"],$finalData[$i]["documentRptAmount"]);
                 }
             }
         }
