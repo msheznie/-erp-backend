@@ -10213,6 +10213,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
             return $this->sendError($exception->getMessage());
         }
     }
+    
 
     public function getGeneralLedgerRefAmount() {
         return DB::select("SELECT * FROM (SELECT
@@ -10269,7 +10270,6 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         srp_erp_payrollmaster.approvedYN = 1 GROUP BY masterID
        ) AS t1");
     }
-
 
     public function getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas) {
         $typeID = join(",",json_decode($typeID));
