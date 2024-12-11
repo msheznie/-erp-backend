@@ -6522,14 +6522,14 @@ class Helper
                                         $comment = $input["rejectedComments"];
 
                                         $sub = "<p>Dear $supplierName,</p>
-                                        <p>The document attached for the tender purchase has been reviewed and approved. Please find the comments provided for the document attached to the tender 
+                                        <p>Please find the comments provided for the document attached to the tender 
                                         <b>$tenderCode</b>, <b>$tenderTitle</b>.</p>
                                         <p><b>Comment:</b></p>
                                         <p>$comment</p>
-                                        <p>Kindly submit the bid before the bid submission closing date.</p>
+                                        <p>Kindly review the comments and attach the updated or corresponding document.</p>
                                         <p>Regards,</p>";
 
-                                        $msg = " Tender Payment Attachment Proof Referred Back";
+                                        $msg = " Tender Payment Attachment Proof Rejected";
                                     }
 
                                     $dataEmail['empEmail'] = $currentApproved->reference_email;
