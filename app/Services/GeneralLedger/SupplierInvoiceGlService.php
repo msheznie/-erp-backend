@@ -1160,7 +1160,6 @@ class SupplierInvoiceGlService
                 }
             }
         }
-
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
     }
 }
