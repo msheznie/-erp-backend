@@ -648,18 +648,22 @@ class SupplierInvoiceGlService
                             $query->where('companySystemID', $masterData->companySystemID);
                         })->where('isActive', 1)->first();
 
-                        if ($exemptExpenseDIDetails->subCatgeoryType == 1 && $masterData->rcmActivated == 1 && $expenseCOA->expenseGL == null && $exemptExpenseDIDetails->recordType == 2 && $exemptExpenseDIDetails->exempt_vat_portion > 0) {
-                            $exemptVATTransAmount = 0;
-                            $exemptVATLocalAmount = 0;
-                            $exemptVATRptAmount = 0;
-                        }
-
-                        if ($exemptExpenseDIDetails->subCatgeoryType == 3 && $masterData->rcmActivated == 1 && $expenseCOA->expenseGL == null && $exemptExpenseDIDetails->recordType == 2 && $exemptExpenseDIDetails->exempt_vat_portion == 0) {
-                            $transBSVAT = 0;
-                            $rptBSVAT = 0;
-                            $localBSVAT = 0;
-                        }
+           
                         if(!empty($exemptExpenseDIDetails)){
+
+                            if ($exemptExpenseDIDetails->subCatgeoryType == 1 && $masterData->rcmActivated == 1 && $expenseCOA->expenseGL == null && $exemptExpenseDIDetails->recordType == 2 && $exemptExpenseDIDetails->exempt_vat_portion > 0) {
+                                $exemptVATTransAmount = 0;
+                                $exemptVATLocalAmount = 0;
+                                $exemptVATRptAmount = 0;
+                            }
+    
+                            if ($exemptExpenseDIDetails->subCatgeoryType == 3 && $masterData->rcmActivated == 1 && $expenseCOA->expenseGL == null && $exemptExpenseDIDetails->recordType == 2 && $exemptExpenseDIDetails->exempt_vat_portion == 0) {
+                                $transBSVAT = 0;
+                                $rptBSVAT = 0;
+                                $localBSVAT = 0;
+                            }
+
+
                             if($exemptExpenseDIDetails->exempt_vat_portion > 0 && $exemptExpenseDIDetails->subCatgeoryType == 1 && $expenseCOA->expenseGL != null) {
                                 $exemptVatTrans = $exemptExpenseDIDetails->VATAmount * $exemptExpenseDIDetails->exempt_vat_portion / 100;
                                 $exemptVATLocal = $exemptExpenseDIDetails->VATAmountLocal * $exemptExpenseDIDetails->exempt_vat_portion / 100;
