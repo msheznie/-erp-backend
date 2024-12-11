@@ -411,12 +411,12 @@ class SupplierInvoiceGlService
                             $data['documentLocalAmount'] = $whtLocal;
                             $data['documentRptAmount'] = $whtRpt;
                         
-                    } 
                     }
                     array_push($finalData, $data);
                 }
+            }
             
-                $data['supplierCodeSystem'] = $masterData->supplierID;
+            $data['supplierCodeSystem'] = $masterData->supplierID;
 
             if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                 $data['chartOfAccountSystemID'] = $masterData->UnbilledGRVAccountSystemID;
