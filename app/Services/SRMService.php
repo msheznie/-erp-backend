@@ -5602,7 +5602,7 @@ class SRMService
         }
         catch (\Exception $e)
         {
-            return $this->generateResponse(false, 'Unexpected Error: ' . $e->getMessage());
+            return $this->generateResponse(false, $e->getMessage());
         }
     }
     protected function getSupplierByUUID($uuid)
@@ -5709,7 +5709,7 @@ class SRMService
         }
         catch(\Exception $e)
         {
-            return $this->generateResponse(false, 'Unexpected Error: ' . $e->getMessage());
+            return $this->generateResponse(false, $e->getMessage());
         }
     }
 
@@ -5734,7 +5734,7 @@ class SRMService
         }
         catch(\Exception $e)
         {
-            return $this->generateResponse(false, 'Unexpected Error: ' . $e->getMessage());
+            return $this->generateResponse(false, $e->getMessage());
         }
     }
 
