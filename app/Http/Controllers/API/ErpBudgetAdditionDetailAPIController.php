@@ -169,9 +169,18 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $input['gLCode'] = $chartOfAccount->AccountCode;
         $input['gLCodeDescription'] = $chartOfAccount->AccountDescription;
 
+        /*Reporting Amount*/
+        $input['adjustmentAmountRpt'] = floatval($input['adjustmentAmountRpt']);
+
         /*Local Amount*/
         $currency = \Helper::currencyConversion($budgetAdditionMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $input['adjustmentAmountRpt']);
-        $input['adjustmentAmountLocal'] = $currency['localAmount'];
+
+        if($input['adjustmentAmountRpt'] < 0) {
+            $input['adjustmentAmountLocal'] = -$currency['localAmount'];
+        }
+        else {
+            $input['adjustmentAmountLocal'] = $currency['localAmount'];
+        }
 
         /*Budget details id*/
         $budgetMaster = BudgetMaster::where([
