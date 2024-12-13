@@ -1507,6 +1507,15 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingDetailQRY($request);
                         $data = $supplierAgingReportService->getSupplierAgingExportToExcelData($output, $typeAging);
+                        
+                        $data = array_filter($data, function ($row, $index) {
+                            if ($index === 0) {
+                                return true;
+                            }
+                        
+                            return isset($row['companyID']) && !empty($row['companyID']);
+                        }, ARRAY_FILTER_USE_BOTH); 
+                                                
                         $objSupplierAgingDetail = new SupplierAgingDetailReport();
                         $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
                     }
