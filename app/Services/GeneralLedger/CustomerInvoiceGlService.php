@@ -293,9 +293,10 @@ class CustomerInvoiceGlService
                             $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                             $data['documentRptAmount'] = $tax->rptAmount * -1;
-                            array_push($finalData, $data);
 
-                       
+                            if ($data['documentTransAmount'] != 0 || $data['documentLocalAmount'] != 0 || $data['documentRptAmount'] != 0) {
+                                array_push($finalData, $data);
+                            }
 
                             $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
@@ -500,7 +501,10 @@ class CustomerInvoiceGlService
                             $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                             $data['documentRptAmount'] = ABS($tax->rptAmount) * -1;
-                            array_push($finalData, $data);
+
+                            if ($data['documentTransAmount'] != 0 || $data['documentLocalAmount'] != 0 || $data['documentRptAmount'] != 0) {
+                                array_push($finalData, $data);
+                            }
 
                             $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
@@ -732,7 +736,10 @@ class CustomerInvoiceGlService
                                 $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                                 $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                                 $data['documentRptAmount'] = $tax->rptAmount * -1;
-                                array_push($finalData, $data);
+
+                                if ($data['documentTransAmount'] != 0 || $data['documentLocalAmount'] != 0 || $data['documentRptAmount'] != 0) {
+                                    array_push($finalData, $data);
+                                }
 
                                 $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                             }
@@ -754,7 +761,9 @@ class CustomerInvoiceGlService
                                 $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
                                 $data['documentRptAmount'] = (1 / $item->comRptCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces) * -1);
                                 
-                                array_push($finalData, $data);
+                                if ($data['documentTransAmount'] != 0 || $data['documentLocalAmount'] != 0 || $data['documentRptAmount'] != 0) {
+                                    array_push($finalData, $data);
+                                }
                                 $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                             }
                         }
