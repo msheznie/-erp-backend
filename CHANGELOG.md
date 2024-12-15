@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.55.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.55.1...v10.55.2) (2024-12-15)
+
+
+### Bug Fixes
+
+* **common:** disable the push notification [GCP-5612] ([652a06e](https://github.com/pbsgears/Gears_BackEnd/commit/652a06e99815950ae499b3032c0d5205342b861b))
+
 ## [10.55.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.54.1...v10.55.0) (2024-12-07)
 
 
