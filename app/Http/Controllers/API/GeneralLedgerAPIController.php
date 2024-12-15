@@ -510,11 +510,9 @@ class GeneralLedgerAPIController extends AppBaseController
                 $masterData = ['documentSystemID' => $dt->documentSystemID,
                     'autoID' => $dt->faID,
                     'companySystemID' => $dt->companySystemID,
-                    'documentDateOveride' => $dt->postedDate,
-                    'employeeSystemID' => $dt->approvedByUserSystemID,
-                    'otherLedgers' => false];
+                    'employeeSystemID' => $dt->approvedByUserSystemID
+                ];
                 $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
-
 
                 DB::table('migratedDocs')->insert([
                     'documentSystemID' => $dt->documentSystemID,
