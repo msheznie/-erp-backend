@@ -1933,6 +1933,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
                 /*define input*/
 
+                if ($chartOfAccount) {
+                    return $this->sendResponse('e', 'Chart Of Account not found.');
+                }
+
                 $addToCusInvDetails[$x]['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
                 $addToCusInvDetails[$x]['companyID'] = $master->companyID;
                 $addToCusInvDetails[$x]['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
