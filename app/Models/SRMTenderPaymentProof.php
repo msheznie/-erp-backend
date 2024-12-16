@@ -343,10 +343,14 @@ class SRMTenderPaymentProof extends Model
             ]);
     }
 
-    public static function getSupplierWiseData($companyId,$empId, $tenderId)
+    public static function getSupplierWiseDataNotApproved($companyId,$empId, $tenderId)
     {
         return DB::table('erp_documentapproved as da')
-            ->join('srm_tender_payment_proof as pf', 'pf.id', '=', 'da.documentSystemCode')
+            ->join('srm_tender_payment_proof as pf', function ($join)
+            {
+                $join->on('pf.id', '=', 'da.documentSystemCode')
+                    ->on('da.rollLevelOrder', '=', 'RollLevForApp_curr');
+            })
             ->join('srm_tender_master as tm', 'tm.id', '=', 'pf.tender_id')
             ->join('srm_tender_type as tt', 'tt.id', '=', 'tm.tender_type_id')
             ->join('srm_envelop_type as et', 'et.id', '=', 'tm.envelop_type_id')
@@ -359,6 +363,7 @@ class SRMTenderPaymentProof extends Model
             })
             ->where([
                 ['da.companySystemID', '=', $companyId],
+                ['da.approvedYN', '=', 0],
                 ['emd.documentSystemID', '=', 127],
                 ['emd.departmentSystemID', '=', 66],
                 ['emd.companySystemID', '=', $companyId],
@@ -372,7 +377,6 @@ class SRMTenderPaymentProof extends Model
                  'pf.uuid',
                  'pf.id as pfCode',
                  'pf.document_system_id as docSysCode',
-                  DB::raw('IF(pf.RollLevForApp_curr = da.rollLevelOrder, true, false) as level'),
                  'srl.name as supplierName',
 	             'srl.registration_number as supplierCr',
 	             'pf.confirmed_date as submittedDate',
@@ -380,6 +384,49 @@ class SRMTenderPaymentProof extends Model
 	             'pf.approved_yn',
                  'da.documentApprovedID as documentApCode',
                  'pf.refferedBackYN'
+            ]);
+    }
+
+    public static function getSupplierWiseDataApproved($companyId,$empId, $tenderId)
+    {
+        return DB::table('erp_documentapproved as da')
+            ->join('srm_tender_payment_proof as pf', function ($join)
+            {
+                $join->on('pf.id', '=', 'da.documentSystemCode');
+            })
+            ->join('srm_tender_master as tm', 'tm.id', '=', 'pf.tender_id')
+            ->join('srm_tender_type as tt', 'tt.id', '=', 'tm.tender_type_id')
+            ->join('srm_envelop_type as et', 'et.id', '=', 'tm.envelop_type_id')
+            ->join('currencymaster as cm', 'cm.currencyID', '=', 'tm.currency_id')
+            ->join('srm_supplier_registration_link as srl', 'srl.id', '=', 'pf.srm_supplier_id')
+            ->join('employeesdepartments as emd', function ($join) {
+                $join->on('emd.employeeGroupID', '=', 'da.approvalGroupID')
+                    ->on('da.documentSystemID', '=', 'emd.documentSystemID')
+                    ->on('da.companySystemID', '=', 'emd.companySystemID');
+            })
+            ->where([
+                ['da.companySystemID', '=', $companyId],
+                ['da.approvedYN', '=', -1],
+                ['emd.documentSystemID', '=', 127],
+                ['emd.departmentSystemID', '=', 66],
+                ['emd.companySystemID', '=', $companyId],
+                ['emd.employeeSystemID', '=', $empId],
+                ['emd.isActive', '=', 1],
+                ['emd.removedYN', '=', 0],
+                ['tm.id', '=', $tenderId],
+            ])
+            ->groupBy('da.documentSystemCode')
+            ->select([
+                'pf.uuid',
+                'pf.id as pfCode',
+                'pf.document_system_id as docSysCode',
+                'srl.name as supplierName',
+                'srl.registration_number as supplierCr',
+                'pf.confirmed_date as submittedDate',
+                'pf.confirmed_yn',
+                'pf.approved_yn',
+                'da.documentApprovedID as documentApCode',
+                'pf.refferedBackYN'
             ]);
     }
 }

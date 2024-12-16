@@ -5710,11 +5710,11 @@ ORDER BY
         }
     }
 
-    public function getSupplierWiseProof(Request $request)
+    public function getSupplierWiseProofNotApproved(Request $request)
     {
         try
         {
-            $data = $this->tenderMasterRepository->getSupplierWiseProof($request);
+            $data = $this->tenderMasterRepository->getSupplierWiseProofNotApproved($request);
             return $data;
         }
         catch(\Exception $e)
@@ -5748,6 +5748,19 @@ ORDER BY
                 return $this->sendError($data['message']);
             }
             return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function getSupplierWiseProofApproved(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getSupplierWiseProofApproved($request);
+            return $data;
         }
         catch(\Exception $e)
         {

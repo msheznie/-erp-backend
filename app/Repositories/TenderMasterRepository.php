@@ -298,7 +298,7 @@ class TenderMasterRepository extends BaseRepository
             ->make(true);
     }
 
-    public function getSupplierWiseProof($request)
+    public function getSupplierWiseProofNotApproved($request)
     {
         $input = $request->all();
         $empId = \Helper::getEmployeeSystemID();
@@ -315,7 +315,7 @@ class TenderMasterRepository extends BaseRepository
         }
 
 
-        $supplierPaymentProof = SRMTenderPaymentProof::getSupplierWiseData($companyId,$empId,$tenderData['id']);
+        $supplierPaymentProof = SRMTenderPaymentProof::getSupplierWiseDataNotApproved($companyId,$empId,$tenderData['id']);
         return \DataTables::of($supplierPaymentProof)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -388,5 +388,37 @@ class TenderMasterRepository extends BaseRepository
         $documentData->supplierName = $input['supplierName'] ?? null;
 
         return $documentData;
+    }
+
+    public function getSupplierWiseProofApproved($request)
+    {
+        $input = $request->all();
+        $empId = \Helper::getEmployeeSystemID();
+        $companyId = $input['companyId'];
+        $tenderUuid = $input['uuid'];
+        $tenderData = TenderMaster::getTenderByUuid($tenderUuid);
+
+
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+
+        $supplierPaymentProof = SRMTenderPaymentProof::getSupplierWiseDataApproved($companyId,$empId,$tenderData['id']);
+        return \DataTables::of($supplierPaymentProof)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
     }
 }

@@ -289,6 +289,7 @@ Route::post('requestKycSubmit', 'SupplierMasterAPIController@requestSubmitKyc')-
 Route::post('checkBidOpeningDateValidation', 'BidSubmissionMasterAPIController@checkDateDisabled')->name("Bid Date Validation");
 Route::post('getTenderPOData', 'TenderMasterAPIController@getTenderPOData')->name("Create PO From Tender");
 Route::post('getPaymentProofDocumentApproval', 'TenderMasterAPIController@getPaymentProofDocumentApproval');
-Route::post('getSupplierWiseProof', 'TenderMasterAPIController@getSupplierWiseProof');
+Route::post('getSupplierWiseProofNotApproved', 'TenderMasterAPIController@getSupplierWiseProofNotApproved');
 Route::post('approveSupplierWiseTender', 'TenderMasterAPIController@approveSupplierWiseTender');
 Route::post('rejectSupplierWiseTender', 'TenderMasterAPIController@rejectSupplierWiseTender');
+Route::post('getSupplierWiseProofApproved', 'TenderMasterAPIController@getSupplierWiseProofApproved');
