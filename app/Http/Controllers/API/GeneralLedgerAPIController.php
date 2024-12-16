@@ -478,6 +478,104 @@ class GeneralLedgerAPIController extends AppBaseController
         return $this->sendResponse([], 'General Ledger updated successfully');
     }
 
+    public function updateNotPostedFAGLEntries(Request $request)
+    {
+        $input = $request->all();
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            return  "tenant list is empty";
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            $data = DB::table('erp_fa_asset_master')
+                ->leftJoin('erp_generalledger', function ($join) {
+                    $join->on('erp_fa_asset_master.faID', '=', 'erp_generalledger.documentSystemCode')
+                        ->where('erp_generalledger.documentSystemID', 22);
+                })
+                ->select('erp_fa_asset_master.*')
+                ->where('erp_fa_asset_master.approved', -1)
+                ->where('erp_fa_asset_master.documentSystemID', 22)
+                ->where('erp_fa_asset_master.assetType', 1)
+                ->whereNull('erp_generalledger.documentSystemCode')
+                ->whereNotNull('erp_fa_asset_master.assetCostingUploadID')
+                ->get();
+
+            foreach ($data as $dt){
+                $masterData = ['documentSystemID' => $dt->documentSystemID,
+                    'autoID' => $dt->faID,
+                    'companySystemID' => $dt->companySystemID,
+                    'employeeSystemID' => $dt->approvedByUserSystemID
+                ];
+                $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+
+                DB::table('migratedDocs')->insert([
+                    'documentSystemID' => $dt->documentSystemID,
+                    'documentSystemCode' => $dt->faID,
+                    'documentCode' => $dt->faCode,
+                    'comment' => "Update General Ledger",
+                    'created_at' => Carbon::now()
+                ]);
+            }
+        }
+
+        return $this->sendResponse([], 'General Ledger updated successfully');
+    }
+
+     public function updateNotPostedFADepGLEntries(Request $request)
+    {
+        $input = $request->all();
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            return  "tenant list is empty";
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            $data = DB::table('erp_fa_depmaster')
+                ->leftJoin('erp_generalledger', function ($join) {
+                    $join->on('erp_fa_depmaster.depMasterAutoID', '=', 'erp_generalledger.documentSystemCode')
+                        ->where('erp_generalledger.documentSystemID', 23);
+                })
+                ->select('erp_fa_depmaster.*')
+                ->where('erp_fa_depmaster.approved', -1)
+                ->where('erp_fa_depmaster.documentSystemID', 23)
+                ->where('erp_fa_depmaster.is_acc_dep', 1)
+                ->whereNull('erp_generalledger.documentSystemCode')
+                ->get();
+
+            foreach ($data as $dt){
+                $masterData = ['documentSystemID' => $dt->documentSystemID,
+                    'autoID' => $dt->depMasterAutoID,
+                    'companySystemID' => $dt->companySystemID,
+                    'employeeSystemID' => $dt->approvedByUserSystemID,
+                    'otherLedgers' => false];
+                $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+
+
+                DB::table('migratedDocs')->insert([
+                    'documentSystemID' => $dt->documentSystemID,
+                    'documentSystemCode' => $dt->depMasterAutoID,
+                    'documentCode' => $dt->depCode,
+                    'comment' => "Update General Ledger",
+                    'created_at' => Carbon::now()
+                ]);
+            }
+        }
+
+        return $this->sendResponse([], 'General Ledger updated successfully');
+    }
+
 
     public function getGeneralLedgerReview(Request $request)
     {

@@ -1023,6 +1023,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
         });
         Route::get('updateNotPostedPVGLEntries', 'GeneralLedgerAPIController@updateNotPostedPVGLEntries');
         Route::get('updateNotPostedRVGLEntries', 'GeneralLedgerAPIController@updateNotPostedRVGLEntries');
+        Route::get('updateNotPostedFAGLEntries', 'GeneralLedgerAPIController@updateNotPostedFAGLEntries');
+        Route::get('updateNotPostedFADepGLEntries', 'GeneralLedgerAPIController@updateNotPostedFADepGLEntries');
     }       
 });
 /*
