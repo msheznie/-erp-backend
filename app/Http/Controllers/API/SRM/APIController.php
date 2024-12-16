@@ -103,6 +103,7 @@ define('GET_PAYMENT_PROOF_RESULTS', 'GET_PAYMENT_PROOF_RESULTS');
 define('CONFIRM_PAYMENT_PROOF', 'CONFIRM_PAYMENT_PROOF');
 define('REOPEN_PAYMENT_PROOF', 'REOPEN_PAYMENT_PROOF');
 define('DELETE_PAYMENT_PROOF_ATTACHMENT', 'DELETE_PAYMENT_PROOF_ATTACHMENT');
+define('PO_REPORT', 'PO_REPORT');
 
 
 class APIController extends Controller
@@ -290,6 +291,8 @@ class APIController extends Controller
                 return $this->SRMService->reopenPaymentProof($request);
             case DELETE_PAYMENT_PROOF_ATTACHMENT:
                 return $this->SRMService->deletePaymentProofAttachment($request);
+            case PO_REPORT:
+                return $this->SRMService->exportPOReport($request);
             default:
                 return [
                     'success'   => false,
