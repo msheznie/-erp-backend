@@ -1217,8 +1217,9 @@ WHERE
                                 $invDetail_arr['VATPercentage'] = $vatDetails['percentage'];
                                 $invDetail_arr['VATAmount'] = 0;
 
-                                if (isset($invDetail_arr['sellingCost']) && $invDetail_arr['sellingCost'] > 0) {
-                                    $invDetail_arr['VATAmount'] = (($invDetail_arr['sellingCost'] / 100) * $vatDetails['percentage']);
+                                $unitCostForCalculation = ($vatDetails['applicableOn'] == 1) ? $invDetail_arr['salesPrice'] : $invDetail_arr['sellingCost'];
+                                if ($unitCostForCalculation > 0) {
+                                    $invDetail_arr['VATAmount'] = (($unitCostForCalculation / 100) * $vatDetails['percentage']);
                                 }
                                 $currencyConversionVAT = \Helper::currencyConversion($customerInvoioce->companySystemID, $customerInvoioce->custTransactionCurrencyID, $customerInvoioce->custTransactionCurrencyID, $invDetail_arr['VATAmount']);
 

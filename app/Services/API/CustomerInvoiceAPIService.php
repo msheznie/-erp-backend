@@ -1326,7 +1326,6 @@ class CustomerInvoiceAPIService extends AppBaseController
                                 'message' => 'Multiple finance category cannot be added. Different finance category found on saved details.'
                             ];
                         }
-
                         foreach ($details as $item) {
 
 //                            If the revenue account or cost account or BS account is null do not allow to confirm
@@ -1373,7 +1372,9 @@ class CustomerInvoiceAPIService extends AppBaseController
                             if ($updateItem->marginPercentage != 0 && $updateItem->marginPercentage != null) {
                                 $updateItem->salesPrice = $updateItem->sellingCost + ($updateItem->sellingCost * $updateItem->marginPercentage / 100);
                             } else {
-                                $updateItem->salesPrice = $updateItem->sellingCost;
+                                if ($isPerforma != 4 && $isPerforma != 5) {
+                                    $updateItem->salesPrice = $updateItem->sellingCost;
+                                }
                             }
 
                             $updateItem->sellingCostAfterMargin = ($updateItem->salesPrice - $updateItem->discountAmount < 0.00001) ? 0 : ($updateItem->salesPrice - $updateItem->discountAmount);
