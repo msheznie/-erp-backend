@@ -2376,7 +2376,6 @@ class Helper
                             if ($input["documentSystemID"] == 22) {
                                 $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database);
                             }
-                            //
 
                         } else {
                             // update roll level in master table
