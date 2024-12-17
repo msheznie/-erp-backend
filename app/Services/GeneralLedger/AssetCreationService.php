@@ -304,6 +304,7 @@ class AssetCreationService extends AppBaseController
                 $documentApproved["approvedComments"] = "Approved by System User";
                 $documentApproved["db"] = $db;
                 $documentApproved["isAutoCreateDocument"] = true;
+                $documentApproved["isDocumentUpload"] = true;
                 $approve = \Helper::approveDocument($documentApproved);
                 if (!$approve["success"]) {
 

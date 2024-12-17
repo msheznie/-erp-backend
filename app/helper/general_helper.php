@@ -2374,9 +2374,13 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 22) {
+                                if(isset($input['isDocumentUpload']) && $input['isDocumentUpload']) {
+                                    $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database, $input['isDocumentUpload'])->onQueue('single');;
 
+                                } else {
+                                    $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database);
 
-                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database);
+                                }
                             }
                             //
 
@@ -5396,7 +5400,11 @@ class Helper
                                         $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else {
-                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                    if(isset($input['isDocumentUpload']) && $input['isDocumentUpload']){
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase)->onQueue('single');
+                                    } else {
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                    }
                                 }
                                 
                                 if ($input["documentSystemID"] == 3) {
