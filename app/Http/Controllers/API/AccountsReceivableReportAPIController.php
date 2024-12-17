@@ -7626,7 +7626,6 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             case 'CA':
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
-
                 $db = isset($request->db) ? $request->db : "";
 
 
