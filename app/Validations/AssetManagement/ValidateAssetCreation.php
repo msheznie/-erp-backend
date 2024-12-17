@@ -10,7 +10,6 @@ use App\Traits\JsonResponseTrait;
 use Carbon\Carbon;
 use DateTime;
 
-
 class ValidateAssetCreation
 {
     use JsonResponseTrait;
@@ -107,7 +106,7 @@ class ValidateAssetCreation
             'AUDITCATOGARY' => 'required',
             'dateDEP' => 'required|date|after_or_equal:dateAQ',
             'documentDate' => 'required|date|before_or_equal:dateDEP',
-            'faUnitSerialNo' => 'required|unique:erp_fa_asset_master',
+            'faUnitSerialNo' => 'required|unique:erp_fa_asset_master,faUnitSerialNo',
         ], $messages);
 
         if ($validator->fails()) {

@@ -69,8 +69,6 @@ class AssetCostingUploadSubJob implements ShouldQueue
         CommonJobService::db_switch($db);
         Log::useFiles(storage_path() . '/logs/asset_costing_bulk_insert.log');
 
-        Log::info("Starting Sub Job");
-
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
         $uploadData = $this->uploadData;
@@ -172,10 +170,8 @@ class AssetCostingUploadSubJob implements ShouldQueue
                 $lclAmountRpt = $lclAmountRpt ?? 0;
                 $residualLocal = $residualLocal ?? 0;
                 $residualRpt = $residualRpt ?? 0;
-                Log::info($lclAmountLocal);
 
                 $mainCategory = $assetCostingValue[6];
-                Log::info($mainCategory);
                 $mainCategoryData = FixedAssetCategory::where('catCode', $mainCategory)->first();
                 if (empty($mainCategoryData)) {
                     throw new AssetCostingException("Main category not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
@@ -193,7 +189,6 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     throw new AssetCostingException("The subcategory code is not associated with the main category", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
-                Log::info($uploadedCompany);
 
                 if ($assetCostingValue[5] == null) {
                     throw new AssetCostingException("Date Acquired is required", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
@@ -289,7 +284,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     "DISPOGLCODEdes" => $assetFinanceCategory->disaccount->AccountDescription,
                     "itemPicture" => null,
                     "itemImage" => null,
-                    "faUnitSerialNo" => $assetCostingValue[2],
+                    "faUnitSerialNo" => (string) $assetCostingValue[2],
                     "confirmedYN" => null,
                     "groupTO" => null,
                     "postToGLYN" => $postToGL,
@@ -321,11 +316,6 @@ class AssetCostingUploadSubJob implements ShouldQueue
 
                 $newCounterValue = $uploadBudgetCounter->counter;
 
-                Log::info($newCounterValue);
-                Log::info('tot' . $totalRecords);
-
-
-
                 if ($newCounterValue == $totalRecords) {
                     UploadAssetCosting::where('id', $logUploadAssetCosting->assetCostingUploadID)->update(['uploadStatus' => 1]);
                     TemporaryAssetSerial::truncate();
@@ -340,11 +330,8 @@ class AssetCostingUploadSubJob implements ShouldQueue
             $assetCostingUploadID = $e->getAssetCostingUploadID();
             $excelRow = $e->getExcelRow();
 
-            Log::info('on catch');
-
             app(AssetCreationService::class)->assetUploadErrorLog($excelRow, $errorMessage, $assetCostingUploadID);
             app(AssetCreationService::class)->assetDeletion($assetCostingUploadID, 1);
-
 
             Log::error('Error Message' . $errorMessage);
             Log::error('Asset Costing Upload ID: ' . $assetCostingUploadID);
@@ -355,8 +342,6 @@ class AssetCostingUploadSubJob implements ShouldQueue
         $uploadStatus = isset($uploadBudgetCounter->uploadStatus) ? $uploadBudgetCounter->uploadStatus : null;
 
         if($uploadStatus === 0){
-            Log::info('Cancelled - job');
-
             app(AssetCreationService::class)->assetDeletion($logUploadAssetCosting->assetCostingUploadID, 1);
         }
     }
