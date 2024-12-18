@@ -626,13 +626,21 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             if ($input['by'] === 'VATPercentage') {
               $input["VATAmount"] = $netUnitAmount * $input["VATPercentage"] / 100;
             } else if ($input['by'] === 'VATAmount') {
-              $input["VATPercentage"] = ($input["VATAmount"] / $netUnitAmount) * 100;
+                if ($netUnitAmount != 0) {
+                    $input["VATPercentage"] = ($input["VATAmount"] / $netUnitAmount) * 100;
+                } else {
+                    $input["VATPercentage"] = 0;
+                }
             }
         } else {
             if ($input['VATPercentage'] != 0) {
               $input["VATAmount"] = $netUnitAmount * $input["VATPercentage"] / 100;
             } else {
-              $input["VATPercentage"] = ($input["VATAmount"] / $netUnitAmount) * 100;
+                if ($netUnitAmount != 0) {
+                    $input["VATPercentage"] = ($input["VATAmount"] / $netUnitAmount) * 100;
+                } else {
+                    $input["VATPercentage"] = 0; 
+                }
             }
         }
 
