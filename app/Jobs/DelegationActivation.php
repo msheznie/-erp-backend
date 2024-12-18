@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\HrDeligationDetails;
+use App\Models\SMEApprovalUser;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -53,7 +55,8 @@ class DelegationActivation implements ShouldQueue
         $deligate->update(['is_active' => 0]);
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_expire_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 0]);
 
-     
+        $this->updateHrmsApprovalUserStatus($dlegations_expire_ids, 0);
+
         $groupInfo = UserGroup::whereIn('delegation_id',$dlegations_expire_ids);
         $userGroupIds = $groupInfo->pluck('userGroupID');
         if (!$userGroupIds->isEmpty())
@@ -70,6 +73,9 @@ class DelegationActivation implements ShouldQueue
         $dlegationPeriod->update(['is_active' => 1]);
         $dlegations_ids = $dlegationPeriod->pluck('id');
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 1]);
+
+        $this->updateHrmsApprovalUserStatus($dlegations_ids, 1);
+
         $activeGroup = UserGroup::whereIn('delegation_id',$dlegations_ids);
 
         $activeGroupIds = $activeGroup->pluck('userGroupID');
@@ -80,5 +86,13 @@ class DelegationActivation implements ShouldQueue
         }
 
 
+    }
+
+    function updateHrmsApprovalUserStatus($idList, $status){
+        SMEApprovalUser::whereIn(
+            'delegation_detail_id',HrDeligationDetails::whereIn(
+            'delegation_id', $idList
+        )->pluck('id')
+        )->update(['Status' => $status]);
     }
 }
