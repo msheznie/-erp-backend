@@ -2374,13 +2374,7 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 22) {
-                                if(isset($input['isDocumentUpload']) && $input['isDocumentUpload']) {
-                                    $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database, $input['isDocumentUpload'])->onQueue('single');;
-
-                                } else {
-                                    $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database);
-
-                                }
+                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database);
                             }
                             //
 
@@ -5342,7 +5336,13 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 22) {
-                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"], $dataBase);
+                                if(isset($input['isDocumentUpload']) && $input['isDocumentUpload']) {
+                                    $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"], $dataBase, $input['isDocumentUpload'])->onQueue('single');;
+
+                                } else {
+                                    $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"], $dataBase);
+
+                                }
                             }
                             
                         
