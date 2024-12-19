@@ -3403,6 +3403,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
 
         if ($paySupplierInvoiceMaster->invoiceType == 6) {
+            if (empty($paySupplierInvoiceMaster->directPaymentPayeeEmpID)) {
+                return $this->sendError('Employee not selcted');
+            }
             $output1 = $this->getEmployeePaymentForPV($request, $paySupplierInvoiceMaster);
             return $this->sendResponse($output1, 'Record retrieved successfully');
         }
