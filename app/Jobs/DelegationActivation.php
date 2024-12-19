@@ -89,10 +89,7 @@ class DelegationActivation implements ShouldQueue
     }
 
     function updateHrmsApprovalUserStatus($idList, $status){
-        SMEApprovalUser::whereIn(
-            'delegation_detail_id',HrDeligationDetails::whereIn(
-            'delegation_id', $idList
-        )->pluck('id')
-        )->update(['Status' => $status]);
+        SMEApprovalUser::whereIn('delegation_master_id', $idList)
+            ->update(['Status' => $status]);
     }
 }
