@@ -223,6 +223,7 @@ class CreateDirectGRV implements ShouldQueue
 
                             $val->vatAmount = $vatAmountConversion['documentAmount'];
 
+
                             $directGRVDet['unitCost'] = $comLocalAmountDetail;
                             $directGRVDet['netAmount'] = $comLocalAmountDetail + $val->vatAmount;
                             $directGRVDet['comment'] = $val->faCode;
