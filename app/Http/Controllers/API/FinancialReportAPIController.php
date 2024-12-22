@@ -1108,20 +1108,11 @@ class FinancialReportAPIController extends AppBaseController
 
                             $total = 0;
 
+                            foreach ($companyArray as $company) {
 
-                            foreach ($companyArray as $keyCom => $company) {
-
-                                if ($keyCom > 0) {
-
-                                    $previousCompanyID = $companyArray[$keyCom - 1]['companySystemID'];
-
-                                    $childCompany = GroupParents::where('parent_company_system_id', $groupCompanySystemID)->where('company_system_id', $company['companySystemID'])->latest('created_at')->first();
+                                $childCompany = GroupParents::where('parent_company_system_id', $groupCompanySystemID['companySystemID'])->where('company_system_id', $company['companySystemID'])->latest('created_at')->first();
 
                                     $holdingPercentage = $childCompany->holding_percentage ?? $company['holding_percentage'];
-
-                                } else {
-                                    $holdingPercentage = $company['holding_percentage'];
-                                }
 
                                 $totalIncome = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
                                     $query->where('controlAccountsSystemID', 1);
