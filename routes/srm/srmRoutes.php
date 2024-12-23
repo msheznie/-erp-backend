@@ -285,4 +285,11 @@ Route::post('removeTenderUserAccess', 'TenderBidEmployeeDetailsController@remove
 Route::post('addUserAccessEmployee', 'TenderBidEmployeeDetailsController@addUserAccessEmployee');
 Route::post('getPublicSupplierLinkData', 'SRMPublicLinkAPIController@getPublicSupplierLinkData');
 Route::post('saveSupplierPublicLink', 'SRMPublicLinkAPIController@saveSupplierPublicLink');
-
+Route::post('requestKycSubmit', 'SupplierMasterAPIController@requestSubmitKyc')->name("KYC Request");
+Route::post('checkBidOpeningDateValidation', 'BidSubmissionMasterAPIController@checkDateDisabled')->name("Bid Date Validation");
+Route::post('getTenderPOData', 'TenderMasterAPIController@getTenderPOData')->name("Create PO From Tender");
+Route::post('getPaymentProofDocumentApproval', 'TenderMasterAPIController@getPaymentProofDocumentApproval');
+Route::post('getSupplierWiseProofNotApproved', 'TenderMasterAPIController@getSupplierWiseProofNotApproved');
+Route::post('approveSupplierWiseTender', 'TenderMasterAPIController@approveSupplierWiseTender');
+Route::post('rejectSupplierWiseTender', 'TenderMasterAPIController@rejectSupplierWiseTender');
+Route::post('getSupplierWiseProofApproved', 'TenderMasterAPIController@getSupplierWiseProofApproved');

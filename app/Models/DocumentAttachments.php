@@ -446,4 +446,9 @@ class DocumentAttachments extends Model
     public function tender(){
         return $this->belongsTo('App\Models\TenderMaster','documentSystemCode','id');
     }
+
+    public static function documentAttachmentById($attachmentId)
+    {
+        return self::where('attachmentID', $attachmentId)->first();
+    }
 }

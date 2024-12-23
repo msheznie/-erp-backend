@@ -128,6 +128,7 @@ use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierContactDetails;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
+use App\Models\TenderMaster;
 use App\Models\WorkOrderGenerationLog;
 use App\Models\Year;
 use App\Models\YesNoSelection;
@@ -139,7 +140,9 @@ use App\Models\PaymentTermTemplate;
 use App\Repositories\ProcumentOrderRepository;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\PoDetailExpectedDeliveryDateRepository;
+use App\Repositories\TenderMasterRepository;
 use App\Repositories\UserRepository;
+use App\Repositories\SrmTenderPoRepository;
 use App\Services\Currency\CurrencyService;
 use App\Services\Excel\ExportReportToExcelService;
 use App\Services\PrintTemplateService;
@@ -179,13 +182,19 @@ class ProcumentOrderAPIController extends AppBaseController
     private $poDetailExpectedDeliveryDateRepository;
     private $printTemplateService;
 
-    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo,PoDetailExpectedDeliveryDateRepository $poDetailExpectedDeliveryDateRepo, PrintTemplateService $printTemplateService)
+    private $tenderPoRepository;
+
+    private $tenderMasterRepository;
+
+    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo,PoDetailExpectedDeliveryDateRepository $poDetailExpectedDeliveryDateRepo, PrintTemplateService $printTemplateService, SrmTenderPoRepository $tenderPoRepository, TenderMasterRepository $tenderMasterRepository)
     {
         $this->procumentOrderRepository = $procumentOrderRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
         $this->poDetailExpectedDeliveryDateRepository = $poDetailExpectedDeliveryDateRepo;
         $this->printTemplateService = $printTemplateService;
+        $this->tenderPoRepository = $tenderPoRepository;
+        $this->tenderMasterRepository = $tenderMasterRepository;
     }
 
     /**
@@ -431,6 +440,15 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $procumentOrders = $this->procumentOrderRepository->create($input);
+
+        if(isset($input["tenderUUID"])){
+            $tender = TenderMaster::getTenderByUuid($input["tenderUUID"]);
+            $po['po_id'] = $procumentOrders->purchaseOrderID;
+            $po['tender_id'] = $tender->id;
+            $po['company_id'] = $input["companySystemID"];
+            $po['status'] = 1;
+            $this->tenderPoRepository->create($po);
+        }
 
         return $this->sendResponse($procumentOrders->toArray(), 'Procurement Order saved successfully');
     }
@@ -2091,6 +2109,9 @@ class ProcumentOrderAPIController extends AppBaseController
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
+            $documentSystemCode = $request->input('documentSystemCode');
+            $updateData = ['status' => 0];
+            $this->tenderPoRepository->update($documentSystemCode, $updateData);
             return $this->sendResponse(array(), $reject["message"]);
         }
     }

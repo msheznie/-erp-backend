@@ -16,6 +16,7 @@ use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\RecurringVoucherSetup;
+use App\Models\SRMTenderPaymentProof;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderMaster;
@@ -524,9 +525,17 @@ class email
                             $data['docCode'] = $recurringVoucher->RRVcode;
                         }
                         break;
+                    case 127:
+                        $srmTenderPaymentProof = SRMTenderPaymentProof::where('id', $data['docSystemCode'])->first();
+                        if (!empty($srmTenderPaymentProof)) {
+                            $data['docApprovedYN'] = $srmTenderPaymentProof->approved_yn;
+                            $data['docCode'] = $srmTenderPaymentProof->document_code;
+                        }
+                        break;
                     default:
                         return ['success' => false, 'message' => 'Document ID not found'];
                 }
+
 
                 $data['isEmailSend'] = 0;
                 $temp = "Hi " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
@@ -555,6 +564,7 @@ class email
                     ->where('companyPolicyCategoryID', 37)
                     ->where('isYesNO', 1)
                     ->exists();
+
 
                 if ($hasPolicy) {
                         Log::info('Email send start');

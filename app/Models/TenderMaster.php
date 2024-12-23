@@ -328,7 +328,8 @@ class TenderMaster extends Model
         'negotiation_doc_verify_comment',
         'negotiation_doc_verify_status',
         'show_technical_criteria',
-         'isDelegation'
+        'isDelegation',
+        'uuid'
     ];
     /**
      * The attributes that should be casted to native types.
@@ -411,7 +412,8 @@ class TenderMaster extends Model
         'negotiation_award_comment' => 'string',
         'negotiation_is_awarded' => 'integer',
         'negotiation_doc_verify_comment' => 'string',
-        'negotiation_doc_verify_status'  => 'integer'
+        'negotiation_doc_verify_status'  => 'integer',
+        'uuid'  => 'string'
     ];
 
     /**
@@ -680,6 +682,59 @@ class TenderMaster extends Model
     public function tenderBidMinimumApproval()
     {
         return $this->hasMany('App\Models\SrmTenderBidEmployeeDetails', 'tender_id', 'id');
+    }
+    public static function getTenderDidOpeningDates($tenderId, $companyId)
+    {
+        return TenderMaster::select('id','stage', 'bid_opening_date',
+            'technical_bid_opening_date', 'bid_opening_end_date', 'technical_bid_closing_date','title','tender_code')
+            ->where('id', $tenderId)
+            ->where('company_id', $companyId)
+            ->first();
+    }
+
+    public static function getTenderByUuid($tenderUuid)
+    {
+        return self::where('uuid', $tenderUuid)
+            ->first();
+    }
+
+    public static function getTenderPOData($tenderId, $companyId)
+    {
+        $tender = TenderMaster::select('id', 'title', 'tender_code', 'currency_id')
+            ->with(['ranking_supplier' => function ($q) {
+                $q->select('id', 'supplier_id', 'tender_id')->where('award', 1)
+                    ->with(['supplier' => function ($q) {
+                        $q->select('id', 'supplier_master_id');
+                    }]);
+            }])
+            ->where('uuid', $tenderId)
+            ->where('company_id', $companyId)
+            ->first();
+
+        if (!$tender) {
+            return null;
+        }
+
+        return [
+            'title' => $tender->title,
+            'tender_code' => $tender->tender_code,
+            'currency_id' => $tender->currency_id,
+            'ranking_supplier' => $tender->ranking_supplier ? [
+                'id' => $tender->ranking_supplier->id,
+                'supplier_id' => $tender->ranking_supplier->supplier_id,
+                'supplier' => $tender->ranking_supplier->supplier ? [
+                    'id' => $tender->ranking_supplier->supplier->id,
+                    'supplier_master_id' => $tender->ranking_supplier->supplier->supplier_master_id,
+                ] : null,
+            ] : null,
+        ];
+
+    }
+
+
+    public function srmTenderPo()
+    {
+        return $this->hasOne('App\Models\SrmTenderPo', 'tender_id', 'id')->where('status', 1);
     }
 
 }

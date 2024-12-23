@@ -602,6 +602,7 @@ class TenderMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+            $data['uuid'] = Helper::generateSRMUuid(16);
             $data['currency_id'] = isset($input['currency_id']) ? $input['currency_id'] : null;
             $data['description'] = isset($input['description']) ? $input['description'] : null;
             $data['envelop_type_id'] = isset($input['envelop_type_id']) ? $input['envelop_type_id'] : null;
@@ -4519,7 +4520,13 @@ ORDER BY
         $companyId = $request['companyId'];
         $filters = $this->getFilterData($input);
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
+        $hasPolicyToCreatePOFromTender = Helper::checkPolicy($companyId, 97);
+
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier', 'srmTenderPo' => function ($q) {
+            $q->select('id', 'tender_id', 'po_id')->with(['procument_order' => function ($po) {
+                $po->select('purchaseOrderID', 'purchaseOrderCode');
+            }]);
+        }])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('is_awarded', 1)->where(function ($query) {
                 $query->where('negotiation_published', 0)
                     ->orWhere('is_negotiation_closed', 1);
@@ -4570,6 +4577,7 @@ ORDER BY
                 }
             })
             ->addIndexColumn()
+            ->addColumn('hasPolicyToCreatePOFromTender', $hasPolicyToCreatePOFromTender)
             ->with('orderCondition', $sort)
             ->make(true);
     }
@@ -4594,7 +4602,15 @@ ORDER BY
             if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
                $q->whereIn('bid_id', $bidSubmissionMasterIds);
             }
-            $q->where('award', 1)->with('supplier');
+            $q->where('award', 1)->with([
+                'supplier' => function ($supplierQuery) {
+                    $supplierQuery->with([
+                        'supplier' => function ($masterQuery) {
+                            $masterQuery->select('supplierCodeSystem', 'approvedYN', 'supplierConfirmedYN', 'isActive');
+                        }
+                    ]);
+                }
+            ]);
         }])->first();
 
         return $this->sendResponse($tender, 'data retrieved successfully');
@@ -5667,4 +5683,88 @@ ORDER BY
         })->sum();
     }
 
+
+    public function getTenderPOData(Request $request)
+    {
+        try {
+            $result = TenderMasterRepository::getTenderPOData($request['tenderUUID'], $request['companySystemID']);
+
+            return $this->sendResponse($result, 'Success' );
+        } catch (\Exception $e) {
+            $statusCode = $e->getCode() ?: 500;
+            return $this->sendError($e->getMessage(), $statusCode);
+        }
+    }
+
+
+    public function getPaymentProofDocumentApproval(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getPaymentProofDocumentApproval($request);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function getSupplierWiseProofNotApproved(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getSupplierWiseProofNotApproved($request);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function approveSupplierWiseTender(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->approveSupplierWiseTender($request);
+            if(!$data['success']) {
+                return $this->sendError($data['message']);
+            }
+            return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function rejectSupplierWiseTender(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->rejectSupplierWiseTender($request);
+            if(!$data['success']) {
+                return $this->sendError($data['message']);
+            }
+            return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function getSupplierWiseProofApproved(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getSupplierWiseProofApproved($request);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
 } 

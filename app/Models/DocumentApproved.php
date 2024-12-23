@@ -223,4 +223,18 @@ class DocumentApproved extends Model
     public function suppliername(){
         return $this->belongsTo('App\Models\SupplierRegistrationLink','documentSystemCode','id');
     }
+
+    public static function getDocumentApprovedData($docuumentApprovedId)
+    {
+        return self::where('documentApprovedID', $docuumentApprovedId)
+            ->first();
+    }
+
+    public static function getAllDocumentApprovedData($id,$documentSystemId,$companySystemID)
+    {
+        return self::where('documentSystemCode', $id)
+            ->where('companySystemID', $companySystemID)
+            ->where('documentSystemID', $documentSystemId)
+            ->get();
+    }
 }

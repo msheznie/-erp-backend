@@ -159,7 +159,8 @@ class BudgetConsumptionService
 			case 52:
 				$masterData = ProcumentOrder::find($documentSystemCode);
 
-				if ($masterData->poTypeID != 2 && $checkBudgetWhileApprove) {
+                //
+				if (!in_array($masterData->poTypeID, [2, 3]) && $checkBudgetWhileApprove) {
 					return ['status' => true, 'data' => []];
 				}
 

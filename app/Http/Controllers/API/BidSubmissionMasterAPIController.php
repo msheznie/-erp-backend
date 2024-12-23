@@ -1411,4 +1411,19 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
        return $existCommonAttachment['data'];
    }
+    public function checkDateDisabled(Request $request)
+    {
+        try {
+            $result = TenderMasterRepository::getTenderDidOpeningDates($request['tenderMasterId'], $request['companySystemID']);
+
+            if (isset($result['error'])) {
+                return $this->sendError($result['error'], 404);
+            }
+            return $this->sendResponse($result, 'Success' );
+        } catch (\Exception $e) {
+            $statusCode = $e->getCode() ?: 500;
+            return $this->sendError($e->getMessage(), $statusCode);
+        }
+    }
+
 }

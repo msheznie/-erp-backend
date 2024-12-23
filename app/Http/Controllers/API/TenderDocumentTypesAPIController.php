@@ -288,27 +288,35 @@ class TenderDocumentTypesAPIController extends AppBaseController
 
         if (in_array(3, $assignDocumentTypes))
         {
-            return TenderDocumentTypes::with(['attachments' => function($query) use($input){
-                $query->where('documentSystemCode', $input['tenderMasterId']);
-                $query->where('companySystemID', $input['companySystemID']);
+            return TenderDocumentTypes::select('id', 'document_type', 'system_generated', 'srm_action', 'sort_order', 'company_id')
+                ->with(['attachments' => function($query) use($input){
+                    $query->select('attachmentType','documentSystemID', 'documentSystemCode','companySystemID')
+                    ->where('documentSystemCode', $input['tenderMasterId'])
+                    ->where('companySystemID', $input['companySystemID']);
                 if(isset($input['rfx']) && $input['rfx']){
                     $query->where('documentSystemID', '113');
                 } else{
                     $query->where('documentSystemID', '108');
                 }
-            }])->where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2, 3])->get();
+            }])->where('company_id',$input['companySystemID'])
+            ->whereIn('id',$assignDocumentTypes)->orWhere('system_generated', 1)
+            ->orderBy('sort_order')->get();
         }
         else
         {
-            return TenderDocumentTypes::with(['attachments' => function($query) use($input){
-                $query->where('documentSystemCode', $input['tenderMasterId']);
-                $query->where('companySystemID', $input['companySystemID']);
+            return TenderDocumentTypes::select('id', 'document_type', 'system_generated', 'srm_action', 'sort_order', 'company_id')
+                ->with(['attachments' => function($query) use($input){
+                    $query->select('attachmentType','documentSystemID', 'documentSystemCode','companySystemID')
+                    ->where('documentSystemCode', $input['tenderMasterId'])
+                    ->where('companySystemID', $input['companySystemID']);
                 if(isset($input['rfx']) && $input['rfx']){
                     $query->where('documentSystemID', '113');
                 } else {
                     $query->where('documentSystemID', '108');
                 }
-        }])->where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2])->get();
+        }])->where('company_id',$input['companySystemID'])
+        ->whereIn('id',$assignDocumentTypes)->orWhere('system_generated', 1)
+        ->where('id', '!=', 3)->orderBy('sort_order')->get();
         }
     }
 

@@ -296,7 +296,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
             ->first();
 
-       if($poType == 2) {
+       if(in_array($poType, [2, 3])) {
            if ($item->financeCategoryMaster == 1) {
                if (!empty($itemExist)) {
                    return $this->sendError('Added item already exist');
@@ -304,7 +304,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
            }
        }
 
-        if($poType != 2) {
+        if(!in_array($poType, [2, 3])) {
             if (!empty($itemExist)) {
                 return $this->sendError('Added item already exist');
             }

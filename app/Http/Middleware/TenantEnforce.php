@@ -34,7 +34,8 @@ class TenantEnforce
             'api/v1/approveDocument',
             'api/v1/rejectPurchaseRequest',
             'api/v1/reSendSupplierRegistrationsLink',
-            'api/v1/saveSupplierPublicLink'
+            'api/v1/saveSupplierPublicLink',
+            'api/v1/requestKycSubmit',
         ];
 
         $dbRoutes = [

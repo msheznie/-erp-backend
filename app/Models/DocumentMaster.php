@@ -66,4 +66,11 @@ class DocumentMaster extends Model
     function company_document_attachment(){
         return $this->hasOne(CompanyDocumentAttachment::class, 'documentSystemID');
     }
+
+    public static function getDocumentData($documentSystemId){
+        return DocumentMaster::select('documentID', 'documentSystemID')
+            ->where('documentSystemID', $documentSystemId)
+            ->first();
+    }
+
 }
