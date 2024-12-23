@@ -218,7 +218,10 @@ class CreateDirectGRV implements ShouldQueue
                             }*/
 
                             $comLocalAmountDetail = $val->sellingPriceLocal;
-                            $val->vatAmount = $grvMaster['companyReportingER'];
+
+                            $vatAmountConversion = \Helper::currencyConversion($dpMaster->toCompanySystemID, $fromCompany->reportingCurrency, $fromCompany->localCurrencyID, $val->vatAmount);
+
+                            $val->vatAmount = $vatAmountConversion['documentAmount'];
 
                             $directGRVDet['unitCost'] = $comLocalAmountDetail;
                             $directGRVDet['netAmount'] = $comLocalAmountDetail + $val->vatAmount;
