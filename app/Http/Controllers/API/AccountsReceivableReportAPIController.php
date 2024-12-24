@@ -4647,9 +4647,9 @@ WHERE
         CASE
             WHEN erp_matchdocumentmaster.documentSystemID = 19
             THEN
-                (SELECT (sum( erp_custreceivepaymentdet.receiveAmountTrans )/erp_matchdocumentmaster.supplierTransCurrencyER)
-                FROM erp_custreceivepaymentdet 
-                WHERE erp_custreceivepaymentdet.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID)
+                (SELECT (sum( curcp.receiveAmountTrans )/erp_matchdocumentmaster.supplierTransCurrencyER) 
+                FROM erp_custreceivepaymentdet AS curcp
+                WHERE curcp.custReceivePaymentAutoID = erp_matchdocumentmaster.PayMasterAutoId AND curcp.matchingDocID != 0 AND curcp.serviceLineSystemID = erp_custreceivepaymentdet.serviceLineSystemID)
             ELSE 
             sum( erp_custreceivepaymentdet.receiveAmountTrans )
         END 
@@ -4657,9 +4657,9 @@ WHERE
         CASE
             WHEN erp_matchdocumentmaster.documentSystemID = 19
             THEN
-                (SELECT (sum( erp_custreceivepaymentdet.receiveAmountTrans )/erp_matchdocumentmaster.localCurrencyER) 
-                FROM erp_custreceivepaymentdet 
-                WHERE erp_custreceivepaymentdet.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID)
+                (SELECT (sum( curcp.receiveAmountTrans )/erp_matchdocumentmaster.localCurrencyER) 
+                FROM erp_custreceivepaymentdet AS curcp
+                WHERE curcp.custReceivePaymentAutoID = erp_matchdocumentmaster.PayMasterAutoId AND curcp.matchingDocID != 0 AND curcp.serviceLineSystemID = erp_custreceivepaymentdet.serviceLineSystemID)
             ELSE 
             sum( erp_custreceivepaymentdet.receiveAmountLocal )
         END 
@@ -4667,9 +4667,9 @@ WHERE
         CASE
             WHEN erp_matchdocumentmaster.documentSystemID = 19
             THEN
-                (SELECT (sum( erp_custreceivepaymentdet.receiveAmountTrans )/erp_matchdocumentmaster.companyRptCurrencyER) 
-                FROM erp_custreceivepaymentdet 
-                WHERE erp_custreceivepaymentdet.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID)
+                (SELECT (sum( curcp.receiveAmountTrans )/erp_matchdocumentmaster.companyRptCurrencyER) 
+                FROM erp_custreceivepaymentdet AS curcp
+                WHERE curcp.custReceivePaymentAutoID = erp_matchdocumentmaster.PayMasterAutoId AND curcp.matchingDocID != 0 AND curcp.serviceLineSystemID = erp_custreceivepaymentdet.serviceLineSystemID)
             ELSE 
             sum( erp_custreceivepaymentdet.receiveAmountRpt )
         END 
