@@ -486,12 +486,11 @@ class SupplierInvoiceTaxLedgerService
             }
         }
         else {
-            $details = SupplierInvoiceItemDetail::selectRaw('erp_bookinvsupp_item_det.id as idDet,erp_grvmaster.grvTotalSupplierTransactionCurrency as totalCur,transSupplierInvoAmount,totTransactionAmount,erp_grvdetails.VATPercentage as VatPer,erp_grvdetails.noQty,erp_grvdetails.VATAmount as grvVATAmount,erp_bookinvsupp_item_det.exempt_vat_portion as portion,erp_tax_vat_sub_categories.subCatgeoryType,(erp_bookinvsupp_item_det.VATAmount) as transVATAmount,(erp_bookinvsupp_item_det.VATAmountLocal) as localVATAmount ,(erp_bookinvsupp_item_det.VATAmountRpt) as rptVATAmount, erp_bookinvsupp_item_det.vatMasterCategoryID, erp_bookinvsupp_item_det.vatSubCategoryID, erp_bookinvsupp_item_det.localCurrencyID as localCurrencyID,erp_bookinvsupp_item_det.companyReportingCurrencyID as reportingCurrencyID,erp_bookinvsupp_item_det.supplierTransactionCurrencyID as transCurrencyID,erp_bookinvsupp_item_det.companyReportingER as reportingCurrencyER,erp_bookinvsupp_item_det.localCurrencyER as localCurrencyER,erp_bookinvsupp_item_det.supplierTransactionCurrencyER as transCurrencyER')
+            $details = SupplierInvoiceItemDetail::selectRaw('erp_grvdetails.noQty,erp_grvdetails.VATAmount as grvVATAmount,erp_bookinvsupp_item_det.exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,(erp_bookinvsupp_item_det.VATAmount) as transVATAmount,(erp_bookinvsupp_item_det.VATAmountLocal) as localVATAmount ,(erp_bookinvsupp_item_det.VATAmountRpt) as rptVATAmount, erp_bookinvsupp_item_det.vatMasterCategoryID, erp_bookinvsupp_item_det.vatSubCategoryID, erp_bookinvsupp_item_det.localCurrencyID as localCurrencyID,erp_bookinvsupp_item_det.companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID as transCurrencyID,erp_bookinvsupp_item_det.companyReportingER as reportingCurrencyER,erp_bookinvsupp_item_det.localCurrencyER as localCurrencyER,supplierTransactionCurrencyER as transCurrencyER')
                                     ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
                                     ->whereNotNull('erp_bookinvsupp_item_det.vatSubCategoryID')
                                     ->join('erp_tax_vat_sub_categories', 'erp_bookinvsupp_item_det.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                                     ->join('erp_grvdetails', 'erp_bookinvsupp_item_det.grvDetailsID', '=', 'erp_grvdetails.grvDetailsID')
-                                    ->join('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
                                     ->get();
             
 
@@ -505,21 +504,20 @@ class SupplierInvoiceTaxLedgerService
                 $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
                 $ledgerData['transCurrencyID'] = $value->transCurrencyID;
 
-              
+
                 if ($subCategoryData) {
                     $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
                 }
 
                 if($value->subCatgeoryType == 1)
                 {
-
-                    $standardProtion = 100 - $value->portion;
-                    $vatPortionStandard = ($value->VatPer/100)*$standardProtion;
-                    $vatPortionExampt = ($value->VatPer/100)*$value->portion;
-                    $standardAmount =  ((\Helper::roundValue($value->totTransactionAmount) /( \Helper::roundValue($value->totalCur)))*$vatPortionStandard);
-                    $exemptAmount = ((\Helper::roundValue($value->totTransactionAmount) /( \Helper::roundValue($value->totalCur)))*$vatPortionExampt);
-
-                
+                    
+                    $normalVAT = $value->grvVATAmount - ($value->grvVATAmount * ($value->exempt_vat_portion /100));
+                    $exemptAmount = (($value->grvVATAmount - $normalVAT) * $value->noQty);
+                    
+                    $standardAmount =  ($normalVAT * $value->noQty);
+    
+    
                     $info = [
                         ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
                         ["amount" => $standardAmount,"subcat" => $value->vatSubCategoryID,"mastercat" => $value->vatMasterCategoryID,"inVat" => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,
@@ -583,7 +581,7 @@ class SupplierInvoiceTaxLedgerService
             $detailData = SupplierInvoiceItemDetail::with(['grv_detail', 'logistic_detail' => function($query) {
                                                 $query->with(['category_by' => function($query) {
                                                     $query->with(['item_by']);
-                                                },'grv_master']);
+                                                }]);
                                             }])
                                             ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
                                             ->whereNotNull('vatSubCategoryID')
@@ -651,13 +649,10 @@ class SupplierInvoiceTaxLedgerService
                 if($value->subCatgeoryType == 1)
                 {
           
-
-                    $standardProtion = 100 - $value->exempt_vat_portion;
-                    $vatPortionStandard = ($value->grv_detail->VATPercentage/100)*$standardProtion;
-                    $vatPortionExampt = ($value->grv_detail->VATPercentage/100)*$value->exempt_vat_portion;
+                    $normalVAT = $value->grv_detail->VATAmount - ($value->grv_detail->VATAmount * ($value->exempt_vat_portion /100));
+                    $exemptAmount = (($value->grv_detail->VATAmount - $normalVAT) * $value->grv_detail->noQty);
                     
-                    $standardAmount =  (\Helper::roundValue($value->totTransactionAmount) /($value->grv_detail->grv_master->grvTotalSupplierTransactionCurrency))*$vatPortionStandard;
-                    $exemptAmount =  (\Helper::roundValue($value->totTransactionAmount) /($value->grv_detail->grv_master->grvTotalSupplierTransactionCurrency))*$vatPortionExampt;
+                    $standardAmount =  ($normalVAT * $value->grv_detail->noQty);
 
     
     
