@@ -210,7 +210,18 @@ class CreateCustomerThirdPartyInvoice
                         $customerInvoiceData['performaDate'] = $today;
     
                         $fromCompany = Company::where('companySystemID', $companySystemId)->first();
-    
+
+                        if(!$isApproveState) {
+                            $customerCurrency = CustomerCurrency::where('customerCodeSystem',$sourceModel['customerID'])
+                                ->where('isAssigned', -1)
+                                ->where('currencyID', $fromCompany->localCurrencyID)
+                                ->first();
+
+                            if (empty($customerCurrency)) {
+                                return ['status' => false, 'message' => "The company’s local currency is not defined for the selected customer."];
+                            }
+                        }
+
                         $companyCurrencyConversion = \Helper::currencyConversion($companySystemId, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
                         $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
                         $customerInvoiceData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
@@ -248,13 +259,18 @@ class CreateCustomerThirdPartyInvoice
                         $bankAccount = BankAccount::where('companySystemID', $companySystemId)
                             ->where('bankmasterAutoID', $bank->bankmasterAutoID)
                             ->where('isDefault', 1)
-                            ->where('accountCurrencyID', $fromCompany->localCurrencyID)
                             ->first();
                         if ($bankAccount) {
                             $customerInvoiceData['bankAccountID'] = $bankAccount->bankAccountAutoID;
                         }
-            
+                        else if (!$isApproveState) {
+                            return ['status' => false, 'message' => "Default Bank Account not set."];
+                        }
                     }
+                    else if (!$isApproveState) {
+                        return ['status' => false, 'message' => "Default Bank Account not set."];
+                    }
+
                         $systemUser = UserTypeService::getSystemEmployee();
                         $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
                         $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
