@@ -7650,7 +7650,6 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
                 ) AS AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker ON AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.bookingInvCodeSystem = qry_ProformaClientApproval_CustomerInvoices.custInvoiceDirectAutoID 
                 ) AS final".$whereStatus;
 
-
         return DB::select($sql);
     }
 
