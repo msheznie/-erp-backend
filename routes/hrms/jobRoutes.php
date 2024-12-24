@@ -12,3 +12,4 @@ Route::get('hrNotificationDebug', 'HRJobInvokeAPIController@hrNotificationDebug'
 Route::get('clockOutJobCall', 'HRJobInvokeAPIController@clockOutJobCall');
 Route::get('crossDayClockOutJobCall', 'HRJobInvokeAPIController@crossDayClockOutJobCall');
 Route::get('leaveAccrualJobCallDebug', 'HRJobInvokeAPIController@leaveAccrualJobCallDebug');
+Route::get('delegationJobCallDebug', 'HRJobInvokeAPIController@delegationJobCallDebug');
