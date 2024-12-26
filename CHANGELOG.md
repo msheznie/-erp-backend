@@ -1,5 +1,16 @@
 # Changelog
 
+## [10.56.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.55.2...v10.56.0) (2024-12-26)
+
+
+### Features
+
+* **SRM:** Invitation to Tender [GSUP-1875] ([#7163](https://github.com/pbsgears/Gears_BackEnd/issues/7163)) ([8ecff9c](https://github.com/pbsgears/Gears_BackEnd/commit/8ecff9c0db3c989d0c166360ab15ed924d639a59))
+* **Tender:** Introduce UUID Field to tender_master Table [GSUP-2094] ([#7174](https://github.com/pbsgears/Gears_BackEnd/issues/7174)) ([dce271b](https://github.com/pbsgears/Gears_BackEnd/commit/dce271b36bd713acbbbef992273f4c50afedf91c))
+* **Tender:** Payment Gateway [GSUP-1827] ([#7192](https://github.com/pbsgears/Gears_BackEnd/issues/7192)) ([adf4e54](https://github.com/pbsgears/Gears_BackEnd/commit/adf4e54eea17aa801047ab7c41547f4fb5c0d261))
+* **Tender:** SRM – Work around for Payment gateway integration [GSUP-2060] ([5679189](https://github.com/pbsgears/Gears_BackEnd/commit/5679189edc1c1a3784e593cc5521a724f9e52639))
+* **Tender:** SRM – Work around for Payment gateway integration [GSUP-2060] ([#7266](https://github.com/pbsgears/Gears_BackEnd/issues/7266)) ([136b096](https://github.com/pbsgears/Gears_BackEnd/commit/136b096b36406b71f65b72803123613658fbe79a))
+
 ## [10.55.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.55.1...v10.55.2) (2024-12-15)
 
 
