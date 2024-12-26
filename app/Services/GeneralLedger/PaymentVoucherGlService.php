@@ -298,11 +298,7 @@ class PaymentVoucherGlService
                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
 
-
-
-
                         $convertAmount = \Helper::convertAmountToLocalRpt(203, $masterModel["autoID"], ($transAmountTotal + $retationVATAmount));
-
 
                         $data['documentTransAmount'] = \Helper::roundValue($transAmountTotal + $retationVATAmount) * -1;
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;

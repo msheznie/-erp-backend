@@ -41,7 +41,6 @@ class AssetCreationService extends AppBaseController
     public function assetUploadErrorLog($errorLine, $logMessage, $assetCostingUploadID){
 
         Log::useFiles(storage_path() . '/logs/asset_costing_bulk_insert.log');
-        Log::info('Start error log');
 
         DB::beginTransaction();
         try {
@@ -51,10 +50,7 @@ class AssetCreationService extends AppBaseController
                 'logMessage' => \Helper::handleErrorData($logMessage)
             ];
 
-            Log::info('Start error log1');
-
             DB::commit();
-
 
             LogUploadAssetCosting::where('assetCostingUploadID', $assetCostingUploadID)->update($assetLog);
             UploadAssetCosting::where('id', $assetCostingUploadID)->update(['uploadStatus' => 0]);
@@ -130,7 +126,6 @@ class AssetCreationService extends AppBaseController
 
         DB::beginTransaction();
         try {
-
             $response = ValidateAssetCreation::validationsForFields($input, $itemImgaeArr);
 
             if ($response['status'] === false) {
@@ -290,9 +285,6 @@ class AssetCreationService extends AppBaseController
                 'isAutoCreateDocument' => true
             );
 
-            Log::info("on confirm");
-
-
 
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
@@ -304,6 +296,7 @@ class AssetCreationService extends AppBaseController
                 $documentApproved["approvedComments"] = "Approved by System User";
                 $documentApproved["db"] = $db;
                 $documentApproved["isAutoCreateDocument"] = true;
+                $documentApproved["isDocumentUpload"] = true;
                 $approve = \Helper::approveDocument($documentApproved);
                 if (!$approve["success"]) {
 

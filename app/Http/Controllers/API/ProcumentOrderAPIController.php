@@ -521,7 +521,6 @@ class ProcumentOrderAPIController extends AppBaseController
         if( strlen((string) $input['poDiscountPercentage'] ) > strlen((string)$input['poDiscountPercentageToTooltip']))
         {
             $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
-
         }else {
             if(round($input['poDiscountPercentageToTooltip'],2) != $input['poDiscountPercentage'])
             {

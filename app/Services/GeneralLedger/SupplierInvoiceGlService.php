@@ -2,6 +2,8 @@
 
 namespace App\Services\GeneralLedger;
 
+use App\helper\ExchangeSetupConfig;
+use App\helper\Helper;
 use App\helper\TaxService;
 use App\Models\AdvancePaymentDetails;
 use App\Models\AdvanceReceiptDetails;
@@ -409,12 +411,12 @@ class SupplierInvoiceGlService
                             $data['documentLocalAmount'] = $whtLocal;
                             $data['documentRptAmount'] = $whtRpt;
                         
-                    } 
                     }
                     array_push($finalData, $data);
                 }
+            }
             
-                $data['supplierCodeSystem'] = $masterData->supplierID;
+            $data['supplierCodeSystem'] = $masterData->supplierID;
 
             if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                 $data['chartOfAccountSystemID'] = $masterData->UnbilledGRVAccountSystemID;
@@ -453,7 +455,7 @@ class SupplierInvoiceGlService
                 $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                     $query->where('companySystemID', $masterData->companySystemID);
                 })->where('isActive', 1)->first();
-                if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
+                if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $exemptExpenseDetails->VATAmount != 0){
                     $exemptVatTrans = $exemptExpenseDetails->VATAmount;
                     $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
                     $exemptVatRpt = $exemptExpenseDetails->VATAmountRpt;
@@ -602,7 +604,7 @@ class SupplierInvoiceGlService
                 $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                     $query->where('companySystemID', $masterData->companySystemID);
                 })->where('isActive', 1)->first();
-                    if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null) {
+                    if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $exemptExpenseDetails->VATAmount != 0) {
                         $exemptVatTrans = $exemptExpenseDetails->VATAmount;
                         $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
                         $exemptVatRpt = $exemptExpenseDetails->VATAmountRpt;
@@ -622,7 +624,6 @@ class SupplierInvoiceGlService
 
 
                 if ($bs) {
-
                     foreach ($bs as $val) {
 
                         $transBSVAT = isset($directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['transVATAmount']) ? $directVATDetails['bsVAT'][$val->financeGLcodebBSSystemID . $val->serviceLineSystemID . $val->comments]['transVATAmount'] : 0;
@@ -647,7 +648,22 @@ class SupplierInvoiceGlService
                             $query->where('companySystemID', $masterData->companySystemID);
                         })->where('isActive', 1)->first();
 
+           
                         if(!empty($exemptExpenseDIDetails)){
+
+                            if ($exemptExpenseDIDetails->subCatgeoryType == 1 && $masterData->rcmActivated == 1 && $expenseCOA->expenseGL == null && $exemptExpenseDIDetails->recordType == 2 && $exemptExpenseDIDetails->exempt_vat_portion > 0) {
+                                $exemptVATTransAmount = 0;
+                                $exemptVATLocalAmount = 0;
+                                $exemptVATRptAmount = 0;
+                            }
+    
+                            if ($exemptExpenseDIDetails->subCatgeoryType == 3 && $masterData->rcmActivated == 1 && $expenseCOA->expenseGL == null && $exemptExpenseDIDetails->recordType == 2 && $exemptExpenseDIDetails->exempt_vat_portion == 0) {
+                                $transBSVAT = 0;
+                                $rptBSVAT = 0;
+                                $localBSVAT = 0;
+                            }
+
+
                             if($exemptExpenseDIDetails->exempt_vat_portion > 0 && $exemptExpenseDIDetails->subCatgeoryType == 1 && $expenseCOA->expenseGL != null) {
                                 $exemptVatTrans = $exemptExpenseDIDetails->VATAmount * $exemptExpenseDIDetails->exempt_vat_portion / 100;
                                 $exemptVATLocal = $exemptExpenseDIDetails->VATAmountLocal * $exemptExpenseDIDetails->exempt_vat_portion / 100;
@@ -667,6 +683,7 @@ class SupplierInvoiceGlService
                             $exemptVATLocal = 0;
                             $exemptVatRpt = 0;
                         }
+
                         $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $val->supplierTransactionER;
                         if($exemptVatTrans > 0)
@@ -1131,6 +1148,13 @@ class SupplierInvoiceGlService
                         Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                     }
 
+                }
+            }
+
+            if(($masterData->documentType == 0) || ($masterData->documentType == 2)) {
+                for ($i = 0; $i < count($finalData); $i++) {
+                    $finalData[$i]['documentLocalCurrencyER'] = ExchangeSetupConfig::calculateLocalER($finalData[$i]["documentTransAmount"],$finalData[$i]["documentLocalAmount"]);
+                    $finalData[$i]['documentRptCurrencyER'] = ExchangeSetupConfig::calculateReportingER($finalData[$i]["documentTransAmount"],$finalData[$i]["documentRptAmount"]);
                 }
             }
         }

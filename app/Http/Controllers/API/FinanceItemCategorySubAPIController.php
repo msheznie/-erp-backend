@@ -643,7 +643,6 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         if( ($input['isBSGlSelected']) && (($financeGLcodePL && ($financeGLcodePL->controlAccountsSystemID == 3 || $financeGLcodePL->controlAccountsSystemID == 4)) || ($financeCogsGLcodePL && ($financeCogsGLcodePL->controlAccountsSystemID == 3 || $financeCogsGLcodePL->controlAccountsSystemID == 4))) )
         {
             return $this->sendError('Balance sheet GL code/s has been selected for Consumption/COGS GL code selection. Generally these two fields correspond to expense GL codes. Are you sure you want to proceed ?', 500,['type' => 'BSGlSelected']);
-
         }
 
 

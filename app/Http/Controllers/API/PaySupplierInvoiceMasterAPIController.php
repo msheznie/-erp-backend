@@ -94,6 +94,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\SupplierBlock;
 use App\Services\ValidateDocumentAmend;
+use App\Services\GeneralLedgerService;
 
 /**
  * Class PaySupplierInvoiceMasterController
@@ -3402,6 +3403,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
 
         if ($paySupplierInvoiceMaster->invoiceType == 6) {
+            if (empty($paySupplierInvoiceMaster->directPaymentPayeeEmpID)) {
+                return $this->sendError('Employee not selcted');
+            }
             $output1 = $this->getEmployeePaymentForPV($request, $paySupplierInvoiceMaster);
             return $this->sendResponse($output1, 'Record retrieved successfully');
         }
@@ -4202,7 +4206,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             }
 
             /*
-             * Updating cheque details when policy 'Get cheque number from cheque register' is on
+             * Updating cheque details when reopen the document
              * */
             if ($payInvoice->chequePaymentYN == -1) {
                 $this->paySupplierInvoiceMasterRepository->releaseChequeDetails($payInvoice->companySystemID, $payInvoice->BPVAccount, $payInvoice->BPVchequeNo);
@@ -4834,6 +4838,13 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $documentAutoId = $PayMasterAutoId;
         $documentSystemID = $paymentVoucherData->documentSystemID;
 
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
+
         if($paymentVoucherData->approved == -1){
             $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
             if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
@@ -4849,10 +4860,12 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 }
             }
     
-            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
-            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                    return $this->sendError($validatePendingGlPost['message']);
+            if($allowValidateDocumentAmend){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
                 }
             }
 
@@ -5029,7 +5042,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 ->delete();
 
             /*
-             * Updating cheque details when policy 'Get cheque number from cheque register' is on
+             * Updating cheque details when amend the document
              * */
             if ($paymentVoucherData->chequePaymentYN == -1) {
                 $this->paySupplierInvoiceMasterRepository->releaseChequeDetails($paymentVoucherData->companySystemID, $paymentVoucherData->BPVAccount, $paymentVoucherData->BPVchequeNo);

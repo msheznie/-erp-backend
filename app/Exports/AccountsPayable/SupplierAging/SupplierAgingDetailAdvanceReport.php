@@ -78,6 +78,7 @@ class SupplierAgingDetailAdvanceReport
             ]);
         }
     }
+    
 
     /**
      * @param mixed $companyID

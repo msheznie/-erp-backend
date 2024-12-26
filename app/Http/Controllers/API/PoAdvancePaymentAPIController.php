@@ -102,7 +102,9 @@ class PoAdvancePaymentAPIController extends AppBaseController
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
         }
-
+        $poTermAmount = PoPaymentTerms::where('paymentTermID', $input['paymentTermID'])
+            ->where('poID', $input['poID'])
+            ->first();
         if (empty($input['comAmount']) || $input['comAmount'] == 0) {
             return $this->sendError('Amount should be greater than 0');
         }
@@ -133,12 +135,23 @@ class PoAdvancePaymentAPIController extends AppBaseController
                  $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
              }*/
         $input['reqDate'] = date('Y-m-d H:i:s');
-        $input['reqAmount'] = $input['comAmount'];
-        $input['reqAmountTransCur_amount'] = $input['comAmount'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['comAmount']);
+        if(!empty($poTermAmount)) {
+            $input['reqAmount'] = $poTermAmount->comAmount;
+            $input['reqAmountTransCur_amount'] = $poTermAmount->comAmount;
 
-        $input['reqAmountInPOTransCur'] = $input['comAmount'];
+            $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $poTermAmount->comAmount);
+
+            $input['reqAmountInPOTransCur'] = $poTermAmount->comAmount;
+        } else {
+            $input['reqAmount'] = $input['comAmount'];
+            $input['reqAmountTransCur_amount'] = $input['comAmount'];
+
+            $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['comAmount']);
+
+            $input['reqAmountInPOTransCur'] = $input['comAmount'];
+        }
+
         $input['reqAmountInPOLocalCur'] = $companyCurrencyConversion['localAmount'];
         $input['reqAmountInPORptCur'] = $companyCurrencyConversion['reportingAmount'];
 

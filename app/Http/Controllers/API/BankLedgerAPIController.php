@@ -421,7 +421,6 @@ class BankLedgerAPIController extends AppBaseController
                         $bankGLCode = $bankLedger->bank_account->chartOfAccountSystemID;
                     }
 
-
                     $checkGLAmount = GeneralLedger::selectRaw('round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmount')
                         ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
                         ->where('companySystemID', $bankLedger->companySystemID)

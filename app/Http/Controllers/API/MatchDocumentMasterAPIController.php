@@ -76,6 +76,7 @@ use App\Models\SystemGlCodeScenarioDetail;
 use App\helper\TaxService;
 use App\Services\GeneralLedger\GlPostedDateService;
 use App\Models\Taxdetail;
+use App\Services\GeneralLedgerService;
 use App\Services\TaxLedger\RecieptVoucherTaxLedgerService;
 use App\Services\ValidateDocumentAmend;
 
@@ -1133,7 +1134,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                         if ($item['addedDocumentSystemID'] == 11) {
                             //supplier invoice
-                            if ($payDetailMoreBooked->supplierPaymentAmount > $item['supplierInvoiceAmount']) {
+                            if (Helper::roundValue($item['supplierInvoiceAmount'] - $payDetailMoreBooked->supplierPaymentAmount) < 0) {
 
                                 $itemDrt = "Selected invoice " . $item['bookingInvDocCode'] . " booked more than the invoice amount.";
                                 $itemExistArray[] = [$itemDrt];
@@ -4125,6 +4126,13 @@ ORDER BY
         $documentSystemID = $masterData->documentSystemID;
 
 
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
+
         if($masterData->documentSystemID == 4 ){
             
             $validateCloseFinanceYear = ValidateDocumentAmend::validateCLoseFinanceYear($documentSystemID, $matchingMasterID);
@@ -4159,10 +4167,12 @@ ORDER BY
 
                     if ((round($DebitNoteMasterExData->debitAmountLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($DebitNoteMasterExData->debitAmountRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
 
-                        $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
-                        if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                            if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                                return $this->sendError($validatePendingGlPost['message']);
+                        if($allowValidateDocumentAmend){
+                            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
+                            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                                    return $this->sendError($validatePendingGlPost['message']);
+                                }
                             }
                         }
 
@@ -4212,10 +4222,13 @@ ORDER BY
                         }
                     }
             } else {
-                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
-                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                        return $this->sendError($validatePendingGlPost['message']);
+
+                if($allowValidateDocumentAmend){
+                    $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID);
+                    if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                        if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                            return $this->sendError($validatePendingGlPost['message']);
+                        }
                     }
                 }
                 

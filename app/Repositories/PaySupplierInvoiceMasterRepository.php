@@ -183,21 +183,20 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
     public function releaseChequeDetails($company_id, $bank_account_id, $cheque_no){
 
-        $is_exist_policy = $this->is_exist_policy(35,$company_id);  // policy id = 35 = Get cheque number from cheque register
-
-        if($is_exist_policy){
-            $update_array = [
-                'document_id' => null,
-                'document_master_id' => null,
-                'status' => 0,
-            ];
-            ChequeRegisterDetail::whereHas('master', function ($q) use($company_id,$bank_account_id) {
-                    $q->where('bank_account_id', $bank_account_id)
-                        ->where('company_id', $company_id);
-                })
-                ->where('cheque_no',$cheque_no)
-                ->update($update_array);
-        }
+        /*
+        * Updating without the policy check - GCP-5459
+        * */
+        $update_array = [
+            'document_id' => null,
+            'document_master_id' => null,
+            'status' => 0,
+        ];
+        ChequeRegisterDetail::whereHas('master', function ($q) use($company_id,$bank_account_id) {
+                $q->where('bank_account_id', $bank_account_id)
+                    ->where('company_id', $company_id);
+            })
+            ->where('cheque_no',$cheque_no)
+            ->update($update_array);
 
     }
 

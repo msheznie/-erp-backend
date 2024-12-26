@@ -1553,7 +1553,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $balanceGrvAmount = sprintf('%.6f', ($detail['netAmount'] - $currentGrvAmount));
 
                 $balanceQty = sprintf('%.6f', ($detail['poQty'] - $detail['receivedQty']));
-
                 $detail['grvAmount'] = $balanceGrvAmount;
                 $detail['balanceGrvAmount'] = $balanceGrvAmount;
                 $detail['noQty'] = $balanceQty;

@@ -56,6 +56,7 @@ use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -1164,7 +1165,15 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
         $documentAutoId = $id;
         $documentSystemID = $masterData->documentSystemID;
-        if($masterData->approvedYN == -1){
+
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
+
+        if($masterData->approvedYN == -1 && $allowValidateDocumentAmend){
             $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
             if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
                 if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){

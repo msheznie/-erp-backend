@@ -197,7 +197,10 @@ class AssetDisposalDetailReferred extends Model
         'DISPOGLCODESystemID',
         'DISPOGLCODE',
         'timesReferred',
-        'timestamp'
+        'timestamp',
+        'condition',
+        'depMonth',
+        'lastDepDate'
     ];
 
     /**
@@ -230,7 +233,10 @@ class AssetDisposalDetailReferred extends Model
         'ACCDEPGLCODE' => 'string',
         'DISPOGLCODESystemID' => 'integer',
         'DISPOGLCODE' => 'string',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'condition' => 'integer',
+        'depMonth' => 'float',
+        'lastDepDate' => 'date'
     ];
 
     /**

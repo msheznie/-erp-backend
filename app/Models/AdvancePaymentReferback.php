@@ -178,6 +178,7 @@ class AdvancePaymentReferback extends Model
         'localAmount',
         'comRptAmount',
         'timesReferred',
+        'fullAmount',
         'timeStamp'
     ];
 
@@ -209,6 +210,7 @@ class AdvancePaymentReferback extends Model
         'supplierTransAmount' => 'float',
         'localAmount' => 'float',
         'comRptAmount' => 'float',
+        'fullAmount' => 'float',
         'timesReferred' => 'integer'
     ];
 

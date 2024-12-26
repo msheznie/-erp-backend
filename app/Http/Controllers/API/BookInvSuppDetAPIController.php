@@ -1002,7 +1002,6 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         }
 
-
         return ['status' => true, 'data' => $totalPullAmount];
     }
 

@@ -198,7 +198,11 @@ class CustomerInvoiceService
             }
 
             if($documentDate != null){
-                $validator = Validator::make(['date' => $documentDate], [
+                
+                // Normalize the date to ensure proper format
+                $normalizedDate = \Carbon\Carbon::createFromFormat('j/n/Y', $documentDate)->format('d/m/Y');
+
+                $validator = Validator::make(['date' => $normalizedDate], [
                     'date' => 'date_format:d/m/Y',
                 ]);
 
@@ -241,8 +245,10 @@ class CustomerInvoiceService
             }
 
             if ($invoiceDueDate != null) {
+                // Normalize the date to ensure proper format
+                $normalizedDate = \Carbon\Carbon::createFromFormat('j/n/Y', $invoiceDueDate)->format('d/m/Y');
 
-                $validator = Validator::make(['date' => $invoiceDueDate], [
+                $validator = Validator::make(['date' => $normalizedDate], [
                     'date' => 'date_format:d/m/Y',
                 ]);
 

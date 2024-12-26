@@ -73,8 +73,6 @@ class AssetCostingUpload implements ShouldQueue
 
         Log::useFiles(storage_path().'/logs/asset_costing_bulk_insert.log');
 
-        Log::info('Asset costing bulk upload started');
-
         $logUploadAssetCosting = $uploadData['logUploadAssetCosting'];
 
         $objPHPExcel = $uploadData['objPHPExcel'];

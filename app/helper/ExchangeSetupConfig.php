@@ -101,5 +101,13 @@ class ExchangeSetupConfig
         return false;
     }
 
+    public static function calculateLocalER($transactionAmount, $localAmount): float
+    {
+        return Helper::roundValue(abs($transactionAmount) / abs($localAmount));
+    }
 
+    public static function calculateReportingER($transactionAmount, $reportingAmount): float
+    {
+        return Helper::roundValue(abs($transactionAmount) / abs($reportingAmount));
+    }
 }

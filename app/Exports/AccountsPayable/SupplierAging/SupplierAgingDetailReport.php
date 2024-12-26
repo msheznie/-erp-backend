@@ -28,7 +28,7 @@ class SupplierAgingDetailReport
     {
         return [
             'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'I' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'J' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,

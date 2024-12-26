@@ -28,15 +28,17 @@ class CreateAccumulatedDepreciation implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $assetAutoID;
     protected $database;
+    protected $isDocumentUpload;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($assetAutoID, $database)
+    public function __construct($assetAutoID, $database, $isDocumentUpload = null)
     {
         $this->assetAutoID = $assetAutoID;
         $this->database = $database;
+        $this->isDocumentUpload = $isDocumentUpload;
     }
 
     /**
@@ -277,6 +279,9 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                                     $documentApproved["approvedComments"] = "Approved by System User";
                                     $documentApproved["db"] = $this->database;
                                     $documentApproved["isAutoCreateDocument"] = true;
+                                    if($this->isDocumentUpload == true){
+                                        $documentApproved["isDocumentUpload"] = true;
+                                    }
                                     $approve = \Helper::approveDocument($documentApproved);
                                     if (!$approve["success"]) {
                                         Log::error($approve['message']);

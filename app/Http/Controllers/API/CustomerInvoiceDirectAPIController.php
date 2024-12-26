@@ -104,6 +104,7 @@ use App\Models\LogUploadCustomerInvoice;
 use App\Models\PortMaster;
 use App\Models\UploadCustomerInvoice;
 use App\Services\CustomerInvoiceServices;
+use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use PHPExcel_IOFactory;
 use Exception;
@@ -1931,6 +1932,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $companyCurrencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totalVatAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
                 /*define input*/
+
+                if (!$chartOfAccount) {
+                    return $this->sendResponse('e', 'Chart Of Account not found.');
+                }
 
                 $addToCusInvDetails[$x]['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
                 $addToCusInvDetails[$x]['companyID'] = $master->companyID;
@@ -4046,6 +4051,13 @@ WHERE
         $documentAutoId = $id;
         $documentSystemID = $masterData->documentSystemiD;
 
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
+
         if($masterData->approved == -1){
             $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
             if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
@@ -4061,10 +4073,12 @@ WHERE
                 }
             }
 
-            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
-            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                    return $this->sendError($validatePendingGlPost['message']);
+            if($allowValidateDocumentAmend){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
                 }
             }
 

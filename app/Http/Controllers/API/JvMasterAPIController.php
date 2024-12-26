@@ -66,6 +66,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
 use App\Models\ErpProjectMaster;
+use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 
 /**
@@ -2333,6 +2334,13 @@ HAVING
         $documentAutoId = $id;
         $documentSystemID = $jvMaster->documentSystemID;
 
+        $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+        if (!$checkBalance['status']) {
+            $allowValidateDocumentAmend = false;
+        } else {
+            $allowValidateDocumentAmend = true;
+        }
+
         if($jvMaster->approved == -1){
             $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
             if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
@@ -2348,12 +2356,14 @@ HAVING
                 }
             }
     
-            $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
-            if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
-                if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
-                    return $this->sendError($validatePendingGlPost['message']);
-                }
-            }    
+            if($allowValidateDocumentAmend){
+                $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId,$documentSystemID);
+                if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
+                    if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){
+                        return $this->sendError($validatePendingGlPost['message']);
+                    }
+                } 
+            }
         }
 
         $emailBody = '<p>' . $jvMaster->JVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';

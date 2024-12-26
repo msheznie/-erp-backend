@@ -239,9 +239,8 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
         try {
             $input = $request->all();
             $updateKey =isset($input['updateKey']) ? $input['updateKey'] : '';
-            $input = array_except($input, ['purchaseorder_by', 'subCategoryArray']);
-
-            $input = $this->convertArrayToValue($input);            
+            $input = array_except($input, ['purchaseorder_by', 'subCategoryArray', 'advancepaymentmaster']);
+            $input = $this->convertArrayToValue($input);
 
             /** @var AdvancePaymentDetails $advancePaymentDetails */
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWithoutFail($id);
@@ -282,6 +281,13 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                 
                 if ($input["paymentAmount"] > $balanceAmount) {
                     return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_requested_amount'), 500, ['type' => 'amountmismatch']);
+                }
+
+                if($updateKey == 'fullAmount') {
+                    $input["paymentAmount"] = $advancePayment->reqAmount;
+                    if(isset($advancePaymentDetailsSum)) {
+                        $input["paymentAmount"] = $advancePayment->reqAmount - $advancePaymentDetailsSum->SumOfpaymentAmount;
+                    }
                 }
             }
             
@@ -682,7 +688,17 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
     public function getADVPaymentDetails(Request $request)
     {
-        $advancePaymentDetails = $this->advancePaymentDetailsRepository->with('purchaseorder_by')->findWhere(['PayMasterAutoId' => $request->PayMasterAutoId]);
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'PayMasterAutoId' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $advancePaymentDetails = $this->advancePaymentDetailsRepository->with(['purchaseorder_by', 'advancepaymentmaster'])->findWhere(['PayMasterAutoId' => $input['PayMasterAutoId']]);
         return $this->sendResponse($advancePaymentDetails, trans('custom.save', ['attribute' => trans('custom.payment_details')]));
     }
 
@@ -834,6 +850,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                             }
                         }
 
+                        $tempArray["fullAmount"] = $tempArray["paymentAmount"];
 
                         $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
                         $this->updatePVDetail($paySupplierInvoiceMaster,$input['PayMasterAutoId']);

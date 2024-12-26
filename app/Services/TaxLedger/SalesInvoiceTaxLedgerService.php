@@ -124,7 +124,9 @@ class SalesInvoiceTaxLedgerService
                 $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
                 $ledgerData['transCurrencyID'] = $value->sellingCurrencyID;
 
-                array_push($finalData, $ledgerData);
+                if ($ledgerData['transAmount'] != 0) {
+                    array_push($finalData, $ledgerData);
+                }
             }
 
 
@@ -142,6 +144,24 @@ class SalesInvoiceTaxLedgerService
                 $ledgerDetailsData['postedDate'] = date('Y-m-d H:i:s');
                 $ledgerDetailsData['documentNumber'] = $masterData->bookingInvCode;
                 $ledgerDetailsData['chartOfAccountSystemID'] = $value->financeGLcodeRevenueSystemID;
+
+                $vatCategories = TaxVatCategories::where('taxVatSubCategoriesAutoID', $ledgerDetailsData["vatSubCategoryID"])
+                                                ->where('mainCategory', $ledgerDetailsData["vatMasterCategoryID"])
+                                                ->first();
+
+
+
+                $MyLocalAmount = 0;
+                $MyRptAmount = 0;
+                $totalAmount = 0;
+                if ($masterData->isPerforma == 0) {
+                    $unitCostForCalculation = ($vatCategories && $vatCategories->applicableOn == 1) ? $value->salesPrice : $value->sellingCostAfterMargin;
+                    $totalAmount = $unitCostForCalculation * $value->qtyIssuedDefaultMeasure;
+                    $convertAmount = self::calculateLocalAndRpt($totalAmount, $masterData);
+
+                    $MyLocalAmount = $convertAmount['localAmount'];
+                    $MyRptAmount = $convertAmount['rptAmount'];
+                }
 
                 $chartOfAccountData = ChartOfAccount::find($value->financeGLcodeRevenueSystemID);
 
@@ -178,19 +198,22 @@ class SalesInvoiceTaxLedgerService
                 $ledgerDetailsData['itemCode'] = $value->itemPrimaryCode;
                 $ledgerDetailsData['itemDescription'] = $value->itemDescription;
                 $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
-                $ledgerDetailsData['taxableAmount'] = ($value->sellingCostAfterMargin * $value->qtyIssuedDefaultMeasure);
                 $ledgerDetailsData['VATAmount'] = $value->VATAmount * $value->qtyIssuedDefaultMeasure;
                 $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount * $value->qtyIssuedDefaultMeasure;
                 $ledgerDetailsData['localER'] = $value->localCurrencyER;
                 $ledgerDetailsData['reportingER'] = $value->reportingCurrencyER;
-                $ledgerDetailsData['taxableAmountLocal'] = ($value->sellingCostAfterMarginLocal * $value->qtyIssuedDefaultMeasure);
-                $ledgerDetailsData['taxableAmountReporting'] = ($value->sellingCostAfterMarginRpt * $value->qtyIssuedDefaultMeasure);
+                $ledgerDetailsData['taxableAmount'] = ($masterData->isPerforma == 2) ? (($vatCategories && $vatCategories->applicableOn == 1) ? $totalAmount :($value->sellingCostAfterMargin * $value->qtyIssuedDefaultMeasure)) : ($value->sellingCostAfterMargin * $value->qtyIssuedDefaultMeasure);
+                $ledgerDetailsData['taxableAmountLocal'] = ($masterData->isPerforma == 2) ? (($vatCategories && $vatCategories->applicableOn == 1) ? $MyLocalAmount :($value->sellingCostAfterMarginLocal * $value->qtyIssuedDefaultMeasure)) : ($value->sellingCostAfterMarginLocal * $value->qtyIssuedDefaultMeasure);
+                $ledgerDetailsData['taxableAmountReporting'] = ($masterData->isPerforma == 2) ? (($vatCategories && $vatCategories->applicableOn == 1) ? $MyRptAmount :($value->sellingCostAfterMarginRpt * $value->qtyIssuedDefaultMeasure)) : ($value->sellingCostAfterMarginRpt * $value->qtyIssuedDefaultMeasure);
                 $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal * $value->qtyIssuedDefaultMeasure;
                 $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt * $value->qtyIssuedDefaultMeasure;
                 $ledgerDetailsData['localCurrencyID'] = $value->localCurrencyID;
                 $ledgerDetailsData['rptCurrencyID'] = $value->reportingCurrencyID;
 
-                array_push($finalDetailData, $ledgerDetailsData);
+                if ($ledgerDetailsData['VATAmount'] != 0) {
+                    array_push($finalDetailData, $ledgerDetailsData);
+                }
+
             }
         } else if ($masterData->isPerforma == 0 || $masterData->isPerforma == 1) {
             $details = CustomerInvoiceDirectDetail::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount*invoiceQty) as transVATAmount,SUM(VATAmountLocal*invoiceQty) as localVATAmount ,SUM(VATAmountRpt*invoiceQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency, localCurrencyER, comRptCurrency, comRptCurrencyER, invoiceAmountCurrency, invoiceAmountCurrencyER')
@@ -235,7 +258,9 @@ class SalesInvoiceTaxLedgerService
                 $ledgerData['rptCurrencyID'] = $value->comRptCurrency;
                 $ledgerData['transCurrencyID'] = $value->invoiceAmountCurrency;
 
-                array_push($finalData, $ledgerData);
+                if ($ledgerData['transAmount'] != 0) {
+                    array_push($finalData, $ledgerData);
+                }
             }
 
 
@@ -253,6 +278,10 @@ class SalesInvoiceTaxLedgerService
                 $ledgerDetailsData['postedDate'] = date('Y-m-d H:i:s');
                 $ledgerDetailsData['documentNumber'] = $masterData->bookingInvCode;
                 $ledgerDetailsData['chartOfAccountSystemID'] = $value->glSystemID;
+
+                $vatCategories = TaxVatCategories::where('taxVatSubCategoriesAutoID', $ledgerDetailsData["vatSubCategoryID"])
+                                                ->where('mainCategory', $ledgerDetailsData["vatMasterCategoryID"])
+                                                ->first();
 
                 $chartOfAccountData = ChartOfAccount::find($value->glSystemID);
 
@@ -277,6 +306,19 @@ class SalesInvoiceTaxLedgerService
                     $ledgerDetailsData['outputVatGLAccountID'] = isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null;
                 }
 
+                $MyLocalAmount = 0;
+                $MyRptAmount = 0;
+                $totalAmount = 0;
+                if ($masterData->isPerforma == 0) {
+                    $unitCostForCalculation = ($vatCategories && $vatCategories->applicableOn == 1) ? $value->salesPrice : $value->unitCost;
+                    $totalAmount = $unitCostForCalculation * $value->invoiceQty;
+                    $convertAmount = self::calculateLocalAndRpt($totalAmount, $masterData);
+
+                    $MyLocalAmount = $convertAmount['localAmount'];
+                    $MyRptAmount = $convertAmount['rptAmount'];
+                }
+
+
                 $ledgerDetailsData['transactionCurrencyID'] = $value->invoiceAmountCurrency;
                 $ledgerDetailsData['originalInvoice'] = $masterData->customerInvoiceNo;
                 $ledgerDetailsData['originalInvoiceDate'] = $masterData->customerInvoiceDate;
@@ -290,22 +332,66 @@ class SalesInvoiceTaxLedgerService
                 $ledgerDetailsData['itemCode'] = null;
                 $ledgerDetailsData['itemDescription'] = null;
                 $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
-                $ledgerDetailsData['taxableAmount'] = $value->invoiceAmount;
                 $ledgerDetailsData['VATAmount'] = $value->VATAmount * $value->invoiceQty;
                 $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount * $value->invoiceQty;
                 $ledgerDetailsData['localER'] = $value->localCurrencyER;
                 $ledgerDetailsData['reportingER'] = $value->comRptCurrencyER;
-                $ledgerDetailsData['taxableAmountLocal'] = $value->localAmount;
-                $ledgerDetailsData['taxableAmountReporting'] = $value->comRptAmount;
+                $ledgerDetailsData['taxableAmount'] = ($masterData->isPerforma == 0) ? $totalAmount : $value->invoiceAmount;
+                $ledgerDetailsData['taxableAmountLocal'] = ($masterData->isPerforma == 0) ? \Helper::roundValue($MyLocalAmount) : $value->localAmount;
+                $ledgerDetailsData['taxableAmountReporting'] = ($masterData->isPerforma == 0) ? \Helper::roundValue($MyRptAmount) : $value->comRptAmount;
                 $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal * $value->invoiceQty;
                 $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt * $value->invoiceQty;
                 $ledgerDetailsData['localCurrencyID'] = $value->localCurrency;
                 $ledgerDetailsData['rptCurrencyID'] = $value->comRptCurrency;
 
-                array_push($finalDetailData, $ledgerDetailsData);
+                if ($ledgerDetailsData['VATAmount'] != 0) {
+                    array_push($finalDetailData, $ledgerDetailsData);
+                }
             }
         }
 
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'finalDetailData' => $finalDetailData]];
 	}
+
+    public static function calculateLocalAndRpt($totalAmount, $masterData)
+    {
+        $MyRptAmount = 0;
+        $MyLocalAmount = 0;
+        if ($masterData->custTransactionCurrencyID == $masterData->companyReportingCurrencyID) {
+            $MyRptAmount = $totalAmount;
+        } else {
+            if ($masterData->companyReportingER > $masterData->custTransactionCurrencyER) {
+                if ($masterData->companyReportingER > 1) {
+                    $MyRptAmount = ($totalAmount / $masterData->companyReportingER);
+                } else {
+                    $MyRptAmount = ($totalAmount * $masterData->companyReportingER);
+                }
+            } else {
+                if ($masterData->companyReportingER > 1) {
+                    $MyRptAmount = ($totalAmount * $masterData->companyReportingER);
+                } else {
+                    $MyRptAmount = ($totalAmount / $masterData->companyReportingER);
+                }
+            }
+        }
+        if ($masterData->custTransactionCurrencyID == $masterData->localCurrencyID) {
+            $MyLocalAmount = $totalAmount;
+        } else {
+            if ($masterData->localCurrencyER > $masterData->custTransactionCurrencyER) {
+                if ($masterData->localCurrencyER > 1) {
+                    $MyLocalAmount = ($totalAmount / $masterData->localCurrencyER);
+                } else {
+                    $MyLocalAmount = ($totalAmount * $masterData->localCurrencyER);
+                }
+            } else {
+                if ($masterData->localCurrencyER > 1) {
+                    $MyLocalAmount = ($totalAmount * $masterData->localCurrencyER);
+                } else {
+                    $MyLocalAmount = ($totalAmount / $masterData->localCurrencyER);
+                }
+            }
+        }
+
+        return ['localAmount' => $MyLocalAmount, 'rptAmount' => $MyRptAmount];
+    }
 }

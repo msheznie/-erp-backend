@@ -74,6 +74,7 @@ use App\Services\ValidateDocumentAmend;
 use App\Traits\AuditLogsTrait;
 use App\Models\CompanyFinanceYear;
 use App\Services\GeneralLedger\AssetCreationService;
+use App\Services\GeneralLedgerService;
 use PHPExcel_IOFactory;
 
 /**
@@ -1623,7 +1624,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $assetCost = $assetCost->where(function ($query) use ($search) {
                 $query->where('faCode', 'LIKE', "%{$search}%")
-                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('faUnitSerialNo', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_fa_category.catDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_fa_categorysub.catDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('docOrigin', 'LIKE', "%{$search}%");
             });
         }
 
@@ -1694,7 +1699,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $assetCost = $assetCost->where(function ($query) use ($search) {
                 $query->where('faCode', 'LIKE', "%{$search}%")
-                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('faUnitSerialNo', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_fa_category.catDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_fa_categorysub.catDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('docOrigin', 'LIKE', "%{$search}%");
             });
         }
 
@@ -2359,8 +2368,16 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $documentAutoId = $id;
             $documentSystemID = $masterData->documentSystemID;
+
+            $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
+            if (!$checkBalance['status']) {
+                $allowValidateDocumentAmend = false;
+            } else {
+                $allowValidateDocumentAmend = true;
+            }
+
             if($masterData->approved == -1){
-                if($masterData->assetType != 2 && ($masterData->assetType == 1 && $masterData->postToGLYN == 1)){
+                if($allowValidateDocumentAmend && $masterData->assetType != 2 && ($masterData->assetType == 1 && $masterData->postToGLYN == 1)){
                     $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
                     if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
                         if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){

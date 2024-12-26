@@ -175,9 +175,9 @@ class CustomerInvoiceGlService
             $data['timestamp'] = $time;
             array_push($finalData, $data);
 
-            $bs = CustomerInvoiceItemDetails::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
+            $bs = CustomerInvoiceItemDetails::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
             //get pnl account
-            $pl = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeCogsGLcodePLSystemID,financeCogsGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeCogsGLcodePLSystemID')->where('financeCogsGLcodePLSystemID', '>', 0)->groupBy('financeCogsGLcodePLSystemID')->get();
+            $pl = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeCogsGLcodePLSystemID,financeCogsGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeCogsGLcodePLSystemID')->where('financeCogsGLcodePLSystemID', '>', 0)->groupBy('financeCogsGLcodePLSystemID')->get();
 
             $revenue = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
 
@@ -293,9 +293,10 @@ class CustomerInvoiceGlService
                             $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                             $data['documentRptAmount'] = $tax->rptAmount * -1;
-                            array_push($finalData, $data);
 
-                       
+                            if ($data['documentTransAmount'] != 0 || $data['documentLocalAmount'] != 0 || $data['documentRptAmount'] != 0) {
+                                array_push($finalData, $data);
+                            }
 
                             $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
@@ -500,7 +501,10 @@ class CustomerInvoiceGlService
                             $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                             $data['documentRptAmount'] = ABS($tax->rptAmount) * -1;
-                            array_push($finalData, $data);
+
+                            if ($data['documentTransAmount'] != 0 || $data['documentLocalAmount'] != 0 || $data['documentRptAmount'] != 0) {
+                                array_push($finalData, $data);
+                            }
 
                             $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
@@ -697,8 +701,7 @@ class CustomerInvoiceGlService
                 ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
                 ->where('documentSystemID', 20)
                 ->get();
-            if (!empty($erp_taxdetail)) {
-
+            if (count($erp_taxdetail) > 0) {
                 // Input VAT control
                 $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
                 if (!empty($taxConfigData)) {
@@ -733,7 +736,10 @@ class CustomerInvoiceGlService
                                 $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                                 $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                                 $data['documentRptAmount'] = $tax->rptAmount * -1;
-                                array_push($finalData, $data);
+
+                                if ($data['documentTransAmount'] != 0 || $data['documentLocalAmount'] != 0 || $data['documentRptAmount'] != 0) {
+                                    array_push($finalData, $data);
+                                }
 
                                 $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                             }
@@ -755,7 +761,9 @@ class CustomerInvoiceGlService
                                 $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
                                 $data['documentRptAmount'] = (1 / $item->comRptCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces) * -1);
                                 
-                                array_push($finalData, $data);
+                                if ($data['documentTransAmount'] != 0 || $data['documentLocalAmount'] != 0 || $data['documentRptAmount'] != 0) {
+                                    array_push($finalData, $data);
+                                }
                                 $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                             }
                         }

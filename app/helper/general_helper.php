@@ -2374,8 +2374,6 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 22) {
-
-
                                 $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database);
                             }
                             //
@@ -5230,7 +5228,8 @@ class Helper
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
                                 }
                                 else if ($sourceModel->disposalType == 6) {
-                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase,$empInfo);
+                                    $isApproveState = isset($input['customerInvoiceDocumentStatus']) && $input['customerInvoiceDocumentStatus'] == 0;
+                                    $message = CreateCustomerThirdPartyInvoice::customerInvoiceCreate($sourceModel, $dataBase,$empInfo,$isApproveState);
 
                                     if (!$message['status']) {
                                         DB::rollback();
@@ -5337,7 +5336,13 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 22) {
-                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"], $dataBase);
+                                if(isset($input['isDocumentUpload']) && $input['isDocumentUpload']) {
+                                    $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"], $dataBase, $input['isDocumentUpload'])->onQueue('single');;
+
+                                } else {
+                                    $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"], $dataBase);
+
+                                }
                             }
                             
                         
@@ -5395,7 +5400,11 @@ class Helper
                                         $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else {
-                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                    if(isset($input['isDocumentUpload']) && $input['isDocumentUpload']){
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase)->onQueue('single');
+                                    } else {
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                    }
                                 }
                                 
                                 if ($input["documentSystemID"] == 3) {

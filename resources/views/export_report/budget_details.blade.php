@@ -125,8 +125,8 @@
                             $monthlyTotalssubCategory1 = array_fill(0, count($months), 0); // Initialize array for monthly totals
                             ?>
                             @if(isset($subCategory->gl_codes))
-
                                 @foreach($subCategory->gl_codes as $item2)
+                                    @if(isset($subCategory->items))
                                     @foreach($subCategory->items as $item3)
                                             <?php
                                             $totBudgetYearSubCategory += $item3->budjetAmtRpt;
@@ -135,6 +135,7 @@
                                             }
                                             ?>
                                     @endforeach
+                                    @endif
                                 @endforeach
                             @endif
 

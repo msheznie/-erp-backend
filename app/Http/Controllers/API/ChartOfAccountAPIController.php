@@ -409,6 +409,7 @@ class ChartOfAccountAPIController extends AppBaseController
                     $retainEarningCode = $isRetainedEarningExists->first();
                     return $this->sendError('There is an Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
                 }
+
                 $availability = FALSE;
                 while (!$availability) {
                     $accountCode = DocumentCodeGenerate::generateAccountCode($input['reportTemplateCategory'])['data'];
@@ -813,6 +814,7 @@ class ChartOfAccountAPIController extends AppBaseController
         {
             $isAmmendable = false;
         }
+
 
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,

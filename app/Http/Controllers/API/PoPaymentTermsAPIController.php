@@ -241,8 +241,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         //$calculatePer = ($input['comPercentage'] / 100) * $poMasterSumDeducted;
         //$input['comAmount'] = round($calculatePer, 8);
 
-        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
-        $input['comAmount'] = round($input['comAmount'], $supplierCurrencyDecimalPlace);
+        $input['comAmount'] = ($input['poAmount'] / 100) * $input['comPercentage'];
         $poPaymentTerms = $this->poPaymentTermsRepository->update($input, $id);
 
         return $this->sendResponse($poPaymentTerms->toArray(), 'PoPaymentTerms updated successfully');
@@ -405,7 +404,7 @@ class PoPaymentTermsAPIController extends AppBaseController
                     $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
                 }else {
                     $calculatePer = $advance['comAmount'];
-                    $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
+                    $roundedCalculatePer = $advance['comAmount'];
                 }
 
 

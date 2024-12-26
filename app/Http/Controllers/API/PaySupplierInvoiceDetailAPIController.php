@@ -1366,6 +1366,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendError("Selected Invoice booked more than the invoice amount. </br>. <ul style='list-style:none'>".implode('',$moreThanBookingInvoiceAmount)."</ul>", 422);
         }
 
+
         DB::beginTransaction();
         try {
             foreach ($input['detailTable'] as $new) {

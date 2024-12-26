@@ -16,8 +16,8 @@ class ChartOfAccountConfigAuditService
                 $oldChartOfAccount = $auditData['previosValue']['chartOfAccountSystemID'];
             }
             else{
-                $newChartOfAccount = $auditData['newValue']['chartOfAccountID'];
-                $oldChartOfAccount = $auditData['previosValue']['chartOfAccountID'];
+                $newChartOfAccount = isset($auditData['newValue']['chartOfAccountID']) ? $auditData['newValue']['chartOfAccountID'] : null;
+                $oldChartOfAccount = isset($auditData['previosValue']['chartOfAccountID']) ? $auditData['previosValue']['chartOfAccountID']: null;
             }
 
             if($oldChartOfAccount != $newChartOfAccount) {

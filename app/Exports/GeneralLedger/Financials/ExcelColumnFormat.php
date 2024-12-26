@@ -59,8 +59,7 @@ class ExcelColumnFormat
 
         foreach ($collection as $key => $node)
         {
-
-            if(is_null($node->masterID))
+            if(isset($node->masterID) && is_null($node->masterID))
             {
                 $parentNode = $node;
                 if(isset($parentNode->detail) && $parentNode->detail->isNotEmpty())
@@ -82,7 +81,7 @@ class ExcelColumnFormat
                 {
                     $count++;
                 }
-            }
+            } 
 
             if($count > self::$mxCount)
             {

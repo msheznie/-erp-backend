@@ -18,6 +18,8 @@
 namespace App\Http\Controllers\API;
 use App\Exports\GeneralLedger\Financials\ExcelColumnFormat;
 use App\Exports\GeneralLedger\GeneralLedger\GeneralLedgerReport;
+use App\Models\GroupCompanyStructure;
+use App\Models\GroupParents;
 use App\Services\Currency\CurrencyService;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\helper\Helper;
@@ -1066,6 +1068,8 @@ class FinancialReportAPIController extends AppBaseController
         $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // main query
 
 
+
+
         $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $eliminationQuery, $eliminationWhereQuery, $cominedColumnKey)); // detail query
 
 
@@ -1082,7 +1086,7 @@ class FinancialReportAPIController extends AppBaseController
                         return $detail->templateDetailID == $detID;
                     });
 
-                    if($data->isNotEmpty())
+                    if($data->isNotEmpty() && (isset($item->itemType) && $item->itemType != 3))
                     {
                         collect($columnKeys)->each(function($colKey) use ($item,$data)
                         {
@@ -1094,15 +1098,21 @@ class FinancialReportAPIController extends AppBaseController
 
                     collect($columnKeys)->each(function($colKey) use ($item,$data, $companyArray, $currency, $serviceLineIDs, $fromDate, $toDate, $companySystemIDs, $groupCompanySystemID)
                     {
-                        $key = explode('-',$colKey);
-                        if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
-                            $item->$colKey = collect($data)->sum($colKey);
+                        if ((isset($item->itemType) && $item->itemType != 3)) {
+                            $key = explode('-',$colKey);
+                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
+                                $item->$colKey = collect($data)->sum($colKey);
+                        }
 
                         if($item->detDescription == 'Share of Associates Profit/Loss') {
 
                             $total = 0;
 
-                            foreach ($companyArray as $keyCom => $company) {
+                            foreach ($companyArray as $company) {
+
+                                $childCompany = GroupParents::where('parent_company_system_id', $groupCompanySystemID['companySystemID'])->where('company_system_id', $company['companySystemID'])->latest('created_at')->first();
+
+                                    $holdingPercentage = $childCompany->holding_percentage ?? $company['holding_percentage'];
 
                                 $totalIncome = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
                                     $query->where('controlAccountsSystemID', 1);
@@ -1111,29 +1121,15 @@ class FinancialReportAPIController extends AppBaseController
                                 $totalExpense = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')->whereIn('serviceLineSystemID', $serviceLineIDs)->where('glAccountTypeID', 2)->where('companySystemID', $company['companySystemID'])->whereBetween('documentDate', [$fromDate, $toDate])->whereHas('charofaccount', function ($query) {
                                     $query->where('controlAccountsSystemID', 2);
                                 })->first();
-                                
 
-                                if($company['group_type'] == 2 || $company['group_type'] == 3) {
+                                $groupType = $childCompany->group_type ?? $company['group_type'];
 
-                                    if ($keyCom > 0) {
-                                        $previousCompanyID = $companyArray[$keyCom - 1]['companySystemID'];
-                                        if($groupCompanySystemID != $previousCompanyID) {
-
-                                            $previousCompany = Company::find($previousCompanyID);
-
-                                            if($previousCompany) {
-                                                $holdingPercentage = ($previousCompany->holding_percentage + $company['holding_percentage']) / 2;
-                                            }
-                                        } else {
-                                            $holdingPercentage = $company['holding_percentage'];
-                                        }
-                                    }
-
+                                if($groupType == 2 || $groupType == 3) {
 
                                     if ($currency == 1) {
-                                        $total += ($totalIncome->documentLocalAmount + $totalExpense->documentLocalAmount) * $company['holding_percentage'] / 100;
+                                        $total += ($totalIncome->documentLocalAmount + $totalExpense->documentLocalAmount) * $holdingPercentage / 100;
                                     } else {
-                                        $total += ($totalIncome->documentRptAmount + $totalExpense->documentRptAmount) * $company['holding_percentage'] / 100;
+                                        $total += ($totalIncome->documentRptAmount + $totalExpense->documentRptAmount) * $holdingPercentage / 100;
                                     }
                                 }
                             }
@@ -1649,7 +1645,7 @@ class FinancialReportAPIController extends AppBaseController
 
                     foreach ($response['reportData'] as $key => $value) {
                         if (isset($value->itemType) && $value->itemType == 5) {
-//                            $value->{$shareOfAccosicateDataArray['CONSColumnKey']} = $shareOfAccosicateAmount;
+                           // $value->{$shareOfAccosicateDataArray['CONSColumnKey']} = $shareOfAccosicateAmount;
                         }
 
                         if (isset($value->itemType) && $value->itemType == 6) {
@@ -4819,7 +4815,13 @@ class FinancialReportAPIController extends AppBaseController
                         ) AS FINAL 
                     GROUP BY
                         ' . $isCompanyWise . 'chartOfAccountSystemID
-                        order by order_no';
+                         ORDER BY
+                        CASE 
+                            WHEN AccountDescription = "Accumulated Retained Earnings (Automated)" THEN 1
+                            WHEN AccountDescription = "Retained Earnings" THEN 2
+                            ELSE 3
+                        END,
+                        glCode;';
 
 
         $output = \DB::select($query);
@@ -5000,7 +5002,13 @@ class FinancialReportAPIController extends AppBaseController
                         ) AS FINAL 
                     GROUP BY
                         ' . $isCompanyWise . 'chartOfAccountSystemID
-                        order by order_no';
+                          ORDER BY
+                          CASE 
+                            WHEN AccountDescription = "Accumulated Retained Earnings (Automated)" THEN 1
+                            WHEN AccountDescription = "Retained Earnings" THEN 2
+                            ELSE 3
+                          END,
+                          glCode;';
         $output1 = \DB::select($query1);               
         $i = 0;
                           
@@ -5792,7 +5800,7 @@ class FinancialReportAPIController extends AppBaseController
                                         ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
                                     IF
                                         ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) AS localCredit,
-                                       CASE	
+                                       CASE 
                                             WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
                                             (
                                                 IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) - (
@@ -5869,7 +5877,7 @@ class FinancialReportAPIController extends AppBaseController
                                         3 As orderNo,
                                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
-                                        CASE	
+                                        CASE    
                                             WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
                                             (
                                                 sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) )) - (
@@ -5949,7 +5957,7 @@ class FinancialReportAPIController extends AppBaseController
                                         2 As orderNo,
                                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
-                                        CASE	
+                                        CASE    
                                             WHEN controlAccounts = "BSA" OR controlAccounts = "PLE" THEN
                                             (
                                                 sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) )) - (
@@ -6711,7 +6719,18 @@ AND MASTER .canceledYN = 0';
             }
 
             if($templateMaster->columnTemplateID == null && $templateMaster->isConsolidation == 1) {
-                $companySubID = collect($request->companySystemID)->where('group_type', 1)->pluck('companySystemID')->toArray();
+                $companySubID = [];
+
+                $groupCompanySystemID = isset($request->groupCompanySystemID[0]) ? $request->groupCompanySystemID[0]: null;
+                foreach($request->companySystemID as $company) {
+
+                    $groupParents = GroupParents::where('company_system_id', $company['companySystemID'])->where('parent_company_system_id', $groupCompanySystemID)->latest('created_at')->first();
+
+                    if($groupParents && $groupParents->group_type == 1) {
+                        $companySubID[] = $groupParents->company_system_id;
+
+                    }
+                }
 
                 $companyGroupID = collect($request->groupCompanySystemID)->pluck('companySystemID')->toArray();
 
@@ -7080,7 +7099,19 @@ GROUP BY
             }
 
             if($templateMaster->columnTemplateID == null && $templateMaster->isConsolidation == 1) {
-                $companySubID = collect($request->companySystemID)->where('group_type', 1)->pluck('companySystemID')->toArray();
+
+                $companySubID = [];
+
+                $groupCompanySystemID = isset($request->groupCompanySystemID[0]) ? $request->groupCompanySystemID[0]: null;
+                foreach($request->companySystemID as $company) {
+
+                    $groupParents = GroupParents::where('company_system_id', $company['companySystemID'])->where('parent_company_system_id', $groupCompanySystemID)->latest('created_at')->first();
+
+                    if($groupParents && $groupParents->group_type == 1) {
+                        $companySubID[] = $groupParents->company_system_id;
+
+                    }
+                }
 
                 $companyGroupID = collect($request->groupCompanySystemID)->pluck('companySystemID')->toArray();
 
@@ -7970,6 +8001,7 @@ GROUP BY
         $budgetQuery = $generatedColumn['budgetQuery'];
         $budgetWhereQuery = $generatedColumn['budgetWhereQuery'];
 
+
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
@@ -7988,19 +8020,34 @@ GROUP BY
         $lastYearEndDate = Carbon::parse($financeYear->endingDate);
         $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
 
+
+        $currency = isset($input['currency'][0]) ? $input['currency'][0] : $input['currency'];
+
+
+        $columnCode = isset(explode('-', $input['selectedColumn'])[0]) ? explode('-', $input['selectedColumn'])[0]: null;
+
         $dateFilter = '';
         $documentQry = '';
         $servicelineQry = '';
         $servicelineQryForBudget = '';
-        if ($request->dateType == 1) {
-            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
-        } else {
-            if ($request->accountType == 2) {
+
+        if ($columnCode != 'ELMN') {
+
+            if ($request->dateType == 1) {
                 $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+                if ($request->accountType == 1) {
+                    $dateFilter = '';
+                }
             } else {
-                $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+                if ($request->accountType == 2) {
+                    $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+                } else {
+                    $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                    $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+                }
             }
+        } else {
+            $dateFilter = 'AND ((DATE(erp_consolejvdetail.glDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         }
 
         if ($request->accountType == 3) {
@@ -8014,7 +8061,7 @@ GROUP BY
                 $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
                 $servicelineQryForBudget = 'AND erp_budjetdetails.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
             }
-        } 
+        }
 
         if ($request->columnTemplateID == 1) {
             $selectedCompanyData = Company::where('CompanyID', $request->selectedCompany)->first();
@@ -8022,7 +8069,9 @@ GROUP BY
             $companyID = collect($selectedCompanyData->companySystemID)->toArray();
         }
 
-        $sql = 'SELECT `' . $input['selectedColumn'] . '`,glCode,AccountDescription,documentCode,documentDate,ServiceLineDes,partyName,documentNarration,clientContractID,documentSystemCode,documentSystemID FROM (SELECT
+        if ($columnCode != 'ELMN') {
+
+            $sql = 'SELECT `' . $input['selectedColumn'] . '`,glCode,AccountDescription,documentCode,documentDate,ServiceLineDes,partyName,documentNarration,clientContractID,documentSystemCode,documentSystemID FROM (SELECT
                         ' . $firstLinkedcolumnQry . ' 
                         glCode,AccountDescription,documentCode,documentDate,serviceline.ServiceLineDes,
                         erp_generalledger.documentNarration,
@@ -8043,6 +8092,34 @@ GROUP BY
                             ' . join(',
                             ', $companyID) . '
                         ) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . ' GROUP BY GeneralLedgerID) a WHERE `' . $input['selectedColumn'] . '` != 0';
+        } else {
+            if($currency == 1) {
+                $amountQry = '(CASE 
+                  WHEN localCreditAmount > localDebitAmount 
+                  THEN (localCreditAmount + localDebitAmount) * -1 
+                  ELSE (localDebitAmount + localCreditAmount) 
+              END) AS `' . addslashes($input['selectedColumn']) . '`';
+
+            } else {
+                $amountQry = '(CASE 
+                  WHEN rptCreditAmount > rptDebitAmount 
+                  THEN (rptCreditAmount + rptDebitAmount) * -1 
+                  ELSE (rptDebitAmount + rptCreditAmount) 
+              END) AS `' . addslashes($input['selectedColumn']) . '`';
+
+            }
+
+            $sql = 'SELECT glAccount, glAccountDescription,documentCode,glDate,ServiceLineDes, documentCode, erp_consolejvdetail.documentSystemID, ' . $amountQry . ', erp_consolejvmaster.consoleJVcode as documentCode, erp_consolejvmaster.consoleJVdate as documentDate, erp_consolejvmaster.consoleJVNarration as documentNarration, null AS clientContractID, null AS partyName
+                 FROM
+                        erp_consolejvdetail
+                    INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_consolejvdetail.glAccountSystemID
+                    INNER JOIN erp_consolejvmaster ON erp_consolejvmaster.consoleJvMasterAutoId = erp_consolejvdetail.consoleJvMasterAutoId
+                    LEFT JOIN serviceline ON serviceline.serviceLineSystemID = erp_consolejvdetail.serviceLineSystemID
+                    WHERE
+                        erp_consolejvdetail.glAccountSystemID = ' . $input['glAutoID'] . ' AND erp_consolejvmaster.companySystemID IN ( ' . join(',', $companyID) . ') ' .$dateFilter . ' AND erp_consolejvdetail.serviceLineSystemID IN (' . join(',', $serviceline) . ') AND erp_consolejvmaster.approved = -1';
+
+        }
+
         return DB::select($sql);
     }
 
@@ -8281,8 +8358,12 @@ GROUP BY
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 1) {
                         if ($request->dateType == 2) {
-                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                         }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($toDate)->subYear()->format('Y-m-d');
+                        }
+
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 3) {
@@ -10123,6 +10204,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
             return $this->sendError($exception->getMessage());
         }
     }
+    
 
     public function getGeneralLedgerRefAmount() {
         return DB::select("SELECT * FROM (SELECT

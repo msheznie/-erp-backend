@@ -60,7 +60,7 @@ class CreateCustomerThirdPartyInvoice
     private $sourceModel;
     private $db;
 
-	public static function customerInvoiceCreate($sourceModel,$db,$empId)
+	public static function customerInvoiceCreate($sourceModel,$db,$empId,$isApproveState = true)
 	{   
 
         DB::beginTransaction();
@@ -210,7 +210,18 @@ class CreateCustomerThirdPartyInvoice
                         $customerInvoiceData['performaDate'] = $today;
     
                         $fromCompany = Company::where('companySystemID', $companySystemId)->first();
-    
+
+                        if(!$isApproveState) {
+                            $customerCurrency = CustomerCurrency::where('customerCodeSystem',$sourceModel['customerID'])
+                                ->where('isAssigned', -1)
+                                ->where('currencyID', $fromCompany->localCurrencyID)
+                                ->first();
+
+                            if (empty($customerCurrency)) {
+                                return ['status' => false, 'message' => "The company’s local currency is not defined for the selected customer."];
+                            }
+                        }
+
                         $companyCurrencyConversion = \Helper::currencyConversion($companySystemId, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
                         $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
                         $customerInvoiceData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
@@ -248,13 +259,18 @@ class CreateCustomerThirdPartyInvoice
                         $bankAccount = BankAccount::where('companySystemID', $companySystemId)
                             ->where('bankmasterAutoID', $bank->bankmasterAutoID)
                             ->where('isDefault', 1)
-                            ->where('accountCurrencyID', $fromCompany->localCurrencyID)
                             ->first();
                         if ($bankAccount) {
                             $customerInvoiceData['bankAccountID'] = $bankAccount->bankAccountAutoID;
                         }
-            
+                        else if (!$isApproveState) {
+                            return ['status' => false, 'message' => "Default Bank Account not set."];
+                        }
                     }
+                    else if (!$isApproveState) {
+                        return ['status' => false, 'message' => "Default Bank Account not set."];
+                    }
+
                         $systemUser = UserTypeService::getSystemEmployee();
                         $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
                         $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
@@ -340,55 +356,63 @@ class CreateCustomerThirdPartyInvoice
 
                         $resVat =  CustomerInvoiceAPIService::updateTotalVAT($customerInvoice->custInvoiceDirectAutoID);
 
-
-                        $params = array(
-                            'autoID' => $customerInvoice->custInvoiceDirectAutoID,
-                            'company' => $customerInvoice->companySystemID,
-                            'document' => $customerInvoice->documentSystemiD,
-                            'segment' => '',
-                            'category' => '',
-                            'amount' => '',
-                            'isAutoCreateDocument' => true
-                        );
-
-                        $returnData = \Helper::confirmDocument($params);
-
-                        if($returnData['success']){
-
-                            $request = new Request();
-                            $request->replace([
-                                'companyId' => $customerInvoice->companySystemID,
-                                'custInvoiceDirectAutoID' => $customerInvoice->custInvoiceDirectAutoID,
+                        if($isApproveState) {
+                            $params = array(
+                                'autoID' => $customerInvoice->custInvoiceDirectAutoID,
+                                'company' => $customerInvoice->companySystemID,
+                                'document' => $customerInvoice->documentSystemiD,
+                                'segment' => '',
+                                'category' => '',
+                                'amount' => '',
                                 'isAutoCreateDocument' => true
+                            );
+
+                            $returnData = \Helper::confirmDocument($params);
+
+                            if($returnData['success']){
+
+                                $request = new Request();
+                                $request->replace([
+                                    'companyId' => $customerInvoice->companySystemID,
+                                    'custInvoiceDirectAutoID' => $customerInvoice->custInvoiceDirectAutoID,
+                                    'isAutoCreateDocument' => true
+                                ]);
+                                $controller = app(CustomerInvoiceDirectAPIController::class);
+                                $customerInvoiceApprovalData = $controller->getCustomerInvoiceApproval($request);
+                                $customerInvoiceApprovalData = json_decode(json_encode($customerInvoiceApprovalData),true);
+
+                                if($customerInvoiceApprovalData['success']){
+
+                                    $dataset = $customerInvoiceApprovalData['data'];
+                                    $dataset['isAutoCreateDocument'] = true;
+                                    $dataset['companySystemID'] = $customerInvoice->companySystemID;
+                                    $dataset['approvedComments'] = "Created from Disposal";
+
+                                    $dataset['db'] = $db;
+
+
+                                    $approveDocument = \Helper::approveDocument($dataset);
+
+                                    if ($approveDocument["success"]) {
+                                        DB::commit();
+                                        return ['status' => true, 'message' => "Customer invoice created successfully"];
+                                    }
+                                    else {
+                                        return ['status' => false, 'message' => $approveDocument['message']];
+                                    }
+
+                                }
+                                else{
+                                    return ['status' => false, 'message' => $customerInvoiceApprovalData['message']];
+                                }
+                            }
+                        }
+                        else {
+                            $customerInvoice->update([
+                                'statusFromDisposal' => 1
                             ]);
-                            $controller = app(CustomerInvoiceDirectAPIController::class);
-                           $customerInvoiceApprovalData = $controller->getCustomerInvoiceApproval($request);
-                           $customerInvoiceApprovalData = json_decode(json_encode($customerInvoiceApprovalData),true);
-
-                            if($customerInvoiceApprovalData['success']){
-
-                                $dataset = $customerInvoiceApprovalData['data'];
-                                $dataset['isAutoCreateDocument'] = true;
-                                $dataset['companySystemID'] = $customerInvoice->companySystemID;
-                                $dataset['approvedComments'] = "Created from Disposal";
-
-                                $dataset['db'] = $db;
-
-
-                                $approveDocument = \Helper::approveDocument($dataset);
-
-                                if ($approveDocument["success"]) {
-                                    DB::commit();
-                                    return ['status' => true, 'message' => "Customer invoice created successfully"];
-                                }
-                                else {
-                                    return ['status' => false, 'message' => $approveDocument['message']];
-                                }
-
-                            }
-                            else{
-                                return ['status' => false, 'message' => $customerInvoiceApprovalData['message']];
-                            }
+                            DB::commit();
+                            return ['status' => true, 'message' => "Customer invoice created successfully"];
                         }
 
                     }

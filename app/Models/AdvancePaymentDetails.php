@@ -183,6 +183,7 @@ class AdvancePaymentDetails extends Model
         'VATPercentage',
         'vatMasterCategoryID',
         'vatSubCategoryID',
+        'fullAmount',
         'timeStamp'
     ];
 
@@ -220,6 +221,7 @@ class AdvancePaymentDetails extends Model
         'localAmount' => 'float',
         'comRptAmount' => 'float',
         'VATPercentage' => 'float',
+        'fullAmount' => 'float',
         'timesReferred' => 'integer'
     ];
 
