@@ -8109,15 +8109,22 @@ GROUP BY
 
             }
 
-            $sql = 'SELECT glAccount, glAccountDescription,documentCode,glDate,ServiceLineDes, documentCode, erp_consolejvdetail.documentSystemID, ' . $amountQry . ', erp_consolejvmaster.consoleJVcode as documentCode, erp_consolejvmaster.consoleJVdate as documentDate, erp_consolejvmaster.consoleJVNarration as documentNarration, null AS clientContractID, null AS partyName
-                 FROM
+            $sql = 'SELECT 
+                        glAccount, glAccountDescription,glDate,ServiceLineDes, erp_consolejvmaster.documentSystemID, ' . $amountQry . ', 
+                        erp_consolejvmaster.consoleJVcode as documentCode, erp_consolejvmaster.consoleJVdate as documentDate, 
+                        erp_consolejvmaster.consoleJVNarration as documentNarration, null AS clientContractID, null AS partyName
+                    FROM
                         erp_consolejvdetail
                     INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_consolejvdetail.glAccountSystemID
                     INNER JOIN erp_consolejvmaster ON erp_consolejvmaster.consoleJvMasterAutoId = erp_consolejvdetail.consoleJvMasterAutoId
                     LEFT JOIN serviceline ON serviceline.serviceLineSystemID = erp_consolejvdetail.serviceLineSystemID
+                    INNER JOIN erp_elimination_ledger ON erp_elimination_ledger.documentSystemID = erp_consolejvmaster.documentSystemID AND erp_elimination_ledger.documentSystemCode = erp_consolejvmaster.consoleJvMasterAutoId
                     WHERE
-                        erp_consolejvdetail.glAccountSystemID = ' . $input['glAutoID'] . ' AND erp_consolejvmaster.companySystemID IN ( ' . join(',', $companyID) . ') ' .$dateFilter . ' AND erp_consolejvdetail.serviceLineSystemID IN (' . join(',', $serviceline) . ') AND erp_consolejvmaster.approved = -1';
-
+                        erp_consolejvdetail.glAccountSystemID = ' . $input['glAutoID'] . ' 
+                        AND erp_elimination_ledger.chartOfAccountSystemID = ' . $input['glAutoID'] . ' 
+                        AND erp_elimination_ledger.companySystemID IN ( ' . join(',', $companyID) . ') ' .$dateFilter . ' 
+                        AND erp_consolejvdetail.serviceLineSystemID IN (' . join(',', $serviceline) . ') 
+                        AND erp_consolejvmaster.approved = -1';
         }
 
         return DB::select($sql);
