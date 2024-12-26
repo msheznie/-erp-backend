@@ -764,6 +764,7 @@ class SalesReturnAPIController extends AppBaseController
         } elseif ($input['type']==2){ ////sales Invoice
             $master = CustomerInvoiceDirect::where('erp_custinvoicedirect.companySystemID',$input['companySystemID'])
                                     ->where('erp_custinvoicedirect.approved', -1)
+                                    ->where('erp_custinvoicedirect.isPOS', 0)
                                     ->where('erp_custinvoicedirect.selectedForSalesReturn', 0)
                                     ->whereIn('erp_custinvoicedirect.isPerforma', [2,4,5])
                                     // ->where('closedYN',0)
