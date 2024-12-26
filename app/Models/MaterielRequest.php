@@ -274,7 +274,9 @@ class MaterielRequest extends Model
         'isSelectedToPR',
         'is_job_run',
         'counter',
-        'isDelegation'
+        'isDelegation',
+        'excelRowCount',
+        'successDetailsCount'
     ];
 
     /**
