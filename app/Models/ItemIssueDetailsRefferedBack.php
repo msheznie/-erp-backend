@@ -409,7 +409,8 @@ class ItemIssueDetailsRefferedBack extends Model
         'pl10',
         'pl3',
         'timestamp',
-        'qtyAvailableToIssue'
+        'qtyAvailableToIssue',
+        'reqDocID'
     ];
 
     /**
