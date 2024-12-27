@@ -3476,11 +3476,9 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
         $time = strtotime("now");
         $fileName = 'procument_order' . $id . '_' . $time . '.pdf';
-        $htmlFooter = view('print.purchase_order_print_pdf_footer', $order);
         $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
-        $mpdf->SetHTMLFooter($htmlFooter);
         $mpdf->WriteHTML($html);
         return $mpdf->Output($fileName, 'I');
     }
