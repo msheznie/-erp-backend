@@ -215,19 +215,22 @@ class CustomerInvoiceService
                 $documentDate = \Carbon\Carbon::createFromFormat('d/m/Y', $documentDate);
 
                 $companyFinanceYear = Helper::companyFinanceYear($uploadedCompany, 0);
-
+                
+                if (!isset($companyFinanceYear) && empty($companyFinanceYear)) 
+                {
+                    $errorMsg = "Finance Year not active";
+                    return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
+                }
+                $checkDate = Carbon::parse($documentDate);
                 $CompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', '=', $uploadedCompany)
                                         ->where('companyFinanceYearID', $companyFinanceYear[0]['companyFinanceYearID'])
                                         ->where('departmentSystemID', 4)
                                         ->where('isActive', -1)
-                                        ->where('isCurrent', -1)
+                                        ->whereRaw('? BETWEEN dateFrom AND dateTo', [$checkDate])
                                         ->first();
+            
 
-                $fromDate = Carbon::parse($CompanyFinancePeriod->dateFrom);
-                $toDate = Carbon::parse($CompanyFinancePeriod->dateTo);
-                $checkDate = Carbon::parse($documentDate);
-
-                if (!$checkDate->between($fromDate, $toDate)) {
+                if (!$CompanyFinancePeriod) {
                     $errorMsg = "The financial period for the  Document date $documentDateBeforeFormat  is not active.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
