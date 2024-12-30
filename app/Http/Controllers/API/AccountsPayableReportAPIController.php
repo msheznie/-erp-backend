@@ -5021,6 +5021,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 final.supplierName,
                 final.documentRptCurrencyID,
                 final.documentLocalCurrencyID,
+                final.supplierInvoiceDate,
                 SUM(final.documentLocalAmount) as documentLocalAmount,
                 SUM(final.documentRptAmount) as documentRptAmount,
                 SUM(final.matchedLocalAmount) as matchedLocalAmount,
@@ -5045,6 +5046,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 finalUnbilled.documentLocalCurrencyID,
                 finalUnbilled.localAmount AS documentLocalAmount,
                 finalUnbilled.rptAmount AS documentRptAmount,
+                finalUnbilled.supplierInvoiceDate AS supplierInvoiceDate,
                    IF
                 ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) AS matchedLocalAmount,
             IF
@@ -5073,6 +5075,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 SupplierForGeneralLedger.supplierName AS supplierName,
                 MatchedGRVAndInvoice.totLocalAmount1 AS matchedLocalAmount,
                 MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount,
+                MatchedGRVAndInvoice.supplierInvoiceDate AS supplierInvoiceDate,
                 pendingBSI.pendingBSISystemId,
                 pendingBSI.pendingBSICode,
                 pendingBSI.pendingBSISystemCode
@@ -5096,7 +5099,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                         erp_bookinvsuppdet.grvAutoID AS documentSystemCode,
                         grvGL.documentCode,
                         SUM( erp_bookinvsuppdet.totLocalAmount ) AS totLocalAmount1,
-                        SUM( erp_bookinvsuppdet.totRptAmount ) AS totRptAmount1 
+                        SUM( erp_bookinvsuppdet.totRptAmount ) AS totRptAmount1 ,
+                        erp_bookinvsuppmaster.supplierInvoiceDate
                     FROM
                         erp_bookinvsuppdet
                         INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
@@ -5121,6 +5125,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
                     WHERE
                         erp_bookinvsuppmaster.approved = -1
+                        AND STR_TO_DATE( DATE_FORMAT( erp_bookinvsuppmaster.supplierInvoiceDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
                     GROUP BY
                         erp_bookinvsuppdet.companySystemID,
                         erp_bookinvsuppdet.grvAutoID 
@@ -5132,7 +5137,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                         erp_bookinvsuppdet.bookingSuppMasInvAutoID AS documentSystemCode,
                         BsiGL.documentCode,
                         SUM( erp_bookinvsuppdet.totLocalAmount * - 1 ) AS totLocalAmount1,
-                        SUM( erp_bookinvsuppdet.totRptAmount * - 1 ) AS totRptAmount1 
+                        SUM( erp_bookinvsuppdet.totRptAmount * - 1 ) AS totRptAmount1,
+                        erp_bookinvsuppmaster.supplierInvoiceDate 
                     FROM
                         erp_bookinvsuppdet
                         INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
@@ -5247,7 +5253,9 @@ class AccountsPayableReportAPIController extends AppBaseController
             $result->balanceRptAmount = $result->documentRptAmount - $result->matchedRptAmount;
 
             if (abs($result->balanceLocalAmount) < 0.00001 || abs($result->balanceRptAmount) < 0.00001) {
-                unset($results[$index]);
+                if(!is_null($result->supplierInvoiceDate) && $result->supplierInvoiceDate < $asOfDate) {
+                    unset($results[$index]);
+                }
             }
         }
 
