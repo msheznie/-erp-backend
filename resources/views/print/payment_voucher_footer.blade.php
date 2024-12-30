@@ -11,7 +11,7 @@
                 <span style="white-space: pre; word-wrap: normal; font-weight: bold">{!! nl2br($docRef) !!}</span>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">{{ __('custom.page') }} <span style="content: counter(page);">{nbpg}</span>
+                <span style="text-align: center">{{ __('custom.page') }} <span style="content: counter(page);">{PAGENO}</span>
 
                 </span><br>
                 @if ($masterdata->company)
