@@ -93,6 +93,8 @@ use Carbon\CarbonPeriod;
                   $date = explode(' ',$item->grv_master_detail->grvDate);
                 } elseif ($item->documentSystemID == 17 && isset($item->jv_master_detail->JVdate)) {
                   $date = explode(' ',$item->jv_master_detail->JVdate);
+                } elseif ($item->documentSystemID == 11 && isset($item->supplier_invoice_master->bookingDate)) {
+                  $date = explode(' ',$item->supplier_invoice_master->bookingDate);
                 }
                   $date = $date?  (new Carbon($date[0]))->format('d/m/Y'):'';
                 ?>

@@ -508,12 +508,16 @@ class FinancialReportAPIController extends AppBaseController
 
     public function generateprojectUtilizationReport(Request $request)
     {
-        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15, 17];
+        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15, 17, 11];
         $dateFrom = (new Carbon($request->fromDate))->format('d/m/Y');
         $dateTo = (new Carbon($request->toDate))->format('d/m/Y');
 
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+
+        $startDay = Carbon::parse($fromDate)->startOfDay(); // Sets time to 00:00:00
+        $endDay = Carbon::parse($toDate)->endOfDay();      // Sets time to 23:59:59
+
         $projectID = $request->projectID;
         $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
         $serviceline = collect($request->selectedServicelines)->pluck('serviceLineSystemID')->toArray();
@@ -523,52 +527,68 @@ class FinancialReportAPIController extends AppBaseController
         $documentCurrencyID = $projectDetail->currency['currencyID'];
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher', 'grv_master', 'jv_master')
+        $budgetConsumedData = BudgetConsumedData::with(['purchase_order',
+                                                        'debit_note', 
+                                                        'credit_note', 
+                                                        'direct_payment_voucher', 
+                                                        'grv_master', 
+                                                        'jv_master',
+                                                        'supplier_invoice_master' => function ($query) {
+                                                                $query->select('bookingSuppMasInvAutoID', 'comments', 'bookingDate');
+                                                            },
+                                                        ])
                                                     ->where('projectID', $projectID)
                                                     ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
                                                         $query->whereIn('serviceLineSystemID', $serviceline);
                                                     })
                                                     ->whereIn('documentSystemID', $documentSystemIDs)->get();
 
-        $detailsPOWise = BudgetConsumedData::with(['segment_by','chart_of_account','purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+        $detailsPOWise = BudgetConsumedData::with(['segment_by','chart_of_account','purchase_order_detail' => function ($query) use ($startDay, $endDay) {
+                $query->whereBetween('approvedDate', [$startDay, $endDay]);
                 }, 
-                'debit_note_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('debitNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'debit_note_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('debitNoteDate', [$startDay, $endDay]);
                 }, 
-                'credit_note_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('creditNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'credit_note_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('creditNoteDate', [$startDay, $endDay]);
                 }, 
-                'direct_payment_voucher_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('postedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'direct_payment_voucher_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('postedDate', [$startDay, $endDay]);
                 }, 
-                'grv_master_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('grvDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'grv_master_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('grvDate', [$startDay, $endDay]);
                 }, 
-                'jv_master_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('JVdate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'jv_master_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('JVdate', [$startDay, $endDay]);
+                }, 
+                'supplier_invoice_master' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('bookingDate', [$startDay, $endDay])
+                            ->select('bookingSuppMasInvAutoID', 'comments', 'bookingDate');
                 }
             ])
 
-            ->where(function($subQuery) use ($fromDate, $toDate)
+            ->where(function($subQuery) use ($startDay, $endDay)
             {   
-                $subQuery->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                $subQuery->whereHas('purchase_order_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('approvedDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('debit_note_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('debitNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('debit_note_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('debitNoteDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('credit_note_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('creditNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('credit_note_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('creditNoteDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('direct_payment_voucher_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('postedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('direct_payment_voucher_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('postedDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('grv_master_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('grvDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('grv_master_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('grvDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('jv_master_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('JVdate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('jv_master_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('JVdate', [$startDay, $endDay]);
+                })
+                ->orWhereHas('supplier_invoice_master', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('bookingDate', [$startDay, $endDay]);
                 });
             })
             ->where('projectID', $projectID)
@@ -583,25 +603,28 @@ class FinancialReportAPIController extends AppBaseController
             ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
                 $query->whereIn('serviceLineSystemID', $serviceline);
             })
-            ->where(function($subQuery) use ($fromDate, $toDate)
+            ->where(function($subQuery) use ($startDay, $endDay)
             {   
-                $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                $subQuery->whereHas('purchase_order', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('approvedDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('debit_note', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('debitNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('debit_note', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('debitNoteDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('credit_note', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('creditNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('credit_note', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('creditNoteDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('direct_payment_voucher', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('postedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('direct_payment_voucher', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('postedDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('grv_master', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('grvDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('grv_master', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('grvDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('jv_master', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('JVdate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('jv_master', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('JVdate', [$startDay, $endDay]);
+                })
+                ->orWhereHas('supplier_invoice_master', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('bookingDate', [$startDay, $endDay]);
                 });
             })
 
@@ -633,6 +656,9 @@ class FinancialReportAPIController extends AppBaseController
                 })
                 ->orWhereHas('jv_master', function ($query) use ($fromDate, $toDate) {
                     $query->whereDate('JVdate', '<', $fromDate);
+                })
+                ->orWhereHas('supplier_invoice_master', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('bookingDate', '<', $fromDate);
                 });
             })
             ->sum('consumedRptAmount');
@@ -2667,12 +2693,16 @@ class FinancialReportAPIController extends AppBaseController
 
     public function downloadProjectUtilizationReport(Request $request)
     {
-        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15, 17];
+        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15, 17, 11];
         $dateFrom = (new Carbon($request->fromDate))->format('d/m/Y');
         $dateTo = (new Carbon($request->toDate))->format('d/m/Y');
 
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+
+        $startDay = Carbon::parse($fromDate)->startOfDay(); // Sets time to 00:00:00
+        $endDay = Carbon::parse($toDate)->endOfDay();      // Sets time to 23:59:59
+
         $projectID = $request->projectID;
          $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
 
@@ -2684,52 +2714,68 @@ class FinancialReportAPIController extends AppBaseController
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher', 'grv_master', 'jv_master')
+        $budgetConsumedData = BudgetConsumedData::with(['purchase_order',
+                                                        'debit_note', 
+                                                        'credit_note', 
+                                                        'direct_payment_voucher', 
+                                                        'grv_master', 
+                                                        'jv_master',
+                                                        'supplier_invoice_master' => function ($query) {
+                                                                $query->select('bookingSuppMasInvAutoID', 'comments', 'bookingDate'); 
+                                                            },
+                                                        ])
                                                 ->where('projectID', $projectID)
                                                 ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
                                                     $query->whereIn('serviceLineSystemID', $serviceline);
                                                 })
                                                 ->whereIn('documentSystemID', $documentSystemIDs)->get();
 
-        $detailsPOWise = BudgetConsumedData::with(['segment_by','chart_of_account','purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+        $detailsPOWise = BudgetConsumedData::with(['segment_by','chart_of_account','purchase_order_detail' => function ($query) use ($startDay, $endDay) {
+                $query->whereBetween('approvedDate', [$startDay, $endDay]);
                 }, 
-                'debit_note_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('debitNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'debit_note_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('debitNoteDate', [$startDay, $endDay]);
                 }, 
-                'credit_note_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('creditNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'credit_note_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('creditNoteDate', [$startDay, $endDay]);
                 }, 
-                'direct_payment_voucher_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('postedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'direct_payment_voucher_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('postedDate', [$startDay, $endDay]);
                 }, 
-                'grv_master_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('grvDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'grv_master_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('grvDate', [$startDay, $endDay]);
                 }, 
-                'jv_master_detail' => function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('JVdate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                'jv_master_detail' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('JVdate', [$startDay, $endDay]);
+                }, 
+                'supplier_invoice_master' => function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('bookingDate', [$startDay, $endDay])
+                            ->select('bookingSuppMasInvAutoID', 'comments', 'bookingDate');
                 }
             ])
 
-            ->where(function($subQuery) use ($fromDate, $toDate)
+            ->where(function($subQuery) use ($startDay, $endDay)
             {   
-                $subQuery->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                $subQuery->whereHas('purchase_order_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('approvedDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('debit_note_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('debitNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('debit_note_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('debitNoteDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('credit_note_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('creditNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('credit_note_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('creditNoteDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('direct_payment_voucher_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('postedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('direct_payment_voucher_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('postedDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('grv_master_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('grvDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('grv_master_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('grvDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('jv_master_detail', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('JVdate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('jv_master_detail', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('JVdate', [$startDay, $endDay]);
+                })
+                ->orWhereHas('supplier_invoice_master', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('bookingDate', [$startDay, $endDay]);
                 });
             })
             ->where('projectID', $projectID)
@@ -2744,25 +2790,28 @@ class FinancialReportAPIController extends AppBaseController
             ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
                 $query->whereIn('serviceLineSystemID', $serviceline);
             })
-            ->where(function($subQuery) use ($fromDate, $toDate)
+            ->where(function($subQuery) use ($startDay, $endDay)
             {   
-                $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                $subQuery->whereHas('purchase_order', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('approvedDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('debit_note', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('debitNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('debit_note', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('debitNoteDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('credit_note', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('creditNoteDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('credit_note', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('creditNoteDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('direct_payment_voucher', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('postedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('direct_payment_voucher', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('postedDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('grv_master', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('grvDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('grv_master', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('grvDate', [$startDay, $endDay]);
                 })
-                ->orWhereHas('jv_master', function ($query) use ($fromDate, $toDate) {
-                    $query->whereBetween('JVdate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                ->orWhereHas('jv_master', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('JVdate', [$startDay, $endDay]);
+                })
+                ->orWhereHas('supplier_invoice_master', function ($query) use ($startDay, $endDay) {
+                    $query->whereBetween('bookingDate', [$startDay, $endDay]);
                 });
             })
 
@@ -2794,6 +2843,9 @@ class FinancialReportAPIController extends AppBaseController
                 })
                 ->orWhereHas('jv_master', function ($query) use ($fromDate, $toDate) {
                     $query->whereDate('JVdate', '<', $fromDate);
+                })
+                ->orWhereHas('supplier_invoice_master', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('bookingDate', '<', $fromDate);
                 });
             })
             ->sum('consumedRptAmount');
