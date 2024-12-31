@@ -29,6 +29,7 @@ use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 use App\helper\BirthdayWishService;
+use App\Jobs\DelegationActivation;
 use App\Jobs\HrDocNotificationJob;
 use App\Jobs\ReturnToWorkNotificationJob;
 use App\Jobs\EmpProfileCreateNotificationJob;
@@ -354,5 +355,20 @@ class HRJobInvokeAPIController extends AppBaseController
 
         LeaveAccrualInitiate::dispatch($tdb,$debugDate);
         return $this->sendResponse(true, 'Leave accrual schedule job added to queue');
+    }
+
+        function delegationJobCallDebug(Request $req){
+        $tenantId = $req->input('tenantId');
+       
+        $tdb = CommonJobService::get_tenant_db($tenantId);
+        if(empty($tdb)){
+            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        }
+
+        Log::info("{$tdb} DB added to queue for delegation
+        . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+
+        DelegationActivation::dispatch($tdb);
+        return $this->sendResponse(true, 'Delegation job added to queue');
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\HrDeligationDetails;
+use App\Models\SMEApprovalUser;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -44,7 +46,8 @@ class DelegationActivation implements ShouldQueue
      */
     public function handle()
     {
-      
+        Log::useFiles( CommonJobService::get_specific_log_file('delegation') );
+
         $tenantDb = $this->tenantDb;
         CommonJobService::db_switch( $this->tenantDb );
         $current_date = Carbon::parse(now())->format('Y-m-d');
@@ -52,8 +55,10 @@ class DelegationActivation implements ShouldQueue
         $dlegations_expire_ids = $deligate->pluck('id');
         $deligate->update(['is_active' => 0]);
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_expire_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 0]);
+        
+        Log::info('Deactivate'. $dlegations_expire_ids);
+        $this->updateHrmsApprovalUserStatus($dlegations_expire_ids, 0);
 
-     
         $groupInfo = UserGroup::whereIn('delegation_id',$dlegations_expire_ids);
         $userGroupIds = $groupInfo->pluck('userGroupID');
         if (!$userGroupIds->isEmpty())
@@ -64,12 +69,14 @@ class DelegationActivation implements ShouldQueue
 
         }
 
-
-
         $dlegationPeriod = Deligation::where('start_date', '<=', $current_date)->where('end_date', '>=', $current_date)->where('approved',-1);
         $dlegationPeriod->update(['is_active' => 1]);
         $dlegations_ids = $dlegationPeriod->pluck('id');
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 1]);
+
+        Log::info('Activate'. $dlegations_ids);
+        $this->updateHrmsApprovalUserStatus($dlegations_ids, 1);
+
         $activeGroup = UserGroup::whereIn('delegation_id',$dlegations_ids);
 
         $activeGroupIds = $activeGroup->pluck('userGroupID');
@@ -78,7 +85,11 @@ class DelegationActivation implements ShouldQueue
             UserGroupAssign::whereIn('userGroupID', $activeGroupIds)->update(['isActive' => 1]);
 
         }
+        Log::info('done');
+    }
 
-
+    function updateHrmsApprovalUserStatus($idList, $status){
+        SMEApprovalUser::whereIn('delegation_master_id', $idList)
+            ->update(['Status' => $status]);
     }
 }
