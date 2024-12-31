@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.58.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.57.0...v10.58.0) (2024-12-31)
+
+
+### Features
+
+* **Delegation:** Delegate Common Approvals to Delegated Users ERP Job [GHR-2412] ([#7343](https://github.com/pbsgears/Gears_BackEnd/issues/7343)) ([28fc5e3](https://github.com/pbsgears/Gears_BackEnd/commit/28fc5e3852cd992cf261d19b111c5ba8354d9179))
+
 ## [10.57.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.56.0...v10.57.0) (2024-12-26)
 
 
