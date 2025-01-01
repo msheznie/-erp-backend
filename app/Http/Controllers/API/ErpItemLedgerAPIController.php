@@ -1040,7 +1040,7 @@ WHERE
                 erp_itemledger.documentSystemCode,
                 erp_itemledger.itemSystemCode,
                 erp_itemledger.itemPrimaryCode,
-                erp_itemledger.itemDescription,
+                itemmaster.itemDescription,
                 erp_itemledger.unitOfMeasure,
                 erp_itemledger.transactionDate,
                 financeitemcategorysub.categoryDescription,
