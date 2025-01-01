@@ -8099,7 +8099,7 @@ GROUP BY
                 }
             }
         } else {
-            $dateFilter = 'AND ((DATE(erp_consolejvdetail.glDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+            $dateFilter = 'AND ((DATE(erp_consolejvmaster.consoleJVdate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         }
 
         if ($request->accountType == 3) {
