@@ -5125,7 +5125,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
                     WHERE
                         erp_bookinvsuppmaster.approved = -1
-                        AND STR_TO_DATE( DATE_FORMAT( erp_bookinvsuppmaster.supplierInvoiceDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+                        AND STR_TO_DATE( DATE_FORMAT( erp_bookinvsuppmaster.bookingDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
                     GROUP BY
                         erp_bookinvsuppdet.companySystemID,
                         erp_bookinvsuppdet.grvAutoID 
