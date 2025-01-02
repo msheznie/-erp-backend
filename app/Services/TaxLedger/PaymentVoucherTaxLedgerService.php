@@ -337,13 +337,13 @@ class PaymentVoucherTaxLedgerService
                     $ledgerDetailsData['itemCode'] = null;
                     $ledgerDetailsData['itemDescription'] = null;
                     $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
-                    $ledgerDetailsData['taxableAmount'] = ($value->paymentAmount);
+                    $ledgerDetailsData['taxableAmount'] = ($value->paymentAmount - $value->VATAmount);
                     $ledgerDetailsData['VATAmount'] = $value->VATAmount;
                     $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount;
                     $ledgerDetailsData['localER'] = $value->localER;
                     $ledgerDetailsData['reportingER'] = $value->comRptER;
-                    $ledgerDetailsData['taxableAmountLocal'] = $value->localAmount;
-                    $ledgerDetailsData['taxableAmountReporting'] = $value->comRptAmount;
+                    $ledgerDetailsData['taxableAmountLocal'] = $value->localAmount - $value->VATAmountLocal;
+                    $ledgerDetailsData['taxableAmountReporting'] = $value->comRptAmount - $value->VATAmountRpt;
                     $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal;
                     $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt;
                     $taxConfigData = TaxService::getInputVATGLAccount($masterData->companySystemID);
