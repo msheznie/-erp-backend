@@ -855,7 +855,7 @@
     </div>
 @endif
 
-<div class="footer" style="height: 152px;">
+<div style="height: 152px;">
     <table style="width:100%;">
         <tr>
             <td><span style="font-weight:bold;">{{ __('custom.electronically_approved_by') }} :</span></td>
