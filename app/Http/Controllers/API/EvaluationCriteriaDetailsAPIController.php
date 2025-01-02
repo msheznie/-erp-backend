@@ -756,6 +756,50 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 $query->where('tender_id', '=', $request['tenderMasterId']);
             })
             ->get();
+
+
+        $parentsWithoutSubLevels = DB::table('srm_evaluation_criteria_master_details as parent')
+            ->leftJoin('srm_evaluation_criteria_master_details as child', 'parent.id', '=', 'child.parent_id')
+            ->where('parent.parent_id', 0)
+            ->whereNull('child.id')
+            ->where('parent.is_final_level', 0)
+            ->select('parent.*')
+            ->get();
+
+
+        $subLevelsWithoutFurtherSubLevels = DB::table('srm_evaluation_criteria_master_details as sub')
+            ->leftJoin('srm_evaluation_criteria_master_details as child', 'sub.id', '=', 'child.parent_id')
+            ->where('sub.parent_id', '!=', 0)
+            ->whereNull('child.id')
+            ->where('sub.is_final_level', 0)
+            ->select('sub.*')
+            ->get();
+
+
+
+        $uniqueIds = null;
+        if ($parentsWithoutSubLevels->isEmpty() && $subLevelsWithoutFurtherSubLevels->isEmpty()) {
+            $data['uniqueEvaluationCriteriaMasterIds'] = "Validation passed: All parent and sub-level entries are correctly marked.";
+        } else {
+            $parents = $parentsWithoutSubLevels->pluck('evaluation_criteria_master_id')->toArray();
+            $subLevels = $subLevelsWithoutFurtherSubLevels->pluck('evaluation_criteria_master_id')->toArray();
+
+            // Merge and make unique
+            $uniqueIds = array_unique(array_merge($parents, $subLevels));
+
+            $data['uniqueEvaluationCriteriaMasterIds'] = $uniqueIds;
+
+            $data['criteriaMaster'] = EvaluationCriteriaMaster::select('id', 'name', 'is_active')
+                ->where('is_active', 1)
+                ->whereNotIn('id', $uniqueIds)
+                ->whereDoesntHave('evaluation_criteria_details', function ($query) use($request) {
+                    $query->where('tender_id', '=', $request['tenderMasterId']);
+                })
+                ->get();
+        }
+
+
+
         return $data;
     }
 
