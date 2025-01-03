@@ -17,6 +17,7 @@ class LeaveAccrualProcess implements ShouldQueue
 
     public $dispatch_db;
     public $debugDate;
+    public $debug;
     public $company;
     public $group;
     public $accrual_type_det;
@@ -26,7 +27,7 @@ class LeaveAccrualProcess implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($dispatch_db, $company_det, $accrual_type_det, $group, $debugDate = null)
+    public function __construct($dispatch_db, $company_det, $accrual_type_det, $group, $debugDate = null, $debug = false)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -39,6 +40,7 @@ class LeaveAccrualProcess implements ShouldQueue
         $this->accrual_type_det = $accrual_type_det;
         $this->group = $group;
         $this->debugDate = $debugDate;
+        $this->debug = $debug;
     }
 
     /**
@@ -51,7 +53,7 @@ class LeaveAccrualProcess implements ShouldQueue
         $path = CommonJobService::get_specific_log_file('leave-accrual');
         Log::useFiles($path);
 
-        ['code'=> $company_code, 'name'=> $company_name] = $this->company;
+        ['code'=> $company_code, 'name'=> $company_name, 'id'=> $companyId] = $this->company;
 
         $accDes = $this->accrual_type_det['description'];
         $leaveGroup = $this->group['description'];
@@ -59,8 +61,14 @@ class LeaveAccrualProcess implements ShouldQueue
         $msg = "Processing the {$accDes} | {$leaveGroup} (leave group) for {$company_code} | {$company_name}";
 
         CommonJobService::db_switch( $this->dispatch_db );
-        $ser = new LeaveAccrualService($this->company, $this->accrual_type_det, $this->group, $this->debugDate);
-        $ser->create_accrual();
+
+        try {
+            $ser = new LeaveAccrualService($this->company, $this->accrual_type_det, $this->group, $this->debugDate, $this->debug);
+            $ser->create_accrual();
+        } catch (\Exception $e) {
+            $errorLog = "Accrual processing failed: " . $e->getMessage();
+            LeaveAccrualService::insertToLogTb( '', 'error', $errorLog.' ~ Leave Group: '.$leaveGroup , $companyId);
+        }
     }
 
 }
