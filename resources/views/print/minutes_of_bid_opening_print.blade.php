@@ -197,7 +197,7 @@
             <td style="width: 10%"><strong>Tender Code:</strong></td>
             <td>{{ $tenderMaster->tender_code }}</td>
             <td style="width: 15%"><strong>Envelope:</strong></td>
-            <td>{{ $tenderMaster->envelop_type->name }}</td>
+            <td>{{ $tenderMaster->envelop_type ? $tenderMaster->envelop_type->name : ' - ' }}</td>
             <td style="width: 18%"><strong>Number of Alternative Solutions:</strong></td>
             <td>{{ $tenderMaster->no_of_alternative_solutions }}</td>
         </tr>
