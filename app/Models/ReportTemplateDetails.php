@@ -12,6 +12,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Support\Facades\Request;
 
 /**
  * @SWG\Definition(
@@ -236,13 +237,20 @@ class ReportTemplateDetails extends Model
     {
         $monthlySums =[];
 
+        $inputData = Request::all();
+
+        if(isset($inputData['id']))
+        {
+            $budgetMaster = BudgetMaster::find($inputData['id']);
+        }
+
         $monthlySums = array_fill(0, 13, ['total' => 0]);
 
-        if($this->itemType === 2 && $this->isFinalLevel === 1)
+        if($this->itemType === 2 && $this->isFinalLevel === 1 && isset($budgetMaster))
         {
                foreach ($this->gl_codes as $glcode)
                {
-                   $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',1)->where('serviceLineSystemID', 1)->where('companyFinanceYearID',68)->where('budjetAmtRpt','>',0)->groupBy('month')->orderBy('month')->get();
+                   $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->where('budjetAmtRpt','>',0)->groupBy('month')->orderBy('month')->get();
 
 
                        foreach ($monthlySum as $month) {

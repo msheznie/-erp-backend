@@ -528,9 +528,23 @@ class BudjetdetailsAPIController extends AppBaseController
     {
         $reportTemplateDetailsID = $request->input('id');
 
-        $glCodes = ReportTemplateDetails::find($reportTemplateDetailsID)->gl_codes()->with(['items' => function($query) {
-            $query->where('companySystemID',1)->where('serviceLineSystemID', 1)->where('companyFinanceYearID',68)->orderBy('month');
-        }])->get();
+        $budgetMaster = $this->budgetMasterRepository->with(['segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($request->input('budgetmasterID'));
+
+        $glCodes = ReportTemplateDetails::find($reportTemplateDetailsID)
+            ->gl_codes()
+            ->with(['items' => function($query) use ($budgetMaster) {
+
+                $query->where('companySystemID', $budgetMaster->companySystemID)
+                    ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                    ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID)
+                    ->orderBy('month');
+            }])
+            ->whereHas('items', function($query) use ($budgetMaster) {
+                $query->where('companySystemID', $budgetMaster->companySystemID)
+                    ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                    ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+            })
+            ->get();
 
 
         foreach ($glCodes as $glCode) {
@@ -704,7 +718,9 @@ class BudjetdetailsAPIController extends AppBaseController
         $input = $request->all();
 
 
-        foreach ($input['items'] as $item) {
+        $items = collect($input['items'])->forget(12);
+
+        foreach ($items as $item) {
             /** @var Budjetdetails $budgetDetail */
             $budgetDetail = $this->budjetdetailsRepository->findWithoutFail($item['budjetDetailsID']);
 
@@ -735,8 +751,9 @@ class BudjetdetailsAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $items = collect($input['items'])->forget(12);
 
-        foreach ($input['items'] as $item) {
+        foreach ($items as $item) {
             /** @var Budjetdetails $budgetDetail */
             $budgetDetail = $this->budjetdetailsRepository->findWithoutFail($item['budjetDetailsID']);
             if (!empty($budgetDetail)) {
