@@ -3282,7 +3282,6 @@ class Helper
                                 return ['success' => false, 'message' => 'Policy not available for this document.'];
                             }
                         
-                                
 
                             // get approval rolls
                             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
@@ -3333,7 +3332,7 @@ class Helper
 
 
                             $output = $approvalLevel->first();
-                            
+
                             //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
                             if (empty($output)) {
                                 if ($isCategoryWise) {
@@ -3408,7 +3407,7 @@ class Helper
                                 }
                                 // insert rolls to document approved table
                                 Models\DocumentApproved::insert($documentApproved);
-                                
+
                                 $documentApproved = Models\DocumentApproved::where("documentSystemID", $params["document"])
                                     ->where("documentSystemCode", $sorceDocument[$docInforArr["primarykey"]])
                                     ->where("rollLevelOrder", 1)
@@ -9134,13 +9133,14 @@ class Helper
                     }
                     break;
                 case 6:
-                    $output = Models\ExpenseClaimDetails::where('expenseClaimMasterAutoID', $documentSystemCode)
+                    $output = Models\ExpenseClaimDetailsMaster::where('expenseClaimMasterAutoID', $documentSystemCode)
                         ->whereHas('master', function ($query) use ($companySystemID, $documentSystemID) {
                             $query->where('companySystemID', $companySystemID)
                                 ->where('documentSystemID', $documentSystemID);
                         })
                         ->with(['master', 'segment', 'category', 'currency', 'local_currency'])
                         ->get();
+
                     break;
                 case 28:
                     $output = Models\MonthlyAdditionDetail::where('monthlyAdditionsMasterID', $documentSystemCode)
