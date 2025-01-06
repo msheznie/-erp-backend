@@ -856,6 +856,9 @@
 @endif
 
 <div style="height: 152px;">
+    <br>
+    <br>
+
     <table style="width:100%;">
         <tr>
             <td><span style="font-weight:bold;">{{ __('custom.electronically_approved_by') }} :</span></td>
