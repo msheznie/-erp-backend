@@ -34,12 +34,17 @@ class ExpenseAssetAllocationRepository extends BaseRepository
         return ExpenseAssetAllocation::class;
     }
 
-    public function deleteExpenseAssetAllocation($documentSystemCode, $documentSystemID)
+    public function deleteExpenseAssetAllocation($documentSystemCode, $documentSystemID, $documentDetailID = null)
     {
-        $res = ExpenseAssetAllocation::where('documentSystemCode', $documentSystemCode)
-                                     ->where('documentSystemID', $documentSystemID)
-                                     ->delete();
+        $res = ExpenseAssetAllocation::where('documentSystemCode', $documentSystemCode)->where('documentSystemID', $documentSystemID);
 
-        return ['status' => true, 'message' => "Asset allocation deleted succssfully"];
+        // Filter line item $documentDetailID != null
+        if($documentDetailID) {
+            $res->where('documentDetailID', $documentDetailID);
+        }
+
+        $res->delete();
+
+        return ['status' => true, 'message' => "Asset allocation deleted successfully"];
     }
 }

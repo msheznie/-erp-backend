@@ -41,6 +41,7 @@ use App\Models\StockTransfer;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
+use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Repositories\ItemIssueDetailsRepository;
 use App\Services\Inventory\MaterialIssueService;
 use Illuminate\Http\Request;
@@ -68,11 +69,17 @@ class ItemIssueDetailsAPIController extends AppBaseController
     /** @var  ItemIssueDetailsRepository */
     private $itemIssueDetailsRepository;
     private $userRepository;
+    private $expenseAssetAllocationRepository;
 
-    public function __construct(ItemIssueDetailsRepository $itemIssueDetailsRepo,UserRepository $userRepo)
+    public function __construct(
+        ItemIssueDetailsRepository $itemIssueDetailsRepo,
+        UserRepository $userRepo,
+        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo
+    )
     {
         $this->userRepository = $userRepo;
         $this->itemIssueDetailsRepository = $itemIssueDetailsRepo;
+        $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
     }
 
     /**
@@ -1209,6 +1216,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }
         }
 
+        $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation(
+            $itemIssueDetails->itemIssueAutoID,
+            $itemIssue->documentSystemID,
+            $id
+        );
 
         $itemIssueDetails->delete();
 
@@ -1257,6 +1269,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
     {
         $material_request = ItemIssueMaster::find($id);
         if($material_request){
+
+            $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($id, $material_request->documentSystemID);
 
             ItemIssueDetails::where('itemIssueAutoID', $id)->delete();
             ItemIssueMaster::where('itemIssueAutoID', $id)->update(['counter' => 0]);

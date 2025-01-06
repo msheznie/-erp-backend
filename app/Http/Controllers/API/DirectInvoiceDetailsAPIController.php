@@ -25,6 +25,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\DirectInvoiceDetails;
 use App\Models\SegmentMaster;
 use App\Repositories\DirectInvoiceDetailsRepository;
+use App\Repositories\ExpenseAssetAllocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ServiceLine;
@@ -41,10 +42,15 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 {
     /** @var  DirectInvoiceDetailsRepository */
     private $directInvoiceDetailsRepository;
+    private $expenseAssetAllocationRepository;
 
-    public function __construct(DirectInvoiceDetailsRepository $directInvoiceDetailsRepo)
+    public function __construct(
+        DirectInvoiceDetailsRepository $directInvoiceDetailsRepo,
+        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo
+    )
     {
         $this->directInvoiceDetailsRepository = $directInvoiceDetailsRepo;
+        $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
     }
 
     /**
@@ -495,6 +501,12 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
                                  ->where('documentSystemCode', $directInvoiceDetails->directInvoiceAutoID)
                                  ->delete();
 
+        $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation(
+            $directInvoiceDetails->directInvoiceAutoID,
+            $directInvoiceDetails->supplier_invoice_master->documentSystemID,
+            $id
+        );
+
         $directInvoiceDetails->delete();
 
         $bookInvSuppMaster = BookInvSuppMaster::find($directInvoiceDetails->directInvoiceAutoID);
@@ -541,7 +553,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError('There are no details to delete',500);
         }
 
-
+        $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($directInvoiceAutoID, $supInvoice->documentSystemID);
 
         if (!empty($detailExistAll)) {
 

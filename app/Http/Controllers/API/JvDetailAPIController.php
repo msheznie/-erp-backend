@@ -45,6 +45,7 @@ use App\Models\Company;
 use App\Models\ChartOfAccountAllocationDetail;
 use App\Models\SystemGlCodeScenario;
 use App\Models\SystemGlCodeScenarioDetail;
+use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Repositories\JvDetailRepository;
 use App\Repositories\ChartOfAccountAllocationDetailHistoryRepository;
 use App\Services\UserTypeService;
@@ -70,12 +71,19 @@ class JvDetailAPIController extends AppBaseController
     private $jvDetailRepository;
     private $userRepository;
     private $allocationHistoryRepository;
+    private $expenseAssetAllocationRepository;
 
-    public function __construct(JvDetailRepository $jvDetailRepo, UserRepository $userRepo, ChartOfAccountAllocationDetailHistoryRepository $allocationHistoryRepo)
+    public function __construct(
+        JvDetailRepository $jvDetailRepo,
+        UserRepository $userRepo,
+        ChartOfAccountAllocationDetailHistoryRepository $allocationHistoryRepo,
+        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo
+    )
     {
         $this->jvDetailRepository = $jvDetailRepo;
         $this->userRepository = $userRepo;
         $this->allocationHistoryRepository = $allocationHistoryRepo;
+        $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
     }
 
     /**
@@ -495,6 +503,12 @@ class JvDetailAPIController extends AppBaseController
             return $this->sendError('Jv Detail not found');
         }
 
+        $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation(
+            $jvDetail->master->jvMasterAutoId,
+            $jvDetail->master->documentSystemID,
+            $id
+        );
+
         $jvDetail->delete();
 
         return $this->sendResponse($id, 'Jv Detail deleted successfully');
@@ -672,6 +686,8 @@ class JvDetailAPIController extends AppBaseController
         if (empty($detailExistAll)) {
             return $this->sendError('There are no details to delete');
         }
+
+        $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($jvMasterAutoId, $jvMaster->documentSystemID);
 
         if (!empty($detailExistAll)) {
             $deleteDetails = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)->delete();
@@ -1138,6 +1154,8 @@ GROUP BY
             return $this->sendError('There are no details to delete');
         }
         $accruvalMasterID = 0;
+
+        $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($jvMasterAutoId, $jvMaster->documentSystemID);
 
         if (!empty($detailExistAll)) {
 

@@ -42,6 +42,7 @@ use App\Models\SupplierMaster;
 use App\Models\GrvDetailsPrn;
 use App\Models\WarehouseItems;
 use App\Models\WarehouseMaster;
+use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Repositories\GRVDetailsRepository;
 use App\Repositories\GRVMasterRepository;
 use Illuminate\Http\Request;
@@ -71,12 +72,19 @@ class GRVDetailsAPIController extends AppBaseController
     private $gRVDetailsRepository;
     private $gRVMasterRepository;
     private $userRepository;
+    private $expenseAssetAllocationRepo;
 
-    public function __construct(GRVDetailsRepository $gRVDetailsRepo, UserRepository $userRepo, GRVMasterRepository $gRVMasterRepository)
+    public function __construct(
+        GRVDetailsRepository $gRVDetailsRepo,
+        UserRepository $userRepo,
+        GRVMasterRepository $gRVMasterRepository,
+        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo
+    )
     {
         $this->gRVDetailsRepository = $gRVDetailsRepo;
         $this->gRVMasterRepository = $gRVMasterRepository;
         $this->userRepository = $userRepo;
+        $this->expenseAssetAllocationRepo = $expenseAssetAllocationRepo;
     }
 
     /**
@@ -525,6 +533,8 @@ class GRVDetailsAPIController extends AppBaseController
                     $subProduct->delete();
                 }
             }
+
+            $this->expenseAssetAllocationRepo->deleteExpenseAssetAllocation($gRVDetails->grvAutoID, $grvMaster->documentSystemID, $id);
 
             // delete the grv detail
             $gRVDetails->delete();
@@ -1662,6 +1672,8 @@ class GRVDetailsAPIController extends AppBaseController
         if($logisticItems){
             return $this->sendError('GRV details cannot be deleted as this GRV is linked with logistics. Unlink the logistic data and try again.',500);
         }
+
+        $this->expenseAssetAllocationRepo->deleteExpenseAssetAllocation($grvAutoID, $grvMasterData->documentSystemID);
 
         if (!empty($detailExistAll)) {
             foreach ($detailExistAll as $cvDeatil) {

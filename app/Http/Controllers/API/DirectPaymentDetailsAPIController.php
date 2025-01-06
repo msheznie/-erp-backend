@@ -36,6 +36,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
 use App\Repositories\DirectPaymentDetailsRepository;
+use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Illuminate\Http\Request;
@@ -60,13 +61,19 @@ class DirectPaymentDetailsAPIController extends AppBaseController
     private $directPaymentDetailsRepository;
     private $expenseClaimRepository;
     private $paySupplierInvoiceMasterRepository;
+    private $expenseAssetAllocationRepository;
 
-    public function __construct(DirectPaymentDetailsRepository $directPaymentDetailsRepo,ExpenseClaimRepository $expenseClaimRepo,
-                                PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo)
+    public function __construct(
+        DirectPaymentDetailsRepository $directPaymentDetailsRepo,
+        ExpenseClaimRepository $expenseClaimRepo,
+        PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo,
+        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo
+    )
     {
         $this->directPaymentDetailsRepository = $directPaymentDetailsRepo;
         $this->expenseClaimRepository = $expenseClaimRepo;
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
+        $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
     }
 
     /**
@@ -688,6 +695,12 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('You cannot delete Direct Payment Detail, this document already confirmed',500);
         }
 
+        $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation(
+            $directPaymentDetails->master->PayMasterAutoId,
+            $directPaymentDetails->master->documentSystemID,
+            $id
+        );
+
         $directPaymentDetails->delete();
 
         // update master table
@@ -731,6 +744,8 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 }
             }
         }
+
+        $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($id, $paySupplierInvoiceMaster->documentSystemID);
 
         $directPaymentDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->delete();
 
