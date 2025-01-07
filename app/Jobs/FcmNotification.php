@@ -51,7 +51,7 @@ class FcmNotification implements ShouldQueue
     public function handle()
     {
         try {
-            $res = $this->fcmService->sendNotification($tokens, $notificationTitle, $description, $payLoadData);
+            $res = $this->fcmService->sendNotification($this->tokens, $this->notificationTitle, $this->description, $this->payLoadData);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
