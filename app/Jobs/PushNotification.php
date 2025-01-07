@@ -69,6 +69,8 @@ class PushNotification implements ShouldQueue
                 $description = $this->pushNotificationArray['pushNotificationMessage'];
             }
 
+            $payLoadData['notification_type'] = $this->notificationType;
+
             if (!empty($this->pushNotificationUserIds)) {
                 $userIDs = $this->pushNotificationUserIds;
             }
