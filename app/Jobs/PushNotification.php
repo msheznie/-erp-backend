@@ -19,7 +19,7 @@ class PushNotification implements ShouldQueue
     protected $pushNotificationArray;
     protected $pushNotificationUserIds;
     protected $notificationType;
-    protected $sendPushNotification = false;
+    protected $sendPushNotification = true;
     protected $dataBase;
 
     /**
