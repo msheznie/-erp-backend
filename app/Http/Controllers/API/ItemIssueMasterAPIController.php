@@ -2222,7 +2222,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                         erp_itemissuedetails 
                     ON 
                         erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID 
-                    JOIN 
+                    LEFT JOIN 
                         erp_request 
                     ON 
                         erp_itemissuedetails.reqDocID = erp_request.RequestID 
