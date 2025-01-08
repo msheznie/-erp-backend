@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.58.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.58.0...v10.58.1) (2025-01-08)
+
+
+### Bug Fixes
+
+* **treasury management:** cannot clear treasury of PV when local currency equals to rpt [GCP-5792] ([#7418](https://github.com/pbsgears/Gears_BackEnd/issues/7418)) ([fa9e410](https://github.com/pbsgears/Gears_BackEnd/commit/fa9e410ba2c4d2c81b87f77271585bd036ef3652))
+
 ## [10.58.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.57.0...v10.58.0) (2024-12-31)
 
 
