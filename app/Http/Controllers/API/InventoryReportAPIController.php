@@ -176,7 +176,7 @@ class InventoryReportAPIController extends AppBaseController
         $categoryType = $request->input('categoryType');
         $categoryTypeID = collect($categoryType)->pluck('id')->toArray();
 
-        $item = ErpItemLedger::select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+        $item = ErpItemLedger::select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'itemmaster.itemDescription', 'itemmaster.secondaryItemCode')
         ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
         ->whereIn('erp_itemledger.companySystemID', $companiesByGroup)
         ->where('itemmaster.financeCategoryMaster', 1)
