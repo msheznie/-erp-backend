@@ -37,6 +37,7 @@ use App\Models\TaxLedgerDetail;
 use App\Models\DebitNoteDetails;
 use App\Models\TaxVatCategories;
 use App\helper\TaxService;
+use App\helper\CurrencyConversionService;
 use App\Models\Employee;
 use App\Models\SalesReturn;
 use App\Models\ChartOfAccount;
@@ -486,7 +487,7 @@ class SupplierInvoiceTaxLedgerService
             }
         }
         else {
-            $details = SupplierInvoiceItemDetail::selectRaw('erp_grvdetails.noQty,erp_grvdetails.VATAmount as grvVATAmount,erp_bookinvsupp_item_det.exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,(erp_bookinvsupp_item_det.VATAmount) as transVATAmount,(erp_bookinvsupp_item_det.VATAmountLocal) as localVATAmount ,(erp_bookinvsupp_item_det.VATAmountRpt) as rptVATAmount, erp_bookinvsupp_item_det.vatMasterCategoryID, erp_bookinvsupp_item_det.vatSubCategoryID, erp_bookinvsupp_item_det.localCurrencyID as localCurrencyID,erp_bookinvsupp_item_det.companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID as transCurrencyID,erp_bookinvsupp_item_det.companyReportingER as reportingCurrencyER,erp_bookinvsupp_item_det.localCurrencyER as localCurrencyER,supplierTransactionCurrencyER as transCurrencyER')
+            $details = SupplierInvoiceItemDetail::selectRaw('erp_grvdetails.noQty,erp_grvdetails.VATAmount as grvVATAmount,erp_bookinvsupp_item_det.exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,(erp_bookinvsupp_item_det.VATAmount) as transVATAmount,(erp_bookinvsupp_item_det.VATAmountLocal) as localVATAmount ,(erp_bookinvsupp_item_det.VATAmountRpt) as rptVATAmount, erp_bookinvsupp_item_det.vatMasterCategoryID, erp_bookinvsupp_item_det.vatSubCategoryID, erp_bookinvsupp_item_det.localCurrencyID as localCurrencyID,erp_bookinvsupp_item_det.companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID as transCurrencyID,erp_bookinvsupp_item_det.companyReportingER as reportingCurrencyER,erp_bookinvsupp_item_det.localCurrencyER as localCurrencyER,supplierTransactionCurrencyER as transCurrencyER, erp_bookinvsupp_item_det.totTransactionAmount, erp_bookinvsupp_item_det.totLocalAmount, erp_bookinvsupp_item_det.totRptAmount')
                                     ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
                                     ->whereNotNull('erp_bookinvsupp_item_det.vatSubCategoryID')
                                     ->join('erp_tax_vat_sub_categories', 'erp_bookinvsupp_item_det.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
@@ -495,6 +496,10 @@ class SupplierInvoiceTaxLedgerService
             
 
             foreach ($details as $key => $value) {
+                $ledgerData['documentTransAmount'] = $value->totTransactionAmount;
+                $ledgerData['documentLocalAmount'] = $value->totLocalAmount;
+                $ledgerData['documentReportingAmount'] = $value->totRptAmount;
+
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
 
                 $ledgerData['transER'] = $value->transCurrencyER;
@@ -527,19 +532,22 @@ class SupplierInvoiceTaxLedgerService
                     ];
     
                     foreach ($info as $key1 => $value1) {
-                        $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $masterData->supplierTransactionCurrencyID,$masterData->supplierTransactionCurrencyID, $value1['amount']);
+                        $localVATAmount = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $value->localCurrencyID, $value1['amount'], $value->localCurrencyER);
+                    
+                        $reportingVATAmount = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $value->reportingCurrencyID, $value1['amount'], $value->reportingCurrencyER);
+
                         if($value1['amount'] != 0)
                         {
-                        $ledgerData['subCategoryID'] = $value1['subcat'];
-                        $ledgerData['masterCategoryID'] = $value1['mastercat'];
-                        $ledgerData['localAmount'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                        $ledgerData['rptAmount'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                        $ledgerData['transAmount'] = \Helper::roundValue($value1['amount']);
-                        $ledgerData['inputVATGlAccountID'] = $value1['inVat'];
-                        $ledgerData['inputVatTransferAccountID'] =  $value1['inTra'];
-                        $ledgerData['outputVatTransferGLAccountID'] = $value1['outTra'];
-                        $ledgerData['outputVatGLAccountID'] =  $value1['outVat'];
-                        array_push($finalData, $ledgerData);
+                            $ledgerData['subCategoryID'] = $value1['subcat'];
+                            $ledgerData['masterCategoryID'] = $value1['mastercat'];
+                            $ledgerData['localAmount'] = \Helper::roundValue($localVATAmount);
+                            $ledgerData['rptAmount'] = \Helper::roundValue($reportingVATAmount);
+                            $ledgerData['transAmount'] = \Helper::roundValue($value1['amount']);
+                            $ledgerData['inputVATGlAccountID'] = $value1['inVat'];
+                            $ledgerData['inputVatTransferAccountID'] =  $value1['inTra'];
+                            $ledgerData['outputVatTransferGLAccountID'] = $value1['outTra'];
+                            $ledgerData['outputVatGLAccountID'] =  $value1['outVat'];
+                            array_push($finalData, $ledgerData);
                         }
                     }
     
@@ -567,11 +575,22 @@ class SupplierInvoiceTaxLedgerService
                             $sumLocalAmount = $group->sum('localAmount');
                             $sumRptAmount = $group->sum('rptAmount');
                             $sumTransAmount = $group->sum('transAmount');
+
+                            $sumLocalAmountTotal = $group->sum('documentLocalAmount');
+                            $sumRptAmountTotal = $group->sum('documentReportingAmount');
+                            $sumTransAmountTotal = $group->sum('documentTransAmount');
                             
                             $firstItem = $group->first();
                             $firstItem['localAmount'] = $sumLocalAmount;
                             $firstItem['rptAmount'] = $sumRptAmount;
                             $firstItem['transAmount'] = $sumTransAmount;
+
+                            $firstItem['documentLocalAmount'] = $sumLocalAmountTotal;
+                            $firstItem['documentReportingAmount'] = $sumRptAmountTotal;
+                            $firstItem['documentTransAmount'] = $sumTransAmountTotal;
+
+                            $firstItem['localER'] = \Helper::roundValue($sumTransAmountTotal / $sumLocalAmountTotal);
+                            $firstItem['comRptER'] = \Helper::roundValue($sumTransAmountTotal / $sumRptAmountTotal);
                             
                             return $firstItem;
                         })
@@ -665,17 +684,20 @@ class SupplierInvoiceTaxLedgerService
                     ];
     
                     foreach ($info as $key1 => $value1) {
-                        $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $masterData->supplierTransactionCurrencyID,$masterData->supplierTransactionCurrencyID, $value1['amount']);
+                        $localVATAmountDetail = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $value->localCurrencyID, $value1['amount'], $value->localCurrencyER);
+                    
+                        $reportingVATAmountDetail = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $value->companyReportingCurrencyID, $value1['amount'], $value->companyReportingER);
+
                         if($value1['amount'] != 0)
                         {
                             $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
                             $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
-                            $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                            $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                            $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($localVATAmountDetail);
+                            $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($reportingVATAmountDetail);
                             $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
                             $ledgerDetailsData['taxableAmount'] = ($value->totTransactionAmount - \Helper::roundValue($value1['amount']));
-                            $ledgerDetailsData['taxableAmountLocal'] = ($isRCMApplicable) ? $value->totLocalAmount  : ($value->totLocalAmount - \Helper::roundValue($currencyConversionVAT['localAmount']));
-                            $ledgerDetailsData['taxableAmountReporting'] = ($isRCMApplicable) ? $value->totRptAmount : ($value->totRptAmount - \Helper::roundValue($currencyConversionVAT['reportingAmount']));
+                            $ledgerDetailsData['taxableAmountLocal'] = ($isRCMApplicable) ? $value->totLocalAmount  : ($value->totLocalAmount - \Helper::roundValue($localVATAmountDetail));
+                            $ledgerDetailsData['taxableAmountReporting'] = ($isRCMApplicable) ? $value->totRptAmount : ($value->totRptAmount - \Helper::roundValue($reportingVATAmountDetail));
     
                             $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
                             $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
