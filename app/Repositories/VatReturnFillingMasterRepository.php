@@ -107,7 +107,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
-                    ->whereIn('documentSystemID',[20,87,21])
+                    ->whereIn('documentSystemID',[20,87])
                     ->whereHas('customer', function($query) use ($companyCountry){
                         $query->where('customerCountry', $companyCountry);
                     })
@@ -140,7 +140,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
-                    ->whereIn('documentSystemID',[20,87,21])
+                    ->whereIn('documentSystemID',[20,87])
                     ->whereHas('customer', function($query) use ($companyCountry){
                         $query->where('customerCountry', $companyCountry);
                     })
