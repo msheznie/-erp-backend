@@ -518,9 +518,6 @@ class BudjetdetailsAPIController extends AppBaseController
             ->orderBy('sortOrder')
             ->get();
 
-
-
-
         return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
     }
 
@@ -561,7 +558,7 @@ class BudjetdetailsAPIController extends AppBaseController
             $glCode->items->push(['budjetAmtRpt' => $budjetAmtRptSum,'isText' => true]);
         }
 
-        return $this->sendResponse(['glCodes' => $glCodes],"Data reterived successfully");
+        return $this->sendResponse(['glData' => $glCodes],"Data reterived successfully");
     }
 
     public function exportReport(Request $request)

@@ -108,7 +108,7 @@ class ReportTemplateDetails extends Model
 
     public $table = 'erp_companyreporttemplatedetails';
 
-    protected $appends = ['total'];
+    protected $appends = ['total','extend','glData'];
 
 
     const CREATED_AT = 'createdDateTime';
@@ -232,6 +232,29 @@ class ReportTemplateDetails extends Model
     }
 
 
+    public function getGlDataAttribute()
+    {
+        $inputData = Request::all();
+        if(isset($inputData['updatedCategory']['masterID']) && $inputData['updatedCategory']['detID'] == $this->detID)
+        {
+            return $inputData['updatedCategory']['glData'];
+        }
+    }
+
+    public function getExtendAttribute()
+    {
+        $inputData = Request::all();
+
+        if(isset($inputData['updatedCategory']['masterID']) && $inputData['updatedCategory']['detID'] == $this->detID)
+        {
+            return true;
+        }else {
+            return false;
+        }
+
+
+
+    }
 
     public function getTotalAttribute()
     {
@@ -250,22 +273,137 @@ class ReportTemplateDetails extends Model
         {
                foreach ($this->gl_codes as $glcode)
                {
-                   $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->where('budjetAmtRpt','>',0)->groupBy('month')->orderBy('month')->get();
+                   $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
 
 
-                       foreach ($monthlySum as $month) {
+                       foreach ($monthlySum as $key => $month) {
                            if (!isset($monthlySums[$month->month-1])) {
                                $monthlySums[$month->month-1]['total'] = 0;
                            }
+
                            $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
+
+                           if($key == 12)
+                           {
+                               $monthlySums[12]['total'] = (!collect($monthlySums)->sum('total')) ? 0 : collect($monthlySums)->sum('total') ;
+
+                           }
+
+
                        }
 
                }
 
                // 13 th column as total
-                $monthlySums[12]['total'] = (collect($monthlySums)->sum('total') == 0) ? 0 : collect($monthlySums)->sum('total') ;
 
         }
+
+
+        if($this->itemType === 3 && $this->isFinalLevel === 1 & isset($budgetMaster) )
+        {
+
+           $subCategories =ReportTemplateDetails::find($this->masterID)->subcategory;
+           $monthlySums = array_fill(0, 13, ['total' => 0]);
+
+           foreach ($subCategories as $subCategory)
+           {
+               $glCodes = $subCategory->gl_codes()->get();
+
+               if($glCodes->isEmpty())
+               {
+                    $subSubCategories = $subCategory->subCategory;
+
+                    foreach ($subSubCategories as $subCategory1)
+                    {
+                        $glCodes1 = $subCategory1->gl_codes()->get();
+
+                        if($glCodes1->isEmpty())
+                        {
+                            $subSubSubCategoreis = $subCategory1->subCategory;
+
+                            foreach ($subSubSubCategoreis as $subCategory2)
+                            {
+                                $glCodes2 = $subCategory2->gl_codes()->get();
+
+                                if($glCodes2->isEmpty())
+                                {
+                                    $subSubSubSubCategoreis = $subSubSubCategoreis->subCategory;
+
+                                    foreach ($subSubSubSubCategoreis as $subCategory3)
+                                    {
+                                        $glCodes3 = $subCategory3->gl_codes()->get();
+                                        foreach ($glCodes3 as $glcode)
+                                        {
+                                            $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
+
+                                            foreach ($monthlySum as $month) {
+                                                if (!isset($monthlySums[$month->month-1])) {
+                                                    $monthlySums[$month->month-1]['total'] = 0;
+                                                }
+
+                                                $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
+                                            }
+
+                                        }
+                                    }
+                                }else {
+                                    foreach ($glCodes2 as $glcode)
+                                    {
+                                        $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
+
+                                        foreach ($monthlySum as $month) {
+                                            if (!isset($monthlySums[$month->month-1])) {
+                                                $monthlySums[$month->month-1]['total'] = 0;
+                                            }
+
+                                            $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
+                                        }
+
+                                    }
+                                }
+
+                            }
+                        }else {
+                            foreach ($glCodes1 as $glcode)
+                            {
+                                $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
+
+                                foreach ($monthlySum as $month) {
+                                    if (!isset($monthlySums[$month->month-1])) {
+                                        $monthlySums[$month->month-1]['total'] = 0;
+                                    }
+
+                                    $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
+                                }
+
+                            }
+                        }
+                    }
+               }else {
+                   foreach ($glCodes as $glcode)
+                   {
+                       $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
+
+                       foreach ($monthlySum as $month) {
+                           if (!isset($monthlySums[$month->month-1])) {
+                               $monthlySums[$month->month-1]['total'] = 0;
+                           }
+
+                           $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
+                       }
+
+                   }
+               }
+
+
+
+           }
+
+        }
+
+
+
+        $monthlySums[12]['total'] = (!collect($monthlySums)->sum('total')) ? 0 : collect($monthlySums)->sum('total') ;
 
 
         return $monthlySums;
