@@ -17,7 +17,10 @@ class FcmService
 
         $jsonKeyFile = storage_path('google-service-account.json');
         $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
-        $this->credentials = new ServiceAccountCredentials($scopes, $jsonKeyFile);
+
+        if (file_exists($jsonKeyFile)) {
+            $this->credentials = new ServiceAccountCredentials($scopes, $jsonKeyFile);
+        }        
     }
 
     /**
@@ -31,6 +34,11 @@ class FcmService
      */
     public function sendNotification(array $deviceTokens, string $title, string $body, array $data = null)
     {
+        if (!file_exists(storage_path('google-service-account.json'))) {
+            Log::error("google-service-account.json not found");
+            return false;
+        } 
+        
         $accessToken = $this->getAccessToken();
 
         $headers = [
