@@ -13,7 +13,7 @@ class FcmService
 
     public function __construct()
     {
-        $this->fcmUrl = 'https://fcm.googleapis.com/v1/projects/' . env('FIREBASE_PROJECT_ID') . '/messages:send';
+        $this->fcmUrl = 'https://fcm.googleapis.com/v1/projects/' . env('FIREBASE_PROJECT_ID', 'gears-erp') . '/messages:send';
 
         $jsonKeyFile = storage_path('google-service-account.json');
         $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
