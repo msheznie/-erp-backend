@@ -185,7 +185,7 @@ class ReportTemplateDetails extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     /**
@@ -271,136 +271,42 @@ class ReportTemplateDetails extends Model
 
         if($this->itemType === 2 && $this->isFinalLevel === 1 && isset($budgetMaster))
         {
-               foreach ($this->gl_codes as $glcode)
-               {
-                   $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
+            foreach ($this->gl_codes as $glcode)
+            {
+                $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
 
 
-                       foreach ($monthlySum as $key => $month) {
-                           if (!isset($monthlySums[$month->month-1])) {
-                               $monthlySums[$month->month-1]['total'] = 0;
-                           }
+                foreach ($monthlySum as $key => $month) {
+                    if (!isset($monthlySums[$month->month-1])) {
+                        $monthlySums[$month->month-1]['total'] = 0;
+                    }
 
-                           $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
+                    $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
 
-                           if($key == 12)
-                           {
-                               $monthlySums[12]['total'] = (!collect($monthlySums)->sum('total')) ? 0 : collect($monthlySums)->sum('total') ;
+                    if($key == 12)
+                    {
+                        $monthlySums[12]['total'] = (!collect($monthlySums)->sum('total')) ? 0 : collect($monthlySums)->sum('total') ;
 
-                           }
+                    }
 
 
-                       }
+                }
 
-               }
+            }
 
-               // 13 th column as total
 
         }
 
 
         if($this->itemType === 3 && $this->isFinalLevel === 1 & isset($budgetMaster) )
         {
-
-           $subCategories =ReportTemplateDetails::find($this->masterID)->subcategory;
-           $monthlySums = array_fill(0, 13, ['total' => 0]);
-
-           foreach ($subCategories as $subCategory)
-           {
-               $glCodes = $subCategory->gl_codes()->get();
-
-               if($glCodes->isEmpty())
-               {
-                    $subSubCategories = $subCategory->subCategory;
-
-                    foreach ($subSubCategories as $subCategory1)
-                    {
-                        $glCodes1 = $subCategory1->gl_codes()->get();
-
-                        if($glCodes1->isEmpty())
-                        {
-                            $subSubSubCategoreis = $subCategory1->subCategory;
-
-                            foreach ($subSubSubCategoreis as $subCategory2)
-                            {
-                                $glCodes2 = $subCategory2->gl_codes()->get();
-
-                                if($glCodes2->isEmpty())
-                                {
-                                    $subSubSubSubCategoreis = $subSubSubCategoreis->subCategory;
-
-                                    foreach ($subSubSubSubCategoreis as $subCategory3)
-                                    {
-                                        $glCodes3 = $subCategory3->gl_codes()->get();
-                                        foreach ($glCodes3 as $glcode)
-                                        {
-                                            $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
-
-                                            foreach ($monthlySum as $month) {
-                                                if (!isset($monthlySums[$month->month-1])) {
-                                                    $monthlySums[$month->month-1]['total'] = 0;
-                                                }
-
-                                                $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
-                                            }
-
-                                        }
-                                    }
-                                }else {
-                                    foreach ($glCodes2 as $glcode)
-                                    {
-                                        $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
-
-                                        foreach ($monthlySum as $month) {
-                                            if (!isset($monthlySums[$month->month-1])) {
-                                                $monthlySums[$month->month-1]['total'] = 0;
-                                            }
-
-                                            $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
-                                        }
-
-                                    }
-                                }
-
-                            }
-                        }else {
-                            foreach ($glCodes1 as $glcode)
-                            {
-                                $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
-
-                                foreach ($monthlySum as $month) {
-                                    if (!isset($monthlySums[$month->month-1])) {
-                                        $monthlySums[$month->month-1]['total'] = 0;
-                                    }
-
-                                    $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
-                                }
-
-                            }
-                        }
-                    }
-               }else {
-                   foreach ($glCodes as $glcode)
-                   {
-                       $monthlySum = $glcode->items()->select('budjetAmtRpt','month')->where('companySystemID',$budgetMaster['companySystemID'])->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])->where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->where('budgetmasterID',$budgetMaster['budgetmasterID'])->groupBy('month')->orderBy('month')->get();
-
-                       foreach ($monthlySum as $month) {
-                           if (!isset($monthlySums[$month->month-1])) {
-                               $monthlySums[$month->month-1]['total'] = 0;
-                           }
-
-                           $monthlySums[$month->month-1]['total'] += $month->budjetAmtRpt;
-                       }
-
-                   }
-               }
-
-
-
-           }
-
+            $monthlySums = $this->calculateGLTotalAmounts($budgetMaster,$monthlySums);
         }
 
+
+        if($this->itemType === 3 && $this->isFinalLevel === 0 & isset($budgetMaster) && is_null($this->masterID)) {
+            $monthlySums = $this->calculateGLTotalAmounts($budgetMaster,$monthlySums);
+        }
 
 
         $monthlySums[12]['total'] = (!collect($monthlySums)->sum('total')) ? 0 : collect($monthlySums)->sum('total') ;
@@ -409,4 +315,52 @@ class ReportTemplateDetails extends Model
         return $monthlySums;
 
     }
+
+
+    public function calculateGLTotalAmounts($budgetMaster, $monthlySums)
+    {
+        $processGLCodes = function ($glCodes, $monthlySums) use ($budgetMaster, &$processGLCodes) {
+            foreach ($glCodes as $glCode) {
+                $monthlySum = $glCode->items()
+                    ->select('budjetAmtRpt', 'month')
+                    ->where('companySystemID', $budgetMaster['companySystemID'])
+                    ->where('serviceLineSystemID', $budgetMaster['serviceLineSystemID'])
+                    ->where('companyFinanceYearID', $budgetMaster['companyFinanceYearID'])
+                    ->where('budgetmasterID', $budgetMaster['budgetmasterID'])
+                    ->groupBy('month')
+                    ->orderBy('month')
+                    ->get();
+
+                foreach ($monthlySum as $month) {
+                    $monthIndex = $month->month - 1;
+                    $monthlySums[$monthIndex]['total'] = ($monthlySums[$monthIndex]['total'] ?? 0) + $month->budjetAmtRpt;
+                }
+            }
+
+            return $monthlySums;
+        };
+
+        $traverseCategories = function ($categories, $monthlySums) use ($processGLCodes, &$traverseCategories) {
+            foreach ($categories as $category) {
+                $glCodes = $category->gl_codes;
+
+                if (!is_null($glCodes)) {
+                    $monthlySums = $processGLCodes($glCodes, $monthlySums);
+                } else {
+                    $subCategories = $category->subCategory()->get();
+                    if (!is_null($subCategories)) {
+                        $monthlySums = $traverseCategories($subCategories, $monthlySums);
+                    }
+                }
+            }
+
+            return $monthlySums;
+        };
+
+        $monthlySums = $traverseCategories($this->gl_codes, $monthlySums);
+
+        return $monthlySums;
+    }
+
+
 }
