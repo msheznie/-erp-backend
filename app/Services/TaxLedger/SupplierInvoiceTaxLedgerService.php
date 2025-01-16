@@ -93,11 +93,17 @@ class SupplierInvoiceTaxLedgerService
         $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
         $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
         
-        $exampteVat = TaxVatCategories::where('subCatgeoryType',3)->where('isActive',1)->first();
+
+        $exampteVat = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+            $query->where('companySystemID', $masterData->companySystemID)->where('taxCategory', 2);
+        })->where('isActive', 1)->first();
+
         $exemptVatSub = $exampteVat?$exampteVat->taxVatSubCategoriesAutoID:NULL;
         $exemptVatMain = $exampteVat?$exampteVat->mainCategory:NULL;
 
-        $standardRatedSupply = TaxVatCategories::where('subCatgeoryType',1)->where('isActive',1)->first();
+        $standardRatedSupply = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 1)->whereHas('tax', function ($query) use ($masterData) {
+            $query->where('companySystemID', $masterData->companySystemID)->where('taxCategory', 2);
+        })->where('isActive', 1)->first();
         $standardRatedSupplyID = $standardRatedSupply?$standardRatedSupply->taxVatSubCategoriesAutoID:null;
 
         if ($masterData->documentType == 1 || $masterData->documentType == 4) {
