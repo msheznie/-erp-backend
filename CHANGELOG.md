@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.58.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.58.1...v10.58.2) (2025-01-16)
+
+
+### Bug Fixes
+
+* **Leave Accrual:** ERP Job |  Monthly Accrual - daily check for start of month [GHR-2518] ([#7398](https://github.com/pbsgears/Gears_BackEnd/issues/7398)) ([4e73919](https://github.com/pbsgears/Gears_BackEnd/commit/4e739192df681afc987577de7009c500cfc60bee))
+
 ## [10.58.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.58.0...v10.58.1) (2025-01-08)
 
 
