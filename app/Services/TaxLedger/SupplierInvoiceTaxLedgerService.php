@@ -672,12 +672,19 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount = (($value->grv_detail->VATAmount - $normalVAT) * $value->grv_detail->noQty);
                     
                     $standardAmount =  ($normalVAT * $value->grv_detail->noQty);
-
-    
-    
+                    $totalAmount = $standardAmount + $exemptAmount;
+                    
+                    $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
+                        $query->where('companySystemID', $masterData->companySystemID);
+                    })->where('isActive', 1)->first();
+                    
+                    $isCost = $expenseCOA && $expenseCOA->expenseGL === null;
+                    $texableAmount = 0;
+                    $texableAmountLocal = 0;
+                    $texableAmountRpt = 0;
                     $info = [
-                        ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
-                        ["amount" => $standardAmount,"subcat" => $value->vatSubCategoryID,"mastercat" => $value->vatMasterCategoryID,"inVat" => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,
+                        ["type" => 1 ,"amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
+                        ["type" => 2 ,"amount" => $standardAmount,"subcat" => $value->vatSubCategoryID,"mastercat" => $value->vatMasterCategoryID,"inVat" => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,
                         "inTra" => isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null,
                         "outVat" => isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null,
                          "outTra" => isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null]
@@ -690,14 +697,33 @@ class SupplierInvoiceTaxLedgerService
 
                         if($value1['amount'] != 0)
                         {
+
+                            $amountToDeduct = $isCost ? (($value1['type'] == 1) ? $standardAmount : $totalAmount) : $totalAmount;
+                            $texableAmount = $value->totTransactionAmount - \Helper::roundValue($amountToDeduct);
+
+
+                            $standardAmountLocal = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $value->localCurrencyID, $standardAmount, $value->localCurrencyER);
+                            $totalAmountLocal = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $value->localCurrencyID, $totalAmount, $value->localCurrencyER);
+
+                            $amountToDeductLocal = $isCost ? (($value1['type'] == 1) ? $standardAmountLocal : $totalAmountLocal) : $totalAmountLocal;
+                            $texableAmountLocal = $value->totTransactionAmount - \Helper::roundValue($amountToDeductLocal);
+
+
+                            $standardAmountRpt = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $value->localCurrencyID, $standardAmount, $value->companyReportingER);
+                            $totalAmountRpt = CurrencyConversionService::localAndReportingConversionByER($masterData->supplierTransactionCurrencyID, $value->localCurrencyID, $totalAmount, $value->companyReportingER);
+
+                            $amountToDeductRpt = $isCost ? (($value1['type'] == 1) ? $standardAmountRpt : $standardAmountRpt) : $totalAmountRpt;
+                            $texableAmountRpt = $value->totTransactionAmount - \Helper::roundValue($amountToDeductRpt);
+
+                            
                             $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
                             $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
                             $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($localVATAmountDetail);
                             $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($reportingVATAmountDetail);
                             $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
-                            $ledgerDetailsData['taxableAmount'] = ($value->totTransactionAmount - \Helper::roundValue($value1['amount']));
-                            $ledgerDetailsData['taxableAmountLocal'] = ($isRCMApplicable) ? $value->totLocalAmount  : ($value->totLocalAmount - \Helper::roundValue($localVATAmountDetail));
-                            $ledgerDetailsData['taxableAmountReporting'] = ($isRCMApplicable) ? $value->totRptAmount : ($value->totRptAmount - \Helper::roundValue($reportingVATAmountDetail));
+                            $ledgerDetailsData['taxableAmount'] = $texableAmount;
+                            $ledgerDetailsData['taxableAmountLocal'] = ($isRCMApplicable) ? $value->totLocalAmount  : $texableAmountLocal;
+                            $ledgerDetailsData['taxableAmountReporting'] = ($isRCMApplicable) ? $value->totRptAmount : $texableAmountRpt;
     
                             $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
                             $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
