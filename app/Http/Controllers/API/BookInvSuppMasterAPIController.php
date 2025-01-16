@@ -884,7 +884,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                         $unbilledSumData = UnbilledGrvGroupBy::find($row['unbilledgrvAutoID']);
 
-                        if (is_null($unbilledSumData->purhaseReturnAutoID)) {
+                        if (isset($unbilledSumData) && is_null($unbilledSumData->purhaseReturnAutoID)) {
                             $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $row['unbilledgrvAutoID'])
                                 ->sum('totTransactionAmount');
 
