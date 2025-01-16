@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\LeaveBalanceValidationHelper;
 
-
 class LeaveAccrualService
 {
     public $company_id;
@@ -23,7 +22,7 @@ class LeaveAccrualService
     public $dailyBasis;
     public $date;
     public $date_time;
-    private $debug = false;
+    public $debug;
 
     public $leave_groups= [];
     public $emp_arr= [];
@@ -35,7 +34,7 @@ class LeaveAccrualService
     public $month_det;
     public $accrualType;
 
-    public function __construct($company_data, $accrual_type_det, $header_data, $debugDate = null)
+    public function __construct($company_data, $accrual_type_det, $header_data, $debugDate = null, $debug = false)
     {
         $this->company_id = $company_data['id'];
         $this->company_code = $company_data['code'];
@@ -45,8 +44,11 @@ class LeaveAccrualService
         $this->date_time = Carbon::now();
         $this->date = $this->date_time->format('Y-m-d');
         $this->accrualType = $accrual_type_det['description'];
-        $this->debugDate = $debugDate;
-
+        $this->debug = $debug;
+        
+        if($debugDate) {
+            $this->date = $debugDate;
+        } 
         if($header_data){
             $this->header_data = $header_data;
         }
@@ -59,7 +61,7 @@ class LeaveAccrualService
         }
 
         if(!$this->dailyBasis){
-            $leaveBalanceBasedOn = LeaveBalanceValidationHelper::validate($this->company_id,$this->date);
+            $leaveBalanceBasedOn = LeaveBalanceValidationHelper::validate($this->company_id, $this->date);
 
             if(!$leaveBalanceBasedOn['status']){
                 Log::error($leaveBalanceBasedOn['message']." ".$this->log_suffix());
@@ -69,7 +71,6 @@ class LeaveAccrualService
         }
 
         foreach ($this->leave_groups as $group){
-
 
             $status = $this->get_employee_list($group['leaveGroupID'], $group['description'], true);
             if($status){
@@ -168,10 +169,17 @@ class LeaveAccrualService
 
     function pending_sql_monthly($str, $leaveGroupID, $master_id_filter): string
     {
-        $accTrigDate = $this->accrualTriggerDate();
+        $this->month_det = LeaveBalanceValidationHelper::validate_month($this->company_id,$this->date)['details'];
+
+        // If month detail not found, throw error to log table
+        if (empty($this->month_det)) {
+            $logMessage = "Details not available - Company Id: {$this->company_id}, Date: {$this->date}";
+            $this->insertToLogTb($logMessage, 'error', 'Leave Accrual Monthly', $this->company_id);
+        }
+        
         $year = Carbon::parse( $this->date )->format('Y');
         $month = Carbon::parse( $this->date )->format('m');
-
+        $lastDate = $this->month_det['dateTo'];
         $month_date_filter = "AND `year` = {$year} AND `month` = {$month}";
 
         if ($this->year_det['accrualPolicyValue'] == 3){
@@ -182,7 +190,7 @@ class LeaveAccrualService
             FROM srp_employeesdetails AS emp
             JOIN srp_erp_leavegroupdetails AS gd ON gd.leaveGroupID = emp.leaveGroupID AND policyMasterID = 3             
             JOIN srp_erp_leavetype ON gd.leaveTypeID = srp_erp_leavetype.leaveTypeID 
-            WHERE Erp_companyID = {$this->company_id} AND isDischarged != 1 AND DateAssumed <= '{$accTrigDate}'  
+            WHERE Erp_companyID = {$this->company_id} AND isDischarged != 1 AND DateAssumed <= '{$lastDate}'  
             AND emp.leaveGroupID IS NOT NULL AND emp.leaveGroupID = {$leaveGroupID} AND
             (EIdNo, srp_erp_leavetype.leaveTypeID) NOT IN (
                 SELECT empID, leaveType FROM srp_erp_leaveaccrualmaster AS m
@@ -193,28 +201,36 @@ class LeaveAccrualService
     }
 
     function create_accrual(){
-        $accrualDate = $this->accrualTriggerDate();
-        if($this->debugDate) {
-            $accrualDate = $this->date;
+
+        $this->month_det = LeaveBalanceValidationHelper::validate_month($this->company_id, $this->date)['details'] ?? null;
+
+        // If month detail not found, throw error to log table
+        if (empty($this->month_det)) {
+            $logMessage = "Details not available - Company Id: {$this->company_id}, Date: {$this->date}";
+            $this->insertToLogTb($logMessage, 'error', 'Leave Accrual Monthly', $this->company_id);
         }
-
+        
         $accrualTriggerBasedOnValues = [1 => 'First of Month', 2 => 'End of Month'];
-        if ($this->policy == 3) {
-            if($accrualDate == $this->date) {
-                $accrualTriggerBasedOn= SME::accrualTriggerBasedOn($this->company_id);
-                $policyMsg = $accrualTriggerBasedOnValues[$accrualTriggerBasedOn];
-                $this->insertToLogTb(
-                    "Monthly Accrual triggered at :  {$accrualDate} based on '{$policyMsg}' policy",
-                    'info', 'Leave Accrual Monthly', $this->company_id);
-
+        $accrualTriggerBasedOn= SME::accrualTriggerBasedOn($this->company_id);
+        $policyMsg = $accrualTriggerBasedOnValues[$accrualTriggerBasedOn];
+        $logData ="Annual accrual triggered at : {$this->date}"; 
+        $accrualDesc = "Leave Accrual Annual";
+        if($this->policy == 3) {
+            $logData = "Monthly Accrual triggered at : {$this->date} based on '{$policyMsg}' policy";
+            $accrualDesc = "Leave Accrual Monthly";
+        } 
+      
+        if ($this->policy == 3 && $accrualTriggerBasedOn == 2) {
+            if($this->month_det['dateTo'] == $this->date) {
+                $policyMsg = $accrualTriggerBasedOnValues[$accrualTriggerBasedOn]; 
+                $this->insertToLogTb( $logData, 'info', $accrualDesc , $this->company_id);
                 $this->createAccrualData();
             }
-        } else {
-            $this->insertToLogTb(
-                "Annual accrual triggered at :  {$this->date}",
-                'info', 'Leave Accrual Annual', $this->company_id);
+        }else{
+            $this->insertToLogTb( $logData, 'info', $accrualDesc , $this->company_id);
             $this->createAccrualData();
-        }
+        };
+
     }
 
     function createAccrualData() {
@@ -276,6 +292,7 @@ class LeaveAccrualService
             'year' => Carbon::parse( $this->date )->format('Y'),
             'month' => Carbon::parse( $this->date )->format('m'),
             'leaveGroupID' => $this->header_data['leaveGroupID'],
+            'accrualPolicyValue' => $this->year_det['accrualPolicyValue'],
             'createdpc' => gethostname(),
             'policyMasterID' => $this->policy,
             'createdUserGroup' => '',
@@ -369,7 +386,7 @@ class LeaveAccrualService
         return " $this->company_code | $this->company_name \t on file:  " . __CLASS__ ." \tline no : {$line_no}";
     }
 
-    function insertToLogTb($logData, $type, $desc, $companyId){
+    public static function insertToLogTb($logData, $type, $desc, $companyId){
 
         $data = [
             'company_id'=> $companyId,

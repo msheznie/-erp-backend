@@ -17,15 +17,18 @@ class LeaveAccrualInitiate implements ShouldQueue
 
     public $dispatch_db;
     public $debugDate;
+    public $debug;
+    public $groupId;
     protected $company_code = '';
     protected $company_name = '';
+    protected $companyId = '';
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $debugDate = null)
+    public function __construct($dispatch_db, $debugDate = null, $debug = false)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -35,6 +38,7 @@ class LeaveAccrualInitiate implements ShouldQueue
 
         $this->dispatch_db = $dispatch_db;
         $this->debugDate = $debugDate;
+        $this->debug = $debug;
     }
 
     /**
@@ -46,9 +50,8 @@ class LeaveAccrualInitiate implements ShouldQueue
     {
         $path = CommonJobService::get_specific_log_file('leave-accrual');
         Log::useFiles($path);
-
         $db = $this->dispatch_db;
-
+        
         CommonJobService::db_switch( $db );
 
         $company_list = CommonJobService::company_list();
@@ -57,21 +60,23 @@ class LeaveAccrualInitiate implements ShouldQueue
             Log::error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
         else{
-
+            
             $service_types = CommonJobService::leave_accrual_service_types();
             $seconds = 0;
             foreach ($company_list as $company){
                 $company = $company->toArray();
-                ['code'=> $company_code, 'name'=> $company_name] = $company;
+                ['code'=> $company_code, 'name'=> $company_name, 'id'=> $companyId] = $company;
                 $this->company_code = $company_code;
                 $this->company_name = $company_name;
+                $this->companyId = $companyId;
 
                 foreach ($service_types as $accrual_type_det){
-                    $acc_type = $accrual_type_det['description'];
+                    $accType = $accrual_type_det['description'];
+                    $logData = $accType." triggered : ".$company_code;
 
-                    $ser = new LeaveAccrualService($company, $accrual_type_det, []);
+                    $ser = new LeaveAccrualService($company, $accrual_type_det, [], null, $this->debug);
                     $groups = $ser->prepare_for_accrual();
-
+              
                     /*
                      $groups example
 
@@ -94,16 +99,18 @@ class LeaveAccrualInitiate implements ShouldQueue
                     */
 
                     if(count($groups) > 0){
-                        
+                        $this->groupId = '';
                         foreach ($groups as $group){
                             $group = array_only($group, ['leaveGroupID', 'description']);
-
-
+                            $this->groupId .= $group['leaveGroupID'].', ' ?? null;
                             $seconds += 30;
-                            LeaveAccrualProcess::dispatch($db, $company, $accrual_type_det, $group, $this->debugDate)
+                           
+                            LeaveAccrualProcess::dispatch($db, $company, $accrual_type_det, $group, $this->debugDate, $this->debug)
                                 ->delay(now()->addSeconds($seconds));
                         }
                     }
+
+                    LeaveAccrualService::insertToLogTb( $logData, 'info', $accType.' ~ Leave Group: '.$this->groupId , $this->companyId);
                 }
             }
         }
