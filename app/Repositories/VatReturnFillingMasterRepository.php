@@ -196,7 +196,8 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     })
                     ->where(function ($query) use ($companyCountry) {
                         $query->whereHas('supplier', function ($query) use ($companyCountry) {
-                            $query->subjectToGCC();
+                            $query->subjectToGCC()
+                                ->where('supplierCountryID', '!=', $companyCountry);
                         })->orWhere(function ($query) {
                             $query->whereNull('partyAutoID')
                                 ->where('documentSystemID', 4);
