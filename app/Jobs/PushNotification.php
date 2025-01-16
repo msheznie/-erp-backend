@@ -21,6 +21,7 @@ class PushNotification implements ShouldQueue
     protected $notificationType;
     protected $sendPushNotification = true;
     protected $dataBase;
+    protected $documentSystemIds;
 
     /**
      * Create a new job instance.
@@ -45,6 +46,7 @@ class PushNotification implements ShouldQueue
         $this->pushNotificationArray = $pushNotificationArray;
         $this->pushNotificationUserIds = $pushNotificationUserIds;
         $this->notificationType = $notificationType;
+        $this->documentSystemIds = [1, 2, 4, 5, 11, 15, 19, 20, 21, 50, 51, 52];
     }
 
     /**
@@ -67,6 +69,10 @@ class PushNotification implements ShouldQueue
             if (!empty($this->pushNotificationArray)) {
                 $payLoadData = $this->pushNotificationArray;
                 $description = $this->pushNotificationArray['pushNotificationMessage'];
+            }
+
+            if(!in_array($payLoadData['documentSystemID'], $this->documentSystemIds)) {
+                return;
             }
 
             $payLoadData['notification_type'] = $this->notificationType;
