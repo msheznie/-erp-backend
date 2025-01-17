@@ -2852,7 +2852,10 @@ GROUP BY
     final.companyID,
     final.CompanyName,
     final.documentSystemCode,
-    final.documentSystemID
+    final.documentSystemID,
+    final.balanceLocal,
+    final.InvoiceLocalAmount,
+    final.documentLocalAmount
 FROM
     (
 SELECT
@@ -2936,32 +2939,32 @@ SELECT
 CASE 
         WHEN erp_generalledger.documentSystemID = 19 THEN 
         SUM(erp_generalledger.documentLocalAmount) + 
-IFNULL(
-    (
-     SELECT 
-            SUM(IFNULL(erp_custreceivepaymentdet.receiveAmountLocal, 0)) 
-        FROM 
-            erp_custreceivepaymentdet 
-        INNER JOIN 
-            erp_matchdocumentmaster 
-        ON 
-            erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID 
-            AND 
-            erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
-        WHERE 
-            erp_matchdocumentmaster.matchingConfirmedYN = 1 
-            AND erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_generalledger.documentSystemCode 
-            AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID
-        GROUP BY 
-            erp_custreceivepaymentdet.custReceivePaymentAutoID 
-    ), 
-    0
-) ELSE SUM(erp_generalledger.documentLocalAmount)
+        ROUND(IFNULL(
+            (
+             SELECT 
+                    SUM(IFNULL(erp_custreceivepaymentdet.receiveAmountLocal, 0)) 
+                FROM 
+                    erp_custreceivepaymentdet 
+                INNER JOIN 
+                    erp_matchdocumentmaster 
+                ON 
+                    erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID 
+                    AND 
+                    erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
+                WHERE 
+                    erp_matchdocumentmaster.matchingConfirmedYN = 1 
+                    AND erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_generalledger.documentSystemCode 
+                    AND erp_matchdocumentmaster.documentSystemID = erp_generalledger.documentSystemID
+                GROUP BY 
+                    erp_custreceivepaymentdet.custReceivePaymentAutoID 
+            ), 
+            0
+        ), currLocal.DecimalPlaces) ELSE SUM(erp_generalledger.documentLocalAmount)
     END AS documentLocalAmount,
     CASE 
         WHEN erp_generalledger.documentSystemID = 19 THEN 
         SUM(erp_generalledger.documentTransAmount) + 
-IFNULL(
+        ROUND(IFNULL(
     (
         SELECT 
             SUM(IFNULL(erp_custreceivepaymentdet.receiveAmountTrans, 0)) 
@@ -2980,7 +2983,8 @@ IFNULL(
             erp_custreceivepaymentdet.custReceivePaymentAutoID
     ), 
     0
-)  ELSE SUM(erp_generalledger.documentTransAmount)
+    ),currLocal.DecimalPlaces)
+    ELSE SUM(erp_generalledger.documentTransAmount)
     END AS documentTransAmount,
     CASE 
         WHEN erp_generalledger.documentSystemID = 19 THEN 
