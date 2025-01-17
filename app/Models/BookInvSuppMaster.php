@@ -682,10 +682,9 @@ class BookInvSuppMaster extends Model
             }])->select('bookingSupInvoiceDetAutoID', 'bookingSuppMasInvAutoID', 'unbilledgrvAutoID');
         }, 'item_details' => function ($item) {
             $item->select(
-                'bookingSuppMasInvAutoID', 'itemCode', 'itemPrimaryCode','itemDescription', 'discountPercentage', 'discountAmount', 'VATPercentage', 'VATAmount', 'whtAmount', 'netAmount', 'noQty');
+                'bookingSuppMasInvAutoID', 'itemCode', 'itemPrimaryCode', 'itemDescription', 'discountPercentage', 'discountAmount', 'VATPercentage', 'VATAmount', 'whtAmount', 'netAmount', 'noQty');
         }, 'approved_by' => function ($query) {
-            $query->with(['employee' => function ($e)
-            {
+            $query->with(['employee' => function ($e) {
                 $e->select('empFullName', 'employeeSystemID');
             }]);
             $query->select('companySystemID',
@@ -706,7 +705,7 @@ class BookInvSuppMaster extends Model
                 'masterCompanySystemIDReorting'
             );
         }, 'transactioncurrency' => function ($tc) {
-            $tc->select('currencyID', 'DecimalPlaces', 'CurrencyCode' );
+            $tc->select('currencyID', 'DecimalPlaces', 'CurrencyCode');
         }, 'supplier' => function ($s) {
             $s->select('supplierCodeSystem', 'primarySupplierCode', 'supplierName');
         }, 'confirmed_by' => function ($q) {
@@ -716,6 +715,11 @@ class BookInvSuppMaster extends Model
         $invoiceDetails['isProjectBase'] = Helper::checkPolicy($invoiceDetails->companySystemID, 56);;
 
         return $invoiceDetails;
+    }
+    public function generalLedger()
+    {
+        return $this->hasMany('App\Models\GeneralLedger', 'documentSystemCode', 'bookingSuppMasInvAutoID')
+            ->where('documentSystemID', 11);
     }
 
 }
