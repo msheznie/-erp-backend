@@ -910,6 +910,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('erp_language_master', 'ERPLanguageMasterAPIController');
                 Route::post('store-employee-language', 'ERPLanguageMasterAPIController@storeEmployeeLanguage');
 
+
                 Route::resource('tax_ledgers', 'TaxLedgerAPIController');
                 Route::resource('employee_designations', 'EmployeeDesignationAPIController');
                 Route::resource('hrms_designations', 'HrmsDesignationAPIController');
@@ -1025,8 +1026,14 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::get('updateNotPostedRVGLEntries', 'GeneralLedgerAPIController@updateNotPostedRVGLEntries');
         Route::get('updateNotPostedFAGLEntries', 'GeneralLedgerAPIController@updateNotPostedFAGLEntries');
         Route::get('updateNotPostedFADepGLEntries', 'GeneralLedgerAPIController@updateNotPostedFADepGLEntries');
-    }       
+        Route::get('updateNotPostedBSIGLEntries', 'GeneralLedgerAPIController@updateNotPostedBSIGLEntries');
+
+    }
+
+
 });
+
+
 /*
  * End external related routes
  */

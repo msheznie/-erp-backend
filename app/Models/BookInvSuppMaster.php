@@ -632,4 +632,10 @@ class BookInvSuppMaster extends Model
         $this->save();
     }
 
+    public function generalLedger()
+    {
+        return $this->hasMany('App\Models\GeneralLedger', 'documentSystemCode', 'bookingSuppMasInvAutoID')
+            ->where('documentSystemID', 11);
+    }
+
 }
