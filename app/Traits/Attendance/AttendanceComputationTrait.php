@@ -300,7 +300,9 @@ trait AttendanceComputationTrait{
         if ($clockInDtObj->format('H:i:s') > $tempOnDutyDtObj->format('H:i:s')) {
             $this->presentAbsentType = AbsentType::LATE;
 
-            $interval = $clockInDtObj->diff($tempOnDutyDtObj);
+            $actualOnDutyTime = new DateTime($this->onDutyTime);
+            $interval = $clockInDtObj->diff($actualOnDutyTime);
+            
             $hours = ($interval->format('%h') != 0) ? $interval->format('%h') : 0;
             $minutes = ($interval->format('%i') != 0) ? $interval->format('%i') : 0;
             $this->lateHours = $hours * 60 + $minutes;
