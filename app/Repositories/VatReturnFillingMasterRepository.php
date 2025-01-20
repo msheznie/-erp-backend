@@ -64,9 +64,6 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
-                    ->whereHas('customer', function($query) use ($companyCountry){
-                        $query->where('customerCountry', 1); // oman based customers
-                    })
                     ->whereIn('documentSystemID',[20,87,19,21])
                     ->whereNotNull('outputVatGLAccountID')
                     ->when($forUpdate == false, function($query) {
@@ -83,6 +80,22 @@ class VatReturnFillingMasterRepository extends BaseRepository
                         $query->where(function($query) use ($returnFilledDetailID) {
                             $query->where('returnFilledDetailID', $returnFilledDetailID);
                         });
+                    })
+                    ->where(function ($query) {
+                        $query->whereIn('documentSystemID', [20, 87, 19])
+                            ->whereHas('customer', function($query) {
+                                $query->where('customerCountry', 1); // Oman-based customers
+                            })
+                            ->orWhere(function ($query) {
+                                $query->where('documentSystemID', 21)
+                                    ->where(function($query) {
+                                        $query->where('partyType', 1) // Only check customer relationship for partyType = 1
+                                            ->whereHas('customer', function($query) {
+                                                $query->where('customerCountry', 1); // Oman-based customers
+                                            })
+                                            ->orWhere('partyType', '!=', 1); // Include non-customer party types
+                                    });
+                            });
                     })
                     ->whereHas('sub_category', function($query) {
                         $query->whereHas('type', function($query) {
