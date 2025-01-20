@@ -1163,14 +1163,15 @@ class EmployeesDepartmentAPIController extends AppBaseController
     public function assignEmployeeToApprovalGroup(Request $request)
     {   
         $input = $request->all();
-        
         $saveData = [];
+
+        $employeeGroupID = (is_array($input['rollMasterDetailData']['approvalGroupID'])) ? $input['rollMasterDetailData']['approvalGroupID'][0] : $input['rollMasterDetailData']['approvalGroupID'];
+        if($employeeGroupID == 0) {
+            return $this->sendError('The approval group has not been selected at the approval level',422, ['type' => 'validation']);
+        }
+
         foreach ($input['selectedEmpIds']['employeeSystemID'] as $key => $val) {
-            $employeeGroupID = (is_array($input['rollMasterDetailData']['approvalGroupID'])) ? $input['rollMasterDetailData']['approvalGroupID'][0] : $input['rollMasterDetailData']['approvalGroupID'];
-
-            
             $current_date = Carbon::parse(now())->format('Y-m-d');
-
 
             $department = EmployeesDepartment::
                  where('approvalDeligated','!=',0)

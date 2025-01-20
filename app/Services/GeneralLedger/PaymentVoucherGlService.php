@@ -619,11 +619,11 @@ class PaymentVoucherGlService
                     ->groupBy('documentSystemCode')
                     ->first();
 
-               if($isMasterExchangeRateChanged)
-               {
+                if(!empty($tax) && $isMasterExchangeRateChanged)
+                {
                    $tax->localAmount = ($tax->transAmount/$masterData->localCurrencyER);
                    $tax->rptAmount = ($tax->transAmount/$masterData->companyRptCurrencyER);
-               }
+                }
 
                 $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {
                     $query->where('companySystemID', $masterData->companySystemID);

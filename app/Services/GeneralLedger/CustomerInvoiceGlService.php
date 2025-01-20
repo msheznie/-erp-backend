@@ -575,8 +575,6 @@ class CustomerInvoiceGlService
 
             $segmentWiseDetail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID', 'clientContractID')->get();
 
-            $currencyConversion = CurrencyMaster::where('currencyID', $segmentWiseDetail[0]->invoiceAmountCurrency)->first();
-            
             $data['companySystemID'] = $masterData->companySystemID;
             $data['companyID'] = $masterData->companyID;
             $data['masterCompanyID'] = $company->masterComapanyID;
@@ -638,14 +636,14 @@ class CustomerInvoiceGlService
 
                     $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
                     $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                    $data['documentTransAmount'] = round($item->invoiceAmount + $item->VATAmountTotal,$currencyConversion->DecimalPlaces);
+                    $data['documentTransAmount'] = $item->invoiceAmount + $item->VATAmountTotal;
                     $data['documentLocalCurrencyID'] = $item->localCurrency;
 
                     $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                    $data['documentLocalAmount'] = $item->localAmount + ((1 / $item->localCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces)));
+                    $data['documentLocalAmount'] = $data['documentTransAmount'] / $data['documentLocalCurrencyER'];
                     $data['documentRptCurrencyID'] = $item->comRptCurrency;
                     $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                    $data['documentRptAmount'] = $item->comRptAmount + + ((1 / $item->comRptCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces)));
+                    $data['documentRptAmount'] = $data['documentTransAmount'] / $data['documentRptCurrencyER'];
                     
                     array_push($finalData, $data);
                 }
@@ -689,10 +687,10 @@ class CustomerInvoiceGlService
                     $data['documentLocalCurrencyID'] = $item->localCurrency;
 
                     $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                    $data['documentLocalAmount'] = (($masterData->isPerforma == 1) ? ($item->localAmount - $item->VATAmountLocal) : $item->localAmount) * -1;
+                    $data['documentLocalAmount'] = $data['documentTransAmount'] / $data['documentLocalCurrencyER'];
                     $data['documentRptCurrencyID'] = $item->comRptCurrency;
                     $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                    $data['documentRptAmount'] = (($masterData->isPerforma == 1) ? ($item->comRptAmount - $item->VATAmountRpt) : $item->comRptAmount) * -1;
+                    $data['documentRptAmount'] = $data['documentTransAmount'] / $data['documentRptCurrencyER'];
                     array_push($finalData, $data);
                 }
             }
@@ -752,14 +750,14 @@ class CustomerInvoiceGlService
                                 $data['documentNarration'] = "";
                                 $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
                                 $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                                $data['documentTransAmount'] = round($item->VATAmountTotal * -1, $currencyConversion->DecimalPlaces);
+                                $data['documentTransAmount'] = $item->VATAmountTotal * -1;
                                 $data['documentLocalCurrencyID'] = $item->localCurrency;
 
                                 $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                                $data['documentLocalAmount'] = (1 / $item->localCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces) * -1);
+                                $data['documentLocalAmount'] = $data['documentTransAmount'] / $data['documentLocalCurrencyER'];
                                 $data['documentRptCurrencyID'] = $item->comRptCurrency;
                                 $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                                $data['documentRptAmount'] = (1 / $item->comRptCurrencyER ) * (round($item->VATAmountTotal,$currencyConversion->DecimalPlaces) * -1);
+                                $data['documentRptAmount'] = $data['documentTransAmount'] / $data['documentRptCurrencyER'];
                                 
                                 if ($data['documentTransAmount'] != 0 || $data['documentLocalAmount'] != 0 || $data['documentRptAmount'] != 0) {
                                     array_push($finalData, $data);

@@ -1034,7 +1034,21 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $allowValidateDocumentAmend = true;
         }
 
-        if($masterData->approved == -1 && $allowValidateDocumentAmend){
+        $isDepreciationWithGL = true;
+        if($masterData->is_acc_dep == 1){
+            $assetDepreciationPeriod = FixedAssetDepreciationPeriod::where('depMasterAutoID', $id)->first();
+            if($assetDepreciationPeriod){
+                $assetCositng = FixedAssetMaster::where('faID', $assetDepreciationPeriod->faID)->first();
+                if($assetCositng){
+                    if($assetCositng->postToGLYN == 1){
+                        $isDepreciationWithGL = false;
+                    }
+                }
+            }
+        }
+
+
+        if($masterData->approved == -1 && $allowValidateDocumentAmend && $isDepreciationWithGL){
             $validatePendingGlPost = ValidateDocumentAmend::validatePendingGlPost($documentAutoId, $documentSystemID);
             if(isset($validatePendingGlPost['status']) && $validatePendingGlPost['status'] == false){
                 if(isset($validatePendingGlPost['message']) && $validatePendingGlPost['message']){

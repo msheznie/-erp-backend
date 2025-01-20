@@ -398,7 +398,8 @@ class ItemIssueDetails extends Model
         'timestamp',
         'timesReferred',
         'detail_project_id',
-        'qtyAvailableToIssue'
+        'qtyAvailableToIssue',
+        'reqDocID'
     ];
     /**
      * The attributes that should be casted to native types.

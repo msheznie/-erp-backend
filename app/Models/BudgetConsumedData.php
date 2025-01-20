@@ -291,6 +291,11 @@ class BudgetConsumedData extends Model
         return $this->belongsTo('App\Models\JvMaster', 'documentSystemCode', 'jvMasterAutoId');
     }
 
+    public function supplier_invoice_master()
+    {
+        return $this->belongsTo('App\Models\BookInvSuppMaster', 'documentSystemCode', 'bookingSuppMasInvAutoID');
+    }
+
 
     public function budget_master()
     {

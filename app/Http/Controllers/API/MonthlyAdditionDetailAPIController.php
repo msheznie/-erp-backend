@@ -23,6 +23,7 @@ use App\Models\ExpenseClaimDetailsMaster;
 use App\Models\ExpenseClaimMaster;
 use App\Models\HRMSChartOfAccounts;
 use App\Models\MonthlyAdditionDetail;
+use App\Repositories\ExpenseClaimMasterRepository;
 use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\MonthlyAdditionDetailRepository;
 use App\Repositories\MonthlyAdditionsMasterRepository;
@@ -49,7 +50,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
 
     public function __construct(MonthlyAdditionDetailRepository $monthlyAdditionDetailRepo,
                                 MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo,
-                                ExpenseClaimRepository $expenseClaimRepo,
+                                ExpenseClaimMasterRepository $expenseClaimRepo,
                                 PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo)
     {
         $this->monthlyAdditionDetailRepository = $monthlyAdditionDetailRepo;
@@ -463,12 +464,11 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         }
 
         $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($monthlyAdditionId);
-
         if (empty($monthlyAddition)) {
             return $this->sendError('Monthly Addition not found');
         }
 
-        $expenseClaimDetails = ExpenseClaimDetails::where('companySystemID', $expenseClaim->companySystemID)
+        $expenseClaimDetails = ExpenseClaimDetailsMaster::where('companyID', $expenseClaim->companyID)
             ->where('expenseClaimMasterAutoID', $id)
             //->where('currencyID', $monthlyAddition->currency)
             ->with(['currency'])
@@ -476,11 +476,10 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
 
         foreach ($expenseClaimDetails as $detail) {
 
-            $emp = Employee::with(['details'])->find($expenseClaim->clamiedByNameSystemID);
+            $emp = Employee::with(['details'])->find($expenseClaim->claimedByEmpID);
 
             $empID = '';
             $empDepartment = 0;
-
             if(!empty($emp)){
                 $empID = $emp->empID;
                 if($emp->details){
@@ -498,21 +497,21 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
 
             $temData = array('monthlyAdditionsMasterID' => $monthlyAddition->monthlyAdditionsMasterID,
                 'expenseClaimMasterAutoID' => $expenseClaim->expenseClaimMasterAutoID,
-                'empSystemID' => $expenseClaim->clamiedByNameSystemID,
+                'empSystemID' => $expenseClaim->claimedByEmpID,
                 'empID' => $empID,
                 'empdepartment' => $empDepartment,
                 'description' => $detail['description'],
-                'declareCurrency' => $detail['localCurrency'],
-                'declareAmount' => $detail['localAmount'],
-                'amountMA' => $detail['localAmount'],
-                'currencyMAID' => $detail['localCurrency'],
+                'declareCurrency' => $detail['companyLocalCurrencyID'],
+                'declareAmount' => $detail['companyLocalAmount'],
+                'amountMA' => $detail['companyLocalAmount'],
+                'currencyMAID' => $detail['companyLocalCurrencyID'],
                 'glCode' => $chartAccountId, //$detail['chartOfAccountSystemID'],
-                'localCurrencyID' => $detail['localCurrency'],
-                'localCurrencyER' => $detail['localCurrencyER'],
-                'localAmount' => $detail['localAmount'],
-                'rptCurrencyID' => $detail['comRptCurrency'],
-                'rptCurrencyER' => $detail['comRptCurrencyER'],
-                'rptAmount' => $detail['comRptAmount'],
+                'localCurrencyID' => $detail['companyLocalCurrencyID'],
+                'localCurrencyER' => $detail['companyLocalExchangeRate'],
+                'localAmount' => $detail['companyLocalAmount'],
+                'rptCurrencyID' => $detail['companyReportingCurrencyID'],
+                'rptCurrencyER' => $detail['companyReportingExchangeRate'],
+                'rptAmount' => $detail['companyReportingAmount'],
                 'IsSSO' => 0,
                 'IsTax' => 0,
                 'createdpc' => gethostname());

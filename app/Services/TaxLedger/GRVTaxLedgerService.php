@@ -35,6 +35,7 @@ use App\Models\TaxLedgerDetail;
 use App\Models\DebitNoteDetails;
 use App\Models\TaxVatCategories;
 use App\helper\TaxService;
+use App\helper\CurrencyConversionService;
 use App\Models\Employee;
 use App\Models\SalesReturn;
 use App\Models\ChartOfAccount;
@@ -76,11 +77,16 @@ class GRVTaxLedgerService
 
         $master = GRVMaster::with(['financeperiod_by', 'supplier_by'])->find($masterModel["autoID"]);
 
-        $exampteVat = TaxVatCategories::where('subCatgeoryType',3)->where('isActive',1)->first();
+        $exampteVat = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterModel) {
+            $query->where('companySystemID', $masterModel['companySystemID'])->where('taxCategory', 2);
+        })->where('isActive', 1)->first();
         $exemptVatSub = $exampteVat?$exampteVat->taxVatSubCategoriesAutoID:NULL;
         $exemptVatMain = $exampteVat?$exampteVat->mainCategory:NULL;
 
-        $standardRatedSupply = TaxVatCategories::where('subCatgeoryType',1)->where('isActive',1)->first();
+        $standardRatedSupply = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 1)->whereHas('tax', function ($query) use ($masterModel) {
+            $query->where('companySystemID', $masterModel['companySystemID'])->where('taxCategory', 2);
+        })->where('isActive', 1)->first();
+
         $standardRatedSupplyID = $standardRatedSupply?$standardRatedSupply->taxVatSubCategoriesAutoID:null;
 
 
@@ -128,23 +134,25 @@ class GRVTaxLedgerService
                 ];
 
                 foreach ($info as $key1 => $value1) {
-                    $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
+                    $localVATAmount = CurrencyConversionService::localAndReportingConversionByER($master->supplierTransactionCurrencyID, $value->localCurrencyID, $value1['amount'], $value->localCurrencyER);
+                    
+                    $reportingVATAmount = CurrencyConversionService::localAndReportingConversionByER($master->supplierTransactionCurrencyID, $value->companyReportingCurrencyID, $value1['amount'], $value->companyReportingER);
+
+
                     if($value1['amount'] != 0)
                     {
-                    $ledgerData['subCategoryID'] = $value1['subcat'];
-                    $ledgerData['masterCategoryID'] = $value1['mastercat'];
-                    $ledgerData['localAmount'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                    $ledgerData['rptAmount'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                    $ledgerData['transAmount'] = \Helper::roundValue($value1['amount']);
-                    $ledgerData['inputVATGlAccountID'] = $value1['inVat'];
-                    $ledgerData['inputVatTransferAccountID'] =  $value1['inTra'];
-                    $ledgerData['outputVatTransferGLAccountID'] = $value1['outTra'];
-                    $ledgerData['outputVatGLAccountID'] =  $value1['outVat'];
-                    array_push($finalData, $ledgerData);
+                        $ledgerData['subCategoryID'] = $value1['subcat'];
+                        $ledgerData['masterCategoryID'] = $value1['mastercat'];
+                        $ledgerData['localAmount'] = \Helper::roundValue($localVATAmount);
+                        $ledgerData['rptAmount'] = \Helper::roundValue($reportingVATAmount);
+                        $ledgerData['transAmount'] = \Helper::roundValue($value1['amount']);
+                        $ledgerData['inputVATGlAccountID'] = $value1['inVat'];
+                        $ledgerData['inputVatTransferAccountID'] =  $value1['inTra'];
+                        $ledgerData['outputVatTransferGLAccountID'] = $value1['outTra'];
+                        $ledgerData['outputVatGLAccountID'] =  $value1['outVat'];
+                        array_push($finalData, $ledgerData);
                     }
                 }
-
-
             }
             else
             {
@@ -238,44 +246,47 @@ class GRVTaxLedgerService
                 ];
 
                 foreach ($info as $key1 => $value1) {
-                    $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
+                    $localVATAmountDetail = CurrencyConversionService::localAndReportingConversionByER($master->supplierTransactionCurrencyID, $value->localCurrencyID, $value1['amount'], $value->localCurrencyER);
+                    
+                    $reportingVATAmountDetail = CurrencyConversionService::localAndReportingConversionByER($master->supplierTransactionCurrencyID, $value->companyReportingCurrencyID, $value1['amount'], $value->companyReportingER);
+
                     if($value1['amount'] != 0)
                     {
-                    $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
-                    $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
-                    $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
-                    $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                    $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                    $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
-                    $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
-                    $ledgerDetailsData['outputVatTransferGLAccountID'] = $value1['outTra'];
-                    $ledgerDetailsData['outputVatGLAccountID'] =  $value1['outVat'];
+                        $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
+                        $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
+                        $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
+                        $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($reportingVATAmountDetail);
+                        $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($localVATAmountDetail);
+                        $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
+                        $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
+                        $ledgerDetailsData['outputVatTransferGLAccountID'] = $value1['outTra'];
+                        $ledgerDetailsData['outputVatGLAccountID'] =  $value1['outVat'];
 
-                    $subCategory = TaxVatCategories::find($value->vatSubCategoryID);
-                    if($subCategory->subCatgeoryType != 2) {
-                        if($value->exempt_vat_portion != 0) {
-                            $taxableAmountLocal = (($value->landingCost_LocalCur * $value->noQty) -  ($ledgerDetailsData['VATAmountLocal'] / 100) * $value->exempt_vat_portion);
-                            $taxableAmountReporting = (($value->landingCost_RptCur * $value->noQty) -  ($ledgerDetailsData['VATAmountRpt'] / 100) * $value->exempt_vat_portion);
-                            $taxableAmount =  ($value->landingCost_TransCur * $value->noQty) - (($ledgerDetailsData['VATAmount'] / 100) * $value->exempt_vat_portion);
-        
+                        $subCategory = TaxVatCategories::find($value->vatSubCategoryID);
+                        if($subCategory->subCatgeoryType != 2) {
+                            if($value->exempt_vat_portion != 0) {
+                                $taxableAmountLocal = (($value->landingCost_LocalCur * $value->noQty) -  ($ledgerDetailsData['VATAmountLocal'] / 100) * $value->exempt_vat_portion);
+                                $taxableAmountReporting = (($value->landingCost_RptCur * $value->noQty) -  ($ledgerDetailsData['VATAmountRpt'] / 100) * $value->exempt_vat_portion);
+                                $taxableAmount =  ($value->landingCost_TransCur * $value->noQty) - (($ledgerDetailsData['VATAmount'] / 100) * $value->exempt_vat_portion);
+            
+                            }else {
+                                $taxableAmountLocal =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_LocalCur * $value->noQty) -  $ledgerDetailsData['VATAmountLocal']) : $value->landingCost_LocalCur * $value->noQty;
+                                $taxableAmountReporting =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_RptCur * $value->noQty)  - $ledgerDetailsData['VATAmountRpt']) : $value->landingCost_RptCur * $value->noQty;
+                                $taxableAmount =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_TransCur * $value->noQty)  - $ledgerDetailsData['VATAmount']) : $value->landingCost_TransCur * $value->noQty;
+            
+                            }
                         }else {
-                            $taxableAmountLocal =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_LocalCur * $value->noQty) -  $ledgerDetailsData['VATAmountLocal']) : $value->landingCost_LocalCur * $value->noQty;
-                            $taxableAmountReporting =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_RptCur * $value->noQty)  - $ledgerDetailsData['VATAmountRpt']) : $value->landingCost_RptCur * $value->noQty;
-                            $taxableAmount =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_TransCur * $value->noQty)  - $ledgerDetailsData['VATAmount']) : $value->landingCost_TransCur * $value->noQty;
-        
-                        }
-                    }else {
-                        $taxableAmountLocal =  $value->landingCost_LocalCur * $value->noQty;
-                        $taxableAmountReporting =  $value->landingCost_RptCur * $value->noQty;
-                        $taxableAmount =  $value->landingCost_TransCur * $value->noQty;
-        
-                    }    
-        
-                    $ledgerDetailsData['taxableAmount'] = $taxableAmount;
-                    $ledgerDetailsData['taxableAmountLocal'] = $taxableAmountLocal;
-                    $ledgerDetailsData['taxableAmountReporting'] = $taxableAmountReporting;
+                            $taxableAmountLocal =  $value->landingCost_LocalCur * $value->noQty;
+                            $taxableAmountReporting =  $value->landingCost_RptCur * $value->noQty;
+                            $taxableAmount =  $value->landingCost_TransCur * $value->noQty;
+            
+                        }    
+            
+                        $ledgerDetailsData['taxableAmount'] = $taxableAmount;
+                        $ledgerDetailsData['taxableAmountLocal'] = $taxableAmountLocal;
+                        $ledgerDetailsData['taxableAmountReporting'] = $taxableAmountReporting;
 
-                    array_push($finalDetailData, $ledgerDetailsData);
+                        array_push($finalDetailData, $ledgerDetailsData);
                     }
                 }
 

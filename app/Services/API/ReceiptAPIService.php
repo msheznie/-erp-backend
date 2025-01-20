@@ -166,6 +166,7 @@ class ReceiptAPIService
 
 
 
+
                 if($receipt->documentType == 13) {
                     $receipt = self::multipleInvoiceAtOneReceiptValidation($receipt);
                 }

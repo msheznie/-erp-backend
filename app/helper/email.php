@@ -567,7 +567,6 @@ class email
 
 
                 if ($hasPolicy) {
-                        Log::info('Email send start');
                         $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
                         $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
                         if (isset($data['empEmail']) && $data['empEmail']) {
@@ -580,10 +579,7 @@ class email
 
                             if ($data['empEmail'] && $data['isEmailVerified']) {
                                 Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
-                                Log::info('email sent success fully to :' . $data['empEmail']);
                                 $count = $count + 1;
-                                Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
-                                Log::info('Email send end count : ' . $count);
                             }
                         }
 
@@ -602,8 +598,6 @@ class email
 
     public static function sendEmailErp($data)
     {
-        Log::info('Send Email Erp funtion start');
-
         $color = '#C23C32';
         $colorObj= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 1)->first();
         if($colorObj)
@@ -625,7 +619,6 @@ class email
             ->where('isYesNO', 1)
             ->exists();
         if ($hasPolicy) {
-            Log::info('Email send start');
             $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
             $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
             if (isset($data['empEmail']) && $data['empEmail']) {
@@ -634,8 +627,6 @@ class email
                     Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
                 }
             }
-            Log::info('email sent success fully to - :' . $data['empEmail']);
-            Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
         } else {
             Alert::create($data);
         }
@@ -650,7 +641,6 @@ class email
             $email = str_replace(" ", "", $email);
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                Log::info(' Email not valid : ' . $email);
                 $email = ''; // Email not valid
             }
         }

@@ -64,10 +64,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                     ->whereDate('documentDate', '<=', $date)
                     ->where('companySystemID', $companySystemID)
-                    ->whereHas('customer', function($query) use ($companyCountry){
-                        $query->where('customerCountry', 1); // oman based customers
-                    })
-                    ->whereIn('documentSystemID',[20,87,19])
+                    ->whereIn('documentSystemID',[20,87,19,21])
                     ->whereNotNull('outputVatGLAccountID')
                     ->when($forUpdate == false, function($query) {
                         $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
@@ -84,13 +81,32 @@ class VatReturnFillingMasterRepository extends BaseRepository
                             $query->where('returnFilledDetailID', $returnFilledDetailID);
                         });
                     })
+                    ->where(function ($query) {
+                        $query->whereIn('documentSystemID', [20, 87, 19])
+                            ->whereHas('customer', function($query) {
+                                $query->where('customerCountry', 1); // Oman-based customers
+                            })
+                            ->orWhere(function ($query) {
+                                $query->where('documentSystemID', 21)
+                                    ->where(function($query) {
+                                        $query->where('partyType', 1) // Only check customer relationship for partyType = 1
+                                            ->whereHas('customer', function($query) {
+                                                $query->where('customerCountry', 1); // Oman-based customers
+                                            })
+                                            ->orWhere('partyType', '!=', 1); // Include non-customer party types
+                                    });
+                            });
+                    })
                     ->whereHas('sub_category', function($query) {
                         $query->whereHas('type', function($query) {
                             $query->where('id', 1);
                         });
                     })
-                    ->orWhereHas('creditNode', function ($query) {
-                        $query->where('isVATApplicable', true);
+                    ->where(function ($query) {
+                        $query->where('documentSystemID', '!=', 19)
+                            ->orWhereHas('creditNode', function ($query) {
+                                $query->where('isVATApplicable', true);
+                        });
                     })
                     ->select('*')
                     ->addSelect(DB::raw('CASE WHEN documentSystemID = 19 THEN ROUND((-1) * VATAmountLocal,3) ELSE ROUND(VATAmountLocal,3) END AS VATAmountLocal'))
@@ -191,8 +207,14 @@ class VatReturnFillingMasterRepository extends BaseRepository
                     ->orWhereHas('payment_voucher', function ($query) {
                         $query->whereIn('invoiceType',[3,5])->where('rcmActivated',1);
                     })
-                    ->whereHas('supplier', function($query) use ($companyCountry){
-                        $query->subjectToGCC();
+                    ->where(function ($query) use ($companyCountry) {
+                        $query->whereHas('supplier', function ($query) use ($companyCountry) {
+                            $query->subjectToGCC()
+                                ->where('supplierCountryID', '!=', $companyCountry);
+                        })->orWhere(function ($query) {
+                            $query->whereNull('partyAutoID')
+                                ->where('documentSystemID', 4);
+                        });
                     });
 
 
@@ -434,9 +456,14 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                             });
                                                         });
                                                   })
-                                                    ->whereHas('supplier', function($query) use ($companyCountry){
+                                                ->where(function ($query) use ($companyCountry) {
+                                                    $query->whereHas('supplier', function ($query) use ($companyCountry) {
                                                         $query->where('supplierCountryID', 1);
-                                                    })
+                                                    })->orWhere(function ($query) {
+                                                        $query->whereNull('partyAutoID')
+                                                            ->where('documentSystemID', 4);
+                                                    });
+                                                })
                                                  ->select('*')
                                                  ->addSelect(DB::raw('CASE WHEN documentSystemID = 15 THEN ROUND((-1) * VATAmountLocal,3) ELSE ROUND(VATAmountLocal,3) END AS VATAmountLocal'))
                                                  ->addSelect(DB::raw('CASE WHEN documentSystemID = 15 THEN ROUND((-1) * taxableAmountLocal,3) ELSE ROUND(taxableAmountLocal,3) END AS taxableAmountLocal'));

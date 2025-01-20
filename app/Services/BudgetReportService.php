@@ -20,6 +20,9 @@ class BudgetReportService
 {
     public function generateBudgetCommitmentDetailsReport(Request  $request)
     {
+        ini_set('max_execution_time', 6000);
+        ini_set('memory_limit', -1);
+
         $serviceLineSystemIDs = collect($request->input('selectedServicelines'))->pluck('serviceLineSystemID')->toArray();
         $chartOfAccountIDs = collect($request->input('glCodes'))->pluck('chartOfAccountSystemID')->toArray();
         $fromDate = new Carbon($request->input('fromDate'));

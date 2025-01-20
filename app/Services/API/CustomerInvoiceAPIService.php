@@ -2150,6 +2150,9 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
         }
 
+        $decimalPlaces = Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
+        $input["VATAmount"] = round($input["VATAmount"],$decimalPlaces);
+
         $currencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $input['VATAmount']);
         $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyPolicyCategoryID', 67)

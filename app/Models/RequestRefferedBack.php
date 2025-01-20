@@ -301,7 +301,9 @@ class RequestRefferedBack extends Model
         'modifiedUser',
         'createdDateTime',
         'counter',
-        'isDelegation'
+        'isDelegation',
+        'excelRowCount',
+        'successDetailsCount'
     ];
 
     /**

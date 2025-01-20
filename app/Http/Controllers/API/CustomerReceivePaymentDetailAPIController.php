@@ -529,7 +529,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         if(isset($input['tempType'])) {
             if ($input['tempType'] == 1) {
-                $input["receiveAmountTrans"] = round($input['custbalanceAmount'],$decimalPlaces);
+                $input["receiveAmountTrans"] = $input['custbalanceAmount'];
             }
         }
 
@@ -574,9 +574,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount'] + $sumReturnTransactionAmountPreCheck + $sumReturnDEOTransactionAmountPreCheck);
 
         $epsilon = 0.00001;
+        $allocationDifferent = $input["receiveAmountTrans"] - $input["custbalanceAmount"];
+
         
         if ($input['addedDocumentSystemID'] == 20) {
-            if ($input["receiveAmountTrans"] - round($totReceiveAmountDetail,$decimalPlaces) > $epsilon) {
+            if ($input["receiveAmountTrans"] - round($totReceiveAmountDetail,$decimalPlaces) > $epsilon || $allocationDifferent > $epsilon) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {

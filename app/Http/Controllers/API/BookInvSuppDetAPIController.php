@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBookInvSuppDetAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppDetAPIRequest;
 use App\Models\BookInvSuppDet;
+use App\helper\CurrencyConversionService;
 use App\Models\BookInvSuppMaster;
 use App\Models\SupplierAssigned;
 use App\Models\Company;
@@ -969,13 +970,17 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $details['supplierInvoAmount'] = 0;
             }
 
-            $currency = \Helper::currencyConversion($unbilledData['companySystemID'], $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $details['supplierInvoAmount']);
+
 
             $details['totTransactionAmount'] = $details['supplierInvoAmount'];
-            $details['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
-            $details['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
-            $grvDetailsInfo = GRVDetails::with(['vat_sub_category'])->find($grvDetail->grvDetailsID);
 
+            $totLocalAmount = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->localCurrencyID, $details['supplierInvoAmount'], $groupMaster->localCurrencyER);
+            $details['totLocalAmount'] = \Helper::roundValue($totLocalAmount);
+            
+            $totRptAmount = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->companyReportingCurrencyID, $details['supplierInvoAmount'], $groupMaster->companyReportingER);
+            $details['totRptAmount'] = \Helper::roundValue($totRptAmount);
+
+            $grvDetailsInfo = GRVDetails::with(['vat_sub_category'])->find($grvDetail->grvDetailsID);
             if(!$unbilledData['logisticYN'])
             {
                 if(isset($grvDetailsInfo->vat_sub_category->subCatgeoryType) && $grvDetailsInfo->vat_sub_category->subCatgeoryType == 3)
@@ -992,10 +997,14 @@ class BookInvSuppDetAPIController extends AppBaseController
              if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                 $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);
                 $VATAmount = $totalVATAmount * $percentage;
-                $currencyVat = \Helper::currencyConversion($unbilledData['companySystemID'], $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $VATAmount);
                     $details['VATAmount'] = \Helper::roundValue($VATAmount);
-                    $details['VATAmountLocal'] = \Helper::roundValue($currencyVat['localAmount']);
-                    $details['VATAmountRpt'] = \Helper::roundValue($currencyVat['reportingAmount']);
+
+                    $VATAmountLocal = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->localCurrencyID, $VATAmount, $groupMaster->localCurrencyER);
+                    $details['VATAmountLocal'] = \Helper::roundValue($VATAmountLocal);
+
+                    
+                    $VATAmountRpt = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->companyReportingCurrencyID, $VATAmount, $groupMaster->companyReportingER);
+                    $details['VATAmountRpt'] = \Helper::roundValue($VATAmountRpt);
             }
 
             $createRes = SupplierInvoiceItemDetail::create($details);

@@ -1109,46 +1109,36 @@ AND hrms_jvmaster.companyID = '" . $companyID . "'" . $where);
             $companyID = $company->CompanyID;
         }
 
-        $output = DB::select("SELECT
-	hrms_jvdetails.accruvalDetID,
-	hrms_jvdetails.accMasterID,
-	serviceline.serviceLineSystemID,
-	hrms_jvdetails.serviceLine,
-	hrms_jvdetails.GlCode,
-	hrms_jvdetails.localAmount,
-	chartofaccounts.chartOfAccountSystemID,
-	chartofaccounts.AccountDescription,
-	hrms_jvdetails.localCurrency,
-	Sum(
-
-		IF (
-			localAmount < 0,
-			localAmount * - 1,
-			0
-		)
-	) AS CreditAmount,
-	Sum(
-
-		IF (
-			localAmount > 0,
-			localAmount,
-			0
-		)
-	) AS DebitAmount
-FROM
-	hrms_jvdetails
-INNER JOIN chartofaccounts ON hrms_jvdetails.GlCode = chartofaccounts.AccountCode
-LEFT JOIN serviceline ON hrms_jvdetails.serviceLine = serviceline.ServiceLineCode
-WHERE
-	hrms_jvdetails.accMasterID = $accruvalMasterID
-AND hrms_jvdetails.companyID = '" . $companyID . "'
-GROUP BY
-	hrms_jvdetails.accMasterID,
-	hrms_jvdetails.serviceLine,
-	hrms_jvdetails.GlCode,
-	chartofaccounts.AccountDescription,
-	hrms_jvdetails.localCurrency,
-	hrms_jvdetails.companyID");
+        $output = DB::table('hrms_jvdetails')
+            ->select(
+                'hrms_jvdetails.accruvalDetID',
+                'hrms_jvdetails.accMasterID',
+                'serviceline.serviceLineSystemID',
+                'hrms_jvdetails.serviceLine',
+                'hrms_jvdetails.GlCode',
+                'hrms_jvdetails.localAmount',
+                'chartofaccounts.chartOfAccountSystemID',
+                'chartofaccounts.AccountDescription',
+                'hrms_jvdetails.localCurrency',
+                DB::raw('SUM(IF(localAmount < 0, localAmount * -1, 0)) AS CreditAmount'),
+                DB::raw('SUM(IF(localAmount > 0, localAmount, 0)) AS DebitAmount')
+            )
+            ->join('chartofaccounts', 'hrms_jvdetails.GlCode', '=', 'chartofaccounts.AccountCode')
+            ->leftJoin('serviceline', function ($join) {
+                $join->on('hrms_jvdetails.serviceLine', '=', 'serviceline.ServiceLineCode')
+                    ->where('serviceline.isDeleted', '=', 0);
+            })
+            ->where('hrms_jvdetails.accMasterID', $accruvalMasterID)
+            ->where('hrms_jvdetails.companyID', $companyID)
+            ->groupBy(
+                'hrms_jvdetails.accMasterID',
+                'hrms_jvdetails.serviceLine',
+                'hrms_jvdetails.GlCode',
+                'chartofaccounts.AccountDescription',
+                'hrms_jvdetails.localCurrency',
+                'hrms_jvdetails.companyID'
+            )
+            ->get();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }

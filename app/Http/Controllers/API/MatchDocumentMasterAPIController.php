@@ -1134,8 +1134,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                         if ($item['addedDocumentSystemID'] == 11) {
                             //supplier invoice
-                            if (Helper::roundValue($item['supplierInvoiceAmount'] - $payDetailMoreBooked->supplierPaymentAmount) < 0) {
 
+                            if (Helper::roundValue($item['supplierInvoiceAmount'] - $payDetailMoreBooked->supplierPaymentAmount) < 0) {
                                 $itemDrt = "Selected invoice " . $item['bookingInvDocCode'] . " booked more than the invoice amount.";
                                 $itemExistArray[] = [$itemDrt];
                             }

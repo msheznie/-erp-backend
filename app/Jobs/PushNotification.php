@@ -8,13 +8,10 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
-use LaravelFCM\Message\OptionsBuilder;
-use LaravelFCM\Message\PayloadDataBuilder;
-use LaravelFCM\Message\PayloadNotificationBuilder;
-use FCM;
 use App\Models\FcmToken;
-use LaravelFCM\Message\Topics;
+use App\Jobs\FcmNotification;
 use App\helper\CommonJobService;
+
 
 class PushNotification implements ShouldQueue
 {
@@ -22,8 +19,9 @@ class PushNotification implements ShouldQueue
     protected $pushNotificationArray;
     protected $pushNotificationUserIds;
     protected $notificationType;
-    protected $sendPushNotification = false;
+    protected $sendPushNotification = true;
     protected $dataBase;
+    protected $documentSystemIds;
 
     /**
      * Create a new job instance.
@@ -45,10 +43,10 @@ class PushNotification implements ShouldQueue
         }
 
         $this->dataBase = $dataBase;
-
         $this->pushNotificationArray = $pushNotificationArray;
         $this->pushNotificationUserIds = $pushNotificationUserIds;
         $this->notificationType = $notificationType;
+        $this->documentSystemIds = [1, 2, 4, 5, 11, 15, 19, 20, 21, 50, 51, 52];
     }
 
     /**
@@ -65,8 +63,6 @@ class PushNotification implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/push_notification_created.log');
 
         if ($this->sendPushNotification) {
-            $optionBuilder = new OptionsBuilder();
-            $optionBuilder->setTimeToLive(60 * 20);
             $payLoadData = array();
             $description = "";
             $userIDs = [];
@@ -75,79 +71,25 @@ class PushNotification implements ShouldQueue
                 $description = $this->pushNotificationArray['pushNotificationMessage'];
             }
 
+            if(!in_array($payLoadData['documentSystemID'], $this->documentSystemIds)) {
+                return;
+            }
+
+            $payLoadData['notification_type'] = $this->notificationType;
+
             if (!empty($this->pushNotificationUserIds)) {
                 $userIDs = $this->pushNotificationUserIds;
             }
            
             $notification_title = 'GEARS ERP Notification';
-            $iosTokens = [];
+            $tokens = [];
             $androidTokens = [];
             $tokenArray = FcmToken::whereIn('userID', $userIDs)->get();
 
-            foreach ($tokenArray as $key => $value) {
-                if ($value->deviceType == "apple") {
-                    $iosTokens[] = $value->fcm_token;
-                } else {
-                    $androidTokens[] = $value->fcm_token;
-                }
-            }
+            $tokens = count($tokenArray) > 0 ? collect($tokenArray)->pluck('fcm_token')->toArray() : [];
 
-
-            if (!empty($iosTokens)) {
-                $added_data = [
-                    'notification_type' => $this->notificationType,
-                    'title' => $notification_title,
-                    'body' => $description,
-                    'payload' => $payLoadData
-                ];
-
-                $notificationBuilder = new PayloadNotificationBuilder($notification_title);
-                $notificationBuilder->setBody($description)
-                    ->setSound('default');
-
-                $dataBuilder = new PayloadDataBuilder();
-                $dataBuilder->addData($added_data);
-
-                $option = $optionBuilder->build();
-                $notification = $notificationBuilder->build();
-                $data = $dataBuilder->build();
-                
-                $downstreamResponse = FCM::sendTo($iosTokens, $option, $notification, $data);
-                $resp = [
-                    $downstreamResponse->numberSuccess(),
-                    $downstreamResponse->numberFailure(),
-                    $downstreamResponse->numberModification(),
-                ];
-            } else {
-                Log::error("IOS FCM token not found");
-            }
-
-            if (!empty($androidTokens)) {
-                $added_data = [
-                    'notification_type' => $this->notificationType,
-                    'title' => $notification_title,
-                    'body' => $description,
-                    'data' => $payLoadData
-                ];
-
-                $notificationBuilder2 = new PayloadNotificationBuilder($notification_title);
-                $notificationBuilder2->setBody($description)
-                    ->setSound('default');
-
-                $dataBuilder2 = new PayloadDataBuilder();
-                $dataBuilder2->addData($added_data);
-
-                $option = $optionBuilder->build();
-                $notification = $notificationBuilder2->build();
-                $data2 = $dataBuilder2->build();
-                $downstreamResponse = FCM::sendTo($androidTokens, $option, null, $data2);
-                $resp = [
-                    $downstreamResponse->numberSuccess(),
-                    $downstreamResponse->numberFailure(),
-                    $downstreamResponse->numberModification(),
-                ];
-            } else {
-                Log::error("ANDROID FCM token not found");
+            if (count($tokens) > 0) {
+                FcmNotification::dispatch($tokens, $notification_title, $description, $payLoadData);
             }
         }
     }

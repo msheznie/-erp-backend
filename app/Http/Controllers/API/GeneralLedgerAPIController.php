@@ -576,6 +576,54 @@ class GeneralLedgerAPIController extends AppBaseController
         return $this->sendResponse([], 'General Ledger updated successfully');
     }
 
+    public function updateNotPostedBSIGLEntries(Request $request)
+    {
+
+        $showInvoices = $request->showInvoices;
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            return  "tenant list is empty";
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            $data = BookInvSuppMaster::whereDoesntHave('generalLedger')
+                ->where('approved',-1)
+                ->select(['bookingSuppMasInvAutoID','documentSystemID','companySystemID','approvedByUserSystemID','bookingInvCode'])
+                ->get();
+
+            if($showInvoices == "true")
+            {
+                print_r($data);
+            }
+
+            foreach ($data as $dt){
+                $masterData = ['documentSystemID' => $dt->documentSystemID,
+                    'autoID' => $dt->bookingSuppMasInvAutoID,
+                    'companySystemID' => $dt->companySystemID,
+                    'employeeSystemID' => $dt->approvedByUserSystemID
+                ];
+                $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+
+                DB::table('migratedDocs')->insert([
+                    'documentSystemID' => $dt->documentSystemID,
+                    'documentSystemCode' => $dt->bookingSuppMasInvAutoID,
+                    'documentCode' => $dt->bookingInvCode,
+                    'comment' => "Update General Ledger",
+                    'created_at' => Carbon::now()
+                ]);
+            }
+        }
+
+        return $this->sendResponse([], 'General Ledger updated successfully');
+
+    }
+
 
     public function getGeneralLedgerReview(Request $request)
     {

@@ -14,6 +14,7 @@ use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetMaster;
 use App\Models\GeneralLedger;
 use App\Models\GRVMaster;
+use App\Models\JobErrorLog;
 use App\Models\JvMaster;
 use App\Models\MatchDocumentMaster;
 use App\Models\MaterielRequest;
@@ -160,6 +161,9 @@ class ValidateDocumentAmend
     public static function validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID = null)
 	{
         $message = 'You cannot amend this document now. The General Ledger posting is In-Progress';
+        $isjobErrorLogExist = JobErrorLog::where('documentSystemCode',$documentAutoId)
+                                            ->where('documentSystemID',$documentSystemID)                                               
+                                            ->count();
         switch ($documentSystemID) {
             case 41: // FADS - Asset Disposal
                     $assetDisposalData = AssetDisposalMaster::find($documentAutoId);
@@ -168,7 +172,11 @@ class ValidateDocumentAmend
                                                 ->where('documentSystemID',$documentSystemID)                                                
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                 break;
@@ -179,7 +187,11 @@ class ValidateDocumentAmend
                                                 ->where('documentSystemID',$documentSystemID)                                                
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                 break;
@@ -190,7 +202,11 @@ class ValidateDocumentAmend
                                                 ->where('documentSystemID',$documentSystemID)                                               
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                 break;
@@ -204,7 +220,11 @@ class ValidateDocumentAmend
                                                 })                                                
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                 break;
@@ -218,7 +238,11 @@ class ValidateDocumentAmend
                                                 })                                                
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                 break;
@@ -229,7 +253,11 @@ class ValidateDocumentAmend
                                                 ->where('documentSystemID',$documentSystemID)
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                 break;
@@ -240,7 +268,11 @@ class ValidateDocumentAmend
                                                 ->where('documentSystemID',$documentSystemID)
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                 break;
@@ -251,7 +283,11 @@ class ValidateDocumentAmend
                                                 ->where('documentSystemID',$documentSystemID)
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                 break;
@@ -265,7 +301,11 @@ class ValidateDocumentAmend
                                                 })                                                
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                 break;
@@ -276,7 +316,11 @@ class ValidateDocumentAmend
                                             ->where('documentSystemID',$documentSystemID)
                                             ->count();
                     if($glPost == 0){
-                        return ['status' => false,'message'=>$message];
+                        if($isjobErrorLogExist > 0){
+                            return ['status' => true];
+                        } else {
+                            return ['status' => false,'message'=>$message];
+                        }
                     }
                 }
                 break;
@@ -290,7 +334,11 @@ class ValidateDocumentAmend
                                                 })
                                             ->count();
                     if($glPost == 0){
-                        return ['status' => false,'message'=>$message];
+                        if($isjobErrorLogExist > 0){
+                            return ['status' => true];
+                        } else {
+                            return ['status' => false,'message'=>$message];
+                        }
                     }
                 }
                 break;
@@ -301,7 +349,11 @@ class ValidateDocumentAmend
                                                 ->where('documentSystemID',$documentSystemID)
                                                 ->count();
                         if($glPost == 0){
-                            return ['status' => false,'message'=>$message];
+                            if($isjobErrorLogExist > 0){
+                                return ['status' => true];
+                            } else {
+                                return ['status' => false,'message'=>$message];
+                            }
                         }
                     }
                     break;

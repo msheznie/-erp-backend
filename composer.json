@@ -13,6 +13,7 @@
         "brozot/laravel-fcm": "^1.3",
         "doctrine/dbal": "2.5.13",
         "fideloper/proxy": "~4.0",
+        "google/auth": "^1.26",
         "guzzlehttp/guzzle": "^6.5",
         "infyomlabs/adminlte-templates": "5.5.x-dev",
         "infyomlabs/laravel-generator": "5.5.x-dev",

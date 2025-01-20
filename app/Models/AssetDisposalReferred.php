@@ -342,5 +342,9 @@ class AssetDisposalReferred extends Model
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
 
+    public function customer(){
+        return $this->belongsTo('App\Models\CustomerMaster','customerID','customerCodeSystem');
+    }
+
     
 }

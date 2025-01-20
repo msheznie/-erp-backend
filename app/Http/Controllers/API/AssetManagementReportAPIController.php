@@ -105,7 +105,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
     public function validateReport(Request $request)
     {
-       
+
         try {
 
             $reportID = $request->reportID;
@@ -2131,8 +2131,9 @@ FROM
                                                                     $query->whereIn('companySystemID',$companyID)
                                                                             ->whereDate('issueDate', '>=', $fromDate)
                                                                             ->whereDate('issueDate', '<=', $toDate);
-                                                                });
-                                                                });
+                                                                })
+                                                                ->where('documentSystemID', 8)->where('module_id', 1);
+                                                            });
                                                       })->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                         $query->whereHas('ioue', function($query) use ($companyID, $fromDate, $toDate) {
                                                                 $query->whereIn('companyID', $companyID)

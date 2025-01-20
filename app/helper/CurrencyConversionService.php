@@ -43,4 +43,23 @@ class CurrencyConversionService
 
 		return ['status' => true];
 	}
+
+
+	public static function localAndReportingConversionByER($transactionCurrencyID, $documentCurrencyID, $transactionAmount, $transER)
+    {
+        $trasToSuppER = 1;
+        $transactionAmount = \Helper::stringToFloat($transactionAmount);
+        $documentAmount = 0;
+        if ($documentCurrencyID) {
+            $transToDocER = $transER;
+
+            if ($transactionCurrencyID == $documentCurrencyID) {
+                $documentAmount = $transactionAmount;
+            } else {
+                $documentAmount = $transactionAmount / $transToDocER;
+            }
+        }
+
+        return $documentAmount;
+    }
 }
