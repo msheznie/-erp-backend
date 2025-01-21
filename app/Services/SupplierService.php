@@ -123,6 +123,8 @@ class SupplierService
             'modifiedUserSystemID',
             'chequeSentToTreasuryByEmpSystemID',
             'companySystemID',
+            'localCurrencyID',
+            'companyRptCurrencyID',
             'cancelledByEmpSystemID'
         ])
             ->where('PayMasterAutoId',  $input['extra']['id'])
@@ -247,6 +249,7 @@ class SupplierService
             'glCodeDes',
             'DPAmount',
             'VATAmountLocal',
+            'vatAmount',
             'VATAmountRpt',
             'localAmount',
             'comRptAmount',
