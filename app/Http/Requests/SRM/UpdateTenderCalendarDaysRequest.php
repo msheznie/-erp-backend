@@ -27,16 +27,16 @@ class UpdateTenderCalendarDaysRequest extends FormRequest
                 'comment' => 'required',
             ];
 
-       $tenderData = TenderMaster::getTenderByUuid($this->input('tenderCode'));
+        $tenderData = TenderMaster::getTenderByUuid($this->input('tenderCode'));
 
-       if($tenderData['stage'] == 1)
-       {
+        if($tenderData['stage'] == 1)
+        {
 
-           $rules = array_merge($rules, [
-                   'bidOpeningStartDate' => 'required',
-                   'bidOpeningStarDateTime' => 'required',
-               ]);
-       }
+            $rules = array_merge($rules, [
+                'bidOpeningStartDate' => 'required',
+                'bidOpeningStarDateTime' => 'required',
+            ]);
+        }
 
 
         if($tenderData['stage'] == 2)
