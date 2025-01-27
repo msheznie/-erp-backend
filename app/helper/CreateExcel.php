@@ -15,34 +15,36 @@ class CreateExcel
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
                 $faqFile = "FAQ";
-                $prebidFile = "Pre-bid Clarifications";
+                $prebidFile = ($fileName == 'purchase_order_summary_report') ? "Purchase Order" : "Pre-bid Clarifications";
 
-                $excel->sheet($faqFile, function ($sheet) use ($dataNew,$faqFile,$array) {
-                    $i = 2;
-                    $sheet->fromArray($dataNew, null, 'A1', true);
-                    (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
+                if (!empty($dataNew) && count($dataNew) > 0) {
+                    $excel->sheet($faqFile, function ($sheet) use ($dataNew,$faqFile,$array) {
+                        $i = 2;
+                        $sheet->fromArray($dataNew, null, 'A1', true);
+                        (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
 
-                    $sheet->row(1, function($row) {
-                        $row->setBackground('#827e7e');
-                        $row->setFont(array(
-                            'family'     => 'Calibri',
-                            'size'       => '12',
-                            'bold'       =>  true
-                        ));
-                    });
-
-                    foreach ($dataNew as $valId) {
-                        $sheet->row($i, function($row) {
-                            $row->setBackground('#ebdfdf');
+                        $sheet->row(1, function($row) {
+                            $row->setBackground('#827e7e');
                             $row->setFont(array(
                                 'family'     => 'Calibri',
                                 'size'       => '12',
+                                'bold'       =>  true
                             ));
                         });
-                        $i++;
-                    }
 
-                });
+                        foreach ($dataNew as $valId) {
+                            $sheet->row($i, function($row) {
+                                $row->setBackground('#ebdfdf');
+                                $row->setFont(array(
+                                    'family'     => 'Calibri',
+                                    'size'       => '12',
+                                ));
+                            });
+                            $i++;
+                        }
+
+                    });
+                }
 
                 $excel->sheet($prebidFile, function ($sheet) use ($dataNewPrebid,$prebidFile,$array) {
                     $sheet->fromArray($dataNewPrebid, null, 'A1', true);
