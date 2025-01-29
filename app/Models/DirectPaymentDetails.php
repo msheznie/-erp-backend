@@ -341,7 +341,10 @@ class DirectPaymentDetails extends Model
         'detail_project_id',
         'contractID',
         'contractDescription',
-        'expense_claim_er'
+        'expense_claim_er',
+        'interBankID',
+        'interBankAmount',
+        'interBankCurrency'
     ];
 
     /**
@@ -445,5 +448,10 @@ class DirectPaymentDetails extends Model
     public function vatSubCategories()
     {
         return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID', 'taxVatSubCategoriesAutoID');
+    }
+
+    public function to_bank()
+    {
+        return $this->belongsTo('App\Models\BankAccount','interBankID', 'bankAccountAutoID');
     }
 }

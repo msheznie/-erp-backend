@@ -404,7 +404,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
     public function update($id, UpdateDirectPaymentDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'chartofaccount']);
+        $input = array_except($input, ['segment', 'chartofaccount','to_bank']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
         /** @var DirectPaymentDetails $directPaymentDetails */
@@ -500,7 +500,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             }
            
 
-            if ($isVATEligible) {
+            if ($isVATEligible && $payMaster->invoiceType != 3) {
                 $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
                     ->where('companyPolicyCategoryID', 67)
                     ->where('isYesNO', 1)
@@ -531,8 +531,18 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 }
             }
         }
+        $epsilon = 0.000001;
+        $isBankChanges = false;
 
         if ($directPaymentDetails->glCodeIsBank) {
+            if($payMaster->expenseClaimOrPettyCash == 15 && $payMaster->invoiceType == 3 && abs($directPaymentDetails->interBankAmount - $input['interBankAmount']) > $epsilon &&  bccomp($directPaymentDetails->bankCurrencyER, $input['bankCurrencyER'], 6) === 0)
+            {
+                $input["bankCurrencyER"] = \Helper::roundValue($input['DPAmount'] / \Helper::roundValue(floatval($input['interBankAmount'])));
+                $isBankChanges = true;
+            }
+        }
+
+        if ($directPaymentDetails->glCodeIsBank && !$isBankChanges) {
             $trasToDefaultER = $input["bankCurrencyER"];
             $bankAmount = 0;
             if ($bankAccount->accountCurrencyID == $directPaymentDetails->bankCurrencyID) {
@@ -594,12 +604,14 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             }
 
             $input['bankAmount'] = \Helper::roundValue($bankAmount);
+            $input['interBankAmount'] = \Helper::roundValue($bankAmount);
         }
 
         if ($directPaymentDetails->toBankCurrencyID) {
             $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->supplierTransCurrencyID)->where('subCurrencyID', $directPaymentDetails->toBankCurrencyID)->first();
             $conversion = $conversion->conversion;
             $bankAmount2 = 0;
+            
             /*if ($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
                 $bankAmount2 = $input['DPAmount'];*/
             if ($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->localCurrency) {
@@ -703,7 +715,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $directPaymentDetails->delete();
 
-        // update master table
+        // update master table  
         PaySupplier::updateMaster($directPaymentDetails->directPaymentAutoID);
 
         return $this->sendResponse($id, 'Direct Payment Details deleted successfully');
@@ -714,7 +726,12 @@ class DirectPaymentDetailsAPIController extends AppBaseController
     {
         $id = $request->PayMasterAutoId;
 
-        $directPaymentDetails = $this->directPaymentDetailsRepository->with(['segment', 'chartofaccount'])->findWhere(['directPaymentAutoID' => $id]);
+        $directPaymentDetails = $this->directPaymentDetailsRepository->with(['segment', 'chartofaccount','to_bank'=>function($query){
+            $query->with(['currency' => function($query){
+                $query->select('currencyID','CurrencyCode');
+            }]);
+
+        }])->findWhere(['directPaymentAutoID' => $id]);
 
         return $this->sendResponse($directPaymentDetails, 'Details retrieved successfully');
     }
@@ -1098,6 +1115,14 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
         return $this->sendResponse($directPaymentDetails->toArray(), 'Monthly deduction type updated successfully');
+
+    }
+
+    public function getBankAccountDetails(request $request)
+    {     
+        $input = $request->all();
+        $account = BankAccount::where('chartOfAccountSystemID', $input['bankGLId'])->where('companySystemID', $input['company_id'])->first();
+        return $this->sendResponse($account, 'Account details retrieved successfully');
 
     }
 }
