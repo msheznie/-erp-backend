@@ -340,8 +340,48 @@ class WarehouseItemsAPIController extends AppBaseController
                 return $array;
 
             })
+            ->addColumn('binLocation', function ($row) {
+                $data = array('companySystemID' => $row->companySystemID,
+                    'itemCodeSystem' => $row->itemSystemCode,
+                    'wareHouseId' => $row->warehouseSystemCode,
+                    'itemReport' => true);
+                $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
+
+                $array = $itemBinLocation['binLocation'];
+                return $array;
+
+            })
+            ->addColumn('isTrack', function ($row) {
+                $data = array('companySystemID' => $row->companySystemID,
+                    'itemCodeSystem' => $row->itemSystemCode,
+                    'wareHouseId' => $row->warehouseSystemCode,
+                    'itemReport' => true);
+                $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
+
+                $array = $itemBinLocation['isTrackable'];
+                return $array;
+
+            })
             ->make(true);
-        return $data;
+            $responseData = json_decode($data->getContent(), true);
+            $transformedData = [];
+            
+            foreach ($responseData['data'] as $item) {
+                if ($item['isTrack'] == "1" && !empty($item['binLocation'])) {
+                    foreach ($item['binLocation'] as $bin) {
+                        $newItem = $item;
+                        $newItem['binLocation'] = $bin; 
+                        $transformedData[] = $newItem;
+                    }
+                } else {
+                    $newItem = $item;
+                    $newItem['binLocation'] = null;
+                    $transformedData[] = $newItem;
+                }
+            }
+            
+            $responseData['data'] = $transformedData;
+            return response()->json($responseData);
     }
 
 
