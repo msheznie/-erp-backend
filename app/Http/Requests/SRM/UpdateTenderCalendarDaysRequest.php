@@ -34,9 +34,7 @@ class UpdateTenderCalendarDaysRequest extends FormRequest
 
            $rules = array_merge($rules, [
                    'bidOpeningStartDate' => 'required',
-                   'bidOpeningEndDate' => 'required',
                    'bidOpeningStarDateTime' => 'required',
-                   'bidOpeningEndDateTime' => 'required',
                ]);
        }
 
