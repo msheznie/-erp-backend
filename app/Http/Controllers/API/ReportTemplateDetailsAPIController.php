@@ -281,11 +281,11 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             if ($input['serialLength'] == 0) {
                 return $this->sendError("Serial Number length cannot be zero.", 500);
             }
-
+            $existingRecord = ReportTemplateDetails::find($input['detID']);
             $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $input['prefix'])
                                                           ->where('detID', '!=', $input['detID'])
                                                           ->first();
-            if ($checkPrefixDuplicate) {
+            if ($checkPrefixDuplicate && $existingRecord && $existingRecord->prefix !== $input['prefix']) {
                 return $this->sendError("Prefix already exists.", 500);
             }
         }
