@@ -27,15 +27,15 @@
         <tr></tr>
         <tr>
             @if($fourthLevel)
-            	<th colspan="5">Description</th>
+                <th colspan="5">Description</th>
             @elseif($thirdLevel)
-            	<th colspan="4">Description</th>
+                <th colspan="4">Description</th>
             @elseif($secondLevel)
-            	<th colspan="3">Description</th>
+                <th colspan="3">Description</th>
             @elseif($firstLevel)
-            	<th colspan="2">Description</th>
+                <th colspan="2">Description</th>
             @else
-            	<th>Description</th>
+                <th>Description</th>
             @endif
             @foreach ($columnHeader as $column)
             <th>{{$column['description']}}</th>
