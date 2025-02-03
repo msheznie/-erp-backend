@@ -45,6 +45,9 @@ Route::group([], function() {
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
     Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
 
+    Route::post('createTemplateMapping', 'BankReconciliationTemplateMappingAPIController@store')->name('Add bank reconciliation template mapping');
+    Route::get('getTemplateMappingDetails', 'BankReconciliationTemplateMappingAPIController@getTemplateMappingDetails')->name('Get template mapping details');
+
 });
 
 //Cheque Register
