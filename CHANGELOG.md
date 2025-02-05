@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.60.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.59.0...v10.60.0) (2025-02-05)
+
+
+### Features
+
+* **Attendance:** Change the Late Calculation for Grace Period setup[GHR-2466] ([#7450](https://github.com/pbsgears/Gears_BackEnd/issues/7450)) ([1ba1a25](https://github.com/pbsgears/Gears_BackEnd/commit/1ba1a252d60697d48ba9a73b3446646dc3ceb00f))
+
 ## [10.59.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.58.2...v10.59.0) (2025-01-20)
 
 
