@@ -323,7 +323,8 @@ class AttendanceComputationService
         if ($clockIn_dt->format('H:i:s') > $tempOnDuty_dt->format('H:i:s')) {
             $this->presentAbsentType = AbsentType::LATE;
 
-            $interval = $clockIn_dt->diff($tempOnDuty_dt);
+            $actualOnDutyTime = new DateTime($this->onDutyTime);
+            $interval = $clockIn_dt->diff($actualOnDutyTime);
 
             $hours = ($interval->format('%h') != 0) ? $interval->format('%h') : 0;
             $minutes = ($interval->format('%i') != 0) ? $interval->format('%i') : 0;
