@@ -108,7 +108,7 @@ class PurchaseRequestRepository extends BaseRepository
         return PurchaseRequest::class;
     }
 
-    public function purchaseRequestListQuery($request, $input, $search = '', $serviceLineSystemID) {
+    public function purchaseRequestListQuery($request, $input, $search = '', $serviceLineSystemID, $buyerEmpSystemId) {
 
         $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId']);
 
@@ -137,6 +137,12 @@ class PurchaseRequestRepository extends BaseRepository
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
+            }
+        }
+
+        if (array_key_exists('buyerEmpSystemID', $input)) {
+            if ($input['buyerEmpSystemID'] && !is_null($input['buyerEmpSystemID'])) {
+                $purchaseRequests->whereIn('buyerEmpSystemID', $buyerEmpSystemId);
             }
         }
 
@@ -192,6 +198,7 @@ class PurchaseRequestRepository extends BaseRepository
                 'erp_purchaserequest.timesReferred',
                 'erp_purchaserequest.refferedBackYN',
                 'erp_purchaserequest.serviceLineSystemID',
+                'erp_purchaserequest.buyerEmpName',
                 'erp_purchaserequest.financeCategory',
                 'erp_purchaserequest.documentSystemID',
                 'erp_purchaserequest.manuallyClosed',
@@ -225,6 +232,7 @@ class PurchaseRequestRepository extends BaseRepository
                 $data[$x]['Segment'] = $val->segment? $val->segment->ServiceLineDes : '';
                 $data[$x]['Location'] = $val->location_pdf ? $val->location_pdf->locationName : '';
                 $data[$x]['Priority'] = $val->priority_pdf? $val->priority_pdf->priorityDescription : '';
+                $data[$x]['Buyer'] = $val->buyerEmpName;
                 $data[$x]['Budget Year'] = $val->budgetYear;
                 $data[$x]['Comments'] = $val->comments;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';

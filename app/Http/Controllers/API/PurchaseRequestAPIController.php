@@ -253,6 +253,9 @@ class PurchaseRequestAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
+        $buyersEmpId = PurchaseRequest::pluck('buyerEmpSystemID');
+        $buyersOnly = Employee::whereIn('employeeSystemID', $buyersEmpId)->get();
+
         $currencies = CurrencyMaster::all();
 
         $financeCategories = FinanceItemCategoryMaster::all();
@@ -322,7 +325,7 @@ class PurchaseRequestAPIController extends AppBaseController
             'currencies' => $currencies,
             'financeCategories' => $financeCategories,
             'locations' => $locations,
-            'buyers' => $buyers,
+            'buyersOnly' => $buyersOnly,
             'companyFinanceYear' => $companyFinanceYear,
             'priorities' => $priorities,
             'financialYears' => $financialYears,
@@ -1120,7 +1123,8 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input,
+        array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year', 'buyerEmpSystemID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1128,11 +1132,12 @@ class PurchaseRequestAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+
         $search = $request->input('search.value');
-        $serviceLineSystemID = $request['serviceLineSystemID'];
-        $serviceLineSystemID = (array)$serviceLineSystemID;
-        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
-        $purchaseRequests = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search, $serviceLineSystemID);
+        $serviceLineSystemID = collect((array) $request['serviceLineSystemID'])->pluck('id');
+        $buyerEmpSystemId = collect((array) $request['buyerEmpSystemID'])->pluck('id');
+        $purchaseRequests = $this->purchaseRequestRepository->purchaseRequestListQuery(
+            $request, $input, $search, $serviceLineSystemID, $buyerEmpSystemId);
 
         return \DataTables::eloquent($purchaseRequests)
             ->addColumn('Actions', 'Actions', "Actions")
