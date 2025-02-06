@@ -42,6 +42,7 @@ use App\Models\CurrencyMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\Employee;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\MaterielRequest;
@@ -238,6 +239,12 @@ class PurchaseRequestAPIController extends AppBaseController
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
         $month = Months::all();
+        $buyers = Employee::where('discharegedYN', '!=', 1)
+            ->where('empActive', 1)
+            ->whereIn('empCompanySystemID', $childCompanies)
+            ->where('isSupportAdmin', '!=', -1)
+            ->where('isSuperAdmin', '!=', -1)
+            ->get();
 
 
         $years = PurchaseRequest::select(DB::raw("YEAR(createdDateTime) as year"))
@@ -315,6 +322,7 @@ class PurchaseRequestAPIController extends AppBaseController
             'currencies' => $currencies,
             'financeCategories' => $financeCategories,
             'locations' => $locations,
+            'buyers' => $buyers,
             'companyFinanceYear' => $companyFinanceYear,
             'priorities' => $priorities,
             'financialYears' => $financialYears,
@@ -1928,6 +1936,15 @@ class PurchaseRequestAPIController extends AppBaseController
         if($input['serviceLineSystemID'] != $purchaseRequest->serviceLineSystemID){
             $code = str_pad($purchaseRequest->serialNumber, 6, '0', STR_PAD_LEFT);
             $input['purchaseRequestCode'] = $purchaseRequest->companyID . '\\' . $purchaseRequest->departmentID . '\\' . $input['serviceLineCode'] . '\\' . $purchaseRequest->documentID . $code;
+        }
+
+        if (!empty($input['buyerEmpSystemID'])) {
+            $buyerInfo = Employee::find($input['buyerEmpSystemID']);
+            if ($buyerInfo) {
+                $input['buyerEmpID'] = $buyerInfo->empID;
+                $input['buyerEmpName'] = $buyerInfo->empName;
+                $input['buyerEmpEmail'] = $buyerInfo->empEmail;
+            }
         }
 
         $input['modifiedPc'] = gethostname();
