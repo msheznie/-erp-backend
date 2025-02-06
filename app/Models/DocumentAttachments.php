@@ -451,4 +451,21 @@ class DocumentAttachments extends Model
     {
         return self::where('attachmentID', $attachmentId)->first();
     }
+
+    public static function evaluationAttachment($companyId, $tenderId)
+    {
+        return DocumentAttachments::where('documentSystemID', 130)
+            ->where('companySystemID', $companyId)
+            ->where('documentSystemCode', $tenderId)->exists();
+    }
+
+    public static function getOriginalFileName($companyId, $tenderId)
+    {
+        $originalFileName = DocumentAttachments::select('originalFileName')
+            ->where('documentSystemID', 130)
+            ->where('companySystemID', $companyId)
+            ->where('documentSystemCode', $tenderId)->first();
+
+        return $originalFileName['originalFileName'] ?? '-';
+    }
 }

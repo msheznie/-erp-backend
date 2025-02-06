@@ -11,6 +11,7 @@ use App\Models\DocumentAttachments;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
+use App\Models\SRMTenderTechnicalEvaluationAttachment;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderMaster;
 use App\Models\TenderNegotiationArea;
@@ -431,8 +432,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $commonAttachmentExists = self::getIsExistCommonAttachment($request);  
 
-        $tender = TenderMaster::select('id','document_type')
-        ->withCount(['criteriaDetails',  
+        $tender = TenderMaster::select('id','document_type', 'uuid')
+        ->withCount(['criteriaDetails',
          'criteriaDetails AS technical_count' => function ($query) {
             $query->where('critera_type_id', 2);
             }
@@ -471,7 +472,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $bidSubmissionMasterIds = [];
         }
 
-        $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink', 'TenderBidNegotiation.tender_negotiation_area','bidSubmissionDetail' => function($query){
+        $query = BidSubmissionMaster::with(['tender:id,document_type', 'SupplierRegistrationLink', 'TenderBidNegotiation.tender_negotiation_area', 'bidSubmissionDetail' => function($query){
                 $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
                     $query->where('id', 1);
                 });
@@ -507,8 +508,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 $query->Orwhere('bidSubmissionCode', 'LIKE', "%{$search}%");
             });
         }
-    
-        return \DataTables::eloquent($query)
+
+          $tblRecords =   \DataTables::eloquent($query)
             ->order(function ($query) use ($input,$sort) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -526,8 +527,21 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 }
             })
             ->with('orderCondition', $sort)
-            ->make(true); 
-    
+            ->make(true);
+
+        $hasEvaluationAttachment = DocumentAttachments::evaluationAttachment($companyId, $tenderId);
+        if($hasEvaluationAttachment) {
+            $getOriginalFileName = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
+        }
+        $getEvaluationData = SRMTenderTechnicalEvaluationAttachment::getEvaluationComment($companyId, $tenderId);
+
+            return [
+                'tblRecords' => $tblRecords->getData(),
+                'EvaluationData' => $getEvaluationData,
+                'hasEvaluationAttachment' => $hasEvaluationAttachment,
+                'OriginalFileName' => $getOriginalFileName ?? '-',
+                'tenderUuid' => $tender['uuid']
+                ];
     }
 
     public function updateTechnicalEvalStaus($tenderId){ 
