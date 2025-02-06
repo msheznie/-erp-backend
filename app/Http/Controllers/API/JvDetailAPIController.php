@@ -679,53 +679,53 @@ class JvDetailAPIController extends AppBaseController
         $formattedDate = Carbon::parse($jvMasterData->JVdate)->format('M Y');
 
         $detailRecordGrouping = DB::select("SELECT
-	accruvalfromop.accMasterID,
-	accruvalfromop.contractID as accrualNarration,
-	accruvalfromop.accrualDateAsOF,
-	accruvalfromop.companyID,
-	accruvalfromop.contractID,
-	serviceline.serviceLineSystemID,
-	contractmaster.serviceLineCode AS serviceLine,
-	Sum(accruvalfromop.stdAmount) AS SumOfstdAmount,
-	Sum(accruvalfromop.opAmount) AS SumOfopAmount,
-	accruvalfromop.glCodeStd,
-	accruvalfromop.glCodeOp,
-	accruvalfromop.glCodeusage,
-	accruvalfromop.glCodeLIH,
-	accruvalfromop.glCodeDBR,
-	accruavalfromopmaster.accConfirmedYN,
-	chartofaccounts.chartOfAccountSystemID,
-	accruvalfromop.GlCode,
-	chartofaccounts.AccountDescription,
-	contractmaster.contractUID AS contractSystemID,
-/*	Sum(
-		accruvalfromop.accrualAmount
-	) AS SumOfaccrualAmount,*/
-		Sum(
-			IFNULL(accruvalfromop.rptAmount,0)
-	) AS SumOfaccrualAmount
+    accruvalfromop.accMasterID,
+    accruvalfromop.contractID as accrualNarration,
+    accruvalfromop.accrualDateAsOF,
+    accruvalfromop.companyID,
+    accruvalfromop.contractID,
+    serviceline.serviceLineSystemID,
+    contractmaster.serviceLineCode AS serviceLine,
+    Sum(accruvalfromop.stdAmount) AS SumOfstdAmount,
+    Sum(accruvalfromop.opAmount) AS SumOfopAmount,
+    accruvalfromop.glCodeStd,
+    accruvalfromop.glCodeOp,
+    accruvalfromop.glCodeusage,
+    accruvalfromop.glCodeLIH,
+    accruvalfromop.glCodeDBR,
+    accruavalfromopmaster.accConfirmedYN,
+    chartofaccounts.chartOfAccountSystemID,
+    accruvalfromop.GlCode,
+    chartofaccounts.AccountDescription,
+    contractmaster.contractUID AS contractSystemID,
+/*  Sum(
+        accruvalfromop.accrualAmount
+    ) AS SumOfaccrualAmount,*/
+        Sum(
+            IFNULL(accruvalfromop.rptAmount,0)
+    ) AS SumOfaccrualAmount
 
 FROM
-	accruvalfromop
+    accruvalfromop
 INNER JOIN accruavalfromopmaster ON accruvalfromop.accMasterID = accruavalfromopmaster.accruvalMasterID
 INNER JOIN erp_months ON accruavalfromopmaster.accmonth = erp_months.monthsID
 LEFT JOIN contractmaster ON accruvalfromop.contractID = contractmaster.ContractNumber
 LEFT JOIN serviceline ON contractmaster.serviceLineCode = serviceline.ServiceLineCode
 LEFT JOIN chartofaccounts ON accruvalfromop.GlCode = chartofaccounts.AccountCode
 WHERE
-	accruavalfromopmaster.accConfirmedYN = 1 AND accruvalfromop.companyID = '" . $jvMasterData->companyID . "' AND accMasterID = $accruvalMasterID
+    accruavalfromopmaster.accConfirmedYN = 1 AND accruvalfromop.companyID = '" . $jvMasterData->companyID . "' AND accMasterID = $accruvalMasterID
 GROUP BY
-	accruvalfromop.accMasterID,
-	accruvalfromop.companyID,
-	accruvalfromop.contractID,
-	contractmaster.serviceLineCode,
-	accruvalfromop.glCodeStd,
-	accruvalfromop.glCodeOp,
-	accruvalfromop.glCodeusage,
-	accruvalfromop.glCodeLIH,
-	accruvalfromop.glCodeDBR,
-	accruavalfromopmaster.accConfirmedYN,
-	accruvalfromop.GlCode");
+    accruvalfromop.accMasterID,
+    accruvalfromop.companyID,
+    accruvalfromop.contractID,
+    contractmaster.serviceLineCode,
+    accruvalfromop.glCodeStd,
+    accruvalfromop.glCodeOp,
+    accruvalfromop.glCodeusage,
+    accruvalfromop.glCodeLIH,
+    accruvalfromop.glCodeDBR,
+    accruavalfromopmaster.accConfirmedYN,
+    accruvalfromop.GlCode");
 
         if (!empty($detailRecordGrouping)) {
             foreach ($detailRecordGrouping as $rowData) {
@@ -1069,8 +1069,8 @@ GROUP BY
         }
 
         $checkProjectSelectionPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-				->where('companySystemID', $input['companySystemID'])
-				->first();
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
 
         $x = 0;
         foreach ($jvMaster->detail as $item){
