@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SupplierTenderNegotiation;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -43,5 +44,11 @@ class SupplierTenderNegotiationRepository extends BaseRepository
     public function deleteSuppliersOfNegotiation($input) {
         $deleteRecord = $this->model->where('tender_negotiation_id',$input['tenderNegotiationID'])->delete();
         return ($deleteRecord) ? true : false;
+    }
+
+    public function getSupplierList($negotiationId)
+    {
+        $data['supplier'] =  SupplierTenderNegotiation::getSupplierList($negotiationId);
+        return $data;
     }
 }

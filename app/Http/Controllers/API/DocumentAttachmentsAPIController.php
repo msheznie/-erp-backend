@@ -1085,7 +1085,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
     }
     public function storeTenderDocuments(CreateDocumentAttachmentsAPIRequest $request){
         $input = $request->all();
-        $attachmentType = $input['attachmentType'];
+        $attachmentType = ($input['documentSystemID'] == '128') ? 0 : $input['attachmentType'];
         $attachmentDescription = $input['attachmentDescription'];
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];
@@ -1101,7 +1101,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
            return ['status' => false, 'message' => 'Description already exists'];  
         }else {
             $i = 1;
-            if($input['attachmentType'] == 3){
+            if($attachmentType == 3){
                $exitingAmendmentRecords =  DocumentAttachments::where('companySystemID',$companySystemID)
                     ->where('documentSystemID',$documentSystemID)
                     ->where('attachmentType',$attachmentType)
