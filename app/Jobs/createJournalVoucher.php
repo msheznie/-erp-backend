@@ -371,12 +371,12 @@ class createJournalVoucher implements ShouldQueue
                         else {
                             $responseData[] = [
                                 "success" => true,
-                                "message" => "Invoice created Successfully!",
+                                "message" => "Journal voucher created Successfully!",
                                 "code" => 200,
                                 "data" => [
                                     'unique-key' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
                                     'index' => $jvNo,
-                                    'invoiceNumber' => $createJournalVoucher['jvCode'] ?? ''
+                                    'voucherCode' => $createJournalVoucher['jvCode'] ?? ''
                                 ]
                             ];
                         }
