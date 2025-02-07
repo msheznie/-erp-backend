@@ -101,8 +101,9 @@ class createJournalVoucher implements ShouldQueue
                         "JVdate" => $input['jvDate'],
                         "companySystemID" => $compId,
                         "jvType" => 0,
-                        "reversalJV" => $input['reversalJV'],
-                        "reversalDate" => $input['reversalDate'],
+                        "reversalJV" => $input['reversalJV'] ?? null,
+                        "reversalDate" => $input['reversalDate'] ?? null,
+                        "isRelatedPartyYN" => $input['relatedParty'] ?? null,
                         "isAutoCreateDocument" => 1
                     ];
 
@@ -321,7 +322,7 @@ class createJournalVoucher implements ShouldQueue
                                 /** details setting for add details function */
                                 $jvDetails[] = [
                                     "chartOfAccountSystemID" => $chartOfAccountId,
-                                    "comments" => $detail['comment'],
+                                    "comments" => $detail['comment'] ?? null,
                                     "companySystemID" => $compId,
                                     "debitAmount" => $detail['debitAmount'],
                                     "creditAmount" => $detail['creditAmount'],
@@ -329,8 +330,8 @@ class createJournalVoucher implements ShouldQueue
                                     "serviceLineCode" => $detail['segment'],
                                     "glAccount" => $detail['glCode'],
                                     "detail_project_id" => isset($detailProjectId) ? $detailProjectId : null,
-                                    "contractUID" => $contractUid,
-                                    "clientContractID" => $detail['clientContract'],
+                                    "contractUID" => $contractUid ?? null,
+                                    "clientContractID" => $detail['clientContract'] ?? null,
                                     "isAutoCreateDocument" => 1
                                 ];
                             }
@@ -353,7 +354,7 @@ class createJournalVoucher implements ShouldQueue
                             $errors =
                                 ['identifier' =>
                                     [
-                                        'unique-key' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
+                                        'uniqueKey' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
                                         'index' => $jvNo
                                     ],
                                     'fieldErrors' => [],
@@ -374,7 +375,7 @@ class createJournalVoucher implements ShouldQueue
                                 "message" => "Journal voucher created Successfully!",
                                 "code" => 200,
                                 "data" => [
-                                    'unique-key' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
+                                    'uniqueKey' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
                                     'index' => $jvNo,
                                     'voucherCode' => $createJournalVoucher['jvCode'] ?? ''
                                 ]
@@ -409,7 +410,7 @@ class createJournalVoucher implements ShouldQueue
                         $errors =
                             ['identifier' =>
                                 [
-                                    'unique-key' => isset($input['narration']) ? $input['narration']: "",
+                                    'uniqueKey' => isset($input['narration']) ? $input['narration']: "",
                                     'index' => $jvNo
                                 ],
                                 'fieldErrors' => $validationError,
@@ -437,7 +438,7 @@ class createJournalVoucher implements ShouldQueue
                     'content-type' => 'application/json',
                     'Authorization' => 'ERP '.$apiExternalKey
                 ];
-                $res = $client->request('POST', $apiExternalUrl . '/create_journal_voucher_log', [
+                $res = $client->request('POST', $apiExternalUrl . '/journal-vouchers/webhook', [
                     'headers' => $headers,
                     'json' => [
                         'data' => $responseData
