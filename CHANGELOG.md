@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.60.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.60.0...v10.60.1) (2025-02-09)
+
+
+### Bug Fixes
+
+* **accounts receivable:** customer ledger and aging summary changes [GCP-5998] ([#7459](https://github.com/pbsgears/Gears_BackEnd/issues/7459)) ([ca0f9d0](https://github.com/pbsgears/Gears_BackEnd/commit/ca0f9d09d590967e2addf68aa1298ba051d02ccd))
+* **general ledger:** financial report group total not showing proper total [GCP-6097] ([#7506](https://github.com/pbsgears/Gears_BackEnd/issues/7506)) ([ec7c6b8](https://github.com/pbsgears/Gears_BackEnd/commit/ec7c6b8867482d56a477d51c7780fca340071115))
+
 ## [10.60.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.59.0...v10.60.0) (2025-02-05)
 
 
