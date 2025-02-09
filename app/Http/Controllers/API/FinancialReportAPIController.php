@@ -27,6 +27,7 @@ use App\Jobs\Report\GeneralLedgerPdfJob;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsType;
 use App\Models\BookInvSuppDet;
+use Illuminate\Support\Str;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
@@ -1198,6 +1199,19 @@ class FinancialReportAPIController extends AppBaseController
             $grandTotal[0] = [];
         }
 
+        if(!empty($grandTotal))
+        {
+            $numericKeys = collect($outputDetail->first())
+                ->keys()
+                ->filter(function($key) { return Str::contains($key, '-'); });
+
+            $grandTotalComputed = $numericKeys->mapWithKeys(function($key) use ($outputDetail) {
+                return [$key => $outputDetail->sum($key)];
+            });
+
+           $grandTotal[0] = $grandTotalComputed;
+        }
+
         $outputOpeningBalance = '';
         $outputOpeningBalanceArr = [];
         $outputClosingBalanceArr = [];
@@ -1250,16 +1264,77 @@ class FinancialReportAPIController extends AppBaseController
             $thirdLevel = false;
             $fourthLevel = false;
             $fifthLevel = false;
+
             if (count($headers) > 0) {
                 foreach ($headers as $key => $val) {
                     $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
+                    $detailsArray = array();
+                    if($val->itemType == 3)
+                    {
+                        foreach (ReportTemplateDetails::find($val->detID)->gl_codes as $glCodeData)
+                        {
+                            $detailsArray[] = $glCodeData->subcategory->detID;
+                        }
 
+                        $outputData = $outputDetail->whereIn('templateDetailID', $detailsArray)->sortBy('sortOrder')->values();
+                        $data =  $outputData
+                            ->reduce(function ($carry, $item) use ($val) {
+                                foreach ($item as $key => $value) {
+                                    if (strpos($key, '-') !== false) {
+                                        if (is_numeric($value)) {
+                                            $carry[$key] = ($carry[$key] ?? 0) + $value;
+                                        }
+                                    }
 
-                    $val->detail = $details;
+                                }
+                                return $carry;
+                            }, []);
+
+                        foreach ($data as $key => $value) {
+                            if (collect($val)->contains($key)) {
+                                $val->$key = $value;
+                            }
+                        }
+
+                    }else {
+                        $val->detail = $details;
+                    }
                     $firstLevel = true;
+                    $glCodesArray = array();
                     foreach ($details as $key2 => $val2) {
                         if ($val2->isFinalLevel == 1) {
-                            $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                            if($val2->itemType == 3)
+                            {
+                                foreach (ReportTemplateDetails::find($val2->detID)->gl_codes as $glCodeData)
+                                {
+                                    $glCodesArray[] = $glCodeData->subcategory->detID;
+                                }
+                                if(!empty($glCodesArray))
+                                {
+                                    $outputData = $outputDetail->whereIn('templateDetailID', $glCodesArray)->sortBy('sortOrder')->values();
+                                    $data =  $outputData
+                                        ->reduce(function ($carry, $item) use ($val2) {
+                                            foreach ($item as $key => $value) {
+                                                if (strpos($key, '-') !== false) {
+                                                    if (is_numeric($value)) {
+                                                        $carry[$key] = ($carry[$key] ?? 0) + $value;
+                                                    }
+                                                }
+
+                                            }
+                                            return $carry;
+                                        }, []);
+                                    foreach ($data as $key => $value) {
+                                        if (collect($val2)->contains($key)) {
+                                            $val2->$key = $value;
+                                        }
+                                    }
+                                }
+
+                            }else {
+                                $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                            }
+
                             if (strpos($val2->detDescription, "Retained Earning") !== false && $showRetained == false) {
                                 if($val2->detDescription == "Retained Earning")
                                 {
@@ -1267,12 +1342,12 @@ class FinancialReportAPIController extends AppBaseController
                                     $retainedDes = '';
                                     if (!empty($val2->glCodes)) {
                                         $glAutoIDs = collect($val2->glCodes)->pluck('glAutoID');
-                                        
+
                                         if ($glAutoIDs->isNotEmpty()) {
                                             $isRetained = ChartOfAccount::whereIn('chartOfAccountSystemID', $glAutoIDs)
                                                 ->where('is_retained_earnings', 1)
                                                 ->first();
-                                    
+
                                             if ($isRetained) {
                                                 $retainedCode = $isRetained->AccountCode;
                                                 $retainedDes = $isRetained->AccountDescription;
@@ -1289,21 +1364,36 @@ class FinancialReportAPIController extends AppBaseController
                             $secondLevel = true;
                             foreach ($detailLevelTwo as $key3 => $val3) {
                                 if ($val3->isFinalLevel == 1) {
-                                    $val3->glCodes = $outputDetail->where('templateDetailID', $val3->detID)->sortBy('sortOrder')->values();
+                                    if($val3->itemType == 3)
+                                    {
+                                        $val3 = $this->getGlCodes($outputDetail,$val3);
+                                    }else {
+                                        $val3->glCodes = $outputDetail->where('templateDetailID', $val3->detID)->sortBy('sortOrder')->values();
+                                    }
                                 } else {
                                     $detailLevelThree = $outputCollect->where('masterID', $val3->detID)->sortBy('sortOrder')->values();
                                     $val3->detail = $detailLevelThree;
                                     $thirdLevel = true;
                                     foreach ($detailLevelThree as $key4 => $val4) {
                                         if ($val4->isFinalLevel == 1) {
-                                            $val4->glCodes = $outputDetail->where('templateDetailID', $val4->detID)->sortBy('sortOrder')->values();
+                                            if($val4->itemType == 3)
+                                            {
+                                                $val4 = $this->getGlCodes($outputDetail,$val4);
+                                            }else {
+                                                $val4->glCodes = $outputDetail->where('templateDetailID', $val4->detID)->sortBy('sortOrder')->values();
+                                            }
                                         } else {
                                             $detailLevelFour = $outputCollect->where('masterID', $val4->detID)->sortBy('sortOrder')->values();
                                             $val4->detail = $detailLevelFour;
                                             $fourthLevel = true;
                                             foreach ($detailLevelFour as $key5 => $val5) {
                                                 if ($val5->isFinalLevel == 1) {
-                                                    $val5->glCodes = $outputDetail->where('templateDetailID', $val5->detID)->sortBy('sortOrder')->values();
+                                                    if($val5->itemType == 3)
+                                                    {
+                                                        $val5 = $this->getGlCodes($outputDetail,$val5);
+                                                    }else {
+                                                        $val5->glCodes = $outputDetail->where('templateDetailID', $val5->detID)->sortBy('sortOrder')->values();
+                                                    }
                                                 }
                                             }
                                         }
@@ -1321,7 +1411,6 @@ class FinancialReportAPIController extends AppBaseController
 
                 }
             }
-
 
             $headers = collect($headers)->forget($removedFromArray)->values();
         }
@@ -1364,7 +1453,7 @@ class FinancialReportAPIController extends AppBaseController
             'closingBalance' => $outputClosingBalanceArr,
             'uncategorize' => $uncategorizeArr,
             'uncategorizeDrillDown' => $uncategorizeDetailArr,
-            'grandTotalUncatArr' => $grandTotal,
+            'grandTotalUncatArr' => !is_array($grandTotal) ? $grandTotal->toArray():$grandTotal,
             'numbers' => $divisionValue,
             'columnTemplateID' => $columnTemplateID,
             'companyHeaderData' => $companyHeaderColumns,
@@ -1378,6 +1467,37 @@ class FinancialReportAPIController extends AppBaseController
             'thirdLevel' => $thirdLevel,
             'fourthLevel' => $fourthLevel
         );
+    }
+
+    public function getGlCodes($outputDetail,$val2)
+    {
+        foreach (ReportTemplateDetails::find($val2->detID)->gl_codes as $glCodeData)
+        {
+            $glCodesArray[] = $glCodeData->subcategory->detID;
+        }
+        if(!empty($glCodesArray))
+        {
+            $outputData = $outputDetail->whereIn('templateDetailID', $glCodesArray)->sortBy('sortOrder')->values();
+            $data =  $outputData
+                ->reduce(function ($carry, $item) use ($val2) {
+                    foreach ($item as $key => $value) {
+                        if (strpos($key, '-') !== false) {
+                            if (is_numeric($value)) {
+                                $carry[$key] = ($carry[$key] ?? 0) + $value;
+                            }
+                        }
+
+                    }
+                    return $carry;
+                }, []);
+            foreach ($data as $key => $value) {
+                if (collect($val2)->contains($key)) {
+                    $val2->$key = $value;
+                }
+            }
+        }
+
+        return $val2;
     }
 
     /*generate report according to each report id*/
