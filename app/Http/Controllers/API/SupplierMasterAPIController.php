@@ -187,9 +187,12 @@ class SupplierMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('category',function ($row) {
-                return $row->supplier_business_category->map(function($category) {
-                    return $category->categoryMaster->categoryCode.' - '.$category->categoryMaster->categoryName;
-                })->implode(' | ');
+                return $row->supplier_business_category->map(function ($category) {
+                    if ($category->categoryMaster) {
+                        return $category->categoryMaster->categoryCode . ' - ' . $category->categoryMaster->categoryName;
+                    }
+                    return null; 
+                })->filter()->implode(' | ');
             })
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
