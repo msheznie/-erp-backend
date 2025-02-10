@@ -325,6 +325,7 @@ class PurchaseRequestAPIController extends AppBaseController
             'currencies' => $currencies,
             'financeCategories' => $financeCategories,
             'locations' => $locations,
+            'buyers' => $buyers,
             'buyersOnly' => $buyersOnly,
             'companyFinanceYear' => $companyFinanceYear,
             'priorities' => $priorities,
