@@ -1,5 +1,37 @@
 # Changelog
 
+## [10.61.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.60.1...v10.61.0) (2025-02-10)
+
+
+### Features
+
+* **pv:** Display Issues in SRM Payment Voucher [GSUP-2255] ([#7454](https://github.com/pbsgears/Gears_BackEnd/issues/7454)) ([0553ec5](https://github.com/pbsgears/Gears_BackEnd/commit/0553ec52cadad3ffd2e9981681eb3371cc7fc712))
+* **Registration:** Supplier Portal | Login Error message UI change [GSUP-2225] ([#7413](https://github.com/pbsgears/Gears_BackEnd/issues/7413)) ([95c40d5](https://github.com/pbsgears/Gears_BackEnd/commit/95c40d5aeda68cd80bff2ce93d86e24a5ead8913))
+* **Tender:** Add validation for Criteria [GSUP-2194] ([e9ae096](https://github.com/pbsgears/Gears_BackEnd/commit/e9ae096835f0361123de76e0fae650dee151004d))
+* **Tender:** Admin option to change the Tender Calendar Dates [GSUP-2184] ([#7461](https://github.com/pbsgears/Gears_BackEnd/issues/7461)) ([713eef7](https://github.com/pbsgears/Gears_BackEnd/commit/713eef777525e841f014ca1474353bb895b2329a))
+* **Tender:** SRM – Work around for Payment gateway integration [GSUP-2060] ([#7266](https://github.com/pbsgears/Gears_BackEnd/issues/7266)) ([23aaf8b](https://github.com/pbsgears/Gears_BackEnd/commit/23aaf8b3ea98f1310e5383c2dd2f440eb571e029))
+* **Tender:** SRM – Work around for Payment gateway integration [GSUP-2060] ([#7266](https://github.com/pbsgears/Gears_BackEnd/issues/7266)) ([84ffab9](https://github.com/pbsgears/Gears_BackEnd/commit/84ffab9780ed5b5db213bed2798dd0f25e86a00c))
+* **Tender:** SRM – Work around for Payment gateway integration Enhancement [GSUP-2158] ([#7408](https://github.com/pbsgears/Gears_BackEnd/issues/7408)) ([41c8da7](https://github.com/pbsgears/Gears_BackEnd/commit/41c8da78c29ebd5b8c7cc0ac755b30d3ee117493))
+
+
+### Bug Fixes
+
+* **SRM:** Minutes of Bid Opening Report Not Displayed for Closed and Single Sourcing RFX [GSUP-2214] ([#7399](https://github.com/pbsgears/Gears_BackEnd/issues/7399)) ([2a6d2b0](https://github.com/pbsgears/Gears_BackEnd/commit/2a6d2b048e3bfac6d8ecd2fe0841a6df8bd28c23))
+* **SRM:** Remove FAQ and Pre-Bid Clarifications Sheet from the Common Purchase Order Summary Report [GSUP-2257] ([#7462](https://github.com/pbsgears/Gears_BackEnd/issues/7462)) ([e011f00](https://github.com/pbsgears/Gears_BackEnd/commit/e011f00dcf7e0deaf096829622ebf12c9f318523))
+
+
+### Miscellaneous Chores
+
+* release 10.53.2 ([1be0a2d](https://github.com/pbsgears/Gears_BackEnd/commit/1be0a2d33ce913e5bf1f636f33136d0e85190bc9))
+* release 10.53.2 ([e18de2b](https://github.com/pbsgears/Gears_BackEnd/commit/e18de2bf55076f43aae345d64f78fe61c67d6954))
+* release 10.53.2 ([f521d99](https://github.com/pbsgears/Gears_BackEnd/commit/f521d99f903529c374300263e0c5a72afdaa86a4))
+* release 10.53.2 ([70f0b7b](https://github.com/pbsgears/Gears_BackEnd/commit/70f0b7b6cb2a798d42f2d78ba50854876fb7da24))
+* release 10.54.0 ([eb17150](https://github.com/pbsgears/Gears_BackEnd/commit/eb17150e53a72793b77011c2d0e1d0deb1682b21))
+* release 10.54.0 ([8c01916](https://github.com/pbsgears/Gears_BackEnd/commit/8c019164c9f86c25686339ddde19c03567a2e127))
+* release 10.54.0 ([2dd1c86](https://github.com/pbsgears/Gears_BackEnd/commit/2dd1c86fce39b8c959dab3f0987e65681f6f3dde))
+* release 10.54.0 ([ec4340a](https://github.com/pbsgears/Gears_BackEnd/commit/ec4340ad945c0a6eed2246b80f126537aa163fe8))
+* release 10.60.1 ([9cb9fac](https://github.com/pbsgears/Gears_BackEnd/commit/9cb9facf2f63441b059985f0c8b6326e4a3c312a))
+
 ## [10.60.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.60.0...v10.60.1) (2025-02-09)
 
 
