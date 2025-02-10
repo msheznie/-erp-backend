@@ -11,6 +11,8 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Models\SrmTenderBidEmployeeDetails;
+use App\Models\SRMTenderCalendarLog;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\TenderBoqItems;
 use App\Models\TenderMaster;
@@ -21,6 +23,7 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 /**
  * Class TenderMasterRepository
  * @package App\Repositories
@@ -89,7 +92,7 @@ class TenderMasterRepository extends BaseRepository
         $companyId = $input['companyId'];
 
         $currency = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
-        ->get();
+            ->get();
 
         $selection = TenderType::select('id', 'name')
             ->get()
@@ -101,13 +104,13 @@ class TenderMasterRepository extends BaseRepository
             });
 
         $envelope = EnvelopType::select('id','name')
-        ->get()
-        ->map(function ($item) {
-            return [
-                'value' => $item->id,
-                'label' => $item->name,
-            ];
-        });
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'value' => $item->id,
+                    'label' => $item->name,
+                ];
+            });
 
         $published =  array(
             array('value'=> 0 , 'label'=> 'Not Published'),
@@ -116,38 +119,38 @@ class TenderMasterRepository extends BaseRepository
 
         $tenderNegotiationStatus =  array(
             array('value'=> 1 , 'label'=> 'Negotiation Not Started'),
-            array('value'=> 2 , 'label'=> 'Negotiation Started'), 
-            array('value'=> 3 , 'label'=> 'Negotiation Completed'), 
+            array('value'=> 2 , 'label'=> 'Negotiation Started'),
+            array('value'=> 3 , 'label'=> 'Negotiation Completed'),
         );
 
         $status =array(
             array('value'=> 1 , 'label'=> 'Not Confirmed'),
-            array('value'=> 2 , 'label'=> 'Pending Approval'), 
-            array('value'=> 3 , 'label'=> 'Fully Approved'),  
-            array('value'=> 4 , 'label'=> 'Referred Back'), 
+            array('value'=> 2 , 'label'=> 'Pending Approval'),
+            array('value'=> 3 , 'label'=> 'Fully Approved'),
+            array('value'=> 4 , 'label'=> 'Referred Back'),
             array('value'=> 5 , 'label'=> 'Rejected'),
         );
 
         $rfxTypes = array(
             array('value'=> 1 , 'label'=> 'RFQ'),
-            array('value'=> 2 , 'label'=> 'RFI'), 
-            array('value'=> 3 , 'label'=> 'RFP'), 
+            array('value'=> 2 , 'label'=> 'RFI'),
+            array('value'=> 3 , 'label'=> 'RFP'),
         );
 
         $gonogo = array(
             array('value'=> 1 , 'label'=> 'Not Completed'),
-            array('value'=> 2 , 'label'=> 'Completed'),  
-        );  
+            array('value'=> 2 , 'label'=> 'Completed'),
+        );
 
         $technical = array(
             array('value'=> 0 , 'label'=> 'Not Completed'),
             array('value'=> 1 , 'label'=> 'Completed'),
-        );  
+        );
 
         $stage = array(
             array('value'=> 1 , 'label'=> 'Single Stage'),
-            array('value'=> 2 , 'label'=> 'Two Stage'),  
-        );  
+            array('value'=> 2 , 'label'=> 'Two Stage'),
+        );
 
         $commercial = array(
             array('value'=> 0 , 'label'=> 'Not Completed'),
@@ -167,24 +170,24 @@ class TenderMasterRepository extends BaseRepository
             'commercial' => $commercial,
             'tenderNegotiationStatus' => $tenderNegotiationStatus
         );
- 
+
         return $data;
     }
 
-    public function getTenderPr(Request $request){ 
+    public function getTenderPr(Request $request){
         $input = $request->all();
         $tenderId = $input['tenderId'];
         $companyId = $input['companyId'];
 
         $data = PurchaseRequest::select('purchaseRequestID','companyID','purchaseRequestCode')
-        ->with(['tender_purchase_request' => function ($query) use ($tenderId) {
-            $query->where('tender_id', $tenderId);
-        }])
-        ->where('companySystemID',$companyId)
-        ->whereHas('tender_purchase_request', function ($query) use ($tenderId) {
+            ->with(['tender_purchase_request' => function ($query) use ($tenderId) {
                 $query->where('tender_id', $tenderId);
-        })
-        ->get();
+            }])
+            ->where('companySystemID',$companyId)
+            ->whereHas('tender_purchase_request', function ($query) use ($tenderId) {
+                $query->where('tender_id', $tenderId);
+            })
+            ->get();
 
         return $data;
 
@@ -352,12 +355,12 @@ class TenderMasterRepository extends BaseRepository
         $input = $request->all();
         $getPaymentProofDocument = SRMTenderPaymentProof::getPaymentProofDataByUuid($input['uuid']);
         $result = DB::transaction(function () use ($getPaymentProofDocument) {
-                $data = [
-                    'tender_master_id' => $getPaymentProofDocument['tender_id'],
-                    'purchased_date' =>  Carbon::parse(now())->format('Y-m-d H:i:s'),
-                    'purchased_by' => $getPaymentProofDocument['srm_supplier_id'],
-                    'created_by' => $getPaymentProofDocument['srm_supplier_id']
-                ];
+            $data = [
+                'tender_master_id' => $getPaymentProofDocument['tender_id'],
+                'purchased_date' =>  Carbon::parse(now())->format('Y-m-d H:i:s'),
+                'purchased_by' => $getPaymentProofDocument['srm_supplier_id'],
+                'created_by' => $getPaymentProofDocument['srm_supplier_id']
+            ];
             TenderMasterSupplier::create($data);
         });
     }
@@ -420,5 +423,324 @@ class TenderMasterRepository extends BaseRepository
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
+    }
+
+    public function updateTenderCalendarDays($request)
+    {
+        try
+        {
+            $input = $request->all();
+            $tenderData = TenderMaster::getTenderByUuid($input['tenderCode']);
+
+
+            if(empty($tenderData)){
+                return ['success' => false, 'message' => 'Tender data not found'];
+            }
+
+            $formattedDatesAndTime = $this->getFormattedDatesAndTime($input,$tenderData);
+            $validationResult = $this->validateTenderDates($formattedDatesAndTime,$tenderData);
+            if (!$validationResult['success']) {
+                return $validationResult;
+            }
+
+            $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
+
+            return [
+                'success' => true,
+                'message' => 'Tender calendar days updated successfully.',
+                'data' => $updatedData
+            ];
+
+        }
+        catch(\Exception $e)
+        {
+            return ['success' => false, 'message' => $e->getMessage(),];
+        }
+    }
+
+    private function validateTenderDates($data,$tenderData)
+    {
+        $submissionClosingDate = $data['submissionClosingDate'];
+        $submissionOpeningDate = $data['submissionOpeningDate'];
+        $bidOpeningStartDate = $data['bidOpeningStartDate'];
+        $bidOpeningEndDate = $data['bidOpeningEndDate'];
+
+        $technicalStartDate = $data['technicalStartDate'];
+        $technicalEndDate = $data['technicalEndDate'];
+        $commercialStartDate = $data['commercialStartDate'];
+        $commercialEndDate = $data['commercialEndDate'];
+        $employee = \Helper::getEmployeeInfo();
+
+
+        $bidClosingDate = $tenderData['bid_submission_closing_date'];
+        $currentDate = (Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()));
+
+        if ($employee->isSuperAdmin != -1) {
+            return ['success' => false, 'message' => 'You do not have permission to edit this record'];
+        }
+
+        if ($submissionOpeningDate > $submissionClosingDate) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
+        }
+
+        if($tenderData['stage'] == 1)
+        {
+            if ($submissionClosingDate >= $bidOpeningStartDate) {
+                return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
+            }
+
+            if ($bidOpeningStartDate > $bidOpeningEndDate) {
+                return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
+            }
+        }
+
+
+        if($tenderData['stage'] == 2)
+        {
+
+            if (!is_null($commercialEndDate)) {
+                if ($commercialStartDate > $commercialEndDate) {
+                    return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
+                }
+            }
+
+            if ($submissionClosingDate > $technicalStartDate) {
+                return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission from date and time'];
+            }
+
+
+            if (is_null($technicalEndDate)) {
+                if ($technicalStartDate > $commercialStartDate) {
+                    return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
+                }
+            } else {
+                if (($technicalEndDate >= $commercialStartDate)) {
+                    return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
+                }
+            }
+
+
+            if (!empty($technicalStartDate) && !empty($technicalEndDate)) {
+                if ($technicalStartDate > $technicalEndDate) {
+                    return ['success' => false, 'message' => 'Technical Bid Opening to date and time should greater than Technical Bid Opening from date and time'];
+                }
+            }
+
+        }
+
+        return ['success' => true];
+    }
+    private function getFormattedDatesAndTime($input, $tenderData)
+    {
+        return [
+            'submissionClosingDate' => $this->parseDateTime($input, 'submissionClosingDate', 'bidSubmissionClosingTime'),
+            'submissionOpeningDate' => Carbon::parse($tenderData['bid_submission_opening_date']),
+            'bidOpeningStartDate' => $this->parseDateTime($input, 'bidOpeningStartDate', 'bidOpeningStarDateTime'),
+            'bidOpeningEndDate' => $this->parseDateTime($input, 'bidOpeningEndDate', 'bidOpeningEndDateTime'),
+            'technicalStartDate' => $this->parseDateTime($input, 'technicalBidOpeningStartDate', 'technicalBidOpeningStarDateTime'),
+            'technicalEndDate' => $this->parseDateTime($input, 'technicalBidOpeningEndDate', 'technicalBidOpeningEndDateTime'),
+            'commercialStartDate' => $this->parseDateTime($input, 'commercialBidOpeningStartDate', 'commercialBidOpeningStarDateTime'),
+            'commercialEndDate' => $this->parseDateTime($input, 'commercialBidOpeningEndDate', 'commercialBidOpeningEndDateTime')
+        ];
+    }
+    private function parseDateTime($input, $dateKey, $timeKey)
+    {
+        if (!empty($input[$dateKey]) && !empty($input[$timeKey])) {
+            $dateTime = Carbon::createFromFormat(
+                'Y-m-d H:i:s',
+                Carbon::parse($input[$dateKey])->format('Y-m-d') . ' ' . Carbon::parse($input[$timeKey])->format('H:i:s')
+            );
+            return $dateTime;
+        }
+        return null;
+    }
+    private function processTenderUpdate($formattedDatesAndTime, $tenderData,$input)
+    {
+        try {
+            DB::transaction(function () use ($formattedDatesAndTime, $tenderData, $input) {
+                $tenderMaster = TenderMaster::find($tenderData['id']);
+                $calendarLog = $this->insertCalendarLog($formattedDatesAndTime, $tenderData, $input);
+                $data = [
+                    'bid_submission_closing_date' => $formattedDatesAndTime['submissionClosingDate'] ?? null,
+                    'bid_opening_date' => $formattedDatesAndTime['bidOpeningStartDate'] ?? null,
+                    'bid_opening_end_date' => $formattedDatesAndTime['bidOpeningEndDate'] ?? null,
+                    'technical_bid_opening_date' => $formattedDatesAndTime['technicalStartDate'] ?? null,
+                    'technical_bid_closing_date' => $formattedDatesAndTime['technicalEndDate'] ?? null,
+                    'commerical_bid_opening_date' => $formattedDatesAndTime['commercialStartDate'] ?? null,
+                    'commerical_bid_closing_date' => $formattedDatesAndTime['commercialEndDate'] ?? null,
+                ];
+
+                $tenderMaster->update($data);
+            });
+
+            return [
+                'success' => true,
+                'message' => 'Tender calendar days updated successfully.',
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function getTenderCalendarValidation($request)
+    {
+        $input = $request->all();
+        $tenderData = TenderMaster::getTenderByUuid($input['tenderCode']);
+        $tenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::getTendetBidEmployeeDetails($tenderData['id']);
+        $currentDate = date('Y-m-d H:i:s');
+        $currentDateFormatted = Carbon::createFromFormat('Y-m-d H:i:s', $currentDate);
+        $formatedDates = $this->getFormattedDatesAndTime($input, $tenderData);
+        $isCommDateDisable = false;
+        $isDateDisable = false;
+
+        if ($tenderData['stage'] == 1) {
+            $bidOpeningStartDate = $formatedDates['bidOpeningStartDate'];
+            $bidOpeningEndDate = $formatedDates['bidOpeningEndDate'];
+        } else if ($tenderData['stage'] == 2) {
+            $bidOpeningStartDate = $formatedDates['technicalStartDate'];
+            $bidOpeningEndDate = $formatedDates['technicalEndDate'];
+
+            $commercialStartDate = $formatedDates['commercialStartDate'];
+            $commercialEndDate = $formatedDates['commercialEndDate'];
+
+            $result1 = $currentDateFormatted->gt($commercialStartDate);
+            if ($commercialEndDate == null) {
+                $result2 = true;
+            } else {
+                $result2 = $commercialEndDate->gt($currentDateFormatted);
+            }
+
+            if ($result1 && $result2) {
+                $isCommDateDisable = true;
+            }
+
+        }
+
+        $technicalBidOpened = $currentDateFormatted->gt($bidOpeningStartDate);
+
+        if ($bidOpeningEndDate == null) {
+            $result4 = true;
+        } else {
+            $result4 = $bidOpeningEndDate->gt($currentDateFormatted);
+        }
+
+        if ($technicalBidOpened && $result4) {
+            $isDateDisable = true;
+        }
+
+        $isEmpApprovalActive = $currentDateFormatted->gte($formatedDates['submissionClosingDate']);
+        $minApprovalBidOpening = $tenderData['min_approval_bid_opening'];
+        $employeeApprovalCount = $tenderBidEmployeeDetails->count();
+
+        $technicalBidValidation = (($technicalBidOpened || $employeeApprovalCount >= $minApprovalBidOpening) || $isEmpApprovalActive);
+
+        $disable = $technicalBidValidation ? false : true;
+        $disableCommercial = $technicalBidValidation ? false : true;
+        $commercialBidValidation = (!$isCommDateDisable || $minApprovalBidOpening > $employeeApprovalCount);
+
+        $comActive = (!$commercialBidValidation && !$disable) ? true : false;
+
+
+        return [
+            'technicalBidValidation'=> $disable,
+            'commercialBidValidation' => $comActive,
+            'isTecDisable' => $technicalBidOpened
+        ] ;
+    }
+
+    public function insertCalendarLog($formattedDatesAndTime, $tenderData, $input)
+    {
+        return DB::transaction(function () use ($formattedDatesAndTime, $tenderData, $input) {
+            $logData = [];
+            $baseData = [
+                'tender_id' => $tenderData['id'],
+                'company_id' => $tenderData['company_id'],
+                'created_by' => Helper::getEmployeeSystemID(),
+                'created_at' => Helper::currentDateTime(),
+                'narration' => $input['comment'],
+            ];
+
+            $fields = $this->getFieldMappings();
+
+            foreach ($fields as $newField => $info) {
+                $oldValue = isset($tenderData[$info['oldField']]) ? $tenderData[$info['oldField']] : null;
+                $newValue = isset($formattedDatesAndTime[$newField]) ? $formattedDatesAndTime[$newField] : null;
+
+                $oldDateTime = $oldValue ? Carbon::parse($oldValue) : null;
+                $newDateTime = $newValue ? Carbon::parse($newValue) : null;
+
+                $oldDate = $oldDateTime ? $oldDateTime->format('Y-m-d') : null;
+                $newDate = $newDateTime ? $newDateTime->format('Y-m-d') : null;
+
+                if ($oldDate !== $newDate) {
+                    $logData[] = array_merge($baseData, [
+                        'filed_description' => $info['descriptionDate'],
+                        'old_value' => $oldDate,
+                        'new_value' => $newDate,
+                    ]);
+                }
+
+                $oldTime = $oldDateTime ? $oldDateTime->format('H:i:s') : null;
+                $newTime = $newDateTime ? $newDateTime->format('H:i:s') : null;
+
+                if ($oldTime !== $newTime) {
+                    $logData[] = array_merge($baseData, [
+                        'filed_description' => $info['descriptionTime'],
+                        'old_value' => $oldTime,
+                        'new_value' => $newTime,
+                    ]);
+                }
+            }
+
+            if (!empty($logData)) {
+                SRMTenderCalendarLog::insert($logData);
+            }
+        });
+    }
+
+    private function getFieldMappings(): array
+    {
+        return [
+            'submissionClosingDate' => [
+                'oldField' => 'bid_submission_closing_date',
+                'descriptionDate' => 'Bid Submission to date',
+                'descriptionTime' => 'Bid Submission to time',
+            ],
+            'bidOpeningStartDate' => [
+                'oldField' => 'bid_opening_date',
+                'descriptionDate' => 'Bid Opening from date',
+                'descriptionTime' => 'Bid Opening from time',
+            ],
+
+            'bidOpeningEndDate' => [
+                'oldField' => 'bid_opening_end_date',
+                'descriptionDate' => 'Bid Opening to date',
+                'descriptionTime' => 'Bid Opening to time',
+            ],
+
+            'technicalStartDate' => [
+                'oldField' => 'technical_bid_opening_date',
+                'descriptionDate' => 'Technical bid opening from date',
+                'descriptionTime' => 'Technical bid opening from time',
+            ],
+
+            'technicalEndDate' => [
+                'oldField' => 'technical_bid_closing_date',
+                'descriptionDate' => 'Technical bid opening to date',
+                'descriptionTime' => 'Technical bid opening  to time',
+            ],
+
+            'commercialStartDate' => [
+                'oldField' => 'commerical_bid_opening_date',
+                'descriptionDate' => 'Commercial bid opening from date',
+                'descriptionTime' => 'Commercial bid opening from time',
+            ],
+
+            'commercialEndDate' => [
+                'oldField' => 'commerical_bid_closing_date',
+                'descriptionDate' => 'Commercial bid opening to date',
+                'descriptionTime' => 'Commercial bid opening to time',
+            ],
+        ];
     }
 }

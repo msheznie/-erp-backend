@@ -80,7 +80,7 @@ class InvoiceService
             ->where('supplierID', $supplierID)
             ->where('approved', -1)
             ->where('cancelYN', 0)
-            ->where('documentType', 0)
+            ->whereIn('documentType', [0,1,2,3])
             ->orderBy('bookingSuppMasInvAutoID', 'desc');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -145,7 +145,7 @@ class InvoiceService
             ->where('supplierID', $supplierID)
             ->where('approved', -1)
             ->where('cancelYN', 0)
-            ->where('documentType', 0)
+            ->whereIn('documentType', [0,1,2,3])
             ->with([
                 'detail' => function ($q) {
                     $q->select(

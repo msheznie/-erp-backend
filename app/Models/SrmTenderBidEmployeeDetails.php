@@ -48,4 +48,11 @@ class SrmTenderBidEmployeeDetails extends Model
     {
         return $this->hasOne('App\Models\Employee', 'employeeSystemID', 'emp_id');
     }
+
+    public static function getTendetBidEmployeeDetails($tenderId)
+    {
+        return self::where('tender_id', $tenderId)
+            ->where('status', true)
+            ->get();
+    }
 }

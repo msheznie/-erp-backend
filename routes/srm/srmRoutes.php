@@ -267,7 +267,7 @@ Route::post('getTenderRfxAudit', 'TenderMasterAPIController@getTenderRfxAudit')-
 
 
 Route::group(['prefix' => 'srm'], function (){
-        
+
     Route::group(['middleware' => ['tenant']], function (){
         Route::post('fetch', 'SRM\APIController@fetch')->name("Get supplier KYC details");
     });
@@ -293,3 +293,6 @@ Route::post('getSupplierWiseProofNotApproved', 'TenderMasterAPIController@getSup
 Route::post('approveSupplierWiseTender', 'TenderMasterAPIController@approveSupplierWiseTender');
 Route::post('rejectSupplierWiseTender', 'TenderMasterAPIController@rejectSupplierWiseTender');
 Route::post('getSupplierWiseProofApproved', 'TenderMasterAPIController@getSupplierWiseProofApproved');
+Route::post('updateTenderCalendarDays', 'TenderMasterAPIController@updateTenderCalendarDays');
+Route::post('getTenderCalendarValidation', 'TenderMasterAPIController@getTenderCalendarValidation');
+/*TenderPaymentDetailAPIController*/

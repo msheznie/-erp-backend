@@ -280,9 +280,9 @@ class SRMTenderPaymentProof extends Model
         return self::select('id','uuid','document_code','tender_id','srm_supplier_id', 'confirmed_yn','refferedBackYN')
             ->with(['documentAttachment' => function($query) use ($documentSystemId, $companyId){
                 $query->select('attachmentID','documentSystemID','documentSystemCode','attachmentDescription','path',
-                'originalFileName','myFileName','companySystemID')
-                ->where('documentSystemID',$documentSystemId)
-                ->where('companySystemID',$companyId);
+                    'originalFileName','myFileName','companySystemID')
+                    ->where('documentSystemID',$documentSystemId)
+                    ->where('companySystemID',$companyId);
             }])
             ->where('tender_id', $tenderId)
             ->where('srm_supplier_id', $srmSupplierId)
@@ -291,7 +291,7 @@ class SRMTenderPaymentProof extends Model
 
     public function documentAttachment()
     {
-       return $this->hasMany('App\Models\DocumentAttachments', 'documentSystemCode', 'id');
+        return $this->hasMany('App\Models\DocumentAttachments', 'documentSystemCode', 'id');
     }
 
     public static function getPaymentProofDataByUuid($uuid)
@@ -374,16 +374,16 @@ class SRMTenderPaymentProof extends Model
             ])
             ->groupBy('da.documentSystemCode')
             ->select([
-                 'pf.uuid',
-                 'pf.id as pfCode',
-                 'pf.document_system_id as docSysCode',
-                 'srl.name as supplierName',
-	             'srl.registration_number as supplierCr',
-	             'pf.confirmed_date as submittedDate',
-	             'pf.confirmed_yn',
-	             'pf.approved_yn',
-                 'da.documentApprovedID as documentApCode',
-                 'pf.refferedBackYN'
+                'pf.uuid',
+                'pf.id as pfCode',
+                'pf.document_system_id as docSysCode',
+                'srl.name as supplierName',
+                'srl.registration_number as supplierCr',
+                'pf.confirmed_date as submittedDate',
+                'pf.confirmed_yn',
+                'pf.approved_yn',
+                'da.documentApprovedID as documentApCode',
+                'pf.refferedBackYN'
             ]);
     }
 

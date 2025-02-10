@@ -240,4 +240,9 @@ class BookInvSuppMasterRepository extends BaseRepository
 
         return $data;
     }
+
+    public function getInvoiceDetails($id)
+    {
+        return BookInvSuppMaster::getInvoiceDetails($id);
+    }
 }

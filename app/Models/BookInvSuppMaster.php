@@ -273,7 +273,7 @@ class BookInvSuppMaster extends Model
 {
     use Compoships;
     public $table = 'erp_bookinvsuppmaster';
-    
+
     const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
 
@@ -459,14 +459,14 @@ class BookInvSuppMaster extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
-    
+
     public function project()
     {
         return $this->belongsTo('App\Models\ErpProjectMaster', 'projectID', 'id');
@@ -602,20 +602,20 @@ class BookInvSuppMaster extends Model
 
     public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
         return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_bookinvsuppmaster.'.$column)
-        ->addSelect($as.".CurrencyName as ".$columnAs);
+            ->addSelect($as.".CurrencyName as ".$columnAs);
 
     }
 
     public function scopeSupplierJoin($q,$as = 'supplier', $column = 'supplierID' , $columnAs = 'primarySupplierCode')
     {
         return $q->leftJoin('suppliermaster as '.$as,$as.'.supplierCodeSystem','erp_bookinvsuppmaster.'.$column)
-        ->addSelect($as.".supplierName as ".$columnAs);
+            ->addSelect($as.".supplierName as ".$columnAs);
     }
 
     public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
     {
         return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_bookinvsuppmaster.'.$column)
-        ->addSelect($as.".CompanyName as ".$columnAs);
+            ->addSelect($as.".CompanyName as ".$columnAs);
     }
 
     public function vrfDocument()
@@ -632,10 +632,90 @@ class BookInvSuppMaster extends Model
         $this->save();
     }
 
-    public function generalLedger()
+    public static function getInvoiceDetails($id)
     {
-        return $this->hasMany('App\Models\GeneralLedger', 'documentSystemCode', 'bookingSuppMasInvAutoID')
-            ->where('documentSystemID', 11);
+        $invoiceDetails = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)->with(['grvdetail' => function ($query) {
+            $query->with(['grvmaster' => function ($gm) {
+                $gm->select('grvAutoID', 'grvPrimaryCode');
+            }])->select(
+                'bookingSuppMasInvAutoID',
+                'unbilledgrvAutoID',
+                'supplierID',
+                'grvAutoID',
+                'localCurrencyID',
+                'supplierInvoOrderedAmount',
+                'supplierInvoAmount',
+                'transSupplierInvoAmount',
+                'localSupplierInvoAmount',
+                'rptSupplierInvoAmount',
+                'totTransactionAmount',
+                'totLocalAmount',
+                'VATAmount',
+                'VATAmountLocal',
+                'VATAmountRpt'
+            );
+        }, 'directdetail' => function ($query) {
+            $query->select(
+                "directInvoiceDetailsID",
+                "directInvoiceAutoID",
+                "companySystemID",
+                "companyID",
+                "serviceLineSystemID",
+                "chartOfAccountSystemID",
+                "glCode",
+                "glCodeDes",
+                "comments",
+                "percentage",
+                "localCurrency",
+                "localCurrencyER",
+                "localAmount",
+                "comRptCurrency",
+                "comRptAmount",
+                "VATAmount",
+                "VATPercentage",
+                "netAmount",
+                "whtAmount"
+            );
+        }, 'detail' => function ($query) {
+            $query->with(['grvmaster' => function ($gm) {
+                $gm->select('grvAutoID', 'grvPrimaryCode');
+            }])->select('bookingSupInvoiceDetAutoID', 'bookingSuppMasInvAutoID', 'unbilledgrvAutoID');
+        }, 'item_details' => function ($item) {
+            $item->select(
+                'bookingSuppMasInvAutoID', 'itemCode', 'itemPrimaryCode','itemDescription', 'discountPercentage', 'discountAmount', 'VATPercentage', 'VATAmount', 'whtAmount', 'netAmount', 'noQty');
+        }, 'approved_by' => function ($query) {
+            $query->with(['employee' => function ($e)
+            {
+                $e->select('empFullName', 'employeeSystemID');
+            }]);
+            $query->select('companySystemID',
+                'companyID',
+                'documentSystemID',
+                'documentSystemCode',
+                'employeeID',
+                'employeeSystemID',
+                'approvedYN',
+                'approvedDate',
+                'approvedForEmpID'
+            )->where('documentSystemID', 11);
+        }, 'company' => function ($c1) {
+            $c1->select(
+                'companySystemID',
+                'companyName as CompanyName',
+                'logoPath',
+                'masterCompanySystemIDReorting'
+            );
+        }, 'transactioncurrency' => function ($tc) {
+            $tc->select('currencyID', 'DecimalPlaces', 'CurrencyCode' );
+        }, 'supplier' => function ($s) {
+            $s->select('supplierCodeSystem', 'primarySupplierCode', 'supplierName');
+        }, 'confirmed_by' => function ($q) {
+            $q->select('employeeSystemID', 'empID', 'empName');
+        }])->first();
+
+        $invoiceDetails['isProjectBase'] = Helper::checkPolicy($invoiceDetails->companySystemID, 56);;
+
+        return $invoiceDetails;
     }
 
 }
