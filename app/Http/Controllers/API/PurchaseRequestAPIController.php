@@ -239,7 +239,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
         $month = Months::all();
-        $buyers = Employee::where('discharegedYN', '!=', 1)
+        $buyers = Employee::where('discharegedYN', '!=', -1)
             ->where('empActive', 1)
             ->whereIn('empCompanySystemID', $childCompanies)
             ->where('isSupportAdmin', '!=', -1)
