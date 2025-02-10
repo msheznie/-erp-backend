@@ -1,0 +1,395 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateDocCodeSetupCommonAPIRequest;
+use App\Http\Requests\API\UpdateDocCodeSetupCommonAPIRequest;
+use App\Models\DocCodeSetupCommon;
+use App\Repositories\DocCodeSetupCommonRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use App\Models\Company;
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
+use App\Models\DocumentCodeMaster;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class DocCodeSetupCommonController
+ * @package App\Http\Controllers\API
+ */
+
+class DocCodeSetupCommonAPIController extends AppBaseController
+{
+    /** @var  DocCodeSetupCommonRepository */
+    private $docCodeSetupCommonRepository;
+
+    public function __construct(DocCodeSetupCommonRepository $docCodeSetupCommonRepo)
+    {
+        $this->docCodeSetupCommonRepository = $docCodeSetupCommonRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/docCodeSetupCommons",
+     *      summary="getDocCodeSetupCommonList",
+     *      tags={"DocCodeSetupCommon"},
+     *      description="Get all DocCodeSetupCommons",
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @OA\Items(ref="#/definitions/DocCodeSetupCommon")
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->docCodeSetupCommonRepository->pushCriteria(new RequestCriteria($request));
+        $this->docCodeSetupCommonRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $docCodeSetupCommons = $this->docCodeSetupCommonRepository->all();
+
+        return $this->sendResponse($docCodeSetupCommons->toArray(), 'Doc Code Setup Commons retrieved successfully');
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Post(
+     *      path="/docCodeSetupCommons",
+     *      summary="createDocCodeSetupCommon",
+     *      tags={"DocCodeSetupCommon"},
+     *      description="Create DocCodeSetupCommon",
+     *      @OA\RequestBody(
+     *        required=true,
+     *        @OA\MediaType(
+     *            mediaType="application/x-www-form-urlencoded",
+     *            @OA\Schema(
+     *                type="object",
+     *                required={""},
+     *                @OA\Property(
+     *                    property="name",
+     *                    description="desc",
+     *                    type="string"
+     *                )
+     *            )
+     *        )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/DocCodeSetupCommon"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateDocCodeSetupCommonAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $docCodeSetupCommon = $this->docCodeSetupCommonRepository->create($input);
+
+        return $this->sendResponse($docCodeSetupCommon->toArray(), 'Doc Code Setup Common saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/docCodeSetupCommons/{id}",
+     *      summary="getDocCodeSetupCommonItem",
+     *      tags={"DocCodeSetupCommon"},
+     *      description="Get DocCodeSetupCommon",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of DocCodeSetupCommon",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/DocCodeSetupCommon"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var DocCodeSetupCommon $docCodeSetupCommon */
+        $docCodeSetupCommon = $this->docCodeSetupCommonRepository->findWithoutFail($id);
+
+        if (empty($docCodeSetupCommon)) {
+            return $this->sendError('Doc Code Setup Common not found');
+        }
+
+        return $this->sendResponse($docCodeSetupCommon->toArray(), 'Doc Code Setup Common retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Put(
+     *      path="/docCodeSetupCommons/{id}",
+     *      summary="updateDocCodeSetupCommon",
+     *      tags={"DocCodeSetupCommon"},
+     *      description="Update DocCodeSetupCommon",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of DocCodeSetupCommon",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\RequestBody(
+     *        required=true,
+     *        @OA\MediaType(
+     *            mediaType="application/x-www-form-urlencoded",
+     *            @OA\Schema(
+     *                type="object",
+     *                required={""},
+     *                @OA\Property(
+     *                    property="name",
+     *                    description="desc",
+     *                    type="string"
+     *                )
+     *            )
+     *        )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/DocCodeSetupCommon"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateDocCodeSetupCommonAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var DocCodeSetupCommon $docCodeSetupCommon */
+        $docCodeSetupCommon = $this->docCodeSetupCommonRepository->findWithoutFail($id);
+
+        if (empty($docCodeSetupCommon)) {
+            return $this->sendError('Doc Code Setup Common not found');
+        }
+
+        $docCodeSetupCommon = $this->docCodeSetupCommonRepository->update($input, $id);
+
+        return $this->sendResponse($docCodeSetupCommon->toArray(), 'DocCodeSetupCommon updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @OA\Delete(
+     *      path="/docCodeSetupCommons/{id}",
+     *      summary="deleteDocCodeSetupCommon",
+     *      tags={"DocCodeSetupCommon"},
+     *      description="Delete DocCodeSetupCommon",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of DocCodeSetupCommon",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var DocCodeSetupCommon $docCodeSetupCommon */
+        $docCodeSetupCommon = $this->docCodeSetupCommonRepository->findWithoutFail($id);
+
+        if (empty($docCodeSetupCommon)) {
+            return $this->sendError('Doc Code Setup Common not found');
+        }
+
+        $docCodeSetupCommon->delete();
+
+        return $this->sendSuccess('Doc Code Setup Common deleted successfully');
+    }
+
+    public function getDocumentCodeSetupCommon(Request $request)
+    {
+        $input = $request->all();
+        $master_id = $input['master_id'];
+
+        $company_id = $input['company_id'];
+        $company = Company::with('country')->find($company_id);
+        $financeYear = CompanyFinanceYear::where('companySystemID', $company_id)
+                                                ->where('isCurrent' , -1)
+                                                ->where('isActive' , -1)
+                                                ->first();
+        $financePeriod = CompanyFinancePeriod::where('companySystemID', $company_id)
+                                                ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
+                                                ->where('isCurrent' , -1)
+                                                ->where('isActive' , -1)
+                                                ->first();
+
+
+        //Formatting Values
+        $companyCode = $company->CompanyID; //format1
+        $countryName = $company->country->countryName;//format2
+        $segmentCode = 'SEG'; //format3
+        $blank = ' '; //format4
+        $YYYY = Carbon::parse($financeYear->bigginingDate)->format('Y'); //format6
+        $YY = Carbon::parse($financeYear->bigginingDate)->format('y'); //format7
+        $MM = Carbon::parse($financePeriod->dateFrom)->format('m'); //format8
+        $slash = '/'; //format9
+        $dash = '-'; //format10
+
+
+        $docCodeSetupCommon = DocCodeSetupCommon::with('document_code_transactions')->where('master_id', $master_id)->get();
+
+        $documentCodeMaster = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
+                                                    ->where('id', $master_id)
+                                                    ->first();
+        $lastSerial = $documentCodeMaster->last_serial;
+        $serialLength = $documentCodeMaster->serial_length;
+        $documentSerial = str_pad($lastSerial, $serialLength, '0', STR_PAD_LEFT);
+
+        if($docCodeSetupCommon){
+            foreach ($docCodeSetupCommon as $key => $value) {
+
+                //Formatting Values
+                $prefix = $value->document_code_transactions->master_prefix; //format5
+
+                $formats = [
+                    1 => $companyCode,
+                    2 => $countryName,
+                    3 => $segmentCode,
+                    4 => $blank,
+                    5 => $prefix,
+                    6 => $YYYY,
+                    7 => $YY,
+                    8 => $MM,
+                    9 => $slash,
+                    10 => $dash,
+                ];
+
+                $formatsArray = [];
+                for ($i = 1; $i <= 12; $i++) {
+                    $format = 'format' . $i;
+                    $formatsArray[] = $formats[$value->$format] ?? '';
+                }
+                $docCodeSetupCommon[$key]->codePreview = implode('', $formatsArray) . $documentSerial;
+
+            }
+        }
+
+        return $this->sendResponse($docCodeSetupCommon->toArray(), 'Doc Code Setup Common retrieved successfully');
+    }
+
+    public function updateCommonFormat(Request $request)
+    {
+        $input = $request->all();
+        unset($input['document_code_transactions']);
+        $input = $this->convertArrayToValue($input);
+        $id = $input['id'];
+
+        /** @var DocCodeSetupCommon $DocCodeSetupCommon */
+        $docCodeSetupCommon = $this->docCodeSetupCommonRepository->findWithoutFail($id);
+
+        if (empty($docCodeSetupCommon)) {
+            return $this->sendError('Document Code Master not found');
+        }
+
+        $docCodeSetupCommon = $this->docCodeSetupCommonRepository->update($input, $id);
+
+        return $this->sendResponse($docCodeSetupCommon->toArray(), 'Doc Code Setup Common updated successfully');
+    }
+
+}
