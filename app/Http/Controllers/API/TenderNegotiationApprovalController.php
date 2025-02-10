@@ -203,7 +203,7 @@ class TenderNegotiationApprovalController extends AppBaseController
                     $employee = SupplierRegistrationLink::select('email','company_id','name')->find($supplierTenderNegotiation->suppliermaster_id);
                     if(isset($employee) &&  $employee->email) {
                         $file = array();
-                        $tenderCustomEmail = TenderCustomEmail::getSupplierCustomEmailBody($input['srm_tender_master_id'], $supplierTenderNegotiation->suppliermaster_id);
+                        $tenderCustomEmail = TenderCustomEmail::getSupplierCustomEmailBody($input['srm_tender_master_id'], $supplierTenderNegotiation->suppliermaster_id, 'TNE');
                         if ($tenderCustomEmail && $tenderCustomEmail->attachment) {
                             $file[$tenderCustomEmail->attachment->originalFileName] = Helper::getFileUrlFromS3($tenderCustomEmail->attachment->path);
                         }

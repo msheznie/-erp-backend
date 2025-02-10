@@ -26,6 +26,7 @@ class GetCustomEmailSupplierRequest extends FormRequest
         return [
             'tender_uuid' => 'required',
             'supplier_uuid' => 'required',
+            'document_code' => 'required',
         ];
     }
 }

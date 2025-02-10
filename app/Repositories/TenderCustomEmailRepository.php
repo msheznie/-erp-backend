@@ -28,6 +28,7 @@ class TenderCustomEmailRepository
             'user_group' => $employee->userGroupID,
             'document_code' => $input['document_code'],
             'document_id' => $input['document_id'],
+            'email_subject' => $input['email_subject'] ?? '',
         ];
 
         try {
@@ -68,10 +69,10 @@ class TenderCustomEmailRepository
         }
     }
 
-    public function getCustomEmailSupplier($tenderId, $supplierUuid)
+    public function getCustomEmailSupplier($tenderId, $supplierUuid, $documentCode)
     {
         try {
-        return DB::transaction(function () use ( $tenderId, $supplierUuid) {
+        return DB::transaction(function () use ( $tenderId, $supplierUuid, $documentCode) {
 
         $tenderData = TenderMaster::getTenderByUuid($tenderId);
         if(!$tenderData){
@@ -87,7 +88,7 @@ class TenderCustomEmailRepository
                 "data" => 'Not a Valid Supplier UUID'
             ];
         }
-            return TenderCustomEmail::getCustomEmailSupplier($tenderData['id'], $supplierId);
+            return TenderCustomEmail::getCustomEmailSupplier($tenderData['id'], $supplierId, $documentCode);
             });
         } catch (\Exception $e) {
 

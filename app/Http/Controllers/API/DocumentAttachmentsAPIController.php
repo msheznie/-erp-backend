@@ -1085,7 +1085,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
     }
     public function storeTenderDocuments(CreateDocumentAttachmentsAPIRequest $request){
         $input = $request->all();
-        $attachmentType = ($input['documentSystemID'] == '128') ? 0 : $input['attachmentType'];
+        $attachmentType = in_array($input['documentSystemID'], ['128', '129']) ? 0 : $input['attachmentType'];
         $attachmentDescription = $input['attachmentDescription'];
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];

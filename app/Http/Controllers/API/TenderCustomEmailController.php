@@ -28,7 +28,7 @@ class TenderCustomEmailController extends AppBaseController
             if (!$result['success']) {
                 return $this->sendError('Error occurred');
             }
-            return $this->sendResponse(true, 'Saved successfully');
+            return $this->sendResponse($result,'Saved successfully');
         } catch (\Exception $e) {
             return $this->sendError('Error occurred');
         }
@@ -39,7 +39,8 @@ class TenderCustomEmailController extends AppBaseController
         try {
             $tenderUUID = $request->input('tender_uuid');
             $supplierUuid = $request->input('supplier_uuid');
-            $record = $this->repository->getCustomEmailSupplier($tenderUUID, $supplierUuid);
+            $documentCode = $request->input('document_code');
+            $record = $this->repository->getCustomEmailSupplier($tenderUUID, $supplierUuid, $documentCode);
 
             if (isset($responseData['success']) && $responseData['success']) {
                 return $this->sendError('Error occurred', ['error' => $record['data']]);

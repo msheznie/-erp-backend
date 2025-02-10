@@ -19,6 +19,7 @@ class TenderCustomEmail extends Model
         'document_code',
         'created_by',
         'cc_email',
+        'email_subject',
         'email_body',
         'document_id'
     ];
@@ -57,24 +58,26 @@ class TenderCustomEmail extends Model
         return $responseData;
     }
 
-    public static function getCustomEmailSupplier($tenderId, $supplierId)
+    public static function getCustomEmailSupplier($tenderId, $supplierId, $documentCode)
     {
         return self::where('tender_id', $tenderId)
             ->with(['attachment' => function ($query) {
                 $query->select('attachmentID', 'path', 'originalFileName');
             }])
             ->where('supplier_id', $supplierId)
+            ->where('document_code', $documentCode)
             ->first();
     }
 
-    public static function getSupplierCustomEmailBody($tenderId, $supplierMasterId)
+    public static function getSupplierCustomEmailBody($tenderId, $supplierMasterId, $documentCode)
     {
-        return TenderCustomEmail::select('email_body', 'cc_email', 'document_id', 'supplier_id')
+        return TenderCustomEmail::select('email_body', 'cc_email', 'document_id', 'supplier_id', 'email_subject')
             ->with(['attachment' => function ($q) {
                 $q->select('attachmentID', 'path', 'originalFileName');
             }])
             ->where('tender_Id', $tenderId)
             ->where('supplier_id', $supplierMasterId)
+            ->where('document_code', $documentCode)
             ->first();
     }
 }

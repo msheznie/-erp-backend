@@ -677,7 +677,7 @@ class email
                 $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
                 if ($data['empEmail']) {
                     Mail::to($data['empEmail'])
-                        ->cc(isset($data['ccEmail']) ? explode(',', $data['ccEmail']) : [])
+                        ->cc(isset($data['ccEmail']) ? $data['ccEmail'] : [])
                         ->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
                 }
             }
