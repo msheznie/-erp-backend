@@ -2127,7 +2127,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
         }
         else{
-            if(isset($input['by']) && ($input['by'] == 'VATPercentage' || $input['by'] == 'VATAmount')){
+            if(isset($input['by']) && ($input['by'] == 'VATPercentage' || $input['by'] == 'VATAmount') && is_numeric($input['VATPercentage'])){
                 if ($input['by'] === 'VATPercentage') {
                     $input["VATAmount"] = $unitCostForCalculation * $input["VATPercentage"] / 100;
                 } else if ($input['by'] === 'VATAmount') {
@@ -2138,7 +2138,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     }
                 }
             } else {
-                if ($input['VATPercentage'] != 0) {
+                if ($input['VATPercentage'] != 0 && is_numeric($input['VATPercentage'])) {
                     $input["VATAmount"] = $unitCostForCalculation * $input["VATPercentage"] / 100;
                 } else if ($input['VATAmount'] != 0){
                     if($unitCostForCalculation > 0){
