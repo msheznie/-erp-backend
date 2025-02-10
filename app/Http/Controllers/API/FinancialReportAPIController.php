@@ -11035,5 +11035,4 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         }
         return $type;
     }
-    
 }

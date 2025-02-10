@@ -59,6 +59,8 @@ Route::group([],function (){
     Route::post('exportFinanceReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Export financial report pdf");
     Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown')->name("Report template gl drill down");
     Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport')->name("Export report template gl drill down");
+    Route::post('reportTemplateEquityGLDrillDown', 'FinancialReportAPIController@reportTemplateEquityGLDrillDown')->name("Report template equity gl drill down");
+
 });
 
 //General Ledger
