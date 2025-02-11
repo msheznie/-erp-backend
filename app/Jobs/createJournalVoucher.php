@@ -67,32 +67,39 @@ class createJournalVoucher implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/create_journal_voucher.log');
         CommonJobService::db_switch($this->db);
         try {
-            $validationError = $headerError = [];
+            $errorDetails = $successDetails = [];
             $inputArray = $this->input;
-            if(!empty($inputArray[0])) {
+            if(!empty($inputArray['journalVouchers'])) {
                 $compId = $inputArray['company_id'];
                 $company = Company::where('companySystemID', $compId)->first();
                 if (empty($company)) {
-                    $responseData[] = [
+                    $responseData = [
                         "success" => false,
                         "message" => "Validation Failed",
                         "code" => 402,
                         "errors" => [
                             'fieldErrors' => [
                                 'field' => '',
-                                'message' => 'Company not found'
+                                'message' => ['Company not found']
                             ],
                         ]
                     ];
                 }
 
                 $jvNo = 1;
-                foreach ($inputArray[0] as $input)
+                DB::beginTransaction();
+                foreach ($inputArray['journalVouchers'] as $input)
                 {
-                    if(empty($input['journalVoucherType']) || $input['journalVoucherType'] != 1) {
+                    $validationError = $headerError = [];
+                    if(empty($input['journalVoucherType'])) {
                         $validationError[] = [
                             'field' => 'journalVoucherType',
-                            'message' => 'Journal voucher type field is required'
+                            'message' => ['Journal voucher type field is required']
+                        ];
+                    } else if($input['journalVoucherType'] != 1) {
+                        $headerError[] = [
+                            'field' => 'journalVoucherType',
+                            'message' => ['Journal voucher type is not valid.']
                         ];
                     }
 
@@ -101,7 +108,7 @@ class createJournalVoucher implements ShouldQueue
                         "JVdate" => $input['jvDate'],
                         "companySystemID" => $compId,
                         "jvType" => 0,
-                        "reversalJV" => $input['reversalJV'] ?? null,
+                        "reversalJV" => (isset($input['reversalJV']) && $input['reversalJV'] == 1) ? 1 : 0,
                         "reversalDate" => $input['reversalDate'] ?? null,
                         "isRelatedPartyYN" => $input['relatedParty'] ?? null,
                         "isAutoCreateDocument" => 1
@@ -110,14 +117,14 @@ class createJournalVoucher implements ShouldQueue
                     if(empty($input['currency'])) {
                         $validationError[] = [
                             'field' => 'currency',
-                            'message' => 'Currency field is required'
+                            'message' => ['Currency field is required']
                         ];
                     } else {
                         $currencyExist = CurrencyMaster::where('CurrencyCode', $input['currency'])->first();
                         if(empty($currencyExist)) {
                             $headerError[] = [
                                 'field' => 'currency',
-                                'message' => 'Currency code not available in the system.'
+                                'message' => ['Currency code not available in the system.']
                             ];
                         } else {
                             $masterDetails['currencyID'] = $currencyExist->currencyID;
@@ -126,29 +133,30 @@ class createJournalVoucher implements ShouldQueue
                     if(empty($input['narration'])) {
                         $validationError[] = [
                             'field' => 'narration',
-                            'message' => 'Narration field is required'
+                            'message' => ['Narration field is required']
                         ];
                     }
 
                     if(empty($input['jvDate'])) {
                         $validationError[] = [
                             'field' => 'jvDate',
-                            'message' => 'Journal voucher date field is required'
+                            'message' => ['Journal voucher date field is required']
                         ];
-                    } else {
+                    }
+                    else {
                         $jvDate = Carbon::parse($input['jvDate']);
                         $currentDate = Carbon::now()->startOfDay();
                         if ($jvDate->gt($currentDate)) {
                             $headerError[] = [
                                 'field' => 'jvDate',
-                                'message' => 'The Journal voucher date must be today or before.'
+                                'message' => ['The Journal voucher date must be today or before.']
                             ];
                         } else {
                             $financeYear = CompanyFinanceYear::active_finance_year($compId, $input['jvDate']);
                             if (empty($financeYear)) {
                                 $headerError[] = [
                                     'field' => 'jvDate',
-                                    'message' => 'Finance Year not found'
+                                    'message' => ['Finance Year not found']
                                 ];
                             } else {
                                 $masterDetails['companyFinanceYearID'] = $financeYear['companyFinanceYearID'];
@@ -158,7 +166,7 @@ class createJournalVoucher implements ShouldQueue
                             if (empty($financePeriod)) {
                                 $headerError[] = [
                                     'field' => 'jvDate',
-                                    'message' => 'Finance Period not found'
+                                    'message' => ['Finance Period not found']
                                 ];
                             } else {
                                 $masterDetails['companyFinancePeriodID'] = $financePeriod['companyFinancePeriodID'];
@@ -170,12 +178,12 @@ class createJournalVoucher implements ShouldQueue
                         if(empty($input['reversalDate'])) {
                             $validationError[] = [
                                 'field' => 'reversalDate',
-                                'message' => 'Reversal date field is required'
+                                'message' => ['Reversal date field is required']
                             ];
                         } else if (!empty($input['jvDate']) && $input['reversalDate'] <= $input['jvDate']) {
                             $headerError[] = [
                                 'field' => 'reversalDate',
-                                'message' => 'Reversal JV date cannot be less than or equal to the document date.'
+                                'message' => ['Reversal JV date cannot be less than or equal to the document date.']
                             ];
                         }
                     }
@@ -184,7 +192,7 @@ class createJournalVoucher implements ShouldQueue
                     if(empty($input['details'])) {
                         $validationError[] = [
                             'field' => 'reversalDate',
-                            'message' => 'Journal voucher details are required'
+                            'message' => ['Journal voucher details are required']
                         ];
                     }
                     else {
@@ -197,7 +205,7 @@ class createJournalVoucher implements ShouldQueue
                         if($totals['totalDebit'] != $totals['totalCredit']) {
                             $detailsDataError[] = [
                                 'field' => 'debitAmount & creditAmount',
-                                'message' => 'Debit amount total and credit amount total is not matching'
+                                'message' => ['Debit amount total and credit amount total is not matching']
                             ];
                         }
 
@@ -208,24 +216,31 @@ class createJournalVoucher implements ShouldQueue
                             if(empty($detail['glCode'])) {
                                 $validationError[] = [
                                     'field' => 'glCode',
-                                    'message' => 'Gl code field is required'
+                                    'message' => ['Gl code field is required']
                                 ];
                             } else {
-                                $chartOfAccountAssign = ChartOfAccountsAssigned::where('companySystemID',$compId)
+                                $chartOfAccountAssign = ChartOfAccountsAssigned::whereHas('chartofaccount', function ($q) {
+                                        $q->where('isApproved', 1);
+                                    })->where('companySystemID',$compId)
                                     ->where('AccountCode',$detail['glCode'])
                                     ->where('isAssigned', -1)
-                                    ->where('isActive', 1)
                                     ->where('isBank', 0)
                                     ->first();
+
                                 if(!$chartOfAccountAssign){
                                     $detailsDataError[] = [
                                         'field' => 'glCode',
-                                        'message' => 'GlCode not found'
+                                        'message' => ['GlCode not found']
                                     ];
                                 } else if($chartOfAccountAssign->controllAccountYN == 1) {
                                     $detailsDataError[] = [
                                         'field' => 'glCode',
-                                        'message' => 'Journal voucher creation is not allowed with a control account.'
+                                        'message' => ['Journal voucher creation is not allowed with a control account.']
+                                    ];
+                                } else if($chartOfAccountAssign->isActive != 1) {
+                                    $detailsDataError[] = [
+                                        'field' => 'glCode',
+                                        'message' => [$detail['glCode'] . ' Gl code is not active.']
                                     ];
                                 } else {
                                     $chartOfAccountId = $chartOfAccountAssign->chartOfAccountSystemID;
@@ -235,18 +250,22 @@ class createJournalVoucher implements ShouldQueue
                             if(empty($detail['segment'])) {
                                 $validationError[] = [
                                     'field' => 'segment',
-                                    'message' => 'Segment field is required'
+                                    'message' => ['Segment field is required']
                                 ];
                             } else {
                                 $detSegment = SegmentMaster::where('ServiceLineCode',$detail['segment'])
-                                    ->where('isActive', 1)
                                     ->where('isDeleted', 0)
                                     ->where('companySystemID', $compId)
                                     ->first();
                                 if(!$detSegment){
                                     $detailsDataError[] = [
                                         'field' => 'segment',
-                                        'message' => 'Segment not found'
+                                        'message' => ['Segment not found']
+                                    ];
+                                } else if($detSegment->isActive != 1) {
+                                    $detailsDataError[] = [
+                                        'field' => 'glCode',
+                                        'message' => [$detail['segment'] . ' Segment is not active.']
                                     ];
                                 } else {
                                     $serviceLineSystemID = $detSegment->serviceLineSystemID;
@@ -256,14 +275,14 @@ class createJournalVoucher implements ShouldQueue
                             if(!isset($detail['debitAmount'])) {
                                 $validationError[] = [
                                     'field' => 'debitAmount',
-                                    'message' => 'Debit amount field is required'
+                                    'message' => ['Debit amount field is required']
                                 ];
                             }
 
                             if(!isset($detail['creditAmount'])) {
                                 $validationError[] = [
                                     'field' => 'creditAmount',
-                                    'message' => 'Credit amount field is required'
+                                    'message' => ['Credit amount field is required']
                                 ];
                             }
 
@@ -272,12 +291,12 @@ class createJournalVoucher implements ShouldQueue
                             if ($credit > 0 && $debit !== 0) {
                                 $detailsDataError[] = [
                                     'field' => 'debitAmount',
-                                    'message' => 'Debit must be 0 when Credit is greater than 0'
+                                    'message' => ['Debit must be 0 when Credit is greater than 0']
                                 ];
                             } elseif ($debit > 0 && $credit !== 0) {
                                 $detailsDataError[] = [
                                     'field' => 'creditAmount',
-                                    'message' => 'Credit must be 0 when Debit is greater than 0'
+                                    'message' => ['Credit must be 0 when Debit is greater than 0']
                                 ];
                             }
 
@@ -288,14 +307,14 @@ class createJournalVoucher implements ShouldQueue
                                 if ($checkProjectSelectionPolicy->isYesNO != 1) {
                                     $detailsDataError[] = [
                                         'field' => 'project',
-                                        'message' => 'Project not enabled'
+                                        'message' => ['Project not enabled']
                                     ];
                                 } else {
                                     $projectExist = ErpProjectMaster::where('projectCode', $detail['project'])->first();
                                     if(!$projectExist) {
                                         $detailsDataError[] = [
                                             'field' => 'project',
-                                            'message' => 'Project code not found in the system'
+                                            'message' => ['Project code not found in the system']
                                         ];
                                     } else {
                                         $detailProjectId = $projectExist->id;
@@ -311,7 +330,7 @@ class createJournalVoucher implements ShouldQueue
                                 if(!$contract) {
                                     $detailsDataError[] = [
                                         'field' => 'clientContract',
-                                        'message' => 'Client Contract not found in the system'
+                                        'message' => ['Client Contract not found in the system']
                                     ];
                                 } else {
                                     $contractUid = $contract->contractUID;
@@ -351,7 +370,7 @@ class createJournalVoucher implements ShouldQueue
                         /*** Insert details */
                         $createJournalVoucher = self::createJournalVoucher($masterDetails, $jvDetails, $compId);
                         if(!$createJournalVoucher['status']) {
-                            $errors =
+                            $errorDetails[] =
                                 ['identifier' =>
                                     [
                                         'uniqueKey' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
@@ -361,24 +380,12 @@ class createJournalVoucher implements ShouldQueue
                                     'headerData' => $createJournalVoucher['error'],
                                     'detailData' => []
                                 ];
-
-                            $responseData[] = [
-                                "success" => false,
-                                "message" => "Validation Failed",
-                                "code" => 402,
-                                "errors" => $errors
-                            ];
                         }
                         else {
-                            $responseData[] = [
-                                "success" => true,
-                                "message" => "Journal voucher created Successfully!",
-                                "code" => 200,
-                                "data" => [
-                                    'uniqueKey' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
-                                    'index' => $jvNo,
-                                    'voucherCode' => $createJournalVoucher['jvCode'] ?? ''
-                                ]
+                            $successDetails[] = [
+                                'uniqueKey' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
+                                'index' => $jvNo,
+                                'voucherCode' => $createJournalVoucher['jvCode'] ?? ''
                             ];
                         }
                     }
@@ -407,7 +414,7 @@ class createJournalVoucher implements ShouldQueue
                             ];
                         }
 
-                        $errors =
+                        $errorDetails[] =
                             ['identifier' =>
                                 [
                                     'uniqueKey' => isset($input['narration']) ? $input['narration']: "",
@@ -417,19 +424,30 @@ class createJournalVoucher implements ShouldQueue
                                 'headerData' => $headerError,
                                 'detailData' => $detailsError
                             ];
-
-                        $responseData[] = [
-                            "success" => false,
-                            "message" => "Validation Failed",
-                            "code" => 402,
-                            "errors" => $errors
-                        ];
                     }
                     $jvNo++;
                 }
+                if(!empty($errorDetails)) {
+                    DB::rollBack();
+                    $responseData = [
+                        "success" => false,
+                        "message" => "Validation Failed",
+                        "code" => 422,
+                        "errors" => $errorDetails
+                    ];
+                    Log::error($responseData);
+                } else {
+                    DB::commit();
+                    $responseData = [
+                        "success" => true,
+                        "message" => "Journal voucher created Successfully!",
+                        "code" => 200,
+                        "data" => $successDetails
+                    ];
+                    Log::info($responseData);
+                }
             }
 
-            Log::info($responseData);
             $apiExternalKey = $this->apiExternalKey;
             $apiExternalUrl = $this->apiExternalUrl;
             if($apiExternalKey != null && $apiExternalUrl != null) {
@@ -456,7 +474,6 @@ class createJournalVoucher implements ShouldQueue
 
     function createJournalVoucher($masterData, $detailsData, $compId)
     {
-        DB::beginTransaction();
         $masterInsert = JournalVoucherService::createJournalVoucher($masterData);
         if($masterInsert['status']) {
             $jvMasterAutoId = $masterInsert['data']['jvMasterAutoId'];
@@ -464,7 +481,6 @@ class createJournalVoucher implements ShouldQueue
                 $jvDetail['jvMasterAutoId'] = $jvMasterAutoId;
                 $detailInsert = JournalVoucherService::createJournalVoucherDetail($jvDetail);
                 if (!$detailInsert['status']) {
-                    DB::rollBack();
                     return [
                         'status' => false,
                         'error' => $detailInsert['message']
@@ -483,7 +499,6 @@ class createJournalVoucher implements ShouldQueue
             );
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
-                DB::rollBack();
                 return [
                     'status' => false,
                     'error' => $confirm["message"]
@@ -496,14 +511,12 @@ class createJournalVoucher implements ShouldQueue
                 if ($approveDocument["success"]) {
                     $jvId[] = $masterInsert['data']['jvMasterAutoId'];
                     $this->storeToDocumentSystemMapping(11,$jvId,$this->authorization);
-                    DB::commit();
                     return [
                         'status' => true,
                         'error' => 'Journal voucher created successfully!',
                         'jvCode' => $masterInsert['data']['JVcode']
                     ];
                 } else {
-                    DB::rollBack();
                     return [
                         'status' => false,
                         'error' => $approveDocument['message']
@@ -511,7 +524,6 @@ class createJournalVoucher implements ShouldQueue
                 }
             }
         } else {
-            DB::rollBack();
             return [
                 'status' => false,
                 'error' => $masterInsert['message']
