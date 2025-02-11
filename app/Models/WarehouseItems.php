@@ -256,4 +256,8 @@ class WarehouseItems extends Model
     {
         return $this->belongsTo('App\Models\WarehouseBinLocation','binNumber','binLocationID');
     }
+    public function item_by()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemSystemCode', 'itemCodeSystem');
+    }
 }

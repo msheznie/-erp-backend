@@ -74,6 +74,7 @@ use App\Models\DeliveryOrderDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Repositories\UnitConversionRepository;
 use App\Traits\AuditLogsTrait;
+use App\Models\WarehouseItems;
 
 /**
  * Class ItemMasterController
@@ -678,6 +679,20 @@ class ItemMasterAPIController extends AppBaseController
         $assetFinanceCategory = AssetFinanceCategory::all();
 
         $categoryTypeData = ItemCategoryTypeMaster::all();
+        $inventoryItemCategorySub = FinanceItemCategorySub::where('isActive',1)->where('itemCategoryID',1)->get();
+
+        $wareHouseItems = WarehouseItems::with('item_by')
+                        ->where('warehouseSystemCode', 1)
+                        ->where('companySystemID', $selectedCompanyId)
+                        ->where('warehouseSystemCode', $input['warehouseSystemCode'])
+                        ->get()
+                        ->map(function ($item) {
+                            return [
+                                'itemCodeSystem' => $item->item_by->itemCodeSystem ?? null,
+                                'itemDescription' => $item->item_by->itemDescription ?? null,
+                            ];
+                        });
+    
 
         $output = array('companiesByGroup' => $companiesByGroup,
             'fixedAssetCategory' => $fixedAssetCategory,
@@ -693,7 +708,9 @@ class ItemMasterAPIController extends AppBaseController
             'masterCompany' => $masterCompany,
             'isPosIntegrated' => $isPosIntegrated,
             'isSubItemEnabled' => $isSubItemEnabled,
-            'categoryTypeData' => $categoryTypeData
+            'categoryTypeData' => $categoryTypeData,
+            'inventoryItemCategorySub' => $inventoryItemCategorySub,
+            'wareHouseItems' => $wareHouseItems
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
