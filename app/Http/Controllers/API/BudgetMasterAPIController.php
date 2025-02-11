@@ -4470,12 +4470,14 @@ class BudgetMasterAPIController extends AppBaseController
             ->where('companyReportTemplateID', $templateMasterID)
             ->orderBy('sortOrder', 'asc')
             ->where('itemType', '!=', 3)
+            ->where('description', '!=', 'Retained Earning (Automated)')
             ->get();
 
         $glMasters = ReportTemplateDetails::where('companySystemID', $templateData['companySystemID'])
                                           ->where('companyReportTemplateID', $templateMasterID)
                                           ->where('masterID', null)
                                           ->where('itemType', '!=', 3)
+                                          ->where('description', '!=', 'Retained Earning (Automated)')
                                           ->orderBy('sortOrder', 'asc')
                                           ->get();
 

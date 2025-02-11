@@ -159,6 +159,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                     }])
                         ->where('itemType', '!=', 3)
                         ->where('companySystemID', $uploadedCompany)
+                        ->where('description', '!=', 'Retained Earning (Automated)')
                         ->where('companyReportTemplateID', $template->companyReportTemplateID)
                         ->orderBy('sortOrder', 'asc')
                         ->get();
@@ -264,7 +265,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
                 }
             }
-  
+
 
             DB::commit();
 
