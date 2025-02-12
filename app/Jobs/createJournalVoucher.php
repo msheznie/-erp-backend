@@ -25,6 +25,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class createJournalVoucher implements ShouldQueue
 {
@@ -66,468 +67,719 @@ class createJournalVoucher implements ShouldQueue
     {
         Log::useFiles(storage_path() . '/logs/create_journal_voucher.log');
         CommonJobService::db_switch($this->db);
-        try {
-            $errorDetails = $successDetails = [];
-            $inputArray = $this->input;
-            if(!empty($inputArray['journalVouchers'])) {
-                $compId = $inputArray['company_id'];
-                $company = Company::where('companySystemID', $compId)->first();
-                if (empty($company)) {
-                    $responseData = [
-                        "success" => false,
-                        "message" => "Validation Failed",
-                        "code" => 402,
-                        "errors" => [
-                            'fieldErrors' => [
-                                'field' => '',
-                                'message' => ['Company not found']
-                            ],
-                        ]
-                    ];
+
+        $fieldErrors = $masterDatasets = $detailsDataSets = $errorDocuments = $successDocuments = [];
+        $headerData = $detailData = ['status' => false , 'errors' => []];
+
+        $masterIndex = 0;
+        $jvs = $this->input['journalVouchers'];
+
+        foreach ($jvs as $jv) {
+            $jv['company_id'] = $this->input['company_id'];
+
+            $datasetMaster = self::validateMasterData($jv,$masterIndex);
+
+            if (!$datasetMaster['status']) {
+                $fieldErrors = $datasetMaster['fieldErrors'];
+                $headerData['errors'] = $datasetMaster['data'];
+            }
+
+            $detailIndex = 0;
+            $details = $jv['details'] ?? null;
+
+            foreach ($details as $detail) {
+
+                $datasetDetails = self::validateDetailsData($jv,$detail);
+
+                if ($datasetDetails['status']) {
+                    $detailsDataSets[$masterIndex][] = $datasetDetails['data'];
                 }
-
-                $jvNo = 1;
-                DB::beginTransaction();
-                foreach ($inputArray['journalVouchers'] as $input)
-                {
-                    $validationError = $headerError = [];
-                    if(empty($input['journalVoucherType'])) {
-                        $validationError[] = [
-                            'field' => 'journalVoucherType',
-                            'message' => ['Journal voucher type field is required']
-                        ];
-                    } else if($input['journalVoucherType'] != 1) {
-                        $headerError[] = [
-                            'field' => 'journalVoucherType',
-                            'message' => ['Journal voucher type is not valid.']
-                        ];
-                    }
-
-                    $masterDetails = [
-                        "JVNarration" => $input['narration'],
-                        "JVdate" => $input['jvDate'],
-                        "companySystemID" => $compId,
-                        "jvType" => 0,
-                        "reversalJV" => (isset($input['reversalJV']) && $input['reversalJV'] == 1) ? 1 : 0,
-                        "reversalDate" => $input['reversalDate'] ?? null,
-                        "isRelatedPartyYN" => $input['relatedParty'] ?? null,
-                        "isAutoCreateDocument" => 1
+                else {
+                    $detailData['errors'][] = [
+                        'index' => $detailIndex + 1,
+                        'error' => $datasetDetails['data']
                     ];
 
-                    if(empty($input['currency'])) {
-                        $validationError[] = [
-                            'field' => 'currency',
-                            'message' => ['Currency field is required']
-                        ];
-                    } else {
-                        $currencyExist = CurrencyMaster::where('CurrencyCode', $input['currency'])->first();
-                        if(empty($currencyExist)) {
-                            $headerError[] = [
-                                'field' => 'currency',
-                                'message' => ['Currency code not available in the system.']
-                            ];
-                        } else {
-                            $masterDetails['currencyID'] = $currencyExist->currencyID;
-                        }
-                    }
-                    if(empty($input['narration'])) {
-                        $validationError[] = [
-                            'field' => 'narration',
-                            'message' => ['Narration field is required']
-                        ];
-                    }
-
-                    if(empty($input['jvDate'])) {
-                        $validationError[] = [
-                            'field' => 'jvDate',
-                            'message' => ['Journal voucher date field is required']
-                        ];
-                    }
-                    else {
-                        $jvDate = Carbon::parse($input['jvDate']);
-                        $currentDate = Carbon::now()->startOfDay();
-                        if ($jvDate->gt($currentDate)) {
-                            $headerError[] = [
-                                'field' => 'jvDate',
-                                'message' => ['The Journal voucher date must be today or before.']
-                            ];
-                        } else {
-                            $financeYear = CompanyFinanceYear::active_finance_year($compId, $input['jvDate']);
-                            if (empty($financeYear)) {
-                                $headerError[] = [
-                                    'field' => 'jvDate',
-                                    'message' => ['Finance Year not found']
-                                ];
-                            } else {
-                                $masterDetails['companyFinanceYearID'] = $financeYear['companyFinanceYearID'];
-                            }
-
-                            $financePeriod = CompanyFinancePeriod::activeFinancePeriod($compId, 5, $input['jvDate']);
-                            if (empty($financePeriod)) {
-                                $headerError[] = [
-                                    'field' => 'jvDate',
-                                    'message' => ['Finance Period not found']
-                                ];
-                            } else {
-                                $masterDetails['companyFinancePeriodID'] = $financePeriod['companyFinancePeriodID'];
-                            }
-                        }
-                    }
-
-                    if(!empty($input['reversalJV']) && $input['reversalJV'] == 1) {
-                        if(empty($input['reversalDate'])) {
-                            $validationError[] = [
-                                'field' => 'reversalDate',
-                                'message' => ['Reversal date field is required']
-                            ];
-                        } else if (!empty($input['jvDate']) && $input['reversalDate'] <= $input['jvDate']) {
-                            $headerError[] = [
-                                'field' => 'reversalDate',
-                                'message' => ['Reversal JV date cannot be less than or equal to the document date.']
-                            ];
-                        }
-                    }
-
-                    $jvDetails = [];
-                    if(empty($input['details'])) {
-                        $validationError[] = [
-                            'field' => 'reversalDate',
-                            'message' => ['Journal voucher details are required']
-                        ];
-                    }
-                    else {
-                        $totals = collect($input['details'])->reduce(function ($carry, $detail) {
-                            $carry['totalDebit'] += $detail['debitAmount'] ?? 0;
-                            $carry['totalCredit'] += $detail['creditAmount'] ?? 0;
-                            return $carry;
-                        }, ['totalDebit' => 0, 'totalCredit' => 0]);
-
-                        if($totals['totalDebit'] != $totals['totalCredit']) {
-                            $detailsDataError[] = [
-                                'field' => 'debitAmount & creditAmount',
-                                'message' => ['Debit amount total and credit amount total is not matching']
-                            ];
-                        }
-
-                        $detailIndex = 1;
-                        $detailsError = [];
-                        foreach ($input['details'] as $detail) {
-                            $detailsDataError = [];
-                            if(empty($detail['glCode'])) {
-                                $validationError[] = [
-                                    'field' => 'glCode',
-                                    'message' => ['Gl code field is required']
-                                ];
-                            } else {
-                                $chartOfAccountAssign = ChartOfAccountsAssigned::whereHas('chartofaccount', function ($q) {
-                                        $q->where('isApproved', 1);
-                                    })->where('companySystemID',$compId)
-                                    ->where('AccountCode',$detail['glCode'])
-                                    ->where('isAssigned', -1)
-                                    ->where('isBank', 0)
-                                    ->first();
-
-                                if(!$chartOfAccountAssign){
-                                    $detailsDataError[] = [
-                                        'field' => 'glCode',
-                                        'message' => ['GlCode not found']
-                                    ];
-                                } else if($chartOfAccountAssign->controllAccountYN == 1) {
-                                    $detailsDataError[] = [
-                                        'field' => 'glCode',
-                                        'message' => ['Journal voucher creation is not allowed with a control account.']
-                                    ];
-                                } else if($chartOfAccountAssign->isActive != 1) {
-                                    $detailsDataError[] = [
-                                        'field' => 'glCode',
-                                        'message' => [$detail['glCode'] . ' Gl code is not active.']
-                                    ];
-                                } else {
-                                    $chartOfAccountId = $chartOfAccountAssign->chartOfAccountSystemID;
-                                }
-                            }
-
-                            if(empty($detail['segment'])) {
-                                $validationError[] = [
-                                    'field' => 'segment',
-                                    'message' => ['Segment field is required']
-                                ];
-                            } else {
-                                $detSegment = SegmentMaster::where('ServiceLineCode',$detail['segment'])
-                                    ->where('isDeleted', 0)
-                                    ->where('companySystemID', $compId)
-                                    ->first();
-                                if(!$detSegment){
-                                    $detailsDataError[] = [
-                                        'field' => 'segment',
-                                        'message' => ['Segment not found']
-                                    ];
-                                } else if($detSegment->isActive != 1) {
-                                    $detailsDataError[] = [
-                                        'field' => 'glCode',
-                                        'message' => [$detail['segment'] . ' Segment is not active.']
-                                    ];
-                                } else {
-                                    $serviceLineSystemID = $detSegment->serviceLineSystemID;
-                                }
-                            }
-
-                            if(!isset($detail['debitAmount'])) {
-                                $validationError[] = [
-                                    'field' => 'debitAmount',
-                                    'message' => ['Debit amount field is required']
-                                ];
-                            }
-
-                            if(!isset($detail['creditAmount'])) {
-                                $validationError[] = [
-                                    'field' => 'creditAmount',
-                                    'message' => ['Credit amount field is required']
-                                ];
-                            }
-
-                            $debit = $detail['debitAmount'] ?? 0;
-                            $credit = $detail['creditAmount'] ?? 0;
-                            if ($credit > 0 && $debit !== 0) {
-                                $detailsDataError[] = [
-                                    'field' => 'debitAmount',
-                                    'message' => ['Debit must be 0 when Credit is greater than 0']
-                                ];
-                            } elseif ($debit > 0 && $credit !== 0) {
-                                $detailsDataError[] = [
-                                    'field' => 'creditAmount',
-                                    'message' => ['Credit must be 0 when Debit is greater than 0']
-                                ];
-                            }
-
-                            if(isset($detail['project']) && !empty($detail['project'])) {
-                                $checkProjectSelectionPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-                                    ->where('companySystemID', $compId)
-                                    ->first();
-                                if ($checkProjectSelectionPolicy->isYesNO != 1) {
-                                    $detailsDataError[] = [
-                                        'field' => 'project',
-                                        'message' => ['Project not enabled']
-                                    ];
-                                } else {
-                                    $projectExist = ErpProjectMaster::where('projectCode', $detail['project'])->first();
-                                    if(!$projectExist) {
-                                        $detailsDataError[] = [
-                                            'field' => 'project',
-                                            'message' => ['Project code not found in the system']
-                                        ];
-                                    } else {
-                                        $detailProjectId = $projectExist->id;
-                                    }
-                                }
-                            }
-
-                            if(isset($detail['clientContract']) && !empty($detail['clientContract'])) {
-                                $contract = Contract::where('companySystemID',$compId)
-                                    ->where('ContractNumber',$detail['clientContract'])
-                                    ->first();
-
-                                if(!$contract) {
-                                    $detailsDataError[] = [
-                                        'field' => 'clientContract',
-                                        'message' => ['Client Contract not found in the system']
-                                    ];
-                                } else {
-                                    $contractUid = $contract->contractUID;
-                                }
-                            }
-
-                            if (empty($validationError) && empty($headerError) && empty($detailsDataError)) {
-                                /** details setting for add details function */
-                                $jvDetails[] = [
-                                    "chartOfAccountSystemID" => $chartOfAccountId,
-                                    "comments" => $detail['comment'] ?? null,
-                                    "companySystemID" => $compId,
-                                    "debitAmount" => $detail['debitAmount'],
-                                    "creditAmount" => $detail['creditAmount'],
-                                    "serviceLineSystemID" => $serviceLineSystemID,
-                                    "serviceLineCode" => $detail['segment'],
-                                    "glAccount" => $detail['glCode'],
-                                    "detail_project_id" => isset($detailProjectId) ? $detailProjectId : null,
-                                    "contractUID" => $contractUid ?? null,
-                                    "clientContractID" => $detail['clientContract'] ?? null,
-                                    "isAutoCreateDocument" => 1
-                                ];
-                            }
-
-                            if(!empty($detailsDataError)) {
-                                $detailsError[] = [
-                                    'index' => $detailIndex,
-                                    'error' => $detailsDataError
-                                ];
-                            }
-                            $detailIndex++;
-                        }
-                    }
-
-                    if(empty($headerError) && empty($validationError) && empty($detailsError))
-                    {
-                        /*** Insert details */
-                        $createJournalVoucher = self::createJournalVoucher($masterDetails, $jvDetails, $compId);
-                        if(!$createJournalVoucher['status']) {
-                            $errorDetails[] =
-                                ['identifier' =>
-                                    [
-                                        'uniqueKey' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
-                                        'index' => $jvNo
-                                    ],
-                                    'fieldErrors' => [],
-                                    'headerData' => $createJournalVoucher['error'],
-                                    'detailData' => []
-                                ];
-                        }
-                        else {
-                            $successDetails[] = [
-                                'uniqueKey' => isset($masterDetails['JVNarration']) ? $masterDetails['JVNarration']: "",
-                                'index' => $jvNo,
-                                'voucherCode' => $createJournalVoucher['jvCode'] ?? ''
-                            ];
-                        }
-                    }
-                    else {
-                        if(empty($headerError)) {
-                            $headerError = [
-                                'status' => true,
-                                'errors' => []
-                            ];
-                        } else {
-                            $headerError = [
-                                'status' => false,
-                                'errors' => $headerError
-                            ];
-                        }
-
-                        if(empty($detailsError)) {
-                            $detailsError = [
-                                'status' => true,
-                                'errors' => []
-                            ];
-                        } else {
-                            $detailsError = [
-                                'status' => false,
-                                'errors' => $detailsError
-                            ];
-                        }
-
-                        $errorDetails[] =
-                            ['identifier' =>
-                                [
-                                    'uniqueKey' => isset($input['narration']) ? $input['narration']: "",
-                                    'index' => $jvNo
-                                ],
-                                'fieldErrors' => $validationError,
-                                'headerData' => $headerError,
-                                'detailData' => $detailsError
-                            ];
-                    }
-                    $jvNo++;
+                    unset($detailsDataSets[$masterIndex]);
                 }
-                if(!empty($errorDetails)) {
+
+                $detailIndex++;
+            }
+
+            if (empty($headerData['errors']) && empty($detailData['errors']) && empty($fieldErrors)) {
+                $masterDatasets[] = array_add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
+            }
+            else {
+                if (empty($headerData['errors'])) {
+                    $headerData['status'] = true;
+                }
+
+                if (empty($detailData['errors'])) {
+                    $detailData['status'] = true;
+                }
+
+                $errorDocuments[] = self::createErrorResponseDataArray($jv['narration'], $masterIndex, $fieldErrors, $headerData, $detailData);
+
+                $fieldErrors = [];
+                $headerData = $detailData = ['status' => false , 'errors' => []];
+            }
+
+            $masterIndex++;
+        }
+
+        if(!empty($masterDatasets)) {
+            DB::beginTransaction();
+
+            $headerData = $detailData = ['status' => true , 'errors' => []];
+
+            foreach ($masterDatasets as $masterDataset) {
+                $documentStatus = true;
+                try {
+                    $detailsData = $masterDataset['details'];
+                    unset($masterDataset['details']);
+
+                    $masterInsert = JournalVoucherService::createJournalVoucher($masterDataset);
+
+                    if($masterInsert['status']) {
+                        $jvMasterAutoId = $masterInsert['data']['jvMasterAutoId'];
+
+                        foreach ($detailsData as $jvDetail) {
+                            $jvDetail['jvMasterAutoId'] = $jvMasterAutoId;
+
+                            $detailInsert = JournalVoucherService::createJournalVoucherDetail($jvDetail);
+
+                            if (!$detailInsert['status']) {
+                                $documentStatus = false;
+                                DB::rollBack();
+                                $error = self::createErrorResponseDataArray($masterDataset['JVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                $error['headerData'] = $detailInsert['message'];
+                                $errorDocuments[] = $error;
+                                break 2;
+                            }
+                        }
+
+                        if($documentStatus) {
+                            $confirmDataSet = $masterInsert['data'];
+                            $confirmDataSet['confirmedYN'] = 1;
+                            $confirmDataSet['isAutoCreateDocument'] = true;
+
+                            $jvUpdateData = JournalVoucherService::updateJournalVoucher($confirmDataSet['jvMasterAutoId'],$confirmDataSet);
+
+                            if($jvUpdateData['status']){
+
+                                $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($confirmDataSet['documentSystemID'],$confirmDataSet['jvMasterAutoId']);
+                                $autoApproveParams['db'] = $this->db;
+                                $autoApproveParams['supplierPrimaryCode'] = $confirmDataSet['JVcode'];
+
+                                $approveDocument = Helper::approveDocument($autoApproveParams);
+
+                                if ($approveDocument["success"]) {
+                                    DB::commit();
+                                    $jvID[] = $confirmDataSet['jvMasterAutoId'];
+                                    $this->storeToDocumentSystemMapping(11,$jvID,$this->authorization);
+                                    $success = self::createSuccessResponseDataArray($masterDataset['JVNarration'], $masterDataset['initialIndex'], $confirmDataSet['JVcode']);
+                                    $successDocuments[] = $success;
+                                }
+                                else {
+                                    DB::rollBack();
+                                    $error = self::createErrorResponseDataArray($masterDataset['JVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                    $error['headerData'] = $approveDocument['message'];
+                                    $errorDocuments[] = $error;
+                                }
+                            }
+                            else {
+                                DB::rollBack();
+                                $error = self::createErrorResponseDataArray($masterDataset['JVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                $error['headerData'] = $jvUpdateData['message'];
+                                $errorDocuments[] = $error;
+                            }
+                        }
+                    }
+                    else {
+                        DB::rollBack();
+                        $error = self::createErrorResponseDataArray($masterDataset['JVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                        $error['headerData'] = $masterInsert['message'];
+                        $errorDocuments[] = $error;
+                    }
+                }
+                catch (\Exception $e) {
                     DB::rollBack();
-                    $responseData = [
-                        "success" => false,
-                        "message" => "Validation Failed",
-                        "code" => 422,
-                        "errors" => $errorDetails
-                    ];
-                    Log::error($responseData);
-                } else {
-                    DB::commit();
-                    $responseData = [
-                        "success" => true,
-                        "message" => "Journal voucher created Successfully!",
-                        "code" => 200,
-                        "data" => $successDetails
-                    ];
-                    Log::info($responseData);
+                    $error = self::createErrorResponseDataArray($masterDataset['JVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                    $error['headerData'] = $e->getMessage();
+                    $errorDocuments[] = $error;
                 }
             }
+        }
 
-            $apiExternalKey = $this->apiExternalKey;
-            $apiExternalUrl = $this->apiExternalUrl;
-            if($apiExternalKey != null && $apiExternalUrl != null) {
-                $client = new Client();
-                $headers = [
-                    'content-type' => 'application/json',
-                    'Authorization' => 'ERP '.$apiExternalKey
-                ];
-                $res = $client->request('POST', $apiExternalUrl . '/journal-vouchers/webhook', [
-                    'headers' => $headers,
-                    'json' => [
-                        'data' => $responseData
-                    ]
-                ]);
-                $json = $res->getBody();
-            }
+        $returnData = [];
 
-        } catch (\Exception $exception) {
-            Log::error('Error');
-            Log::error($exception->getMessage());
-            Log::error('File: ' . $exception->getFile() . ' at line ' . $exception->getLine());
+        if(!empty($errorDocuments)) {
+            $returnData[] = [
+                'success' => false,
+                'message' => "Validation Failed",
+                'code' => 422,
+                'errors' => $errorDocuments
+            ];
+        }
+
+        if(!empty($successDocuments)) {
+            $returnData[] = [
+                'success' => true,
+                'message' => "Journal voucher created Successfully!",
+                'code' => 200,
+                'data' => $successDocuments
+            ];
+        }
+
+        Log::info($returnData);
+
+        $apiExternalKey = $this->apiExternalKey;
+        $apiExternalUrl = $this->apiExternalUrl;
+        if($apiExternalKey != null && $apiExternalUrl != null) {
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+                'Authorization' => 'ERP '.$apiExternalKey
+            ];
+            $res = $client->request('POST', $apiExternalUrl . '/journal-vouchers/webhook', [
+                'headers' => $headers,
+                'json' => [
+                    'data' => $returnData
+                ]
+            ]);
+            $json = $res->getBody();
         }
     }
 
-    function createJournalVoucher($masterData, $detailsData, $compId)
+    public static function validateAPIDate($date): bool
     {
-        $masterInsert = JournalVoucherService::createJournalVoucher($masterData);
-        if($masterInsert['status']) {
-            $jvMasterAutoId = $masterInsert['data']['jvMasterAutoId'];
-            foreach ($detailsData as $jvDetail) {
-                $jvDetail['jvMasterAutoId'] = $jvMasterAutoId;
-                $detailInsert = JournalVoucherService::createJournalVoucherDetail($jvDetail);
-                if (!$detailInsert['status']) {
-                    return [
-                        'status' => false,
-                        'error' => $detailInsert['message']
-                    ];
-                }
-            }
+        $data = ['date' => $date];
 
-            $params = array(
-                'autoID' => $masterInsert['data']['jvMasterAutoId'],
-                'company' => $compId,
-                'document' => $masterInsert['data']['documentSystemID'],
-                'segment' => '',
-                'category' => '',
-                'amount' => '',
-                'isAutoCreateDocument' => 1
-            );
-            $confirm = \Helper::confirmDocument($params);
-            if (!$confirm["success"]) {
-                return [
-                    'status' => false,
-                    'error' => $confirm["message"]
-                ];
-            } else {
-                $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($masterInsert['data']['documentSystemID'],$masterInsert['data']['jvMasterAutoId']);
-                $autoApproveParams['db'] = $this->db;
-                $autoApproveParams['supplierPrimaryCode'] = $masterInsert['data']['JVcode'];
-                $approveDocument = Helper::approveDocument($autoApproveParams);
-                if ($approveDocument["success"]) {
-                    $jvId[] = $masterInsert['data']['jvMasterAutoId'];
-                    $this->storeToDocumentSystemMapping(11,$jvId,$this->authorization);
-                    return [
-                        'status' => true,
-                        'error' => 'Journal voucher created successfully!',
-                        'jvCode' => $masterInsert['data']['JVcode']
-                    ];
-                } else {
-                    return [
-                        'status' => false,
-                        'error' => $approveDocument['message']
+        $rules = [
+            'date' => [
+                'required',
+                'regex:/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/',
+                function ($attribute, $value, $fail) {
+                    $parts = explode('-', $value);
+                    if (!checkdate((int)$parts[1], (int)$parts[2], (int)$parts[0])) {
+                        $fail("The $attribute is not a valid date.");
+                    }
+                }
+            ],
+        ];
+
+        $validator = Validator::make($data, $rules);
+
+        if (!$validator->fails()) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public static function validateMasterData($request,$index): array {
+
+        $errorData = $fieldErrors = [];
+
+        if (isset($request['journalVoucherType'])) {
+            if(is_int($request['journalVoucherType'])) {
+                if ($request['journalVoucherType'] != 1) {
+                    $errorData[] = [
+                        'field' => "journalVoucherType",
+                        'message' => ["journalVoucherType format is invalid"]
                     ];
                 }
+                else {
+                    $request['journalVoucherType'] = 0;
+                }
             }
-        } else {
-            return [
-                'status' => false,
-                'error' => $masterInsert['message']
+            else {
+                $errorData[] = [
+                    'field' => "journalVoucherType",
+                    'message' => ["journalVoucherType must be an integer"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "journalVoucherType",
+                'message' => ["journalVoucherType field is required"]
             ];
         }
+
+        if (isset($request['currency'])) {
+            $request['currency'] = strtoupper($request['currency']);
+
+            $currency = CurrencyMaster::where('CurrencyCode', $request['currency'])->first();
+
+            if($currency){
+                $request['currency'] = $currency->currencyID;
+            }
+            else {
+                $errorData[] = [
+                    'field' => "currency",
+                    'message' => ["Invalid Currency"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "currency",
+                'message' => ["currency field is required"]
+            ];
+        }
+
+        if (!isset($request['narration'])) {
+            $errorData[] = [
+                'field' => "narration",
+                'message' => ["narration field is required"]
+            ];
+            $errorData[] = $fieldErrors;
+        }
+
+        if (isset($request['jvDate'])) {
+            $data = self::validateAPIDate($request['jvDate']);
+
+            if ($data) {
+                $documentDate = Carbon::parse($request['jvDate']);
+
+                if($documentDate->lessThanOrEqualTo(Carbon::today())) {
+                    $financeYear = CompanyFinanceYear::where('companySystemID',$request['company_id'])
+                        ->where('isDeleted',0)
+                        ->where('isActive',-1)
+                        ->where('isCurrent',-1)
+                        ->where('bigginingDate','<=',$documentDate)
+                        ->where('endingDate','>=',$documentDate)
+                        ->first();
+
+                    if($financeYear){
+                        $request['companyFinanceYearID'] = $financeYear['companyFinanceYearID'];
+
+                        $financePeriod = CompanyFinancePeriod::where('companySystemID',$request['company_id'])
+                            ->where('departmentSystemID',5)
+                            ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
+                            ->where('isActive',-1)
+                            ->whereMonth('dateFrom',$documentDate->month)
+                            ->whereMonth('dateTo',$documentDate->month)
+                            ->first();
+
+                        if($financePeriod){
+                            $request['companyFinancePeriodID'] = $financePeriod['companyFinancePeriodID'];
+
+                            if (isset($request['reversalJV'])) {
+                                if(is_int($request['reversalJV'])) {
+                                    if(in_array($request['reversalJV'],[1,2])) {
+                                        if($request['reversalJV'] == 1) {
+                                            $request['reversalJV'] = 1;
+                                            if(isset($request['reversalDate'])) {
+                                                $data = self::validateAPIDate($request['reversalDate']);
+                                                if($data) {
+                                                    $documentDate = Carbon::parse($request['jvDate']);
+                                                    $reversalJVDate = Carbon::parse($request['reversalDate']);
+
+                                                    if(!$reversalJVDate->greaterThan($documentDate)) {
+                                                        $errorData[] = [
+                                                            'field' => "reversalDate",
+                                                            'message' => ["Reversal JV date cannot be less than or equal to the document date"]
+                                                        ];
+                                                    }
+                                                }
+                                                else {
+                                                    $errorData[] = [
+                                                        'field' => "reversalDate",
+                                                        'message' => ["reversalDate format is invalid"]
+                                                    ];
+                                                }
+                                            }
+                                            else {
+                                                $errorData[] = [
+                                                    'field' => "reversalDate",
+                                                    'message' => ["reversalDate field is required"]
+                                                ];
+                                            }
+                                        }
+                                        else {
+                                            $request['reversalJV'] = 0;
+                                            $request['reversalDate'] = null;
+                                        }
+                                    }
+                                    else {
+                                        $errorData[] = [
+                                            'field' => "reversalJV",
+                                            'message' => ["reversalJV format is invalid"]
+                                        ];
+                                    }
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "reversalJV",
+                                        'message' => ["reversalJV mus be an integer"]
+                                    ];
+                                }
+                            }
+                            else {
+                                $request['reversalJV'] = 0;
+                                $request['reversalDate'] = null;
+                            }
+                        }
+                        else {
+                            $errorData[] = [
+                                'field' => "jvDate",
+                                'message' => ["Finance Period Not Active"]
+                            ];
+                        }
+                    }
+                    else{
+                        $errorData[] = [
+                            'field' => "jvDate",
+                            'message' => ["Finance Year Not Found"]
+                        ];
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "jvDate",
+                        'message' => ["The Journal voucher date must be today or before"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "jvDate",
+                    'message' => ["jvDate format is invalid"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "jvDate",
+                'message' => ["jvDate field is required"]
+            ];
+        }
+
+        if (isset($request['relatedParty'])) {
+            if(is_int($request['relatedParty'])) {
+                if(in_array($request['relatedParty'],[1,2])) {
+                    $request['relatedParty'] = $request['relatedParty'] == 1 ? 1 : 0;
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "relatedParty",
+                        'message' => ["relatedParty format is invalid"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "relatedParty",
+                    'message' => ["relatedParty mus be an integer"]
+                ];
+            }
+        }
+        else{
+            $request['relatedParty'] = 0;
+        }
+
+        $details = $request['details'] ?? null;
+
+        if(isset($details)) {
+            $detailsCollection = collect($details);
+
+            if($detailsCollection->count() >= 2) {
+                $totalCredit = $detailsCollection->sum('creditAmount');
+                $totalDebit = $detailsCollection->sum('debitAmount');
+
+                if($totalCredit != $totalDebit) {
+                    $errorData[] = [
+                        'field' => "details",
+                        'message' => ["Debit amount total and credit amount total is not matching"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "details",
+                    'message' => ["details cannot be less than two"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "details",
+                'message' => ["details field is required"]
+            ];
+        }
+
+        if (empty($errorData) && empty($fieldErrors)) {
+            $returnDataset = [
+                'status' => true,
+                'data' => [
+                    'jvType' => $request['journalVoucherType'],
+                    'JVNarration' => $request['narration'],
+                    'currencyID' => $request['currency'],
+                    'reversalJV' => $request['reversalJV'],
+                    'JVdate' => $request['jvDate'],
+                    'isRelatedPartyYN' => $request['relatedParty'],
+                    'companySystemID' => $request['company_id'],
+                    'companyFinanceYearID' => $request['companyFinanceYearID'],
+                    'companyFinancePeriodID' => $request['companyFinancePeriodID'],
+                    'isAutoCreateDocument' => true,
+                    'initialIndex' => $index
+                ]
+            ];
+
+            if($request['reversalJV'] == 1){
+                $returnDataset['data']['reversalDate'] = $request['reversalDate'];
+            }
+        }
+        else {
+            $returnDataset = [
+                'status' => false,
+                'data' => $errorData,
+                'fieldErrors' => $fieldErrors
+            ];
+        }
+
+        return $returnDataset;
+    }
+
+    public static function validateDetailsData($masterData, $request): array {
+
+        $errorData = [];
+
+        if(isset($request['glCode'])) {
+            $chartOfAccountAssign = ChartOfAccountsAssigned::whereHas('chartofaccount', function ($q) {
+                $q->where('isApproved', 1);
+            })->where('companySystemID',$masterData['company_id'])
+                ->where('AccountCode',$request['glCode'])
+                ->where('isAssigned', -1)
+                ->where('isActive', 1)
+                ->where('isBank', 0)
+                ->first();
+
+            if($chartOfAccountAssign){
+                if($chartOfAccountAssign->controllAccountYN == 1) {
+                    $errorData[] = [
+                        'field' => 'glCode',
+                        'message' => ['Journal voucher creation is not allowed with a control account.']
+                    ];
+                }
+                else {
+                    $request['glCodeID'] = $chartOfAccountAssign->chartOfAccountSystemID;
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => 'glCode',
+                    'message' => ['GlCode not found']
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "glCode",
+                'message' => ["glCode field is required"]
+            ];
+        }
+
+        if (isset($request['project'])) {
+            $checkProjectSelectionPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $masterData['company_id'])
+                ->first();
+
+            if ($checkProjectSelectionPolicy->isYesNO == 1) {
+                $projectExist = ErpProjectMaster::where('projectCode', $request['project'])->first();
+
+                if($projectExist) {
+                    $request['project'] = $projectExist->id;
+                }
+                else {
+                    $errorData[] = [
+                        'field' => 'project',
+                        'message' => ['Project code not found in the system']
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => 'project',
+                    'message' => ['Project not enabled']
+                ];
+            }
+        }
+        else {
+            $request['project'] = null;
+        }
+
+        if (isset($request['segment'])) {
+            $segment = SegmentMaster::where('ServiceLineCode',$request['segment'])
+                ->where('isDeleted', 0)
+                ->where('isActive', 1)
+                ->where('companySystemID', $masterData['company_id'])
+                ->first();
+
+            if($segment){
+                $request['segmentID'] = $segment->serviceLineSystemID;
+            }
+            else {
+                $errorData[] = [
+                    'field' => 'segment',
+                    'message' => ['Segment not found']
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "segment",
+                'message' => ["segment field is required"]
+            ];
+        }
+
+        if (isset($request['clientContract'])) {
+            $checkClientContractPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 93)
+                ->where('companySystemID', $masterData['company_id'])
+                ->first();
+
+            if ($checkClientContractPolicy->isYesNO == 1) {
+                $contract = Contract::where('companySystemID',$masterData['company_id'])
+                    ->where('ContractNumber',$request['clientContract'])
+                    ->first();
+
+                if($contract) {
+                    $request['clientContractID'] = $contract->contractUID;
+                }
+                else {
+                    $errorData[] = [
+                        'field' => 'clientContract',
+                        'message' => ['Client Contract not found in the system']
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => 'clientContract',
+                    'message' => ['clientContract not enabled']
+                ];
+            }
+        }
+        else {
+            $request['clientContract'] = null;
+        }
+
+        $debitValidation = false;
+        if(isset($request['debitAmount'])) {
+            if (gettype($request['debitAmount']) != 'string') {
+                $debitValidation = true;
+            }
+            else {
+                $errorData[] = [
+                    'field' => "debitAmount",
+                    'message' => ["debitAmount must be a numeric"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "debitAmount",
+                'message' => ["debitAmount field is required"]
+            ];
+        }
+
+        $creditValidation = false;
+        if(isset($request['creditAmount'])) {
+            if (gettype($request['creditAmount']) != 'string') {
+                $creditValidation = true;
+            }
+            else {
+                $errorData[] = [
+                    'field' => "creditAmount",
+                    'message' => ["creditAmount must be a numeric"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "creditAmount",
+                'message' => ["creditAmount field is required"]
+            ];
+        }
+
+        if ($creditValidation && $debitValidation) {
+            if($request['creditAmount'] < 0) {
+                $errorData[] = [
+                    'field' => "creditAmount",
+                    'message' => ["Credit amount cannot less than 0"]
+                ];
+            }
+
+            if($request['debitAmount'] < 0) {
+                $errorData[] = [
+                    'field' => "debitAmount",
+                    'message' => ["Debit amount cannot less than 0"]
+                ];
+            }
+
+            if(($request['creditAmount'] > 0) && ($request['debitAmount'] > 0)) {
+                $errorData[] = [
+                    'field' => "debitAmount",
+                    'message' => ["Cannot enter both credit and debit amount same time"]
+                ];
+                $errorData[] = [
+                    'field' => "creditAmount",
+                    'message' => ["Cannot enter both credit and debit amount same time"]
+                ];
+            }
+        }
+
+        if (empty($errorData)) {
+            $returnData = [
+                "status" => true,
+                "data" => [
+                    "chartOfAccountSystemID" => $request['glCodeID'],
+                    "glAccount" => $request['glCode'],
+                    "comments" => $request['comment'] ?? null,
+                    "companySystemID" => $masterData['company_id'],
+                    "debitAmount" => $request['debitAmount'],
+                    "creditAmount" => $request['creditAmount'],
+                    "serviceLineSystemID" => $request['segmentID'],
+                    "serviceLineCode" => $request['segment'],
+                    "detail_project_id" => $request['project'],
+                    "contractUID" => $request['clientContractID'],
+                    "clientContractID" => $request['clientContract'],
+                    "isAutoCreateDocument" => 1
+                ]
+            ];
+        }
+        else{
+            $returnData = [
+                "status" => false,
+                "data" => $errorData
+            ];
+        }
+
+        return $returnData;
+    }
+
+    public static function createErrorResponseDataArray($narration,$masterIndex,$fieldErrors, $headerData, $detailData): array
+    {
+        return [
+            'identifier' => [
+                'unique-key' => $narration,
+                'index' => $masterIndex + 1
+            ],
+            'fieldErrors' => $fieldErrors,
+            'headerData' => [$headerData],
+            'detailData' => [$detailData]
+        ];
+    }
+
+    public static function createSuccessResponseDataArray($narration,$masterIndex,$code): array
+    {
+        return [
+            'uniqueKey' => $narration,
+            'index' => $masterIndex + 1,
+            'voucherCode' => $code,
+        ];
     }
 }
