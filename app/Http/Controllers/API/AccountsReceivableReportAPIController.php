@@ -3519,7 +3519,6 @@ WHERE
     ( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" )
     AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
     AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
-   AND erp_generalledger.documentNarration NOT LIKE "%Matching%"
     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
     AND (
@@ -7723,5 +7722,4 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
                 return $this->sendError('No report ID found');
         }
     }
-    
 }
