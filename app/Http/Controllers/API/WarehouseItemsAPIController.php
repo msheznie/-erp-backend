@@ -25,6 +25,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\WarehouseBinLocation;
+use App\Models\ItemBatch;
 
 /**
  * Class WarehouseItemsController
@@ -238,8 +239,20 @@ class WarehouseItemsAPIController extends AppBaseController
         if (!isset($input['binNumber'])) {
             $input['binNumber'] = 0;
         }
-        $warehouseItems = $this->warehouseItemsRepository->update(array_only($input, ['binNumber']), $id);
 
+        if(isset($input['binLocation']) && !empty($input['binLocation']) && ($input['binLocation']['binLocationID'] == null))
+        {
+            if (!empty($input['binLocation']['IDS']) && is_array($input['binLocation']['IDS'])) {
+                $productIDs = array_filter($input['binLocation']['IDS'], 'is_numeric');
+                if (!empty($productIDs)) {
+                    ItemBatch::whereIn('id', $productIDs)->update(['binLocation' => $input['binNumber']]);
+                }
+            }
+        }
+        else
+        {
+            $warehouseItems = $this->warehouseItemsRepository->update(array_only($input, ['binNumber']), $id);
+        }
         return $this->sendResponse($warehouseItems->toArray(), 'WarehouseItems updated successfully');
     }
 
@@ -374,19 +387,23 @@ class WarehouseItemsAPIController extends AppBaseController
 
             })
             ->make(true);
+            
             $responseData = json_decode($data->getContent(), true);
             $transformedData = [];
-            
-            $transformedData = array_reduce($responseData['data'], function ($carry, $item) {
+            $x = 1;
+            $transformedData = array_reduce($responseData['data'], function ($carry, $item) use(&$x) {
                 if ($item['isTrack'] == "1" && !empty($item['binLocation'])) {
                     foreach ($item['binLocation'] as $bin) {
                         $carry[] = array_merge($item, [
                             'binLocation' => $bin,
-                            'binNumber' => $bin['binLocationID']
+                            'binNumber' => $bin['binLocationID'],
+                            'order' => $x
                         ]);
+                        $x++;
                     }
                 } else {
-                    $carry[] = array_merge($item, ['binLocation' => null]);
+                    $carry[] = array_merge($item, ['binLocation' => null,'order' => $x]);
+                    $x++;
                 }
                 return $carry;
             }, []);

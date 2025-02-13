@@ -157,12 +157,16 @@ class inventory
                                         foreach ($newItems as $newItem) {
                                             $binLocationDes = $newItem['binLocationDes'];
                                             $binLocationID = $newItem['binLocationID'];
-                                            $totalWacCostLocalWarehouse = round($newItem['quantity'] * $itemLedgerRec->wacValueLocalWarehouse, 2);
-                                            $totalWacCostRptWarehouse = round($newItem['quantity'] * $itemLedgerRec->wacValueReportingWarehouse, 2);
+                                            $totalWacCostLocalWarehouse = round($newItem['quantity'] * $itemLedgerRecWarehouse->wacCostLocal, 2);
+                                            $totalWacCostRptWarehouse = round($newItem['quantity'] * $itemLedgerRecWarehouse->wacCostRpt, 2);
+                                            $productBatchID = $newItem['productBatchID'];
                                             if (isset($groupedNewItems[$binLocationID])) {
                                                 $groupedNewItems[$binLocationID]['quantity'] += $newItem['quantity'];
                                                 $groupedNewItems[$binLocationID]['totalWacCostLocal'] += $totalWacCostLocalWarehouse;
                                                 $groupedNewItems[$binLocationID]['totalWacCostRpt'] += $totalWacCostRptWarehouse;
+                                                if (!in_array($productBatchID, $groupedNewItems[$binLocationID]['IDS'])) {
+                                                    $groupedNewItems[$binLocationID]['IDS'][] = $productBatchID;
+                                                }
                                             } else {
                                                 $groupedNewItems[$binLocationID] = [
                                                     'binLocationDes' => $binLocationDes,
@@ -172,6 +176,7 @@ class inventory
                                                     'productBatchID' => $newItem['productBatchID'],
                                                     'totalWacCostLocal' => $totalWacCostLocalWarehouse,
                                                     'totalWacCostRpt' => $totalWacCostRptWarehouse,
+                                                    'IDS' => [$productBatchID],
                                                 ];
                                             }
                                         }
