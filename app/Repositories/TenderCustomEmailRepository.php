@@ -40,25 +40,26 @@ class TenderCustomEmailRepository
                     "data" => 'Not a Valid Tender UUID'
                 ];
             }
+            foreach ($data['supplier_uuid'] as $supplierUuid) {
+                $supplierId = SRMService::getSupplierRegIdByUUID($supplierUuid);
+                if(!$supplierId){
+                    return [
+                        "success" => false,
+                        "data" => 'Not a Valid Supplier UUID'
+                    ];
+                }
 
-            $supplierId = SRMService::getSupplierRegIdByUUID($data['supplier_uuid']);
-            if(!$supplierId){
-                return [
-                    "success" => false,
-                    "data" => 'Not a Valid Supplier UUID'
-                ];
-            }
+                $data['supplier_id'] = $supplierId;
 
-            $data['supplier_id'] = $supplierId;
+                $recordData = array_merge($data, $additionalData);
+                $result = TenderCustomEmail::createOrUpdateCustomEmail(
+                    ['tender_id' => $tenderData->id, 'supplier_id' => $supplierId],
+                    $recordData
+                );
 
-            $recordData = array_merge($data, $additionalData);
-            $result = TenderCustomEmail::createOrUpdateCustomEmail(
-                ['tender_id' => $tenderData->id, 'supplier_id' => $supplierId],
-                $recordData
-            );
-
-            if (!$result) {
-                return ['success' => false, 'data' => 'Failed to save record.'];
+                if (!$result) {
+                    return ['success' => false, 'data' => 'Failed to save record.'];
+                }
             }
 
             return ['success' => true, 'data' => 'Saved successfully'];
