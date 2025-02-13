@@ -7722,5 +7722,4 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
                 return $this->sendError('No report ID found');
         }
     }
-    
 }
