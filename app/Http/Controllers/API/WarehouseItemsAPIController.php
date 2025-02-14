@@ -370,9 +370,7 @@ class WarehouseItemsAPIController extends AppBaseController
                     'wareHouseId' => $row->warehouseSystemCode,
                     'itemReport' => true);
                 $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
-
-                $array = $itemBinLocation['binLocation'];
-                return $array;
+                return $itemBinLocation['binLocation'] ?? [];
 
             })
             ->addColumn('isTrack', function ($row) {
@@ -381,9 +379,7 @@ class WarehouseItemsAPIController extends AppBaseController
                     'wareHouseId' => $row->warehouseSystemCode,
                     'itemReport' => true);
                 $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
-
-                $array = $itemBinLocation['isTrackable'];
-                return $array;
+                return $itemBinLocation['isTrackable'] ?? [];
 
             })
             ->make(true);
@@ -469,6 +465,7 @@ class WarehouseItemsAPIController extends AppBaseController
                                 'Item Description' => $value->itemDescription,
                                 'Unit' => $value->unit ? $value->unit->UnitShortCode : '-',
                                 'Category' => $value->financeSubCategory ? $value->financeSubCategory->categoryDescription : '-',
+                                'Warehouse' => $value->warehouse_by ? $value->warehouse_by->wareHouseDescription : '-',
                                 'Bin Location' => $bin['binLocationDes'],
                                 'Min Qty' => number_format($value->minimumQty, 2),
                                 'Max Qty' => number_format($value->maximunQty, 2),
@@ -490,6 +487,7 @@ class WarehouseItemsAPIController extends AppBaseController
                             'Item Description' => $value->itemDescription,
                             'Unit' => $value->unit ? $value->unit->UnitShortCode : '-',
                             'Category' => $value->financeSubCategory ? $value->financeSubCategory->categoryDescription : '-',
+                            'Warehouse' => $value->warehouse_by ? $value->warehouse_by->wareHouseDescription : '-',
                             'Bin Location' =>  $bin ? $bin->binLocationDes : '-',
                             'Min Qty' => number_format($value->minimumQty, 2),
                             'Max Qty' => number_format($value->maximunQty, 2),
@@ -527,36 +525,33 @@ class WarehouseItemsAPIController extends AppBaseController
 
     public function getAssignedItemsByWareHouse($input)
     {
+        $input = $this->convertArrayToSelectedValue($input,
+            array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
+        $childCompanies = [];
+        $companyIds = $input['companyId'];
+        $warehouseSystemCode = is_array($input['warehouseSystemCode'])
+            ? $input['warehouseSystemCode'] : [$input['warehouseSystemCode']];
 
-        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
-        $companyId = $input['companyId'];
-        $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
-
-        $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
+        $warehouse = WarehouseMaster::whereIn('warehouseSystemCode', $warehouseSystemCode)->get();
 
         if(!empty($warehouse)){
-            $companyId = $warehouse->companySystemID;
+            $companyIds = $warehouse->pluck('companySystemID')->unique()->toArray();
         }
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
-
-
-        if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
-        } else {
-            $childCompanies = [$companyId];
-        }
-
-        $itemMasters = WarehouseItems::with(['warehouse_by', 'binLocation', 'unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency'])
-            ->whereIn('companySystemID', $childCompanies)
-            ->where('warehouseSystemCode', $input['warehouseSystemCode'])
-            ->where('financeCategoryMaster', 1);
-
-        if (array_key_exists('financeCategoryMaster', $input)) {
-            if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
-                $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
+        foreach ($companyIds as $companyId) {
+            if (\Helper::checkIsCompanyGroup($companyId)) {
+                $childCompanies = array_merge($childCompanies, \Helper::getGroupCompany($companyId));
+            } else {
+                $childCompanies[] = $companyId;
             }
         }
+
+        $childCompanies = array_unique($childCompanies);
+
+        $itemMasters = WarehouseItems::with(['warehouse_by', 'binLocation', 'unit', 'financeSubCategory', 'local_currency', 'rpt_currency'])
+            ->whereIn('companySystemID', $childCompanies)
+            ->whereIn('warehouseSystemCode', $warehouseSystemCode)
+            ->where('financeCategoryMaster', 1);
 
         if (array_key_exists('financeCategorySub', $input)) {
             if ($input['financeCategorySub']  && !is_null($input['financeCategorySub']) && !empty($input['financeCategorySub'])) {
@@ -564,11 +559,6 @@ class WarehouseItemsAPIController extends AppBaseController
             }
         }
 
-        if (array_key_exists('isActive', $input)) {
-            if (($input['isActive'] == 0 || $input['isActive'] == 1) && !is_null($input['isActive'])) {
-                $itemMasters->where('isActive', $input['isActive']);
-            }
-        }
         if (array_key_exists('itemApprovedYN', $input)) {
             if (($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) && !is_null($input['itemApprovedYN'])) {
                 $itemMasters->where('itemApprovedYN', $input['itemApprovedYN']);

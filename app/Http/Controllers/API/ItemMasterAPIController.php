@@ -572,6 +572,7 @@ class ItemMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
+        $subCompanies = [];
         $selectedCompanyId = $request['selectedCompanyId'];
 
         $isPosIntegratedPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 69)
@@ -592,26 +593,25 @@ class ItemMasterAPIController extends AppBaseController
             $isSubItemEnabled = false;
         }
 
-
-        $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
-
-        $warehouse = WarehouseMaster::find($warehouseSystemCode);
+        $warehouseSystemCode = $warehouseSystemCodesArray = explode(',', $input['warehouseSystemCode']);
+        ;
+        $warehouse = WarehouseMaster::whereIn('warehouseSystemCode', $warehouseSystemCode)->get();
 
         if(!empty($warehouse)){
-            $selectedCompanyId = $warehouse->companySystemID;
+            $selectedCompanyId = $warehouse->pluck('companySystemID')->unique()->toArray();
         }
 
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
-
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            //$subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-            $subCompanies = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
+        foreach ($selectedCompanyId as $companyId) {
+            if (\Helper::checkIsCompanyGroup($companyId)) {
+                $childCompanies = array_merge($childCompanies, \Helper::getGroupCompany($companyId));
+            } else {
+                $childCompanies[] = $companyId;
+            }
         }
+
+        $subCompanies = array_unique($selectedCompanyId);
 
         /**  Fixed Assets  Drop Down */
         $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
@@ -654,7 +654,7 @@ class ItemMasterAPIController extends AppBaseController
         $wareHouseBinLocations = [];
         if (isset($request['warehouseSystemCode'])) {
             $wareHouseBinLocations = WarehouseBinLocation::where('companySystemID', $selectedCompanyId)
-                ->where('wareHouseSystemCode', $request['warehouseSystemCode'])
+                ->whereIn('wareHouseSystemCode', $warehouseSystemCode)
                 ->get();
         }
 
@@ -677,9 +677,11 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $assetFinanceCategory = AssetFinanceCategory::all();
+        $warehouseAll = WarehouseMaster::where('companySystemID', $selectedCompanyId)->get();
 
         $categoryTypeData = ItemCategoryTypeMaster::all();
         $inventoryItemCategorySub = FinanceItemCategorySub::where('isActive',1)->where('itemCategoryID',1)->get();
+
 
         $wareHouseItems = [];
         if(isset($input['warehouseSystemCode']) && !empty($input['warehouseSystemCode']))
@@ -702,10 +704,10 @@ class ItemMasterAPIController extends AppBaseController
             'financeItemCategoryMaster' => $itemCategory,
             'assetFinanceCategory' => $assetFinanceCategory,
             'financeItemCategorySub' => $itemCategorySubArray,
-            'yesNoSelection' => $yesNoSelection,
             'units' => $units,
             'isVatRegisteredYN' => $isVatRegisteredYN,
             'wareHouseBinLocations' => $wareHouseBinLocations,
+            'wareHouses' => $warehouseAll,
             'vatSubCategory' => $vatSubCategory,
             'masterCompany' => $masterCompany,
             'isPosIntegrated' => $isPosIntegrated,
