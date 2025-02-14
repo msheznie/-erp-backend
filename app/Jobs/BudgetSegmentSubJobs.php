@@ -119,6 +119,9 @@ class BudgetSegmentSubJobs implements ShouldQueue
                         $currencyConvection = \Helper::currencyConversion($budget->companySystemID, $currencyMaster->currencyID, $currencyMaster->currencyID, $value[$segmentMaster->ServiceLineDes]);
 
                         $localAmount = \Helper::roundValue($currencyConvection['localAmount']);
+                        if($value[$segmentMaster->ServiceLineDes] < 0) {
+                            $localAmount = abs($localAmount) * -1;
+                        }
 
                         $companyMaster = Company::find($budget->companySystemID);
                         $currencyMasterLocal = CurrencyMaster::where('currencyID', $companyMaster->localCurrencyID)->first();
