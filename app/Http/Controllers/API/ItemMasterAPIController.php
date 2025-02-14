@@ -681,18 +681,20 @@ class ItemMasterAPIController extends AppBaseController
         $categoryTypeData = ItemCategoryTypeMaster::all();
         $inventoryItemCategorySub = FinanceItemCategorySub::where('isActive',1)->where('itemCategoryID',1)->get();
 
-        $wareHouseItems = WarehouseItems::with('item_by')
-                        ->where('warehouseSystemCode', 1)
-                        ->where('companySystemID', $selectedCompanyId)
-                        ->where('warehouseSystemCode', $input['warehouseSystemCode'])
-                        ->get()
-                        ->map(function ($item) {
-                            return [
-                                'itemCodeSystem' => $item->item_by->itemCodeSystem ?? null,
-                                'itemDescription' => $item->item_by->itemDescription ?? null,
-                            ];
-                        });
-    
+        $wareHouseItems = [];
+        if(isset($input['warehouseSystemCode']) && !empty($input['warehouseSystemCode']))
+        {
+            $wareHouseItems = WarehouseItems::with('item_by')
+                ->where('companySystemID', $selectedCompanyId)
+                ->where('warehouseSystemCode', $input['warehouseSystemCode'])
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'itemCodeSystem' => $item->item_by->itemCodeSystem ?? null,
+                        'itemDescription' => $item->item_by->itemDescription ?? null,
+                    ];
+                });
+        }
 
         $output = array('companiesByGroup' => $companiesByGroup,
             'fixedAssetCategory' => $fixedAssetCategory,
