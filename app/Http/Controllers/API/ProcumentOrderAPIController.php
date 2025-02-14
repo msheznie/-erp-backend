@@ -588,7 +588,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $advancedPaymentPercentage = PoPaymentTerms::where('poID',$id)->sum('comPercentage');
         if(isset($input['isConfirm']) && $input['isConfirm']) {
-            if($advancedPaymentPercentage != 100) {
+            $epsilon = 0.00001;
+            if(abs(100 - $advancedPaymentPercentage) > $epsilon) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
         }
