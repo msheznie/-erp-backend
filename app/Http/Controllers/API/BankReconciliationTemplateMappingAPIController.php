@@ -336,6 +336,9 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
         $accountAutoId = $request['accountAutoId'];
 
         $bankReconciliationTemplateMapping = $this->bankReconciliationTemplateMappingRepository->where('bankAccountAutoID', $accountAutoId)->first();
+        if (!$bankReconciliationTemplateMapping) {
+            return $this->sendError('Bank Reconciliation Template Mapping not found.', 404);
+        }
         return $this->sendResponse($bankReconciliationTemplateMapping->toArray(), 'Bank Reconciliation Template Mapping retrieved successfully');
     }
 }

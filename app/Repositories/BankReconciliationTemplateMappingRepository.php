@@ -41,7 +41,6 @@ class BankReconciliationTemplateMappingRepository extends BaseRepository
         'credit',
         'description',
         'category',
-        'account',
         'createdDateTime',
         'timeStamp'
     ];
@@ -56,7 +55,7 @@ class BankReconciliationTemplateMappingRepository extends BaseRepository
 
     public function updateAllAccounts($input) {
         /** Update details for existing mappings */
-        if($input['templateId']){
+        if(isset($input['templateId'])){
             unset($input['templateId']);
         }
         if($input['bankAccountAutoID']){

@@ -160,13 +160,6 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @OA\Property(
- *          property="account",
- *          description="account",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
  *          property="createdDateTime",
  *          description="createdDateTime",
  *          readOnly=$FIELD_READ_ONLY$,
@@ -215,7 +208,6 @@ class BankReconciliationTemplateMapping extends Model
         'credit',
         'description',
         'category',
-        'account',
         'createdDateTime',
         'timeStamp'
     ];
@@ -247,7 +239,6 @@ class BankReconciliationTemplateMapping extends Model
         'credit' => 'string',
         'description' => 'string',
         'category' => 'string',
-        'account' => 'string',
         'createdDateTime' => 'datetime',
         'timeStamp' => 'datetime'
     ];
