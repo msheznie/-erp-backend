@@ -43,6 +43,13 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\Models\BookInvSuppMaster;
+use App\Models\CustomerReceivePayment;
+use App\Models\DebitNote;
+use App\Models\DirectPaymentDetails;
+use App\Models\ExpenseClaimMaster;
+use App\Models\MatchDocumentMaster;
+use App\Models\PaySupplierInvoiceDetail;
+use App\Models\PaySupplierInvoiceMaster;
 
 /**
  * Class EmployeeController
@@ -651,5 +658,429 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
 
         array_push($finalArray,$output);
         return $this->sendResponse($finalArray, 'User Count details retrieved successfully');
+    }
+
+    public function employeeDocumentStatus(Request $request)
+    {
+        $input = $request->all();
+
+        if(!isset($input['empID'])){
+            return $this->sendError('Employee ID is required');
+        }
+        
+        $empID = $input['empID'];
+
+        $employee = Employee::where('empID',$empID)
+                            ->where('discharegedYN',0)
+                            ->first();
+
+        if(!$employee){
+            return $this->sendError('Employee not found');
+        }
+        $documentDetails = [];
+
+        $supplierInvoice = BookInvSuppMaster::where('employeeID', $employee->employeeSystemID)
+                                                ->where('documentType', 4)
+                                                ->where('cancelYN', 0)
+                                                ->where(function ($query) {
+                                                    $query->where('confirmedYN', 0)
+                                                        ->orWhere('approved', 0);
+                                                })
+                                                ->get();
+
+        if ($supplierInvoice) {
+            foreach ($supplierInvoice as $invoice) {
+                $isSupConfirmed = $invoice->confirmedYN == 1 ? 1 : 0;
+                $isSupApproved = $invoice->approved == -1 ? 1 : 0;
+                $isSupRefferedBack= $invoice->refferedBackYN == -1 ? 1 : 0;
+
+                $documentDetails[] = [
+                    'documentCode' => $invoice->bookingInvCode,
+                    'documentType' => 'Employee Direct Invoice',
+                ];
+                
+                if (!$isSupConfirmed && !$isSupApproved && !$isSupRefferedBack) {
+                    $documentDetails[count($documentDetails) - 1]['isDraft'] = 1;
+                }
+
+                if($isSupConfirmed || $isSupApproved){
+                    $documentDetails[count($documentDetails) - 1]['isConfirmed'] = $isSupConfirmed;
+                    $documentDetails[count($documentDetails) - 1]['isApproved'] = $isSupApproved;
+                }
+
+                if ($isSupRefferedBack && !$isSupApproved && $isSupConfirmed) {
+                    $documentDetails[count($documentDetails) - 1]['isRefferedBack'] = $isSupRefferedBack;
+                }
+
+            }
+        }
+
+        $supplierInvoiceApproved = BookInvSuppMaster::where('employeeID', $employee->employeeSystemID)
+                        ->where('documentType', 4)
+                        ->where('approved', -1)
+                        ->get(); 
+
+        if ($supplierInvoiceApproved) {
+            foreach ($supplierInvoiceApproved as $invoiceApproved) {
+                $pvSettled = PaySupplierInvoiceDetail::with(['payment_master','matching_master'])
+                    ->where('bookingInvSystemCode', $invoiceApproved->bookingSuppMasInvAutoID)
+                    ->get();
+
+                $pvSettledCount = PaySupplierInvoiceDetail::where('bookingInvSystemCode', $invoiceApproved->bookingSuppMasInvAutoID)
+                    ->count();
+
+                if ($pvSettled && $pvSettledCount > 0) {
+                    $partiallySettled = 0;
+                    $supplierPaymentAmount = 0;
+                    foreach ($pvSettled as $pvSettle) {
+                        if($pvSettle->matching_master && $pvSettle->matching_master->matchingConfirmedYN == 1){
+                            $supplierPaymentAmount += $pvSettle->paymentLocalAmount;
+                        }
+
+                        if(!$pvSettle->matching_master && $pvSettle->payment_master && $pvSettle->payment_master->approved == -1){
+                            $supplierPaymentAmount += $pvSettle->paymentLocalAmount;
+                        }
+                    }
+
+                    $balanceAmount = $invoiceApproved->bookingAmountLocal - $supplierPaymentAmount;
+                    
+
+
+                    if($balanceAmount > 0){
+                        $documentDetails[] = [
+                            'documentCode' => $invoiceApproved->bookingInvCode,
+                            'documentType' => 'Employee Direct Invoice',
+                            'isConfirmed' => 1,
+                            'isApproved' => 1,
+                            'isPartiallySettled' => 1,
+                        ];
+                    }
+                } else if($pvSettledCount == 0){
+                    $documentDetails[] = [
+                        'documentCode' => $invoiceApproved->bookingInvCode,
+                        'documentType' => 'Employee Direct Invoice',
+                        'isConfirmed' => 1,
+                        'isApproved' => 1,
+                        'isNotSettled' => 1,
+                    ];
+                }
+            }
+
+        }
+
+        $expenseClaim = ExpenseClaimMaster::where('claimedByEmpID', $employee->employeeSystemID)
+                        ->get();
+        if ($expenseClaim) {
+            foreach ($expenseClaim as $claim) {
+                if($claim->addedForPayment == 0){
+
+                    $documentDetails[] = [
+                        'documentCode' => $claim->expenseClaimCode,
+                        'documentType' => 'Expense Claim',
+                    ];
+                    
+                    if ($claim->confirmedYN == 0 && $claim->approvedYN == 0) {
+                        $documentDetails[count($documentDetails) - 1]['isDraft'] = 1;
+                    }
+    
+                    if($claim->confirmedYN == 1 && $claim->approvedYN == 0){
+                        $documentDetails[count($documentDetails) - 1]['isConfirmed'] = 1;
+                        $documentDetails[count($documentDetails) - 1]['isApproved'] = 0;
+                    }
+
+                    if($claim->confirmedYN == 1 && $claim->approvedYN == 1){
+                        $documentDetails[count($documentDetails) - 1]['isConfirmed'] = 1;
+                        $documentDetails[count($documentDetails) - 1]['isApproved'] = 1;
+                        $documentDetails[count($documentDetails) - 1]['isNotPaid'] = 1;
+
+                    }
+    
+                    if ($claim->confirmedYN == 2) {
+                        $documentDetails[count($documentDetails) - 1]['isRefferedBack'] = 1;
+                    }
+                }
+
+                if($claim->addedForPayment == -1){
+                    $directPaymentDetails = DirectPaymentDetails::where('expenseClaimMasterAutoID', $claim->expenseClaimMasterAutoID)
+                        ->latest('directPaymentDetailsID')
+                        ->first();
+                    if($directPaymentDetails){
+                        $directPaymentVoucher = PaySupplierInvoiceMaster::where('PayMasterAutoId', $directPaymentDetails->directPaymentAutoID)
+                                                ->first();
+                        if($directPaymentVoucher && $directPaymentVoucher->approved == 0){
+                            $documentDetails[] = [
+                                'documentCode' => $claim->expenseClaimCode,
+                                'documentType' => 'Expense Claim',
+                                'isConfirmed' => 1,
+                                'isApproved' => 1,
+                                'isPartiallyPaid' => 1,
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        $paymentVoucher = PaySupplierInvoiceMaster::where('directPaymentPayeeEmpID', $employee->employeeSystemID)
+                                                    ->whereIn('invoiceType', [6, 7, 3])
+                                                    ->where('cancelYN', 0)
+                                                    ->where(function ($query) {
+                                                        $query->where('confirmedYN', 0)
+                                                            ->orWhere('approved', 0);
+                                                    })
+                                                    ->get();
+
+        if ($paymentVoucher) {
+            foreach ($paymentVoucher as $payVoucher) {
+                if ($payVoucher->invoiceType == 6) {
+                    $documentType = 'Employee Payment';
+                } else if ($payVoucher->invoiceType == 7) {
+                    $documentType = 'Employee Advance Payment';
+                } else {
+                    $documentType = 'Direct Payment';
+                }
+
+                $isPayConfirmed = $payVoucher->confirmedYN == 1 ? 1 : 0;
+                $isPayApproved = $payVoucher->approved == -1 ? 1 : 0;
+                $isPayRefferedBack= $payVoucher->refferedBackYN == -1 ? 1 : 0;
+
+                $documentDetails[] = [
+                    'documentCode' => $payVoucher->BPVcode,
+                    'documentType' => $documentType
+                ];
+                
+                if (!$isPayConfirmed && !$isPayApproved && !$isPayRefferedBack) {
+                    $documentDetails[count($documentDetails) - 1]['isDraft'] = 1;
+                }
+
+                if($isPayConfirmed || $isPayApproved){
+                    $documentDetails[count($documentDetails) - 1]['isConfirmed'] = $isPayConfirmed;
+                    $documentDetails[count($documentDetails) - 1]['isApproved'] = $isPayApproved;
+                }
+
+                if ($isPayRefferedBack && !$isPayApproved && $isPayConfirmed) {
+                    $documentDetails[count($documentDetails) - 1]['isRefferedBack'] = $isPayRefferedBack;
+                }
+            }
+        }
+
+        $paymentVoucherApproved = PaySupplierInvoiceMaster::where('directPaymentPayeeEmpID', $employee->employeeSystemID)
+                        ->whereIn('invoiceType', [6, 7, 3])
+                        ->where('approved', -1)
+                        ->get();
+
+        if ($paymentVoucherApproved) {
+            foreach ($paymentVoucherApproved as $payVoucherApproved) {
+                $voucherMatching = MatchDocumentMaster::where('employee_id', $employee->employeeSystemID)
+                    ->where('PayMasterAutoId', $payVoucherApproved->PayMasterAutoId)
+                    ->where('documentSystemID', 4)
+                    ->where('BPVcode', $payVoucherApproved->BPVcode)
+                    ->latest('matchDocumentMasterAutoID')
+                    ->first();
+
+                $voucherMatchingCount = MatchDocumentMaster::where('employee_id', $employee->employeeSystemID)
+                    ->where('PayMasterAutoId', $payVoucherApproved->PayMasterAutoId)
+                    ->where('documentSystemID', 4)
+                    ->where('BPVcode', $payVoucherApproved->BPVcode)
+                    ->count();
+                    
+                if ($voucherMatching) {
+                    $matchingBalance = $voucherMatching->matchBalanceAmount - $voucherMatching->matchingAmount;
+                    if ($voucherMatching->matchingConfirmedYN == 0 || ($voucherMatching->matchingConfirmedYN == 1 && $matchingBalance > 0)) {
+                        if ($payVoucherApproved->invoiceType == 6) {
+                            $documentType = 'Employee Payment';
+                        } else if ($payVoucherApproved->invoiceType == 7) {
+                            $documentType = 'Employee Advance Payment';
+                        } else {
+                            $documentType = 'Direct Payment';
+                        }
+        
+                        $documentDetails[] = [
+                            'documentCode' => $payVoucherApproved->BPVcode,
+                            'documentType' => $documentType,
+                            'isConfirmed' => 1,
+                            'isApproved' => 1,
+                            'isPartiallyMatched' => 1,
+                        ];
+                    }
+                }
+
+                if($voucherMatchingCount == 0 && $payVoucherApproved->invoiceType == 7){
+                    $documentDetails[] = [
+                        'documentCode' => $payVoucherApproved->BPVcode,
+                        'documentType' => 'Employee Advance Payment',
+                        'isConfirmed' => 1,
+                        'isApproved' => 1,
+                        'isNotMatched' => 1,
+                    ];
+                }
+            }
+        }
+        
+        $debitNote = DebitNote::where('empID', $employee->employeeSystemID)
+                    ->where('type', 2)
+                    ->where(function ($query) {
+                        $query->where('confirmedYN', 0)
+                            ->orWhere('approved', 0);
+                    })
+                    ->get();
+
+        if ($debitNote) {
+            foreach ($debitNote as $note) {
+                $isNoteConfirmed = $note->confirmedYN == 1 ? 1 : 0;
+                $isNoteApproved = $note->approved == -1 ? 1 : 0;
+                $isNoteRefferedBack= $note->refferedBackYN == -1 ? 1 : 0;
+
+                $documentDetails[] = [
+                    'documentCode' => $note->debitNoteCode,
+                    'documentType' => 'Debit Note',
+                ];
+                
+                if (!$isNoteConfirmed && !$isNoteApproved && !$isNoteRefferedBack) {
+                    $documentDetails[count($documentDetails) - 1]['isDraft'] = 1;
+                }
+
+                if($isNoteConfirmed || $isNoteApproved){
+                    $documentDetails[count($documentDetails) - 1]['isConfirmed'] = $isNoteConfirmed;
+                    $documentDetails[count($documentDetails) - 1]['isApproved'] = $isNoteApproved;
+                }
+
+                if ($isNoteRefferedBack && !$isNoteApproved && $isNoteConfirmed) {
+                    $documentDetails[count($documentDetails) - 1]['isRefferedBack'] = $isNoteRefferedBack;
+                }
+            }
+        }
+
+        $debitNoteApproved = DebitNote::where('empID', $employee->employeeSystemID)
+            ->where('type', 2)
+            ->where('approved', -1)
+            ->get();
+
+        if ($debitNoteApproved) {
+            foreach ($debitNoteApproved as $noteApproved) {
+                $debitVoucherMatching = MatchDocumentMaster::where('employee_id', $employee->employeeSystemID)
+                    ->where('PayMasterAutoId', $noteApproved->debitNoteAutoID)
+                    ->where('documentSystemID', 15)
+                    ->where('BPVcode', $noteApproved->debitNoteCode)
+                    ->latest('matchDocumentMasterAutoID')
+                    ->first();
+
+                $debitVoucherMatchingCount = MatchDocumentMaster::where('employee_id', $employee->employeeSystemID)
+                    ->where('PayMasterAutoId', $noteApproved->debitNoteAutoID)
+                    ->where('documentSystemID', 15)
+                    ->where('BPVcode', $noteApproved->debitNoteCode)
+                    ->count();
+
+                if ($debitVoucherMatching) {
+                    $debitMatchingBalance = $debitVoucherMatching->matchBalanceAmount - $debitVoucherMatching->matchingAmount;
+                    if ($debitVoucherMatching->matchingConfirmedYN == 0 ||  ($debitVoucherMatching->matchingConfirmedYN == 1 && $debitMatchingBalance > 0)) {
+                        $documentDetails[] = [
+                            'documentCode' => $noteApproved->debitNoteCode,
+                            'documentType' => 'Debit Note',
+                            'isConfirmed' => 1,
+                            'isApproved' => 1,
+                            'isPartiallyMatched' => 1,
+                        ];
+                    }
+                }
+
+                if($debitVoucherMatchingCount == 0){
+                    $documentDetails[] = [
+                        'documentCode' => $noteApproved->debitNoteCode,
+                        'documentType' => 'Debit Note',
+                        'isConfirmed' => 1,
+                        'isApproved' => 1,
+                        'isNotMatched' => 1,
+                    ];
+                }
+            }
+        }
+
+        $receipetVoucher = CustomerReceivePayment::where('PayeeEmpID', $employee->employeeSystemID)
+        ->where('documentType', 14)
+        ->where('payeeTypeID', 2)
+        ->where('cancelYN', 0)
+        ->where(function ($query) {
+            $query->where('confirmedYN', 0)
+                ->orWhere('approved', 0);
+        })
+        ->get();
+
+        if ($receipetVoucher) {
+            foreach ($receipetVoucher as $recVoucher) {
+
+                $isRecConfirmed = $recVoucher->confirmedYN == 1 ? 1 : 0;
+                $isRecApproved = $recVoucher->approved == -1 ? 1 : 0;
+                $isRecRefferedBack= $recVoucher->refferedBackYN == -1 ? 1 : 0;
+
+                $documentDetails[] = [
+                    'documentCode' => $recVoucher->custPaymentReceiveCode,
+                    'documentType' => 'Direct Receipet Voucher ',
+                ];
+                
+                if (!$isRecConfirmed && !$isRecApproved && !$isRecRefferedBack) {
+                    $documentDetails[count($documentDetails) - 1]['isDraft'] = 1;
+                }
+
+                if($isRecConfirmed || $isRecApproved){
+                    $documentDetails[count($documentDetails) - 1]['isConfirmed'] = $isRecConfirmed;
+                    $documentDetails[count($documentDetails) - 1]['isApproved'] = $isRecApproved;
+                }
+
+                if ($isRecRefferedBack && !$isRecApproved && $isRecConfirmed) {
+                    $documentDetails[count($documentDetails) - 1]['isRefferedBack'] = $isRecRefferedBack;
+                }
+            }
+        }
+
+
+        $result = $this->convertDocumentDetails($documentDetails);
+        
+        $output = [
+            'documentDetails' => $result,
+            'employeeDocumentStatus' => (count($documentDetails) > 0) ? true : false 
+        ];
+
+
+
+        return $this->sendResponse($output, 'Employee document status retrieved successfully');
+
+    }
+
+    public function convertDocumentDetails(array $documents): array
+    {
+        $statusKeys = [
+            'isDraft' => ['true' => 'Draft', 'false' => 'Not Draft'],
+            'isApproved' => ['true' => 'Approved', 'false' => 'Not Approved'],
+            'isConfirmed' => ['true' => 'Confirmed', 'false' => 'Not Confirmed'],
+            'isPartiallyMatched' => ['true' => 'Partially Matched', 'false' => 'Not Partially Matched'],
+            'isPartiallySettled' => ['true' => 'Partially Settled', 'false' => 'Not Partially Settled'],
+            'isNotSettled' => ['true' => 'Not Settled', 'false' => 'Settled'],
+            'isAddedForPayment' => ['true' => 'Added for Payment', 'false' => 'Not Added for Payment'],
+            'isNotMatched' => ['true' => 'Not Matched', 'false' => 'Matched'],
+            'isRefferedBack' => ['true' => 'Referred Back', 'false' => 'Not Referred Back'],
+            'isNotPaid' => ['true' => 'Not Paid', 'false' => 'Paid'],
+            'isPartiallyPaid' => ['true' => 'Partially Paid', 'false' => 'Not Partially Paid']
+        ];
+
+        $converted = [];
+
+        foreach ($documents as $document) {
+            $docStatus = [];
+
+            foreach ($statusKeys as $key => $labels) {
+                if (isset($document[$key])) {
+                    $docStatus[] = ($document[$key] === 1 || $document[$key] === -1) ? $labels['true'] : $labels['false'];
+                } 
+            }
+
+            $converted[] = [
+                'documentCode' => $document['documentCode'] ?? null,
+                'documentType' => $document['documentType'] ?? null,
+                'documentStatus' => $docStatus
+            ];
+        }
+
+        return $converted;
     }
 }
