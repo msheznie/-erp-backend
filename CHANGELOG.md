@@ -1,5 +1,18 @@
 # Changelog
 
+## [10.62.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.61.0...v10.62.0) (2025-02-15)
+
+
+### Features
+
+* **common:** Employee document status API [GCP-5979] ([#7510](https://github.com/pbsgears/Gears_BackEnd/issues/7510)) ([2e48c03](https://github.com/pbsgears/Gears_BackEnd/commit/2e48c03160102b48138b3a0cb072ffed7a7509a6))
+* **general ledger:** journal voucher API [GCP-6081] ([#7527](https://github.com/pbsgears/Gears_BackEnd/issues/7527)) ([5272c50](https://github.com/pbsgears/Gears_BackEnd/commit/5272c506f2594fd3cd9b72c991b6bb18bfce9317))
+
+
+### Bug Fixes
+
+* **accounts receivable:** customer aging and summary report issues fixed [GCP-6164] ([#7535](https://github.com/pbsgears/Gears_BackEnd/issues/7535)) ([7ef113b](https://github.com/pbsgears/Gears_BackEnd/commit/7ef113bda3436d62795245f1abc3e020df62bb38))
+
 ## [10.61.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.60.1...v10.61.0) (2025-02-10)
 
 
