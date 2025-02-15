@@ -570,14 +570,14 @@ class ItemMasterAPIController extends AppBaseController
      */
     public function getItemMasterFormData(Request $request)
     {
-
         $input = $request->all();
+        $companyList = [];
         $subCompanies = [];
         $selectedCompanyId = $request['selectedCompanyId'];
 
         $isPosIntegratedPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 69)
-                            ->where('companySystemID', $selectedCompanyId)
-                            ->first();
+            ->where('companySystemID', $selectedCompanyId)
+            ->first();
         if(!empty($isPosIntegratedPolicy->isYesNO)){
             $isPosIntegrated = $isPosIntegratedPolicy->isYesNO;
         } else {
@@ -593,25 +593,30 @@ class ItemMasterAPIController extends AppBaseController
             $isSubItemEnabled = false;
         }
 
-        $warehouseSystemCode = $warehouseSystemCodesArray = explode(',', $input['warehouseSystemCode']);
-        ;
+
+        $warehouseSystemCode = isset($input['warehouseSystemCode'])
+            ? (is_array($input['warehouseSystemCode'])
+                ? array_map('strval', $input['warehouseSystemCode'])
+                : explode(',', $input['warehouseSystemCode']))
+            : [0];
+
         $warehouse = WarehouseMaster::whereIn('warehouseSystemCode', $warehouseSystemCode)->get();
 
         if(!empty($warehouse)){
-            $selectedCompanyId = $warehouse->pluck('companySystemID')->unique()->toArray();
+            $companyList = $warehouse->pluck('companySystemID')->unique()->toArray();
         }
 
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
-        foreach ($selectedCompanyId as $companyId) {
+        foreach ($companyList as $companyId) {
             if (\Helper::checkIsCompanyGroup($companyId)) {
-                $childCompanies = array_merge($childCompanies, \Helper::getGroupCompany($companyId));
+                $subCompanies = array_merge($subCompanies, \Helper::getGroupCompany($companyId));
             } else {
-                $childCompanies[] = $companyId;
+                $subCompanies = [$companyId];
             }
         }
 
-        $subCompanies = array_unique($selectedCompanyId);
+        $subCompanies = array_unique($companyList);
 
         /**  Fixed Assets  Drop Down */
         $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
@@ -678,25 +683,19 @@ class ItemMasterAPIController extends AppBaseController
 
         $assetFinanceCategory = AssetFinanceCategory::all();
         $warehouseAll = WarehouseMaster::where('companySystemID', $selectedCompanyId)->get();
-
         $categoryTypeData = ItemCategoryTypeMaster::all();
         $inventoryItemCategorySub = FinanceItemCategorySub::where('isActive',1)->where('itemCategoryID',1)->get();
 
-
-        $wareHouseItems = [];
-        if(isset($input['warehouseSystemCode']) && !empty($input['warehouseSystemCode']))
-        {
-            $wareHouseItems = WarehouseItems::with('item_by')
-                ->where('companySystemID', $selectedCompanyId)
-                ->where('warehouseSystemCode', $input['warehouseSystemCode'])
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'itemCodeSystem' => $item->item_by->itemCodeSystem ?? null,
-                        'itemDescription' => $item->item_by->itemDescription ?? null,
-                    ];
-                });
-        }
+        $wareHouseItems = WarehouseItems::with('item_by')
+            ->where('companySystemID', $selectedCompanyId)
+            ->whereIn('warehouseSystemCode', $warehouseSystemCode)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'itemCodeSystem' => $item->item_by->itemCodeSystem ?? null,
+                    'itemDescription' => $item->item_by->itemDescription ?? null,
+                ];
+            });
 
         $output = array('companiesByGroup' => $companiesByGroup,
             'fixedAssetCategory' => $fixedAssetCategory,
@@ -704,21 +703,21 @@ class ItemMasterAPIController extends AppBaseController
             'financeItemCategoryMaster' => $itemCategory,
             'assetFinanceCategory' => $assetFinanceCategory,
             'financeItemCategorySub' => $itemCategorySubArray,
+            'inventoryItemCategorySub' => $inventoryItemCategorySub,
+            'yesNoSelection' => $yesNoSelection,
             'units' => $units,
             'isVatRegisteredYN' => $isVatRegisteredYN,
             'wareHouseBinLocations' => $wareHouseBinLocations,
             'wareHouses' => $warehouseAll,
+            'wareHouseItems' => $wareHouseItems,
             'vatSubCategory' => $vatSubCategory,
             'masterCompany' => $masterCompany,
             'isPosIntegrated' => $isPosIntegrated,
             'isSubItemEnabled' => $isSubItemEnabled,
-            'categoryTypeData' => $categoryTypeData,
-            'inventoryItemCategorySub' => $inventoryItemCategorySub,
-            'wareHouseItems' => $wareHouseItems
+            'categoryTypeData' => $categoryTypeData
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
-
     }
 
     /**
