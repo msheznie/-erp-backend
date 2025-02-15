@@ -26,6 +26,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
+use App\Jobs\CreateJournalVoucher;
 use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
@@ -54,6 +55,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetConsumedDataRepository;
 use App\Repositories\JvMasterRepository;
 use App\Repositories\UserRepository;
+use App\Services\JournalVoucherService;
 use App\Services\UserTypeService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -173,40 +175,6 @@ class JvMasterAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                return [
-                    "success" => false,
-                    "message" => "Selected financial year is not active"
-                ];
-            }
-            else{
-                return $this->sendError($companyFinanceYear["message"], 500);
-            }
-        }
-
-        $inputParam = $input;
-        $inputParam["departmentSystemID"] = 5;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                return [
-                    "success" => false,
-                    "message" => "Selected financial period is not active"
-                ];
-            }
-            else{
-                return $this->sendError($companyFinancePeriod["message"], 500);
-            }
-        }
-        else {
-            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
-        }
-
-        unset($inputParam);
-
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
@@ -229,153 +197,27 @@ class JvMasterAPIController extends AppBaseController
             }
         }
 
-
-        if (isset($input['jvType']) && $input['jvType'] == 5) {
-
-            $systemGlCodeScenario = SystemGlCodeScenario::where('slug','po-accrual-liability')->first();
-
-            if($systemGlCodeScenario)
-            {
-                $glCodeScenarioDetails = SystemGlCodeScenarioDetail::where('systemGlScenarioID',$systemGlCodeScenario->id)->where('companySystemID',$input["companySystemID"])->first();
-
-                if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)) || ($glCodeScenarioDetails && $glCodeScenarioDetails->chartOfAccountSystemID == 0))
-                {
-                    return $this->sendError("Please configure PO accrual account for this company.", 500);
-                }
-            }else {
-                return $this->sendError("Gl Code scenario not found for PO Accrual", 500);
+        $resultData = JournalVoucherService::createJournalVoucher($input);
+        if ($resultData["status"]) {
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                return [
+                    "success" => true,
+                    "data" => $resultData['data']
+                ];
             }
-
-            if(Carbon::parse($input['reversalDate']) <= Carbon::parse($input['JVdate']))
-            {
-                return $this->sendError("Reversal date should greater the JV date", 500);
-            }else {
-                $input['reversalDate'] = Carbon::parse($input['reversalDate']);
+            else{
+                return $this->sendResponse($resultData['data'], 'JV created successfully');
             }
-        }
-        if (isset($input['jvType']) && $input['jvType'] == 4) {
-            $checkPendingJv = JvMaster::where('jvType', $input['jvType'])
-                                      ->where('companySystemID', $input['companySystemID'])
-                                      ->where('refferedBackYN', 0)
-                                      ->where('approved', 0)
-                                      ->first();
-
-            if ($checkPendingJv) {
-                return $this->sendError('There is a pending allocation JV, please approve those allocation JVs');
-            }
-        }
-
-        if (isset($input['JVdate'])) {
-            if ($input['JVdate']) {
-                $input['JVdate'] = new Carbon($input['JVdate']);
-            }
-        }
-
-        if (isset($input['reversalDate'])) {
-            if ($input['reversalDate']) {
-                $input['reversalDate'] = new Carbon($input['reversalDate']);
-            }
-        }
-
-        $documentDate = $input['JVdate'];
-        $monthBegin = $input['FYBiggin'];
-        $monthEnd = $input['FYEnd'];
-
-        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
-                    "message" => "JV date is not within the financial period"
+                    "message" => $resultData["message"]
                 ];
             }
             else{
-                return $this->sendError('JV date is not within the financial period!');
+                return $this->sendError($resultData["message"], $resultData["httpCode"]);
             }
-        }
-
-        $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-        $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
-        $FYPeriodDateTo = $companyfinanceperiod->dateTo;
-
-        $input['FYPeriodDateFrom'] = $FYPeriodDateFrom;
-        $input['FYPeriodDateTo'] = $FYPeriodDateTo;
-
-        $input['createdPcID'] = gethostname();
-
-        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-            $employee = UserTypeService::getSystemEmployee();
-            $input['createdUserID'] = $employee->empID;
-            $input['createdUserSystemID'] = $employee->employeeSystemID;
-        }
-        else{
-            $id = Auth::id();
-            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
-            $input['createdUserID'] = $user->employee['empID'];
-            $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
-        }
-
-        $input['documentSystemID'] = '17';
-        $input['documentID'] = 'JV';
-
-        $lastSerial = JvMaster::where('companySystemID', $input['companySystemID'])
-            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('serialNo', 'desc')
-            ->first();
-
-        $lastSerialNumber = 1;
-        if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-        }
-
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
-
-        //var_dump($companyCurrencyConversion);
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if ($company) {
-            $input['companyID'] = $company->CompanyID;
-            $input['rptCurrencyID'] = $company->reportingCurrency;
-            $input['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-        }
-
-        $input['serialNo'] = $lastSerialNumber;
-        $input['currencyER'] = 1;
-
-        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
-
-        $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->where('companySystemID', $input['companySystemID'])
-            ->first();
-
-        if ($companyfinanceyear) {
-            $startYear = $companyfinanceyear['bigginingDate'];
-            $finYearExp = explode('-', $startYear);
-            $finYear = $finYearExp[0];
-        } else {
-            $finYear = date("Y");
-        }
-        if ($documentMaster) {
-            $jvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-            $input['JVcode'] = $jvCode;
-        }
-
-        if (isset($input['reversalJV'])) {
-            if ($input['reversalJV'] == 0 && $input['jvType'] == 0) {
-                $input['reversalDate'] = null;
-            }
-        }
-        
-        $jvMaster = $this->jvMasterRepository->create($input);
-
-        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-            return [
-                "success" => true,
-                "data" => $jvMaster->toArray()
-            ];
-        }
-        else{
-            return $this->sendResponse($jvMaster->toArray(), 'JV created successfully');
         }
     }
 
@@ -486,384 +328,63 @@ class JvMasterAPIController extends AppBaseController
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency', 'modified_by','type']);
         $input = $this->convertArrayToValue($input);
 
-        /** @var JvMaster $jvMaster */
         $jvMaster = $this->jvMasterRepository->findWithoutFail($id);
+        if (!empty($jvMaster)) {
+            if ($jvMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+                $validator = \Validator::make($input, [
+                    'companyFinancePeriodID' => 'required|numeric|min:1',
+                    'companyFinanceYearID' => 'required|numeric|min:1',
+                    'JVdate' => 'required',
+                    'currencyID' => 'required|numeric|min:1',
+                    'JVNarration' => 'required',
+                ]);
 
-        if (empty($jvMaster)) {
+                if ($validator->fails()) {
+                    if (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
+                        return [
+                            "success" => false,
+                            "message" => "Validation failed"
+                        ];
+                    } else {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                }
+            }
+        }
+
+        $result = JournalVoucherService::updateJournalVoucher($id, $input);
+        if ($result["status"]) {
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                return [
+                    "success" => true,
+                    "data" => $result['data']
+                ];
+            }
+            else{
+                if(isset($result['confirm_data'])) {
+                    return $this->sendReponseWithDetails($result['data'], $result["message"], 1, $result['confirm_data']);
+                } else {
+                    return $this->sendResponse($result['data'],$result["message"]);
+                }
+            }
+        } else {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
-                    "message" => "Jv Master not found"
+                    "message" => $result["message"]
                 ];
             }
-            else{
-                return $this->sendError('Jv Master not found');
-            }
-        }
-
-        $jvConfirmedYN = $input['confirmedYN'];
-        $prevJvConfirmedYN = $jvMaster->confirmedYN;
-
-        $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
-
-        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-        }
-        else{
-            if (isset($input['JVdate'])) {
-                if ($input['JVdate']) {
-                    $input['JVdate'] = Carbon::parse($input['JVdate']);
-                }
-            }
-
-            if (isset($input['reversalDate'])) {
-                if ($input['reversalDate']) {
-                    $input['reversalDate'] = new Carbon($input['reversalDate']);
-                }
-            }
-
-
-            if (isset($input['jvType']) && $input['jvType'] == 5) {
-                $systemGlCodeScenario = SystemGlCodeScenario::where('slug','po-accrual-liability')->first();
-
-                if($systemGlCodeScenario)
-                {
-                    $glCodeScenarioDetails = SystemGlCodeScenarioDetail::where('systemGlScenarioID',$systemGlCodeScenario->id)->where('companySystemID',$input["companySystemID"])->first();
-
-                    if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)) || ($glCodeScenarioDetails && $glCodeScenarioDetails->chartOfAccountSystemID == 0))
-                    {
-                        return $this->sendError("Please configure PO accrual account for this company.");
-                    }
-                }else {
-                    return $this->sendError("Gl Code scenario not found for PO Accrual");
+            else {
+                if(isset($result['error_details'])) {
+                    return $this->sendError($result["message"], $result['httpCode'], $result['error_details']);
                 }
 
-                if(Carbon::parse($input['reversalDate']) <= Carbon::parse($input['JVdate']))
-                {
-                    return $this->sendError("Reversal date should greater the JV date");
-                }else {
-                    $input['reversalDate'] = Carbon::parse($input['reversalDate']);
-                }
-            }
-            if (isset($input['jvType']) && $input['jvType'] == 4) {
-                $checkPendingJv = JvMaster::where('jvType', $input['jvType'])
-                    ->where('companySystemID', $input['companySystemID'])
-                    ->where('refferedBackYN', 0)
-                    ->where('approved', 0)
-                    ->first();
-
-                if ($checkPendingJv) {
-                    return $this->sendError('There is a pending allocation JV, please approve those allocation JVs');
-                }
-            }
-
-            if(isset($input['reversalJV']) && $input['reversalJV'] == 1){
-                if($input['reversalDate'] == null) {
-                    return $this->sendError('Reversal Date is mandatory');
-                }
-            }
-
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-            if (!$companyFinanceYear["success"]) {
-                return $this->sendError($companyFinanceYear["message"], 500);
-            } else {
-                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
-            }
-
-            $inputParam = $input;
-            $inputParam["departmentSystemID"] = 5;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-            if (!$companyFinancePeriod["success"]) {
-                return $this->sendError($companyFinancePeriod["message"], 500);
-            } else {
-                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
-            }
-            unset($inputParam);
-
-            $documentDate = $input['JVdate'];
-            $monthBegin = $input['FYPeriodDateFrom'];
-            $monthEnd = $input['FYPeriodDateTo'];
-
-            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-            } else {
-                return $this->sendError('Document date is not within the selected financial period !', 500);
-            }
-        }
-
-        if ($jvMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-
-
-            $validator = \Validator::make($input, [
-                'companyFinancePeriodID' => 'required|numeric|min:1',
-                'companyFinanceYearID' => 'required|numeric|min:1',
-                'JVdate' => 'required',
-                'currencyID' => 'required|numeric|min:1',
-                'JVNarration' => 'required',
-            ]);
-
-            if ($validator->fails()) {
-                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                    return [
-                        "success" => false,
-                        "message" => "Validation failed"
-                    ];
-                }
-                else{
-                    return $this->sendError($validator->messages(), 422);
-                }
-            }
-
-
-            $query = JvDetail::selectRaw("chartofaccounts.AccountCode")
-            ->join('chartofaccounts', 'chartofaccounts.chartOfAccountSystemID', '=', 'erp_jvdetail.chartOfAccountSystemID')
-            ->where('chartofaccounts.isActive',0)
-            ->where('erp_jvdetail.jvMasterAutoId', $input['jvMasterAutoId'])
-            ->groupBy('chartofaccounts.AccountCode');
-            
-            if($query->count() > 0)
-            {
-                $inActiveAccounts = $query->pluck('AccountCode');
-                $lastKey = count($inActiveAccounts) - 1;
-
-
-                $msg = '';
-                foreach($inActiveAccounts as $key => $account)
-                {   
-                    if ($key != $lastKey) {
-                        $msg .= ' '.$account.' ,';
-                    }
-                    else
-                    {
-                        $msg .= ' '.$account;
-                    }
-                   
-                }
-
-                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
-                    return [
-                        "success" => false,
-                        "message" => "The Chart of Account/s are Inactive"
-                    ];
-                }
-                else{
-                    return $this->sendError("The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
-                }
-            }
-
-            $documentDate = $input['JVdate'];
-            $monthBegin = $input['FYPeriodDateFrom'];
-            $monthEnd = $input['FYPeriodDateTo'];
-            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-            } else {
-                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                    return [
-                        "success" => false,
-                        "message" => "Document date is not within the selected financial period !"
-                    ];
-                }
-                else{
-                    return $this->sendError('Document date is not within the selected financial period !', 500);
-                }
-            }
-
-            $checkItems = JvDetail::where('jvMasterAutoId', $id)
-                ->count();
-            if ($checkItems == 0) {
-                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                    return [
-                        "success" => false,
-                        "message" => "Journal Voucher should have at least one item"
-                    ];
-                }
-                else{
-                    return $this->sendError('Journal Voucher should have at least one item', 500);
-                }
-            }
-
-
-
-            if ($jvMaster->jvType != 4) {
-                $checkQuantity = JvDetail::where('jvMasterAutoId', $id)
-                    ->where('debitAmount', '<=', 0)
-                    ->where('creditAmount', '<=', 0)
-                    ->count();
-                if ($checkQuantity > 0) {
-                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                        return [
-                            "success" => false,
-                            "message" => "Amount should be greater than 0 for debit amount or credit amount"
-                        ];
-                    }
-                    else{
-                        return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
-                    }
-                }
-            }
-
-            $jvDetails = JvDetail::where('jvMasterAutoId', $id)->get();
-
-            $finalError = array(
-                'required_serviceLine' => array(),
-                'active_serviceLine' => array(),
-                'contract_check' => array()
-            );
-            $error_count = 0;
-
-            foreach ($jvDetails as $item) {
-                $updateItem = JvDetail::find($item['jvDetailAutoID']);
-
-                if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
-                    if ($jvMaster->jvType != 5) {
-                        $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
-                            ->where('isActive', 1)
-                            ->first();
-                        if (empty($checkDepartmentActive)) {
-                            $updateItem->serviceLineSystemID = null;
-                            $updateItem->serviceLineCode = null;
-                            array_push($finalError['active_serviceLine'], $updateItem->glAccount);
-                            $error_count++;
-                        }
-                    }
+                if(isset($result['type'])) {
+                    return $this->sendError($result["message"], $result['httpCode'], ['type' => $result['type']]);
                 } else {
-                    array_push($finalError['required_serviceLine'], $updateItem->glAccount);
-                    $error_count++;
-                }
-
-            }
-
-            //if standard jv
-            if ($input['jvType'] == 0) {
-                $policyConfirmedUserToApprove = CompanyPolicyMaster::where('companyPolicyCategoryID', 15)
-                    ->where('companySystemID', $input['companySystemID'])
-                    ->first();
-
-                if ($policyConfirmedUserToApprove->isYesNO == 0) {
-
-                    foreach ($jvDetails as $item) {
-
-                        $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')->where('chartOfAccountSystemID', $item->chartOfAccountSystemID)->first();
-
-                        if ($chartOfAccount->controlAccountsSystemID == 1) {
-                            if ($item['contractUID'] == '' || $item['contractUID'] == 0) {
-                                array_push($finalError['contract_check'], $item->glAccount);
-                                $error_count++;
-                            }
-                        }
-                    }
+                    return $this->sendError($result["message"], $result['httpCode']);
                 }
             }
-
-            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
-            if ($error_count > 0) {
-                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                    return [
-                        "success" => false,
-                        "message" => "You cannot confirm this document."
-                    ];
-                }
-                else{
-                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
-                }
-            }
-
-            $JvDetailDebitSum = JvDetail::where('jvMasterAutoId', $id)
-                ->sum('debitAmount');
-
-            $JvDetailCreditSum = JvDetail::where('jvMasterAutoId', $id)
-                ->sum('creditAmount');
-
-            if (round($JvDetailDebitSum, $currencyDecimalPlace) != round($JvDetailCreditSum, $currencyDecimalPlace)) {
-                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                    return [
-                        "success" => false,
-                        "message" => "Debit amount total and credit amount total is not matching"
-                    ];
-                }
-                else{
-                    return $this->sendError('Debit amount total and credit amount total is not matching', 500);
-                }
-            }
-
-            $input['RollLevForApp_curr'] = 1;
-
-
-            unset($input['confirmedYN']);
-            unset($input['confirmedByEmpSystemID']);
-            unset($input['confirmedByEmpID']);
-            unset($input['confirmedByName']);
-            unset($input['confirmedDate']);
-
-            $params = array(
-                'autoID' => $id,
-                'company' => $input["companySystemID"],
-                'document' => $input["documentSystemID"],
-                'segment' => 0,
-                'category' => 0,
-                'amount' => $JvDetailDebitSum,
-                'isAutoCreateDocument' => isset($input['isAutoCreateDocument'])
-            );
-
-            $confirm = \Helper::confirmDocument($params);
-
-            if (!$confirm["success"]) {
-                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
-                    return [
-                        "success" => false,
-                        "message" => $confirm["message"]
-                    ];
-                }
-                else{
-                    return $this->sendError($confirm["message"], 500);
-                }
-            }
-        }
-
-        if (isset($input['reversalJV'])) {
-            if ($input['reversalJV'] == 0 && $input['jvType'] == 0) {
-                $input['reversalDate'] = null;
-            }
-        }
-
-
-        $employee = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? UserTypeService::getSystemEmployee() : Helper::getEmployeeInfo();
-
-        $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $employee->empID;
-        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
-        if($jvMaster->jvType == 5)
-        {
-            $input['reversalDate'] = Carbon::parse($input['reversalDate']);
-        }
-
-        if($input['jvType'] == 1 || $input['jvType'] == 2 || $input['jvType'] == 3 || $input['jvType'] == 4)
-        {
-            $input['reversalJV'] = 0;
-            $input['reversalDate'] = null;
-        }
-
-        $jvMaster = $this->jvMasterRepository->update($input, $id);
-
-        if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
-            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
-                return [
-                    "success" => true,
-                    "data" => $jvMaster->toArray()
-                ];
-            }
-            else{
-                return $this->sendReponseWithDetails($jvMaster->toArray(), 'Journal Voucher confirmed successfully',1,$confirm['data'] ?? null);
-            }
-        }
-
-        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
-            return [
-                "success" => true,
-                "data" => $jvMaster->toArray()
-            ];
-        }
-        else{
-            return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher updated successfully');
         }
     }
 
@@ -2662,4 +2183,29 @@ HAVING
         }
 
     }
+
+    public function createJournalVoucher(Request $request)
+    {
+        $input = $request->all();
+        $db = isset($request->db) ? $request->db : "";
+        $authorization = $request->header('Authorization');
+
+        $jvs = $input['journalVouchers'] ?? null;
+
+        if(is_array($jvs)) {
+
+            $compId = $input['company_id'];
+            $company = Company::where('companySystemID', $compId)->first();
+            if (empty($company)) {
+                return $this->sendError("Company details not found", 404);
+            }
+
+            CreateJournalVoucher::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
+            return $this->sendResponse([],"Journal voucher request has been successfully queued for processing!");
+        }
+        else {
+            return $this->sendError("Invalid Data Format", 404);
+        }
+    }
+
 }

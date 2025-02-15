@@ -48,6 +48,7 @@ use App\Models\SystemGlCodeScenarioDetail;
 use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Repositories\JvDetailRepository;
 use App\Repositories\ChartOfAccountAllocationDetailHistoryRepository;
+use App\Services\JournalVoucherService;
 use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -169,24 +170,10 @@ class JvDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-
-        $jvMaster = JvMaster::find($input['jvMasterAutoId']);
-
-        if (empty($jvMaster)) {
-            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                return [
-                    "success" => false,
-                    "message" => "Journal Voucher not found"
-                ];
-            }
-            else{
-                return $this->sendError('Journal Voucher not found');
-            }
-        }
-
         $messages = [
             'currencyID' => 'Currency is required',
         ];
+        $jvMaster = JvMaster::find($input['jvMasterAutoId']);
         $validator = \Validator::make($jvMaster->toArray(), [
             'jvType' => 'required|numeric',
             'currencyID' => 'required|numeric|min:1'
@@ -204,56 +191,27 @@ class JvDetailAPIController extends AppBaseController
             }
         }
 
-        $input['documentSystemID'] = $jvMaster->documentSystemID;
-        $input['documentID'] = $jvMaster->documentID;
-        $input['companySystemID'] = $jvMaster->companySystemID;
-        $input['companyID'] = $jvMaster->companyID;
-
-        $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
-        if (empty($chartOfAccount)) {
+        $resultData = JournalVoucherService::createJournalVoucherDetail($input);
+        if ($resultData["status"]) {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
-                    "success" => false,
-                    "message" => "Chart of Account not found"
+                    "success" => true,
+                    "data" => $resultData['data']
                 ];
             }
             else{
-                return $this->sendError('Chart of Account not found');
+                return $this->sendResponse($resultData['data'], $resultData["message"]);
             }
-        }
-
-        $input['glAccount'] = $chartOfAccount->AccountCode;
-        $input['glAccountDescription'] = $chartOfAccount->AccountDescription;
-
-        $input['currencyID'] = $jvMaster->currencyID;
-        $input['currencyER'] = $jvMaster->currencyER;
-        $input['comments'] = $jvMaster->JVNarration;
-
-        $input['createdPcID'] = gethostname();
-
-        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-            $employee = UserTypeService::getSystemEmployee();
-            $input['createdUserID'] = $employee->empID;
-            $input['createdUserSystemID'] = $employee->employeeSystemID;
-        }
-        else{
-            $id = Auth::id();
-            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
-            $input['createdUserID'] = $user->employee['empID'];
-            $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
-        }
-
-        $jvDetails = $this->jvDetailRepository->create($input);
-
-        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-            return [
-                "success" => true,
-                "data" => $jvDetails->toArray()
-            ];
-        }
-        else{
-            return $this->sendResponse($jvDetails->toArray(), 'Jv Detail saved successfully');
+        } else {
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                return [
+                    "success" => false,
+                    "message" => $resultData["message"]
+                ];
+            }
+            else{
+                return $this->sendError($resultData["message"], $resultData['httpCode']);
+            }
         }
     }
 
@@ -358,101 +316,31 @@ class JvDetailAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['segment', 'currency_by', 'console_company','chartofaccount']);
         $input = $this->convertArrayToValue($input);
-        $serviceLineError = array('type' => 'serviceLine');
 
-        /** @var JvDetail $jvDetail */
-        $jvDetail = $this->jvDetailRepository->findWithoutFail($id);
-
-        if (empty($jvDetail)) {
+        $resultData = JournalVoucherService::updateJournalVoucherDetail($id, $input);
+        if ($resultData["status"]) {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
-                    "success" => false,
-                    "message" => "Jv Detail not found"
+                    "success" => true,
+                    "data" => $resultData['data']
                 ];
             }
             else{
-                return $this->sendError('Jv Detail not found');
+                return $this->sendResponse($resultData['data'], $resultData["message"]);
             }
-        }
-
-        $jvMaster = JvMaster::find($input['jvMasterAutoId']);
-
-        if (empty($jvMaster)) {
+        } else {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
-                    "message" => "Journal Voucher not found"
+                    "message" => $resultData["message"]
                 ];
             }
             else{
-                return $this->sendError('Journal Voucher not found');
-            }
-        }
-
-        if ($input['creditAmount'] == '') {
-            $input['creditAmount'] = 0;
-        }
-        if ($input['debitAmount'] == '') {
-            $input['debitAmount'] = 0;
-        }
-
-        if (isset($input['serviceLineSystemID'])) {
-
-            if ($input['serviceLineSystemID'] > 0) {
-                $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
-                if (empty($checkDepartmentActive)) {
-                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                        return [
-                            "success" => false,
-                            "message" => "Department not found"
-                        ];
-                    }
-                    else{
-                        return $this->sendError('Department not found');
-                    }
+                if(isset($resultData['error_details'])) {
+                    return $this->sendError($resultData["message"], $resultData["httpCode"], $resultData['error_details']);
                 }
-
-                if ($checkDepartmentActive->isActive == 0) {
-                    $this->$jvDetail->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
-                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-                        return [
-                            "success" => false,
-                            "message" => "Please select an active department"
-                        ];
-                    }
-                    else{
-                        return $this->sendError('Please select an active department', 500, $serviceLineError);
-                    }
-                }
-
-                $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
+                return $this->sendError($resultData["message"], $resultData["httpCode"]);
             }
-        }
-
-        if (isset($input['contractUID'])) {
-
-            $input['clientContractID'] = NULL;
-
-            $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')
-                ->where('contractUID', $input['contractUID'])
-                ->first();
-            
-            if(!empty($contract)) {
-                $input['clientContractID'] = $contract['ContractNumber'];
-            }   
-
-        }
-
-        $jvDetail = $this->jvDetailRepository->update($input, $id);
-
-        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
-            return [
-                "success" => true,
-                "data" => $jvDetail->toArray()
-            ];
-        }
-        else{
-            return $this->sendResponse($jvDetail->toArray(), 'JvDetail updated successfully');
         }
     }
 
