@@ -4204,7 +4204,7 @@ WHERE
         });
 
 
-        return ['data' => $output, 'aging' => $aging];
+        return ['data' => $filteredData, 'aging' => $aging];
     }
 
     // Customer Collection report
