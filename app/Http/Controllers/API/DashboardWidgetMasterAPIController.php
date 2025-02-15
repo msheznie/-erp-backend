@@ -25,6 +25,8 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
+use App\Models\SupplierGroup;
+use App\Models\SupplierMaster;
 
 /**
  * Class DashboardWidgetMasterController
@@ -370,8 +372,10 @@ END AS sortDashboard')
             ->orderBy('sortOrder')
             ->get();
         $output = [];
+        $supplierGroup = SupplierGroup::notDeleted();
         if(!empty($widget)){
-            $output = $widget->toArray();
+            $output['widget'] = $widget->toArray();
+            $output['supplierGroup'] = $supplierGroup;
         }
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -380,6 +384,10 @@ END AS sortDashboard')
 
         $input = $request->all();
         $data = [];
+        $suplierrGroup = [];
+        if(isset($input['supplierGroup'])){
+           $suplierrGroup =  SupplierMaster::where('supplier_group_id',$input['supplierGroup'])->pluck('supplierCodeSystem')->toArray();
+        }
 
         $id = isset($input['widgetMasterID']) ? $input['widgetMasterID'] : 0;
         if($id==0){
@@ -484,6 +492,9 @@ END AS sortDashboard')
                     ->groupBy('supplierID')
                     ->orderBy('total','DESC')
                     ->limit(10)
+                    ->when(!empty($suplierrGroup), function ($query) use ($suplierrGroup) {
+                            $query->whereIn('supplierID', $suplierrGroup);
+                          })
                     ->get();
                 if(!empty($result) && $result->count()){
 //
@@ -648,8 +659,11 @@ GROUP BY
 	erp_generalledger.supplierCodeSystem*/
 
                 $result = GeneralLedger::where('documentSystemID',4)
-                    ->whereHas('supplier', function ($query){
-                        $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID');
+                    ->whereHas('supplier', function ($query) use($suplierrGroup){
+                        $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID')
+                        ->when(!empty($suplierrGroup), function ($query) use ($suplierrGroup) {
+                            $query->whereIn('supplierCodeSystem', $suplierrGroup);
+                          });
                     })
                     ->whereIn('companySystemID', $childCompanies)
                     ->select(DB::raw('supplierCodeSystem,SUM(documentRptAmount) AS total'))
@@ -659,6 +673,7 @@ GROUP BY
                     ->limit(10)
                     ->get();
 
+                    
                 if(!empty($result) && $result->count()){
 //
 //                    $finalTotal = 0;
@@ -718,8 +733,11 @@ GROUP BY
 	erp_generalledger.supplierCodeSystem*/
 
                 $result = GeneralLedger::whereIn('documentSystemID',[4,11,15])
-                    ->whereHas('supplier', function ($query){
-                        $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID');
+                    ->whereHas('supplier', function ($query) use($suplierrGroup){
+                        $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID')
+                        ->when(!empty($suplierrGroup), function ($query) use ($suplierrGroup) {
+                            $query->whereIn('supplierCodeSystem', $suplierrGroup);
+                          });
                     })
                     ->whereIn('companySystemID', $childCompanies)
                     ->select(DB::raw('supplierCodeSystem,SUM(documentRptAmount*-1) AS total'))
