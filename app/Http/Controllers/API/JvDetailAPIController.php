@@ -314,7 +314,7 @@ class JvDetailAPIController extends AppBaseController
     public function update($id, Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'currency_by', 'console_company','chartofaccount']);
+        $input = array_except($input, ['segment', 'currency_by', 'console_company','chartofaccount','line_segments']);
         $input = $this->convertArrayToValue($input);
 
         $resultData = JournalVoucherService::updateJournalVoucherDetail($id, $input);
