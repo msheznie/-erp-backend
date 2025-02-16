@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.62.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.62.0...v10.62.1) (2025-02-16)
+
+
+### Bug Fixes
+
+* **general ledger:** issue while updating JV fixed [GCP-6213] ([#7562](https://github.com/pbsgears/Gears_BackEnd/issues/7562)) ([49e2a05](https://github.com/pbsgears/Gears_BackEnd/commit/49e2a05608e51e9b34d7bcaf94a829b6ad0ee22f))
+
 ## [10.62.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.61.0...v10.62.0) (2025-02-15)
 
 
