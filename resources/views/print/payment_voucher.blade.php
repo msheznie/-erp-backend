@@ -454,7 +454,9 @@
                     @endif
                     <th style="text-align: center">{{ __('custom.segment') }}</th>
                     <th style="text-align: center">{{ __('custom.amount') }}</th>
+                    @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash != 15)
                     <th style="text-align: center">{{ __('custom.vat') }}</th>
+                    @endif
                     <th style="text-align: center">{{ __('custom.payment_amount') }}</th>
                     <th style="text-align: center">{{ __('custom.local_amt') }} (
                         @if($masterdata->localCurrency)
@@ -495,7 +497,9 @@
                             @endif
                         </td>
                         <td style="text-align: right">{{number_format($item->DPAmount, $transDecimal)}}</td>
+                        @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash != 15)
                         <td style="text-align: right">{{number_format($item->vatAmount, $transDecimal)}}</td>
+                        @endif
                         <td style="text-align: right">{{number_format($item->DPAmount + $item->vatAmount, $transDecimal)}}</td>
                         <td style="text-align: right">{{number_format($item->localAmount + $item->VATAmountLocal, $localDecimal)}}</td>
                         <td style="text-align: right">{{number_format($item->comRptAmount + $item->VATAmountRpt, $rptDecimal)}}</td>
@@ -510,7 +514,7 @@
                     @if($masterdata->invoiceType == 3 && $isProjectBase)
                         <td colspan="4" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
                     @endif
-                    <td colspan="5" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
+                    <td colspan="{{ ($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash != 15) ? 5 : 4 }}" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
                     <td style="text-align: right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     <td style="text-align: right"
                         style="background-color: rgb(215,215,215)">{{number_format($tot, $transDecimal)}}</td>
