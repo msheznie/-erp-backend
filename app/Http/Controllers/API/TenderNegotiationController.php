@@ -487,12 +487,17 @@ class TenderNegotiationController extends AppBaseController
     }
 
     public function getNegotiationStartedSupplierList(Request $request){
-
+    try {
         $validatedData = $request->validate([
             'negotiationId' => 'required|integer',
+            'tenderUuid' => 'required',
         ]);
 
-        return $this->supplierTenderNegotiationRepository->getSupplierList($validatedData['negotiationId']);
+        $result =  $this->supplierTenderNegotiationRepository->getSupplierList($validatedData['negotiationId'], $validatedData['tenderUuid']);
+        return $this->sendResponse($result,'Received supplier List');
+        } catch (\Exception $e) {
+            return $this->sendError('Error occurred');
+        }
     }
 }
 

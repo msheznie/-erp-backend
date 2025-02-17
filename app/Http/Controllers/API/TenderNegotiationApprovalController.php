@@ -203,6 +203,7 @@ class TenderNegotiationApprovalController extends AppBaseController
                     $employee = SupplierRegistrationLink::select('email','company_id','name')->find($supplierTenderNegotiation->suppliermaster_id);
                     if(isset($employee) &&  $employee->email) {
                         $file = array();
+                        $ccEmails = null;
                         $tenderCustomEmail = TenderCustomEmail::getSupplierCustomEmailBody($input['srm_tender_master_id'], $supplierTenderNegotiation->suppliermaster_id, 'TNE');
                         if ($tenderCustomEmail && $tenderCustomEmail->attachment) {
                             $file[$tenderCustomEmail->attachment->originalFileName] = Helper::getFileUrlFromS3($tenderCustomEmail->attachment->path);
@@ -214,7 +215,8 @@ class TenderNegotiationApprovalController extends AppBaseController
                         $url = trim($loginUrl,"/register");
                         $redirectUrl= $url."/tender-management/tenders/1";
                         $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
-
+                        $dataEmail['ccEmail'] = [];
+                        $dataEmail['attachmentList'] = [];
                         if ($tenderCustomEmail) {
                             $emailBody =  "<p>Dear " . $employee->name . $tenderCustomEmail->email_body . $companyName . '</p>';
                             $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
