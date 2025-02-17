@@ -336,81 +336,21 @@ class WarehouseItemsAPIController extends AppBaseController
             $input['itemSystemCode'] = collect($request['itemSystemCode'])->pluck('id');   
         }
 
-        $itemMasters = $this->getAssignedItemsByWareHouse($input);
+        $itemMasters = ($this->getAssignedItemsByWareHouse($input));
 
-        $data = \DataTables::eloquent($itemMasters)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('warehouseItemsID', $input['order'][0]['dir']);
-                    }
-                }
-            })
+        $itemMasters = collect($itemMasters);
+
+        $direction = $input['order'][0]['dir'] ?? 'asc';
+        $itemMasters = $itemMasters->sortBy('warehouseItemsID', SORT_REGULAR, $direction === 'desc');
+
+        $data = \DataTables::collection($itemMasters)
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('current', function ($row) {
-                $data = array('companySystemID' => $row->companySystemID,
-                    'itemCodeSystem' => $row->itemSystemCode,
-                    'wareHouseId' => $row->warehouseSystemCode);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
-
-                $array = array('local' => $itemCurrentCostAndQty['wacValueLocalWarehouse'],
-                    'rpt' => $itemCurrentCostAndQty['wacValueReportingWarehouse'],
-                    'wareHouseStock' => $itemCurrentCostAndQty['currentWareHouseStockQty'],
-                    'totalWacCostLocal' => $itemCurrentCostAndQty['totalWacCostLocalWarehouse'],
-                    'totalWacCostRpt' => $itemCurrentCostAndQty['totalWacCostRptWarehouse'],
-                );
-                return $array;
-
-            })
-            ->addColumn('binLocation', function ($row) {
-                $data = array('companySystemID' => $row->companySystemID,
-                    'itemCodeSystem' => $row->itemSystemCode,
-                    'wareHouseId' => $row->warehouseSystemCode,
-                    'itemReport' => true);
-                $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
-                return $itemBinLocation['binLocation'] ?? [];
-
-            })
-            ->addColumn('isTrack', function ($row) {
-                $data = array('companySystemID' => $row->companySystemID,
-                    'itemCodeSystem' => $row->itemSystemCode,
-                    'wareHouseId' => $row->warehouseSystemCode,
-                    'itemReport' => true);
-                $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
-                return $itemBinLocation['isTrackable'] ?? [];
-
-            })
             ->make(true);
             
-            $responseData = json_decode($data->getContent(), true);
-            $transformedData = [];
-            $x = 1;
-            $transformedData = array_reduce($responseData['data'], function ($carry, $item) use(&$x) {
-                if ($item['isTrack'] == "1" && !empty($item['binLocation'])) {
-                    foreach ($item['binLocation'] as $bin) {
-                        $carry[] = array_merge($item, [
-                            'binLocation' => $bin,
-                            'binNumber' => $bin['binLocationID'],
-                            'order' => $x
-                        ]);
-                        $x++;
-                    }
-                } else {
-                    $carry[] = array_merge($item, ['binLocation' => null,'order' => $x]);
-                    $x++;
-                }
-                return $carry;
-            }, []);
+            return $data;
 
-            if(isset($request['binNumber']) && !empty($request['binNumber'])) {
-                $transformedData = ($this->filterBinLocation($transformedData,$request));
-            } 
-        
-            
-            $responseData['data'] = $transformedData;
-            return response()->json($responseData);
     }
 
 
@@ -423,92 +363,61 @@ class WarehouseItemsAPIController extends AppBaseController
             $sort = 'desc';
         }
         $data = array();
-        $output = ($this->getAssignedItemsByWareHouse($input))->orderBy('warehouseItemsID', $sort)->get();
-
-        if(isset($request['binNumber']) && !empty($request['binNumber'])) {
-            $binumberValues = collect($request['binNumber'])->pluck('id')->toArray();;   
-
-        } 
+        $output = ($this->getAssignedItemsByWareHouse($input));
+        $output = collect($output)->map(function ($item) {
+            return (object) $item;
+        });
+        
+        $output = $output->sortBy('warehouseItemsID', SORT_REGULAR, $sort)->values();
 
         $type = $request->type;
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
 
+                $data[$x]['Item code'] = $value->itemPrimaryCode;
+                $data[$x]['Item Description'] = $value->itemDescription;
+
+                if ($value->unit) {
+                    $data[$x]['Unit'] = $value->unit['UnitShortCode'];
+                } else {
+                    $data[$x]['Unit'] = '-';
+                }
+
+                if ($value->finance_sub_category) {
+                    $data[$x]['Category'] = $value->finance_sub_category['categoryDescription'];
+                } else {
+                    $data[$x]['Category'] = '-';
+                }
+                $bin = WarehouseBinLocation::find($value->binNumber);
+                $data[$x]['Bin Location'] = $value->isTrack == 1? $value->binLocation['binLocationDes'] : $bin ? $bin->binLocationDes : '-';
+              
+                $data[$x]['Min Qty'] = number_format($value->minimumQty, 2);
+                $data[$x]['Max Qty'] = number_format($value->maximunQty, 2);
 
                 $localDecimal = 3;
                 $rptDecimal = 2;
                 if ($value->local_currency) {
-                    $localDecimal = $value->local_currency->DecimalPlaces;
+                    $localDecimal = $value->local_currency['DecimalPlaces'];
                 }
                 if ($value->rpt_currency) {
-                    $rptDecimal = $value->rpt_currency->DecimalPlaces;
+                    $rptDecimal = $value->rpt_currency['DecimalPlaces'];
                 }
 
                 $data1 = array('companySystemID' => $value->companySystemID,
                     'itemCodeSystem' => $value->itemSystemCode,
                     'wareHouseId' => $value->warehouseSystemCode);
-                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data1);
+                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data1);                
 
-
-                $data2 = array('companySystemID' => $value->companySystemID,
-                'itemCodeSystem' => $value->itemSystemCode,
-                'wareHouseId' => $value->warehouseSystemCode,
-                'itemReport' => true);
-                     $itemBinLocation = \Inventory::itemCurrentCostAndQty($data2);
-                
-                
-                     if (!empty($itemBinLocation['isTrackable']) && $itemBinLocation['isTrackable'] == "1" && !empty($itemBinLocation['binLocation'])) {
-                        foreach ($itemBinLocation['binLocation'] as $bin) {
-                            $data[$x] = [
-                                'Item code' => $value->itemPrimaryCode,
-                                'Item Description' => $value->itemDescription,
-                                'Unit' => $value->unit ? $value->unit->UnitShortCode : '-',
-                                'Category' => $value->financeSubCategory ? $value->financeSubCategory->categoryDescription : '-',
-                                'Warehouse' => $value->warehouse_by ? $value->warehouse_by->wareHouseDescription : '-',
-                                'Bin Location' => $bin['binLocationDes'],
-                                'Min Qty' => number_format($value->minimumQty, 2),
-                                'Max Qty' => number_format($value->maximunQty, 2),
-                                'Stock Qty' => number_format($itemCurrentCostAndQty['currentWareHouseStockQty'], 2),
-                                'WAC Local' => number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'], $localDecimal),
-                                'WAC Rpt' => number_format($itemCurrentCostAndQty['wacValueReportingWarehouse'], $rptDecimal),
-                                'WAC Local Val' => number_format($itemCurrentCostAndQty['totalWacCostLocalWarehouse'], $localDecimal),
-                                'WAC Rpt Val' => number_format($itemCurrentCostAndQty['totalWacCostRptWarehouse'], $rptDecimal),
-                                'binNumber' => $bin['binLocationID'],
-                            ];
-
-                            $x++; 
-                        }
-                    } else {
-                         $bin = WarehouseBinLocation::find($value->binNumber);
-                        
-                        $data[$x] = [
-                            'Item code' => $value->itemPrimaryCode,
-                            'Item Description' => $value->itemDescription,
-                            'Unit' => $value->unit ? $value->unit->UnitShortCode : '-',
-                            'Category' => $value->financeSubCategory ? $value->financeSubCategory->categoryDescription : '-',
-                            'Warehouse' => $value->warehouse_by ? $value->warehouse_by->wareHouseDescription : '-',
-                            'Bin Location' =>  $bin ? $bin->binLocationDes : '-',
-                            'Min Qty' => number_format($value->minimumQty, 2),
-                            'Max Qty' => number_format($value->maximunQty, 2),
-                            'Stock Qty' => number_format($itemCurrentCostAndQty['currentWareHouseStockQty'], 2),
-                            'WAC Local' => number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'], $localDecimal),
-                            'WAC Rpt' => number_format($itemCurrentCostAndQty['wacValueReportingWarehouse'], $rptDecimal),
-                            'WAC Local Val' => number_format($itemCurrentCostAndQty['totalWacCostLocalWarehouse'], $localDecimal),
-                            'WAC Rpt Val' => number_format($itemCurrentCostAndQty['totalWacCostRptWarehouse'], $rptDecimal),
-                            'binNumber' => $bin ? $bin->binLocationID : '-',
-                        ];
-
-                        $x++; 
-                    }
-
+                 $data[$x]['Stock Qty'] = $value->isTrack == 1? number_format($value->binLocation['quantity'],2) :number_format($value->current['wareHouseStock'],2);
+                 $data[$x]['WAC Local'] = number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'],$localDecimal);
+                 $data[$x]['WAC Rpt'] = number_format($itemCurrentCostAndQty['wacValueReportingWarehouse'],$rptDecimal);
+                 $data[$x]['WAC Local Val'] = $value->isTrack == 1? number_format($value->binLocation['totalWacCostLocal'],$localDecimal) :number_format($value->current['totalWacCostLocal'],$localDecimal);
+                 $data[$x]['WAC Rpt Val'] = $value->isTrack == 1? number_format($value->binLocation['totalWacCostRpt'],$rptDecimal) :number_format($value->current['totalWacCostRpt'],$rptDecimal);
+                 $x++;
             }
         }
 
-        if(isset($request['binNumber']) && !empty($request['binNumber'])) {
-            $data = ($this->filterBinLocation($data,$request));
-
-        } 
 
          \Excel::create('items_by_warehouse', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
@@ -579,9 +488,53 @@ class WarehouseItemsAPIController extends AppBaseController
                     ->orWhere('itemDescription', 'LIKE', "%{$search}%");
             });
         }
+        $details = $itemMasters->get();
+        foreach($details as &$row)
+        {
+            $data = array('companySystemID' => $row->companySystemID,
+            'itemCodeSystem' => $row->itemSystemCode,
+            'wareHouseId' => $row->warehouseSystemCode,
+            'itemReport' => true);
+            $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
+            
+            $row['binLocation'] =$itemBinLocation['binLocation'] ?? [];
+            $row['isTrack'] =$itemBinLocation['isTrackable'] ?? [];
 
+            $array = array('local' => $itemBinLocation['wacValueLocalWarehouse'],
+            'rpt' => $itemBinLocation['wacValueReportingWarehouse'],
+            'wareHouseStock' => $itemBinLocation['currentWareHouseStockQty'],
+            'totalWacCostLocal' => $itemBinLocation['totalWacCostLocalWarehouse'],
+            'totalWacCostRpt' => $itemBinLocation['totalWacCostRptWarehouse'],
+             );
+            $row['current'] = $array;
+        }
 
-        return $itemMasters;
+        $transformedData = [];
+        $x = 1;
+        $details = $details->toArray(); 
+        $transformedData = array_reduce($details, function ($carry, $item) use(&$x) {
+            if ($item['isTrack'] == "1" && !empty($item['binLocation'])) {
+                foreach ($item['binLocation'] as $bin) {
+                    $carry[] = array_merge($item, [
+                        'binLocation' => $bin,
+                        'binNumber' => $bin['binLocationID'],
+                        'order' => $x
+                    ]);
+                    $x++;
+                }
+            } else {
+                $carry[] = array_merge($item, ['binLocation' => null,'order' => $x]);
+                $x++;
+            }
+            return $carry;
+        }, []);
+
+        if(isset($input['binNumber']) && !empty($input['binNumber'])) {
+            $transformedData = ($this->filterBinLocation($transformedData,$input));
+
+        } 
+
+        return $transformedData;
 
     }
 
