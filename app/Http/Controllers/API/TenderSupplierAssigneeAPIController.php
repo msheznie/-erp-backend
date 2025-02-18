@@ -512,12 +512,23 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
     {
         $docType = 'Tender';
         $emailFormatted = email::emailAddressFormat($email);
-        $tenderMaster = TenderMaster::select('title','description')
+        $tenderMaster = TenderMaster::select('title','description', 'document_type')
             ->where('id', $tenderId)
             ->where('company_id', $companySystemId)
             ->first();
         if($rfx){
-            $docType = 'RFX';
+            $defaultDocType = 'RFX';
+            switch ($tenderMaster->document_type) {
+                case 1:
+                    $docType = 'RFQ';
+                    break;
+                case 2:
+                    $docType = 'RFI';
+                    break;
+                case 3:
+                    $docType = 'RFP';
+                    break;
+            }
         }
 
         $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
@@ -529,6 +540,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
         if ($type == 1) {
             if($rfx){
+                $alertMessage = " ".$defaultDocType." Invitation link";
                 $body = "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
             Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
