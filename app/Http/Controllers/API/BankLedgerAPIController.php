@@ -1165,7 +1165,9 @@ class BankLedgerAPIController extends AppBaseController
                 $q->whereHas('supplier');
             });
         }else {
-            $bankLedger->whereIn('invoiceType', [3,6,7])->whereHas('paymentVoucher', function ($q) {
+            $bankLedger->whereIn('invoiceType', [3])->whereHas('paymentVoucher', function ($q) {
+                $q->where('payment_mode',3);
+                $q->whereIn('finalSettlementYN',[1]);
                 $q->whereHas('payee');
             });
 
