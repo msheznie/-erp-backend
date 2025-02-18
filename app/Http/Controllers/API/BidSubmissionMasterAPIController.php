@@ -239,7 +239,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function update($id, UpdateBidSubmissionMasterAPIRequest $request)
     {
         $input = $request->all();
-        
+
             
         /** @var BidSubmissionMaster $bidSubmissionMaster */
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
@@ -259,14 +259,14 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->where('bid_master_id',$id)->where('eval_result',null)->whereHas('srm_evaluation_criteria_details',function($q){
                     $q->where('critera_type_id',2);
                 })->count();
-    
-             
                 if($evaluation > 0)
                 {
-                    return $this->sendError('Please enter the remaining user values for the technical evaluation',500);
+                    $hasExistingEvaluatedRecord = $this->bidSubmissionMasterRepository->identifyDuplicateBids($tender_id, $id);
+                    
+                    if(!$hasExistingEvaluatedRecord){
+                        return $this->sendError('Please enter the remaining user values for the technical evaluation',500);
+                    }
                 }
-
-
 
                 $input['technical_verify_by'] = \Helper::getEmployeeSystemID();
                 $input['technical_verify_at'] = Carbon::now();

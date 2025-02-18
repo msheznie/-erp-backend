@@ -144,4 +144,20 @@ class BidSubmissionDetail extends Model
     public function srm_bid_submission_master(){
         return $this->belongsTo('App\Models\BidSubmissionMaster','bid_master_id','id');
     }
+
+    public static function getBidSubmissionDetails($tender_id, $bidSubmissionMasterId){
+        return self::select('evaluation_detail_id')->where('tender_id',$tender_id)
+            ->where('bid_master_id',$bidSubmissionMasterId)->where('eval_result',null)->whereHas('srm_evaluation_criteria_details',function($q){
+            $q->where('critera_type_id',2);
+        })->first();
+    }
+
+    public static function hasExistingEvaluatedRecord($tender_id, $bidSubmissionMasterId, $evaluationDetailId)
+    {
+        return self::where('tender_id', $tender_id)
+            ->where('bid_master_id', $bidSubmissionMasterId)->where('evaluation_detail_id', $evaluationDetailId)
+            ->whereNotNull('eval_result')->whereHas('srm_evaluation_criteria_details', function ($q) {
+                $q->where('critera_type_id', 2);
+            })->exists();
+    }
 }
