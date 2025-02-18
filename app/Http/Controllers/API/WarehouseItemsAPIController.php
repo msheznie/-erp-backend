@@ -326,12 +326,12 @@ class WarehouseItemsAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        if(isset($request['financeCategorySub']) && !empty($request['financeCategorySub']) && !is_null($input['financeCategorySub']))
+        if(isset($request['financeCategorySubLocation']) && !empty($request['financeCategorySubLocation']))
         {
-            $input['financeCategorySub'] = collect($request['financeCategorySub'])->pluck('id');   
+            $input['financeCategorySubLocation'] = collect($request['financeCategorySubLocation'])->pluck('id');   
         }
 
-        if(isset($request['itemSystemCode']) && !empty($request['itemSystemCode']) && !is_null($input['itemSystemCode']))
+        if(isset($request['itemSystemCode']) && !empty($request['itemSystemCode']))
         {
             $input['itemSystemCode'] = collect($request['itemSystemCode'])->pluck('id');   
         }
@@ -346,6 +346,8 @@ class WarehouseItemsAPIController extends AppBaseController
         $data = \DataTables::collection($itemMasters)
             ->addIndexColumn()
             ->with('orderCondition', $sort)
+            ->filter(function ($query) { 
+            })
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
             
@@ -435,7 +437,7 @@ class WarehouseItemsAPIController extends AppBaseController
     public function getAssignedItemsByWareHouse($input)
     {
         $input = $this->convertArrayToSelectedValue($input,
-            array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
+            array('financeCategoryMaster', 'financeCategorySubLocation', 'isActive'));
         $childCompanies = [];
         $companyIds = $input['companyId'];
         $warehouseSystemCode = is_array($input['warehouseSystemCode'])
@@ -462,9 +464,9 @@ class WarehouseItemsAPIController extends AppBaseController
             ->whereIn('warehouseSystemCode', $warehouseSystemCode)
             ->where('financeCategoryMaster', 1);
 
-        if (array_key_exists('financeCategorySub', $input)) {
-            if ($input['financeCategorySub']  && !is_null($input['financeCategorySub']) && !empty($input['financeCategorySub'])) {
-                $itemMasters->whereIn('financeCategorySub',$input['financeCategorySub']);
+        if (array_key_exists('financeCategorySubLocation', $input)) {
+            if (isset($input['financeCategorySubLocation'])  && !empty($input['financeCategorySubLocation'])) {
+                $itemMasters->whereIn('financeCategorySub',$input['financeCategorySubLocation']);
             }
         }
 
@@ -475,7 +477,7 @@ class WarehouseItemsAPIController extends AppBaseController
         }
 
         if (array_key_exists('itemSystemCode', $input)) {
-            if ($input['itemSystemCode']  && !is_null($input['itemSystemCode']) && !empty($input['itemSystemCode'])) {
+            if (isset($input['itemSystemCode'])  && !empty($input['itemSystemCode'])) {
                 $itemMasters->whereIn('itemSystemCode',$input['itemSystemCode']);
             }
         }
