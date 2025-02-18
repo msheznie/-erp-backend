@@ -266,9 +266,17 @@ class ChartOfAccountAPIController extends AppBaseController
 
                     if ($policy) {
 
-                        $updateData = [
-                            'AccountDescription' => $input['AccountDescription'],
-                        ];
+                        if($chartOfAccount->catogaryBLorPLID == 1 && $input['catogaryBLorPLID'] == 1){
+                            $updateData = [
+                                'AccountDescription' => $input['AccountDescription'],
+                                'isBank' => $input['isBank'],
+                            ];
+                        } else {
+                            $updateData = [
+                                'AccountDescription' => $input['AccountDescription'],
+                            ];
+                        }
+
                         $updateDataNotAssigned = [
                             'isActive' => $input['isActive']
                         ];
@@ -305,9 +313,16 @@ class ChartOfAccountAPIController extends AppBaseController
                     //check policy 10
                     $policyCAc = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'], 10);
                     if ($policyCAc) {
-                        $updateData = [
-                            'controllAccountYN' => $input['controllAccountYN'],
-                        ];
+                        if($chartOfAccount->catogaryBLorPLID == 1 && $input['catogaryBLorPLID'] == 1){
+                            $updateData = [
+                                'controllAccountYN' => $input['controllAccountYN'],
+                                'isBank' => $input['isBank'],
+                            ];
+                        } else {
+                            $updateData = [
+                                'controllAccountYN' => $input['controllAccountYN'],
+                            ];
+                        }
 
                         $updateDataNotAssigned = [
                             'isActive' => $input['isActive']
