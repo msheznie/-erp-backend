@@ -268,7 +268,6 @@ class ChartOfAccountAPIController extends AppBaseController
 
                         $updateData = [
                             'AccountDescription' => $input['AccountDescription'],
-                            'isBank' => $input['isBank'],
                         ];
                         $updateDataNotAssigned = [
                             'isActive' => $input['isActive']
@@ -308,7 +307,6 @@ class ChartOfAccountAPIController extends AppBaseController
                     if ($policyCAc) {
                         $updateData = [
                             'controllAccountYN' => $input['controllAccountYN'],
-                            'isBank' => $input['isBank'],
                         ];
 
                         $updateDataNotAssigned = [
