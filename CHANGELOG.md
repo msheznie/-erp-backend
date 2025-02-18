@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.62.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.62.1...v10.62.2) (2025-02-18)
+
+
+### Bug Fixes
+
+* **accounts receivable:** customer fully matched report issue in old date fixed [GCP-6216] ([#7565](https://github.com/pbsgears/Gears_BackEnd/issues/7565)) ([cd6ecd3](https://github.com/pbsgears/Gears_BackEnd/commit/cd6ecd37c195b8b0f01b0a4c60902d607eddbcff))
+
 ## [10.62.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.62.0...v10.62.1) (2025-02-16)
 
 
