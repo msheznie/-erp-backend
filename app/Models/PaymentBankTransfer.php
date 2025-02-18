@@ -150,6 +150,7 @@ class PaymentBankTransfer extends Model
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey  = 'paymentBankTransferID';
+    protected  $appends = ['fileTypeName'];
 
 
     public $fillable = [
@@ -184,7 +185,8 @@ class PaymentBankTransfer extends Model
         'exportedUserSystemID',
         'exportedDate',
         'refferedBackYN',
-        'timesReferred'
+        'timesReferred',
+        'fileType'
     ];
 
     /**
@@ -220,7 +222,8 @@ class PaymentBankTransfer extends Model
         'exportedUserSystemID'  => 'integer',
         'exportedDate' => 'string',
         'refferedBackYN' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'fileType'  => 'integer'
     ];
 
     /**
@@ -263,5 +266,18 @@ class PaymentBankTransfer extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'paymentBankTransferID')->where('documentSystemID',64);
     }
-    
+
+    public function getFileTypeNameAttribute()
+    {
+            switch ($this->fileType) {
+                case 0 :
+                    return "Vendor File";
+                    break;
+                case 1 :
+                    return "Employee File";
+                    break;
+                default :
+                    return null;
+            }
+    }
 }

@@ -152,6 +152,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'narration' => 'required',
             'documentDate' => 'required',
+            'fileType' => 'required',
         ]);
 
         if ($validator->fails()) {

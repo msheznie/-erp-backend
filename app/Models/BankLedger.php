@@ -532,4 +532,9 @@ class BankLedger extends Model
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
     }
+
+    public function paymentVoucher()
+    {
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','documentSystemCode', 'PayMasterAutoId')->where('documentSystemID',4);
+    }
 }

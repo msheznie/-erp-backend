@@ -1133,7 +1133,7 @@ class BankLedgerAPIController extends AppBaseController
         }else if($input['isFromHistory'] == 1) {
             $orderBy = 'refferedbackAutoID';
             $bankLedger = PaymentBankTransferDetailRefferedBack::whereIn('companySystemID', $subCompanies)
-                                                                ->where('timesReferred',$input['timesReferred']);
+                ->where('timesReferred',$input['timesReferred']);
 
             $input['paymentBankTransferID'] = $paymentBankTransfer->paymentBankTransferID;
         }
@@ -1142,7 +1142,7 @@ class BankLedgerAPIController extends AppBaseController
             ->where("bankAccountID", $input['bankAccountAutoID'])
             ->where("trsClearedYN", -1)
             ->where("bankClearedYN", 0)
-            ->whereIn('invoiceType', [2, 3, 5])
+            ->where("payAmountBank",'>',0)
             ->where("bankCurrency", $bankId)
             ->where(function ($q) use ($input, $confirmed) {
                 $q->where(function ($q1) use ($input) {
@@ -1154,7 +1154,22 @@ class BankLedgerAPIController extends AppBaseController
             })
             ->with(['payee_bank_memos' => function ($q) {
                 $q->where('bankMemoTypeID', 4);
+            },'paymentVoucher'=> function($q) {
+                $q->with(['supplier','payee']);
             }]);
+
+
+        if($paymentBankTransfer->fileType == 0)
+        {
+            $bankLedger->whereIn('invoiceType', [2, 3, 5])->whereHas('paymentVoucher', function ($q) {
+                $q->whereHas('supplier');
+            });
+        }else {
+            $bankLedger->whereIn('invoiceType', [3,6,7])->whereHas('paymentVoucher', function ($q) {
+                $q->whereHas('payee');
+            });
+
+        }
 
         $search = $request->input('search.value');
 
