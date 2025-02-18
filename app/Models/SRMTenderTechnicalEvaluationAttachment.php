@@ -65,4 +65,12 @@ class SRMTenderTechnicalEvaluationAttachment extends Model
         return $this->hasOne('App\Models\DocumentAttachments',['documentSystemID', 'documentSystemCode',
             'companySystemID'], ['document_system_id', 'tender_id', 'company_id']);
     }
+
+    public static function hasEvaluationComment($companyId, $tenderId){
+        $evaluationData = SRMTenderTechnicalEvaluationAttachment::where('tender_id', $tenderId)
+            ->where('company_id', $companyId)
+            ->exists();
+
+        return $evaluationData;
+    }
 }

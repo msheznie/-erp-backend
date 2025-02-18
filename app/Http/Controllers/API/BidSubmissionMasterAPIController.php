@@ -432,7 +432,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $commonAttachmentExists = self::getIsExistCommonAttachment($request);  
 
-        $tender = TenderMaster::select('id','document_type', 'uuid')
+        $tender = TenderMaster::select('id','document_type', 'uuid', 'bid_opening_end_date', 'technical_bid_closing_date')
         ->withCount(['criteriaDetails',
          'criteriaDetails AS technical_count' => function ($query) {
             $query->where('critera_type_id', 2);
@@ -530,15 +530,22 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->make(true);
 
         $hasEvaluationAttachment = DocumentAttachments::evaluationAttachment($companyId, $tenderId);
+        $hasEvaluationComment = SRMTenderTechnicalEvaluationAttachment::hasEvaluationComment($companyId, $tenderId);
         if($hasEvaluationAttachment) {
             $getOriginalFileName = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
         }
         $getEvaluationData = SRMTenderTechnicalEvaluationAttachment::getEvaluationComment($companyId, $tenderId);
 
-            return [
+        $bidDate = $tender->bid_opening_end_date ?? $tender->technical_bid_closing_date;
+        $bidOpeningEndDate = Carbon::parse($bidDate);
+        $hasBidOpen = $bidOpeningEndDate->isFuture();
+
+        return [
                 'tblRecords' => $tblRecords->getData(),
                 'EvaluationData' => $getEvaluationData,
                 'hasEvaluationAttachment' => $hasEvaluationAttachment,
+                'hasEvaluationComment' => $hasEvaluationComment,
+                'hasBidOpen' => $hasBidOpen,
                 'OriginalFileName' => $getOriginalFileName ?? '-',
                 'tenderUuid' => $tender['uuid']
                 ];
