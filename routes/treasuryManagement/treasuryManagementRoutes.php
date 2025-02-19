@@ -86,6 +86,7 @@ Route::group([],function () {
     Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack')->name('Payment bank transfer referback');
     Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer')->name('Get referback history by bank transfer');
     Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount')->name('Get all bank transfer by bank account');
+    Route::post('getAllBankTransferSubmissionList', 'PaymentBankTransferAPIController@getAllBankTransferSubmissionList')->name('Get all bank transfer submission list');
 
     Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate')->name('Get check before create bank transfers');
     Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck')->name('Export payment bank transfer precheck');

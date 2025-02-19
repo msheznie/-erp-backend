@@ -32,6 +32,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -634,9 +635,15 @@ class BankReconciliationAPIController extends AppBaseController
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
         $bankMasters = BankMaster::all();
+
+        $submitBankTransfer = CompanyPolicyMaster::where('companyPolicyCategoryID', 102)
+            ->where('companySystemID', $companyId)
+            ->first();
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
-            'bankMasters' => $bankMasters
+            'bankMasters' => $bankMasters,
+            'bankTransferSubmitPolicy' => $submitBankTransfer->isYesNO ?? 0
         );
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));

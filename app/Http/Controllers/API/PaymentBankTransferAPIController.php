@@ -1246,4 +1246,33 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         return $this->sendResponse($bankTransfer->toArray(), 'Bank Transfer Amend successfully');
     }
+
+    public function getAllBankTransferSubmissionList(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, []);
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        $bankTransfer = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search, null, 1);
+
+        return \DataTables::eloquent($bankTransfer)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
 }

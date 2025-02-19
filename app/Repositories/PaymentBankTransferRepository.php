@@ -58,7 +58,7 @@ class PaymentBankTransferRepository extends BaseRepository
         return PaymentBankTransfer::class;
     }
 
-    public function paymentBankTransferListQuery($request, $input, $search = '', $bankmasterAutoID) {
+    public function paymentBankTransferListQuery($request, $input, $search = '', $bankmasterAutoID, $approved = 0) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -96,6 +96,10 @@ class PaymentBankTransferRepository extends BaseRepository
             $bankTransfer = $bankTransfer->whereHas('bank_account', function($query) use ($bankmasterAutoID) {
                                                             $query->whereIn('bankmasterAutoID', $bankmasterAutoID);
                                                     });
+        }
+
+        if($approved == 1) {
+            $bankTransfer = $bankTransfer->where('approvedYN', -1);
         }
 
         if ($search) {
