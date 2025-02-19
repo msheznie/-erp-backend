@@ -101,15 +101,22 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         if (!is_null($documentAttachments->path)) {
+            
             $disk = ($documentAttachments->attachmentType == 11)
                 ? 's3SRM'
                 : Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
- 
+
             if (Storage::disk($disk)->exists($documentAttachments->path)) {
                 return Storage::disk($disk)->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
                 return $this->sendError('Attachments not found', 500);
             }
+
+          /*  if ($exists = Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->exists($documentAttachments->path)) {
+                return Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->download($documentAttachments->path, $documentAttachments->myFileName);
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }*/
         } else {
             return $this->sendError('Attachment is not attached', 404);
         }
