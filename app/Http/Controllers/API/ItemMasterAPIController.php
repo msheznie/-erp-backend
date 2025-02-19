@@ -616,7 +616,7 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
-        $subCompanies = array_unique($companyList);
+        $subCompanies = !empty($companyList) ? array_unique($companyList) : [$selectedCompanyId];
 
         /**  Fixed Assets  Drop Down */
         $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
