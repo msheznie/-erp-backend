@@ -284,8 +284,27 @@ class PaymentBankTransferAPIController extends AppBaseController
                 })->when($confirmed == 0, function ($q2) {
                     $q2->orWhere("pulledToBankTransferYN", 0);
                 });
-            })->sum('payAmountBank');
+            });
 
+        if($paymentBankTransfer->fileType == 0)
+        {
+            $totalPaymentAmount->whereIn('invoiceType', [2, 3, 5])->whereHas('paymentVoucher', function ($q) {
+                $q->where('payment_mode',3);
+                $q->whereHas('supplier');
+            });
+        }else {
+
+            $totalPaymentAmount->whereIn('invoiceType', [3])
+                ->whereHas('paymentVoucher', function ($q) {
+                    $q->where('payment_mode', 3)
+                        ->whereIn('finalSettlementYN', [1]);
+                })
+                ->orWhereHas('paymentVoucher', function ($q) {
+                    $q->where('payment_mode', 3)
+                        ->where('finalSettlementYN', [-1])
+                        ->whereHas('payee');
+                });
+        }
 
         $totalPaymentClearedAmount = BankLedger::where('companySystemID', $paymentBankTransfer->companySystemID)
             ->where('payAmountBank', '>', 0)
@@ -299,7 +318,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                 });
             })->sum('payAmountBank');
 
-        $paymentBankTransfer->totalPaymentAmount = $totalPaymentAmount;
+        $paymentBankTransfer->totalPaymentAmount = $totalPaymentAmount->sum('payAmountBank');
         $paymentBankTransfer->totalPaymentClearedAmount = $totalPaymentClearedAmount;
 
         return $this->sendResponse($paymentBankTransfer->toArray(), 'Payment Bank Transfer retrieved successfully');

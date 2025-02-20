@@ -432,6 +432,7 @@ class BankLedgerAPIController extends AppBaseController
                         })
                         ->where('chartOfAccountSystemID', $bankGLCode)
                         ->first();
+
                     if (!empty($checkGLAmount)) {
                         $glAmount = 0;
                         $conditionChecking = true;
@@ -1162,15 +1163,21 @@ class BankLedgerAPIController extends AppBaseController
         if($paymentBankTransfer->fileType == 0)
         {
             $bankLedger->whereIn('invoiceType', [2, 3, 5])->whereHas('paymentVoucher', function ($q) {
+                $q->where('payment_mode',3);
                 $q->whereHas('supplier');
             });
         }else {
-            $bankLedger->whereIn('invoiceType', [3])->whereHas('paymentVoucher', function ($q) {
-                $q->where('payment_mode',3);
-                $q->whereIn('finalSettlementYN',[1]);
-                $q->whereHas('payee');
-            });
 
+            $bankLedger->whereIn('invoiceType', [3])
+                ->whereHas('paymentVoucher', function ($q) {
+                    $q->where('payment_mode', 3)
+                        ->whereIn('finalSettlementYN', [1]);
+                })
+                ->orWhereHas('paymentVoucher', function ($q) {
+                    $q->where('payment_mode', 3)
+                        ->where('finalSettlementYN', [-1])
+                        ->whereHas('payee');
+                });
         }
 
         $search = $request->input('search.value');
