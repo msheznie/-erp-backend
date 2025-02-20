@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.62.3](https://github.com/pbsgears/Gears_BackEnd/compare/v10.62.2...v10.62.3) (2025-02-20)
+
+
+### Bug Fixes
+
+* **Supplier Master:** ERP-Unable to Download Attachments in Supplier Master [GSUP-2308] ([ddf01de](https://github.com/pbsgears/Gears_BackEnd/commit/ddf01de718f7d005dada6e61522f549b17266fc2))
+
 ## [10.62.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.62.1...v10.62.2) (2025-02-18)
 
 
