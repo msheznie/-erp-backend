@@ -10863,7 +10863,6 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         $fromDate = $fromDate->format('Y-m-d');
         $selectedGL = $request->details; 
         $selectedColumn = $request->selectedColumn; 
-        $selectedColumn = str_replace(' ', '_', $selectedColumn);
         $toDate = new Carbon($request->toDate);
         $toDate = $toDate->format('Y-m-d');
         $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency;
@@ -11036,5 +11035,4 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         }
         return $type;
     }
-    
 }
