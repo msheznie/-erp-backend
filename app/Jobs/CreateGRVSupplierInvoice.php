@@ -7,6 +7,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
+use App\Models\SupplierInvoiceItemDetail;
 use App\Repositories\BookInvSuppDetRepository;
 use App\Repositories\BookInvSuppMasterRepository;
 use Illuminate\Bus\Queueable;
@@ -48,7 +49,7 @@ class CreateGRVSupplierInvoice implements ShouldQueue
             $grvMaster = GRVMaster::find($this->grvMasterAutoID);
             if ($grvMaster) {
                 if ($grvMaster->interCompanyTransferYN == -1) {
-                    $grvDetail = GRVDetails::selectRaw('SUM(landingCost_LocalCur) as landingCost_LocalCur,SUM(landingCost_RptCur) as landingCost_RptCur , SUM(landingCost_TransCur) as landingCost_TransCur')->where('grvAutoID', $this->grvMasterAutoID)->first();
+                    $grvDetail = GRVDetails::selectRaw('SUM(landingCost_LocalCur) as landingCost_LocalCur,SUM(landingCost_RptCur) as landingCost_RptCur , SUM(landingCost_TransCur) as landingCost_TransCur, VATAmount ,VATAmountLocal, VATAmountRpt ,grvDetailsID,vatMasterCategoryID,vatSubCategoryID,exempt_vat_portion,purchaseOrderMastertID,grvAutoID')->where('grvAutoID', $this->grvMasterAutoID)->first();
                     $today = NOW();
                     $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $grvMaster->companySystemID)->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
 
@@ -94,9 +95,14 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                     $bookingAmountTrans = 0;
 
                     if ($grvDetail) {
-                        $bookingAmountLocal = $grvDetail->landingCost_LocalCur;
-                        $bookingAmountRpt = $grvDetail->landingCost_RptCur;
-                        $bookingAmountTrans = $grvDetail->landingCost_TransCur;
+                        $VATAmount = $grvDetail->VATAmount;
+                        $VATAmountLocal = $grvDetail->VATAmountLocal;
+                        $VATAmountRpt = $grvDetail->VATAmountRpt;
+
+                        $bookingAmountLocal = $grvDetail->landingCost_LocalCur + $VATAmountLocal;
+                        $bookingAmountRpt = $grvDetail->landingCost_RptCur + $VATAmountRpt;
+                        $bookingAmountTrans = $grvDetail->landingCost_TransCur + $VATAmount;
+
                     }
 
                     $bookingInvCode = ($grvMaster->companyID . '\\' . $suppFinYear . '\\' . 'BSI' . str_pad($supInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
@@ -142,6 +148,7 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                     $supplierInvoiceData['createdUserSystemID'] = $grvMaster->grvConfirmedByEmpSystemID;
                     $supplierInvoiceData['createdUserID'] = $grvMaster->grvConfirmedByName;
                     $supplierInvoiceData['createdPcID'] = gethostname();
+                    $supplierInvoiceData['vatRegisteredYN'] = $grvMaster->vatRegisteredYN;
                     $bookInvSuppMaster = $bookInvSuppMasterRepo->create($supplierInvoiceData);
                     // supplier Invoice master end
 
@@ -162,7 +169,7 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                         $supplierInvoiceDetail['companyReportingER'] = $grvMaster->companyReportingER;
                         $supplierInvoiceDetail['localCurrencyID'] = $grvMaster->localCurrencyID;
                         $supplierInvoiceDetail['localCurrencyER'] = $grvMaster->localCurrencyER;
-                        $supplierInvoiceDetail['supplierInvoOrderedAmount'] = $bookingAmountTrans;
+                        $supplierInvoiceDetail['supplierInvoOrderedAmount'] = 0;
                         $supplierInvoiceDetail['supplierInvoAmount'] = $bookingAmountTrans;
                         $supplierInvoiceDetail['transSupplierInvoAmount'] = $bookingAmountTrans;
                         $supplierInvoiceDetail['localSupplierInvoAmount'] = $bookingAmountLocal;
@@ -174,7 +181,44 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                         $supplierInvoiceDetail['invoiceBeforeGRVYN'] = 0;
                         $supplierInvoiceDetail['timesReferred'] = 0;
                         $supplierInvoiceDetail['timeStamp'] = $today;
+                        $supplierInvoiceDetail['VATAmount'] = $VATAmount;
+                        $supplierInvoiceDetail['VATAmountLocal'] = $VATAmountLocal;
+                        $supplierInvoiceDetail['VATAmountRpt'] = $VATAmountRpt;
                         $bookInvSuppDet = $bookInvSuppDetRepo->create($supplierInvoiceDetail);
+
+                        if($bookInvSuppDet){
+                            $details = [
+                                'bookingSupInvoiceDetAutoID' => $bookInvSuppDet->bookingSupInvoiceDetAutoID,
+                                'bookingSuppMasInvAutoID' => $bookInvSuppDet->bookingSuppMasInvAutoID,
+                                'unbilledgrvAutoID' => $grvMaster->UnbilledGRVAccountSystemID,
+                                'companySystemID' => $grvMaster->companySystemID,
+                                'grvDetailsID' => $grvDetail->grvDetailsID,
+                                'logisticID' => $grvMaster->grvLocation,
+                                'vatMasterCategoryID' => $grvDetail->vatMasterCategoryID,
+                                'vatSubCategoryID' => $grvDetail->vatSubCategoryID,
+                                'exempt_vat_portion' => $grvDetail->exempt_vat_portion,
+                                'purchaseOrderID' => $grvDetail->purchaseOrderMastertID,
+                                'grvAutoID' => $grvDetail->grvAutoID,
+                                'supplierTransactionCurrencyID' => $grvMaster->supplierTransactionCurrencyID,
+                                'supplierTransactionCurrencyER' => 1,
+                                'companyReportingCurrencyID' => $grvMaster->companyReportingCurrencyID,
+                                'companyReportingER' => $grvMaster->companyReportingER,
+                                'localCurrencyID' => $grvMaster->localCurrencyID,
+                                'localCurrencyER' => $grvMaster->localCurrencyER,
+                                'supplierInvoOrderedAmount' => 0,
+                                'supplierInvoAmount' =>$bookingAmountTrans,
+                                'transSupplierInvoAmount' =>$bookingAmountTrans,
+                                'localSupplierInvoAmount' =>$bookingAmountLocal,
+                                'rptSupplierInvoAmount' =>$bookingAmountRpt,
+                                'totTransactionAmount' =>$bookingAmountTrans,
+                                'totLocalAmount' =>$bookingAmountLocal,
+                                'totRptAmount' =>$bookingAmountRpt,
+                                'VATAmount' =>$VATAmount,
+                                'VATAmountLocal' =>$VATAmountLocal,
+                                'VATAmountRpt' =>$VATAmountRpt,
+                            ];
+                            $createInvoiceItemDetail = SupplierInvoiceItemDetail::create($details);
+                        }
                     }
 
                     $masterModel = ['documentSystemID' => 11, 'autoID' => $bookInvSuppMaster->bookingSuppMasInvAutoID, 'companySystemID' => $bookInvSuppMaster->companySystemID, 'employeeSystemID' => $bookInvSuppMaster->confirmedByEmpSystemID];
