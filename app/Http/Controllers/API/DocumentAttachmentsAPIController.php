@@ -101,8 +101,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         if (!is_null($documentAttachments->path)) {
-            
-            $disk = ($documentAttachments->attachmentType == 11)
+
+            $disk = ($documentAttachments->attachmentType == 11 && $documentAttachments->attachmentType == 56)
                 ? 's3SRM'
                 : Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
 

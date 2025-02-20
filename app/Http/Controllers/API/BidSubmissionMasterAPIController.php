@@ -532,7 +532,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $hasEvaluationAttachment = DocumentAttachments::evaluationAttachment($companyId, $tenderId);
         $hasEvaluationComment = SRMTenderTechnicalEvaluationAttachment::hasEvaluationComment($companyId, $tenderId);
         if($hasEvaluationAttachment) {
-            $getOriginalFileName = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
+            $getFileDetails = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
         }
         $getEvaluationData = SRMTenderTechnicalEvaluationAttachment::getEvaluationComment($companyId, $tenderId);
 
@@ -546,7 +546,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 'hasEvaluationAttachment' => $hasEvaluationAttachment,
                 'hasEvaluationComment' => $hasEvaluationComment,
                 'hasBidOpen' => $hasBidOpen,
-                'OriginalFileName' => $getOriginalFileName ?? '-',
+                'OriginalFileName' => $getFileDetails['originalFileName'] ?? '-',
+                'OriginalFileId' => $getFileDetails['attachmentID'] ?? '-',
                 'tenderUuid' => $tender['uuid']
                 ];
     }

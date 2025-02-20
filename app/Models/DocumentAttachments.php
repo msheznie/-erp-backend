@@ -461,11 +461,11 @@ class DocumentAttachments extends Model
 
     public static function getOriginalFileName($companyId, $tenderId)
     {
-        $originalFileName = DocumentAttachments::select('originalFileName')
+        $originalFileName = DocumentAttachments::select('originalFileName', 'attachmentID')
             ->where('documentSystemID', 130)
             ->where('companySystemID', $companyId)
             ->where('documentSystemCode', $tenderId)->first();
 
-        return $originalFileName['originalFileName'] ?? '-';
+        return $originalFileName;
     }
 }
