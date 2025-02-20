@@ -500,7 +500,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             }
            
 
-            if ($isVATEligible && $payMaster->invoiceType != 3) {
+            if ($isVATEligible && $payMaster->expenseClaimOrPettyCash != 15) {
                 $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
                     ->where('companyPolicyCategoryID', 67)
                     ->where('isYesNO', 1)
