@@ -92,7 +92,7 @@ class ItemIssueMasterRepository extends BaseRepository
     public function getAudit($id)
     {
         return $this->with(['created_by', 'confirmed_by', 'modified_by', 'warehouse_by', 'company', 'details' => function ($q1) {
-              $q1->with(['uom_issuing', 'item_by', 'reportingCurreny' => function ($query) {
+              $q1->with(['uom_issuing', 'item_by', 'reportingCurrency' => function ($query) {
                   $query->select(['currencyID', 'CurrencyCode', 'DecimalPlaces']);
               }, 'allocate_employees' => function ($q2) {
                   $q2->with(['employee' => function ($q3) {
