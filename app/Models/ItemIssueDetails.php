@@ -497,5 +497,9 @@ class ItemIssueDetails extends Model
         return $this->hasMany('App\Models\ExpenseEmployeeAllocation','documentDetailID','itemIssueDetailID');
     }
 
+    public function reportingCurreny() {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'reportingCurrencyID', 'currencyID');
+    }
+
     
 }
