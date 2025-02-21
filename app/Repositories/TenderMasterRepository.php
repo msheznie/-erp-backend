@@ -881,7 +881,7 @@ class TenderMasterRepository extends BaseRepository
 
         if (env('IS_MULTI_TENANCY') == true) {
             $url = $_SERVER['HTTP_HOST'];
-            $url_array = explode('.', parse_url($url, PHP_URL_HOST));
+            $url_array = explode('.', $url);
             $subDomain = $url_array[0];
 
             $tenantDomain = explode('-', $subDomain);
