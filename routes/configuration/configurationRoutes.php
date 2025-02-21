@@ -213,6 +213,8 @@ Route::group([], function() {
 
     Route::get('getDocumentCodeMasters', 'DocumentCodeMasterAPIController@getDocumentCodeMasters')->name("Get document code masters");
     Route::get('getDocumentCodemaster', 'DocumentCodeMasterAPIController@getDocumentCodemaster')->name("Get document code master");
+    Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->name("Update document code Transaction");
+    Route::get('isGettingCodeConfigured', 'DocumentCodeMasterAPIController@isGettingCodeConfigured')->name("Is getting code configured");
     Route::get('getDocumentCodeSetupTypeBased', 'DocCodeSetupTypeBasedAPIController@getDocumentCodeSetupTypeBased')->name("Get document code setup type based");
     Route::post('updateTypeBasedFormat', 'DocCodeSetupTypeBasedAPIController@updateTypeBasedFormat')->name("Update type based format");
     Route::get('getDocumentCodeSetupCommon', 'DocCodeSetupCommonAPIController@getDocumentCodeSetupCommon')->name("Get document code setup common");

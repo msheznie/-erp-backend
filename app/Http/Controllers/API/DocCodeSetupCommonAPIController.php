@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\Services\DocumentCodeConfigurationService;
 use Response;
 
 /**
@@ -26,10 +27,12 @@ use Response;
 class DocCodeSetupCommonAPIController extends AppBaseController
 {
     /** @var  DocCodeSetupCommonRepository */
+    private $documentCodeConfigurationService;
     private $docCodeSetupCommonRepository;
 
-    public function __construct(DocCodeSetupCommonRepository $docCodeSetupCommonRepo)
+    public function __construct(DocumentCodeConfigurationService $documentCodeConfigurationService ,DocCodeSetupCommonRepository $docCodeSetupCommonRepo)
     {
+        $this->documentCodeConfigurationService = $documentCodeConfigurationService;
         $this->docCodeSetupCommonRepository = $docCodeSetupCommonRepo;
     }
 
@@ -308,28 +311,6 @@ class DocCodeSetupCommonAPIController extends AppBaseController
         $master_id = $input['master_id'];
 
         $company_id = $input['company_id'];
-        $company = Company::with('country')->find($company_id);
-        $financeYear = CompanyFinanceYear::where('companySystemID', $company_id)
-                                                ->where('isCurrent' , -1)
-                                                ->where('isActive' , -1)
-                                                ->first();
-        $financePeriod = CompanyFinancePeriod::where('companySystemID', $company_id)
-                                                ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
-                                                ->where('isCurrent' , -1)
-                                                ->where('isActive' , -1)
-                                                ->first();
-
-
-        //Formatting Values
-        $companyCode = $company->CompanyID; //format1
-        $countryName = $company->country->countryName;//format2
-        $segmentCode = 'SEG'; //format3
-        $blank = ' '; //format4
-        $YYYY = Carbon::parse($financeYear->bigginingDate)->format('Y'); //format6
-        $YY = Carbon::parse($financeYear->bigginingDate)->format('y'); //format7
-        $MM = Carbon::parse($financePeriod->dateFrom)->format('m'); //format8
-        $slash = '/'; //format9
-        $dash = '-'; //format10
 
 
         $docCodeSetupCommon = DocCodeSetupCommon::with('document_code_transactions')->where('master_id', $master_id)->get();
@@ -344,21 +325,11 @@ class DocCodeSetupCommonAPIController extends AppBaseController
         if($docCodeSetupCommon){
             foreach ($docCodeSetupCommon as $key => $value) {
 
-                //Formatting Values
-                $prefix = $value->document_code_transactions->master_prefix; //format5
+                // Get the formats array from the service function
+                $formats = $this->documentCodeConfigurationService->getDocumentCodeSetupValues($company_id, 'SEG');
 
-                $formats = [
-                    1 => $companyCode,
-                    2 => $countryName,
-                    3 => $segmentCode,
-                    4 => $blank,
-                    5 => $prefix,
-                    6 => $YYYY,
-                    7 => $YY,
-                    8 => $MM,
-                    9 => $slash,
-                    10 => $dash,
-                ];
+                // Add the prefix to the formats array
+                $formats[5] = $value->document_code_transactions->master_prefix;//format5
 
                 $formatsArray = [];
                 for ($i = 1; $i <= 12; $i++) {

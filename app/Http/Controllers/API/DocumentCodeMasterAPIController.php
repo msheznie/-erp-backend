@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\DocCodeSetupCommon;
 use App\Models\DocCodeSetupTypeBased;
+use App\Models\DocumentCodeTransaction;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -352,8 +353,40 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $documentCodeMasters = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
                                                     ->where('id', $id)
                                                     ->first();
+        if($documentCodeMasters){
+            $documentCodeMasters->document_code_transactions->update(['isGettingEdited' => 1]);
+        }
 
         return $this->sendResponse($documentCodeMasters->toArray(), 'Document Code Masters retrieved successfully');
+
+    }
+
+    public function updateDocumentCodeTransaction(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+
+        $documentCodeMasters = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
+                                                    ->where('id', $id)
+                                                    ->first();
+        if($documentCodeMasters){
+            $documentCodeMasters->document_code_transactions->update(['isGettingEdited' => 0]);
+        }
+
+        return $this->sendResponse($documentCodeMasters->toArray(), 'Document Code Transaction updated successfully');
+
+    }
+
+    public function isGettingCodeConfigured(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+
+        $isGettingEdited = DocumentCodeTransaction::where('id', $id)
+                                                    ->first();
+
+
+        return $this->sendResponse($isGettingEdited->toArray(), 'Document Code Transaction isGettingEdited retrieved successfully');
 
     }
 

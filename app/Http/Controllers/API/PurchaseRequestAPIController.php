@@ -94,6 +94,7 @@ use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Models\DocumentModifyRequest;
 use App\Repositories\DocumentApprovedRepository;
 use App\Repositories\DocumentModifyRequestRepository;
+use App\Services\DocumentCodeConfigurationService;
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -106,14 +107,16 @@ class PurchaseRequestAPIController extends AppBaseController
     private $segmentAllocatedItemRepository;
     private $materielRequestRepository;
     private $purchaseRequestDetailsRepository;
+    private $documentCodeConfigurationService;
 
-    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo,PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, MaterielRequestRepository $materielRequestRepository)
+    public function __construct(DocumentCodeConfigurationService $documentCodeConfigurationService , PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo,PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, MaterielRequestRepository $materielRequestRepository)
     {
         $this->purchaseRequestRepository = $purchaseRequestRepo;
         $this->purchaseRequestDetailsRepository = $purchaseRequestDetailsRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
         $this->materielRequestRepository = $materielRequestRepository;
+        $this->documentCodeConfigurationService = $documentCodeConfigurationService;
     }
 
     /**
@@ -1497,8 +1500,17 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
-        $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
+        $documentCodeMasterID = 1;
+        $purchaseRequestCode = $this->documentCodeConfigurationService->getDocumentCodeConfiguration($input['companySystemID'],$input,$lastSerialNumber,$documentCodeMasterID,$input['serviceLineCode']);
+        
+        if($purchaseRequestCode['status'] == true){
+            $input['purchaseRequestCode'] = $purchaseRequestCode['documentCode'];
+            $input['serialNumber'] = $purchaseRequestCode['docLastSerialNumber'];
+        } else {
+            $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
+            $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
+        }
+        
 
         $purchaseRequests = $this->purchaseRequestRepository->create($input);
 

@@ -168,6 +168,7 @@ use App\helper\CreateExcel;
 use App\helper\BudgetConsumptionService;
 use App\Jobs\DocumentAttachments\PoSentToSupplierJob;
 use App\Models\SupplierBlock;
+use App\Services\DocumentCodeConfigurationService;
 
 /**
  * Class ProcumentOrderController
@@ -183,10 +184,11 @@ class ProcumentOrderAPIController extends AppBaseController
     private $printTemplateService;
 
     private $tenderPoRepository;
+    private $documentCodeConfigurationService;
 
     private $tenderMasterRepository;
 
-    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo,PoDetailExpectedDeliveryDateRepository $poDetailExpectedDeliveryDateRepo, PrintTemplateService $printTemplateService, SrmTenderPoRepository $tenderPoRepository, TenderMasterRepository $tenderMasterRepository)
+    public function __construct(DocumentCodeConfigurationService $documentCodeConfigurationService ,ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo,PoDetailExpectedDeliveryDateRepository $poDetailExpectedDeliveryDateRepo, PrintTemplateService $printTemplateService, SrmTenderPoRepository $tenderPoRepository, TenderMasterRepository $tenderMasterRepository)
     {
         $this->procumentOrderRepository = $procumentOrderRepo;
         $this->userRepository = $userRepo;
@@ -195,6 +197,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $this->printTemplateService = $printTemplateService;
         $this->tenderPoRepository = $tenderPoRepository;
         $this->tenderMasterRepository = $tenderMasterRepository;
+        $this->documentCodeConfigurationService = $documentCodeConfigurationService;
     }
 
     /**
@@ -284,6 +287,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->first();
         }
 
+        $input['POOrderedDate'] = now();
 
         $lastSerialNumber = 1;
         if ($lastSerial) {
@@ -391,9 +395,17 @@ class ProcumentOrderAPIController extends AppBaseController
         }
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
-        if ($documentMaster) {
-            $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-            $input['purchaseOrderCode'] = $poCode;
+        $documentCodeMasterID = 2;
+        $purchaseOrderCode = $this->documentCodeConfigurationService->getDocumentCodeConfiguration($input['companySystemID'],$input,$lastSerialNumber,$documentCodeMasterID,$input['serviceLine']);
+        
+        if($purchaseOrderCode['status'] == true){
+            $input['purchaseOrderCode'] = $purchaseOrderCode['documentCode'];
+            $input['serialNumber'] = $purchaseOrderCode['docLastSerialNumber'];
+        } else {
+            if ($documentMaster) {
+                $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                $input['purchaseOrderCode'] = $poCode;
+            }
         }
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
