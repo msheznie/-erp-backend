@@ -10,7 +10,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\ContractMaster;
 use App\Models\ContractSettingDetail;
 use App\Models\ContractSettingMaster;
-use App\Models\contractStatusHistory;
+use App\Models\ContractStatusHistory;
 use App\Models\ContractTypes;
 use App\Models\ContractTypeSections;
 use App\Models\ContractUserAssign;
