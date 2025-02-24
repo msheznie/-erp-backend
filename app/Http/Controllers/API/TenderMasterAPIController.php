@@ -4832,6 +4832,7 @@ ORDER BY
                     $dataEmail['alertMessage'] = "$documentType Regret";
                     $dataEmail['emailAlertMessage'] = $body;
                     $dataEmail['attachmentList'] = [];
+                    $dataEmail['ccEmail'] = [];
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                 }
             }
