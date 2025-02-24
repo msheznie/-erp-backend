@@ -391,6 +391,8 @@ class WarehouseItemsAPIController extends AppBaseController
                 } else {
                     $data[$x]['Category'] = '-';
                 }
+
+                $data[$x]['warehouse'] =  $value->warehouse_by ? $value->warehouse_by['wareHouseDescription'] : '-';
                 $bin = WarehouseBinLocation::find($value->binNumber);
                 $data[$x]['Bin Location'] = $value->isTrack == 1? $value->binLocation['binLocationDes'] : $bin ? $bin->binLocationDes : '-';
               
@@ -487,9 +489,19 @@ class WarehouseItemsAPIController extends AppBaseController
         if ($search) {
             $itemMasters = $itemMasters->where(function ($query) use ($search) {
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhereHas('warehouse_by', function ($q) use ($search) {
+                        $q->where('warehouseDescription', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhereHas('binLocation', function ($q) use ($search) {
+                        $q->where('binLocationDes', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhereHas('financeSubCategory', function ($q) use ($search) {
+                        $q->where('categoryDescription', 'LIKE', "%{$search}%");
+                    });
             });
         }
+
         $details = $itemMasters->get();
         foreach($details as &$row)
         {

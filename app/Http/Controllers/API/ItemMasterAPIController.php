@@ -574,6 +574,17 @@ class ItemMasterAPIController extends AppBaseController
         $companyList = [];
         $subCompanies = [];
         $selectedCompanyId = $request['selectedCompanyId'];
+        $type = isset($input['type'])
+            ? (is_array($input['type'])
+                ? array_map('strval', $input['type'])
+                : explode(',', $input['type']))
+            : [0];
+
+        $financeSubCatId = isset($input['financeSubCatId'])
+            ? (is_array($input['financeSubCatId'])
+                ? array_map('strval', $input['financeSubCatId'])
+                : explode(',', $input['financeSubCatId']))
+            : [0];
 
         $isPosIntegratedPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 69)
             ->where('companySystemID', $selectedCompanyId)
@@ -684,12 +695,23 @@ class ItemMasterAPIController extends AppBaseController
         $assetFinanceCategory = AssetFinanceCategory::all();
         $warehouseAll = WarehouseMaster::where('companySystemID', $selectedCompanyId)->get();
         $categoryTypeData = ItemCategoryTypeMaster::all();
-        $inventoryItemCategorySub = FinanceItemCategorySub::where('isActive',1)->where('itemCategoryID',1)->get();
+        $inventoryItemCategorySub = FinanceItemCategorySub::with(['finance_item_category_type'])
+            ->where('isActive', 1)
+            ->where('itemCategoryID', 1)
+            ->when(!empty($input['type']), function($query) use ($type) {
+                $query->whereHas('finance_item_category_type', function ($subQuery) use ($type) {
+                    $subQuery->whereIn('categoryTypeID', $type);
+                });
+            })->get();
 
-        $wareHouseItems = WarehouseItems::with('item_by')
+        $wareHouseItems = WarehouseItems::with('item_by', 'financeSubCategory')
             ->where('companySystemID', $selectedCompanyId)
             ->whereIn('warehouseSystemCode', $warehouseSystemCode)
-            ->get()
+            ->when(!empty($input['financeSubCatId']), function($query) use ($financeSubCatId) {
+                $query->whereHas('financeSubCategory', function ($subQuery) use ($financeSubCatId) {
+                    $subQuery->whereIn('financeCategorySub', $financeSubCatId);
+                });
+            })->get()
             ->map(function ($item) {
                 return [
                     'itemCodeSystem' => $item->item_by->itemCodeSystem ?? null,
