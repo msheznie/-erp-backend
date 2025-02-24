@@ -661,9 +661,7 @@ class BankLedgerAPIController extends AppBaseController
                     })->first();
                 }
 
-
-
-                if (empty($checkBankAccount) && $input['pulledToBankTransferYN']) {
+                if (empty($checkBankAccount) && $input['pulledToBankTransferYN'] && $bankTransfer->fileType != 1) {
                     return $this->sendError(trans('custom.supplier_account_is_not_updated_you_cannot_add_this_payment_to_the_transfer'), 500);
                 }
 
