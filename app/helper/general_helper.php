@@ -118,6 +118,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailForQueuing;
 use App\Models\DocumentModifyRequest;
 use App\helper\TenderDetails;
+use App\Models\BirthdayTemplate;
 
 use App\Models\DirectInvoiceDetails;
 use App\Models\BookInvSuppDet;
@@ -10081,5 +10082,12 @@ class Helper
     public static function generateSRMUuid($length=16) : string
     {
         return bin2hex(random_bytes($length));
+    }
+
+    public static function getDefaultBirthdayTemplate()
+    {
+        return BirthdayTemplate::select('template', 'client_code', 'image_path')
+            ->where('is_default', 1)
+            ->first();
     }
 }
