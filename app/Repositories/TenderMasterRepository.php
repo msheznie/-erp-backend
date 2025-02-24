@@ -1117,35 +1117,25 @@ class TenderMasterRepository extends BaseRepository
     public static function insertHistoryStatus($contractId, $status, $companySystemID, $contractHistoryId = null,
                                                $systemUser=false)
     {
-        try
+        $insert = [
+            'contract_id' => $contractId,
+            'status' => $status,
+            'company_id' => $companySystemID,
+            'created_at' => Carbon::now()
+        ];
+
+        if($systemUser)
         {
-            return DB::transaction(function () use ($contractId,$status, $companySystemID, $contractHistoryId,
-                $systemUser)
-            {
-                $insert = [
-                    'contract_id' => $contractId,
-                    'status' => $status,
-                    'company_id' => $companySystemID,
-                    'created_at' => Carbon::now()
-                ];
+            $insert['system_user'] = 1;
+        }else
+            $insert['created_by'] = Helper::getEmployeeSystemID();
 
-                if($systemUser)
-                {
-                    $insert['system_user'] = 1;
-                }else
-                    $insert['created_by'] = Helper::getEmployeeSystemID();
-
-                if ($contractHistoryId!=null)
-                {
-                    $insert['contract_history_id'] = $contractHistoryId;
-                }
-
-                ContractStatusHistory::create($insert);
-            });
-        } catch (\Exception $e)
+        if ($contractHistoryId!=null)
         {
-            return ['success' => false, 'message' => $e->getMessage()];
+            $insert['contract_history_id'] = $contractHistoryId;
         }
+
+        ContractStatusHistory::create($insert);
     }
 
     private function assignDefaultUserForContract($contractId, $companySystemID)
