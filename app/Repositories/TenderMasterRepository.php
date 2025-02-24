@@ -8,7 +8,14 @@ use App\Models\CodeConfigurations;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\ContractMaster;
+use App\Models\ContractSettingDetail;
+use App\Models\ContractSettingMaster;
+use App\Models\contractStatusHistory;
 use App\Models\ContractTypes;
+use App\Models\ContractTypeSections;
+use App\Models\ContractUserAssign;
+use App\Models\ContractUserGroup;
+use App\Models\ContractUserGroupAssignedUser;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
@@ -812,6 +819,50 @@ class TenderMasterRepository extends BaseRepository
                     ];
 
                     TenderMaster::where('uuid',$input['tenderId'])->update($data);
+
+                    $contractMasterId = $contractMaster->id;
+                    $this->insertHistoryStatus($contractMasterId, 0,$companySystemId);
+
+                    $contractTypeSections = ContractTypeSections::getContractTypeSections($contractType["contract_typeId"], $companySystemId);
+
+                    foreach ($contractTypeSections as $contractTypeSection) {
+
+                        $contractSettingMasterArray = [
+                            'uuid' => bin2hex(random_bytes(16)),
+                            'contractId' => $contractMasterId,
+                            'contractTypeSectionId' => $contractTypeSection['ct_sectionId'],
+                            'isActive' => 0
+                        ];
+                        ContractSettingMaster::create($contractSettingMasterArray);
+                    }
+
+                    $contractTypeSectionDetail = ContractSettingMaster::getContractTypeSectionDetail($contractMasterId);
+
+                    $contractSettingDetailArray = [];
+                    $i = 0;
+
+                    foreach ($contractTypeSectionDetail as $contractSectionDetail)
+                    {
+                        $sectionDetails = $contractSectionDetail['contractTypeSection']['contractSectionWithTypes']['sectionDetail'];
+
+                        foreach ($sectionDetails as $sectionDetail)
+                        {
+                            $sectionDetailId = $sectionDetail['id'];
+                            $contractSettingDetailArray[$i] = [
+                                'uuid' => bin2hex(random_bytes(16)),
+                                'settingMasterId' => $contractSectionDetail['id'],
+                                'sectionDetailId' => $sectionDetailId,
+                                'isActive' => 0,
+                                'contractId' => $contractMasterId,
+                                'created_at' => Carbon::now(),
+                            ];
+                            $i++;
+                        }
+                    }
+
+                    ContractSettingDetail::insert($contractSettingDetailArray);
+
+                    $this->assignDefaultUserForContract($contractMasterId, $companySystemId);
                 }
             });
 
@@ -881,6 +932,9 @@ class TenderMasterRepository extends BaseRepository
 
         if (env('IS_MULTI_TENANCY') == true) {
             $url = $_SERVER['HTTP_HOST'];
+            $getProtocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
+            $protocol = $getProtocol . "://";
+
             $url_array = explode('.', $url);
             $subDomain = $url_array[0];
 
@@ -895,7 +949,7 @@ class TenderMasterRepository extends BaseRepository
         }
 
         return [
-            'contractUrl' => $redirectUrlNew . $contractUuid['uuid'],
+            'contractUrl' => $protocol . $redirectUrlNew . $contractUuid['uuid'],
         ];
     }
 
@@ -1058,5 +1112,67 @@ class TenderMasterRepository extends BaseRepository
             'success' => true,
             'message' => 'Attachment Deleted successfully.',
         ];
+    }
+
+    public static function insertHistoryStatus($contractId, $status, $companySystemID, $contractHistoryId = null,
+                                               $systemUser=false)
+    {
+        try
+        {
+            return DB::transaction(function () use ($contractId,$status, $companySystemID, $contractHistoryId,
+                $systemUser)
+            {
+                $insert = [
+                    'contract_id' => $contractId,
+                    'status' => $status,
+                    'company_id' => $companySystemID,
+                    'created_at' => Carbon::now()
+                ];
+
+                if($systemUser)
+                {
+                    $insert['system_user'] = 1;
+                }else
+                    $insert['created_by'] = Helper::getEmployeeSystemID();
+
+                if ($contractHistoryId!=null)
+                {
+                    $insert['contract_history_id'] = $contractHistoryId;
+                }
+
+                ContractStatusHistory::create($insert);
+            });
+        } catch (\Exception $e)
+        {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    private function assignDefaultUserForContract($contractId, $companySystemID)
+    {
+        $defaultUserIds = ContractUserGroup::getDefaultUserIds($companySystemID);
+
+        $userIdsAssignedUserGroup = ContractUserGroupAssignedUser::getUserIdsAssignedUserGroup($defaultUserIds);
+        foreach ($userIdsAssignedUserGroup as $user)
+        {
+            $userGroupId = $user['userGroupId'];
+            $userId = $user['contractUserId'];
+            $existingRecord = ContractUserAssign::isExistingRecord($contractId, $userGroupId, $userId);
+
+            if (!$existingRecord)
+            {
+                $input = [
+                    'uuid' => bin2hex(random_bytes(16)),
+                    'contractId' => $contractId,
+                    'userGroupId' => $userGroupId,
+                    'userId' => $userId,
+                    'status' => 1,
+                    'createdBy' => Helper::getEmployeeSystemID(),
+                    'updated_at' => null
+                ];
+
+                ContractUserAssign::create($input);
+            }
+        }
     }
 }
