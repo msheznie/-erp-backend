@@ -393,6 +393,7 @@ END AS sortDashboard')
         $data = [];
         $suplierrGroup = [];
         $glAccount = [];
+        $isSupplierGroupExists = false;
 
         if(isset($input['glAccount'])){
             $glAccount = ChartOfAccount::where('chartOfAccountSystemID',$input['glAccount'])
@@ -400,6 +401,7 @@ END AS sortDashboard')
         }
 
         if(isset($input['supplierGroup'])){
+           $isSupplierGroupExists = true;
            $suplierrGroup =  SupplierMaster::where('supplier_group_id',$input['supplierGroup'])->pluck('supplierCodeSystem')->toArray();
         }
 
@@ -506,7 +508,7 @@ END AS sortDashboard')
                     ->groupBy('supplierID')
                     ->orderBy('total','DESC')
                     ->limit(10)
-                    ->when(!empty($suplierrGroup), function ($query) use ($suplierrGroup) {
+                    ->when($isSupplierGroupExists == true, function ($query) use ($suplierrGroup) {
                             $query->whereIn('supplierID', $suplierrGroup);
                           })
                     ->get();
@@ -673,9 +675,9 @@ GROUP BY
 	erp_generalledger.supplierCodeSystem*/
 
                 $result = GeneralLedger::where('documentSystemID',4)
-                    ->whereHas('supplier', function ($query) use($suplierrGroup){
+                    ->whereHas('supplier', function ($query) use($suplierrGroup,$isSupplierGroupExists){
                         $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID')
-                        ->when(!empty($suplierrGroup), function ($query) use ($suplierrGroup) {
+                        ->when($isSupplierGroupExists == true, function ($query) use ($suplierrGroup) {
                             $query->whereIn('supplierCodeSystem', $suplierrGroup);
                           });
                     })
@@ -747,9 +749,9 @@ GROUP BY
 	erp_generalledger.supplierCodeSystem*/
 
                 $result = GeneralLedger::whereIn('documentSystemID',[4,11,15])
-                    ->whereHas('supplier', function ($query) use($suplierrGroup){
+                    ->whereHas('supplier', function ($query) use($suplierrGroup,$isSupplierGroupExists){
                         $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID')
-                        ->when(!empty($suplierrGroup), function ($query) use ($suplierrGroup) {
+                        ->when($isSupplierGroupExists == true, function ($query) use ($suplierrGroup) {
                             $query->whereIn('supplierCodeSystem', $suplierrGroup);
                           });
                     })
