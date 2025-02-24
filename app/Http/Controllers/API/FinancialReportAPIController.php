@@ -1949,12 +1949,12 @@ class FinancialReportAPIController extends AppBaseController
             CONCAT('{', 
                     GROUP_CONCAT(
                         DISTINCT CONCAT('\"', e.description, '\": ', 
-                            (SELECT COALESCE(SUM(g.$amountColumn), 0) 
+                            (SELECT COALESCE(SUM(g.$amountColumn * -1), 0) 
                             FROM erp_generalledger g 
                             WHERE g.chartOfAccountSystemID IN (
                                 SELECT DISTINCT cl.glAutoID 
                                 FROM erp_companyreporttemplatelinks cl 
-                                WHERE cl.templateDetailID = e.id
+                                WHERE cl.templateDetailID = e.id AND cl.templateMasterID = $request->templateType
                             )
                             AND g.documentDate BETWEEN '$fromDate' AND '$toDate'
                             AND  g.companySystemID = $request->selectedCompanyID
@@ -1968,7 +1968,7 @@ class FinancialReportAPIController extends AppBaseController
                  CONCAT('\"', e.description, '\": [', 
                         (SELECT GROUP_CONCAT(DISTINCT cl.glAutoID ORDER BY cl.glAutoID SEPARATOR ',') 
                         FROM erp_companyreporttemplatelinks cl 
-                        WHERE cl.templateDetailID = e.id),
+                        WHERE cl.templateDetailID = e.id AND cl.templateMasterID = $request->templateType),
                     ']')
                 SEPARATOR ', '),
             '}') AS glAutoIDGroups,
@@ -1976,7 +1976,7 @@ class FinancialReportAPIController extends AppBaseController
                 SELECT 
                     COALESCE(SUM(
                         CASE 
-                            WHEN ca.controlAccountsSystemID = 1 THEN g.$amountColumn 
+                            WHEN ca.controlAccountsSystemID = 1 THEN g.$amountColumn * -1 
                             WHEN ca.controlAccountsSystemID = 2 THEN -g.$amountColumn
                             ELSE 0 
                         END
@@ -2015,7 +2015,7 @@ class FinancialReportAPIController extends AppBaseController
             if (in_array($row['detDescription'], ['Opening Balance', 'Profit after tax'])) 
             {
                 $row[$row['Retain']] = ($row['detDescription'] === 'Opening Balance')
-                ? ($row[$row['Retain']] ?? 0) + ($row['RetainedAutomated'] ?? 0)
+                ? (($row[$row['Retain']] ?? 0) + ($row['RetainedAutomated'] ?? 0))*-1
                 : $row['Profit'];
                 $totalRetain += $row[$row['Retain']];
             }
@@ -2039,7 +2039,7 @@ class FinancialReportAPIController extends AppBaseController
                     foreach ($dynamicColumnNames as $column) {
                         $sum = array_sum(array_column(
                             array_filter($result, function ($item) {
-                                return in_array($item['detDescription'], ['Other changes','Comprehensive income']);
+                                return in_array($item['detDescription'], ['Opening Balance','Other changes','Profit after tax']);
                             }),
                             $column
                         ));
@@ -10869,7 +10869,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
         $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';    
         $search = ($request->search['value'] ?? '');
         $output = DB::table('erp_generalledger')
-                ->selectRaw("documentSystemCode,documentCode,erp_generalledger.documentSystemID,documentDate,documentNarration,$amountColumn as `$selectedColumn` ,serviceline.ServiceLineDes,clientContractID,
+                ->selectRaw("documentSystemCode,documentCode,erp_generalledger.documentSystemID,documentDate,documentNarration,(-1 *$amountColumn) as `$selectedColumn` ,serviceline.ServiceLineDes,clientContractID,
                             CASE 
                                 WHEN customermaster.CustomerName IS NOT NULL THEN customermaster.CustomerName
                                 ELSE suppliermaster.SupplierName 
