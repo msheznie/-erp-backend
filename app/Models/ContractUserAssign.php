@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Eloquent as Model;
 
 class ContractUserAssign extends Model
 {
@@ -53,7 +53,8 @@ class ContractUserAssign extends Model
 
     public static function isExistingRecord($contractId, $userGroupId, $userId)
     {
-        return ContractUserAssign::where('contractId', $contractId)
+        return ContractUserAssign::select('uuid', 'userGroupId')
+            ->where('contractId', $contractId)
             ->where('userGroupId', $userGroupId)
             ->where('userId', $userId)
             ->where('status', 1)

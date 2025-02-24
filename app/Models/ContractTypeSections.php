@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Eloquent as Model;
 
 class ContractTypeSections extends Model
 {
@@ -61,7 +61,8 @@ class ContractTypeSections extends Model
 
     public static function getContractTypeSections($contractTypeId, $companySystemId)
     {
-        return ContractTypeSections::where('contract_typeId', $contractTypeId)
+        return ContractTypeSections::select('uuid', 'ct_sectionId')
+            ->where('contract_typeId', $contractTypeId)
             ->where('companySystemID', $companySystemId)
             ->where('is_enabled', 1)
             ->get();

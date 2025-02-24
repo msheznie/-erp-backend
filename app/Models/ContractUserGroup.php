@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Eloquent as Model;
 
 class ContractUserGroup extends Model
 {
@@ -50,7 +50,8 @@ class ContractUserGroup extends Model
 
     public static function getDefaultUserIds($companySystemID)
     {
-        return ContractUserGroup::where('companySystemID', $companySystemID)
+        return ContractUserGroup::select('id', 'uuid')
+            ->where('companySystemID', $companySystemID)
             ->where('isDefault', 1)
             ->where('status', 1)
             ->pluck('id')
