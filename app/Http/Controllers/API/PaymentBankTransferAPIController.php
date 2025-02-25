@@ -1220,6 +1220,9 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $bankTransferArray = $bankTransfer->toArray();
+        if(isset($bankTransferArray['fileTypeName'])) {
+            unset($bankTransferArray['fileTypeName']);
+        }
 
         $storeHistory = PaymentBankTransferRefferedBack::insert($bankTransferArray);
 
