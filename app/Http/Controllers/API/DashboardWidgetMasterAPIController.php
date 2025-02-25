@@ -1165,6 +1165,7 @@ GROUP BY
 
             case 18 :
                 $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
+                $companyCurrency = \Helper::companyCurrency($companyID);
 
                 $DLBCPolicy = CompanyPolicyMaster::where('companySystemID', $companyID)
                     ->where('companyPolicyCategoryID', 33)
@@ -1270,6 +1271,7 @@ GROUP BY
                 });
 
                 $data['financialYear'] = $currentFinancialYear;
+                $data['reportingCurrency'] = $companyCurrency->reportingcurrency->CurrencyCode;
                 $data['actual'] = $allMonthData->values()->all();
                 $data['budget'] = Budjetdetails::with(['budget_master.segment_by',
                     'budget_master.company','chart_of_account'])
@@ -1277,7 +1279,11 @@ GROUP BY
                         $query->where('companySystemID', $companyID);
                     })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
                         $query->where('companyFinanceYearID', $currentFinancialYear->companyFinanceYearID);
-                    })->selectRaw('SUM(budjetAmtLocal) as amount, month')
+                    })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
+                        $query->where('confirmedYN', 1);
+                    })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
+                        $query->where('approvedYN', -1);
+                    })->selectRaw('SUM(budjetAmtRpt) as amount, month')
                     ->when(!empty($glAccount), function ($query) use ($glAccount) {
                         $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
                     })
