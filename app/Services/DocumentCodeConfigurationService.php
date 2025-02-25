@@ -24,7 +24,9 @@ class DocumentCodeConfigurationService
         if(!$documentCodeMaster){
             return ['status' => false,'message'=>'Document Code Master not found'];
         }
-        $formats = $this->getDocumentCodeSetupValues($companyID, $segmentCode);
+
+        $sequenceID = $documentCodeMaster->numbering_sequence_id;
+        $formats = $this->getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID ,$isPreview = 0);
 
 
         $docCodeSetupCommon = DocCodeSetupCommon::with('document_code_transactions')->where('master_id', $documentCodeMasterID)->first();
@@ -75,7 +77,7 @@ class DocumentCodeConfigurationService
                 $docLastSerialNumber = $lastSerialNumber;
 
                 if($documentCodeMaster->numbering_sequence_id == 2){
-                    $PORequestedDate = now();
+                    $currentDate = now();
                     $orderedDatefinanceYear = CompanyFinanceYear::where('companySystemID', $companyID)
                                             ->whereYear('bigginingDate', date('Y', strtotime($input['POOrderedDate'])))
                                             ->where('isActive' , -1)
@@ -148,7 +150,7 @@ class DocumentCodeConfigurationService
         
     }
 
-    function getDocumentCodeSetupValues($companyID, $segmentCode) {
+    function getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID , $isPreview) {
 
         $company = Company::with('country')->find($companyID);
 
@@ -163,30 +165,37 @@ class DocumentCodeConfigurationService
             ->where('isActive', -1)
             ->first();
     
-        if ($financeYear) {
+        if($documentCodeMasterID==1 || $documentCodeMasterID==2){
+            $currentDate = now();
+            $YYYY = Carbon::parse($currentDate)->format('Y'); // format6
+            $YY = Carbon::parse($currentDate)->format('y'); // format7
+            $MM = Carbon::parse($currentDate)->format('m'); // format8
+        } else {
+            if ($financeYear) {
     
-            if (Carbon::parse($financeYear->bigginingDate)->format('Y') != Carbon::parse($financeYear->endingDate)->format('Y')) {
-                $YYYY = Carbon::parse($financeYear->bigginingDate)->format('Y') . '-' . Carbon::parse($financeYear->endingDate)->format('y'); // format6
-                $YY = Carbon::parse($financeYear->bigginingDate)->format('y') . '-' . Carbon::parse($financeYear->endingDate)->format('y'); // format7
+                if (Carbon::parse($financeYear->bigginingDate)->format('Y') != Carbon::parse($financeYear->endingDate)->format('Y')) {
+                    $YYYY = Carbon::parse($financeYear->bigginingDate)->format('Y') . '-' . Carbon::parse($financeYear->endingDate)->format('y'); // format6
+                    $YY = Carbon::parse($financeYear->bigginingDate)->format('y') . '-' . Carbon::parse($financeYear->endingDate)->format('y'); // format7
+                } else {
+                    $YYYY = Carbon::parse($financeYear->bigginingDate)->format('Y'); // format6
+                    $YY = $financeYear->bigginingDate ? Carbon::parse($financeYear->bigginingDate)->format('y') : ''; // format7
+                }
+        
+                $financePeriod = CompanyFinancePeriod::where('companySystemID', $companyID)
+                    ->where('companyFinanceYearID', $financeYear->companyFinanceYearID)
+                    ->where('isCurrent', -1)
+                    ->where('isActive', -1)
+                    ->first();
+                if ($financePeriod) {
+                    $MM = Carbon::parse($financePeriod->dateFrom)->format('m'); // format8
+                } else {
+                    $MM = ''; // format8
+                }
             } else {
-                $YYYY = Carbon::parse($financeYear->bigginingDate)->format('Y'); // format6
-                $YY = $financeYear->bigginingDate ? Carbon::parse($financeYear->bigginingDate)->format('y') : ''; // format7
-            }
-    
-            $financePeriod = CompanyFinancePeriod::where('companySystemID', $companyID)
-                ->where('companyFinanceYearID', $financeYear->companyFinanceYearID)
-                ->where('isCurrent', -1)
-                ->where('isActive', -1)
-                ->first();
-            if ($financePeriod) {
-                $MM = Carbon::parse($financePeriod->dateFrom)->format('m'); // format8
-            } else {
+                $YYYY = ''; // format6
+                $YY = ''; // format7
                 $MM = ''; // format8
             }
-        } else {
-            $YYYY = ''; // format6
-            $YY = ''; // format7
-            $MM = ''; // format8
         }
     
         $slash = '\\'; // format9

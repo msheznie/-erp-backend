@@ -326,7 +326,7 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
             foreach ($docCodeSetupTypeBased as $key => $value) {
 
                 // Get the formats array from the service function
-                $formats = $this->documentCodeConfigurationService->getDocumentCodeSetupValues($company_id, 'SEG');
+                $formats = $this->documentCodeConfigurationService->getDocumentCodeSetupValues($company_id, 'SEG',$master_id, $isPreview = 1);
 
                 // Add the prefix to the formats array
                 $formats[5] = $value->type->type_prefix; //format5
