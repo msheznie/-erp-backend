@@ -2231,7 +2231,6 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
-            ->where('company_id', $request->input('company_id'))
             ->where('email', $request->input('email'))
             ->where('registration_number', $request->input('registration_number'))
             ->orderBy("id", "desc")
