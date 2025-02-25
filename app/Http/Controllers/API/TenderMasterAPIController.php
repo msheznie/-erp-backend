@@ -2124,6 +2124,7 @@ ORDER BY
         $companyId = $input['companySystemID'];
         $data['tenders'] = TenderMaster::where('company_id', $companyId)
             ->where('published_yn', 1)
+            ->where('company_id', $companyId)
             ->where('pre_bid_clarification_method', '!=', 0)
             ->where('closed_yn', '!=', 1)
             ->get();
@@ -3119,7 +3120,7 @@ ORDER BY
                     })
                     ->orWhere('document_system_id', 113);
             })
-            ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
+            ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('company_id', $companyId);
 
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
@@ -3559,6 +3560,7 @@ ORDER BY
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('technical_eval_status', 1)
             ->where('doc_verifiy_status', 1)
+            ->where('company_id', $companyId)
             ->where('go_no_go_status', 1)
             ->where(function ($query) use ($userId) {
                 $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
@@ -3743,6 +3745,7 @@ ORDER BY
             })
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
+            ->where('company_id', $companyId)
             ->where('technical_eval_status', 1);
 
         if($isNegotiation == 1){
@@ -4593,7 +4596,7 @@ ORDER BY
                     $po->select('purchaseOrderID', 'purchaseOrderCode');
                 }]);
             }])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-            ->where('is_awarded', 1)->where(function ($query) {
+            ->where('is_awarded', 1)->where('company_id', $companyId)->where(function ($query) {
                 $query->where('negotiation_published', 0)
                     ->orWhere('is_negotiation_closed', 1);
             });
@@ -5109,7 +5112,10 @@ ORDER BY
 
         $companyId = $request['companyId'];
 
-        $query = TenderNegotiation::select('srm_tender_master_id','status','approved_yn','confirmed_yn','comments','started_by','no_to_approve','currencyId','id')->with(['area' => function ($query)  use ($input) {
+        $query = TenderNegotiation::select('srm_tender_master_id','status','approved_yn','confirmed_yn','comments','started_by','no_to_approve','currencyId','id')
+            ->whereHas('tenderMaster', function ($q) use ($companyId) {
+                $q->where('company_id', $companyId);
+            })->with(['area' => function ($query)  use ($input) {
             $query->select('pricing_schedule','technical_evaluation','tender_documents','id','tender_negotiation_id');
         },'tenderMaster' => function ($q) use ($input){
             $q->select('title', 'uuid', 'description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id', 'is_negotiation_closed');
