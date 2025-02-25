@@ -10902,7 +10902,20 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
             $sort = 'desc';
         }
 
+        $search = $request->input('search.value');
+
         $output = $this->processConsolidationDataForDrillDownAndReport($input);
+
+        if ($search) {
+            $output['data'] = array_filter($output['data'], function ($item) use ($search) {
+                return strpos($item['company'], $search) !== false;
+            });
+        }
+
+        $data['order'] = [];
+        $data['search']['value'] = '';
+        $request->merge($data);
+        $request->request->remove('search.value');
 
         return \DataTables::of($output['data'])
             ->addIndexColumn()
