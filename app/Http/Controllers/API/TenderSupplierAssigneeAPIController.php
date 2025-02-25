@@ -539,12 +539,12 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
         if ($type == 1) {
             if($rfx){
-                $alertMessage = " ".$defaultDocType." Invitation link";
+                $alertMessage = "Invitation for ".$defaultDocType." ";
                 $body = "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
             Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
             }else{
-                $alertMessage = " ".$docType." Invitation link";
+                $alertMessage = "Invitation for ".$docType." ";
                 $body = "Dear Supplier," . "<br /><br />" . "
             I trust this message finds you well." . "<br /><br />" . "
             We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
