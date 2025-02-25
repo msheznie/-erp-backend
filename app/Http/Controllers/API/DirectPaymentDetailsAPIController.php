@@ -542,7 +542,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             }
         }
 
-        if ($directPaymentDetails->glCodeIsBank && !$isBankChanges) {
+        if ($directPaymentDetails->glCodeIsBank) {
             $trasToDefaultER = $input["bankCurrencyER"];
             $bankAmount = 0;
             if ($bankAccount->accountCurrencyID == $directPaymentDetails->bankCurrencyID) {
