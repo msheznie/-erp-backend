@@ -2534,7 +2534,7 @@ ORDER BY
             $emailFormatted = email::emailAddressFormat($SupplierList['email']);
 
             $dataEmail['companySystemID'] = $companyId;
-            $dataEmail['alertMessage'] = " ".$docType." Invitation link";
+            $dataEmail['alertMessage'] = "Invitation for ".$docType." ";
             $dataEmail['empEmail'] = $emailFormatted;
             $body = "Dear Supplier," . "<br /><br />" . "
             I trust this message finds you well." . "<br /><br />" . "

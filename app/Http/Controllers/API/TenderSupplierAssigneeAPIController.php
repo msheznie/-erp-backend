@@ -534,7 +534,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
         $file = array();
 
-        $alertMessage = 'Registration Link';
+        $alertMessage = "Invitation for ".$docType." ";
         $body = '';
 
         if ($type == 1) {
