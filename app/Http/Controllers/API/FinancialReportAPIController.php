@@ -1887,11 +1887,8 @@ class FinancialReportAPIController extends AppBaseController
         $template = ReportTemplate::find($request->templateType);
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
-        $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->format('Y-m-d');
-
-        $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->format('Y-m-d');
+        $fromDate = Carbon::parse($request->fromDate)->startOfDay()->format('Y-m-d H:i:s');
+        $toDate = Carbon::parse($request->toDate)->endOfDay()->format('Y-m-d H:i:s');
         $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency;   
         $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';     
         $dynamicColumnNames = DB::table('erp_report_template_equity')
@@ -1901,7 +1898,7 @@ class FinancialReportAPIController extends AppBaseController
                         ->toArray();
 
         $dynamicColumns = collect($dynamicColumnNames)
-        ->map(function ($desc) use ($fromDate,$amountColumn) {
+        ->map(function ($desc) use ($fromDate,$amountColumn,$request) {
             return "
                 SUM(CASE 
                     WHEN d.description = 'Profit after tax' THEN 0
@@ -1909,7 +1906,7 @@ class FinancialReportAPIController extends AppBaseController
                     WHEN d.description = 'Comprehensive income' THEN 0
                     WHEN d.description = 'Other changes' THEN 0
                     WHEN d.description = 'Closing balance' THEN 0
-                    WHEN e.description = '$desc' AND g.documentDate < '$fromDate' THEN g.$amountColumn
+                    WHEN e.description = '$desc' AND g.documentDate < '$fromDate' AND g.companySystemID = $request->selectedCompanyID THEN g.$amountColumn *-1
                     ELSE 0 
                 END) AS `$desc`
             ";
@@ -1923,7 +1920,7 @@ class FinancialReportAPIController extends AppBaseController
                 $dynamicColumns,
                 CASE 
                     WHEN d.description = 'Opening Balance' THEN (
-                        SELECT COALESCE(SUM(g2.$amountColumn *- 1), 0)
+                        SELECT COALESCE(SUM(g2.$amountColumn ), 0)
                         FROM erp_generalledger g2
                         WHERE g2.companySystemID = $request->selectedCompanyID
                         AND g2.glAccountType = 'BS'
@@ -1946,22 +1943,6 @@ class FinancialReportAPIController extends AppBaseController
                 d.netProfitStatus as netProfitStatus,
                 d.hideHeader as hideHeader,
                 1 as expanded,
-            CONCAT('{', 
-                    GROUP_CONCAT(
-                        DISTINCT CONCAT('\"', e.description, '\": ', 
-                            (SELECT COALESCE(SUM(g.$amountColumn * -1), 0) 
-                            FROM erp_generalledger g 
-                            WHERE g.chartOfAccountSystemID IN (
-                                SELECT DISTINCT cl.glAutoID 
-                                FROM erp_companyreporttemplatelinks cl 
-                                WHERE cl.templateDetailID = e.id AND cl.templateMasterID = $request->templateType
-                            )
-                            AND g.documentDate BETWEEN '$fromDate' AND '$toDate'
-                            AND  g.companySystemID = $request->selectedCompanyID
-                            )
-                        ) SEPARATOR ','
-                    ),
-                '}') AS glAutoIDTotals,
             CONCAT('{',
                 GROUP_CONCAT(
                     DISTINCT 
@@ -1985,7 +1966,43 @@ class FinancialReportAPIController extends AppBaseController
                 JOIN chartofaccounts ca ON g.chartOfAccountSystemID = ca.chartOfAccountSystemID
                 WHERE g.companySystemID = $request->selectedCompanyID
                 AND g.documentDate BETWEEN '$fromDate' AND '$toDate'
-             ) AS `Profit`
+             ) AS `Profit`,
+                (
+                    SELECT COALESCE(SUM(g.documentLocalAmount), 0)
+                    FROM erp_generalledger g
+                    JOIN chartofaccounts ca ON g.chartOfAccountSystemID = ca.chartOfAccountSystemID
+                    WHERE g.companySystemID = $request->selectedCompanyID
+                    AND ca.controlAccountsSystemID IN (1, 2)
+                    AND g.documentLocalAmount > 0
+                    AND g.documentDate < '$fromDate'
+                ) AS Debit,
+                (
+                    SELECT COALESCE(SUM(g.documentLocalAmount * -1), 0)
+                    FROM erp_generalledger g
+                    JOIN chartofaccounts ca ON g.chartOfAccountSystemID = ca.chartOfAccountSystemID
+                    WHERE g.companySystemID = $request->selectedCompanyID
+                    AND ca.controlAccountsSystemID IN (1, 2)
+                    AND g.documentLocalAmount < 0
+                    AND g.documentDate < '$fromDate'
+                ) AS Credit,
+                         (
+                    SELECT COALESCE(SUM(g.documentLocalAmount), 0)
+                    FROM erp_generalledger g
+                    JOIN chartofaccounts ca ON g.chartOfAccountSystemID = ca.chartOfAccountSystemID
+                    WHERE g.companySystemID = $request->selectedCompanyID
+                    AND ca.controlAccountsSystemID IN (1, 2)
+                    AND g.documentLocalAmount > 0
+                    AND g.documentDate BETWEEN '$fromDate' AND '$toDate'
+                ) AS DebitPL,
+                (
+                    SELECT COALESCE(SUM(g.documentLocalAmount * -1), 0)
+                    FROM erp_generalledger g
+                    JOIN chartofaccounts ca ON g.chartOfAccountSystemID = ca.chartOfAccountSystemID
+                    WHERE g.companySystemID = $request->selectedCompanyID
+                    AND ca.controlAccountsSystemID IN (1, 2)
+                    AND g.documentLocalAmount < 0
+                    AND g.documentDate BETWEEN '$fromDate' AND '$toDate'
+                ) AS CreditPL
             FROM 
                 erp_companyreporttemplatedetails d
             LEFT JOIN 
@@ -2012,14 +2029,49 @@ class FinancialReportAPIController extends AppBaseController
         {
             $row = (array) $row;
 
+            $row['Profit'] = abs($row['Profit']) * ($row['DebitPL'] > $row['CreditPL'] ? -1 : 1);
+
             if (in_array($row['detDescription'], ['Opening Balance', 'Profit after tax'])) 
             {
+                $retainAutomated = abs($row['RetainedAutomated']) * ($row['Debit'] > $row['Credit'] ? -1 : 1);
+               
+                foreach ($dynamicColumnNames as $column) {
+                    $glAutoIDs = json_decode($row['glAutoIDGroups'], true)[$column] ?? [];
+                    if (!empty($glAutoIDs)) {
+                        $ledgerData = DB::table('erp_generalledger AS g')
+                            ->selectRaw("
+                                JSON_ARRAYAGG(g.$amountColumn) AS glDetails
+                            ")
+                            ->where('g.documentDate', '<', $fromDate)
+                            ->where('g.companySystemID', $request->selectedCompanyID)
+                            ->whereIn('g.chartOfAccountSystemID', $glAutoIDs)
+                            ->first();
+                
+                        $glDetails = json_decode($ledgerData->glDetails ?? '[]', true);
+                
+                        $filteredDetails = array_values(array_filter($glDetails, function ($v) {
+                            return $v !== null;
+                        }));
+                        $debit = array_sum(array_filter($filteredDetails, function ($v) {
+                            return $v > 0;
+                        }));
+                
+                        $credit = abs(array_sum(array_filter($filteredDetails, function ($v) {
+                            return $v < 0;
+                        })));
+                        $row[$column] = abs($row[$column]) * ($debit > $credit ? -1 : 1);
+
+                    } else {
+                        $row[$column . ' GL Positive Sum'] = 0;
+                        $row[$column . ' GL Negative Sum'] = 0;
+                    }
+                }
                 $row[$row['Retain']] = ($row['detDescription'] === 'Opening Balance')
-                ? (($row[$row['Retain']] ?? 0) + ($row['RetainedAutomated'] ?? 0))*-1
+                ? (($row[$row['Retain']] ?? 0) + ($row['RetainedAutomated'] ?? 0))
                 : $row['Profit'];
                 $totalRetain += $row[$row['Retain']];
             }
-
+           
             if ($row['detDescription'] == 'Comprehensive income') {  
                 $row[$row['Retain']] = $totalRetain;
                 continue;
@@ -2028,11 +2080,28 @@ class FinancialReportAPIController extends AppBaseController
             if ($row['detDescription'] == 'Other changes') {  
                 $row['glAutoIDGroups'] = json_decode($row['glAutoIDGroups'], true);
                 $row['isFinalLevel'] = 1;
-                $row['glAutoIDTotals'] = json_decode($row['glAutoIDTotals'], true);
-                foreach ($row['glAutoIDTotals'] as $key => $value) {
-                    $row[$key] = $value; 
-                };
-            }
+                if (!empty($row['glAutoIDGroups']) && is_array($row['glAutoIDGroups'])) 
+                {
+                    foreach ($row['glAutoIDGroups'] as $key => $value) {
+
+
+                        $generalLedgerData = DB::table('erp_generalledger AS g')
+                        ->selectRaw("
+                            SUM(CASE 
+                                WHEN g.documentDate BETWEEN ? AND ? 
+                                AND g.companySystemID = ? 
+                                THEN g.$amountColumn * -1 
+                                ELSE 0 
+                            END) AS totalAmount",
+                            [$fromDate, $toDate, $request->selectedCompanyID]
+                        )
+                        ->whereIn('g.chartOfAccountSystemID', $value)->first();
+
+                        $totalAmount = $generalLedgerData->totalAmount ?? 0;
+                        $row[$key] = $totalAmount; 
+                    };
+                }
+              }
             if ($row['detDescription'] === 'Closing balance') {
 
                     $sum = 0;
@@ -10859,12 +10928,11 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
 
     public function reportTemplateEquityGLDrillDownQry(Request $request)
     {
-        $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->format('Y-m-d');
+        
+        $fromDate = Carbon::parse($request->fromDate)->startOfDay()->format('Y-m-d H:i:s');
+        $toDate = Carbon::parse($request->toDate)->endOfDay()->format('Y-m-d H:i:s');
         $selectedGL = $request->details; 
         $selectedColumn = $request->selectedColumn; 
-        $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->format('Y-m-d');
         $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency;
         $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';    
         $search = ($request->search['value'] ?? '');
