@@ -535,6 +535,6 @@ class BankLedger extends Model
 
     public function paymentVoucher()
     {
-        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','documentSystemCode', 'PayMasterAutoId')->where('documentSystemID',4);
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','documentSystemCode', 'PayMasterAutoId');
     }
 }
