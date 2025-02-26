@@ -364,6 +364,17 @@ class WarehouseItemsAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
+
+        if(isset($request['financeCategorySubLocation']) && !empty($request['financeCategorySubLocation']))
+        {
+            $input['financeCategorySubLocation'] = collect($request['financeCategorySubLocation'])->pluck('id');   
+        }
+
+        if(isset($request['itemSystemCode']) && !empty($request['itemSystemCode']))
+        {
+            $input['itemSystemCode'] = collect($request['itemSystemCode'])->pluck('id');   
+        }
+        
         $data = array();
         $output = ($this->getAssignedItemsByWareHouse($input));
         $output = collect($output)->map(function ($item) {
@@ -445,6 +456,12 @@ class WarehouseItemsAPIController extends AppBaseController
         $warehouseSystemCode = is_array($input['warehouseSystemCode'])
             ? $input['warehouseSystemCode'] : [$input['warehouseSystemCode']];
 
+        $type = isset($input['categoryTypeValue'])
+            ? (is_array($input['categoryTypeValue'])
+                ? array_map('strval', $input['categoryTypeValue'])
+                : explode(',', $input['categoryTypeValue']))
+            : [];
+
         $warehouse = WarehouseMaster::whereIn('warehouseSystemCode', $warehouseSystemCode)->get();
 
         if(!empty($warehouse)){
@@ -461,10 +478,17 @@ class WarehouseItemsAPIController extends AppBaseController
 
         $childCompanies = array_unique($childCompanies);
 
-        $itemMasters = WarehouseItems::with(['warehouse_by', 'binLocation', 'unit', 'financeSubCategory', 'local_currency', 'rpt_currency'])
+        $itemMasters = WarehouseItems::with(['warehouse_by', 'binLocation', 'unit', 'item_by', 'financeSubCategory', 'local_currency', 'rpt_currency'])
             ->whereIn('companySystemID', $childCompanies)
             ->whereIn('warehouseSystemCode', $warehouseSystemCode)
-            ->where('financeCategoryMaster', 1);
+            ->where('financeCategoryMaster', 1) 
+            ->when(!empty($type) && is_array($type), function ($query) use ($type) {
+                $query->whereHas('item_by', function ($query) use ($type) {
+                    $query->whereHas('item_category_type', function ($subQuery) use ($type) {
+                        $subQuery->whereIn('categoryTypeID', $type);
+                    });
+                });
+            });
 
         if (array_key_exists('financeCategorySubLocation', $input)) {
             if (isset($input['financeCategorySubLocation'])  && !empty($input['financeCategorySubLocation'])) {

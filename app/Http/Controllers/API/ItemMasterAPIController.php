@@ -574,10 +574,10 @@ class ItemMasterAPIController extends AppBaseController
         $companyList = [];
         $subCompanies = [];
         $selectedCompanyId = $request['selectedCompanyId'];
-        $type = isset($input['type'])
-            ? (is_array($input['type'])
-                ? array_map('strval', $input['type'])
-                : explode(',', $input['type']))
+        $type = isset($input['categoryTypeValue'])
+            ? (is_array($input['categoryTypeValue'])
+                ? array_map('strval', $input['categoryTypeValue'])
+                : explode(',', $input['categoryTypeValue']))
             : [0];
 
         $financeSubCatId = isset($input['financeSubCatId'])
