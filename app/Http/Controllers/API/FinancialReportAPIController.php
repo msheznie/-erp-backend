@@ -10976,7 +10976,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
 
         if ($search) {
             $output['data'] = array_filter($output['data'], function ($item) use ($search) {
-                return strpos($item['company'], $search) !== false;
+                return strpos(strtolower($item['company']), strtolower($search)) !== false;
             });
         }
 
