@@ -1887,8 +1887,16 @@ class FinancialReportAPIController extends AppBaseController
         $template = ReportTemplate::find($request->templateType);
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
-        $fromDate = Carbon::parse($request->fromDate)->startOfDay()->format('Y-m-d H:i:s');
-        $toDate = Carbon::parse($request->toDate)->endOfDay()->format('Y-m-d H:i:s');
+        if ($request->dateType == 1) {
+            $fromDate = Carbon::parse($request->fromDate)->startOfDay()->format('Y-m-d H:i:s');
+            $toDate = Carbon::parse($request->toDate)->endOfDay()->format('Y-m-d H:i:s');
+        } else {
+            $period = CompanyFinancePeriod::find($request->month);
+            $fromDate = Carbon::parse($period->dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+            $toDate = Carbon::parse($period->dateTo)->endOfDay()->format('Y-m-d H:i:s');
+        }
+        \DB::select("SET SESSION group_concat_max_len = 1000000");
+
         $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency;   
         $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';     
         $dynamicColumnNames = DB::table('erp_report_template_equity')
@@ -2039,15 +2047,15 @@ class FinancialReportAPIController extends AppBaseController
                     $glAutoIDs = json_decode($row['glAutoIDGroups'], true)[$column] ?? [];
                     if (!empty($glAutoIDs)) {
                         $ledgerData = DB::table('erp_generalledger AS g')
-                            ->selectRaw("
-                                JSON_ARRAYAGG(g.$amountColumn) AS glDetails
-                            ")
-                            ->where('g.documentDate', '<', $fromDate)
-                            ->where('g.companySystemID', $request->selectedCompanyID)
-                            ->whereIn('g.chartOfAccountSystemID', $glAutoIDs)
-                            ->first();
-                
-                        $glDetails = json_decode($ledgerData->glDetails ?? '[]', true);
+                        ->selectRaw("
+                            CONCAT('[', GROUP_CONCAT(g.$amountColumn), ']') AS glDetails
+                        ")
+                        ->where('g.documentDate', '<', $fromDate)
+                        ->where('g.companySystemID', $request->selectedCompanyID)
+                        ->whereIn('g.chartOfAccountSystemID', $glAutoIDs)
+                        ->first();
+                    
+                        $glDetails = json_decode($ledgerData->glDetails ?? '[]', true) ?: [];
                 
                         $filteredDetails = array_values(array_filter($glDetails, function ($v) {
                             return $v !== null;
@@ -2084,7 +2092,7 @@ class FinancialReportAPIController extends AppBaseController
                 {
                     foreach ($row['glAutoIDGroups'] as $key => $value) {
 
-
+                        
                         $generalLedgerData = DB::table('erp_generalledger AS g')
                         ->selectRaw("
                             SUM(CASE 
