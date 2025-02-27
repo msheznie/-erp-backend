@@ -1951,16 +1951,6 @@ class FinancialReportAPIController extends AppBaseController
                 d.netProfitStatus as netProfitStatus,
                 d.hideHeader as hideHeader,
                 1 as expanded,
-            CONCAT('{',
-                GROUP_CONCAT(
-                    DISTINCT 
-                 CONCAT('\"', e.description, '\": [', 
-                        (SELECT GROUP_CONCAT(DISTINCT cl.glAutoID ORDER BY cl.glAutoID SEPARATOR ',') 
-                        FROM erp_companyreporttemplatelinks cl 
-                        WHERE cl.templateDetailID = e.id AND cl.templateMasterID = $request->templateType),
-                    ']')
-                SEPARATOR ', '),
-            '}') AS glAutoIDGroups,
              (
                 SELECT 
                     COALESCE(SUM(
@@ -2029,14 +2019,33 @@ class FinancialReportAPIController extends AppBaseController
             GROUP BY 
                 d.detID
         ";
-    
+        
+
+        $groupAutoGroupsDetail = "SELECT 
+                    CONCAT('{',
+                        GROUP_CONCAT(
+                            DISTINCT 
+                        CONCAT('\"', e.description, '\": [', 
+                                (SELECT GROUP_CONCAT(DISTINCT cl.glAutoID ORDER BY cl.glAutoID SEPARATOR ',') 
+                                FROM erp_companyreporttemplatelinks cl 
+                                WHERE cl.templateDetailID = e.id AND cl.templateMasterID = $request->templateType AND cl.companySystemID = $request->selectedCompanyID),
+                            ']')
+                        SEPARATOR ', '),
+                    '}') AS glAutoIDGroups
+                FROM erp_report_template_equity e
+                JOIN erp_companyreporttemplatelinks cl ON cl.templateDetailID = e.id
+                WHERE e.templateMasterID = $request->templateType AND e.companySystemID = $request->selectedCompanyID";
+        
+        $groupAutoGroupsSum = DB::select($groupAutoGroupsDetail);
+        $glAutoIDGroups = $groupAutoGroupsSum[0]->glAutoIDGroups ?? '';
+
         $result = DB::select($sql);
         $totalRetain = 0;
         $sums = array_fill_keys($dynamicColumnNames, 0);
         foreach($result as &$row)
         {
             $row = (array) $row;
-
+            $row['glAutoIDGroups'] = $glAutoIDGroups;
             $row['Profit'] = abs($row['Profit']) * ($row['DebitPL'] > $row['CreditPL'] ? -1 : 1);
 
             if (in_array($row['detDescription'], ['Opening Balance', 'Profit after tax'])) 
