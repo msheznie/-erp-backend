@@ -372,13 +372,14 @@ END AS sortDashboard')
 
         $input = $request->all();
         $departmentID = isset($input['departmentID'])?$input['departmentID']:0;
+        $companyId = isset($input['companyId'])?$input['companyId']:0;
         $widget = DashboardWidgetMaster::where('isActive',1)
             ->where('departmentID',$departmentID)
             ->orderBy('sortOrder')
             ->get();
         $output = [];
         $supplierGroup = SupplierGroup::notDeleted();
-        $glAccounts = ChartOfAccount::all()->toArray();
+        $glAccounts = ChartOfAccount::where('primaryCompanySystemID', $companyId)->get()->toArray();
         if(!empty($widget)){
             $output['widget'] = $widget->toArray();
             $output['supplierGroup'] = $supplierGroup;
@@ -1178,6 +1179,7 @@ GROUP BY
                            chartofaccounts.controlAccountsSystemID,
                            erp_companyreporttemplatedetails.description as templateDetailDescription,
                            erp_companyreporttemplatedetails.detID as templatesMasterAutoID,
+                           ca.month as gmonth,
                            erp_budjetdetails.*,ifnull(ca.consumed_amount,0) as consumed_amount,
                            ifnull(ppo.rptAmt,0) as pending_po_amount,
                            ((SUM(budjetAmtRpt) * -1) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance,
@@ -1198,7 +1200,7 @@ GROUP BY
                         Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
                         erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 AND 
                         (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
-                        GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
+                        GROUP BY month,erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
                         erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.companyFinanceYearID) as ca'),
                     function ($join) {
                         $join->on('erp_budjetdetails.companySystemID', '=', 'ca.companySystemID')
@@ -1248,46 +1250,53 @@ GROUP BY
                             ->on('erp_budgetmaster.Year', '=', 'adj.YEAR')
                             ->on('erp_budjetdetails.chartOfAccountID', '=', 'adj.adjustedGLCodeSystemID');
                     })
-                    ->groupBy(['erp_budjetdetails.chartOfAccountID', 'ca.month'])
+                    ->groupBy('ca.month')
+                    ->having('consumed_amount', '>', 0)
                     ->get();
 
                 foreach ($reportData as $key => $value) {
-                    $consumptionData = BudgetConsumptionService::getCommitedConsumedAmount($value, $DLBCPolicy, true);
-                    $value['actuallConsumptionAmount'] = $consumptionData['actuallConsumptionAmount'];
-                    $value['committedAmount'] = $consumptionData['committedAmount'];
-                    $value['pendingDocumentAmount'] = $consumptionData['pendingDocumentAmount'];
-                    $value['balance'] = $value['totalRpt']
-                        - ($consumptionData['pendingDocumentAmount']
-                        + $consumptionData['committedAmount']
-                        + $consumptionData['actuallConsumptionAmount']);
+                    $commitedConsumedAmount = BudgetConsumptionService::getCommitedConsumedAmount($value, $DLBCPolicy, true);
+                    $value['actuallConsumptionAmount'] = $commitedConsumedAmount['actuallConsumptionAmount'];
                 }
 
-                $groupedByMonth = $reportData->groupBy('month')->map(function ($group) {
-                    return ['amount' => $group->sum('actuallConsumptionAmount')];
+                $reportData->groupBy('ca.month');
+
+                $reportDataFiltered = collect(range(1, 12))->mapWithKeys(function ($month) {
+                    return [$month => 0]; 
                 });
 
-                $allMonthData = collect(range(1, 12))->map(function ($month) use ($groupedByMonth) {
-                    return $groupedByMonth->get($month, ['amount' => 0]);
+                $reportData->values()->map(function ($item) use (&$reportDataFiltered) {
+                    $gmonth = $item->gmonth;
+                    if (isset($reportDataFiltered[$gmonth])) {
+                        $reportDataFiltered[$gmonth] = $item->actuallConsumptionAmount;
+                    }
                 });
+
+                $finalResult = $reportDataFiltered->map(function ($amount) {
+                    return ['amount' => $amount];
+                })->values()->all(); 
+
 
                 $data['financialYear'] = $currentFinancialYear;
                 $data['reportingCurrency'] = $companyCurrency->reportingcurrency->CurrencyCode;
-                $data['actual'] = $allMonthData->values()->all();
+                $data['decimalPlaces'] = $companyCurrency->reportingcurrency->DecimalPlaces;
+                $data['actual'] = $finalResult;
                 $data['budget'] = Budjetdetails::with(['budget_master.segment_by',
                     'budget_master.company','chart_of_account'])
                    ->whereHas('budget_master.company', function($query) use ($companyID) {
                         $query->where('companySystemID', $companyID);
                     })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
                         $query->where('companyFinanceYearID', $currentFinancialYear->companyFinanceYearID);
-                    })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
+                    })->whereHas('budget_master',function ($query) {
                         $query->where('confirmedYN', 1);
-                    })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
+                    })->whereHas('budget_master',function ($query) {
                         $query->where('approvedYN', -1);
                     })->selectRaw('SUM(budjetAmtRpt) as amount, month')
                     ->when(!empty($glAccount), function ($query) use ($glAccount) {
                         $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
                     })
                     ->groupBy('month')
+                    ->having('amount', '>', 0)
                     ->get();
 
                 return $this->sendResponse($data, 'Data retrieved successfully');
