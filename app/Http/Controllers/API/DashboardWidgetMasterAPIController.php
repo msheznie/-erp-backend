@@ -1166,6 +1166,11 @@ GROUP BY
 
             case 18 :
                 $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
+
+                if(!$currentFinancialYear) {
+                    return $this->sendError('Company finance year not set');
+                }
+
                 $companyCurrency = \Helper::companyCurrency($companyID);
 
                 $DLBCPolicy = CompanyPolicyMaster::where('companySystemID', $companyID)
@@ -1200,8 +1205,7 @@ GROUP BY
                         Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
                         erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 AND 
                         (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
-                        GROUP BY month,erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
-                        erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.companyFinanceYearID) as ca'),
+                        GROUP BY month,erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.companyFinanceYearID ) as ca'),
                     function ($join) {
                         $join->on('erp_budjetdetails.companySystemID', '=', 'ca.companySystemID')
                             ->on('erp_budjetdetails.serviceLineSystemID', '=', 'ca.serviceLineSystemID')
