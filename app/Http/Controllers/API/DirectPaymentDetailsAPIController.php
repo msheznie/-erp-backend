@@ -537,6 +537,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         if ($directPaymentDetails->glCodeIsBank) {
             if($payMaster->expenseClaimOrPettyCash == 15 && $payMaster->invoiceType == 3 && abs($directPaymentDetails->interBankAmount - $input['interBankAmount']) > $epsilon &&  abs($directPaymentDetails->bankCurrencyER - $input['bankCurrencyER']) < 0.000001)
             {
+                if(\Helper::roundValue(floatval($input['interBankAmount'])) == 0)
+                {
+                    return $this->sendError('Inter Bank Amount cannot be zero');
+                }
+
                 $input["bankCurrencyER"] = \Helper::roundValue($input['DPAmount'] / \Helper::roundValue(floatval($input['interBankAmount'])));
                 $isBankChanges = true;
             }
