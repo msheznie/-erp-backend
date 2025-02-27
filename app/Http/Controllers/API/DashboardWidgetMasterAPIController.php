@@ -1300,7 +1300,6 @@ GROUP BY
                         $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
                     })
                     ->groupBy('month')
-                    ->having('amount', '>', 0)
                     ->get();
 
                 return $this->sendResponse($data, 'Data retrieved successfully');
