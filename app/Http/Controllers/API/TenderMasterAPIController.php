@@ -5322,6 +5322,7 @@ ORDER BY
         }])
             ->where('is_negotiation_started',1)
             ->where('negotiation_published',1)
+            ->where('company_id',$companyId)
             ->withCount(['criteriaDetails',
                 'criteriaDetails AS go_no_go_count' => function ($query) {
                     $query->where('critera_type_id', 1);
