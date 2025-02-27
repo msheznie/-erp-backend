@@ -13,6 +13,7 @@ use App\Models\DocCodeSetupTypeBased;
 use App\Models\DocumentCodeTransaction;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -353,8 +354,12 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $documentCodeMasters = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
                                                     ->where('id', $id)
                                                     ->first();
+        $data = [
+            'isGettingEdited' => 1,
+            'isGettingEditedTime' => now()
+        ];
         if($documentCodeMasters){
-            $documentCodeMasters->document_code_transactions->update(['isGettingEdited' => 1]);
+            $documentCodeMasters->document_code_transactions->update($data);
         }
 
         return $this->sendResponse($documentCodeMasters->toArray(), 'Document Code Masters retrieved successfully');
@@ -433,6 +438,127 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $documentCodeMaster = $this->documentCodeMasterRepository->update($input, $id);
 
         return $this->sendResponse($documentCodeMaster->toArray(), 'DocumentCodeMaster updated successfully');
+    }
+
+    public function updateDocumentCode(Request $request)
+    {
+        $input = $request->all();
+
+        DB::beginTransaction();
+        try {
+    
+            if (isset($input['documentCodeMaster'])) {
+                $input['documentCodeMaster'] = json_decode($input['documentCodeMaster'], true);
+                $documentCodeMaster =$input['documentCodeMaster'];
+                unset($documentCodeMaster['doc_code_numbering_sequences']);
+                unset($documentCodeMaster['document_code_transactions']);
+                $documentCodeMaster = $this->convertArrayToSelectedValue($documentCodeMaster, array('numbering_sequence_id'));
+                DocumentCodeMaster::where('id', $documentCodeMaster['id'])->update($documentCodeMaster);
+            }
+
+            if (isset($input['typeBased'])) {
+                $input['typeBased'] = json_decode($input['typeBased'], true);
+            }
+
+            if (isset($input['common'])) {
+                $input['common'] = json_decode($input['common'], true);
+            }
+
+
+            if(isset($input['documentCodeMaster'])){
+                if($documentCodeMaster['numbering_sequence_id'] == 2){
+                    if (isset($input['typeBased'])) {
+                        foreach ($input['typeBased'] as $typeBased) {
+                            unset($typeBased['codePreview']);
+                            unset($typeBased['type']);
+                            $typeBased = $this->convertArrayToSelectedValue($typeBased, array(  'format1',
+                                                                                                'format2',
+                                                                                                'format3',
+                                                                                                'format4',
+                                                                                                'format5',
+                                                                                                'format6',
+                                                                                                'format7',
+                                                                                                'format8',
+                                                                                                'format9',
+                                                                                                'format10',
+                                                                                                'format11',
+                                                                                                'format12',));
+
+                            // Extract format values (format1 to format12)
+                            $formats = [];
+                            for ($i = 1; $i <= 12; $i++) {
+                                $key = "format$i";
+                                if (isset($typeBased[$key])) {
+                                    $formats[] = (array) $typeBased[$key]; 
+                                }
+                            }
+
+                            $flattenedFormats = !empty($formats) ? array_merge(...$formats) : [];
+
+                            //check if any format have selected YYYY or YY
+                            if (!in_array(6, $flattenedFormats) && !in_array(7, $flattenedFormats)) {
+                                return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
+                            }
+                            DocCodeSetupTypeBased::where('id', $typeBased['id'])->update($typeBased);
+                            
+                        }
+                    }
+                    
+                    if (isset($input['common'])) {
+                        foreach ($input['common'] as $common) {
+                            unset($common['codePreview']);
+                            unset($common['document_code_transactions']);
+                            $common = $this->convertArrayToSelectedValue($common, array(  'format1',
+                                                                                        'format2',
+                                                                                        'format3',
+                                                                                        'format4',
+                                                                                        'format5',
+                                                                                        'format6',
+                                                                                        'format7',
+                                                                                        'format8',
+                                                                                        'format9',
+                                                                                        'format10',
+                                                                                        'format11',
+                                                                                        'format12',));
+
+                            // Extract format values (format1 to format12)
+                            $formats = [];
+                            for ($i = 1; $i <= 12; $i++) {
+                                $key = "format$i";
+                                if (isset($common[$key])) {
+                                    $formats[] = (array) $common[$key]; 
+                                }
+                            }
+
+                            $flattenedFormats = !empty($formats) ? array_merge(...$formats) : [];
+
+                            //check if any format have selected YYYY or YY
+                            if (!in_array(6, $flattenedFormats) && !in_array(7, $flattenedFormats)) {
+                                return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
+                            }
+                            DocCodeSetupCommon::where('id', $common['id'])->update($common);
+                            
+                        }
+
+                    }
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse($documentCodeMaster, 'Document code configured successfully');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError('Error occurred in document code configuration',500);
+        }
+
+
+
+
+        return $input;
+        //Need to update the document code master & common and type based
+
+
+
     }
 
 }

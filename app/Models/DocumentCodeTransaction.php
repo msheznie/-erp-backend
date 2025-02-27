@@ -98,6 +98,7 @@ class DocumentCodeTransaction extends Model
         'document_system_id',
         'is_active',
         'isGettingEdited',
+        'isGettingEditedTime',
         'isTypeEnable'
     ];
 
@@ -114,6 +115,7 @@ class DocumentCodeTransaction extends Model
         'document_system_id' => 'integer',
         'is_active' => 'integer',
         'isGettingEdited' => 'integer',
+        'isGettingEditedTime' => 'string',
         'isTypeEnable' => 'integer'
     ];
 
