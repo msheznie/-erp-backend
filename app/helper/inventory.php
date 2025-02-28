@@ -164,7 +164,48 @@ class inventory
                                         
                                         foreach ($newItems as $item) {
                                             $batchID = $item['productBatchID'];
-                                    
+
+                                                if($item['sold'] != 0)
+                                                    {                           
+                                                        $docHub = DB::table('document_sub_products')->where('productInID', $item['id'])->where($column, $item['productBatchID'])->get();
+                                                        $add = 0;
+                                                        foreach ($docHub as $hub) 
+                                                        {
+                                                            $document = null;
+
+                                                            switch ($hub->documentSystemID) {
+                                                                case 3: 
+                                                                    $document = GRVMaster::where('grvAutoID', $hub->documentSystemCode)->first();
+                                                                    if ($document && $document->approved == 0) {
+                                                                        $add--; 
+                                                                    }
+                                                                    break;
+
+                                                                case 24:
+                                                                case 71:
+                                                                case 8:
+                                                                case 13:
+                                                                    $modelMap = [
+                                                                        24 => [PurchaseReturn::class, 'purhaseReturnAutoID','approved'],
+                                                                        71 => [DeliveryOrder::class, 'deliveryOrderID','approvedYN'],
+                                                                        8  => [ItemIssueMaster::class, 'itemIssueAutoID','approved'],
+                                                                        13 => [StockTransfer::class, 'stockTransferAutoID','approved'],
+                                                                    ];
+
+                                                                    [$model, $columnName,$approve] = $modelMap[$hub->documentSystemID];
+
+                                                                    $document = $model::where($columnName, $hub->documentSystemCode)->where($approve, 0)->first();
+
+                                                                    if ($document) {
+                                                                        $add++; 
+                                                                    }
+                                                                    break;
+                                                            }
+                                                        }
+                                                        $item['RemainingQty'] += $add;
+                                                    }
+                                           
+                                         
                                             if (!isset($groupedItems[$batchID])) {
                                                 $groupedItems[$batchID] = $item;
                                             } else {
