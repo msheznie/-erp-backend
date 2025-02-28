@@ -1953,7 +1953,6 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if($input['serviceLineSystemID'] != $purchaseRequest->serviceLineSystemID){
             $code = str_pad($purchaseRequest->serialNumber, 6, '0', STR_PAD_LEFT);
-            $input['purchaseRequestCode'] = $purchaseRequest->companyID . '\\' . $purchaseRequest->departmentID . '\\' . $input['serviceLineCode'] . '\\' . $purchaseRequest->documentID . $code;
         }
 
         if (!empty($input['buyerEmpSystemID'])) {

@@ -418,7 +418,22 @@ class DocumentCodeMasterAPIController extends AppBaseController
             $docCodeSetupCommon = DocCodeSetupCommon::with('document_code_transactions')->where('master_id', $id)->get();
             if($docCodeSetupCommon){
                 foreach ($docCodeSetupCommon as $codeSetupCommon) {
-                    $codeSetupCommon->update([$formatCount => null]);
+                    $formatCount = $input['formatCount'];
+                    $hasYYYYFormat = false;
+                    for ($i = 1; $i <= $formatCount; $i++) {
+                        $formatKey = 'format' . $i;
+                        $formatValue = $codeSetupCommon->{'format' . $i};
+                        if ($formatValue == 6 || $formatValue == 7) {
+                            $hasYYYYFormat = true;
+                            break;
+                        }
+                    }
+                    if (!$hasYYYYFormat) {
+                        return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
+                    }
+                    $deletedFormatNumber = $input['formatCount'] + 1;
+                    $nullFormat = 'format' . $deletedFormatNumber;
+                    $codeSetupCommon->update([$nullFormat => null]);
                 }
             }
 
@@ -453,6 +468,13 @@ class DocumentCodeMasterAPIController extends AppBaseController
                 unset($documentCodeMaster['doc_code_numbering_sequences']);
                 unset($documentCodeMaster['document_code_transactions']);
                 $documentCodeMaster = $this->convertArrayToSelectedValue($documentCodeMaster, array('numbering_sequence_id'));
+                if($documentCodeMaster['serial_length'] > 12){
+                    return $this->sendError('Serial length should not be greater than 12.',400);
+                }
+                if($documentCodeMaster['serial_length'] < 4){
+                    return $this->sendError('Serial length should not be less than 4.',400);
+                }
+
                 DocumentCodeMaster::where('id', $documentCodeMaster['id'])->update($documentCodeMaster);
             }
 
@@ -541,6 +563,46 @@ class DocumentCodeMasterAPIController extends AppBaseController
                         }
 
                     }
+                } else {
+                    if (isset($input['common'])) {
+                        foreach ($input['common'] as $common) {
+                            unset($common['codePreview']);
+                            unset($common['document_code_transactions']);
+                            $common = $this->convertArrayToSelectedValue($common, array(  'format1',
+                                                                                        'format2',
+                                                                                        'format3',
+                                                                                        'format4',
+                                                                                        'format5',
+                                                                                        'format6',
+                                                                                        'format7',
+                                                                                        'format8',
+                                                                                        'format9',
+                                                                                        'format10',
+                                                                                        'format11',
+                                                                                        'format12',));
+                            DocCodeSetupCommon::where('id', $common['id'])->update($common);
+                        }
+                    }
+
+                    if (isset($input['typeBased'])) {
+                        foreach ($input['typeBased'] as $typeBased) {
+                            unset($typeBased['codePreview']);
+                            unset($typeBased['type']);
+                            $typeBased = $this->convertArrayToSelectedValue($typeBased, array(  'format1',
+                                                                                                'format2',
+                                                                                                'format3',
+                                                                                                'format4',
+                                                                                                'format5',
+                                                                                                'format6',
+                                                                                                'format7',
+                                                                                                'format8',
+                                                                                                'format9',
+                                                                                                'format10',
+                                                                                                'format11',
+                                                                                                'format12',));
+                            DocCodeSetupTypeBased::where('id', $typeBased['id'])->update($typeBased);
+                        }
+                    }
                 }
             }
 
@@ -550,14 +612,6 @@ class DocumentCodeMasterAPIController extends AppBaseController
             DB::rollback();
             return $this->sendError('Error occurred in document code configuration',500);
         }
-
-
-
-
-        return $input;
-        //Need to update the document code master & common and type based
-
-
 
     }
 
