@@ -15,6 +15,7 @@ namespace App\helper;
 use App\Models\ErpItemLedger;
 use App\Models\ItemAssigned;
 use Response;
+use App\Models\ItemMaster;
 
 class inventory
 {
@@ -29,7 +30,7 @@ class inventory
      */
     public static function itemCurrentCostAndQty($params)
     {
-
+        \DB::select("SET SESSION group_concat_max_len = 1000000");
         $output = array('currentStockQty' => 0,
             'currentWareHouseStockQty' => 0,
             'currentStockQtyInDamageReturn' => 0,
@@ -51,7 +52,14 @@ class inventory
                 ->where('companySystemID', $params['companySystemID'])
                 ->first();
 
-            if (!empty($item)) {
+            $itemMaster = ItemMaster::where('itemCodeSystem', $params['itemCodeSystem'])
+                ->where('primaryCompanySystemID', $params['companySystemID'])
+                ->first();
+            if (!empty($item) && !empty($itemMaster)) {
+
+              
+                $table = $itemMaster->trackingType == 2 ? 'item_serial' : 'item_batch';
+                $column = $itemMaster->trackingType == 2 ? 'productSerialID' : 'productBatchID';
 
                 $itemLedgerRec = ErpItemLedger::selectRaw('companySystemID, 
                                                         itemSystemCode, 
@@ -124,11 +132,12 @@ class inventory
                                                         JSON_OBJECT(
                                                         "id", document_sub_products.id, 
                                                         "quantity", document_sub_products.quantity, 
-                                                        "productBatchID", document_sub_products.productBatchID,
-                                                        "binLocation", item_batch.binLocation,
+                                                        "productBatchID", document_sub_products.' . $column . ',
+                                                        "binLocation", ' . $table . '.binLocation,
                                                         "binLocationDes", warehousebinlocationmaster.binLocationDes,
                                                         "wac", erp_itemledger.wacLocal,
-                                                        "binLocationID", warehousebinlocationmaster.binLocationID
+                                                        "binLocationID", warehousebinlocationmaster.binLocationID,
+                                                        "RemainingQty",document_sub_products.quantity - document_sub_products.soldQty
                                                     )
                                                 ), "]"), "[]"
                                             ) as newItem
@@ -141,9 +150,9 @@ class inventory
                                             $join->on('erp_itemledger.documentSystemID', '=', 'document_sub_products.documentSystemID')
                                                 ->on('erp_itemledger.documentSystemCode', '=', 'document_sub_products.documentSystemCode');
                                         })
-                                        ->leftJoin('item_batch', 'document_sub_products.productBatchID', '=', 'item_batch.id')
+                                        ->leftJoin($table, "document_sub_products.{$column}", '=', "{$table}.id")
                                         ->leftJoin('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
-                                        ->leftJoin('warehousebinlocationmaster', 'item_batch.binLocation', '=', 'warehousebinlocationmaster.binLocationID') 
+                                        ->leftJoin('warehousebinlocationmaster', "{$table}.binLocation", '=', 'warehousebinlocationmaster.binLocationID') 
                                         ->groupBy('erp_itemledger.itemSystemCode', 'erp_itemledger.companySystemID')
                                         ->first();
 
@@ -152,32 +161,83 @@ class inventory
                                     $newItems = json_decode($itemLedgerRec->newItem, true); 
                                     $groupedNewItems = [];
                                     if (is_array($newItems)) {
+                                        
+                                        foreach ($newItems as $item) {
+                                            $batchID = $item['productBatchID'];
                                     
-        
-                                        foreach ($newItems as $newItem) {
+                                            if (!isset($groupedItems[$batchID])) {
+                                                $groupedItems[$batchID] = $item;
+                                            } else {
+                                                $groupedItems[$batchID]['quantity'] += $item['quantity'];
+                                            }
+                                        }
+                                    
+                                        $groupedItems = collect(array_values($groupedItems));
+                                   
+                                
+                                        $grouped = collect($groupedItems)
+                                        ->groupBy(function ($item) {
+                                            return $item['binLocationID'] !== null ? $item['binLocationID'] : uniqid(); 
+                                        })
+                                        ->map(function ($group) {
+                                            if ($group->first()['binLocationID'] === null) {
+                                                return $group->first();
+                                            }
+                                    
+                                            return [
+                                                'id' => $group->first()['id'],
+                                                'wac' => $group->first()['wac'],
+                                                'binLocation' => $group->first()['binLocation'],
+                                                'binLocationID' => $group->first()['binLocationID'],
+                                                'binLocationDes' => $group->first()['binLocationDes'],
+                                                'productBatchID' => $group->first()['productBatchID'], 
+                                                'RemainingQty' => $group->sum('RemainingQty'),
+                                            ];
+                                        })
+                                        ->values();
+                                        
+                                        foreach ($groupedItems as $newItem) {
                                             $binLocationDes = $newItem['binLocationDes'];
                                             $binLocationID = $newItem['binLocationID'];
-                                            $totalWacCostLocalWarehouse = round($newItem['quantity'] * $itemLedgerRecWarehouse->wacCostLocal, 2);
-                                            $totalWacCostRptWarehouse = round($newItem['quantity'] * $itemLedgerRecWarehouse->wacCostRpt, 2);
+                                            $totalWacCostLocalWarehouse = round($newItem['RemainingQty'] * $itemLedgerRecWarehouse->wacCostLocal, 2);
+                                            $totalWacCostRptWarehouse = round($newItem['RemainingQty'] * $itemLedgerRecWarehouse->wacCostRpt, 2);
                                             $productBatchID = $newItem['productBatchID'];
-                                            if (isset($groupedNewItems[$binLocationID])) {
-                                                $groupedNewItems[$binLocationID]['quantity'] += $newItem['quantity'];
-                                                $groupedNewItems[$binLocationID]['totalWacCostLocal'] += $totalWacCostLocalWarehouse;
-                                                $groupedNewItems[$binLocationID]['totalWacCostRpt'] += $totalWacCostRptWarehouse;
-                                                if (!in_array($productBatchID, $groupedNewItems[$binLocationID]['IDS'])) {
-                                                    $groupedNewItems[$binLocationID]['IDS'][] = $productBatchID;
-                                                }
-                                            } else {
-                                                $groupedNewItems[$binLocationID] = [
-                                                    'binLocationDes' => $binLocationDes,
-                                                    'binLocationID' => $binLocationID,
-                                                    'quantity' => $newItem['quantity'],
-                                                    'binLocation' => $newItem['binLocation'],
-                                                    'productBatchID' => $newItem['productBatchID'],
+
+                                            if($binLocationID == null)
+                                            {
+                                                $groupedNewItems[] = [
+                                                    'binLocationDes' => null,
+                                                    'binLocationID' => null,
+                                                    'quantity' => $newItem['RemainingQty'],
+                                                    'binLocation' => null,
+                                                    'productBatchID' => $productBatchID,
                                                     'totalWacCostLocal' => $totalWacCostLocalWarehouse,
                                                     'totalWacCostRpt' => $totalWacCostRptWarehouse,
-                                                    'IDS' => [$productBatchID],
+                                                    'IDS' => [$productBatchID]
                                                 ];
+                                            }
+
+                                            else
+                                            {
+                                                if (isset($groupedNewItems[$binLocationID])) {
+                                                    $groupedNewItems[$binLocationID]['quantity'] += $newItem['RemainingQty'];
+                                                    $groupedNewItems[$binLocationID]['totalWacCostLocal'] += $totalWacCostLocalWarehouse;
+                                                    $groupedNewItems[$binLocationID]['totalWacCostRpt'] += $totalWacCostRptWarehouse;
+                                                    if (!in_array($productBatchID, $groupedNewItems[$binLocationID]['IDS'])) {
+                                                        $groupedNewItems[$binLocationID]['IDS'][] = $productBatchID;
+                                                    }
+                                                } else {
+                                                    $groupedNewItems[$binLocationID] = [
+                                                        'binLocationDes' => $binLocationDes,
+                                                        'binLocationID' => $binLocationID,
+                                                        'quantity' => $newItem['RemainingQty'],
+                                                        'binLocation' => $newItem['binLocation'],
+                                                        'productBatchID' => $newItem['productBatchID'],
+                                                        'totalWacCostLocal' => $totalWacCostLocalWarehouse,
+                                                        'totalWacCostRpt' => $totalWacCostRptWarehouse,
+                                                        'IDS' => [$productBatchID],
+                                                    ];
+                                                }
                                             }
                                         }
                                     }

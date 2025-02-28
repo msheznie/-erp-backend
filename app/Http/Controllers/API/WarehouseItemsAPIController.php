@@ -26,6 +26,9 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\WarehouseBinLocation;
 use App\Models\ItemBatch;
+use App\Models\ItemMaster;
+use App\Models\ItemSerial;
+use App\Models\ErpItemLedger;
 
 /**
  * Class WarehouseItemsController
@@ -240,12 +243,15 @@ class WarehouseItemsAPIController extends AppBaseController
             $input['binNumber'] = 0;
         }
 
-        if(isset($input['binLocation']) && !empty($input['binLocation']) && ($input['binLocation']['binLocationID'] == null))
+
+        if(isset($input['binLocation']) && !empty($input['binLocation']))
         {
             if (!empty($input['binLocation']['IDS']) && is_array($input['binLocation']['IDS'])) {
                 $productIDs = array_filter($input['binLocation']['IDS'], 'is_numeric');
-                if (!empty($productIDs)) {
-                    ItemBatch::whereIn('id', $productIDs)->update(['binLocation' => $input['binNumber']]);
+                $itemMaster = ItemMaster::find($warehouseItems->itemSystemCode);
+                if (!empty($productIDs) && $itemMaster) {
+                    $model = $itemMaster->trackingType == 1 ? ItemBatch::class : ItemSerial::class;
+                    $model::whereIn('id', $productIDs)->update(['binLocation' => $input['binNumber']]);
                 }
             }
         }
@@ -551,7 +557,7 @@ class WarehouseItemsAPIController extends AppBaseController
         $x = 1;
         $details = $details->toArray(); 
         $transformedData = array_reduce($details, function ($carry, $item) use(&$x) {
-            if ($item['isTrack'] == "1" && !empty($item['binLocation'])) {
+            if (($item['isTrack'] == "1" || $item['isTrack'] == "2") && !empty($item['binLocation'])) {
                 foreach ($item['binLocation'] as $bin) {
                     $carry[] = array_merge($item, [
                         'binLocation' => $bin,
