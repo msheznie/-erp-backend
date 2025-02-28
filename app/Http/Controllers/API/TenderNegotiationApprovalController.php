@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\CreateTenderNegotiationApprovalRequest;
 use App\Http\Requests\UpdateTenderNegotiationApprovalRequest;
+use App\Models\TenderCustomEmail;
 use App\Repositories\TenderNegotiationApprovalRepository;
 use App\Http\Controllers\AppBaseController;
 use App\Models\SrmTenderBidEmployeeDetails;
@@ -14,6 +16,7 @@ use App\Models\TenderMaster;
 use App\Models\SupplierRegistrationLink;
 use Illuminate\Http\Request;
 use Flash;
+use Illuminate\Support\Facades\Log;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Auth;
@@ -199,16 +202,40 @@ class TenderNegotiationApprovalController extends AppBaseController
                 foreach($supplierTenderNegotiations as $supplierTenderNegotiation) {
                     $employee = SupplierRegistrationLink::select('email','company_id','name')->find($supplierTenderNegotiation->suppliermaster_id);
                     if(isset($employee) &&  $employee->email) {
+                        $file = array();
+                        $ccEmails = null;
+                        $tenderCustomEmail = TenderCustomEmail::getSupplierCustomEmailBody($input['srm_tender_master_id'], $supplierTenderNegotiation->suppliermaster_id, 'TNE');
+                        if ($tenderCustomEmail && $tenderCustomEmail->attachment) {
+                            $file[$tenderCustomEmail->attachment->originalFileName] = Helper::getFileUrlFromS3($tenderCustomEmail->attachment->path);
+                        }
+
                         $dataEmail['empEmail'] = $employee->email;
                         $dataEmail['companySystemID'] = $employee->company_id;
                         $loginUrl = env('SRM_LINK');
                         $url = trim($loginUrl,"/register");
                         $redirectUrl= $url."/tender-management/tenders/1";
                         $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
-                        $temp = "<p>Dear " . $employee->name . ',</p><p>We would like to inform you that you have been shortlisted for the tender negotiation '. $code. ' | '. $title. ' tender, and for that we would like to arrange a meeting with you, before submitting the final proposal.</p><br/><br/><p>Kind Regards,</p><p>' . $companyName . '</p>';
+                        $dataEmail['ccEmail'] = [];
+                        $dataEmail['attachmentList'] = [];
+                        if ($tenderCustomEmail) {
+                            $emailBody =  "<p>Dear " . $employee->name . $tenderCustomEmail->email_body . $companyName . '</p>';
+                            $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
+                        } else {
+                            $emailBody = "<p>Dear " . $employee->name . ',</p><p>We would like to inform you that you have been shortlisted for the tender negotiation ' . $code . ' | ' . $title . ' tender, and for that we would like to arrange a meeting with you, before submitting the final proposal.</p><br/><br/><p>Kind Regards,</p><p>' . $companyName . '</p>';
+                        }
+
                         $dataEmail['alertMessage'] = "Tender Negotiation Invitation";
-                        $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $dataEmail['emailAlertMessage'] = $emailBody;
+
+                        if (!empty($ccEmails)) {
+                            $dataEmail['ccEmail'] = $ccEmails;
+                        }
+
+                        if (!empty($tenderCustomEmail->attachment)) {
+                            $dataEmail['attachmentList'] = $file;
+                        }
+
+                        $sendEmail = \Email::sendEmailSRM($dataEmail);
                     }
                 }
             }

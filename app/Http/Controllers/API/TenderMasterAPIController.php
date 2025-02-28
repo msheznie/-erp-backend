@@ -3,8 +3,13 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\Http\Requests\AddAttachmentAPIRequest;
+use App\Http\Requests\API\CompanyValidateAPIRequest;
+use App\Http\Requests\API\CreateContractMasterAPIRequest;
 use App\Http\Requests\API\CreateTenderMasterAPIRequest;
 use App\Http\Requests\API\UpdateTenderMasterAPIRequest;
+use App\Http\Requests\API\ViewContractAPIRequest;
+use App\Http\Requests\DeleteAttachmentAPIRequest;
 use App\Http\Requests\SRM\UpdateTenderCalendarDaysRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
@@ -29,6 +34,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderBidNegotiation;
+use App\Models\TenderCustomEmail;
 use App\Models\TenderMasterReferred;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
@@ -2118,6 +2124,7 @@ ORDER BY
         $companyId = $input['companySystemID'];
         $data['tenders'] = TenderMaster::where('company_id', $companyId)
             ->where('published_yn', 1)
+            ->where('company_id', $companyId)
             ->where('pre_bid_clarification_method', '!=', 0)
             ->where('closed_yn', '!=', 1)
             ->get();
@@ -2527,7 +2534,7 @@ ORDER BY
             $emailFormatted = email::emailAddressFormat($SupplierList['email']);
 
             $dataEmail['companySystemID'] = $companyId;
-            $dataEmail['alertMessage'] = " ".$docType." Invitation link";
+            $dataEmail['alertMessage'] = "Invitation for ".$docType." ";
             $dataEmail['empEmail'] = $emailFormatted;
             $body = "Dear Supplier," . "<br /><br />" . "
             I trust this message finds you well." . "<br /><br />" . "
@@ -3113,7 +3120,7 @@ ORDER BY
                     })
                     ->orWhere('document_system_id', 113);
             })
-            ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
+            ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('company_id', $companyId);
 
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
@@ -3553,6 +3560,7 @@ ORDER BY
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('technical_eval_status', 1)
             ->where('doc_verifiy_status', 1)
+            ->where('company_id', $companyId)
             ->where('go_no_go_status', 1)
             ->where(function ($query) use ($userId) {
                 $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
@@ -3737,6 +3745,7 @@ ORDER BY
             })
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
+            ->where('company_id', $companyId)
             ->where('technical_eval_status', 1);
 
         if($isNegotiation == 1){
@@ -4569,13 +4578,25 @@ ORDER BY
         $filters = $this->getFilterData($input);
 
         $hasPolicyToCreatePOFromTender = Helper::checkPolicy($companyId, 97);
+        $hasPolicyToInitiateContractFromTender = Helper::checkPolicy($companyId, 100);
+        $hasPolicyToLoiLoa = Helper::checkPolicy($companyId, 101);
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier', 'srmTenderPo' => function ($q) {
-            $q->select('id', 'tender_id', 'po_id')->with(['procument_order' => function ($po) {
-                $po->select('purchaseOrderID', 'purchaseOrderCode');
-            }]);
-        }])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-            ->where('is_awarded', 1)->where(function ($query) {
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type',
+            'contract' => function ($q)
+            {
+                $q->select('id', 'contractCode');
+            },
+            'srmTenderMasterSupplier', 'srmTenderMasterSupplier.supplierDetails' => function ($s1) {
+                $s1->select('id', 'name', 'uuid', 'email');
+            }, 'ranking_supplier.bid_submission_master' => function ($rs) {
+                $rs->select('id', 'bidSubmittedDatetime', 'line_item_total');
+            },
+            'srmTenderPo' => function ($q) {
+                $q->select('id', 'tender_id', 'po_id')->with(['procument_order' => function ($po) {
+                    $po->select('purchaseOrderID', 'purchaseOrderCode');
+                }]);
+            }])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
+            ->where('is_awarded', 1)->where('company_id', $companyId)->where(function ($query) {
                 $query->where('negotiation_published', 0)
                     ->orWhere('is_negotiation_closed', 1);
             });
@@ -4626,6 +4647,8 @@ ORDER BY
             })
             ->addIndexColumn()
             ->addColumn('hasPolicyToCreatePOFromTender', $hasPolicyToCreatePOFromTender)
+            ->addColumn('hasPolicyToInitiateContractFromTender', $hasPolicyToInitiateContractFromTender)
+            ->addColumn('hasPolicyToLoiLoa', $hasPolicyToLoiLoa)
             ->with('orderCondition', $sort)
             ->make(true);
     }
@@ -4754,20 +4777,42 @@ ORDER BY
             $tender->final_tender_award_email = 1;
             $tender->save();
 
+            //Get the Custom email Template
+            $file = array();
+            $tenderCustomEmail = TenderCustomEmail::getSupplierCustomEmailBody($tenderId, $tender->ranking_supplier->supplier->id, 'TAE');
+            if ($tenderCustomEmail && $tenderCustomEmail->attachment) {
+                $file[$tenderCustomEmail->attachment->originalFileName] = Helper::getFileUrlFromS3($tenderCustomEmail->attachment->path);
+            }
             $name = $tender->ranking_supplier->supplier->name;
             $company = $tender->company->CompanyName;
             $currency = $tender->currency->CurrencyName;
             $bid_submision_date = \Carbon\Carbon::parse($tender->ranking_supplier->bid_submission_master->bidSubmittedDatetime)->format('d/m/Y');
             $finalcommercialprice = $tender->ranking_supplier->bid_submission_master->line_item_total;
             $documentType = $this->getDocumentType($tender->document_type);
-            $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
+            $dataEmail['ccEmail'] = [];
+            $dataEmail['attachmentList'] = [];
+            if ($tenderCustomEmail) {
+                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . $company . '</p>';
+                $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
+            } else {
+                $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
                     <br><br> Regards,<br>$company.";
+            }
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
-            $dataEmail['alertMessage'] = "Letter of Awarding | $tender->tender_code | $tender->title";
+            $dataEmail['alertMessage'] = ($tenderCustomEmail && $tenderCustomEmail->email_subject) ? $tenderCustomEmail->email_subject : "Letter of Awarding | $tender->tender_code | $tender->title";
             $dataEmail['emailAlertMessage'] = $body;
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+
+            if (!empty($ccEmails)) {
+                $dataEmail['ccEmail'] = $ccEmails;
+            }
+
+            if (!empty($tenderCustomEmail->attachment)) {
+                $dataEmail['attachmentList'] = $file;
+            }
+
+            $sendEmail = \Email::sendEmailSRM($dataEmail);
 
             $bidSubmittedSuppliers = BidSubmissionMaster::select('supplier_registration_id')
                 ->where('tender_id', $tenderId)
@@ -4789,6 +4834,8 @@ ORDER BY
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['alertMessage'] = "$documentType Regret";
                     $dataEmail['emailAlertMessage'] = $body;
+                    $dataEmail['attachmentList'] = [];
+                    $dataEmail['ccEmail'] = [];
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                 }
             }
@@ -5065,10 +5112,13 @@ ORDER BY
 
         $companyId = $request['companyId'];
 
-        $query = TenderNegotiation::select('srm_tender_master_id','status','approved_yn','confirmed_yn','comments','started_by','no_to_approve','currencyId','id')->with(['area' => function ($query)  use ($input) {
+        $query = TenderNegotiation::select('srm_tender_master_id','status','approved_yn','confirmed_yn','comments','started_by','no_to_approve','currencyId','id')
+            ->whereHas('tenderMaster', function ($q) use ($companyId) {
+                $q->where('company_id', $companyId);
+            })->with(['area' => function ($query)  use ($input) {
             $query->select('pricing_schedule','technical_evaluation','tender_documents','id','tender_negotiation_id');
         },'tenderMaster' => function ($q) use ($input){
-            $q->select('title','description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id', 'is_negotiation_closed');
+            $q->select('title', 'uuid', 'description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id', 'is_negotiation_closed');
             $q->with(['currency' => function ($c) use ($input) {
                 $c->select('CurrencyName','currencyID','CurrencyCode');
             },'tender_type' => function ($t) {
@@ -5272,6 +5322,7 @@ ORDER BY
         }])
             ->where('is_negotiation_started',1)
             ->where('negotiation_published',1)
+            ->where('company_id',$companyId)
             ->withCount(['criteriaDetails',
                 'criteriaDetails AS go_no_go_count' => function ($query) {
                     $query->where('critera_type_id', 1);
@@ -5845,4 +5896,85 @@ ORDER BY
             return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
+
+    public function getContractTypes(CompanyValidateAPIRequest $request)
+    {
+        try
+        {
+            $input = $request->all();
+            $companySystemID = $input['companySystemId'];
+            $contractTypes = $this->tenderMasterRepository->getContractTypes($companySystemID);
+            return $contractTypes;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function createContract(CreateContractMasterAPIRequest $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->createContract($request);
+
+            if(!$data['success']) {
+                return $this->sendError($data['message']);
+            }
+            return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function viewContract(ViewContractAPIRequest $request)
+    {
+        try
+        {
+            $input = $request->all();
+            $contractUrl = $this->tenderMasterRepository->viewContract($input);
+            return $contractUrl;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function addAttachment(AddAttachmentAPIRequest $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->addAttachment($request);
+
+            if(!$data['success']) {
+                return $this->sendError($data['message']);
+            }
+            return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function deleteAttachment(DeleteAttachmentAPIRequest $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->deleteAttachment($request);
+
+            if(!$data['success']) {
+                return $this->sendError($data['message']);
+            }
+            return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
 }

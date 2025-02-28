@@ -315,7 +315,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 });
             })->when(($tenderId > 0), function ($query) use ($tenderId) {
                 $query->where('id', $tenderId);
-            })
+            })->where('company_id', $companyId)
             ->get();
 
         return $data;

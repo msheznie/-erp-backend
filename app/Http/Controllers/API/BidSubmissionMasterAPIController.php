@@ -11,6 +11,7 @@ use App\Models\DocumentAttachments;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
+use App\Models\SRMTenderTechnicalEvaluationAttachment;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderMaster;
 use App\Models\TenderNegotiationArea;
@@ -238,7 +239,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function update($id, UpdateBidSubmissionMasterAPIRequest $request)
     {
         $input = $request->all();
-        
+
             
         /** @var BidSubmissionMaster $bidSubmissionMaster */
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
@@ -258,14 +259,14 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->where('bid_master_id',$id)->where('eval_result',null)->whereHas('srm_evaluation_criteria_details',function($q){
                     $q->where('critera_type_id',2);
                 })->count();
-    
-             
                 if($evaluation > 0)
                 {
-                    return $this->sendError('Please enter the remaining user values for the technical evaluation',500);
+                    $hasExistingEvaluatedRecord = $this->bidSubmissionMasterRepository->identifyDuplicateBids($tender_id, $id);
+                    
+                    if(!$hasExistingEvaluatedRecord){
+                        return $this->sendError('Please enter the remaining user values for the technical evaluation',500);
+                    }
                 }
-
-
 
                 $input['technical_verify_by'] = \Helper::getEmployeeSystemID();
                 $input['technical_verify_at'] = Carbon::now();
@@ -431,8 +432,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $commonAttachmentExists = self::getIsExistCommonAttachment($request);  
 
-        $tender = TenderMaster::select('id','document_type')
-        ->withCount(['criteriaDetails',  
+        $tender = TenderMaster::select('id','document_type', 'uuid', 'bid_opening_end_date', 'technical_bid_closing_date')
+        ->withCount(['criteriaDetails',
          'criteriaDetails AS technical_count' => function ($query) {
             $query->where('critera_type_id', 2);
             }
@@ -471,7 +472,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $bidSubmissionMasterIds = [];
         }
 
-        $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink', 'TenderBidNegotiation.tender_negotiation_area','bidSubmissionDetail' => function($query){
+        $query = BidSubmissionMaster::with(['tender:id,document_type', 'SupplierRegistrationLink', 'TenderBidNegotiation.tender_negotiation_area', 'bidSubmissionDetail' => function($query){
                 $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
                     $query->where('id', 1);
                 });
@@ -507,8 +508,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 $query->Orwhere('bidSubmissionCode', 'LIKE', "%{$search}%");
             });
         }
-    
-        return \DataTables::eloquent($query)
+
+          $tblRecords =   \DataTables::eloquent($query)
             ->order(function ($query) use ($input,$sort) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -526,8 +527,29 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 }
             })
             ->with('orderCondition', $sort)
-            ->make(true); 
-    
+            ->make(true);
+
+        $hasEvaluationAttachment = DocumentAttachments::evaluationAttachment($companyId, $tenderId);
+        $hasEvaluationComment = SRMTenderTechnicalEvaluationAttachment::hasEvaluationComment($companyId, $tenderId);
+        if($hasEvaluationAttachment) {
+            $getFileDetails = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
+        }
+        $getEvaluationData = SRMTenderTechnicalEvaluationAttachment::getEvaluationComment($companyId, $tenderId);
+
+        $bidDate = $tender->bid_opening_end_date ?? $tender->technical_bid_closing_date;
+        $bidOpeningEndDate = Carbon::parse($bidDate);
+        $hasBidOpen = $bidOpeningEndDate->isFuture();
+
+        return [
+                'tblRecords' => $tblRecords->getData(),
+                'EvaluationData' => $getEvaluationData,
+                'hasEvaluationAttachment' => $hasEvaluationAttachment,
+                'hasEvaluationComment' => $hasEvaluationComment,
+                'hasBidOpen' => $hasBidOpen,
+                'OriginalFileName' => $getFileDetails['originalFileName'] ?? '-',
+                'OriginalFileId' => $getFileDetails['attachmentID'] ?? '-',
+                'tenderUuid' => $tender['uuid']
+                ];
     }
 
     public function updateTechnicalEvalStaus($tenderId){ 

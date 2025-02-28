@@ -101,15 +101,22 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         if (!is_null($documentAttachments->path)) {
-            $disk = ($documentAttachments->attachmentType == 11)
+
+            $disk = ($documentAttachments->attachmentType == 11 && $documentAttachments->documentSystemID == 56)
                 ? 's3SRM'
                 : Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
- 
+
             if (Storage::disk($disk)->exists($documentAttachments->path)) {
                 return Storage::disk($disk)->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
                 return $this->sendError('Attachments not found', 500);
             }
+
+          /*  if ($exists = Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->exists($documentAttachments->path)) {
+                return Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->download($documentAttachments->path, $documentAttachments->myFileName);
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }*/
         } else {
             return $this->sendError('Attachment is not attached', 404);
         }
@@ -1085,7 +1092,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
     }
     public function storeTenderDocuments(CreateDocumentAttachmentsAPIRequest $request){
         $input = $request->all();
-        $attachmentType = $input['attachmentType'];
+        $attachmentType = in_array($input['documentSystemID'], ['128', '129']) ? 0 : $input['attachmentType'];
         $attachmentDescription = $input['attachmentDescription'];
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];
@@ -1101,7 +1108,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
            return ['status' => false, 'message' => 'Description already exists'];  
         }else {
             $i = 1;
-            if($input['attachmentType'] == 3){
+            if($attachmentType == 3){
                $exitingAmendmentRecords =  DocumentAttachments::where('companySystemID',$companySystemID)
                     ->where('documentSystemID',$documentSystemID)
                     ->where('attachmentType',$attachmentType)

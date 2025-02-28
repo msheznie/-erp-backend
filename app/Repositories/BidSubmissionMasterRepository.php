@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
 use App\Models\DocumentAttachments;
 use App\Models\TenderMaster;
@@ -84,6 +85,19 @@ class BidSubmissionMasterRepository extends BaseRepository
         }
         catch (\Exception $exception) {
             DB::rollBack(); 
+            return ['status' => false, 'message' => $exception->getMessage()];
+        }
+    }
+
+    public function identifyDuplicateBids($tenderId, $id) {
+        try {
+        $detailResult = BidSubmissionDetail::getBidSubmissionDetails($tenderId, $id);
+
+        if($detailResult){
+          return BidSubmissionDetail::hasExistingEvaluatedRecord($tenderId, $id, $detailResult->evaluation_detail_id);
+        }
+            return false;
+        } catch (\Exception $exception) {
             return ['status' => false, 'message' => $exception->getMessage()];
         }
     }

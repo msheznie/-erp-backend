@@ -377,7 +377,6 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     $isBidTender =  (!is_null($val['supplierAssigned']['registrationNumber'])) ? 0 : 1;
 
                     $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
-                        ->where('company_id', $companyId)
                         ->where('email', $email)
                         ->where('registration_number', $regNo)
                         ->orderBy("id", "desc")
@@ -512,28 +511,40 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
     {
         $docType = 'Tender';
         $emailFormatted = email::emailAddressFormat($email);
-        $tenderMaster = TenderMaster::select('title','description')
+        $tenderMaster = TenderMaster::select('title','description', 'document_type')
             ->where('id', $tenderId)
             ->where('company_id', $companySystemId)
             ->first();
         if($rfx){
-            $docType = 'RFX';
+            $defaultDocType = 'RFX';
+            switch ($tenderMaster->document_type) {
+                case 1:
+                    $docType = 'RFQ';
+                    break;
+                case 2:
+                    $docType = 'RFI';
+                    break;
+                case 3:
+                    $docType = 'RFP';
+                    break;
+            }
         }
 
         $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
 
         $file = array();
 
-        $alertMessage = 'Registration Link';
+        $alertMessage = "Invitation for ".$docType." ";
         $body = '';
 
         if ($type == 1) {
             if($rfx){
+                $alertMessage = "Invitation for ".$defaultDocType." ";
                 $body = "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
             Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
             }else{
-                $alertMessage = " ".$docType." Invitation link";
+                $alertMessage = "Invitation for ".$docType." ";
                 $body = "Dear Supplier," . "<br /><br />" . "
             I trust this message finds you well." . "<br /><br />" . "
             We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "

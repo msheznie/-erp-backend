@@ -22,6 +22,8 @@ use App\Models\CurrencyMaster;
 use Carbon\Carbon;
 use Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class TenderNegotiationController extends AppBaseController
 {
@@ -482,6 +484,20 @@ class TenderNegotiationController extends AppBaseController
         ];
         return $data;
 
+    }
+
+    public function getNegotiationStartedSupplierList(Request $request){
+    try {
+        $validatedData = $request->validate([
+            'negotiationId' => 'required|integer',
+            'tenderUuid' => 'required',
+        ]);
+
+        $result =  $this->supplierTenderNegotiationRepository->getSupplierList($validatedData['negotiationId'], $validatedData['tenderUuid']);
+        return $this->sendResponse($result,'Received supplier List');
+        } catch (\Exception $e) {
+            return $this->sendError('Error occurred');
+        }
     }
 }
 

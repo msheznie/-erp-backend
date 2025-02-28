@@ -647,4 +647,44 @@ class email
 
         return $email;
     }
+
+    public static function sendEmailSRM($data)
+    {
+        $color = '#C23C32';
+        $colorObj= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 1)->first();
+        if($colorObj)
+        {
+            $color = $colorObj->value;
+        }
+
+        $text = 'GEARS';
+        $textObj= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 7)->first();
+        if($textObj)
+        {
+            $text = $textObj->value;
+        }
+
+        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+
+        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
+            ->where('companyPolicyCategoryID', 37)
+            ->where('isYesNO', 1)
+            ->exists();
+        if ($hasPolicy) {
+            $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
+            $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
+            if (isset($data['empEmail']) && $data['empEmail']) {
+                $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
+                if ($data['empEmail']) {
+                    Mail::to($data['empEmail'])
+                        ->cc(isset($data['ccEmail']) ? $data['ccEmail'] : [])
+                        ->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
+                }
+            }
+        } else {
+            Alert::create($data);
+        }
+
+        return ['success' => true, 'message' => 'Successfully Inserted'];
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Schema(
@@ -99,8 +100,32 @@ class SupplierTenderNegotiation extends Model
         return $this->belongsTo('App\Models\SupplierRegistrationLink', 'suppliermaster_id', 'id');
     }
 
+    public function supplierCustomEmail()
+    {
+        return $this->belongsTo('App\Models\TenderCustomEmail', 'suppliermaster_id', 'supplier_id');
+    }
+
     public function SrmTenderBidNegotiation() {
         return $this->belongsTo('App\Models\TenderBidNegotiation', 'srm_bid_submission_master_id', 'bid_submission_master_id_old');
     }
-    
+
+    public static function getSupplierList($negotiationId, $tenderId)
+    {
+        $suppliers = SupplierTenderNegotiation::select('id', 'suppliermaster_id')->where('tender_negotiation_id', $negotiationId)
+            ->whereDoesntHave('supplierCustomEmail', function ($query) use ($tenderId) {
+                $query->where('tender_id', $tenderId);
+            })
+            ->with(['supplier' => function ($query) {
+                $query->select('id','uuid', 'name');
+            }])
+            ->get()
+            ->pluck('supplier');
+
+        return $suppliers->map(function ($supplier) {
+            return [
+                'id' => $supplier->uuid,
+                'name' => $supplier->name
+            ];
+        });
+    }
 }

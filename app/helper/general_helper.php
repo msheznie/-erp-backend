@@ -195,11 +195,11 @@ class Helper
         }
 
         $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
-                         ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
-                         ->whereIN('serviceline.companySystemID', $companiesByGroup)
-                         ->where('serviceline.isFinalLevel', 1)
-                         ->where('serviceline.isDeleted', 0)
-                        ->get();
+            ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
+            ->whereIN('serviceline.companySystemID', $companiesByGroup)
+            ->where('serviceline.isFinalLevel', 1)
+            ->where('serviceline.isDeleted', 0)
+            ->get();
         return $serviceline;
     }
 
@@ -235,13 +235,13 @@ class Helper
     public static function getGroupCompany($selectedCompanyId, $excludeSameCompany = false)
     {
         $companiesByGroup = Models\Company::with(['child' => function($q) use($selectedCompanyId,$excludeSameCompany){
-                    if($excludeSameCompany){
-                        $q->where("companySystemID",'!=', $selectedCompanyId);
-                    }
-            }])
+            if($excludeSameCompany){
+                $q->where("companySystemID",'!=', $selectedCompanyId);
+            }
+        }])
             ->where("masterCompanySystemIDReorting", $selectedCompanyId)
             ->get();
-        
+
         $groupCompany = [];
         if ($companiesByGroup) {
             foreach ($companiesByGroup as $val) {
@@ -2376,6 +2376,7 @@ class Helper
                             if ($input["documentSystemID"] == 22) {
                                 $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"], $database);
                             }
+                            //
 
                         } else {
                             // update roll level in master table
@@ -3199,7 +3200,7 @@ class Helper
                         }
                     }
                 }
-             
+
                 //validate currency
                 if (in_array($params["document"], self::documentListForValidateCurrency())) {
                     $currencyValidate = CurrencyValidation::validateCurrency($params["document"], $masterRec);
@@ -3222,7 +3223,7 @@ class Helper
                 {
                     $reference_document_id = $params['reference_document_id'];
                 }
-                
+
                 //checking whether document approved table has a data for the same document
                 $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
 
@@ -3281,54 +3282,55 @@ class Helper
                             } else {
                                 return ['success' => false, 'message' => 'Policy not available for this document.'];
                             }
-                        
+
+
 
                             // get approval rolls
                             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
 
-                                if ($isSegmentWise) {
-                                    if (array_key_exists('segment', $params)) {
+                            if ($isSegmentWise) {
+                                if (array_key_exists('segment', $params)) {
 
-                                        if ($params["segment"]) {
-                                            $approvalLevel->where('serviceLineSystemID', $params["segment"]);
-                                            $approvalLevel->where('serviceLineWise', 1);
-                                        } else {
-                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
-                                        }
+                                    if ($params["segment"]) {
+                                        $approvalLevel->where('serviceLineSystemID', $params["segment"]);
+                                        $approvalLevel->where('serviceLineWise', 1);
                                     } else {
-                                        return ['success' => false, 'message' => 'Serviceline parameters are missing'];
+                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
                                     }
+                                } else {
+                                    return ['success' => false, 'message' => 'Serviceline parameters are missing'];
                                 }
+                            }
 
-                                if ($isCategoryWise) {
-                                    if (array_key_exists('category', $params)) {
-                                        if ($params["category"]) {
-                                            $approvalLevel->where('categoryID', $params["category"]);
-                                            $approvalLevel->where('isCategoryWiseApproval', -1);
-                                        } else {
-                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
-                                        }
+                            if ($isCategoryWise) {
+                                if (array_key_exists('category', $params)) {
+                                    if ($params["category"]) {
+                                        $approvalLevel->where('categoryID', $params["category"]);
+                                        $approvalLevel->where('isCategoryWiseApproval', -1);
                                     } else {
-                                        return ['success' => false, 'message' => 'Category parameter are missing'];
+                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
                                     }
+                                } else {
+                                    return ['success' => false, 'message' => 'Category parameter are missing'];
                                 }
+                            }
 
-                                if ($isValueWise) {
-                                    if (array_key_exists('amount', $params)) {
-                                        if ($params["amount"] >= 0) {
-                                            $amount = $params["amount"];
-                                            $approvalLevel->where(function ($query) use ($amount) {
-                                                $query->where('valueFrom', '<=', $amount);
-                                                $query->where('valueTo', '>=', $amount);
-                                            });
-                                            $approvalLevel->where('valueWise', 1);
-                                        } else {
-                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
-                                        }
+                            if ($isValueWise) {
+                                if (array_key_exists('amount', $params)) {
+                                    if ($params["amount"] >= 0) {
+                                        $amount = $params["amount"];
+                                        $approvalLevel->where(function ($query) use ($amount) {
+                                            $query->where('valueFrom', '<=', $amount);
+                                            $query->where('valueTo', '>=', $amount);
+                                        });
+                                        $approvalLevel->where('valueWise', 1);
                                     } else {
-                                        return ['success' => false, 'message' => 'Amount parameter are missing'];
+                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
                                     }
+                                } else {
+                                    return ['success' => false, 'message' => 'Amount parameter are missing'];
                                 }
+                            }
 
 
                             $output = $approvalLevel->first();
@@ -3862,7 +3864,7 @@ class Helper
 
         //break this function for the requirment of GCP-515
         return ['success' => true, 'message' => '', 'type' => 5];
-        
+
         $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
 
         if ($approvalLevel) {
@@ -3910,7 +3912,7 @@ class Helper
      */
     public static function approveDocument($input)
     {
-        
+
         $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
 
         $dataBase = (isset($input['db'])) ? $input['db'] : "";
@@ -3977,7 +3979,7 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmedEmpSystemID";
                 break;
             case 2:
- 
+
             case 5:
             case 52:
                 $docInforArr["tableName"] = 'erp_purchaseordermaster';
@@ -4474,7 +4476,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 break;
-             case 69: // Console Journal Voucher
+            case 69: // Console Journal Voucher
                 $docInforArr["tableName"] = 'erp_consolejvmaster';
                 $docInforArr["modelName"] = 'ConsoleJVMaster';
                 $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
@@ -4553,7 +4555,7 @@ class Helper
                     $reference_document_id = $input['reference_document_id'];
                 }
 
-                    
+
                 // get current employee detail
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     $empInfo = UserTypeService::getSystemEmployee();
@@ -4674,7 +4676,7 @@ class Helper
                 if ($docApproved->rejectedYN == -1) {
                     return ['success' => false, 'message' => 'Level is already rejected'];
                 }
-              
+
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
@@ -4877,7 +4879,7 @@ class Helper
                                 $resRrvShedule = CreateRecurringVoucherSetupSchedules::dispatch($input['documentSystemCode'],$dataBase);
                             }
 
-                                // create monthly deduction
+                            // create monthly deduction
                             if (
                                 $input["documentSystemID"] == 4 &&
                                 $input['createMonthlyDeduction'] == 1 &&
@@ -4929,7 +4931,7 @@ class Helper
                                     return ['success' => false, 'message' => 'GL entries are already passed for this document'];
                                 }
                             }
-                           
+
 
                             if ($input["documentSystemID"] == 103) { // Asset Transfer
                                 $generatePR = AssetTransferService::generatePRForAssetTransfer($input);
@@ -4952,38 +4954,38 @@ class Helper
                                                 DB::rollback();
                                                 return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already selected for disposal'];
                                             }
-    
+
                                             if($fxedAsset->DIPOSED) {
                                                 DB::rollback();
                                                 return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already disposed'];
                                             }
-    
+
                                             if($input['type'] == 2) {
                                                 $fxedAsset->LOCATION = $assetTransferDetailItem->to_location_id;
                                             }
 
                                             if($input['type'] == 3) {
-                                                    $fxedAsset->empID = $assetTransferDetailItem->to_emp_id;
+                                                $fxedAsset->empID = $assetTransferDetailItem->to_emp_id;
                                             }
 
                                             if($input['type'] == 4 || $input['type'] == 3) {
-                                                    $assetTransferDetailItem->receivedYN = 1;
-                                                    $assetTransferDetailItem->save();
+                                                $assetTransferDetailItem->receivedYN = 1;
+                                                $assetTransferDetailItem->save();
                                             }
-                                            
+
                                             if($input['type'] == 1) {
-                                                    $fxedAsset->empID = ($assetTransferDetailItem->assetRequestMaster) ? $assetTransferDetailItem->assetRequestMaster->emp_id : null;
-                                                    $assetTransferDetailItem->to_emp_id = ($assetTransferDetailItem->assetRequestMaster) ? $assetTransferDetailItem->assetRequestMaster->emp_id : null;
-                                                    $assetTransferDetailItem->save();
+                                                $fxedAsset->empID = ($assetTransferDetailItem->assetRequestMaster) ? $assetTransferDetailItem->assetRequestMaster->emp_id : null;
+                                                $assetTransferDetailItem->to_emp_id = ($assetTransferDetailItem->assetRequestMaster) ? $assetTransferDetailItem->assetRequestMaster->emp_id : null;
+                                                $assetTransferDetailItem->save();
                                             }
-                                            
-                                            if($input['type'] == 4 && isset($assetTransferDetailItem->department)) {                                        
+
+                                            if($input['type'] == 4 && isset($assetTransferDetailItem->department)) {
                                                 $fxedAsset->departmentSystemID = $assetTransferDetailItem->department->departmentSystemID;
                                                 $fxedAsset->departmentID = $assetTransferDetailItem->department->DepartmentID;
                                             }
-    
+
                                             $fxedAsset->save();
-                                        }                                  
+                                        }
 
                                     }
                                 }
@@ -5271,16 +5273,16 @@ class Helper
 
                                 $suppiler_info = SupplierRegistrationLink::where('id', '=', $docApproved->documentSystemCode)->first();
 
-                             $updatedUserEmail = SRMSupplierValues::select('id','user_name','company_id','supplier_id')
-                                ->where('company_id', $docApproved->companySystemID)
-                                ->where('supplier_id', $docApproved->documentSystemCode)
-                                ->first();
+                                $updatedUserEmail = SRMSupplierValues::select('id','user_name','company_id','supplier_id')
+                                    ->where('company_id', $docApproved->companySystemID)
+                                    ->where('supplier_id', $docApproved->documentSystemCode)
+                                    ->first();
 
-                             $docApproved->reference_email = $updatedUserEmail['user_name'];
+                                $docApproved->reference_email = $updatedUserEmail['user_name'];
 
-                              Models\DocumentApproved::where('documentSystemID',107)
-                                  ->where('documentSystemCode',$docApproved->documentSystemCode)
-                                  ->update(['reference_email' => $docApproved->reference_email]);
+                                Models\DocumentApproved::where('documentSystemID',107)
+                                    ->where('documentSystemCode',$docApproved->documentSystemCode)
+                                    ->update(['reference_email' => $docApproved->reference_email]);
 
                                 if (isset($suppiler_info) && isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
 
@@ -5293,31 +5295,31 @@ class Helper
                                 }
                             }
 
-                                if ($input["documentSystemID"] == 127) {
+                            if ($input["documentSystemID"] == 127) {
 
-                                    if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
+                                if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
 
-                                        $supplierName = $input["supplierName"];
-                                        $tenderCode = $input["tenderCode"];
-                                        $tenderTitle = $input["tenderTitle"];
-                                        $comment = $input["approvedComments"];
+                                    $supplierName = $input["supplierName"];
+                                    $tenderCode = $input["tenderCode"];
+                                    $tenderTitle = $input["tenderTitle"];
+                                    $comment = $input["approvedComments"];
 
-                                        $temp = "<p>Dear {$supplierName},</p>
+                                    $temp = "<p>Dear {$supplierName},</p>
                                     <p>The document attached for the tender purchase is reviewed and approved. Please find the comments provided for the document attached to the tender 
                                     <strong>{$tenderCode}</strong>, <strong>{$tenderTitle}</strong>.</p>
                                     <p><strong>Comment:</strong><br />{$comment}</p>
                                     <p>Kindly submit the bid before the bid submission closing date.</p>
                                     <p>Regards,</p>";
 
-                                        $dataEmail['empEmail'] = $docApproved->reference_email;
-                                        $dataEmail['companySystemID'] = $docApproved->companySystemID;
+                                    $dataEmail['empEmail'] = $docApproved->reference_email;
+                                    $dataEmail['companySystemID'] = $docApproved->companySystemID;
 
-                                        $dataEmail['alertMessage'] = "Payment Proof Document Approved";
-                                        $dataEmail['emailAlertMessage'] = $temp;
-                                        $sendEmail = \Email::sendEmailErp($dataEmail);
-                                    }
-
+                                    $dataEmail['alertMessage'] = "Payment Proof Document Approved";
+                                    $dataEmail['emailAlertMessage'] = $temp;
+                                    $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
+
+                            }
 
                             if ($input["documentSystemID"] == 106) {
 
@@ -5342,48 +5344,48 @@ class Helper
 
                                 }
                             }
-                            
-                        
-                                if ($input["documentSystemID"] == 118) {
-                           
+
+
+                            if ($input["documentSystemID"] == 118) {
+
                                 $tenderObj = TenderDetails::getTenderMasterData($input['id']);
                                 $documentModify = DocumentModifyRequest::select('id','type','requested_document_master_id')->where('id',$tenderObj->tender_edit_version_id)->first();
                                 $circulars = TenderCirculars::select('id','description','status','circular_name')->where('tender_id', $input['id'])->where('status',0)->get();
 
                                 if ($circulars && isset($documentModify)) {
-                                        $companyName = "";
-                                        $company = Company::find($docApproved->companySystemID);
-                                        if(isset($company->CompanyName)){
-                                            $companyName =  $company->CompanyName;
-                                        }
-                                        foreach($circulars as $circular)
-                                        {
-                                            $updateData = [
-                                                'updated_by' => $empInfo->employeeSystemID,
-                                                'status' => 1
-                                            ];
+                                    $companyName = "";
+                                    $company = Company::find($docApproved->companySystemID);
+                                    if(isset($company->CompanyName)){
+                                        $companyName =  $company->CompanyName;
+                                    }
+                                    foreach($circulars as $circular)
+                                    {
+                                        $updateData = [
+                                            'updated_by' => $empInfo->employeeSystemID,
+                                            'status' => 1
+                                        ];
 
-                                            $result = TenderCirculars::where('id', $circular['id'])->update($updateData);
-                                            if ($result) {
-                                                if($tenderObj->document_system_id == 113 ||
-                                                    ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id!=1)){
+                                        $result = TenderCirculars::where('id', $circular['id'])->update($updateData);
+                                        if ($result) {
+                                            if($tenderObj->document_system_id == 113 ||
+                                                ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id!=1)){
 
-                                                    $supplierList = self::getTenderCircularSupplierList($tenderObj, $circular['id'], $input['id'], $docApproved->companySystemID);
+                                                $supplierList = self::getTenderCircularSupplierList($tenderObj, $circular['id'], $input['id'], $docApproved->companySystemID);
 
-                                                    $amendmentsList = CircularAmendments::select('id','amendment_id')
-                                                        ->with('document_attachments')
-                                                        ->where('circular_id', $circular['id'])
-                                                        ->get();
+                                                $amendmentsList = CircularAmendments::select('id','amendment_id')
+                                                    ->with('document_attachments')
+                                                    ->where('circular_id', $circular['id'])
+                                                    ->get();
 
-                                                    $circularAttachments = self::getCircularAttachments($amendmentsList);
-                                                    if($supplierList){
-                                                        self::sendCircularEmailToSuppliers($supplierList, $circular, $docApproved->companySystemID, $circularAttachments, $companyName, $tenderObj);
-                                                    }
+                                                $circularAttachments = self::getCircularAttachments($amendmentsList);
+                                                if($supplierList){
+                                                    self::sendCircularEmailToSuppliers($supplierList, $circular, $docApproved->companySystemID, $circularAttachments, $companyName, $tenderObj);
                                                 }
-                                            }else {
-                                                return ['success' => false, 'message' => 'Published failed'];
                                             }
+                                        }else {
+                                            return ['success' => false, 'message' => 'Published failed'];
                                         }
+                                    }
                                 }
                             }
 
@@ -5404,7 +5406,7 @@ class Helper
                                         $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 }
-                                
+
                                 if ($input["documentSystemID"] == 3) {
                                     $sourceData = $namespacedModel::find($input["documentSystemCode"]);
                                     $masterData['supplierID'] = $sourceData->supplierID;
@@ -5447,7 +5449,7 @@ class Helper
                                 $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                             }
                         }
-                        
+
 
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
@@ -5634,7 +5636,7 @@ class Helper
                         }
 
                         if ($input['documentSystemID'] == 2) {
-                             Log::info('approvedDocument function called in side general helper');
+                            Log::info('approvedDocument function called in side general helper');
                             SendEmailForDocument::approvedDocument($input);
                         }
 
@@ -5726,27 +5728,27 @@ class Helper
         $srDetails = SalesReturnDetail::where('salesReturnID', $id)->get();
         $checkSR = SalesReturn::find($id);
         if($checkSR->returnType == 1) {
-        foreach ($srDetails as $value) {
-            $deliveryOrderData = DeliveryOrderDetail::find($value->deliveryOrderDetailID);
+            foreach ($srDetails as $value) {
+                $deliveryOrderData = DeliveryOrderDetail::find($value->deliveryOrderDetailID);
 
-            $checkDO = DeliveryOrder::find($deliveryOrderData->deliveryOrderID);
+                $checkDO = DeliveryOrder::find($deliveryOrderData->deliveryOrderID);
 
-            if($checkDO->orderType != 1) {
+                if($checkDO->orderType != 1) {
 
-                $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
+                    $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
 
-                $returnQty = isset($deliveryOrderData->returnQty) ? $deliveryOrderData->returnQty : 0;
-                $qtyIssuedDefault = isset($deliveryOrderData->qtyIssuedDefaultMeasure) ? $deliveryOrderData->qtyIssuedDefaultMeasure : 0;
-                $doQty = $qtyIssuedDefault - $returnQty;
+                    $returnQty = isset($deliveryOrderData->returnQty) ? $deliveryOrderData->returnQty : 0;
+                    $qtyIssuedDefault = isset($deliveryOrderData->qtyIssuedDefaultMeasure) ? $deliveryOrderData->qtyIssuedDefaultMeasure : 0;
+                    $doQty = $qtyIssuedDefault - $returnQty;
 
-                $deliveryOrderData->update(['approvedReturnQty' => $returnQty]);
+                    $deliveryOrderData->update(['approvedReturnQty' => $returnQty]);
 
-                $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
-                    ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
+                    $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
+                        ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
+                }
+
             }
-
         }
-    }
         return ['success' => true];
     }
 
@@ -6232,7 +6234,7 @@ class Helper
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                     break;
-                 case 69: // Console Journal Voucher
+                case 69: // Console Journal Voucher
                     $docInforArr["tableName"] = 'erp_consolejvmaster';
                     $docInforArr["modelName"] = 'ConsoleJVMaster';
                     $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
@@ -6283,40 +6285,40 @@ class Helper
                 {
                     $reference_document_id = $input['reference_document_id'];
                 }
-                
-                $empInfo = self::getEmployeeInfo(); 
+
+                $empInfo = self::getEmployeeInfo();
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $docModal = $namespacedModel::find($input["documentSystemCode"]);
 
                 $policyConfirmedUserToApprove = '';
 
                 $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
-                                            ->when(in_array($input["documentSystemID"], [56, 57, 58, 59]), function($query) use ($docModal){
-                                                $query->where('companySystemID', $docModal['primaryCompanySystemID']);
-                                            })
-                                            ->when(!in_array($input["documentSystemID"], [56, 57, 58, 59]), function($query) use ($docModal){
-                                                $query->where('companySystemID', $docModal['companySystemID']);
-                                            })
-                                            ->first();
+                    ->when(in_array($input["documentSystemID"], [56, 57, 58, 59]), function($query) use ($docModal){
+                        $query->where('companySystemID', $docModal['primaryCompanySystemID']);
+                    })
+                    ->when(!in_array($input["documentSystemID"], [56, 57, 58, 59]), function($query) use ($docModal){
+                        $query->where('companySystemID', $docModal['companySystemID']);
+                    })
+                    ->first();
 
 
-         
+
 
                 $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApprove->companySystemID)
-                ->where('documentSystemID', $reference_document_id)
-                ->first();
+                    ->where('documentSystemID', $reference_document_id)
+                    ->first();
 
-                    if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found.'];
-                    }
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found.'];
+                }
 
 
                 $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApprove->approvalGroupID)
-                ->where('companySystemID', $docApprove->companySystemID)
-                ->where('employeeSystemID', $empInfo->employeeSystemID)
-                ->where('documentSystemID', $reference_document_id)
-                ->where('isActive', 1)
-                ->where('removedYN', 0);
+                    ->where('companySystemID', $docApprove->companySystemID)
+                    ->where('employeeSystemID', $empInfo->employeeSystemID)
+                    ->where('documentSystemID', $reference_document_id)
+                    ->where('isActive', 1)
+                    ->where('removedYN', 0);
 
                 if ($companyDocument['isServiceLineApproval'] == -1) {
                     $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->where('ServiceLineSystemID', $docApprove->serviceLineSystemID);
@@ -6332,10 +6334,10 @@ class Helper
                 if (!$checkUserHasApprovalAccess) {
                     if (($input["documentSystemID"] == 9 && ($docModal && $docModal->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
                         return ['success' => false, 'message' => 'You do not have access to reject this document.'];
-                    } 
+                    }
                 }
 
-                
+
                 if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($docModal[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
                         return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
@@ -6346,10 +6348,10 @@ class Helper
                 $isRejected = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('rejectedYN', -1)->first();
                 if (!$isRejected) {
                     $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
-                    
+
                     if ($approvalLevel) {
                         // get current employee detail
-                       
+
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
@@ -6396,7 +6398,7 @@ class Helper
                                 $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
                             }
 
-                          
+
 
                             if($input["documentSystemID"] == 56 )
                             {
@@ -6410,7 +6412,7 @@ class Helper
                             }
                             else if(!empty($input["document_system_id"]) && $input["document_system_id"] == 108)
                             {
-                                    $subjectName = 'Tender ' . $currentApproved->documentCode;
+                                $subjectName = 'Tender ' . $currentApproved->documentCode;
                             }
                             else
                             {
@@ -6579,7 +6581,7 @@ class Helper
                                 $sendEmail = email::sendEmail($emails);
                             }
 
-                            
+
                             if (!$sendEmail["success"]) {
                                 return ['success' => false, 'message' => $sendEmail["message"]];
                             }
@@ -6611,11 +6613,11 @@ class Helper
     public static function getEmployeeInfo()
     {
         $user = Models\User::find(Auth::id());
-        
-        if(empty($user)){ 
+
+        if(empty($user)){
             return  new \stdClass();
         }
-        
+
         $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
             $query->select('uuid', 'employee_id');
         },'language' => function ($q) {
@@ -7205,13 +7207,13 @@ class Helper
                         if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
                             $reportingAmount = $transactionAmount / $trasToRptER;
                         } else {
-                            $reportingAmount = 0; 
+                            $reportingAmount = 0;
                         }
                     } else {
                         if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
                             $reportingAmount = $transactionAmount * $trasToRptER;
                         } else {
-                            $reportingAmount = 0; 
+                            $reportingAmount = 0;
                         }
                     }
                 } else {
@@ -7219,13 +7221,13 @@ class Helper
                         if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
                             $reportingAmount = $transactionAmount * $trasToRptER;
                         } else {
-                            $reportingAmount = 0; 
+                            $reportingAmount = 0;
                         }
                     } else {
                         if (is_numeric($transactionAmount) && is_numeric($trasToRptER)) {
                             $reportingAmount = $transactionAmount / $trasToRptER;
                         } else {
-                            $reportingAmount = 0; 
+                            $reportingAmount = 0;
                         }
                     }
                 }
@@ -8311,7 +8313,7 @@ class Helper
             } else {
                 $employeeData = Employee::find($custReceivePayment->PayeeEmpID);
 
-                $data['payeeName'] = $employeeData ? $employeeData->empName: $custReceivePayment->PayeeName;                                    
+                $data['payeeName'] = $employeeData ? $employeeData->empName: $custReceivePayment->PayeeName;
             }
 
             $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
@@ -8450,7 +8452,7 @@ class Helper
                             }
                         }
                         $budgetConsume = Models\BudgetConsumedData::insert($budgetConsumeData);
-                    } 
+                    }
                 }
                 break;
             case 4:
@@ -9133,14 +9135,13 @@ class Helper
                     }
                     break;
                 case 6:
-                    $output = Models\ExpenseClaimDetailsMaster::where('expenseClaimMasterAutoID', $documentSystemCode)
+                    $output = Models\ExpenseClaimDetails::where('expenseClaimMasterAutoID', $documentSystemCode)
                         ->whereHas('master', function ($query) use ($companySystemID, $documentSystemID) {
                             $query->where('companySystemID', $companySystemID)
                                 ->where('documentSystemID', $documentSystemID);
                         })
                         ->with(['master', 'segment', 'category', 'currency', 'local_currency'])
                         ->get();
-
                     break;
                 case 28:
                     $output = Models\MonthlyAdditionDetail::where('monthlyAdditionsMasterID', $documentSystemCode)
@@ -9476,12 +9477,12 @@ class Helper
             return $sumAmount ;
         }
 
-        
+
     }
 
 
     public static function rowTotalOfReportTemplate($companyHeaderData, $columns, $data)
-    {   
+    {
         $total = 0;
 
         foreach ($companyHeaderData as $key1 => $company) {
@@ -9501,7 +9502,7 @@ class Helper
     }
 
     public static function rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $data)
-    {   
+    {
         $total = 0;
 
         foreach ($companyHeaderData as $key1 => $company) {
@@ -9521,7 +9522,7 @@ class Helper
     }
 
     public static function rowTotalOfReportTemplateGrandTotal($companyHeaderData, $columns, $data)
-    {   
+    {
         $total = 0;
 
         foreach ($companyHeaderData as $key1 => $company) {
@@ -9542,7 +9543,7 @@ class Helper
     }
 
     public static function grandTotalValueOfReportTemplate($code, $column, $data)
-    {   
+    {
         $value = 0;
         if (isset($data[$code])) {
             $value = $data[$code]->$column;
@@ -9574,43 +9575,43 @@ class Helper
 
 
     public static function updateSupplierRetentionAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
-    { 
+    {
         $directItems = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
-        ->with(['segment', 'purchase_order'])
-        ->get();
+            ->with(['segment', 'purchase_order'])
+            ->get();
 
 
-        
+
         $invDetailItems = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
-        ->with(['grvmaster', 'pomaster'])
-        ->get();
+            ->with(['grvmaster', 'pomaster'])
+            ->get();
 
 
         $supplierItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
-        ->with(['unit' => function ($query) {
-        }, 'vat_sub_category'])->get();
+            ->with(['unit' => function ($query) {
+            }, 'vat_sub_category'])->get();
 
         if(count($supplierItems) == 0) {
             $supplierItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
-            ->with(['unit' => function ($query) {
-            }, 'vat_sub_category'])->get();
+                ->with(['unit' => function ($query) {
+                }, 'vat_sub_category'])->get();
         }
 
-         $tot = 0;
-         $vatTot = 0;
-         $totalNet = 0;
+        $tot = 0;
+        $vatTot = 0;
+        $totalNet = 0;
         for ($i = 0; $i < count($directItems); $i++) {
-          $tot += doubleval($directItems[$i]->DIAmount);
-          $vatTot += doubleval($directItems[$i]->VATAmount);
+            $tot += doubleval($directItems[$i]->DIAmount);
+            $vatTot += doubleval($directItems[$i]->VATAmount);
         }
 
         for ($i = 0; $i < count($invDetailItems); $i++) {
-          $tot += doubleval($invDetailItems[$i]->supplierInvoAmount);
+            $tot += doubleval($invDetailItems[$i]->supplierInvoAmount);
         }
-    
+
         for ($i = 0; $i < count($supplierItems); $i++) {
-          $tot += doubleval($supplierItems[$i]->netAmount);
-          $vatTot += doubleval($supplierItems[$i]->VATAmount) * doubleval($supplierItems[$i]->noQty);
+            $tot += doubleval($supplierItems[$i]->netAmount);
+            $vatTot += doubleval($supplierItems[$i]->VATAmount) * doubleval($supplierItems[$i]->noQty);
         }
 
         $totalVat = $bookInvSuppMaster->rcmActivated ? 0 : $vatTot;
@@ -9621,7 +9622,7 @@ class Helper
         if ($currency) {
             $decimalPlaces = $currency->DecimalPlaces;
         }
-        
+
         $retentionAmountToFixed = round($retentionAmount,$decimalPlaces);
         $bookInvSuppMaster->retentionAmount = $retentionAmountToFixed;
         $bookInvSuppMaster->save();
@@ -9630,11 +9631,11 @@ class Helper
 
     public static function checkBlockSuppliers($date,$supplier_id)
     {
-       $isValidate = true;
+        $isValidate = true;
 
-       $isPermenentExist = SupplierBlock::where('supplierCodeSytem',$supplier_id)->where('blockType',1)->exists();
-       $isPeriodExist = SupplierBlock::where('supplierCodeSytem',$supplier_id)->where('blockType',2)->exists();
-       $type = $isPermenentExist ? 1 : ($isPeriodExist ? 2 : 0);
+        $isPermenentExist = SupplierBlock::where('supplierCodeSytem',$supplier_id)->where('blockType',1)->exists();
+        $isPeriodExist = SupplierBlock::where('supplierCodeSytem',$supplier_id)->where('blockType',2)->exists();
+        $type = $isPermenentExist ? 1 : ($isPeriodExist ? 2 : 0);
 
         if($type == 1)
         {
@@ -9646,10 +9647,10 @@ class Helper
             $date =  ((new Carbon(($date)))->format('Y-m-d'));
             $check_date = Carbon::parse($date);
 
-            
+
             $withinDateRanges = SupplierBlock::where('supplierCodeSytem',$supplier_id)->where('blockType',2)->where('blockFrom', '<=', $check_date)
-                                ->where('blockTo', '>=', $check_date)
-                                ->exists();
+                ->where('blockTo', '>=', $check_date)
+                ->exists();
 
 
             if ($withinDateRanges) {
@@ -9660,7 +9661,7 @@ class Helper
         }
         if(!$isValidate)
         {
-            
+
             return ['success' => false, 'message' => 'The selected supplier has been blocked. Please change the supplier to proceed.'];
         }
 
@@ -9670,10 +9671,10 @@ class Helper
 
 
     public static function getDocumentModifyRequestDetails($autoID)
-    { 
+    {
         $doucumentModifyComment = DocumentModifyRequest::select('description')
-        ->where('id',$autoID)
-        ->first();
+            ->where('id',$autoID)
+            ->first();
 
         return $doucumentModifyComment;
     }
@@ -9710,8 +9711,8 @@ class Helper
 
     public static function getSupplierRegDomain($id){
         $supplierReg =  SupplierRegistrationLink::select('sub_domain')
-                ->where('id',$id)
-                ->first();
+            ->where('id',$id)
+            ->first();
 
         return $supplierReg['sub_domain'];
 
@@ -9754,7 +9755,7 @@ class Helper
         return TenderSupplierAssignee::select('id','tender_master_id','supplier_assigned_id','mail_sent')
             ->with(['supplierAssigned'=> function ($q) use ($companyId){
                 $q->select('supplierAssignedID','companySystemID','supEmail','companySystemID')
-                ->where('companySystemID',$companyId);
+                    ->where('companySystemID',$companyId);
             }])
             ->where('mail_sent',1)
             ->where('tender_master_id',$tenderId)
@@ -9797,24 +9798,24 @@ class Helper
 
 
     public static function updateSupplierWhtAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
-    { 
-        
+    {
+
         $bookInvSuppMaster = BookInvSuppMaster::with(['supplier' => function($query){
             $query->with('tax');
-          }])->find($bookingSuppMasInvAutoID);
+        }])->find($bookingSuppMasInvAutoID);
 
-         $percentage = 0;
-         if(isset($bookInvSuppMaster->supplier->tax))
-         {
+        $percentage = 0;
+        if(isset($bookInvSuppMaster->supplier->tax))
+        {
             $percentage = $bookInvSuppMaster->supplier->tax->whtPercentage;
-         } 
+        }
         if($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2)
         {
             $isWHTApplicableSupplier = $bookInvSuppMaster->supplier->whtApplicableYN == 1?true:false;
             if( $bookInvSuppMaster->supplier->whtApplicableYN == 1)
-              {       
+            {
                 $isWHTApplicableSupplier = $bookInvSuppMaster->whtApplicableYN == 1?true:false;
-              }
+            }
             $isDetailVat = false;
             $WhtTotalAmount = 0 ;
             $isGrvApplicable = false;
@@ -9823,102 +9824,102 @@ class Helper
             $rcmActive = false;
             $whtTrue = true;
             $items = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
-                        ->with(['grvmaster' => function($q){
-                            $q->with('details');
-                        }, 'pomaster','suppinvmaster'=>function($q){
-                            $q->select('bookingSuppMasInvAutoID','documentType');
-                        }])
-                        ->get();
-    
-    
-                foreach ($items as $i => $invDetailItem) {
-    
-                    
-                        if (($invDetailItem->pomaster != null && $invDetailItem->pomaster->VATAmount == 0) ||( $invDetailItem->pomaster != null && $invDetailItem->pomaster->VATAmount != 0 && $invDetailItem->pomaster->rcmActivated == 1 )
-                            && $bookInvSuppMaster['documentType'] == 0
-                        ) {
-                            $isPoApplicable = true;
-                            $WhtTotalAmount += $invDetailItem->supplierInvoAmount;
+                ->with(['grvmaster' => function($q){
+                    $q->with('details');
+                }, 'pomaster','suppinvmaster'=>function($q){
+                    $q->select('bookingSuppMasInvAutoID','documentType');
+                }])
+                ->get();
+
+
+            foreach ($items as $i => $invDetailItem) {
+
+
+                if (($invDetailItem->pomaster != null && $invDetailItem->pomaster->VATAmount == 0) ||( $invDetailItem->pomaster != null && $invDetailItem->pomaster->VATAmount != 0 && $invDetailItem->pomaster->rcmActivated == 1 )
+                    && $bookInvSuppMaster['documentType'] == 0
+                ) {
+                    $isPoApplicable = true;
+                    $WhtTotalAmount += $invDetailItem->supplierInvoAmount;
+                }
+
+                if ($invDetailItem->grvmaster != null && $bookInvSuppMaster['documentType'] == 2) {
+                    $isGrvApp = true;
+                    foreach ($invDetailItem->grvmaster->details as $k => $detail) {
+                        if ($detail->VATAmount != 0) {
+                            $isGrvApp = false;
                         }
-                    
-                        if ($invDetailItem->grvmaster != null && $bookInvSuppMaster['documentType'] == 2) {
-                            $isGrvApp = true;
-                            foreach ($invDetailItem->grvmaster->details as $k => $detail) {
-                                if ($detail->VATAmount != 0) {
-                                    $isGrvApp = false;
-                                }
-                            }
-                            if ($isGrvApp) {
-                                $isGrvApplicable = true;
-                                $WhtTotalAmount += $invDetailItem->supplierInvoAmount;
-                            }
-                        }
-                        
-    
-                        if($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 1)
-                        {
-                          if($invDetailItem->pomaster != null && $invDetailItem->pomaster->rcmActivated == 1)
-                            {
-                              $rcmActive = true;
-                            }
-                        }
-                   
-                    
                     }
-    
-                    
-                        if($isGrvApplicable &&  ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
-                        {
-                            $isWHTApplicableVat = true;
-                            $isDetailVat = true;
-                        }
-    
-                        if($isPoApplicable &&  ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
-                        {
-                            $isWHTApplicableVat = true;
-                            $isDetailVat = true;
-                        }
-    
-                        if(count($items) == 0 && ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
-                        {
-                            $isWHTApplicableVat = true;
-                            $isDetailVat = false;
-                        }
-    
-                        if($bookInvSuppMaster['documentType'] == 0)
-                        {
-                            if(($isWHTApplicableVat == true && $isWHTApplicableSupplier == true) || ($isWHTApplicableSupplier == true && $rcmActive == true))
-                            {
-                                $whtTrue = true;
-                            }
-                            else
-                            {
-                                $whtTrue = false;
-                            }
-                        }
-    
-                        if($bookInvSuppMaster['documentType'] == 2)
-                        {
-                            if(($isWHTApplicableVat == true && $isWHTApplicableSupplier == true))
-                            {
-                                $whtTrue = true;
-                            }
-                            else
-                            {
-                                $whtTrue = false;
-                            }
-                        }
-                    
-                    $amount = round($WhtTotalAmount*($percentage/100),2);
-                    $totalAmount = $whtTrue == true?$amount:0;
-                    $bookInvSuppMaster->whtAmount = $totalAmount;
-                    $bookInvSuppMaster->whtApplicable = $whtTrue;
-                    $bookInvSuppMaster->whtEdited = false;
-                    $bookInvSuppMaster->whtPercentage = $percentage;
-                    $bookInvSuppMaster->isWHTApplicableVat = $isDetailVat;
-                    $bookInvSuppMaster->save();
+                    if ($isGrvApp) {
+                        $isGrvApplicable = true;
+                        $WhtTotalAmount += $invDetailItem->supplierInvoAmount;
+                    }
+                }
+
+
+                if($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 1)
+                {
+                    if($invDetailItem->pomaster != null && $invDetailItem->pomaster->rcmActivated == 1)
+                    {
+                        $rcmActive = true;
+                    }
+                }
+
+
+            }
+
+
+            if($isGrvApplicable &&  ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
+            {
+                $isWHTApplicableVat = true;
+                $isDetailVat = true;
+            }
+
+            if($isPoApplicable &&  ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
+            {
+                $isWHTApplicableVat = true;
+                $isDetailVat = true;
+            }
+
+            if(count($items) == 0 && ($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2))
+            {
+                $isWHTApplicableVat = true;
+                $isDetailVat = false;
+            }
+
+            if($bookInvSuppMaster['documentType'] == 0)
+            {
+                if(($isWHTApplicableVat == true && $isWHTApplicableSupplier == true) || ($isWHTApplicableSupplier == true && $rcmActive == true))
+                {
+                    $whtTrue = true;
+                }
+                else
+                {
+                    $whtTrue = false;
+                }
+            }
+
+            if($bookInvSuppMaster['documentType'] == 2)
+            {
+                if(($isWHTApplicableVat == true && $isWHTApplicableSupplier == true))
+                {
+                    $whtTrue = true;
+                }
+                else
+                {
+                    $whtTrue = false;
+                }
+            }
+
+            $amount = round($WhtTotalAmount*($percentage/100),2);
+            $totalAmount = $whtTrue == true?$amount:0;
+            $bookInvSuppMaster->whtAmount = $totalAmount;
+            $bookInvSuppMaster->whtApplicable = $whtTrue;
+            $bookInvSuppMaster->whtEdited = false;
+            $bookInvSuppMaster->whtPercentage = $percentage;
+            $bookInvSuppMaster->isWHTApplicableVat = $isDetailVat;
+            $bookInvSuppMaster->save();
         }
-    
+
 
 
     }
@@ -9932,85 +9933,85 @@ class Helper
 
             $invmaster = BookInvSuppMaster::with(['supplier' => function($query){
                 $query->with('tax');
-              }])->find($bookingSuppMasInvAutoID);
-    
-             $percentage = 0;
-             if(isset($invmaster->supplier->tax))
-             {
+            }])->find($bookingSuppMasInvAutoID);
+
+            $percentage = 0;
+            if(isset($invmaster->supplier->tax))
+            {
                 $percentage = $invmaster->supplier->tax->whtPercentage;
-             } 
+            }
 
             $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
             if( $invmaster->supplier->whtApplicableYN == 1)
-              {       
+            {
                 $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
-              }
-    
-              $whtTotalAmountDirect = 0;
-              
+            }
+
+            $whtTotalAmountDirect = 0;
+
             $directItems = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
-                    ->with(['segment', 'purchase_order','chartofaccount'])
-                    ->get();
-    
-                    foreach ($directItems as $index => $item) {
-    
-    
-                        if ($item->VATAmount != 0) {
-                            if ($invmaster->rcmActivated && $invmaster->documentType == 1) {
-                                if ($item->whtEdited == 0) {
-                                    $item->whtAmount = $item->netAmount * ($percentage / 100);
-                                }
-                                if ($invmaster->documentType == 1 && $invmaster->whtApplicable == true) {
-                                    $whtTotalAmountDirect += $item->whtAmount;
-                                }
-                    
-                                if ($invmaster->whtApplicable == false) {
-                                    $item->whtApplicable = false;
-                                    $item->whtAmount = 0;
-                                }
-                            } else {
-                                $item->whtApplicable = false;
-                                $item->whtAmount = 0;
-                            }
-                        } else {
-    
-    
-    
-                            if ($invmaster->whtApplicable == false) {
-                                $item->whtApplicable = false;
-                                $item->whtAmount = 0;
-                            } else {
-                                $isWhtapp = true;
-                                $item->whtApplicable = true;
-                                if ($item->whtEdited == 0) {
-                                    $item->whtAmount = $item->netAmount * ($percentage / 100);
-                                }
-                                if ($invmaster->documentType == 1 && $invmaster->whtApplicable == true) {
-                                    $whtTotalAmountDirect += $item->whtAmount;
-                                }
-    
-    
-                            }
+                ->with(['segment', 'purchase_order','chartofaccount'])
+                ->get();
+
+            foreach ($directItems as $index => $item) {
+
+
+                if ($item->VATAmount != 0) {
+                    if ($invmaster->rcmActivated && $invmaster->documentType == 1) {
+                        if ($item->whtEdited == 0) {
+                            $item->whtAmount = $item->netAmount * ($percentage / 100);
                         }
-    
-    
-                        if ($invmaster->rcmActivated && $invmaster->documentType == 1 && $invmaster->whtApplicable == true) {
-                            $item->whtApplicable = true;
+                        if ($invmaster->documentType == 1 && $invmaster->whtApplicable == true) {
+                            $whtTotalAmountDirect += $item->whtAmount;
                         }
-    
-                        DirectInvoiceDetails::where('directInvoiceDetailsID', $item->directInvoiceDetailsID)->update([
-                            'whtAmount' => $item->whtAmount,
-                            'whtApplicable' => $item->whtApplicable,
-                        ]);
-                        
+
+                        if ($invmaster->whtApplicable == false) {
+                            $item->whtApplicable = false;
+                            $item->whtAmount = 0;
+                        }
+                    } else {
+                        $item->whtApplicable = false;
+                        $item->whtAmount = 0;
                     }
-                    
-                    $invmaster->whtAmount = $whtTotalAmountDirect;
-                    $invmaster->whtPercentage = $percentage;
-                    // $bookInvSuppMaster->whtEdited = false;
-                    $invmaster->save();
+                } else {
+
+
+
+                    if ($invmaster->whtApplicable == false) {
+                        $item->whtApplicable = false;
+                        $item->whtAmount = 0;
+                    } else {
+                        $isWhtapp = true;
+                        $item->whtApplicable = true;
+                        if ($item->whtEdited == 0) {
+                            $item->whtAmount = $item->netAmount * ($percentage / 100);
+                        }
+                        if ($invmaster->documentType == 1 && $invmaster->whtApplicable == true) {
+                            $whtTotalAmountDirect += $item->whtAmount;
+                        }
+
+
+                    }
+                }
+
+
+                if ($invmaster->rcmActivated && $invmaster->documentType == 1 && $invmaster->whtApplicable == true) {
+                    $item->whtApplicable = true;
+                }
+
+                DirectInvoiceDetails::where('directInvoiceDetailsID', $item->directInvoiceDetailsID)->update([
+                    'whtAmount' => $item->whtAmount,
+                    'whtApplicable' => $item->whtApplicable,
+                ]);
+
+            }
+
+            $invmaster->whtAmount = $whtTotalAmountDirect;
+            $invmaster->whtPercentage = $percentage;
+            // $bookInvSuppMaster->whtEdited = false;
+            $invmaster->save();
         }
- 
+
     }
 
 
@@ -10022,59 +10023,59 @@ class Helper
 
             $invmaster = BookInvSuppMaster::with(['supplier' => function($query){
                 $query->with('tax');
-              }])->find($bookingSuppMasInvAutoID);
-    
-             $percentage = 0;
-             if(isset($invmaster->supplier->tax))
-             {
+            }])->find($bookingSuppMasInvAutoID);
+
+            $percentage = 0;
+            if(isset($invmaster->supplier->tax))
+            {
                 $percentage = $invmaster->supplier->tax->whtPercentage;
-             } 
+            }
 
             $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
             if( $invmaster->supplier->whtApplicableYN == 1)
-              {       
+            {
                 $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
-              }
-    
-              $whtTotalAmountDirect = 0;
-              
-              $items = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
-                        ->with(['unit' => function ($query) {
-                        }, 'vat_sub_category'])->get();
-    
-                        foreach ($items as $index => $item) {
-                            if ($item->VATAmount != 0) {
-                                $item->whtApplicable = false;
-                                $item->whtAmount = 0;
-                            } else {
-                                if ($invmaster->whtApplicable == false) {
-                                    $item->whtApplicable = false;
-                                    $item->whtAmount = 0;
-                                } else {
-                                    $isWhtapp = true;
-                                    $item->whtApplicable = true;
-                                    if ($item->whtEdited == 0) {
-                                        $item->whtAmount = $item->netAmount * ($percentage  / 100);
-                                    }
-                                    if ($invmaster->documentType == 3 && $invmaster->whtApplicable == true) {
-                                        $whtTotalAmountDirect += $item->whtAmount;
-                                    }
-                                }
-                            }
-                        
-                            SupplierInvoiceDirectItem::where('id', $item->id)->update([
-                                'whtAmount' => $item->whtAmount,
-                                'whtApplicable' => $item->whtApplicable,
-                            ]);
+            }
+
+            $whtTotalAmountDirect = 0;
+
+            $items = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                ->with(['unit' => function ($query) {
+                }, 'vat_sub_category'])->get();
+
+            foreach ($items as $index => $item) {
+                if ($item->VATAmount != 0) {
+                    $item->whtApplicable = false;
+                    $item->whtAmount = 0;
+                } else {
+                    if ($invmaster->whtApplicable == false) {
+                        $item->whtApplicable = false;
+                        $item->whtAmount = 0;
+                    } else {
+                        $isWhtapp = true;
+                        $item->whtApplicable = true;
+                        if ($item->whtEdited == 0) {
+                            $item->whtAmount = $item->netAmount * ($percentage  / 100);
                         }
-                    
-                    $invmaster->whtAmount = $whtTotalAmountDirect;
-                    $invmaster->whtPercentage = $percentage;
-                    // $bookInvSuppMaster->whtApplicable = $whtTrue;
-                    // $bookInvSuppMaster->whtEdited = false;
-                    $invmaster->save();
+                        if ($invmaster->documentType == 3 && $invmaster->whtApplicable == true) {
+                            $whtTotalAmountDirect += $item->whtAmount;
+                        }
+                    }
+                }
+
+                SupplierInvoiceDirectItem::where('id', $item->id)->update([
+                    'whtAmount' => $item->whtAmount,
+                    'whtApplicable' => $item->whtApplicable,
+                ]);
+            }
+
+            $invmaster->whtAmount = $whtTotalAmountDirect;
+            $invmaster->whtPercentage = $percentage;
+            // $bookInvSuppMaster->whtApplicable = $whtTrue;
+            // $bookInvSuppMaster->whtEdited = false;
+            $invmaster->save();
         }
-       
+
     }
 
     public static function generateSRMUuid($length=16) : string

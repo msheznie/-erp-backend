@@ -742,4 +742,13 @@ class TenderMaster extends Model
         return $this->hasOne(TenderPaymentDetail::class, 'tender_id', 'id');
     }
 
+    public function contract()
+    {
+        return $this->belongsTo('App\Models\ContractMaster', 'contract_id', 'id');
+    }
+
+    public function EvaluationAttachment()
+    {
+        return $this->belongsTo('App\Models\SRMTenderTechnicalEvaluationAttachment', 'id', 'tender_id');
+    }
 }
