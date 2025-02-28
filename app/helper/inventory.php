@@ -16,6 +16,12 @@ use App\Models\ErpItemLedger;
 use App\Models\ItemAssigned;
 use Response;
 use App\Models\ItemMaster;
+use DB;
+use App\Models\PurchaseReturn;
+use App\Models\DeliveryOrder;
+use App\Models\ItemIssueMaster;
+use App\Models\StockTransfer;
+use App\Models\GRVMaster;
 
 class inventory
 {
@@ -137,7 +143,8 @@ class inventory
                                                         "binLocationDes", warehousebinlocationmaster.binLocationDes,
                                                         "wac", erp_itemledger.wacLocal,
                                                         "binLocationID", warehousebinlocationmaster.binLocationID,
-                                                        "RemainingQty",document_sub_products.quantity - document_sub_products.soldQty
+                                                        "RemainingQty",document_sub_products.quantity - document_sub_products.soldQty,
+                                                        "sold",document_sub_products.soldQty
                                                     )
                                                 ), "]"), "[]"
                                             ) as newItem
