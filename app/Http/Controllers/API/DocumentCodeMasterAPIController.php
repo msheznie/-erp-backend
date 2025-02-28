@@ -400,6 +400,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $input = $request->all();
         unset($input['doc_code_numbering_sequences']);
         unset($input['document_code_transactions']);
+        unset($input['numbering_sequence_id']);
         $input = $this->convertArrayToValue($input);
 
         $id = $input['id'];
@@ -428,8 +429,10 @@ class DocumentCodeMasterAPIController extends AppBaseController
                             break;
                         }
                     }
-                    if (!$hasYYYYFormat) {
-                        return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
+                    if($documentCodeMaster->numbering_sequence_id == 2 || $input['numbering_sequence_id'] == 2){
+                        if (!$hasYYYYFormat) {
+                            return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
+                        }
                     }
                     $deletedFormatNumber = $input['formatCount'] + 1;
                     $nullFormat = 'format' . $deletedFormatNumber;
@@ -440,7 +443,25 @@ class DocumentCodeMasterAPIController extends AppBaseController
             $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')->where('master_id', $id)->get();
             if($docCodeSetupTypeBased){
                 foreach ($docCodeSetupTypeBased as $codeSetupTypeBased) {
-                    $codeSetupTypeBased->update([$formatCount => null]);
+                    $formatCount = $input['formatCount'];
+                    $hasYYYYFormat = false;
+                    for ($i = 1; $i <= $formatCount; $i++) {
+                        $formatKey = 'format' . $i;
+                        $formatValue = $codeSetupTypeBased->{'format' . $i};
+                        if ($formatValue == 6 || $formatValue == 7) {
+                            $hasYYYYFormat = true;
+                            break;
+                        }
+                    }
+                    if($documentCodeMaster->numbering_sequence_id == 2 || $input['numbering_sequence_id'] == 2){
+                        if (!$hasYYYYFormat) {
+                            return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
+                        }
+                    }
+                    $deletedFormatNumber = $input['formatCount'] + 1;
+                    $nullFormat = 'format' . $deletedFormatNumber;
+
+                    $codeSetupTypeBased->update([$nullFormat => null]);
                 }
             }
 
