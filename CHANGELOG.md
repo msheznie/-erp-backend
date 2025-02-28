@@ -1,5 +1,57 @@
 # Changelog
 
+## [10.63.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.62.3...v10.63.0) (2025-02-28)
+
+
+### Features
+
+* **SRM:** Invitation to Tender [GSUP-1875] ([#7163](https://github.com/pbsgears/Gears_BackEnd/issues/7163)) ([c731e8f](https://github.com/pbsgears/Gears_BackEnd/commit/c731e8f1eb9455f5680fcfcfdece04860d53754c))
+* **SRM:** Make Information to be provided by the Supplier document mandatory.[GSUP-2309] ([#7597](https://github.com/pbsgears/Gears_BackEnd/issues/7597)) ([ee70ed8](https://github.com/pbsgears/Gears_BackEnd/commit/ee70ed81b9b1778064ca1a471fab7d45ce3c1896))
+* **SRM:** Send LOI/LOA from the Tender [GSUP-2216] ([#7504](https://github.com/pbsgears/Gears_BackEnd/issues/7504)) ([7b5a776](https://github.com/pbsgears/Gears_BackEnd/commit/7b5a7761a2fd32ec815fb15bb1f53a2c28ccb718))
+* **srm:** SRM | Create Contract from Tender  [GSUP-1959] ([#7477](https://github.com/pbsgears/Gears_BackEnd/issues/7477)) ([906781e](https://github.com/pbsgears/Gears_BackEnd/commit/906781e83308e5bdeb9cb4bae05ea8888f9dccf4))
+* **srm:** Technical Evaluation Common Attachment and Comment box feature [GSUP-1878] ([#7487](https://github.com/pbsgears/Gears_BackEnd/issues/7487)) ([26412f3](https://github.com/pbsgears/Gears_BackEnd/commit/26412f3978646a2b3614d76b92513ab8f2867627))
+* **SRM:** Tender Negotiation Invitation Customization [GSUP-2130] ([#7483](https://github.com/pbsgears/Gears_BackEnd/issues/7483)) ([00db6f8](https://github.com/pbsgears/Gears_BackEnd/commit/00db6f875efdf9344a13b64167e4fba0710dc683))
+* **Tender:** Admin option to change the Tender Calendar Dates [GSUP-2184] ([#7461](https://github.com/pbsgears/Gears_BackEnd/issues/7461)) ([137e3dd](https://github.com/pbsgears/Gears_BackEnd/commit/137e3dd7e4d08c60c198923b7291e35a1487edbf))
+* **Tender:** Introduce UUID Field to tender_master Table [GSUP-2094] ([#7174](https://github.com/pbsgears/Gears_BackEnd/issues/7174)) ([d9b6ed6](https://github.com/pbsgears/Gears_BackEnd/commit/d9b6ed65e1e0980cf7efb0fb6aeaf403bc2c817e))
+* **Tender:** Introduce UUID Field to tender_master Table [GSUP-2094] ([#7174](https://github.com/pbsgears/Gears_BackEnd/issues/7174)) ([1e6e5e4](https://github.com/pbsgears/Gears_BackEnd/commit/1e6e5e4f877279e39bce7da6150b0a49bc874b54))
+* **Tender:** SRM – Work around for Payment gateway integration [GSUP-2060] ([#7266](https://github.com/pbsgears/Gears_BackEnd/issues/7266)) ([a934a2f](https://github.com/pbsgears/Gears_BackEnd/commit/a934a2f0ab8ab94d70880a94a740dbb024d62191))
+* **Tender:** SRM – Work around for Payment gateway integration [GSUP-2060] ([#7266](https://github.com/pbsgears/Gears_BackEnd/issues/7266)) ([8863610](https://github.com/pbsgears/Gears_BackEnd/commit/8863610ca20d1d2d25ac1d61b02a664216d6b89c))
+* **Tender:** SRM – Work around for Payment gateway integration [GSUP-2060] ([#7266](https://github.com/pbsgears/Gears_BackEnd/issues/7266)) ([43344a0](https://github.com/pbsgears/Gears_BackEnd/commit/43344a02ee61b3198bb0257a650adb88c5a05517))
+
+
+### Bug Fixes
+
+* **accounts payable:** GL generated for supplier invoice which were not posted earlier [GCP-5941] ([#7445](https://github.com/pbsgears/Gears_BackEnd/issues/7445)) ([97c302b](https://github.com/pbsgears/Gears_BackEnd/commit/97c302b6cc65e00f90deb7605c1ae9193add6eb2))
+* **srm:** Incorrect Email Subject and RFx Type Naming in Body [GSUP-2256] ([#7542](https://github.com/pbsgears/Gears_BackEnd/issues/7542)) ([ae20a5d](https://github.com/pbsgears/Gears_BackEnd/commit/ae20a5db6bb0e740d3ea388a013891a5fc0049b1))
+* **SRM:** Other Company Details Loading in Multiple Sections.[GSUP-2321] ([#7622](https://github.com/pbsgears/Gears_BackEnd/issues/7622)) ([c38bd8a](https://github.com/pbsgears/Gears_BackEnd/commit/c38bd8ab64635965d2d9a4066c68177276545df5))
+* **SRM:** Other Company Details Loading in Multiple Sections.[GSUP-2321] ([#7639](https://github.com/pbsgears/Gears_BackEnd/issues/7639)) ([2dea4a0](https://github.com/pbsgears/Gears_BackEnd/commit/2dea4a0164bc5f6f9919c907ebe9cc83fb29f98b))
+* **srm:** Save Changes Button Behavior in Technical Evaluation [GSUP-2285] ([#7523](https://github.com/pbsgears/Gears_BackEnd/issues/7523)) ([94a27e2](https://github.com/pbsgears/Gears_BackEnd/commit/94a27e2f9d438f5614ff2ae068fef3e64914ca92))
+* **SRM:** Unable to Submit Technical Evaluation After Filling All Values [GSUP-2282] ([#7522](https://github.com/pbsgears/Gears_BackEnd/issues/7522)) ([52c9248](https://github.com/pbsgears/Gears_BackEnd/commit/52c9248421b3021f90e6a73796d1df720e6d0eb0))
+* **srm:** User cannot download uploaded attachments [GSUP-2304] ([c5ecf45](https://github.com/pbsgears/Gears_BackEnd/commit/c5ecf453f4da6b1c843cf8948d8bd3d21a330500))
+* **srm:** User cannot download uploaded attachments [GSUP-2304] ([c5ecf45](https://github.com/pbsgears/Gears_BackEnd/commit/c5ecf453f4da6b1c843cf8948d8bd3d21a330500))
+* **srm:** User cannot view created contract [GSUP-2312] ([#7605](https://github.com/pbsgears/Gears_BackEnd/issues/7605)) ([dd11dc5](https://github.com/pbsgears/Gears_BackEnd/commit/dd11dc56e3669fe072ea1d0b81420cde93fe8277))
+
+
+### Miscellaneous Chores
+
+* release 10.53.2 ([19c6a60](https://github.com/pbsgears/Gears_BackEnd/commit/19c6a603e2aa9c8d2ad394f529a096d66ede242a))
+* release 10.53.2 ([a283f37](https://github.com/pbsgears/Gears_BackEnd/commit/a283f373a3c174b3539c31549dff381800dbdd77))
+* release 10.53.2 ([9cadc46](https://github.com/pbsgears/Gears_BackEnd/commit/9cadc46644fd3059bceb570526175c71f1f9e0ff))
+* release 10.53.2 ([b58f38e](https://github.com/pbsgears/Gears_BackEnd/commit/b58f38e8bc0b24832478e5aaa4425787882f8e1c))
+* release 10.53.2 ([19f255f](https://github.com/pbsgears/Gears_BackEnd/commit/19f255f96704bb8fa72b20de132dd85c6c3c1e0e))
+* release 10.53.2 ([2a145b6](https://github.com/pbsgears/Gears_BackEnd/commit/2a145b60bb7161955aec229bb588f7c1ce5f9202))
+* release 10.53.2 ([ccb2750](https://github.com/pbsgears/Gears_BackEnd/commit/ccb2750207478b172fbef8f3331ecfa43808660a))
+* release 10.53.2 ([3751f48](https://github.com/pbsgears/Gears_BackEnd/commit/3751f48a2531bbd4d382ed58e77e3babe8a328a1))
+* release 10.54.0 ([b63b6de](https://github.com/pbsgears/Gears_BackEnd/commit/b63b6de47fea94ff8cef6099cd34c43592c92c7f))
+* release 10.54.0 ([55bbaca](https://github.com/pbsgears/Gears_BackEnd/commit/55bbaca3440e6cc2ed1b2207573de5e9c9d347c0))
+* release 10.54.0 ([66116e6](https://github.com/pbsgears/Gears_BackEnd/commit/66116e698e06748057ba0a5c3cdb0c9801f201ca))
+* release 10.54.0 ([eca4219](https://github.com/pbsgears/Gears_BackEnd/commit/eca42196d8505d3cb085d0eb380813edcac79cbc))
+* release 10.54.0 ([bf84a84](https://github.com/pbsgears/Gears_BackEnd/commit/bf84a84d75a9e67263c6aba72546e49f7a8ab946))
+* release 10.54.0 ([ec1f2f8](https://github.com/pbsgears/Gears_BackEnd/commit/ec1f2f898ed9f76804284b1938ce6ec3df37094a))
+* release 10.54.0 ([3e72659](https://github.com/pbsgears/Gears_BackEnd/commit/3e726597f52e9bca21b8c38b2832d3fb1d16ca47))
+* release 10.54.0 ([fd8f92b](https://github.com/pbsgears/Gears_BackEnd/commit/fd8f92b64f13798914fe360390f1c6866c02c92a))
+* release 10.62.3 ([5da0d49](https://github.com/pbsgears/Gears_BackEnd/commit/5da0d490e1ab68c3329ce33db89a21b0363a1f66))
+
 ## [10.62.3](https://github.com/pbsgears/Gears_BackEnd/compare/v10.62.2...v10.62.3) (2025-02-20)
 
 
