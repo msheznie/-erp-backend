@@ -417,7 +417,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
 
 
             $docCodeSetupCommon = DocCodeSetupCommon::with('document_code_transactions')->where('master_id', $id)->get();
-            if($docCodeSetupCommon){
+            if($docCodeSetupCommon && $documentCodeMaster->serialization == 0){
                 foreach ($docCodeSetupCommon as $codeSetupCommon) {
                     $formatCount = $input['formatCount'];
                     $hasYYYYFormat = false;
@@ -429,7 +429,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
                             break;
                         }
                     }
-                    if($documentCodeMaster->numbering_sequence_id == 2 || $input['numbering_sequence_id'] == 2){
+                    if($documentCodeMaster->numbering_sequence_id == 2){
                         if (!$hasYYYYFormat) {
                             return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
                         }
@@ -441,7 +441,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
             }
 
             $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')->where('master_id', $id)->get();
-            if($docCodeSetupTypeBased){
+            if($docCodeSetupTypeBased && $documentCodeMaster->serialization == 1){
                 foreach ($docCodeSetupTypeBased as $codeSetupTypeBased) {
                     $formatCount = $input['formatCount'];
                     $hasYYYYFormat = false;
@@ -453,7 +453,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
                             break;
                         }
                     }
-                    if($documentCodeMaster->numbering_sequence_id == 2 || $input['numbering_sequence_id'] == 2){
+                    if($documentCodeMaster->numbering_sequence_id == 2){
                         if (!$hasYYYYFormat) {
                             return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
                         }
