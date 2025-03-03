@@ -261,7 +261,9 @@ class B2BResourceAPIController extends AppBaseController
 
     public function downloadErrorLogFromPortal(Request $request)
     {
-        $getConfigDetails = BankConfig::where('slug','ahlibank')->first();
+        $supplierBankTransfer = PaymentBankTransfer::find($request->bankTransferID);
+        $getConfigDetails = BankConfig::where('slug','ahlibank')->where('bank_master_id',$supplierBankTransfer->bankMasterID)->first();
+
         if(!isset($getConfigDetails))
             return $this->sendError("The vendor file format is not available for the selected bank!",500,[]);
 

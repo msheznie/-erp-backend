@@ -130,10 +130,12 @@ class BankConfigService
 
     public function downloadErrorLogFile($bankTransferID)
     {
-        $getConfigDetails = BankConfig::where('slug','ahlibank')->first();
-        $config = collect($getConfigDetails['details'])->where('fileType',0)->first();
         $supplierBankTransfer = PaymentBankTransfer::find($bankTransferID);
+        $getConfigDetails = BankConfig::where('slug','ahlibank')->where('bank_master_id',$supplierBankTransfer->bankMasterID)->first();
+        if(!isset($getConfigDetails))
+            throw new \Exception("The vendor file format is not available for the selected bank");
 
+        $config = collect($getConfigDetails['details'])->where('fileType',0)->first();
         if($config['failure_path'])
         {
             try {

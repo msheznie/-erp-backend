@@ -54,7 +54,7 @@ class checkB2BStatusWithBank extends Command
 
         foreach ($tenants as $tenant){
             $tenantDb = $tenant->database;
-            BankStatus::dispatch($tenantDb)->onConnection("bankStatus");
+            BankStatus::dispatch($tenantDb)->onQueue("bankStatus");
         }
     }
 
