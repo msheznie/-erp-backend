@@ -11,6 +11,7 @@ use App\Models\PaymentBankTransfer;
 use App\Models\UserGroup;
 use App\Models\UserGroupAssign;
 use App\Services\B2B\BankConfigService;
+use App\Services\B2B\CheckBankStatusService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -56,7 +57,7 @@ class BankStatus implements ShouldQueue
     public function handle()
     {
         CommonJobService::db_switch($this->tenantDb);
-        $batchConfigService = new BankConfigService($this->tenantDb);
+        $batchConfigService = new CheckBankStatusService($this->tenantDb);
         $batchConfigService->updateStatusOfFilesFromSuccessPath();
         $batchConfigService->updateStatusOfFilesFromfailurePath();
     }
