@@ -38,56 +38,6 @@ class BankConfigService
         config(['filesystems.disks.sftp' => $this->configDetails]);
         $this->storage = \Storage::disk('sftp');
     }
-
-    private function updateStatusFromPath(string $path, int $portalStatus, int $submittedStatus = null)
-    {
-        $paymentTransfers = PaymentBankTransfer::whereNotNull('batchReference')
-            ->select(['paymentBankTransferID', 'batchReference', 'portalStatus'])
-            ->get();
-
-        $configDetails = BankConfig::where('slug', 'ahlibank')->first();
-        if (!$configDetails) return;
-        $config = collect($configDetails['details'])->where('fileType', 0)->first();
-        if (empty($config[$path])) return;
-        $disk = $this->storage;
-        if($path == "success_path")
-        {
-            $files = $disk->files($config[$path]);
-        }else {
-            $files = $disk->files($config[$path]);
-        }
-
-
-        if (empty($files)) return;
-
-        foreach ($paymentTransfers as $paymentTransfer) {
-            foreach ($files as $file) {
-                $fileContent = file_get_contents($file);
-                $batchReference = preg_quote($paymentTransfer->batchReference, '/');
-                $pattern = "/Batch Number:\s*" . $batchReference . "/";
-
-                if (preg_match($pattern, $fileContent)) {
-                    $paymentTransfer->portalStatus = $portalStatus;
-                    if ($submittedStatus !== null) {
-                        $paymentTransfer->submittedStatus = $submittedStatus;
-                    }
-                    $paymentTransfer->save();
-                }
-
-            }
-        }
-    }
-
-    public function updateStatusOfFilesFromSuccessPath()
-    {
-        $this->updateStatusFromPath('success_path', 1);
-    }
-
-    public function updateStatusOfFilesFromFailurePath()
-    {
-        $this->updateStatusFromPath('failure_path', 0, 2);
-    }
-
     public function uploadFileToBank($fileName,$bankTransferID)
     {
         $disk = $this->storage;
