@@ -350,15 +350,27 @@ class WarehouseItemsAPIController extends AppBaseController
         $itemMasters = $itemMasters->sortBy('warehouseItemsID', SORT_REGULAR, $direction === 'desc');
 
         $data = \DataTables::collection($itemMasters)
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->filter(function ($query) { 
-            })
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->make(true);
-            
-            return $data;
+        ->addIndexColumn()
+        ->with('orderCondition', $sort)
+        ->filter(function ($instance) use ($input) {  
+            $search = $input['search']['value'] ?? null;
+            if (!empty($search)) {
+                $instance->collection = $instance->collection->filter(function ($item) use ($search) {
+                    return stripos($item['itemPrimaryCode'] ?? '', $search) !== false ||
+                    stripos($item['itemDescription'] ?? '', $search) !== false ||
+                    stripos($item['warehouse_by']['warehouseDescription'] ?? '', $search) !== false ||
+                    stripos($item['binLocation']['binLocationDes'] ?? '', $search) !== false ||
+                    stripos($item['financeSubCategory']['categoryDescription'] ?? '', $search) !== false;
+                });
+            }
+        })
+        ->addColumn('Actions', function ($row) {
+            return '<button class="btn btn-sm btn-primary">Edit</button>';
+        })
+        ->rawColumns(['Actions'])
+        ->make(true);
 
+        return $data;
     }
 
 
@@ -512,24 +524,6 @@ class WarehouseItemsAPIController extends AppBaseController
             if (isset($input['itemSystemCode'])  && !empty($input['itemSystemCode'])) {
                 $itemMasters->whereIn('itemSystemCode',$input['itemSystemCode']);
             }
-        }
-        
-
-        $search = $input['search']['value'];
-        if ($search) {
-            $itemMasters = $itemMasters->where(function ($query) use ($search) {
-                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
-                    ->orWhereHas('warehouse_by', function ($q) use ($search) {
-                        $q->where('warehouseDescription', 'LIKE', "%{$search}%");
-                    })
-                    ->orWhereHas('binLocation', function ($q) use ($search) {
-                        $q->where('binLocationDes', 'LIKE', "%{$search}%");
-                    })
-                    ->orWhereHas('financeSubCategory', function ($q) use ($search) {
-                        $q->where('categoryDescription', 'LIKE', "%{$search}%");
-                    });
-            });
         }
 
         $details = $itemMasters->get();
