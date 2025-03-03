@@ -56,8 +56,8 @@ class BankStatus implements ShouldQueue
     public function handle()
     {
         CommonJobService::db_switch($this->tenantDb);
-        $batchConfigService = new BankConfigService();
-        $batchConfigService->updateStatusOfFilesFromSuccessPath($this->tenantDb);
-        $batchConfigService->updateStatusOfFilesFromfailurePath($this->tenantDb);
+        $batchConfigService = new BankConfigService($this->tenantDb);
+        $batchConfigService->updateStatusOfFilesFromSuccessPath();
+        $batchConfigService->updateStatusOfFilesFromfailurePath();
     }
 }

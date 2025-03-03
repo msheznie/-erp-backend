@@ -2,6 +2,7 @@
 
 namespace App\Services\B2B;
 
+use App\helper\CommonJobService;
 use App\Models\BankConfig;
 use App\Models\PaymentBankTransfer;
 use App\Services\WebPushNotificationService;
@@ -18,8 +19,15 @@ class BankConfigService
 
     private $storage;
 
-    public function __construct()
+    private $db;
+    public function __construct($db = null)
     {
+        if(!is_null($db))
+        {
+            $this->db = $db;
+            CommonJobService::db_switch($db);
+        }
+
         $getConfigDetails = BankConfig::where('slug', 'ahlibank')->first();
         $config = collect($getConfigDetails['details'])->where('fileType', 0)->first();
         $this->pathDetails = $getConfigDetails;
@@ -37,7 +45,7 @@ class BankConfigService
         $this->storage = \Storage::disk('sftp');
     }
 
-    private function updateStatusFromPath(string $path, int $portalStatus, int $submittedStatus = null,$database = null)
+    private function updateStatusFromPath(string $path, int $portalStatus, int $submittedStatus = null)
     {
         $paymentTransfers = PaymentBankTransfer::whereNotNull('batchReference')
             ->select(['paymentBankTransferID', 'batchReference', 'portalStatus'])
@@ -71,7 +79,7 @@ class BankConfigService
                     }
                     $paymentTransfer->save();
 
-                    if(isset($database))
+                    if(isset($this->db))
                     {
                         $webPushData = [
                             'title' => "Bank Transfer portal status updated",
@@ -79,7 +87,7 @@ class BankConfigService
                             'url' => "treasury/bank-transfer-list",
                             'path' => "",
                         ];
-                        WebPushNotificationService::sendNotification($webPushData, 2, [$paymentTransfer->createdUserSystemID], $database);
+                        WebPushNotificationService::sendNotification($webPushData, 2, [$paymentTransfer->createdUserSystemID], $this->db);
                     }
                 }
 
@@ -87,14 +95,14 @@ class BankConfigService
         }
     }
 
-    public function updateStatusOfFilesFromSuccessPath($database)
+    public function updateStatusOfFilesFromSuccessPath()
     {
-        $this->updateStatusFromPath('success_path', 1,null,$database);
+        $this->updateStatusFromPath('success_path', 1);
     }
 
-    public function updateStatusOfFilesFromFailurePath($database)
+    public function updateStatusOfFilesFromFailurePath()
     {
-        $this->updateStatusFromPath('failure_path', 0, 2,$database);
+        $this->updateStatusFromPath('failure_path', 0, 2);
     }
 
     public function uploadFileToBank($fileName,$bankTransferID)
