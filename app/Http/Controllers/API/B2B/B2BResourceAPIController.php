@@ -128,7 +128,7 @@ class B2BResourceAPIController extends AppBaseController
     {
         $companyMaster = Company::find($request->companyID,['registrationNumber','companySystemID']);
         $bankTransfer = PaymentBankTransfer::find($request->bankTransferID,['bankAccountAutoID','documentDate','paymentBankTransferID','bankMasterID','narration','bankTransferDocumentCode','serialNumber']);
-        $bankAccount = BankAccount::find($bankTransfer->bankAccountAutoID.['AccountNo']);
+        $bankAccount = BankAccount::find($bankTransfer->bankAccountAutoID,['AccountNo']);
 
         $batchNo = $this->bankTransferService->generateBatchNo($request->companyID, $bankTransfer->bankTransferDocumentCode,$bankTransfer->serialNumber);
         $headerDetails = [
