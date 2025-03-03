@@ -546,6 +546,10 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 $isBankChanges = true;
             }
         }
+        if(\Helper::roundValue(floatval($input['bankCurrencyER'])) == 0)
+        {
+            return $this->sendError('Bank exchange cannot be zero');
+        }
 
         if ($directPaymentDetails->glCodeIsBank) {
             $trasToDefaultER = $input["bankCurrencyER"];
