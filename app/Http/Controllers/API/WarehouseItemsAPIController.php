@@ -360,6 +360,7 @@ class WarehouseItemsAPIController extends AppBaseController
                     stripos($item['itemDescription'] ?? '', $search) !== false ||
                     stripos($item['warehouse_by']['warehouseDescription'] ?? '', $search) !== false ||
                     stripos($item['binLocation']['binLocationDes'] ?? '', $search) !== false ||
+                    stripos($item['bin_location']['binLocationDes'] ?? '', $search) !== false ||
                     stripos($item['financeSubCategory']['categoryDescription'] ?? '', $search) !== false;
                 });
             }
