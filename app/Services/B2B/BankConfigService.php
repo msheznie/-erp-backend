@@ -4,6 +4,7 @@ namespace App\Services\B2B;
 
 use App\Models\BankConfig;
 use App\Models\PaymentBankTransfer;
+use App\Services\WebPushNotificationService;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
@@ -36,7 +37,7 @@ class BankConfigService
         $this->storage = \Storage::disk('sftp');
     }
 
-    private function updateStatusFromPath(string $path, int $portalStatus, int $submittedStatus = null)
+    private function updateStatusFromPath(string $path, int $portalStatus, int $submittedStatus = null,$database = null)
     {
         $paymentTransfers = PaymentBankTransfer::whereNotNull('batchReference')
             ->select(['paymentBankTransferID', 'batchReference', 'portalStatus'])
@@ -69,19 +70,31 @@ class BankConfigService
                         $paymentTransfer->submittedStatus = $submittedStatus;
                     }
                     $paymentTransfer->save();
+
+                    if(isset($database))
+                    {
+                        $webPushData = [
+                            'title' => "Bank Transfer portal status updated",
+                            'body' => "",
+                            'url' => "treasury/bank-transfer-list",
+                            'path' => "",
+                        ];
+                        WebPushNotificationService::sendNotification($webPushData, 2, [$paymentTransfer->createdUserSystemID], $database);
+                    }
                 }
+
             }
         }
     }
 
-    public function updateStatusOfFilesFromSuccessPath()
+    public function updateStatusOfFilesFromSuccessPath($database)
     {
-        $this->updateStatusFromPath('success_path', 1);
+        $this->updateStatusFromPath('success_path', 1,null,$database);
     }
 
-    public function updateStatusOfFilesFromFailurePath()
+    public function updateStatusOfFilesFromFailurePath($database)
     {
-        $this->updateStatusFromPath('failure_path', 0, 2);
+        $this->updateStatusFromPath('failure_path', 0, 2,$database);
     }
 
     public function uploadFileToBank($fileName,$bankTransferID)
