@@ -25,6 +25,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Repositories\DashboardWidgetMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\BudgetConsumedData;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -379,7 +380,7 @@ END AS sortDashboard')
             ->get();
         $output = [];
         $supplierGroup = SupplierGroup::notDeleted();
-        $glAccounts = ChartOfAccount::where('primaryCompanySystemID', $companyId)->get()->toArray();
+        $glAccounts = ChartOfAccount::all()->toArray();
         if(!empty($widget)){
             $output['widget'] = $widget->toArray();
             $output['supplierGroup'] = $supplierGroup;
@@ -1173,120 +1174,18 @@ GROUP BY
 
                 $companyCurrency = \Helper::companyCurrency($companyID);
 
-                $DLBCPolicy = CompanyPolicyMaster::where('companySystemID', $companyID)
-                    ->where('companyPolicyCategoryID', 33)
-                    ->where('isYesNO', 1)
-                    ->exists();
-
-                $reportData = Budjetdetails::select(DB::raw("(SUM(budjetAmtLocal) * -1) as totalLocal,
-                           (SUM(budjetAmtRpt) * -1) as totalRpt,
-                           chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
-                           chartofaccounts.controlAccountsSystemID,
-                           erp_companyreporttemplatedetails.description as templateDetailDescription,
-                           erp_companyreporttemplatedetails.detID as templatesMasterAutoID,
-                           ca.month as gmonth,
-                           erp_budjetdetails.*,ifnull(ca.consumed_amount,0) as consumed_amount,
-                           ifnull(ppo.rptAmt,0) as pending_po_amount,
-                           ((SUM(budjetAmtRpt) * -1) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance,
-                           ifnull(adj.SumOfadjustmentRptAmount,0) AS adjusted_amount"))
-                        ->where('erp_budjetdetails.companySystemID', $companyID)
-                        ->where('erp_budjetdetails.companyFinanceYearID', $currentFinancialYear->companyFinanceYearID)
-                        ->when(!empty($glAccount), function ($query) use ($glAccount) {
-                            $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
-                        })
-                        ->leftJoin('chartofaccounts', 'chartOfAccountID', '=', 'chartOfAccountSystemID')
-                        ->leftJoin('erp_budgetmaster', 'erp_budgetmaster.budgetmasterID', '=', 'erp_budjetdetails.budgetmasterID')
-                        ->leftJoin('erp_companyreporttemplatedetails', 'templateDetailID', '=', 'detID');
-
-                $reportData = $reportData->leftJoin(DB::raw('(SELECT month,erp_budgetconsumeddata.companySystemID, 
-                        erp_budgetconsumeddata.serviceLineSystemID, 
-                        erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year,
-                        erp_budgetconsumeddata.companyFinanceYearID, 
-                        Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
-                        erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 AND 
-                        (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
-                        GROUP BY month,erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.companyFinanceYearID ) as ca'),
-                    function ($join) {
-                        $join->on('erp_budjetdetails.companySystemID', '=', 'ca.companySystemID')
-                            ->on('erp_budjetdetails.serviceLineSystemID', '=', 'ca.serviceLineSystemID')
-                            ->on('erp_budjetdetails.companyFinanceYearID', '=', 'ca.companyFinanceYearID')
-                            ->on('erp_budjetdetails.chartOfAccountID', '=', 'ca.chartOfAccountID');
-                    })
-                    ->leftJoin(DB::raw('(SELECT erp_purchaseordermaster.companySystemID,
-                           erp_purchaseordermaster.serviceLineSystemID, 
-                           erp_purchaseorderdetails.financeGLcodePLSystemID, Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt, 
-                           Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt, erp_purchaseordermaster.budgetYear FROM 
-                           erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON 
-                           erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID 
-                           WHERE (((erp_purchaseordermaster.approved)=0) 
-                           AND ((erp_purchaseordermaster.poCancelledYN)=0) AND (erp_purchaseordermaster.projectID = 0 
-                           OR erp_purchaseordermaster.projectID IS NULL)) 
-                           GROUP BY 
-                           erp_purchaseordermaster.companySystemID, 
-                           erp_purchaseordermaster.serviceLineSystemID, 
-                           erp_purchaseorderdetails.financeGLcodePL, 
-                           erp_purchaseorderdetails.budgetYear 
-                           HAVING 
-                           (((erp_purchaseorderdetails.financeGLcodePLSystemID) Is Not Null))) as ppo'),
-                        function ($join) {
-                            $join->on('erp_budjetdetails.companySystemID', '=', 'ppo.companySystemID')
-                                ->on('erp_budjetdetails.serviceLineSystemID', '=', 'ppo.serviceLineSystemID')
-                                ->on('erp_budgetmaster.Year', '=', 'ppo.budgetYear')
-                                ->on('erp_budjetdetails.chartOfAccountID', '=', 'ppo.financeGLcodePLSystemID');
-                        });
-
-                $reportData = $reportData->leftJoin(DB::raw('(SELECT
-                                erp_budgetadjustment.companySystemID,
-                                erp_budgetadjustment.serviceLineSystemID,
-                                erp_budgetadjustment.adjustedGLCodeSystemID,
-                                erp_budgetadjustment.YEAR,
-                                Sum( erp_budgetadjustment.adjustmentRptAmount ) AS SumOfadjustmentRptAmount 
-                                FROM
-                                    erp_budgetadjustment 
-                                GROUP BY
-                                erp_budgetadjustment.companySystemID,
-                                erp_budgetadjustment.serviceLineSystemID,
-                                erp_budgetadjustment.adjustedGLCodeSystemID,
-                                erp_budgetadjustment.YEAR ) as adj'),
-                    function ($join) {
-                        $join->on('erp_budjetdetails.companySystemID', '=', 'adj.companySystemID')
-                            ->on('erp_budjetdetails.serviceLineSystemID', '=', 'adj.serviceLineSystemID')
-                            ->on('erp_budgetmaster.Year', '=', 'adj.YEAR')
-                            ->on('erp_budjetdetails.chartOfAccountID', '=', 'adj.adjustedGLCodeSystemID');
-                    })
-                    ->groupBy('ca.month')
-                    ->having('consumed_amount', '>', 0)
-                    ->get();
-
-                foreach ($reportData as $key => $value) {
-                    $commitedConsumedAmount = BudgetConsumptionService::getCommitedConsumedAmount($value, $DLBCPolicy, true);
-                    $value['actuallConsumptionAmount'] = $commitedConsumedAmount['actuallConsumptionAmount'];
-                }
-
-                $reportData->groupBy('ca.month');
-
-                $reportDataFiltered = collect(range(1, 12))->mapWithKeys(function ($month) {
-                    return [$month => 0]; 
-                });
-
-                $reportData->values()->map(function ($item) use (&$reportDataFiltered) {
-                    $gmonth = $item->gmonth;
-                    if (isset($reportDataFiltered[$gmonth])) {
-                        $reportDataFiltered[$gmonth] = $item->actuallConsumptionAmount;
-                    }
-                });
-
-                $finalResult = $reportDataFiltered->map(function ($amount) {
-                    return ['amount' => $amount];
-                })->values()->all(); 
-
+                $actualConsumption = BudgetConsumptionService::getActualConsumption($companyID, 
+                                        $currentFinancialYear->companyFinanceYearID, $glAccount);
+                   
+                $actual = collect($actualConsumption)->map(function ($value) {
+                    return ['amount' => $value['amount']]; })->values();
 
                 $data['financialYear'] = $currentFinancialYear;
                 $data['reportingCurrency'] = $companyCurrency->reportingcurrency->CurrencyCode;
                 $data['decimalPlaces'] = $companyCurrency->reportingcurrency->DecimalPlaces;
-                $data['actual'] = $finalResult;
+                $data['actual'] = $actual;
                 $data['budget'] = Budjetdetails::with(['budget_master.segment_by',
-                    'budget_master.company','chart_of_account'])
+                    'budget_master.company'])
                    ->whereHas('budget_master.company', function($query) use ($companyID) {
                         $query->where('companySystemID', $companyID);
                     })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
