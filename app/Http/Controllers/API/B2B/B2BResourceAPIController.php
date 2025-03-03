@@ -3,20 +3,18 @@
 namespace App\Http\Controllers\API\B2B;
 
 use App\Exports\B2B\VendorFile\VendorFile;
-use App\Http\Controllers\API\BankLedgerAPIController;
 use App\Http\Controllers\AppBaseController;
 use App\Models\BankAccount;
+use App\Models\BankConfig;
+use App\Models\BankMaster;
 use App\Models\BankMemoSupplier;
 use App\Models\Company;
 use App\Models\CurrencyMaster;
 use App\Models\PaymentBankTransfer;
+use App\Services\B2B\BankConfigService;
 use App\Services\B2B\BankTransferService;
-use App\Validations\B2B\VendorFile\Detail;
-use App\Validations\B2B\VendorFile\Header;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-
 class B2BResourceAPIController extends AppBaseController
 {
 
@@ -26,13 +24,29 @@ class B2BResourceAPIController extends AppBaseController
 
     private $bankTransferService;
 
-    public function __construct(VendorFile $vendorFile, BankTransferService $bankTransferService)
+    private $bankConfigService;
+
+    private $requestType;
+
+    private $bankTransferID;
+
+    public function __construct(VendorFile $vendorFile, BankTransferService $bankTransferService,BankConfigService $bankConfigService)
     {
         $this->vendorFile = $vendorFile;
         $this->bankTransferService = $bankTransferService;
+        $this->bankConfigService = $bankConfigService;
     }
 
     public function generateVendorFile(Request $request) {
+
+        $bankMaster = BankMaster::with(['config'])
+            ->where('bankmasterAutoID', PaymentBankTransfer::find($request->bankTransferID)->bankMasterID)
+            ->whereHas('config')
+            ->exists();
+
+        if(!$bankMaster)
+            return $this->sendError("The vendor file format is not available for the selected bank",500,[]);
+
         $requestNew = new Request([
             'companyId' => $request->companyID,
             'paymentBankTransferID' => $request->bankTransferID,
@@ -42,11 +56,17 @@ class B2BResourceAPIController extends AppBaseController
         $data = app('App\Http\Controllers\API\BankLedgerAPIController')->getPaymentsByBankTransfer($requestNew);
         $result = $data->original['data'];
 
+        if(collect($result)->where('pulledToBankTransferYN',-1)->isEmpty())
+        {
+            return $this->sendError("There is no payment voucher selected in the bank transfer list.",500,[]);
+        }
+
+
+        $this->requestType = $request->requestType;
+        $this->bankTransferID = $request->bankTransferID;
+        $this->setHeaderDetails($request);
         $bankTransferBankAccountDetails = BankAccount::find(PaymentBankTransfer::find($request->bankTransferID)->bankAccountAutoID);
         $detailsArray = array();
-
-
-        $this->setHeaderDetails($request);
 
         foreach ($result as $rs)
         {
@@ -55,7 +75,7 @@ class B2BResourceAPIController extends AppBaseController
 
             $detailObject->setSectionIndex('S2');
             $detailObject->setTransferMethod($this->setBankTransferMethod($rs));
-            $detailObject->setCreditAmount($rs['payment_voucher']['payAmountBank'],$rs['payment_voucher']['BPVbankCurrency']);
+            $detailObject->setCreditAmount(($rs['payment_voucher']['payAmountBank'] + $rs['payment_voucher']['VATAmountBank']),$rs['payment_voucher']['BPVbankCurrency']);
             $detailObject->setCreditCurrency($rs['payment_voucher']['supplierTransCurrencyID']);
             $detailObject->setExchangeRate($rs['payment_voucher']['BPVbankCurrencyER']);
             $detailObject->setDealRefNo("");
@@ -98,7 +118,6 @@ class B2BResourceAPIController extends AppBaseController
 
         }
 
-
         $this->details = $detailsArray;
 
         return $this->downloadExcel();
@@ -111,6 +130,7 @@ class B2BResourceAPIController extends AppBaseController
         $bankTransfer = PaymentBankTransfer::find($request->bankTransferID,['bankAccountAutoID','documentDate','paymentBankTransferID','bankMasterID','narration','bankTransferDocumentCode','serialNumber']);
         $bankAccount = BankAccount::find($bankTransfer->bankAccountAutoID.['AccountNo']);
 
+        $batchNo = $this->bankTransferService->generateBatchNo($request->companyID, $bankTransfer->bankTransferDocumentCode,$bankTransfer->serialNumber);
         $headerDetails = [
             [
                 "S1",
@@ -120,11 +140,12 @@ class B2BResourceAPIController extends AppBaseController
                 1,
                 $bankTransfer->narration,
                 Carbon::parse($bankTransfer->documentDate)->format('d/m/Y'),
-                $this->bankTransferService->generateBatchNo($request->companyID, $bankTransfer->bankTransferDocumentCode,$bankTransfer->serialNumber)
+                $batchNo
             ]
         ];
 
-
+        $bankTransfer->batchReference = $batchNo;
+        $bankTransfer->save();
         $this->headerDetails = $headerDetails;
     }
 
@@ -149,7 +170,6 @@ class B2BResourceAPIController extends AppBaseController
 
     public function downloadExcel()
     {
-
 
         $footerDetails = [
             ['S3',count($this->details),collect($this->details)->sum('credit_amount')]
@@ -178,15 +198,73 @@ class B2BResourceAPIController extends AppBaseController
         ];
 
         $excelColumnFormat = [
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
+            'A' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
+            'C' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
             'G' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
         ];
-        return \Excel::create('vendorFile', function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
+
+
+        if($this->requestType == 0)
+        {
+            return \Excel::create('vendorFile', function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
+                $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
+                    $sheet->setColumnFormat($excelColumnFormat);
+                    $sheet->loadView($templateName, $reportData);
+                    $sheet->setAutoSize(true);
+                });
+            })->download('xlsx');
+        }else {
+
+            return $this->submitVendorFile($reportData,$templateName,$excelColumnFormat);
+        }
+    }
+
+
+    private function submitVendorFile($reportData,$templateName,$excelColumnFormat)
+    {
+
+        $paymentBankTransfer = PaymentBankTransfer::find($this->bankTransferID);
+        $getConfigDetails = BankConfig::where('slug','ahlibank')->where('bank_master_id',($paymentBankTransfer->bankMasterID))->first();
+
+        if(empty($getConfigDetails))
+            return $this->sendError("The vendor file format is not available for the selected bank",500,[]);
+
+        $filePath = storage_path('app/temp/');
+        $fileName = "vendorFile".Carbon::now()->format('dmyHis');
+
+
+
+        $isStored  =  \Excel::create($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
             $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
                 $sheet->setColumnFormat($excelColumnFormat);
                 $sheet->loadView($templateName, $reportData);
                 $sheet->setAutoSize(true);
             });
-        })->download('xlsx');
+        })->store('xlsx',$filePath);
+
+
+        if($isStored) {
+            $submitFile = $this->bankConfigService->uploadFileToBank($fileName,$this->bankTransferID);
+            if (!is_null($submitFile) && $submitFile->getData() && !$submitFile->getData()->success) {
+                return $this->sendError($submitFile->getData()->message, 500,[]);
+            }
+
+            $fullFilePath = $filePath . $fileName.'.xlsx';
+            if (file_exists($fullFilePath)) {
+                unlink($fullFilePath);
+            }
+        }
+
+        return $this->sendResponse([],'File submitted');
+
+    }
+
+    public function downloadErrorLogFromPortal(Request $request)
+    {
+        $getConfigDetails = BankConfig::where('slug','ahlibank')->first();
+        if(!isset($getConfigDetails))
+            return $this->sendError("The vendor file format is not available for the selected bank!",500,[]);
+
+        return $this->bankConfigService->downloadErrorLogFile($request->bankTransferID);
     }
 }

@@ -186,7 +186,11 @@ class PaymentBankTransfer extends Model
         'exportedDate',
         'refferedBackYN',
         'timesReferred',
-        'fileType'
+        'fileType',
+        'submittedDate',
+        'submittedStatus',
+        'portalStatus',
+        'batchReference'
     ];
 
     /**
@@ -223,7 +227,11 @@ class PaymentBankTransfer extends Model
         'exportedDate' => 'string',
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
-        'fileType'  => 'integer'
+        'fileType'  => 'integer',
+        'submittedDate' => 'date',
+        'submittedStatus' => 'integer',
+        'portalStatus' => 'integer',
+        'batchReference' => 'string'
     ];
 
     /**

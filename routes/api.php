@@ -108,8 +108,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
                 Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
 
-                Route::post('generateVendorFile','B2B\B2BResourceAPIController@generateVendorFile');
-
                 Route::group(['middleware' => 'max_memory_limit'], function () {
                     Route::group(['middleware' => 'max_execution_limit'], function () {
                         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');

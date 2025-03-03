@@ -70,7 +70,11 @@ class PaymentBankTransferRepository extends BaseRepository
         }
 
         $bankTransfer = PaymentBankTransfer::whereIn('companySystemID', $subCompanies)
-                                           ->with(['created_by', 'bank_account']);
+                                           ->with(['created_by', 'bank_account' => function ($query) {
+                                               $query->with(['bank' => function($q) {
+                                                   $q->with(['config']);
+                                               }]);
+                                           }]);
 
         if (isset($input['month']) && $input['month'] != null) {
             $month = Carbon::parse($input['month'])->format('m');

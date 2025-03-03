@@ -2,8 +2,14 @@
 
 namespace App\Services\B2B;
 
+use App\Models\BankConfig;
 use App\Models\Company;
+use App\Models\PaymentBankTransfer;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
+use League\Flysystem\Filesystem;
+use League\Flysystem\Sftp\SftpAdapter;
+use Illuminate\Support\Facades\File;
 
 class BankTransferService
 {
@@ -51,11 +57,38 @@ class BankTransferService
         $formatted = str_replace('/', '\\', $code);
 
         $parts = explode('\\', $formatted);
-        $lastPart = str_pad(end($parts), 3, '0', STR_PAD_LEFT);
+//        $lastPart = str_pad(end($parts), 3, '0', STR_PAD_LEFT);
+        $lastPart = mt_rand(1,999);
         $parts[key($parts)] = $lastPart;
 
         $output = ltrim(implode('\\', $parts), '\\');
 
         return $output;
     }
+
+    public function updateStatus($bankTransferID,$status)
+    {
+        $bankTransfer = PaymentBankTransfer::find($bankTransferID);
+
+        $bankTransfer->submittedDate = Carbon::now();
+        switch ($status)
+        {
+            case "success" :
+                $bankTransfer->submittedStatus = 1;
+                break;
+            case "failed" :
+                $bankTransfer->submittedStatus = 0;
+                break;
+            case "resubmitted" :
+                $bankTransfer->submittedStatus = 2;
+                break;
+        }
+
+        $bankTransfer->save();
+
+
+    }
+
+
+
 }

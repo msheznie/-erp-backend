@@ -68,5 +68,9 @@ class BankMaster extends Model
         
     ];
 
-    
+
+    public function config()
+    {
+        return $this->belongsTo('App\Models\BankConfig','bankmasterAutoID','bank_master_id');
+    }
 }

@@ -91,6 +91,10 @@ Route::group([],function () {
     Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate')->name('Get check before create bank transfers');
     Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck')->name('Export payment bank transfer precheck');
 
+
+    Route::post('generateVendorFile','B2B\B2BResourceAPIController@generateVendorFile');
+    Route::post('downloadErrorLogFromPortal','B2B\B2BResourceAPIController@downloadErrorLogFromPortal');
+
     Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
     Route::resource('bankTransferRefferedBack', 'PaymentBankTransferRefferedBackAPIController');
 

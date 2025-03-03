@@ -102,6 +102,13 @@ return [
             'url' => env('APP_URL').'',
             'visibility' => 'public',
         ],
+        'sftp' => [
+            'driver'   => 'sftp',
+            'host'     => '',
+            'username' => '',
+            'password' => '',
+            'port'     => 22
+        ],
     ],
 
 ];
