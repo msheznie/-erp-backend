@@ -184,7 +184,7 @@ class inventory
                                                                 case 3: 
                                                                     $document = GRVMaster::where('grvAutoID', $hub->documentSystemCode)->first();
                                                                     if ($document && $document->approved == 0) {
-                                                                        $add--; 
+                                                                        $add = $add - $hub->quantity; 
                                                                     }
                                                                     break;
 
@@ -204,7 +204,7 @@ class inventory
                                                                     $document = $model::where($columnName, $hub->documentSystemCode)->where($approve, 0)->first();
 
                                                                     if ($document) {
-                                                                        $add++; 
+                                                                        $add = $add + $hub->quantity; 
                                                                     }
                                                                     break;
                                                             }
