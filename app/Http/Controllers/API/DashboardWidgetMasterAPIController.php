@@ -26,6 +26,7 @@ use App\Repositories\DashboardWidgetMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\BudgetConsumedData;
+use App\Models\ChartOfAccountsAssigned;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -380,7 +381,11 @@ END AS sortDashboard')
             ->get();
         $output = [];
         $supplierGroup = SupplierGroup::notDeleted();
-        $glAccounts = ChartOfAccount::all()->toArray();
+        $glAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyId)
+                                    ->where('catogaryBLorPLID', 2)
+                                    ->get()
+                                    ->toArray();
+    
         if(!empty($widget)){
             $output['widget'] = $widget->toArray();
             $output['supplierGroup'] = $supplierGroup;

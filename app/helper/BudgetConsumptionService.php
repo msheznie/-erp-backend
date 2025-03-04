@@ -6643,104 +6643,104 @@ class BudgetConsumptionService
 					if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
 						$committedAmount += $value->consumedRptAmount;
 					} else {
-						$notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('
-                                itemFinanceCategoryID,
-                                SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty)) as totalAmount,
-                                SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount,
-                                SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount
-                            ')
-                            ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                            ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                            ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                            ->whereHas('order', function($query) {
-                                $query->where(function($query) {
-                                    $query->where('projectID', 0)
-                                          ->orWhereNull('projectID');
-                                });
-                            });
+					// 	$notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('
+                    //             itemFinanceCategoryID,
+                    //             SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty)) as totalAmount,
+                    //             SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount,
+                    //             SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount
+                    //         ')
+                    //         ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                    //         ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                    //         ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                    //         ->whereHas('order', function($query) {
+                    //             $query->where(function($query) {
+                    //                 $query->where('projectID', 0)
+                    //                       ->orWhereNull('projectID');
+                    //             });
+                    //         });
 
-						if (!empty($glAccount)) {
-							if (is_array($glAccount)) {
-								$notRecivedPoNonFixedAsset->whereIn('financeGLcodePLSystemID', $glAccount);
-							} else {
-								$notRecivedPoNonFixedAsset->where('financeGLcodePLSystemID', $glAccount);
-							}
-						}
+					// 	if (!empty($glAccount)) {
+					// 		if (is_array($glAccount)) {
+					// 			$notRecivedPoNonFixedAsset->whereIn('financeGLcodePLSystemID', $glAccount);
+					// 		} else {
+					// 			$notRecivedPoNonFixedAsset->where('financeGLcodePLSystemID', $glAccount);
+					// 		}
+					// 	}
 
-						$notRecivedPoNonFixedAsset = $notRecivedPoNonFixedAsset->groupBy('purchaseOrderMasterID')->first();
+					// 	$notRecivedPoNonFixedAsset = $notRecivedPoNonFixedAsset->groupBy('purchaseOrderMasterID')->first();
                 
 
 				
-						if ($notRecivedPoNonFixedAsset) {
+					// 	if ($notRecivedPoNonFixedAsset) {
 
-							if($notRecivedPoNonFixedAsset->itemFinanceCategoryID == 3)
-							{
-								$isAssets = true;
-								$totalCommitedAmount = 0;
-								if(isset($value->purchase_order->grv_details))
-								{
-									$grvDetails =  $value->purchase_order->grv_details;
-									foreach($grvDetails as $grv)
-									{
-										if (!in_array($grv->grv_master->grvAutoID, $grv_details))
-										{
-											$fixed_assets = FixedAssetMaster::where('docOriginDocumentSystemID', 3)
-												->where('docOriginSystemCode', $grv->grv_master->grvAutoID);
+					// 		if($notRecivedPoNonFixedAsset->itemFinanceCategoryID == 3)
+					// 		{
+					// 			$isAssets = true;
+					// 			$totalCommitedAmount = 0;
+					// 			if(isset($value->purchase_order->grv_details))
+					// 			{
+					// 				$grvDetails =  $value->purchase_order->grv_details;
+					// 				foreach($grvDetails as $grv)
+					// 				{
+					// 					if (!in_array($grv->grv_master->grvAutoID, $grv_details))
+					// 					{
+					// 						$fixed_assets = FixedAssetMaster::where('docOriginDocumentSystemID', 3)
+					// 							->where('docOriginSystemCode', $grv->grv_master->grvAutoID);
 
-												if (!empty($glAccount)) {
-													if (is_array($glAccount)) {
-														$fixed_assets->whereIn('costglCodeSystemID', $glAccount);
-													} else {
-														$fixed_assets->where('costglCodeSystemID', $glAccount);
-													}
-												}
+					// 							if (!empty($glAccount)) {
+					// 								if (is_array($glAccount)) {
+					// 									$fixed_assets->whereIn('costglCodeSystemID', $glAccount);
+					// 								} else {
+					// 									$fixed_assets->where('costglCodeSystemID', $glAccount);
+					// 								}
+					// 							}
 
-												$fixed_assets = $fixed_assets->get();
+					// 							$fixed_assets = $fixed_assets->get();
 
-												if($fixed_assets)
-												{
+					// 							if($fixed_assets)
+					// 							{
 												
-													foreach($fixed_assets as $asset)
-													{
-														if($asset->approved == -1)
-														{
-															$fixedCOmmitedAmount += $asset->COSTUNIT;
-														}
-													}
-												}
-											array_push($grv_details,$grv->grv_master->grvAutoID);
-										}
+					// 								foreach($fixed_assets as $asset)
+					// 								{
+					// 									if($asset->approved == -1)
+					// 									{
+					// 										$fixedCOmmitedAmount += $asset->COSTUNIT;
+					// 									}
+					// 								}
+					// 							}
+					// 						array_push($grv_details,$grv->grv_master->grvAutoID);
+					// 					}
 										
-									}
-								}
+					// 				}
+					// 			}
 								
 
-								$totalCommitedAmount = $notRecivedPoNonFixedAsset->remainingAmount + $notRecivedPoNonFixedAsset->receivedAmount;
-								$tot+=$totalCommitedAmount;
+					// 			$totalCommitedAmount = $notRecivedPoNonFixedAsset->remainingAmount + $notRecivedPoNonFixedAsset->receivedAmount;
+					// 			$tot+=$totalCommitedAmount;
 
-							}
-							else {
-								$grvApprovedPoAmount = 0;
-								$grvDetails =  $value->purchase_order->grv_details;
-								foreach($grvDetails as $grv)
-								{
-									if($grv->grv_master->approved == -1)
-									{
-										if($grv->financeGLcodePLSystemID == $value->chartOfAccountID)
-										{
-											$grvApprovedPoAmount += $grv->netAmount;
-										}
+					// 		}
+					// 		else {
+					// 			$grvApprovedPoAmount = 0;
+					// 			$grvDetails =  $value->purchase_order->grv_details;
+					// 			foreach($grvDetails as $grv)
+					// 			{
+					// 				if($grv->grv_master->approved == -1)
+					// 				{
+					// 					if($grv->financeGLcodePLSystemID == $value->chartOfAccountID)
+					// 					{
+					// 						$grvApprovedPoAmount += $grv->netAmount;
+					// 					}
 									
-									}
-								}
+					// 				}
+					// 			}
 
-								$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
-								$currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
-								$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
-								$currencyConversionRptAmountRec = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
-								$partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
-							}
-							}
+					// 			$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+					// 			$currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
+					// 			$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
+					// 			$currencyConversionRptAmountRec = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
+					// 			$partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
+					// 		}
+					// 		}
 						}
 
 					}
@@ -6748,24 +6748,24 @@ class BudgetConsumptionService
 					if (!$isAssets) {
 						$actuallConsumptionAmount = $dataValue->consumed_amount - $committedAmount;
 					} else {
-						$commited_amount = $tot - $fixedCOmmitedAmount;
-						$commited_amount = $commited_amount < 1 ? 0 : $commited_amount;
-						$currencyConversionRptAmount = \Helper::currencyConversion(
-							$dataValue->companySystemID,
-							$value->purchase_order->supplierTransactionCurrencyID,
-							$value->purchase_order->supplierTransactionCurrencyID,
-							$commited_amount
-						);
-						$committedAmount = $currencyConversionRptAmount['reportingAmount'];
+						// $commited_amount = $tot - $fixedCOmmitedAmount;
+						// $commited_amount = $commited_amount < 1 ? 0 : $commited_amount;
+						// $currencyConversionRptAmount = \Helper::currencyConversion(
+						// 	$dataValue->companySystemID,
+						// 	$value->purchase_order->supplierTransactionCurrencyID,
+						// 	$value->purchase_order->supplierTransactionCurrencyID,
+						// 	$commited_amount
+						// );
+						// $committedAmount = $currencyConversionRptAmount['reportingAmount'];
 
-						$consumAssetamount = FixedAssetMaster::selectRaw('SUM(costUnitRpt) as amount')
-							->where('approved', -1)
-							->groupBy('costglCodeSystemID')
-							->first();
+						// $consumAssetamount = FixedAssetMaster::selectRaw('SUM(costUnitRpt) as amount')
+						// 	->where('approved', -1)
+						// 	->groupBy('costglCodeSystemID')
+						// 	->first();
 
-						if ($consumAssetamount) {
-							$actuallConsumptionAmount = $consumAssetamount->amount;
-						}
+						// if ($consumAssetamount) {
+						// 	$actuallConsumptionAmount = $consumAssetamount->amount;
+						// }
 					}
 		
 				$results[$month] = [
