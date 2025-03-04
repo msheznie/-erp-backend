@@ -427,6 +427,49 @@ END AS sortDashboard')
 
         $dashBoardWidget = DashboardWidgetMaster::find($id);
         $currentYear = date("Y");
+
+        //Budget Widget
+        if(isset($input['slug']) && $input['slug'] == 'budget_widget') {
+            $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
+
+            if(!$currentFinancialYear) {
+                return $this->sendError('Company finance year not set');
+            }
+
+            $companyCurrency = \Helper::companyCurrency($companyID);
+
+            $actualConsumption = BudgetConsumptionService::getActualConsumption($companyID, 
+                                    $currentFinancialYear->companyFinanceYearID, $glAccount);
+               
+            $actual = collect($actualConsumption)->map(function ($value) {
+                return ['amount' => $value['amount']]; })->values();
+
+            $data['financialYear'] = $currentFinancialYear;
+            $data['reportingCurrency'] = $companyCurrency->reportingcurrency->CurrencyCode;
+            $data['decimalPlaces'] = $companyCurrency->reportingcurrency->DecimalPlaces;
+            $data['actual'] = $actual;
+            $data['budget'] = Budjetdetails::with(['budget_master.segment_by',
+                'budget_master.company'])
+               ->whereHas('budget_master.company', function($query) use ($companyID) {
+                    $query->where('companySystemID', $companyID);
+                })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
+                    $query->where('companyFinanceYearID', $currentFinancialYear->companyFinanceYearID);
+                })->whereHas('budget_master',function ($query) {
+                    $query->where('confirmedYN', 1);
+                })->whereHas('budget_master',function ($query) {
+                    $query->where('approvedYN', -1);
+                })
+                ->whereIn('glCodeType', ['PLI', 'PLE'])
+                ->selectRaw('SUM(budjetAmtRpt) as amount, month')
+                ->when(!empty($glAccount), function ($query) use ($glAccount) {
+                    $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
+                })
+                ->groupBy('month')
+                ->get();
+
+            return $this->sendResponse($data, 'Data retrieved successfully');
+        }
+
         switch ($id){
             case 1:// top 10 subcategory by spent
                 $temSeries = array(
@@ -1169,48 +1212,8 @@ GROUP BY
                 array_push($data,$temSeries);
             }
             return $this->sendResponse($data, 'Data retrieved successfully');
-
-            case 18 :
-                $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
-
-                if(!$currentFinancialYear) {
-                    return $this->sendError('Company finance year not set');
-                }
-
-                $companyCurrency = \Helper::companyCurrency($companyID);
-
-                $actualConsumption = BudgetConsumptionService::getActualConsumption($companyID, 
-                                        $currentFinancialYear->companyFinanceYearID, $glAccount);
-                   
-                $actual = collect($actualConsumption)->map(function ($value) {
-                    return ['amount' => $value['amount']]; })->values();
-
-                $data['financialYear'] = $currentFinancialYear;
-                $data['reportingCurrency'] = $companyCurrency->reportingcurrency->CurrencyCode;
-                $data['decimalPlaces'] = $companyCurrency->reportingcurrency->DecimalPlaces;
-                $data['actual'] = $actual;
-                $data['budget'] = Budjetdetails::with(['budget_master.segment_by',
-                    'budget_master.company'])
-                   ->whereHas('budget_master.company', function($query) use ($companyID) {
-                        $query->where('companySystemID', $companyID);
-                    })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
-                        $query->where('companyFinanceYearID', $currentFinancialYear->companyFinanceYearID);
-                    })->whereHas('budget_master',function ($query) {
-                        $query->where('confirmedYN', 1);
-                    })->whereHas('budget_master',function ($query) {
-                        $query->where('approvedYN', -1);
-                    })
-                    ->whereIn('glCodeType', ['PLI', 'PLE'])
-                    ->selectRaw('SUM(budjetAmtRpt) as amount, month')
-                    ->when(!empty($glAccount), function ($query) use ($glAccount) {
-                        $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
-                    })
-                    ->groupBy('month')
-                    ->get();
-
-                return $this->sendResponse($data, 'Data retrieved successfully');
-            default:
-                return $this->sendError('Data retrieved successfully');
+        default:
+            return $this->sendError('Data retrieved successfully');
         }
     }
 

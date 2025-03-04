@@ -6587,6 +6587,7 @@ class BudgetConsumptionService
 					->pluck('chartOfAccountID')
 					->implode(',');
 
+			$chartOfAccountIDs = !empty($chartOfAccountIDs) ? $chartOfAccountIDs : '0';
 			$query = "SELECT 
 					erp_budgetconsumeddata.companySystemID, 
 					erp_budgetconsumeddata.Year, 
