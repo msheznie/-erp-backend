@@ -45,7 +45,7 @@ class Detail
             'swift' => 'required|alpha_num|size:8,11',
             'charges_type' => 'required|in:OUR,BEN,SHA',
             'transactor_code' => 'required|string',
-            'transaction_reference' => 'nullable|string|max:20',
+            'transaction_reference' => 'nullable|string',
             'debit_narrative' => 'nullable|string|max:35',
             'credit_narrative' => 'nullable|string|max:35',
             'beneficiary_address' => 'nullable|string|max:35|regex:/^[a-zA-Z0-9 ]+$/',
