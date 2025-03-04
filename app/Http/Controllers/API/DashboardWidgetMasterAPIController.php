@@ -1199,7 +1199,9 @@ GROUP BY
                         $query->where('confirmedYN', 1);
                     })->whereHas('budget_master',function ($query) {
                         $query->where('approvedYN', -1);
-                    })->selectRaw('SUM(budjetAmtRpt) as amount, month')
+                    })
+                    ->whereIn('glCodeType', ['PLI', 'PLE'])
+                    ->selectRaw('SUM(budjetAmtRpt) as amount, month')
                     ->when(!empty($glAccount), function ($query) use ($glAccount) {
                         $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
                     })

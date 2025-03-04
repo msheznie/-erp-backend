@@ -6578,6 +6578,15 @@ class BudgetConsumptionService
 
 	public static function getActualConsumption($companyId, $financialYear, $glAccount) {
 
+			$chartOfAccountIDs = BudgetConsumedData::where('companySystemID', $companyId)
+					->where('companyFinanceYearID', $financialYear)
+					->whereHas('chart_of_account', function ($query) {
+						$query->where('catogaryBLorPLID', 2);
+					})
+					->distinct()
+					->pluck('chartOfAccountID')
+					->implode(',');
+
 			$query = "SELECT 
 					erp_budgetconsumeddata.companySystemID, 
 					erp_budgetconsumeddata.Year, 
@@ -6588,7 +6597,8 @@ class BudgetConsumptionService
 				WHERE erp_budgetconsumeddata.consumeYN = -1 
 				AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
 				AND companySystemID = $companyId 
-				AND companyFinanceYearID = $financialYear";
+				AND companyFinanceYearID = $financialYear
+				AND chartOfAccountID IN ($chartOfAccountIDs)";
 	
 			if (!empty($glAccount)) {
 				if (is_array($glAccount)) {
