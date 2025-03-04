@@ -390,6 +390,9 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $isGettingEdited = DocumentCodeTransaction::where('id', $id)
                                                     ->first();
 
+        if ($isGettingEdited && $isGettingEdited->isGettingEdited == 1) {
+            return $this->sendError('Document code configuration in progress', 500);
+        }
 
         return $this->sendResponse($isGettingEdited->toArray(), 'Document Code Transaction isGettingEdited retrieved successfully');
 
