@@ -451,14 +451,14 @@ class AttendanceDataPullingService{
 
         DB::table('srp_erp_pay_empattendancereview')->insert($this->data);
 
-        $this->update_ot_settlement_type();
+        $this->updateOtSettlementType();
 
         return true;
     }
 
-    private function update_ot_settlement_type(){
-        $emp_array = array_unique($this->allEmpArr);
-        $lieuBasedEmp = $this->get_ot_settlement_type_of_lieuLeave($emp_array);
+    private function updateOtSettlementType(){
+        $empArray = array_unique($this->allEmpArr);
+        $lieuBasedEmp = $this->getOtSettlementTypeOfLieuLeave($empArray);
 
         if(empty($lieuBasedEmp)){
             return true;
@@ -467,25 +467,29 @@ class AttendanceDataPullingService{
         DB::table('srp_erp_pay_empattendancereview')
             ->whereIn('empID', $lieuBasedEmp)
             ->whereDate('attendanceDate', $this->pullingDate)
+            ->where('isGeneralOT', '!=', 1)
             ->update(['settlementType'=> 2]);
 
         return true;
     }
 
-    function get_ot_settlement_type_of_lieuLeave($emp_array){
+    function getOtSettlementTypeOfLieuLeave($empArray){
+        $lieuLeaveBaseOn = SME::policy($this->companyId, 'LLB', 'All');
+
         $data = DB::table('srp_employeesdetails AS e')
             ->join('srp_erp_employeegrade AS g', 'g.gradeID', '=', 'e.gradeID')
-            ->where('g.isLieuLeave', 1)
-            ->whereIn('e.EIdNo', $emp_array)
-            ->get();
+            ->where(['e.Erp_companyID' => $this->companyId, 'g.isLieuLeave' => 1])
+            ->whereIn('e.EIdNo', $empArray);
 
-        if(empty($data)){
-            return [];
+        if ($lieuLeaveBaseOn == 2) {
+            $data = DB::table('srp_employeesdetails as e')
+                ->join('srp_employeedesignation as ed', 'ed.EmpID', '=', 'e.EIdNo')
+                ->join('srp_designation as d', 'd.DesignationID', '=', 'ed.DesignationID')
+                ->where(['d.isLieuLeave' => 1, 'e.Erp_companyID' => $this->companyId, 'ed.isMajor' => 1])
+                ->whereIn('e.EIdNo', $empArray);
         }
 
-        $data = get_object_vars($data);
-
-        return array_column($data, 'EIdNo');
+        return $data->pluck('e.EIdNo')->toArray();
     }
 
     private function deleteEntries(){
