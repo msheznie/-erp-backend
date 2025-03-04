@@ -11,7 +11,6 @@ use App\Models\BankMemoSupplier;
 use App\Models\Company;
 use App\Models\CurrencyMaster;
 use App\Models\PaymentBankTransfer;
-use App\Services\B2B\BankConfigService;
 use App\Services\B2B\BankTransferService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -24,17 +23,14 @@ class B2BResourceAPIController extends AppBaseController
 
     private $bankTransferService;
 
-    private $bankConfigService;
-
     private $requestType;
 
     private $bankTransferID;
 
-    public function __construct(VendorFile $vendorFile, BankTransferService $bankTransferService,BankConfigService $bankConfigService)
+    public function __construct(VendorFile $vendorFile, BankTransferService $bankTransferService)
     {
         $this->vendorFile = $vendorFile;
         $this->bankTransferService = $bankTransferService;
-        $this->bankConfigService = $bankConfigService;
     }
 
     public function generateVendorFile(Request $request) {
@@ -186,7 +182,6 @@ class B2BResourceAPIController extends AppBaseController
                 'detailsErrors' => (!empty(array_flatten($this->vendorFile->detailsDataErros))) ? $this->vendorFile->detailsDataErros : null,
                 'headerErrors' => (!empty(array_flatten($this->vendorFile->headerErrors))) ? $this->vendorFile->headerErrors : null
             ]);
-
         }
 
 
@@ -214,7 +209,6 @@ class B2BResourceAPIController extends AppBaseController
                 });
             })->download('xlsx');
         }else {
-
             return $this->submitVendorFile($reportData,$templateName,$excelColumnFormat);
         }
     }
@@ -244,11 +238,6 @@ class B2BResourceAPIController extends AppBaseController
 
 
         if($isStored) {
-//            $submitFile = $this->bankConfigService->uploadFileToBank($fileName,$this->bankTransferID);
-//            if (!is_null($submitFile) && $submitFile->getData() && !$submitFile->getData()->success) {
-//                return $this->sendError($submitFile->getData()->message, 500,[]);
-//            }
-
             $getConfigDetails = BankConfig::where('slug', 'ahlibank')->first();
             $config = collect($getConfigDetails['details'])->where('fileType', 0)->first();
             $pathDetails = $getConfigDetails;
