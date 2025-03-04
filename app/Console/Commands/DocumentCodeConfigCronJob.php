@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\DocumentCodeTransaction;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use App\helper\CommonJobService;
 
 class DocumentCodeConfigCronJob extends Command
 {
@@ -39,19 +40,28 @@ class DocumentCodeConfigCronJob extends Command
      */
     public function handle()
     {
-        $documentCodeTransaction = DocumentCodeTransaction::where('isGettingEdited', 1)->get();
-        if($documentCodeTransaction){
-            foreach ($documentCodeTransaction as $key => $value) {
-                $editedTime = Carbon::parse($value->isGettingEditedTime);
-                $currentTime = Carbon::now();
-                $timeDiff = $currentTime->diffInHours($editedTime);
-
-                if ($timeDiff > 1) {
-                    $value->isGettingEdited = 0;
-                    $value->save();
-                }
-            }
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
         }
 
+        foreach ($tenants as $tenant){
+            $tenant_database = $tenant->database;
+
+            CommonJobService::db_switch($tenant_database);
+            
+            $documentCodeTransaction = DocumentCodeTransaction::where('isGettingEdited', 1)->get();
+            if($documentCodeTransaction){
+                foreach ($documentCodeTransaction as $key => $value) {
+                    $editedTime = Carbon::parse($value->isGettingEditedTime);
+                    $currentTime = Carbon::now();
+                    $timeDiff = $currentTime->diffInHours($editedTime);
+
+                    if ($timeDiff > 1) {
+                        $value->isGettingEdited = 0;
+                        $value->save();
+                    }
+                }
+            }
+        } 
     }
 }
