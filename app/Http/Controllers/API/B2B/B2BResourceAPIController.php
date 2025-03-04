@@ -11,6 +11,7 @@ use App\Models\BankMemoSupplier;
 use App\Models\Company;
 use App\Models\CurrencyMaster;
 use App\Models\PaymentBankTransfer;
+use App\Models\SupplierCurrency;
 use App\Services\B2B\BankTransferService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -67,8 +68,8 @@ class B2BResourceAPIController extends AppBaseController
         foreach ($result as $rs)
         {
             $detailObject = new \App\Classes\B2B\Detail();
-            $bankMemoDetails = BankMemoSupplier::where('supplierCodeSystem',$rs['payment_voucher']['BPVsupplierID'])->where('supplierCurrencyID',$rs['payment_voucher']['supplierTransCurrencyID'])->get();
-
+            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem',$rs['payment_voucher']['BPVsupplierID'])->where('currencyID',$rs['payment_voucher']['supplierTransCurrencyID'])->first();
+            $bankMemoDetails = BankMemoSupplier::where('supplierCodeSystem',$rs['payment_voucher']['BPVsupplierID'])->where('supplierCurrencyID',$supplierCurrency->supplierCurrencyID ?? 0)->get();
             $detailObject->setSectionIndex('S2');
             $detailObject->setTransferMethod($this->setBankTransferMethod($rs));
             $detailObject->setCreditAmount(($rs['payment_voucher']['payAmountBank'] + $rs['payment_voucher']['VATAmountBank']),$rs['payment_voucher']['BPVbankCurrency']);
