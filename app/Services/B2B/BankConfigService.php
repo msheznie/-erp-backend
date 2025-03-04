@@ -20,12 +20,12 @@ class BankConfigService
     private $storage;
 
     private $db;
-    public function __construct()
+    public function __construct(BankTransferService $bankTransferService)
     {
         $getConfigDetails = BankConfig::where('slug', 'ahlibank')->first();
         $config = collect($getConfigDetails['details'])->where('fileType', 0)->first();
         $this->pathDetails = $getConfigDetails;
-        $this->bankTransferService = new BankTransferService();
+        $this->bankTransferService = $bankTransferService;
         $this->configDetails = [
             'driver'   => 'sftp',
             'host'     => $config['connectionDetails']['host'] ?? '',
