@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.64.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.63.0...v10.64.0) (2025-03-04)
+
+
+### Features
+
+* **Birthday Notification:** [HRMS] Default Birthday email template [GHR-229] ([#7613](https://github.com/pbsgears/Gears_BackEnd/issues/7613)) ([d69012c](https://github.com/pbsgears/Gears_BackEnd/commit/d69012c30ddfbcccc49a1fc864f0acd1ed378d3d))
+
+
+### Bug Fixes
+
+* **attendance:** Settlement Type Update for Machine Attendance [GHR-2728] ([#7572](https://github.com/pbsgears/Gears_BackEnd/issues/7572)) ([103d093](https://github.com/pbsgears/Gears_BackEnd/commit/103d093790d32b5e58f0ba6990bcfb1788831bc0))
+
 ## [10.63.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.62.3...v10.63.0) (2025-02-28)
 
 
