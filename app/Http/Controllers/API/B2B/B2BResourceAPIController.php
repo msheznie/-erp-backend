@@ -244,39 +244,10 @@ class B2BResourceAPIController extends AppBaseController
 
 
         if($isStored) {
-//            $submitFile = $this->bankConfigService->uploadFileToBank($fileName,$this->bankTransferID);
-            $getConfigDetails = BankConfig::where('slug', 'ahlibank')->first();
-            $config = collect($getConfigDetails['details'])->where('fileType', 0)->first();
-            $configDetails = [
-                'driver'   => 'sftp',
-                'host'     => $config['connectionDetails']['host'] ?? '',
-                'username' => $config['connectionDetails']['username'] ?? '',
-                'password' => $config['connectionDetails']['password'] ?? '',
-                'port'     => $config['connectionDetails']['port'] ?? 22,
-                'root'     => $config['connectionDetails']['root'] ?? '/',
-                'timeout'  => 50,
-            ];
-            config(['filesystems.disks.sftp' => $configDetails]);
-
-            if(!isset($getConfigDetails))
-               return $this->sendError("The vendor file format is not available for the selected bank",500,[]);
-
-            if(!isset($getConfigDetails) || !isset($getConfigDetails->details[0]['upload_path']))
-                return $this->sendError("Upload path not found!",500,[]);
-
-            $filePath = storage_path('app/temp/'.$fileName).'.xlsx';
-            $remotePath = $getConfigDetails->details[0]['upload_path']."/".$fileName.'.xlsx';
-            if (file_exists($filePath)) {
-                \Storage::disk('sftp')->put($remotePath,file_get_contents($filePath));
-                $this->bankTransferService->updateStatus($this->bankTransferID,'success');
-            } else {
-                $this->bankTransferService->updateStatus($this->bankTransferID,'failed');
+            $submitFile = $this->bankConfigService->uploadFileToBank($fileName,$this->bankTransferID);
+            if (!is_null($submitFile) && $submitFile->getData() && !$submitFile->getData()->success) {
+                return $this->sendError($submitFile->getData()->message, 500,[]);
             }
-//
-//
-//            if (!is_null($submitFile) && $submitFile->getData() && !$submitFile->getData()->success) {
-//                return $this->sendError($submitFile->getData()->message, 500,[]);
-//            }
 
             $fullFilePath = $filePath . $fileName.'.xlsx';
             if (file_exists($fullFilePath)) {

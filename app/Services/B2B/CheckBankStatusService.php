@@ -44,51 +44,53 @@ class CheckBankStatusService
 
     private function updateStatusFromPath(string $path, int $portalStatus, int $submittedStatus = null)
     {
-        $paymentTransfers = PaymentBankTransfer::whereNotNull('batchReference')
-            ->select(['paymentBankTransferID', 'batchReference', 'portalStatus'])
-            ->get();
+        try {
+            $paymentTransfers = PaymentBankTransfer::whereNotNull('batchReference')
+                ->select(['paymentBankTransferID', 'batchReference', 'portalStatus'])
+                ->get();
 
-        $configDetails = BankConfig::where('slug', 'ahlibank')->first();
-        if (!$configDetails) return;
-        $config = collect($configDetails['details'])->where('fileType', 0)->first();
-        if (empty($config[$path])) return;
-        $disk = $this->storage;
-        if($path == "success_path")
-        {
+            $configDetails = BankConfig::where('slug', 'ahlibank')->first();
+            if (!$configDetails) return;
+
+            $config = collect($configDetails['details'])->where('fileType', 0)->first();
+            if (empty($config[$path])) return;
+
+            $disk = $this->storage;
             $files = $disk->files($config[$path]);
-        }else {
-            $files = $disk->files($config[$path]);
-        }
 
+            if (empty($files)) return;
 
-        if (empty($files)) return;
+            foreach ($paymentTransfers as $paymentTransfer) {
+                foreach ($files as $file) {
+                    try {
+                        $fileContent = file_get_contents($file);
+                        $batchReference = preg_quote($paymentTransfer->batchReference, '/');
+                        $pattern = "/Batch Number:\s*" . $batchReference . "/";
 
-        foreach ($paymentTransfers as $paymentTransfer) {
-            foreach ($files as $file) {
-                $fileContent = file_get_contents($file);
-                $batchReference = preg_quote($paymentTransfer->batchReference, '/');
-                $pattern = "/Batch Number:\s*" . $batchReference . "/";
+                        if (preg_match($pattern, $fileContent)) {
+                            $paymentTransfer->portalStatus = $portalStatus;
+                            if ($submittedStatus !== null) {
+                                $paymentTransfer->submittedStatus = $submittedStatus;
+                            }
+                            $paymentTransfer->save();
 
-                if (preg_match($pattern, $fileContent)) {
-                    $paymentTransfer->portalStatus = $portalStatus;
-                    if ($submittedStatus !== null) {
-                        $paymentTransfer->submittedStatus = $submittedStatus;
-                    }
-                    $paymentTransfer->save();
-
-                    if(isset($this->db))
-                    {
-                        $webPushData = [
-                            'title' => "Bank Transfer portal status updated",
-                            'body' => "",
-                            'url' => "treasury/bank-transfer-list",
-                            'path' => "",
-                        ];
-                        WebPushNotificationService::sendNotification($webPushData, 2, [$paymentTransfer->createdUserSystemID], $this->db);
+                            if (isset($this->db)) {
+                                $webPushData = [
+                                    'title' => "Bank Transfer portal status updated",
+                                    'body' => "",
+                                    'url' => "treasury/bank-transfer-list",
+                                    'path' => "",
+                                ];
+                                WebPushNotificationService::sendNotification($webPushData, 2, [$paymentTransfer->createdUserSystemID], $this->db);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error("Error processing file {$batchReference}: " . $e->getMessage());
                     }
                 }
-
             }
+        } catch (\Exception $e) {
+            \Log::error("Error in processing bank transfers: " . $e->getMessage());
         }
     }
 

@@ -3,25 +3,12 @@
 namespace App\Jobs\B2B;
 
 use App\helper\CommonJobService;
-use App\Models\BankConfig;
-use App\Models\Deligation;
-use App\Models\EmployeeNavigation;
-use App\Models\EmployeesDepartment;
-use App\Models\PaymentBankTransfer;
-use App\Models\UserGroup;
-use App\Models\UserGroupAssign;
-use App\Services\B2B\BankConfigService;
 use App\Services\B2B\CheckBankStatusService;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
-use League\Flysystem\Filesystem;
-use League\Flysystem\Sftp\SftpAdapter;
 
 class BankStatus implements ShouldQueue
 {

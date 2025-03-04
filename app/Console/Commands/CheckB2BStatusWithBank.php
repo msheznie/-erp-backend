@@ -4,16 +4,9 @@ namespace App\Console\Commands;
 
 use App\helper\CommonJobService;
 use App\Jobs\B2B\BankStatus;
-use App\Jobs\DelegationActivation;
-use App\Models\BankConfig;
-use App\Models\PaymentBankTransfer;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
-use League\Flysystem\Filesystem;
-use League\Flysystem\Sftp\SftpAdapter;
 
-class checkB2BStatusWithBank extends Command
+class CheckB2BStatusWithBank extends Command
 {
     /**
      * The name and signature of the console command.
