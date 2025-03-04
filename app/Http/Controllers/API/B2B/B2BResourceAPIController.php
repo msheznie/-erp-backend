@@ -244,11 +244,51 @@ class B2BResourceAPIController extends AppBaseController
 
 
         if($isStored) {
-            $submitFile = $this->bankConfigService->uploadFileToBank($fileName,$this->bankTransferID);
-            if (!is_null($submitFile) && $submitFile->getData() && !$submitFile->getData()->success) {
-                return $this->sendError($submitFile->getData()->message, 500,[]);
-            }
+//            $submitFile = $this->bankConfigService->uploadFileToBank($fileName,$this->bankTransferID);
+//            if (!is_null($submitFile) && $submitFile->getData() && !$submitFile->getData()->success) {
+//                return $this->sendError($submitFile->getData()->message, 500,[]);
+//            }
 
+            $getConfigDetails = BankConfig::where('slug', 'ahlibank')->first();
+            $config = collect($getConfigDetails['details'])->where('fileType', 0)->first();
+            $pathDetails = $getConfigDetails;
+            $configDetails = [
+                'driver' => 'sftp',
+                'host' => $config['connectionDetails']['host'] ?? '',
+                'username' => $config['connectionDetails']['username'] ?? '',
+                'password' => $config['connectionDetails']['password'] ?? '',
+                'port' => $config['connectionDetails']['port'] ?? 22,
+                'root' => $config['connectionDetails']['root'] ?? '/',
+                'timeout' => 50,
+            ];
+            config(['filesystems.disks.sftp' => $configDetails]);
+            $storage = \Storage::disk('sftp');
+
+            $disk = $storage;
+            try {
+
+                if (!isset($configDetails))
+                    throw new \Exception("The vendor file format is not available for the selected bank");
+
+                if (!isset($pathDetails) || !isset($pathDetails->details[0]['upload_path']))
+                    throw new \Exception("Upload path not found!");
+
+                $filePath = storage_path('app/temp/' . $fileName) . '.xlsx';
+
+                $remotePath = $pathDetails->details[0]['upload_path'] . "/" . $fileName . '.xlsx';
+                if (file_exists($filePath)) {
+                    $disk->put($remotePath, file_get_contents($filePath));
+                    $this->bankTransferService->updateStatus($this->bankTransferID, 'success');
+                } else {
+                    $this->bankTransferService->updateStatus($this->bankTransferID, 'failed');
+                }
+
+            } catch (\Exception $exception) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $exception->getMessage()
+                ], 500);
+            }
             $fullFilePath = $filePath . $fileName.'.xlsx';
             if (file_exists($fullFilePath)) {
                 unlink($fullFilePath);
@@ -267,6 +307,42 @@ class B2BResourceAPIController extends AppBaseController
         if(!isset($getConfigDetails))
             return $this->sendError("The vendor file format is not available for the selected bank!",500,[]);
 
-        return $this->bankConfigService->downloadErrorLogFile($request->bankTransferID);
+        $supplierBankTransfer = PaymentBankTransfer::find($request->bankTransferID);
+        $getConfigDetails = BankConfig::where('slug', 'ahlibank')->where('bank_master_id', $supplierBankTransfer->bankMasterID)->first();
+        if (!isset($getConfigDetails))
+            return $this->sendError("The vendor file format is not available for the selected bank");
+
+        $config = collect($getConfigDetails['details'])->where('fileType', 0)->first();
+        if ($config['failure_path']) {
+            $configDetails = [
+                'driver' => 'sftp',
+                'host' => $config['connectionDetails']['host'] ?? '',
+                'username' => $config['connectionDetails']['username'] ?? '',
+                'password' => $config['connectionDetails']['password'] ?? '',
+                'port' => $config['connectionDetails']['port'] ?? 22,
+                'root' => $config['connectionDetails']['root'] ?? '/',
+                'timeout' => 50,
+            ];
+            config(['filesystems.disks.sftp' => $configDetails]);
+            $storage = \Storage::disk('sftp');
+            try {
+                $disk = $storage;
+                $files = $disk->files($config['failure_path']);
+                foreach ($files as $file) {
+                    $filePath = $file->getRealPath();
+                    $file = file_get_contents($filePath);
+                    $batchReference = preg_quote($supplierBankTransfer->batchReference, '/'); // Escape special characters
+                    $pattern = "/Batch Number:\s*" . $batchReference . "/"; // Proper regex with delimiters
+                    if (preg_match($pattern, $file, $matches)) {
+                        return response()->file($filePath);
+                    }
+                }
+            } catch (\Exception $exception) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $exception->getMessage()
+                ], 500);
+            }
+        }
     }
 }
