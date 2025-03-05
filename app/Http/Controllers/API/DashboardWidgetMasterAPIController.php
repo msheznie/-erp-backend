@@ -467,7 +467,6 @@ END AS sortDashboard')
                 ->groupBy('month')
                 ->get();
 
-            return $this->sendResponse($data, 'Data retrieved successfully');
         }
 
         switch ($id){
@@ -1213,7 +1212,7 @@ GROUP BY
             }
             return $this->sendResponse($data, 'Data retrieved successfully');
         default:
-            return $this->sendError('Data retrieved successfully');
+            return $this->sendResponse($data, 'Data retrieved successfully');
         }
     }
 
