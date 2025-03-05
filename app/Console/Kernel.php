@@ -35,6 +35,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('command:recurringVoucher')->daily()->withoutOverlapping();
         $schedule->command('command:reversePoAccrual')->daily()->withoutOverlapping();
         $schedule->command('command:delegationActive')->daily()->withoutOverlapping();
+        $schedule->command('command:codeConfigEdit')->hourly()->withoutOverlapping();
+        $schedule->command('command:checkb2bstatus')->everyFifteenMinutes()->withoutOverlapping();
 
         $schedule->command('pull-attendance')
         ->timezone('Asia/Muscat')

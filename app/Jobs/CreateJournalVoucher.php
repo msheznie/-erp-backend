@@ -798,6 +798,7 @@ class CreateJournalVoucher implements ShouldQueue
             'detailData' => [$detailData]
         ];
     }
+    
 
     public static function createSuccessResponseDataArray($narration,$masterIndex,$code): array
     {

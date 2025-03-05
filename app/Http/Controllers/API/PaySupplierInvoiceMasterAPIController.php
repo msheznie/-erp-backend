@@ -2185,9 +2185,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     );
 
                     $error_count = 0;
-
+                    if($paySupplierInvoiceMaster->expenseClaimOrPettyCash != 15)
+                    {
                     DirectPaymentDetails::where('directPaymentAutoID', $id)->update(['bankCurrencyER' => $input['BPVbankCurrencyER']]);
-
+                    }
                     $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
                                     ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
                                     ->first();

@@ -197,3 +197,28 @@ Route::group([], function() {
     Route::post('getExchangeSetupConfigOfCompany', 'ExchangeSetup\ExchangeSetupDocumentController@getExchangeSetupConfigOfCompany');
 
 });
+
+
+// Document Code Setup
+
+Route::group([], function() {
+    Route::resource('document_code_modules', 'DocumentCodeModuleAPIController');
+    Route::resource('document_code_transactions', 'DocumentCodeTransactionAPIController');
+    Route::resource('document_code_type_baseds', 'DocumentCodeTypeBasedAPIController');
+    Route::resource('document_code_masters', 'DocumentCodeMasterAPIController');
+    Route::resource('document_code_formats', 'DocumentCodeFormatAPIController');
+    Route::resource('doc_code_numbering_sequences', 'DocCodeNumberingSequenceAPIController');
+    Route::resource('doc_code_setup_type_baseds', 'DocCodeSetupTypeBasedAPIController');
+    Route::resource('doc_code_setup_commons', 'DocCodeSetupCommonAPIController');
+
+    Route::get('getDocumentCodeMasters', 'DocumentCodeMasterAPIController@getDocumentCodeMasters')->name("Get document code masters");
+    Route::get('getDocumentCodemaster', 'DocumentCodeMasterAPIController@getDocumentCodemaster')->name("Get document code master");
+    // Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->name("Update document code Transaction");
+    Route::get('isGettingCodeConfigured', 'DocumentCodeMasterAPIController@isGettingCodeConfigured')->name("Is getting code configured");
+    Route::get('getDocumentCodeSetupTypeBased', 'DocCodeSetupTypeBasedAPIController@getDocumentCodeSetupTypeBased')->name("Get document code setup type based");
+    Route::post('updateTypeBasedFormat', 'DocCodeSetupTypeBasedAPIController@updateTypeBasedFormat')->name("Update type based format");
+    Route::get('getDocumentCodeSetupCommon', 'DocCodeSetupCommonAPIController@getDocumentCodeSetupCommon')->name("Get document code setup common");
+    Route::post('updateCommonFormat', 'DocCodeSetupCommonAPIController@updateCommonFormat')->name("Update common format");
+    Route::post('updateDocumentCodeMaster', 'DocumentCodeMasterAPIController@updateDocumentCodeMaster')->name("Update document code master");
+    Route::post('updateDocumentCode', 'DocumentCodeMasterAPIController@updateDocumentCode')->name("Update document code");
+});

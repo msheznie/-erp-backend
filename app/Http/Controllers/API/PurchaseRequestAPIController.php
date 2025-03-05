@@ -42,6 +42,7 @@ use App\Models\CurrencyMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\Employee;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\MaterielRequest;
@@ -93,6 +94,7 @@ use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Models\DocumentModifyRequest;
 use App\Repositories\DocumentApprovedRepository;
 use App\Repositories\DocumentModifyRequestRepository;
+use App\Services\DocumentCodeConfigurationService;
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -105,14 +107,16 @@ class PurchaseRequestAPIController extends AppBaseController
     private $segmentAllocatedItemRepository;
     private $materielRequestRepository;
     private $purchaseRequestDetailsRepository;
+    private $documentCodeConfigurationService;
 
-    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo,PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, MaterielRequestRepository $materielRequestRepository)
+    public function __construct(DocumentCodeConfigurationService $documentCodeConfigurationService , PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo,PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, MaterielRequestRepository $materielRequestRepository)
     {
         $this->purchaseRequestRepository = $purchaseRequestRepo;
         $this->purchaseRequestDetailsRepository = $purchaseRequestDetailsRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
         $this->materielRequestRepository = $materielRequestRepository;
+        $this->documentCodeConfigurationService = $documentCodeConfigurationService;
     }
 
     /**
@@ -238,6 +242,12 @@ class PurchaseRequestAPIController extends AppBaseController
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
         $month = Months::all();
+        $buyers = Employee::where('discharegedYN', '!=', -1)
+            ->where('empActive', 1)
+            ->whereIn('empCompanySystemID', $childCompanies)
+            ->where('isSupportAdmin', '!=', -1)
+            ->where('isSuperAdmin', '!=', -1)
+            ->get();
 
 
         $years = PurchaseRequest::select(DB::raw("YEAR(createdDateTime) as year"))
@@ -245,6 +255,9 @@ class PurchaseRequestAPIController extends AppBaseController
             ->groupby('year')
             ->orderby('year', 'desc')
             ->get();
+
+        $buyersEmpId = PurchaseRequest::pluck('buyerEmpSystemID');
+        $buyersOnly = Employee::whereIn('employeeSystemID', $buyersEmpId)->get();
 
         $currencies = CurrencyMaster::all();
 
@@ -315,6 +328,8 @@ class PurchaseRequestAPIController extends AppBaseController
             'currencies' => $currencies,
             'financeCategories' => $financeCategories,
             'locations' => $locations,
+            'buyers' => $buyers,
+            'buyersOnly' => $buyersOnly,
             'companyFinanceYear' => $companyFinanceYear,
             'priorities' => $priorities,
             'financialYears' => $financialYears,
@@ -1112,7 +1127,8 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input,
+        array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year', 'buyerEmpSystemID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1120,11 +1136,12 @@ class PurchaseRequestAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+
         $search = $request->input('search.value');
-        $serviceLineSystemID = $request['serviceLineSystemID'];
-        $serviceLineSystemID = (array)$serviceLineSystemID;
-        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
-        $purchaseRequests = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search, $serviceLineSystemID);
+        $serviceLineSystemID = collect((array) $request['serviceLineSystemID'])->pluck('id');
+        $buyerEmpSystemId = collect((array) $request['buyerEmpSystemID'])->pluck('id');
+        $purchaseRequests = $this->purchaseRequestRepository->purchaseRequestListQuery(
+            $request, $input, $search, $serviceLineSystemID, $buyerEmpSystemId);
 
         return \DataTables::eloquent($purchaseRequests)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -1238,6 +1255,8 @@ class PurchaseRequestAPIController extends AppBaseController
         }
         
         return \DataTables::of($purchaseRequests)
+            ->filter(function ($instance){  
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1312,6 +1331,8 @@ class PurchaseRequestAPIController extends AppBaseController
         });
 
         return \DataTables::of($purchaseRequests)
+            ->filter(function ($instance){  
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1483,8 +1504,10 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
+        $documentCodeMasterID = 1;
         $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
         $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
+    
 
         $purchaseRequests = $this->purchaseRequestRepository->create($input);
 
@@ -1928,6 +1951,15 @@ class PurchaseRequestAPIController extends AppBaseController
         if($input['serviceLineSystemID'] != $purchaseRequest->serviceLineSystemID){
             $code = str_pad($purchaseRequest->serialNumber, 6, '0', STR_PAD_LEFT);
             $input['purchaseRequestCode'] = $purchaseRequest->companyID . '\\' . $purchaseRequest->departmentID . '\\' . $input['serviceLineCode'] . '\\' . $purchaseRequest->documentID . $code;
+        }
+
+        if (!empty($input['buyerEmpSystemID'])) {
+            $buyerInfo = Employee::find($input['buyerEmpSystemID']);
+            if ($buyerInfo) {
+                $input['buyerEmpID'] = $buyerInfo->empID;
+                $input['buyerEmpName'] = $buyerInfo->empName;
+                $input['buyerEmpEmail'] = $buyerInfo->empEmail;
+            }
         }
 
         $input['modifiedPc'] = gethostname();

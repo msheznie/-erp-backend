@@ -231,7 +231,7 @@ class WarehouseItems extends Model
     ];
 
     public function unit(){
-        return $this->hasOne('App\Models\Unit','UnitID','itemUnitOfMeasure');
+        return $this->hasOne('App\Models\Unit','UnitID','unitOfMeasure');
     }
     public function financeMainCategory(){
         return $this->hasOne('App\Models\FinanceItemCategoryMaster','itemCategoryID','financeCategoryMaster');
@@ -255,5 +255,9 @@ class WarehouseItems extends Model
     public function binLocation()
     {
         return $this->belongsTo('App\Models\WarehouseBinLocation','binNumber','binLocationID');
+    }
+    public function item_by()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemSystemCode', 'itemCodeSystem');
     }
 }

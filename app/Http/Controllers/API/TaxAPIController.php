@@ -27,6 +27,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\VatReturnFillingMaster;
 
 /**
  * Class TaxController
@@ -304,12 +305,27 @@ class TaxAPIController extends AppBaseController
 
         if($taxCategory == 2){
             $input['isDefault'] = 1;
-            $alreadyTaxDefined = Tax::where('taxCategory',$taxCategory)->where('taxMasterAutoID','!=',$id)->exists();
+            $alreadyTaxDefined = Tax::where('taxCategory',$taxCategory)->where('companySystemID', $input['companySystemID'])->where('taxMasterAutoID','!=',$id)->exists();
+            $keys = ['taxDescription', 'identification_no', 'isActive','authorityAutoID','companySystemID'];
+            $inputData = array_intersect_key($input, array_flip($keys));
+            $newAuthorityAutoID = $inputData['authorityAutoID'];
+            $vatFilling = VatReturnFillingMaster::where('companySystemID', $input['companySystemID'])->exists();
+            $authorityRecord  = Tax::where('taxCategory',$taxCategory)->where('companySystemID', $input['companySystemID'])->where('taxMasterAutoID',$id)->first();
+
+            if($vatFilling && $authorityRecord && isset($newAuthorityAutoID))
+            {
+                if ($authorityRecord->authorityAutoID !== $newAuthorityAutoID) {
+                    return $this->sendError('A VAT return filing document has been created. Changes to the authority are not allowed', 500);
+
+                }
+            }
             if($alreadyTaxDefined){
                 if($taxCategory == 2){
                     return $this->sendError('VAT is already defined. You cannot create more than one active VAT', 500);
                 }
             }
+            $input = $inputData;
+
         }
 
         if($taxCategory == 3){

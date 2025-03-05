@@ -24,6 +24,11 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\WarehouseBinLocation;
+use App\Models\ItemBatch;
+use App\Models\ItemMaster;
+use App\Models\ItemSerial;
+use App\Models\ErpItemLedger;
 
 /**
  * Class WarehouseItemsController
@@ -237,8 +242,23 @@ class WarehouseItemsAPIController extends AppBaseController
         if (!isset($input['binNumber'])) {
             $input['binNumber'] = 0;
         }
-        $warehouseItems = $this->warehouseItemsRepository->update(array_only($input, ['binNumber']), $id);
 
+
+        if(isset($input['binLocation']) && !empty($input['binLocation']))
+        {
+            if (!empty($input['binLocation']['IDS']) && is_array($input['binLocation']['IDS'])) {
+                $productIDs = array_filter($input['binLocation']['IDS'], 'is_numeric');
+                $itemMaster = ItemMaster::find($warehouseItems->itemSystemCode);
+                if (!empty($productIDs) && $itemMaster) {
+                    $model = $itemMaster->trackingType == 1 ? ItemBatch::class : ItemSerial::class;
+                    $model::whereIn('id', $productIDs)->update(['binLocation' => $input['binNumber']]);
+                }
+            }
+        }
+        else
+        {
+            $warehouseItems = $this->warehouseItemsRepository->update(array_only($input, ['binNumber']), $id);
+        }
         return $this->sendResponse($warehouseItems->toArray(), 'WarehouseItems updated successfully');
     }
 
@@ -312,35 +332,45 @@ class WarehouseItemsAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $itemMasters = $this->getAssignedItemsByWareHouse($input);
+        if(isset($request['financeCategorySubLocation']) && !empty($request['financeCategorySubLocation']))
+        {
+            $input['financeCategorySubLocation'] = collect($request['financeCategorySubLocation'])->pluck('id');   
+        }
 
-        $data = \DataTables::eloquent($itemMasters)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('warehouseItemsID', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('current', function ($row) {
-                $data = array('companySystemID' => $row->companySystemID,
-                    'itemCodeSystem' => $row->itemSystemCode,
-                    'wareHouseId' => $row->warehouseSystemCode);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        if(isset($request['itemSystemCode']) && !empty($request['itemSystemCode']))
+        {
+            $input['itemSystemCode'] = collect($request['itemSystemCode'])->pluck('id');   
+        }
 
-                $array = array('local' => $itemCurrentCostAndQty['wacValueLocalWarehouse'],
-                    'rpt' => $itemCurrentCostAndQty['wacValueReportingWarehouse'],
-                    'wareHouseStock' => $itemCurrentCostAndQty['currentWareHouseStockQty'],
-                    'totalWacCostLocal' => $itemCurrentCostAndQty['totalWacCostLocalWarehouse'],
-                    'totalWacCostRpt' => $itemCurrentCostAndQty['totalWacCostRptWarehouse'],
-                );
-                return $array;
+        $itemMasters = ($this->getAssignedItemsByWareHouse($input));
 
-            })
-            ->make(true);
+        $itemMasters = collect($itemMasters);
+
+        $direction = $input['order'][0]['dir'] ?? 'asc';
+        $itemMasters = $itemMasters->sortBy('warehouseItemsID', SORT_REGULAR, $direction === 'desc');
+
+        $data = \DataTables::collection($itemMasters)
+        ->addIndexColumn()
+        ->with('orderCondition', $sort)
+        ->filter(function ($instance) use ($input) {  
+            $search = $input['search']['value'] ?? null;
+            if (!empty($search)) {
+                $instance->collection = $instance->collection->filter(function ($item) use ($search) {
+                    return stripos($item['itemPrimaryCode'] ?? '', $search) !== false ||
+                    stripos($item['itemDescription'] ?? '', $search) !== false ||
+                    stripos($item['warehouse_by']['warehouseDescription'] ?? '', $search) !== false ||
+                    stripos($item['binLocation']['binLocationDes'] ?? '', $search) !== false ||
+                    stripos($item['bin_location']['binLocationDes'] ?? '', $search) !== false ||
+                    stripos($item['financeSubCategory']['categoryDescription'] ?? '', $search) !== false;
+                });
+            }
+        })
+        ->addColumn('Actions', function ($row) {
+            return '<button class="btn btn-sm btn-primary">Edit</button>';
+        })
+        ->rawColumns(['Actions'])
+        ->make(true);
+
         return $data;
     }
 
@@ -353,8 +383,24 @@ class WarehouseItemsAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
+
+        if(isset($request['financeCategorySubLocation']) && !empty($request['financeCategorySubLocation']))
+        {
+            $input['financeCategorySubLocation'] = collect($request['financeCategorySubLocation'])->pluck('id');   
+        }
+
+        if(isset($request['itemSystemCode']) && !empty($request['itemSystemCode']))
+        {
+            $input['itemSystemCode'] = collect($request['itemSystemCode'])->pluck('id');   
+        }
+        
         $data = array();
-        $output = ($this->getAssignedItemsByWareHouse($input))->orderBy('warehouseItemsID', $sort)->get();
+        $output = ($this->getAssignedItemsByWareHouse($input));
+        $output = collect($output)->map(function ($item) {
+            return (object) $item;
+        });
+        
+        $output = $output->sortBy('warehouseItemsID', SORT_REGULAR, $sort)->values();
 
         $type = $request->type;
         if (!empty($output)) {
@@ -365,48 +411,47 @@ class WarehouseItemsAPIController extends AppBaseController
                 $data[$x]['Item Description'] = $value->itemDescription;
 
                 if ($value->unit) {
-                    $data[$x]['Unit'] = $value->unit->UnitShortCode;
+                    $data[$x]['Unit'] = $value->unit['UnitShortCode'];
                 } else {
                     $data[$x]['Unit'] = '-';
                 }
 
-                if ($value->financeSubCategory) {
-                    $data[$x]['Category'] = $value->financeSubCategory->categoryDescription;
+                if ($value->finance_sub_category) {
+                    $data[$x]['Category'] = $value->finance_sub_category['categoryDescription'];
                 } else {
                     $data[$x]['Category'] = '-';
                 }
 
-                if ($value->bin_location) {
-                    $data[$x]['Bin Location'] = $value->bin_location->binLocationDes;
-                } else {
-                    $data[$x]['Bin Location'] = '-';
-                }
-
+                $data[$x]['warehouse'] =  $value->warehouse_by ? $value->warehouse_by['wareHouseDescription'] : '-';
+                $bin = WarehouseBinLocation::find($value->binNumber);
+                $data[$x]['Bin Location'] = $value->isTrack == 1? $value->binLocation['binLocationDes'] : $bin ? $bin->binLocationDes : '-';
+              
                 $data[$x]['Min Qty'] = number_format($value->minimumQty, 2);
                 $data[$x]['Max Qty'] = number_format($value->maximunQty, 2);
 
                 $localDecimal = 3;
                 $rptDecimal = 2;
                 if ($value->local_currency) {
-                    $localDecimal = $value->local_currency->DecimalPlaces;
+                    $localDecimal = $value->local_currency['DecimalPlaces'];
                 }
                 if ($value->rpt_currency) {
-                    $rptDecimal = $value->rpt_currency->DecimalPlaces;
+                    $rptDecimal = $value->rpt_currency['DecimalPlaces'];
                 }
 
                 $data1 = array('companySystemID' => $value->companySystemID,
                     'itemCodeSystem' => $value->itemSystemCode,
                     'wareHouseId' => $value->warehouseSystemCode);
-                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data1);
+                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data1);                
 
-                $data[$x]['Stock Qty'] = number_format($itemCurrentCostAndQty['currentWareHouseStockQty'],2);
-                $data[$x]['WAC Local'] = number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'],$localDecimal);
-                $data[$x]['WAC Rpt'] = number_format($itemCurrentCostAndQty['wacValueReportingWarehouse'],$rptDecimal);
-                $data[$x]['WAC Local Val'] = number_format($itemCurrentCostAndQty['totalWacCostLocalWarehouse'],$localDecimal);
-                $data[$x]['WAC Rpt Val'] = number_format($itemCurrentCostAndQty['totalWacCostRptWarehouse'],$rptDecimal);
-                $x++;
+                 $data[$x]['Stock Qty'] = $value->isTrack == 1? number_format($value->binLocation['quantity'],2) :number_format($value->current['wareHouseStock'],2);
+                 $data[$x]['WAC Local'] = number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'],$localDecimal);
+                 $data[$x]['WAC Rpt'] = number_format($itemCurrentCostAndQty['wacValueReportingWarehouse'],$rptDecimal);
+                 $data[$x]['WAC Local Val'] = $value->isTrack == 1? number_format($value->binLocation['totalWacCostLocal'],$localDecimal) :number_format($value->current['totalWacCostLocal'],$localDecimal);
+                 $data[$x]['WAC Rpt Val'] = $value->isTrack == 1? number_format($value->binLocation['totalWacCostRpt'],$rptDecimal) :number_format($value->current['totalWacCostRpt'],$rptDecimal);
+                 $x++;
             }
         }
+
 
          \Excel::create('items_by_warehouse', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
@@ -423,65 +468,124 @@ class WarehouseItemsAPIController extends AppBaseController
 
     public function getAssignedItemsByWareHouse($input)
     {
+        $input = $this->convertArrayToSelectedValue($input,
+            array('financeCategoryMaster', 'financeCategorySubLocation', 'isActive'));
+        $childCompanies = [];
+        $companyIds = $input['companyId'];
+        $warehouseSystemCode = is_array($input['warehouseSystemCode'])
+            ? $input['warehouseSystemCode'] : [$input['warehouseSystemCode']];
 
-        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
-        $companyId = $input['companyId'];
-        $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+        $type = isset($input['categoryTypeValue'])
+            ? (is_array($input['categoryTypeValue'])
+                ? array_map('strval', $input['categoryTypeValue'])
+                : explode(',', $input['categoryTypeValue']))
+            : [];
 
-        $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
+        $warehouse = WarehouseMaster::whereIn('warehouseSystemCode', $warehouseSystemCode)->get();
 
         if(!empty($warehouse)){
-            $companyId = $warehouse->companySystemID;
+            $companyIds = $warehouse->pluck('companySystemID')->unique()->toArray();
         }
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
-
-
-        if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
-        } else {
-            $childCompanies = [$companyId];
+        foreach ($companyIds as $companyId) {
+            if (\Helper::checkIsCompanyGroup($companyId)) {
+                $childCompanies = array_merge($childCompanies, \Helper::getGroupCompany($companyId));
+            } else {
+                $childCompanies[] = $companyId;
+            }
         }
 
-        $itemMasters = WarehouseItems::with(['warehouse_by', 'binLocation', 'unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency'])
+        $childCompanies = array_unique($childCompanies);
+
+        $itemMasters = WarehouseItems::with(['warehouse_by', 'binLocation', 'unit', 'item_by', 'financeSubCategory', 'local_currency', 'rpt_currency'])
             ->whereIn('companySystemID', $childCompanies)
-            ->where('warehouseSystemCode', $input['warehouseSystemCode'])
-            ->where('financeCategoryMaster', 1);
+            ->whereIn('warehouseSystemCode', $warehouseSystemCode)
+            ->where('financeCategoryMaster', 1) 
+            ->when(!empty($type) && is_array($type), function ($query) use ($type) {
+                $query->whereHas('item_by', function ($query) use ($type) {
+                    $query->whereHas('item_category_type', function ($subQuery) use ($type) {
+                        $subQuery->whereIn('categoryTypeID', $type);
+                    });
+                });
+            });
 
-        if (array_key_exists('financeCategoryMaster', $input)) {
-            if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
-                $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
+        if (array_key_exists('financeCategorySubLocation', $input)) {
+            if (isset($input['financeCategorySubLocation'])  && !empty($input['financeCategorySubLocation'])) {
+                $itemMasters->whereIn('financeCategorySub',$input['financeCategorySubLocation']);
             }
         }
 
-        if (array_key_exists('financeCategorySub', $input)) {
-            if ($input['financeCategorySub'] > 0 && !is_null($input['financeCategorySub'])) {
-                $itemMasters->where('financeCategorySub', $input['financeCategorySub']);
-            }
-        }
-
-        if (array_key_exists('isActive', $input)) {
-            if (($input['isActive'] == 0 || $input['isActive'] == 1) && !is_null($input['isActive'])) {
-                $itemMasters->where('isActive', $input['isActive']);
-            }
-        }
         if (array_key_exists('itemApprovedYN', $input)) {
             if (($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) && !is_null($input['itemApprovedYN'])) {
                 $itemMasters->where('itemApprovedYN', $input['itemApprovedYN']);
             }
         }
 
-        $search = $input['search']['value'];
-        if ($search) {
-            $itemMasters = $itemMasters->where(function ($query) use ($search) {
-                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
-            });
+        if (array_key_exists('itemSystemCode', $input)) {
+            if (isset($input['itemSystemCode'])  && !empty($input['itemSystemCode'])) {
+                $itemMasters->whereIn('itemSystemCode',$input['itemSystemCode']);
+            }
         }
 
+        $details = $itemMasters->get();
+        foreach($details as &$row)
+        {
+            $data = array('companySystemID' => $row->companySystemID,
+            'itemCodeSystem' => $row->itemSystemCode,
+            'wareHouseId' => $row->warehouseSystemCode,
+            'itemReport' => true);
+            $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
+            
+            $row['binLocation'] =$itemBinLocation['binLocation'] ?? [];
+            $row['isTrack'] =$itemBinLocation['isTrackable'] ?? [];
 
-        return $itemMasters;
+            $array = array('local' => $itemBinLocation['wacValueLocalWarehouse'],
+            'rpt' => $itemBinLocation['wacValueReportingWarehouse'],
+            'wareHouseStock' => $itemBinLocation['currentWareHouseStockQty'],
+            'totalWacCostLocal' => $itemBinLocation['totalWacCostLocalWarehouse'],
+            'totalWacCostRpt' => $itemBinLocation['totalWacCostRptWarehouse'],
+             );
+            $row['current'] = $array;
+        }
+
+        $transformedData = [];
+        $x = 1;
+        $details = $details->toArray(); 
+        $transformedData = array_reduce($details, function ($carry, $item) use(&$x) {
+            if (($item['isTrack'] == "1" || $item['isTrack'] == "2") && !empty($item['binLocation'])) {
+                foreach ($item['binLocation'] as $bin) {
+                    $carry[] = array_merge($item, [
+                        'binLocation' => $bin,
+                        'binNumber' => $bin['binLocationID'],
+                        'order' => $x
+                    ]);
+                    $x++;
+                }
+            } else {
+                $carry[] = array_merge($item, ['binLocation' => null,'order' => $x]);
+                $x++;
+            }
+            return $carry;
+        }, []);
+
+        if(isset($input['binNumber']) && !empty($input['binNumber'])) {
+            $transformedData = ($this->filterBinLocation($transformedData,$input));
+
+        } 
+
+        return $transformedData;
 
     }
 
+    public function filterBinLocation($data,$request)
+    {
+        $binumberValues = collect($request['binNumber'])->pluck('id')->toArray();;   
+
+        $filteredData = array_filter($data, function ($item) use ($binumberValues) {
+            return in_array($item['binNumber'], $binumberValues);
+        });
+
+        $data = array_values($filteredData); 
+        return $data;
+    }
 }

@@ -47,6 +47,9 @@ use App\Models\TenderDocumentTypeAssign;
 use App\Observers\TenderDocumentTypeObserver;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Observers\FinanceItemcategorySubAssignedObserver;
+use Storage;
+use League\Flysystem\Filesystem;
+use League\Flysystem\Sftp\SftpAdapter;
 class AppServiceProvider extends ServiceProvider
 {
 
@@ -115,5 +118,9 @@ class AppServiceProvider extends ServiceProvider
         passport::$pruneRevokedTokens;
         Passport::tokensExpireIn(Carbon::now()->addHours(1));
         Passport::refreshTokensExpireIn(Carbon::now()->addHours(1));
+
+        Storage::extend('sftp', function ($app, $config) {
+            return new Filesystem(new SftpAdapter($config));
+        });
     }
 }

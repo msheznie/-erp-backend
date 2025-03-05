@@ -14,6 +14,7 @@ use App\Http\Middleware\MobileAccessVerify;
 */
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\ExtractHeadersFromBody;
 
 
 Route::group(['middleware' => ['mobileServer']], function () {
@@ -57,6 +58,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('journal-voucher','JvMasterAPIController@createJournalVoucher');
             Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocumentStatus');
         });
+        
+        Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
 
         Route::group(['middleware' => 'auth.api.keycloak'], function () {
 
@@ -104,7 +107,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
                 Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
-
 
                 Route::group(['middleware' => 'max_memory_limit'], function () {
                     Route::group(['middleware' => 'max_execution_limit'], function () {

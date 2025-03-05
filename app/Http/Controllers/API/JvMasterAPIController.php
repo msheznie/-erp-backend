@@ -595,16 +595,16 @@ class JvMasterAPIController extends AppBaseController
         }
 
         $output = DB::select("SELECT
-	hrms_jvmaster.accruvalMasterID,
-	hrms_jvmaster.salaryProcessMasterID,
-	hrms_jvmaster.JVCode,
-	hrms_jvmaster.accruvalNarration,
-	hrms_jvmaster.accConfirmedYN,
-	hrms_jvmaster.accJVSelectedYN,
-	hrms_jvmaster.accJVpostedYN,
-	hrms_jvmaster.accmonth
+    hrms_jvmaster.accruvalMasterID,
+    hrms_jvmaster.salaryProcessMasterID,
+    hrms_jvmaster.JVCode,
+    hrms_jvmaster.accruvalNarration,
+    hrms_jvmaster.accConfirmedYN,
+    hrms_jvmaster.accJVSelectedYN,
+    hrms_jvmaster.accJVpostedYN,
+    hrms_jvmaster.accmonth
 FROM
-	hrms_jvmaster
+    hrms_jvmaster
 WHERE hrms_jvmaster.accConfirmedYN = 1
 AND hrms_jvmaster.accJVSelectedYN = 0
 AND hrms_jvmaster.accJVpostedYN = 0
@@ -680,13 +680,13 @@ AND hrms_jvmaster.companyID = '" . $companyID . "'" . $where);
         }
 
         $output = DB::select("SELECT
-	accruavalfromopmaster.accruvalMasterID,
-	accruavalfromopmaster.accrualDateAsOF,
-	accruavalfromopmaster.accmonth,
-	accruavalfromopmaster.accYear,
-	accruavalfromopmaster.accruvalNarration
+    accruavalfromopmaster.accruvalMasterID,
+    accruavalfromopmaster.accrualDateAsOF,
+    accruavalfromopmaster.accmonth,
+    accruavalfromopmaster.accYear,
+    accruavalfromopmaster.accruvalNarration
 FROM
-	accruavalfromopmaster
+    accruavalfromopmaster
 WHERE accruavalfromopmaster.companyID = '" . $companyID . "'
 AND accruavalfromopmaster.accConfirmedYN = 1
 AND accruavalfromopmaster.accJVpostedYN = 0");
@@ -710,25 +710,25 @@ AND accruavalfromopmaster.accJVpostedYN = 0");
         }
 
         $output = DB::select("SELECT
-	accruvalfromop.accruvalDetID,
-	accruvalfromop.contractID,
-	serviceline.serviceLineSystemID,
-	accruvalfromop.serviceLine,
-	accruvalfromop.stdAmount,
-	accruvalfromop.opAmount,
-	accruvalfromop.accMasterID,
-	accruvalfromop.companyID,
-	/*accruvalfromop.accrualAmount,*/
-	IFNULL(accruvalfromop.rptAmount,0) as accrualAmount ,
-	accruvalfromop.GlCode,
-	chartofaccounts.chartOfAccountSystemID,
-	chartofaccounts.AccountDescription
+    accruvalfromop.accruvalDetID,
+    accruvalfromop.contractID,
+    serviceline.serviceLineSystemID,
+    accruvalfromop.serviceLine,
+    accruvalfromop.stdAmount,
+    accruvalfromop.opAmount,
+    accruvalfromop.accMasterID,
+    accruvalfromop.companyID,
+    /*accruvalfromop.accrualAmount,*/
+    IFNULL(accruvalfromop.rptAmount,0) as accrualAmount ,
+    accruvalfromop.GlCode,
+    chartofaccounts.chartOfAccountSystemID,
+    chartofaccounts.AccountDescription
 FROM
-	accruvalfromop
+    accruvalfromop
 LEFT JOIN serviceline ON accruvalfromop.serviceLine = serviceline.ServiceLineCode
 LEFT JOIN chartofaccounts ON accruvalfromop.GlCode = chartofaccounts.AccountCode
 WHERE
-	accruvalfromop.accMasterID = $accruvalMasterID
+    accruvalfromop.accMasterID = $accruvalMasterID
 AND accruvalfromop.companyID = '" . $companyID . "'");
 
         return $this->sendResponse($output, 'Data retrieved successfully');
@@ -740,8 +740,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
 
         $checkProjectSelectionPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-				->where('companySystemID', $input['companySystemID'])
-				->first();
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
 
         if ($checkProjectSelectionPolicy->isYesNO == 0) {
             if ($exists = Storage::disk($disk)->exists('standard_jv_template/standard_jv_upload_template.xlsx')) {
@@ -1415,8 +1415,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
 
             $checkProjectSelectionPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-				->where('companySystemID', $input['companySystemID'])
-				->first();
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
 
             if ($checkProjectSelectionPolicy->isYesNO == 0) {
                 $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
@@ -1707,66 +1707,66 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $formattedJVdate = Carbon::parse($jvMasterData->JVdate)->format('Y-m-d');
 
         $qry = "SELECT
-	pomaster.purchaseOrderID,
-	pomaster.poType,
-	pomaster.purchaseOrderCode,
-	pomaster.serviceLineSystemID,
-	pomaster.serviceLine,
-	pomaster.expectedDeliveryDate,
-	pomaster.approvedDate,
-	podetail.itemPrimaryCode,
-	podetail.itemDescription,
-	IF (
-	podetail.financeGLcodePL IS NULL
-	OR podetail.financeGLcodePL = '',
-	podetail.financeGLcodebBS,
-	podetail.financeGLcodePL
+    pomaster.purchaseOrderID,
+    pomaster.poType,
+    pomaster.purchaseOrderCode,
+    pomaster.serviceLineSystemID,
+    pomaster.serviceLine,
+    pomaster.expectedDeliveryDate,
+    pomaster.approvedDate,
+    podetail.itemPrimaryCode,
+    podetail.itemDescription,
+    IF (
+    podetail.financeGLcodePL IS NULL
+    OR podetail.financeGLcodePL = '',
+    podetail.financeGLcodebBS,
+    podetail.financeGLcodePL
 ) AS glCode,
 IF (
-	podetail.financeGLcodePL IS NULL
-	OR podetail.financeGLcodePL = '',
-	podetail.financeGLcodebBSSystemID,
-	podetail.financeGLcodePLSystemID
+    podetail.financeGLcodePL IS NULL
+    OR podetail.financeGLcodePL = '',
+    podetail.financeGLcodebBSSystemID,
+    podetail.financeGLcodePLSystemID
 ) AS glCodeSystemID,
-	pomaster.supplierName,
-	podetail.poSum AS poCost,
-	IFNULL(grvdetail.grvSum, 0) AS grvCost,
-	(
-		podetail.poSum - IFNULL(grvdetail.grvSum, 0)
-	) AS balanceCost
+    pomaster.supplierName,
+    podetail.poSum AS poCost,
+    IFNULL(grvdetail.grvSum, 0) AS grvCost,
+    (
+        podetail.poSum - IFNULL(grvdetail.grvSum, 0)
+    ) AS balanceCost
 FROM
-	erp_purchaseordermaster AS pomaster
+    erp_purchaseordermaster AS pomaster
 INNER JOIN (
-	SELECT
+    SELECT
         GRVcostPerUnitSupDefaultCur * noQty AS poSum,
         purchaseOrderDetailsID,
-		purchaseOrderMasterID,
-		itemCode,
-		itemPrimaryCode,
-		itemDescription,
-		financeGLcodePL,
-		financeGLcodePLSystemID,
-		financeGLcodebBS,
-		financeGLcodebBSSystemID
-	FROM
-		erp_purchaseorderdetails WHERE erp_purchaseorderdetails.itemFinanceCategoryID IN (2, 4, 1)
+        purchaseOrderMasterID,
+        itemCode,
+        itemPrimaryCode,
+        itemDescription,
+        financeGLcodePL,
+        financeGLcodePLSystemID,
+        financeGLcodebBS,
+        financeGLcodebBSSystemID
+    FROM
+        erp_purchaseorderdetails WHERE erp_purchaseorderdetails.itemFinanceCategoryID IN (2, 4, 1)
 ) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
 LEFT JOIN (
-	SELECT
-		purchaseOrderMastertID,
-		purchaseOrderDetailsID,
-		sum(unitCost * noQty) as GRVSum
-	FROM
-		erp_grvdetails
-	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
-	WHERE
-		grvTypeID = 2
-	AND DATE(grvDate) <= '$formattedJVdate' AND erp_grvmaster.companySystemID = $companySystemID
+    SELECT
+        purchaseOrderMastertID,
+        purchaseOrderDetailsID,
+        sum(unitCost * noQty) as GRVSum
+    FROM
+        erp_grvdetails
+    INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+    WHERE
+        grvTypeID = 2
+    AND DATE(grvDate) <= '$formattedJVdate' AND erp_grvmaster.companySystemID = $companySystemID
     group by purchaseOrderDetailsID
 ) AS grvdetail ON grvdetail.purchaseOrderDetailsID = podetail.purchaseOrderDetailsID
 INNER JOIN suppliermaster AS supmaster ON pomaster.supplierID = supmaster.supplierCodeSystem
 WHERE
-	pomaster.companySystemID = $companySystemID
+    pomaster.companySystemID = $companySystemID
 AND pomaster.poConfirmedYN = 1
 AND pomaster.poCancelledYN = 0
 AND pomaster.approved = - 1
@@ -1774,12 +1774,12 @@ AND pomaster.poType_N <> 5
 AND pomaster.manuallyClosed = 0
 AND date(pomaster.approvedDate) >= '2016-05-01'
 AND date(
-	pomaster.expectedDeliveryDate
+    pomaster.expectedDeliveryDate
 ) <= '$formattedJVdate'
 {$filter}
 AND supmaster.companyLinkedToSystemID IS NULL
 HAVING
-	round(balanceCost, 2) > 0";
+    round(balanceCost, 2) > 0";
 
         //echo $qry;
         //exit();
@@ -2207,5 +2207,4 @@ HAVING
             return $this->sendError("Invalid Data Format", 404);
         }
     }
-
 }

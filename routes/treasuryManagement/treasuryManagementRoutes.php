@@ -45,6 +45,9 @@ Route::group([], function() {
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
     Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
 
+    Route::post('createTemplateMapping', 'BankReconciliationTemplateMappingAPIController@store')->name('Add bank reconciliation template mapping');
+    Route::get('getTemplateMappingDetails', 'BankReconciliationTemplateMappingAPIController@getTemplateMappingDetails')->name('Get template mapping details');
+
 });
 
 //Cheque Register
@@ -83,9 +86,17 @@ Route::group([],function () {
     Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack')->name('Payment bank transfer referback');
     Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer')->name('Get referback history by bank transfer');
     Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount')->name('Get all bank transfer by bank account');
+    Route::post('getAllBankTransferSubmissionList', 'PaymentBankTransferAPIController@getAllBankTransferSubmissionList')->name('Get all bank transfer submission list');
 
     Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate')->name('Get check before create bank transfers');
     Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck')->name('Export payment bank transfer precheck');
+
+    Route::group(['middleware' => 'max_memory_limit'], function () {
+        Route::group(['middleware' => 'max_execution_limit'], function () {
+            Route::post('generateVendorFile','B2B\B2BResourceAPIController@generateVendorFile');
+            Route::post('downloadErrorLogFromPortal','B2B\B2BResourceAPIController@downloadErrorLogFromPortal');
+        });
+    });
 
     Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
     Route::resource('bankTransferRefferedBack', 'PaymentBankTransferRefferedBackAPIController');

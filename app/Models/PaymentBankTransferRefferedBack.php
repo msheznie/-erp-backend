@@ -185,7 +185,7 @@ class PaymentBankTransferRefferedBack extends Model
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey  = 'paymentBankTransferRefferedBackID';
-
+    protected  $appends = ['fileTypeName'];
 
 
     public $fillable = [
@@ -221,7 +221,8 @@ class PaymentBankTransferRefferedBack extends Model
         'timeStamp',
         'exportedYN',
         'exportedUserSystemID',
-        'exportedDate'
+        'exportedDate',
+        'fileType'
     ];
 
     /**
@@ -257,7 +258,8 @@ class PaymentBankTransferRefferedBack extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'exportedYN' => 'integer',
-        'exportedUserSystemID' => 'integer'
+        'exportedUserSystemID' => 'integer',
+        'fileType'  => 'integer'
     ];
 
     /**
@@ -289,5 +291,19 @@ class PaymentBankTransferRefferedBack extends Model
 
     public function approved_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','paymentBankTransferID');
+    }
+
+    public function getFileTypeNameAttribute()
+    {
+        switch ($this->fileType) {
+            case 0 :
+                return "Vendor File";
+                break;
+            case 1 :
+                return "Employee File";
+                break;
+            default :
+                return null;
+        }
     }
 }

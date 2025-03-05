@@ -649,7 +649,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $masterTemplates = ReportTemplate::where('isActive', 1)
             ->where('companySystemID', $companyId)
-            ->where('reportID', '!=', 3)
+            ->whereNotIn('reportID', [3, 4])
             ->get();
 
 

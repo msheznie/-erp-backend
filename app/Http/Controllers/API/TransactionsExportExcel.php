@@ -157,33 +157,17 @@ class TransactionsExportExcel extends AppBaseController
         switch($input['documentId']) {
 
             case '1':
-                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
-                $serviceLineSystemID = $request['serviceLineSystemID'];
-                $serviceLineSystemID = (array)$serviceLineSystemID;
-                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
-                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search, $serviceLineSystemID);
-                $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
-
-                break;
-
             case '50':
-                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
-                $serviceLineSystemID = $request['serviceLineSystemID'];
-                $serviceLineSystemID = (array)$serviceLineSystemID;
-                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
-                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search,$serviceLineSystemID);
-                $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
-                break;
-
             case '51':
-                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
-                $serviceLineSystemID = $request['serviceLineSystemID'];
-                $serviceLineSystemID = (array)$serviceLineSystemID;
-                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
-                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search,$serviceLineSystemID);
+            $input = $this->convertArrayToSelectedValue($input,
+                array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month',
+                    'year', 'buyerEmpSystemID'));
+                $serviceLineSystemID = collect((array) $request['serviceLineSystemID'])->pluck('id');
+                $buyerEmpSystemId = collect((array) $request['buyerEmpSystemID'])->pluck('id');
+                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery(
+                    $request, $input, $search, $serviceLineSystemID, $buyerEmpSystemId);
                 $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
                 break;
-
             case '3':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID', 'projectID'));
                 $grvLocation = $request['grvLocation'];

@@ -352,7 +352,10 @@ class DirectPaymentReferback extends Model
         'detail_project_id',
         'contractID',
         'contractDescription',
-        'expense_claim_er'
+        'expense_claim_er',
+        'interBankID',
+        'interBankAmount',
+        'interBankCurrency'
     ];
 
     /**

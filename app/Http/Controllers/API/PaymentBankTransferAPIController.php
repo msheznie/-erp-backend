@@ -152,6 +152,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'narration' => 'required',
             'documentDate' => 'required',
+            'fileType' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -283,8 +284,27 @@ class PaymentBankTransferAPIController extends AppBaseController
                 })->when($confirmed == 0, function ($q2) {
                     $q2->orWhere("pulledToBankTransferYN", 0);
                 });
-            })->sum('payAmountBank');
+            });
 
+        if($paymentBankTransfer->fileType == 0)
+        {
+            $totalPaymentAmount->whereIn('invoiceType', [2, 3, 5])->whereHas('paymentVoucher', function ($q) {
+                $q->where('payment_mode',3);
+                $q->whereHas('supplier');
+            });
+        }else {
+
+            $totalPaymentAmount->whereIn('invoiceType', [3])
+                ->whereHas('paymentVoucher', function ($q) {
+                    $q->where('payment_mode', 3)
+                        ->whereIn('finalSettlementYN', [1]);
+                })
+                ->orWhereHas('paymentVoucher', function ($q) {
+                    $q->where('payment_mode', 3)
+                        ->where('finalSettlementYN', [-1])
+                        ->whereHas('payee');
+                });
+        }
 
         $totalPaymentClearedAmount = BankLedger::where('companySystemID', $paymentBankTransfer->companySystemID)
             ->where('payAmountBank', '>', 0)
@@ -298,7 +318,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                 });
             })->sum('payAmountBank');
 
-        $paymentBankTransfer->totalPaymentAmount = $totalPaymentAmount;
+        $paymentBankTransfer->totalPaymentAmount = $totalPaymentAmount->sum('payAmountBank');
         $paymentBankTransfer->totalPaymentClearedAmount = $totalPaymentClearedAmount;
 
         return $this->sendResponse($paymentBankTransfer->toArray(), 'Payment Bank Transfer retrieved successfully');
@@ -1200,6 +1220,9 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $bankTransferArray = $bankTransfer->toArray();
+        if(isset($bankTransferArray['fileTypeName'])) {
+            unset($bankTransferArray['fileTypeName']);
+        }
 
         $storeHistory = PaymentBankTransferRefferedBack::insert($bankTransferArray);
 
@@ -1244,5 +1267,34 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         return $this->sendResponse($bankTransfer->toArray(), 'Bank Transfer Amend successfully');
+    }
+
+    public function getAllBankTransferSubmissionList(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, []);
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        $bankTransfer = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search, null, 1);
+
+        return \DataTables::eloquent($bankTransfer)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

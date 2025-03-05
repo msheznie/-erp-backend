@@ -168,6 +168,7 @@ use App\helper\CreateExcel;
 use App\helper\BudgetConsumptionService;
 use App\Jobs\DocumentAttachments\PoSentToSupplierJob;
 use App\Models\SupplierBlock;
+use App\Services\DocumentCodeConfigurationService;
 
 /**
  * Class ProcumentOrderController
@@ -183,10 +184,11 @@ class ProcumentOrderAPIController extends AppBaseController
     private $printTemplateService;
 
     private $tenderPoRepository;
+    private $documentCodeConfigurationService;
 
     private $tenderMasterRepository;
 
-    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo,PoDetailExpectedDeliveryDateRepository $poDetailExpectedDeliveryDateRepo, PrintTemplateService $printTemplateService, SrmTenderPoRepository $tenderPoRepository, TenderMasterRepository $tenderMasterRepository)
+    public function __construct(DocumentCodeConfigurationService $documentCodeConfigurationService ,ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo,PoDetailExpectedDeliveryDateRepository $poDetailExpectedDeliveryDateRepo, PrintTemplateService $printTemplateService, SrmTenderPoRepository $tenderPoRepository, TenderMasterRepository $tenderMasterRepository)
     {
         $this->procumentOrderRepository = $procumentOrderRepo;
         $this->userRepository = $userRepo;
@@ -195,6 +197,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $this->printTemplateService = $printTemplateService;
         $this->tenderPoRepository = $tenderPoRepository;
         $this->tenderMasterRepository = $tenderMasterRepository;
+        $this->documentCodeConfigurationService = $documentCodeConfigurationService;
     }
 
     /**
@@ -284,6 +287,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->first();
         }
 
+        $input['POOrderedDate'] = now();
 
         $lastSerialNumber = 1;
         if ($lastSerial) {
@@ -588,7 +592,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $advancedPaymentPercentage = PoPaymentTerms::where('poID',$id)->sum('comPercentage');
         if(isset($input['isConfirm']) && $input['isConfirm']) {
-            if($advancedPaymentPercentage != 100) {
+            $epsilon = 0.00001;
+            if(abs(100 - $advancedPaymentPercentage) > $epsilon) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
         }

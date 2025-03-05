@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\BudgetConsumptionService;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateDashboardWidgetMasterAPIRequest;
 use App\Http\Requests\API\UpdateDashboardWidgetMasterAPIRequest;
 use App\Models\BookInvSuppDet;
+use App\Models\BudgetMaster;
+use App\Models\Budjetdetails;
+use App\Models\ChartOfAccount;
 use App\Models\CompanyFinanceYear;
 use App\Models\Company;
 use App\Models\BookInvSuppMaster;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DashboardWidgetMaster;
 use App\Models\AccountsReceivableLedger;
 use App\Models\CustomerMaster;
@@ -20,11 +25,15 @@ use App\Models\PurchaseOrderDetails;
 use App\Repositories\DashboardWidgetMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\BudgetConsumedData;
+use App\Models\ChartOfAccountsAssigned;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
+use App\Models\SupplierGroup;
+use App\Models\SupplierMaster;
 
 /**
  * Class DashboardWidgetMasterController
@@ -365,13 +374,22 @@ END AS sortDashboard')
 
         $input = $request->all();
         $departmentID = isset($input['departmentID'])?$input['departmentID']:0;
+        $companyId = isset($input['companyId'])?$input['companyId']:0;
         $widget = DashboardWidgetMaster::where('isActive',1)
             ->where('departmentID',$departmentID)
             ->orderBy('sortOrder')
             ->get();
         $output = [];
+        $supplierGroup = SupplierGroup::notDeleted();
+        $glAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyId)
+                                    ->where('catogaryBLorPLID', 2)
+                                    ->get()
+                                    ->toArray();
+    
         if(!empty($widget)){
-            $output = $widget->toArray();
+            $output['widget'] = $widget->toArray();
+            $output['supplierGroup'] = $supplierGroup;
+            $output['glAccounts'] = $glAccounts;
         }
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -380,6 +398,19 @@ END AS sortDashboard')
 
         $input = $request->all();
         $data = [];
+        $suplierrGroup = [];
+        $glAccount = [];
+        $isSupplierGroupExists = false;
+
+        if(isset($input['glAccount'])){
+            $glAccount = ChartOfAccount::where('chartOfAccountSystemID',$input['glAccount'])
+                    ->pluck('chartOfAccountSystemID')->toArray();
+        }
+
+        if(isset($input['supplierGroup'])){
+           $isSupplierGroupExists = true;
+           $suplierrGroup =  SupplierMaster::where('supplier_group_id',$input['supplierGroup'])->pluck('supplierCodeSystem')->toArray();
+        }
 
         $id = isset($input['widgetMasterID']) ? $input['widgetMasterID'] : 0;
         if($id==0){
@@ -396,6 +427,48 @@ END AS sortDashboard')
 
         $dashBoardWidget = DashboardWidgetMaster::find($id);
         $currentYear = date("Y");
+
+        //Budget Widget
+        if(isset($input['slug']) && $input['slug'] == 'budget_widget') {
+            $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
+
+            if(!$currentFinancialYear) {
+                return $this->sendError('Company finance year not set');
+            }
+
+            $companyCurrency = \Helper::companyCurrency($companyID);
+
+            $actualConsumption = BudgetConsumptionService::getActualConsumption($companyID, 
+                                    $currentFinancialYear->companyFinanceYearID, $glAccount);
+               
+            $actual = collect($actualConsumption)->map(function ($value) {
+                return ['amount' => $value['amount']]; })->values();
+
+            $data['financialYear'] = $currentFinancialYear;
+            $data['reportingCurrency'] = $companyCurrency->reportingcurrency->CurrencyCode;
+            $data['decimalPlaces'] = $companyCurrency->reportingcurrency->DecimalPlaces;
+            $data['actual'] = $actual;
+            $data['budget'] = Budjetdetails::with(['budget_master.segment_by',
+                'budget_master.company'])
+               ->whereHas('budget_master.company', function($query) use ($companyID) {
+                    $query->where('companySystemID', $companyID);
+                })->whereHas('budget_master',function ($query) use ($currentFinancialYear) {
+                    $query->where('companyFinanceYearID', $currentFinancialYear->companyFinanceYearID);
+                })->whereHas('budget_master',function ($query) {
+                    $query->where('confirmedYN', 1);
+                })->whereHas('budget_master',function ($query) {
+                    $query->where('approvedYN', -1);
+                })
+                ->whereIn('glCodeType', ['PLI', 'PLE'])
+                ->selectRaw('SUM(budjetAmtRpt) as amount, month')
+                ->when(!empty($glAccount), function ($query) use ($glAccount) {
+                    $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
+                })
+                ->groupBy('month')
+                ->get();
+
+        }
+
         switch ($id){
             case 1:// top 10 subcategory by spent
                 $temSeries = array(
@@ -484,6 +557,9 @@ END AS sortDashboard')
                     ->groupBy('supplierID')
                     ->orderBy('total','DESC')
                     ->limit(10)
+                    ->when($isSupplierGroupExists == true, function ($query) use ($suplierrGroup) {
+                            $query->whereIn('supplierID', $suplierrGroup);
+                          })
                     ->get();
                 if(!empty($result) && $result->count()){
 //
@@ -648,8 +724,11 @@ GROUP BY
 	erp_generalledger.supplierCodeSystem*/
 
                 $result = GeneralLedger::where('documentSystemID',4)
-                    ->whereHas('supplier', function ($query){
-                        $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID');
+                    ->whereHas('supplier', function ($query) use($suplierrGroup,$isSupplierGroupExists){
+                        $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID')
+                        ->when($isSupplierGroupExists == true, function ($query) use ($suplierrGroup) {
+                            $query->whereIn('supplierCodeSystem', $suplierrGroup);
+                          });
                     })
                     ->whereIn('companySystemID', $childCompanies)
                     ->select(DB::raw('supplierCodeSystem,SUM(documentRptAmount) AS total'))
@@ -659,6 +738,7 @@ GROUP BY
                     ->limit(10)
                     ->get();
 
+                    
                 if(!empty($result) && $result->count()){
 //
 //                    $finalTotal = 0;
@@ -718,8 +798,11 @@ GROUP BY
 	erp_generalledger.supplierCodeSystem*/
 
                 $result = GeneralLedger::whereIn('documentSystemID',[4,11,15])
-                    ->whereHas('supplier', function ($query){
-                        $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID');
+                    ->whereHas('supplier', function ($query) use($suplierrGroup,$isSupplierGroupExists){
+                        $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID')
+                        ->when($isSupplierGroupExists == true, function ($query) use ($suplierrGroup) {
+                            $query->whereIn('supplierCodeSystem', $suplierrGroup);
+                          });
                     })
                     ->whereIn('companySystemID', $childCompanies)
                     ->select(DB::raw('supplierCodeSystem,SUM(documentRptAmount*-1) AS total'))
@@ -1128,9 +1211,8 @@ GROUP BY
                 array_push($data,$temSeries);
             }
             return $this->sendResponse($data, 'Data retrieved successfully');
-
-            default:
-                return $this->sendError('Data retrieved successfully');
+        default:
+            return $this->sendResponse($data, 'Data retrieved successfully');
         }
     }
 

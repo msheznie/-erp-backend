@@ -6575,4 +6575,217 @@ class BudgetConsumptionService
 
     	return ['budgetmasterIDs' => ((count($budgetIds) > 0)  ? array_unique($budgetIds) : [])];
     }
+
+	public static function getActualConsumption($companyId, $financialYear, $glAccount) {
+
+			$chartOfAccountIDs = BudgetConsumedData::where('companySystemID', $companyId)
+					->where('companyFinanceYearID', $financialYear)
+					->whereHas('chart_of_account', function ($query) {
+						$query->where('catogaryBLorPLID', 2);
+					})
+					->distinct()
+					->pluck('chartOfAccountID')
+					->implode(',');
+
+			$chartOfAccountIDs = !empty($chartOfAccountIDs) ? $chartOfAccountIDs : '0';
+			$query = "SELECT 
+					erp_budgetconsumeddata.companySystemID, 
+					erp_budgetconsumeddata.Year, 
+					erp_budgetconsumeddata.companyFinanceYearID,
+					month,
+					SUM(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount
+				FROM erp_budgetconsumeddata 
+				WHERE erp_budgetconsumeddata.consumeYN = -1 
+				AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
+				AND companySystemID = $companyId 
+				AND companyFinanceYearID = $financialYear
+				AND chartOfAccountID IN ($chartOfAccountIDs)";
+	
+			if (!empty($glAccount)) {
+				if (is_array($glAccount)) {
+					$glAccountList = implode(',', $glAccount);
+					$query .= " AND erp_budgetconsumeddata.chartOfAccountID IN ($glAccountList)";
+				} else {
+					$query .= " AND erp_budgetconsumeddata.chartOfAccountID = $glAccount";
+				}
+			}
+
+			$query .= " GROUP BY month";
+
+			$data = DB::select($query);
+
+			$results = [];
+
+			foreach ($data as $key => $dataValue) {
+				$month = $dataValue->month;
+
+				$consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) {
+					$query->with(['grv_details' => function ($query) {
+						$query->select('grvDetailsID', 'grvAutoID', 'purchaseOrderMastertID', 'purchaseOrderDetailsID', 'financeGLcodePLSystemID', 'netAmount')
+							->with(['grv_master' => function ($query) {
+								$query->with('details')->select('grvAutoID', 'grvPrimaryCode', 'approved', 'grvConfirmedYN', 'grvTotalComRptCurrency');
+							}]);
+					}]);
+				}])
+				->where('consumeYN', -1)
+				->where('companySystemID', $companyId)
+				->where(function ($query) {
+					$query->where('projectID', 0)
+						->orWhereNull('projectID');
+				})
+				->when(($glAccount), function($query) use ($glAccount){
+					$query->where('chartOfAccountID', $glAccount);
+				})
+				->where('companyFinanceYearID', $financialYear)
+				->where('documentSystemID', 2)
+				->where('month', $month)
+				->get();
+
+				$tot = 0;
+				$committedAmount = 0;
+				$partiallyReceivedAmount = 0;
+				$isAssets = false;
+				$actuallConsumptionAmount = 0;
+				$fixedCOmmitedAmount = 0;
+				$grv_details = [];
+				
+
+				foreach ($consumedAmountOfPO as $key => $value) {
+					if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
+						$committedAmount += $value->consumedRptAmount;
+					} else {
+					// 	$notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('
+                    //             itemFinanceCategoryID,
+                    //             SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty)) as totalAmount,
+                    //             SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount,
+                    //             SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount
+                    //         ')
+                    //         ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                    //         ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                    //         ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                    //         ->whereHas('order', function($query) {
+                    //             $query->where(function($query) {
+                    //                 $query->where('projectID', 0)
+                    //                       ->orWhereNull('projectID');
+                    //             });
+                    //         });
+
+					// 	if (!empty($glAccount)) {
+					// 		if (is_array($glAccount)) {
+					// 			$notRecivedPoNonFixedAsset->whereIn('financeGLcodePLSystemID', $glAccount);
+					// 		} else {
+					// 			$notRecivedPoNonFixedAsset->where('financeGLcodePLSystemID', $glAccount);
+					// 		}
+					// 	}
+
+					// 	$notRecivedPoNonFixedAsset = $notRecivedPoNonFixedAsset->groupBy('purchaseOrderMasterID')->first();
+                
+
+				
+					// 	if ($notRecivedPoNonFixedAsset) {
+
+					// 		if($notRecivedPoNonFixedAsset->itemFinanceCategoryID == 3)
+					// 		{
+					// 			$isAssets = true;
+					// 			$totalCommitedAmount = 0;
+					// 			if(isset($value->purchase_order->grv_details))
+					// 			{
+					// 				$grvDetails =  $value->purchase_order->grv_details;
+					// 				foreach($grvDetails as $grv)
+					// 				{
+					// 					if (!in_array($grv->grv_master->grvAutoID, $grv_details))
+					// 					{
+					// 						$fixed_assets = FixedAssetMaster::where('docOriginDocumentSystemID', 3)
+					// 							->where('docOriginSystemCode', $grv->grv_master->grvAutoID);
+
+					// 							if (!empty($glAccount)) {
+					// 								if (is_array($glAccount)) {
+					// 									$fixed_assets->whereIn('costglCodeSystemID', $glAccount);
+					// 								} else {
+					// 									$fixed_assets->where('costglCodeSystemID', $glAccount);
+					// 								}
+					// 							}
+
+					// 							$fixed_assets = $fixed_assets->get();
+
+					// 							if($fixed_assets)
+					// 							{
+												
+					// 								foreach($fixed_assets as $asset)
+					// 								{
+					// 									if($asset->approved == -1)
+					// 									{
+					// 										$fixedCOmmitedAmount += $asset->COSTUNIT;
+					// 									}
+					// 								}
+					// 							}
+					// 						array_push($grv_details,$grv->grv_master->grvAutoID);
+					// 					}
+										
+					// 				}
+					// 			}
+								
+
+					// 			$totalCommitedAmount = $notRecivedPoNonFixedAsset->remainingAmount + $notRecivedPoNonFixedAsset->receivedAmount;
+					// 			$tot+=$totalCommitedAmount;
+
+					// 		}
+					// 		else {
+					// 			$grvApprovedPoAmount = 0;
+					// 			$grvDetails =  $value->purchase_order->grv_details;
+					// 			foreach($grvDetails as $grv)
+					// 			{
+					// 				if($grv->grv_master->approved == -1)
+					// 				{
+					// 					if($grv->financeGLcodePLSystemID == $value->chartOfAccountID)
+					// 					{
+					// 						$grvApprovedPoAmount += $grv->netAmount;
+					// 					}
+									
+					// 				}
+					// 			}
+
+					// 			$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+					// 			$currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
+					// 			$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
+					// 			$currencyConversionRptAmountRec = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
+					// 			$partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
+					// 		}
+					// 		}
+						}
+
+					}
+					
+					if (!$isAssets) {
+						$actuallConsumptionAmount = $dataValue->consumed_amount - $committedAmount;
+					} else {
+						// $commited_amount = $tot - $fixedCOmmitedAmount;
+						// $commited_amount = $commited_amount < 1 ? 0 : $commited_amount;
+						// $currencyConversionRptAmount = \Helper::currencyConversion(
+						// 	$dataValue->companySystemID,
+						// 	$value->purchase_order->supplierTransactionCurrencyID,
+						// 	$value->purchase_order->supplierTransactionCurrencyID,
+						// 	$commited_amount
+						// );
+						// $committedAmount = $currencyConversionRptAmount['reportingAmount'];
+
+						// $consumAssetamount = FixedAssetMaster::selectRaw('SUM(costUnitRpt) as amount')
+						// 	->where('approved', -1)
+						// 	->groupBy('costglCodeSystemID')
+						// 	->first();
+
+						// if ($consumAssetamount) {
+						// 	$actuallConsumptionAmount = $consumAssetamount->amount;
+						// }
+					}
+		
+				$results[$month] = [
+					'amount' => ($results[$month]['actuallConsumptionAmount'] ?? 0) + $actuallConsumptionAmount
+				];
+			}
+
+			return $results;		
+		}
+	
 }
+

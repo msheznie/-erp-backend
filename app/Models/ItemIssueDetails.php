@@ -496,6 +496,5 @@ class ItemIssueDetails extends Model
     public function allocate_employees(){
         return $this->hasMany('App\Models\ExpenseEmployeeAllocation','documentDetailID','itemIssueDetailID');
     }
-
     
 }

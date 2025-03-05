@@ -316,7 +316,8 @@ class ProcumentOrder extends Model
         'upload_job_status',
         'successDetailsCount',
         'excelRowCount',
-        'isDelegation'
+        'isDelegation',
+        'POOrderedDate'
     ];
 
     /**

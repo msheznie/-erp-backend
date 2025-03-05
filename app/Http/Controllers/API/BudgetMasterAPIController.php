@@ -3861,7 +3861,7 @@ class BudgetMasterAPIController extends AppBaseController
             } else {
                 $reportTemplates = ReportTemplate::where('isActive', 1)
                                                  ->where('companySystemID', $companyId)
-                                                 ->where('reportID', '!=', 3)
+                                                 ->whereNotIn('reportID', [3, 4])
                                                  ->get();
             }
         }
@@ -4258,24 +4258,47 @@ class BudgetMasterAPIController extends AppBaseController
             $monthArray[] = $temp;
         }
 
-        $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) use ($budgetMaster) {
-                                            $query->whereHas('items', function($query) use ($budgetMaster) {
-                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
-                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                              ->where('Year', $budgetMaster->Year);
-                                                  })
-                                                  ->orderBy('sortOrder');
-                                      }])
-                                      ->whereHas('gllink',function ($query) use ($budgetMaster) {
-                                            $query->whereHas('items', function($query) use ($budgetMaster) {
-                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
-                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                              ->where('Year', $budgetMaster->Year);
-                                                  });
-                                      })
-                                      ->where('companyReportTemplateID', $budgetMaster->templateMasterID)
-                                      ->orderBy('sortOrder')
-                                      ->get();
+        $templateMaster = ReportTemplate::find($budgetMaster->templateMasterID);
+        if ($templateMaster->reportID == 1) {
+            $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) use ($budgetMaster) {
+                $query->whereHas('items', function($query) use ($budgetMaster) {
+                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                        ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                        ->where('Year', $budgetMaster->Year);
+                })
+                    ->orderBy('sortOrder');
+            }])
+                ->whereHas('gllink',function ($query) use ($budgetMaster) {
+                    $query->whereHas('items', function($query) use ($budgetMaster) {
+                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                            ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                            ->where('Year', $budgetMaster->Year);
+                    });
+                })
+                ->where('companyReportTemplateID', $budgetMaster->templateMasterID)
+                ->where('itemType', '!=', 4)
+                ->orderBy('sortOrder')
+                ->get();
+        } else {
+            $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) use ($budgetMaster) {
+                $query->whereHas('items', function($query) use ($budgetMaster) {
+                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                        ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                        ->where('Year', $budgetMaster->Year);
+                })
+                    ->orderBy('sortOrder');
+            }])
+                ->whereHas('gllink',function ($query) use ($budgetMaster) {
+                    $query->whereHas('items', function($query) use ($budgetMaster) {
+                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                            ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                            ->where('Year', $budgetMaster->Year);
+                    });
+                })
+                ->where('companyReportTemplateID', $budgetMaster->templateMasterID)
+                ->orderBy('sortOrder')
+                ->get();
+        }
 
         foreach ($glCOdes as $key => $value) {
             $value->sortOrderOfTopLevel = \Helper::headerCategoryOfReportTemplate($value->detID)['sortOrder'];
@@ -4462,22 +4485,41 @@ class BudgetMasterAPIController extends AppBaseController
         $path = 'general-ledger/transactions/budget-template/excel/';
 
         $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
+        $templateMaster = ReportTemplate::find($templateMasterID);
 
-        $glCOdes = ReportTemplateDetails::with(['gllink'  => function ($query) {
+        if($templateMaster->reportID == 1) {
+            $glCOdes = ReportTemplateDetails::with(['gllink'  => function ($query) {
                 $query->orderBy('sortOrder', 'asc');
-        }])
-            ->where('companySystemID', $templateData['companySystemID'])
-            ->where('companyReportTemplateID', $templateMasterID)
-            ->orderBy('sortOrder', 'asc')
-            ->where('itemType', '!=', 3)
-            ->get();
+            }])
+                ->where('companySystemID', $templateData['companySystemID'])
+                ->where('companyReportTemplateID', $templateMasterID)
+                ->orderBy('sortOrder', 'asc')
+                ->whereNotIn('itemType', [3, 4])
+                ->get();
 
-        $glMasters = ReportTemplateDetails::where('companySystemID', $templateData['companySystemID'])
-                                          ->where('companyReportTemplateID', $templateMasterID)
-                                          ->where('masterID', null)
-                                          ->where('itemType', '!=', 3)
-                                          ->orderBy('sortOrder', 'asc')
-                                          ->get();
+            $glMasters = ReportTemplateDetails::where('companySystemID', $templateData['companySystemID'])
+                ->where('companyReportTemplateID', $templateMasterID)
+                ->where('masterID', null)
+                ->whereNotIn('itemType', [3, 4])
+                ->orderBy('sortOrder', 'asc')
+                ->get();
+        } else {
+            $glCOdes = ReportTemplateDetails::with(['gllink'  => function ($query) {
+                $query->orderBy('sortOrder', 'asc');
+            }])
+                ->where('companySystemID', $templateData['companySystemID'])
+                ->where('companyReportTemplateID', $templateMasterID)
+                ->orderBy('sortOrder', 'asc')
+                ->where('itemType', '!=', 3)
+                ->get();
+
+            $glMasters = ReportTemplateDetails::where('companySystemID', $templateData['companySystemID'])
+                ->where('companyReportTemplateID', $templateMasterID)
+                ->where('masterID', null)
+                ->where('itemType', '!=', 3)
+                ->orderBy('sortOrder', 'asc')
+                ->get();
+        }
 
         function buildTree($elements, $parentId = null) {
             $branch = array();
@@ -4525,7 +4567,6 @@ class BudgetMasterAPIController extends AppBaseController
         sortTree($tree);
         $sortedFlat = flattenTree($tree);
 
-        $templateMaster = ReportTemplate::find($templateMasterID);
         $financeYearMaster = CompanyFinanceYear::find($companyFinanceYearID);
 
         $companyCode = isset($company->CompanyID) ? $company->CompanyID: null;

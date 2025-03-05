@@ -21,6 +21,7 @@ use App\Models\SupplierMaster;
 use App\Models\SystemGlCodeScenarioDetail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentVoucherServices
 {
@@ -323,14 +324,22 @@ class PaymentVoucherServices
             $checkRegisterDetails = ChequeRegisterDetail::where('id',$input['BPVchequeNoDropdown'])
                 ->where('company_id',$input['companySystemID'])
                 ->first();
-
+            Log::info($checkRegisterDetails);
             if($checkRegisterDetails) {
+
+                $cheque_no = $checkRegisterDetails->cheque_no;
+
+                Log::info('$cheque_no');
+                Log::info($cheque_no);
+
                 /*update cheque detail table */
                 $checkRegisterDetails->document_id = $paySupplierInvoiceMasters->PayMasterAutoId;
                 $checkRegisterDetails->document_master_id = $paySupplierInvoiceMasters->documentSystemID;
                 $checkRegisterDetails->status = 1;
                 $checkRegisterDetails->save();
 
+
+                Log::info($checkRegisterDetails->cheque_no);
 
                 PaySupplierInvoiceMaster::find($paySupplierInvoiceMasters->PayMasterAutoId)->update([
                     'BPVchequeNo' => $checkRegisterDetails->cheque_no

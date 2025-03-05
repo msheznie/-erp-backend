@@ -11,14 +11,15 @@ use App\Services\Currency\CurrencyService;
 class SupplierAgingReportService
 {
     public function getSupplierAgingExportToExcelData($output, $typeAging): Array {
+        $outputData = array_values($output['data']);
         $data = array();
 
-        if ($output['data'] && $output['aging']) {
+        if ($outputData && $output['aging']) {
             if(empty($data)) {
                 $objSupplierAgingDetailHeader = new SupplierAgingDetailReport();
                 array_push($data,collect($objSupplierAgingDetailHeader->getHeader($typeAging, $output['aging']))->toArray());
             }
-            foreach ($output['data'] as $index => $val) {
+            foreach ($outputData as $index => $val) {
                 $objSupplierAgingDetail = new SupplierAgingDetailReport();
                 $objSupplierAgingDetail->setCompanyID($val->companyID);
                 $objSupplierAgingDetail->setCompanyName($val->CompanyName);
@@ -40,27 +41,31 @@ class SupplierAgingReportService
                 array_push($data,collect($objSupplierAgingDetail)->toArray());
 
             }
-            foreach ($output['data'] as $index => $val) {
+
+            foreach ($outputData as $index => $val) {
+                $currentIndex = $index + 1;
                 $lineTotal = 0;
 
-                foreach ($output['aging'] as $val2) {
-                    $data[$index + 1][$val2] = $val->$val2;
-                    $lineTotal += $val->$val2;
+                foreach ($output['aging'] as $agingKey) {
+                    $data[$currentIndex][$agingKey] = $val->$agingKey;
+                    $lineTotal += $val->$agingKey;
                 }
 
+                $unallocatedAmount = CurrencyService::convertNumberFormatToNumber(
+                    number_format($val->unAllocatedAmount, $val->balanceDecimalPlaces)
+                );
+                $totalAmount = CurrencyService::convertNumberFormatToNumber(
+                    number_format($lineTotal + $val->unAllocatedAmount, $val->balanceDecimalPlaces)
+                );
 
-                $data[$index + 1]['Advance/UnAllocated Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->unAllocatedAmount, $val->balanceDecimalPlaces));
-
-                $data[$index + 1]['Total'] = CurrencyService::convertNumberFormatToNumber(number_format($lineTotal + $val->unAllocatedAmount, $val->balanceDecimalPlaces));
+                $data[$currentIndex]['Advance/UnAllocated Amount'] = $unallocatedAmount;
+                $data[$currentIndex]['Total'] = $totalAmount;
             }
         }
-
-
 
         return $data;
 
     }
-
 
 
     public function getSupplierAgingSummaryExportToExcelData($output, $typeAging): Array

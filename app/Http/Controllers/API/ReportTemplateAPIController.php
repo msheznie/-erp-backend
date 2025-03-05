@@ -304,7 +304,7 @@ class ReportTemplateAPIController extends AppBaseController
                 {
                     $data['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
                     $data['description'] = $det['name'];
-                    $data['itemType'] = 4;
+                    $data['itemType'] = 5;
                     $data['sortOrder'] = 1;
                     $data['companySystemID'] = $input['companySystemID'];
                     $data['companyID'] = $input['companyID'];

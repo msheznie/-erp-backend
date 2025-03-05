@@ -74,6 +74,7 @@ use App\Models\DeliveryOrderDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Repositories\UnitConversionRepository;
 use App\Traits\AuditLogsTrait;
+use App\Models\WarehouseItems;
 
 /**
  * Class ItemMasterController
@@ -569,13 +570,25 @@ class ItemMasterAPIController extends AppBaseController
      */
     public function getItemMasterFormData(Request $request)
     {
-
         $input = $request->all();
+        $companyList = [];
+        $subCompanies = [];
         $selectedCompanyId = $request['selectedCompanyId'];
+        $type = isset($input['categoryTypeValue'])
+            ? (is_array($input['categoryTypeValue'])
+                ? array_map('strval', $input['categoryTypeValue'])
+                : explode(',', $input['categoryTypeValue']))
+            : [0];
+
+        $financeSubCatId = isset($input['financeSubCatId'])
+            ? (is_array($input['financeSubCatId'])
+                ? array_map('strval', $input['financeSubCatId'])
+                : explode(',', $input['financeSubCatId']))
+            : [0];
 
         $isPosIntegratedPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 69)
-                            ->where('companySystemID', $selectedCompanyId)
-                            ->first();
+            ->where('companySystemID', $selectedCompanyId)
+            ->first();
         if(!empty($isPosIntegratedPolicy->isYesNO)){
             $isPosIntegrated = $isPosIntegratedPolicy->isYesNO;
         } else {
@@ -592,25 +605,29 @@ class ItemMasterAPIController extends AppBaseController
         }
 
 
-        $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+        $warehouseSystemCode = isset($input['warehouseSystemCode'])
+            ? (is_array($input['warehouseSystemCode'])
+                ? array_map('strval', $input['warehouseSystemCode'])
+                : explode(',', $input['warehouseSystemCode']))
+            : [0];
 
-        $warehouse = WarehouseMaster::find($warehouseSystemCode);
+        $warehouse = WarehouseMaster::whereIn('warehouseSystemCode', $warehouseSystemCode)->get();
 
         if(!empty($warehouse)){
-            $selectedCompanyId = $warehouse->companySystemID;
+            $companyList = $warehouse->pluck('companySystemID')->unique()->toArray();
         }
 
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
-
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            //$subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-            $subCompanies = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
+        foreach ($companyList as $companyId) {
+            if (\Helper::checkIsCompanyGroup($companyId)) {
+                $subCompanies = array_merge($subCompanies, \Helper::getGroupCompany($companyId));
+            } else {
+                $subCompanies = [$companyId];
+            }
         }
+
+        $subCompanies = !empty($companyList) ? array_unique($companyList) : [$selectedCompanyId];
 
         /**  Fixed Assets  Drop Down */
         $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
@@ -653,7 +670,7 @@ class ItemMasterAPIController extends AppBaseController
         $wareHouseBinLocations = [];
         if (isset($request['warehouseSystemCode'])) {
             $wareHouseBinLocations = WarehouseBinLocation::where('companySystemID', $selectedCompanyId)
-                ->where('wareHouseSystemCode', $request['warehouseSystemCode'])
+                ->whereIn('wareHouseSystemCode', $warehouseSystemCode)
                 ->get();
         }
 
@@ -676,8 +693,31 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $assetFinanceCategory = AssetFinanceCategory::all();
-
+        $warehouseAll = WarehouseMaster::where('companySystemID', $selectedCompanyId)->get();
         $categoryTypeData = ItemCategoryTypeMaster::all();
+        $inventoryItemCategorySub = FinanceItemCategorySub::with(['finance_item_category_type'])
+            ->where('isActive', 1)
+            ->where('itemCategoryID', 1)
+            ->when(!empty($input['type']), function($query) use ($type) {
+                $query->whereHas('finance_item_category_type', function ($subQuery) use ($type) {
+                    $subQuery->whereIn('categoryTypeID', $type);
+                });
+            })->get();
+
+        $wareHouseItems = WarehouseItems::with('item_by', 'financeSubCategory')
+            ->where('companySystemID', $selectedCompanyId)
+            ->whereIn('warehouseSystemCode', $warehouseSystemCode)
+            ->when(!empty($input['financeSubCatId']), function($query) use ($financeSubCatId) {
+                $query->whereHas('financeSubCategory', function ($subQuery) use ($financeSubCatId) {
+                    $subQuery->whereIn('financeCategorySub', $financeSubCatId);
+                });
+            })->get()
+            ->map(function ($item) {
+                return [
+                    'itemCodeSystem' => $item->item_by->itemCodeSystem ?? null,
+                    'itemDescription' => $item->item_by->itemDescription ?? null,
+                ];
+            });
 
         $output = array('companiesByGroup' => $companiesByGroup,
             'fixedAssetCategory' => $fixedAssetCategory,
@@ -685,10 +725,13 @@ class ItemMasterAPIController extends AppBaseController
             'financeItemCategoryMaster' => $itemCategory,
             'assetFinanceCategory' => $assetFinanceCategory,
             'financeItemCategorySub' => $itemCategorySubArray,
+            'inventoryItemCategorySub' => $inventoryItemCategorySub,
             'yesNoSelection' => $yesNoSelection,
             'units' => $units,
             'isVatRegisteredYN' => $isVatRegisteredYN,
             'wareHouseBinLocations' => $wareHouseBinLocations,
+            'wareHouses' => $warehouseAll,
+            'wareHouseItems' => $wareHouseItems,
             'vatSubCategory' => $vatSubCategory,
             'masterCompany' => $masterCompany,
             'isPosIntegrated' => $isPosIntegrated,
@@ -697,7 +740,6 @@ class ItemMasterAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
-
     }
 
     /**

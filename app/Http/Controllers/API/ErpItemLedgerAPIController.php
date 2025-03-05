@@ -910,6 +910,14 @@ WHERE
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'ILR':
+                $validator = \Validator::make($request->all(), [
+                    'warehouse' => 'required',
+                ]);
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('Error Occurred!');
         }

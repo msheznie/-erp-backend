@@ -432,6 +432,7 @@ class BankLedgerAPIController extends AppBaseController
                         })
                         ->where('chartOfAccountSystemID', $bankGLCode)
                         ->first();
+
                     if (!empty($checkGLAmount)) {
                         $glAmount = 0;
                         $conditionChecking = true;
@@ -660,9 +661,7 @@ class BankLedgerAPIController extends AppBaseController
                     })->first();
                 }
 
-
-
-                if (empty($checkBankAccount) && $input['pulledToBankTransferYN']) {
+                if (empty($checkBankAccount) && $input['pulledToBankTransferYN']  && $bankTransfer->fileType != 1) {
                     return $this->sendError(trans('custom.supplier_account_is_not_updated_you_cannot_add_this_payment_to_the_transfer'), 500);
                 }
 
@@ -1133,7 +1132,7 @@ class BankLedgerAPIController extends AppBaseController
         }else if($input['isFromHistory'] == 1) {
             $orderBy = 'refferedbackAutoID';
             $bankLedger = PaymentBankTransferDetailRefferedBack::whereIn('companySystemID', $subCompanies)
-                                                                ->where('timesReferred',$input['timesReferred']);
+                ->where('timesReferred',$input['timesReferred']);
 
             $input['paymentBankTransferID'] = $paymentBankTransfer->paymentBankTransferID;
         }
@@ -1142,19 +1141,44 @@ class BankLedgerAPIController extends AppBaseController
             ->where("bankAccountID", $input['bankAccountAutoID'])
             ->where("trsClearedYN", -1)
             ->where("bankClearedYN", 0)
-            ->whereIn('invoiceType', [2, 3, 5])
+            ->where('documentSystemID',4)
+            ->where("payAmountBank",'>',0)
             ->where("bankCurrency", $bankId)
-            ->where(function ($q) use ($input, $confirmed) {
-                $q->where(function ($q1) use ($input) {
-                    $q1->where('paymentBankTransferID', $input['paymentBankTransferID'])
-                        ->where("pulledToBankTransferYN", -1);
-                })->when($confirmed == 0, function ($q2) {
-                    $q2->orWhere("pulledToBankTransferYN", 0);
-                });
-            })
             ->with(['payee_bank_memos' => function ($q) {
                 $q->where('bankMemoTypeID', 4);
+            },'paymentVoucher'=> function($q) {
+                $q->with(['supplier','payee']);
             }]);
+
+
+        if($paymentBankTransfer->fileType == 0)
+        {
+            $bankLedger->whereIn('invoiceType', [2, 3, 5])->whereHas('paymentVoucher', function ($q) {
+                $q->where('payment_mode',3);
+                $q->whereHas('supplier');
+            });
+        }else {
+
+            $bankLedger->whereIn('invoiceType', [3])
+                ->whereHas('paymentVoucher', function ($q) {
+                    $q->where('payment_mode', 3)
+                        ->whereIn('finalSettlementYN', [1]);
+                })
+                ->orWhereHas('paymentVoucher', function ($q) {
+                    $q->where('payment_mode', 3)
+                        ->where('finalSettlementYN', [-1])
+                        ->whereHas('payee');
+                });
+        }
+
+        $bankLedger->where(function ($q) use ($input, $confirmed) {
+            $q->where(function ($q1) use ($input) {
+                $q1->where('paymentBankTransferID', $input['paymentBankTransferID'])
+                    ->where("pulledToBankTransferYN", -1);
+            })->when($confirmed == 0, function ($q2) {
+                $q2->orWhere("pulledToBankTransferYN", 0);
+            });
+        });
 
         $search = $request->input('search.value');
 

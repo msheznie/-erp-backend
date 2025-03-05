@@ -154,14 +154,26 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
                 $notValidLine = true;
                 if ($notValidTemplate) {
-                    $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) {
-                        $query->orderBy('sortOrder', 'asc');
-                    }])
-                        ->where('itemType', '!=', 3)
-                        ->where('companySystemID', $uploadedCompany)
-                        ->where('companyReportTemplateID', $template->companyReportTemplateID)
-                        ->orderBy('sortOrder', 'asc')
-                        ->get();
+
+                    if($template->reportID == 1) {
+                        $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) {
+                            $query->orderBy('sortOrder', 'asc');
+                        }])
+                            ->whereNotIn('itemType', [3, 4])
+                            ->where('companySystemID', $uploadedCompany)
+                            ->where('companyReportTemplateID', $template->companyReportTemplateID)
+                            ->orderBy('sortOrder', 'asc')
+                            ->get();
+                    } else {
+                        $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) {
+                            $query->orderBy('sortOrder', 'asc');
+                        }])
+                            ->whereNotIn('itemType', [3, 4])
+                            ->where('companySystemID', $uploadedCompany)
+                            ->where('companyReportTemplateID', $template->companyReportTemplateID)
+                            ->orderBy('sortOrder', 'asc')
+                            ->get();
+                    }
 
                     $glCOdesSorted = collect($glCOdes);
                     $count = 0;
@@ -264,7 +276,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
                 }
             }
-  
+
 
             DB::commit();
 
