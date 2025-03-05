@@ -395,17 +395,9 @@ class ProcumentOrderAPIController extends AppBaseController
         }
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
-        $documentCodeMasterID = 2;
-        $purchaseOrderCode = $this->documentCodeConfigurationService->getDocumentCodeConfiguration($input['companySystemID'],$input,$lastSerialNumber,$documentCodeMasterID,$input['serviceLine']);
-        
-        if($purchaseOrderCode['status'] == true){
-            $input['purchaseOrderCode'] = $purchaseOrderCode['documentCode'];
-            $input['serialNumber'] = $purchaseOrderCode['docLastSerialNumber'];
-        } else {
-            if ($documentMaster) {
-                $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-                $input['purchaseOrderCode'] = $poCode;
-            }
+        if ($documentMaster) {
+            $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['purchaseOrderCode'] = $poCode;
         }
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();

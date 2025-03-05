@@ -1505,16 +1505,9 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $documentCodeMasterID = 1;
-        $purchaseRequestCode = $this->documentCodeConfigurationService->getDocumentCodeConfiguration($input['companySystemID'],$input,$lastSerialNumber,$documentCodeMasterID,$input['serviceLineCode']);
-        
-        if($purchaseRequestCode['status'] == true){
-            $input['purchaseRequestCode'] = $purchaseRequestCode['documentCode'];
-            $input['serialNumber'] = $purchaseRequestCode['docLastSerialNumber'];
-        } else {
-            $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
-            $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
-        }
-        
+        $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
+        $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
+    
 
         $purchaseRequests = $this->purchaseRequestRepository->create($input);
 
