@@ -84,6 +84,7 @@ class BankStatus implements ShouldQueue
             config(['filesystems.disks.sftp' => $configDetails]);
             $storage = \Storage::disk('sftp');
             $paymentTransfers = PaymentBankTransfer::whereNotNull('batchReference')
+                ->where('bankMasterID', $getConfigDetails->bank_master_id)
                 ->select(['paymentBankTransferID', 'batchReference', 'portalStatus'])
                 ->get();
 
@@ -107,14 +108,14 @@ class BankStatus implements ShouldQueue
                             }
                             $paymentTransfer->save();
 
-                            if (isset($this->db)) {
+                            if (isset($this->tenantDb)) {
                                 $webPushData = [
                                     'title' => "Bank Transfer portal status updated",
                                     'body' => "",
                                     'url' => "treasury/bank-transfer-list",
                                     'path' => "",
                                 ];
-                                WebPushNotificationService::sendNotification($webPushData, 2, [$paymentTransfer->createdUserSystemID], $this->db);
+                                WebPushNotificationService::sendNotification($webPushData, 2, [$paymentTransfer->createdUserSystemID], $this->tenantDb);
                             }
                         }
                     } catch (\Exception $e) {
