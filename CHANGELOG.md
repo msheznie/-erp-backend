@@ -1,5 +1,67 @@
 # Changelog
 
+## [10.65.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.64.0...v10.65.0) (2025-03-05)
+
+
+### Features
+
+* **accounts payable:** Inter bank account transfer UI changes [GCP-5901] ([#7464](https://github.com/pbsgears/Gears_BackEnd/issues/7464)) ([a97cd8c](https://github.com/pbsgears/Gears_BackEnd/commit/a97cd8cb649442621ae6bfbd3380b1fa50c9d9cc))
+* **accounts receivable:** accounts recivable check numeric values [GCP-6094] ([#7498](https://github.com/pbsgears/Gears_BackEnd/issues/7498)) ([32e4769](https://github.com/pbsgears/Gears_BackEnd/commit/32e4769e12597a2dff197ca79655ed50f7689202))
+* **budget:** Removed Retained Earning (Automated) GL from loading to Balance sheet excel budget upload [GCP-5921] ([#7517](https://github.com/pbsgears/Gears_BackEnd/issues/7517)) ([bc25637](https://github.com/pbsgears/Gears_BackEnd/commit/bc25637dbdfb257b365c95e42e3fc6a588d65f32))
+* **common:** Budget widget in ERP Dashboard [GCP-6091] ([#7600](https://github.com/pbsgears/Gears_BackEnd/issues/7600)) ([68c3592](https://github.com/pbsgears/Gears_BackEnd/commit/68c3592abc4f87ca2e287716a616c55132013e49))
+* **common:** Employee document status [GCP-5979-M] ([cd7414f](https://github.com/pbsgears/Gears_BackEnd/commit/cd7414f4748feadeb71063f119301b5fb1afefbc))
+* **common:** Employee document status [GCP-5979] ([f500c30](https://github.com/pbsgears/Gears_BackEnd/commit/f500c30c2f76a86bd28c1b247907d78d32d14416))
+* **common:** Employee document status [GCP-5979] ([479b06a](https://github.com/pbsgears/Gears_BackEnd/commit/479b06a9d4f0f476ef63af8c7eb9ad4bd58bd1da))
+* **common:** Employee document status [GCP-5979] ([#7512](https://github.com/pbsgears/Gears_BackEnd/issues/7512)) ([d6ed386](https://github.com/pbsgears/Gears_BackEnd/commit/d6ed386af770185919153216afb1e4d1572484b5))
+* **common:** Employee document status modification [GCP-5979-M] ([7b8bae3](https://github.com/pbsgears/Gears_BackEnd/commit/7b8bae36e16384582a3aad578575362c2799cb48))
+* **common:** Employee document status modification [GCP-5979] ([8293e98](https://github.com/pbsgears/Gears_BackEnd/commit/8293e98a457e527e7e6977ebba45f619f0d83c79))
+* **common:** Employee document status modification [GCP-5979] ([#7528](https://github.com/pbsgears/Gears_BackEnd/issues/7528)) ([a48f3fa](https://github.com/pbsgears/Gears_BackEnd/commit/a48f3faf54312b88d7eab31c318950b43b17a9c5))
+* **configuration:** Document code config [GCP-6256] ([#7638](https://github.com/pbsgears/Gears_BackEnd/issues/7638)) ([955c79f](https://github.com/pbsgears/Gears_BackEnd/commit/955c79fba83dc0f62831ebf258a368d0d7beea79))
+* **configuration:** Document code configuration [GCP-5721] ([#7502](https://github.com/pbsgears/Gears_BackEnd/issues/7502)) ([8392802](https://github.com/pbsgears/Gears_BackEnd/commit/8392802366c2344722e398312ea2240a585f7882))
+* **configuration:** Document code configuration [GCP-5935] ([#7603](https://github.com/pbsgears/Gears_BackEnd/issues/7603)) ([56c1c58](https://github.com/pbsgears/Gears_BackEnd/commit/56c1c58a8c6022730327c96387154e94562efefe))
+* **configuration:** Group Filter in widget [GCP-6092] ([#7553](https://github.com/pbsgears/Gears_BackEnd/issues/7553)) ([539d45d](https://github.com/pbsgears/Gears_BackEnd/commit/539d45d5e9a7eb7b636fd1a8395b3cb3758bf631))
+* **configuration:** Sending the error message from backend [GCP-6312] ([#7669](https://github.com/pbsgears/Gears_BackEnd/issues/7669)) ([2d5d923](https://github.com/pbsgears/Gears_BackEnd/commit/2d5d923983a781eb78277873a636174f7d4838df))
+* **general ledger:** Create journal voucher API ([1249385](https://github.com/pbsgears/Gears_BackEnd/commit/1249385ec61e35ebf6f5ad7a5c1e9f1768d7b8bf))
+* **general ledger:** Create journal voucher API ([4e3c8b8](https://github.com/pbsgears/Gears_BackEnd/commit/4e3c8b8aff26ecf2379531c51c27d0f2e9ee16c9))
+* **general ledger:** Create journal voucher API ([33f50fb](https://github.com/pbsgears/Gears_BackEnd/commit/33f50fb0d59815048c3bf9ecb033c0d5b10f02fd))
+* **general ledger:** Create journal voucher API [GCP-6081] ([#7499](https://github.com/pbsgears/Gears_BackEnd/issues/7499)) ([a659b20](https://github.com/pbsgears/Gears_BackEnd/commit/a659b205220491ed7b0d1f4c5e1b97b453e7d6b3))
+* **general ledger:** financial report group total and header total issue fixed [GCP-6097] ([#7491](https://github.com/pbsgears/Gears_BackEnd/issues/7491)) ([e8b52dc](https://github.com/pbsgears/Gears_BackEnd/commit/e8b52dc56acd7f0c491fb47d86ca0a42e446b94b))
+* **general ledger:** Generate Report Statement of Change in Equity [GCP-5049] ([#7490](https://github.com/pbsgears/Gears_BackEnd/issues/7490)) ([45bcc39](https://github.com/pbsgears/Gears_BackEnd/commit/45bcc39b5c78ae335fb54d34fc3bb50f7d482aac))
+* **group report:** Consolidation report incorrect values update [GCP-6227] ([#7578](https://github.com/pbsgears/Gears_BackEnd/issues/7578)) ([768a796](https://github.com/pbsgears/Gears_BackEnd/commit/768a79688f3af70eefbbf33064be8f4f24d25071))
+* **group report:** Consolidation report updates [GCP-5016] ([#7601](https://github.com/pbsgears/Gears_BackEnd/issues/7601)) ([18475ce](https://github.com/pbsgears/Gears_BackEnd/commit/18475cee754f25cf7731763a991669b37f29454d))
+* **inventory:** Added reporting currency details to MI audit details return [GCP-6250] ([#7590](https://github.com/pbsgears/Gears_BackEnd/issues/7590)) ([c2a13fe](https://github.com/pbsgears/Gears_BackEnd/commit/c2a13fe19928bf3eab4fea97dc144580152aa7e1))
+* **inventory:** list Bin Location in warehouse items   [GCP-4641] ([#7469](https://github.com/pbsgears/Gears_BackEnd/issues/7469)) ([ede84cd](https://github.com/pbsgears/Gears_BackEnd/commit/ede84cd846fc40818adef44fae67446298e73392))
+* **inventory:** Rack bin location report [GCP-5970] ([#7541](https://github.com/pbsgears/Gears_BackEnd/issues/7541)) ([f8190af](https://github.com/pbsgears/Gears_BackEnd/commit/f8190aff94e0010852475f5783785828a6204d38))
+* **procurement:** Added buyer field in Purchase Request [GCP-5839] ([#7485](https://github.com/pbsgears/Gears_BackEnd/issues/7485)) ([dbbb177](https://github.com/pbsgears/Gears_BackEnd/commit/dbbb177e2a8d2162dced0dd662700a53152ec514))
+* **procurement:** Added buyer filter in purchase request list [GCP-5840] ([#7486](https://github.com/pbsgears/Gears_BackEnd/issues/7486)) ([be2ec3d](https://github.com/pbsgears/Gears_BackEnd/commit/be2ec3db2d3f9ea8a3248a90bbe4eb5bb4465ac9))
+* **procurement:** Revert document serialization to previous [GCP-6336] ([#7689](https://github.com/pbsgears/Gears_BackEnd/issues/7689)) ([4bd37eb](https://github.com/pbsgears/Gears_BackEnd/commit/4bd37eb6749c2f4f1a1160d07cf23ba00a9554eb))
+* **procurement:** Revert document serialization to previous [GCP-6336] ([#7690](https://github.com/pbsgears/Gears_BackEnd/issues/7690)) ([5fadbf7](https://github.com/pbsgears/Gears_BackEnd/commit/5fadbf7893f2d251152aac456ddd807e18de1ba1))
+* **system admin:** add Filter option in Bin location [GCP-5969] ([#7519](https://github.com/pbsgears/Gears_BackEnd/issues/7519)) ([9618bbd](https://github.com/pbsgears/Gears_BackEnd/commit/9618bbd83c9e6975c0a7f8489cf4a774699e434a))
+* **treasury management:** B to B integration show payment vouchers to bank transfer based on file type [GCP-6084] ([#7574](https://github.com/pbsgears/Gears_BackEnd/issues/7574)) ([530efef](https://github.com/pbsgears/Gears_BackEnd/commit/530efefafeede03ec810486c5fcf665bc5293d46))
+* **treasury management:** b2b configuration upload file to bank portal and get response [GCP-6273] ([#7653](https://github.com/pbsgears/Gears_BackEnd/issues/7653)) ([ed9266d](https://github.com/pbsgears/Gears_BackEnd/commit/ed9266d13eb290b13d59b3c20f7df42a07f99f49))
+* **treasury management:** B2B integration vendor file generation [GCP-6085] ([#7626](https://github.com/pbsgears/Gears_BackEnd/issues/7626)) ([6e3aaf6](https://github.com/pbsgears/Gears_BackEnd/commit/6e3aaf6a5112f404fd758c54eedafd9d7cbf29f8))
+* **treasury management:** bank bemo details not updating fixes [GCP-6285] ([#7675](https://github.com/pbsgears/Gears_BackEnd/issues/7675)) ([2bc16eb](https://github.com/pbsgears/Gears_BackEnd/commit/2bc16eb5a00fcc24876fa62da4392692fe694171))
+* **treasury management:** Introduced template mapping option for bank reconciliation excel upload [GCP-2625] ([#7472](https://github.com/pbsgears/Gears_BackEnd/issues/7472)) ([915f4a4](https://github.com/pbsgears/Gears_BackEnd/commit/915f4a4038caa45efecc46d210a82549f9fd2e48))
+* **treasury management:** Submission table view added in bank transfer list [GCP-6086] ([#7582](https://github.com/pbsgears/Gears_BackEnd/issues/7582)) ([acaa359](https://github.com/pbsgears/Gears_BackEnd/commit/acaa359ccb8bb6ba5818965207e9bb8f80ee1e43))
+
+
+### Bug Fixes
+
+* **accounts payable:** Incorrect values in supplier aging excel report [GCP-5925] ([#7518](https://github.com/pbsgears/Gears_BackEnd/issues/7518)) ([38009a3](https://github.com/pbsgears/Gears_BackEnd/commit/38009a350e20b98d60ab04be2d3e1ceaf061e097))
+* **accounts payable:** VAT column shouldn't show in Print views [GCP-6220] ([#7569](https://github.com/pbsgears/Gears_BackEnd/issues/7569)) ([c4eb47d](https://github.com/pbsgears/Gears_BackEnd/commit/c4eb47dd71fdf6a4cf95bea66692f47f8e1c1c34))
+* **accounts payable:** Wrong SI type for intercompany disposal [GCP-5922] ([#7468](https://github.com/pbsgears/Gears_BackEnd/issues/7468)) ([b487648](https://github.com/pbsgears/Gears_BackEnd/commit/b48764835841e8fd2931926ee733f0b874b9dc92))
+* **accounts receivable:** customer aging and details report query fixed [GCP-6164] ([#7532](https://github.com/pbsgears/Gears_BackEnd/issues/7532)) ([ef2105b](https://github.com/pbsgears/Gears_BackEnd/commit/ef2105ba6cc375e851752b7023b1e5702ae95e7d))
+* **accounts receivable:** customer ledger matching entry wrong when exchange gain or loss [GCP-5998] ([#7457](https://github.com/pbsgears/Gears_BackEnd/issues/7457)) ([0ae89b6](https://github.com/pbsgears/Gears_BackEnd/commit/0ae89b6091d1a135fb7b48657bbe50bd1dd603ff))
+* **budget:** Fixed budget summary report showing local amount wrongly [GCP-5920] ([#7533](https://github.com/pbsgears/Gears_BackEnd/issues/7533)) ([50bedce](https://github.com/pbsgears/Gears_BackEnd/commit/50bedceee2f7196b5f8490da226a31d682a68838))
+* **configuration:** report Template Sort Order Issue [GCP-5928] ([#7471](https://github.com/pbsgears/Gears_BackEnd/issues/7471)) ([b074571](https://github.com/pbsgears/Gears_BackEnd/commit/b0745716dc6710eae72b6050967cad05ebeb811c))
+* **general ledger:** finanical report group total not showing proper total [GCP-6097] ([#7481](https://github.com/pbsgears/Gears_BackEnd/issues/7481)) ([61d53dc](https://github.com/pbsgears/Gears_BackEnd/commit/61d53dc2150ec2c4706557442f2e872bae0f5d89))
+* **general ledger:** general ledger financial report export to excel grand total 0 fixed [GCP-6162] ([#7493](https://github.com/pbsgears/Gears_BackEnd/issues/7493)) ([ea4cd98](https://github.com/pbsgears/Gears_BackEnd/commit/ea4cd98c7612c345cfbcd626f4322a1054c53425))
+* **procurement:** Fixed PO payment term computation errors for rounded off percentage values [GCP-5939] ([#7548](https://github.com/pbsgears/Gears_BackEnd/issues/7548)) ([e5747b1](https://github.com/pbsgears/Gears_BackEnd/commit/e5747b1e4a0c9ceda1405d2104230f54e7b3a207))
+* **procurement:** Unable to search purchase requests in approval page [GCP-6308] ([#7665](https://github.com/pbsgears/Gears_BackEnd/issues/7665)) ([9244aa7](https://github.com/pbsgears/Gears_BackEnd/commit/9244aa7246f1a55c58ccac8dd15a81f377d86e3a))
+* **sales & marketing:** Removed POS generated invoices from sales return [GCP-2838] ([#7455](https://github.com/pbsgears/Gears_BackEnd/issues/7455)) ([e7ec8b5](https://github.com/pbsgears/Gears_BackEnd/commit/e7ec8b5bd5961e67e9df6af54b1ecd0bf3f7dde9))
+* **system admin:** Sentry issue item master [GCP-6190] ([#7545](https://github.com/pbsgears/Gears_BackEnd/issues/7545)) ([113137a](https://github.com/pbsgears/Gears_BackEnd/commit/113137a1daa750e662fe62c3803a7a04a403144c))
+* **system admin:** Vat amend modification [GCP-5927] ([#7456](https://github.com/pbsgears/Gears_BackEnd/issues/7456)) ([6dae14a](https://github.com/pbsgears/Gears_BackEnd/commit/6dae14a0f806fe053c4b0764858b6c030ec1ebce))
+
 ## [10.64.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.63.0...v10.64.0) (2025-03-04)
 
 
