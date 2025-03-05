@@ -65,8 +65,12 @@ class B2BResourceAPIController extends AppBaseController
         $bankTransferBankAccountDetails = BankAccount::find(PaymentBankTransfer::find($request->bankTransferID)->bankAccountAutoID);
         $detailsArray = array();
 
+        $bankMaster = BankAccount::find( PaymentBankTransfer::find($request->bankTransferID)->bankAccountAutoID,['accountCurrencyID']);
+
+
         foreach ($result as $rs)
         {
+
             $detailObject = new \App\Classes\B2B\Detail();
             $supplierCurrency = SupplierCurrency::where('supplierCodeSystem',$rs['payment_voucher']['BPVsupplierID'])->where('currencyID',$rs['payment_voucher']['supplierTransCurrencyID'])->first();
             $bankMemoDetails = BankMemoSupplier::where('supplierCodeSystem',$rs['payment_voucher']['BPVsupplierID'])->where('supplierCurrencyID',$supplierCurrency->supplierCurrencyID ?? 0)->get();
@@ -74,40 +78,70 @@ class B2BResourceAPIController extends AppBaseController
             $detailObject->setTransferMethod($this->setBankTransferMethod($rs));
             $detailObject->setCreditAmount(($rs['payment_voucher']['payAmountBank'] + $rs['payment_voucher']['VATAmountBank']),$rs['payment_voucher']['BPVbankCurrency']);
             $detailObject->setCreditCurrency($rs['payment_voucher']['supplierTransCurrencyID']);
-            $detailObject->setExchangeRate($rs['payment_voucher']['BPVbankCurrencyER']);
+
+            if(isset($bankMaster->accountCurrencyID) && ($bankMaster->accountCurrencyID === (integer) $rs['payment_voucher']['supplierTransCurrencyID']))
+            {
+                $detailObject->setExchangeRate("");
+            }else {
+                $detailObject->setExchangeRate($rs['payment_voucher']['BPVbankCurrencyER']);
+            }
             $detailObject->setDealRefNo("");
             $detailObject->setValueDate($rs['payment_voucher']['BPVdate']);
-            $detailObject->setDebitAccountNo($bankTransferBankAccountDetails->AccountNo ?? null);
-            $detailObject->setCreditAccountNo($bankMemoDetails->where('bankMemoTypeID',4)->first()['memoDetail'] ?? null);
+            $detailObject->setDebitAccountNo($bankTransferBankAccountDetails->AccountNo ?? "");
+            $detailObject->setCreditAccountNo($bankMemoDetails->where('bankMemoTypeID',4)->first()['memoDetail'] ?? $bankMemoDetails->where('bankMemoTypeID',8)->first()['memoDetail']);
             $detailObject->setTransactionReference($this->bankTransferService->generateBatchNo($request->companyID,$rs['documentCode'],$rs['payment_voucher']['serialNo']));
-            $detailObject->setDebitNarrative($rs['payment_voucher']['BPVNarration'] ?? null);
+            $detailObject->setDebitNarrative(substr( $rs['payment_voucher']['BPVNarration'], 0, 35));
             $detailObject->setDebitNarrative2("");
             $detailObject->setCreditNarrative("");
-            $detailObject->setPaymentDetails1("payment details");
-            $detailObject->setPaymentDetails2("payment details");
+            $detailObject->setPaymentDetails1("800");
+            $detailObject->setPaymentDetails2("FIS");
             $detailObject->setPaymentDetails3("");
             $detailObject->setPaymentDetails4("");
-            $detailObject->setBeneficiaryName($rs['payment_voucher']['supplier']['supplierName']);
-            $detailObject->setBeneficiaryAddress1("");
-            $detailObject->setBeneficiaryAddress2("");
-            $detailObject->setInstitutionNameAddress1($bankMemoDetails->where('bankMemoTypeID',2)->first()['memoDetail'] ?? null);
-            $detailObject->setInstitutionNameAddress2($bankMemoDetails->where('bankMemoTypeID',3)->first()['memoDetail'] ?? null);
-            $detailObject->setInstitutionNameAddress3($bankMemoDetails->where('bankMemoTypeID',3)->first()['memoDetail'] ?? null);
-            $detailObject->setInstitutionNameAddress4($bankMemoDetails->where('bankMemoTypeID',3)->first()['memoDetail'] ?? null);
-            $detailObject->setSwift($bankMemoDetails->where('bankMemoTypeID',9)->first()['memoDetail'] ?? null);
-            $detailObject->setIntermediaryAccount($bankMemoDetails->where('bankMemoTypeID',11)->first()['memoDetail'] ?? null);
-            $detailObject->setIntermediarySwift($bankMemoDetails->where('bankMemoTypeID',12)->first()['memoDetail'] ?? null);
-            $detailObject->setIntermediaryName($bankMemoDetails->where('bankMemoTypeID',10)->first()['memoDetail'] ?? null);
-            $detailObject->setIntermediaryAddress1(null);
-            $detailObject->setIntermediaryAddress2(null);
-            $detailObject->setIntermediaryAddress3(null);
+
+            $supplierName = $rs['payment_voucher']['supplier']['supplierName'];
+            $address = $bankMemoDetails->where('bankMemoTypeID',3)->first()['memoDetail'];
+
+            $formattedAddress = str_replace(',', ' ', $address);
+            $formattedAddress = preg_replace('/[^a-zA-Z0-9\s]/', '', $formattedAddress);
+
+            $beneficiaryAddressLine2 = "";
+            if (strlen($supplierName) > 35) {
+                $beneficiaryName = substr($supplierName, 0, 35);
+                $beneficiaryAddressLine1 = substr($supplierName, 35);
+            } else {
+                $beneficiaryName = $supplierName;
+                if(strlen($formattedAddress) > 35)
+                {
+                    $beneficiaryAddressLine1 = substr($formattedAddress,0,35);
+                    $beneficiaryAddressLine2 = substr($formattedAddress,35);
+                }else {
+                    $beneficiaryAddressLine1 = $formattedAddress;
+                }
+            }
+
+
+            $detailObject->setBeneficiaryName($beneficiaryName);
+            $detailObject->setBeneficiaryAddress1($beneficiaryAddressLine1);  // Beneficiary Address 1
+            $detailObject->setBeneficiaryAddress2($beneficiaryAddressLine2);
+
+            $detailObject->setInstitutionNameAddress1($bankMemoDetails->where('bankMemoTypeID',2)->first()['memoDetail'] ?? "");
+            $detailObject->setInstitutionNameAddress2("");
+            $detailObject->setInstitutionNameAddress3("");
+            $detailObject->setInstitutionNameAddress4("");
+            $detailObject->setSwift($bankMemoDetails->where('bankMemoTypeID',9)->first()['memoDetail'] ?? "");
+            $detailObject->setIntermediaryAccount("");
+            $detailObject->setIntermediarySwift("");
+            $detailObject->setIntermediaryName( "");
+            $detailObject->setIntermediaryAddress1("");
+            $detailObject->setIntermediaryAddress2("");
+            $detailObject->setIntermediaryAddress3("");
             $detailObject->setChargesType("BEN");
             $detailObject->setSortCodeBeneficiaryBank($bankMemoDetails->where('bankMemoTypeID',14)->first()['memoDetail'] ?? null);
             $detailObject->setIFSC($bankMemoDetails->where('bankMemoTypeID',16)->first()['memoDetail'] ?? null);
             $detailObject->setFedwire($bankMemoDetails->where('bankMemoTypeID',18)->first()['memoDetail'] ?? null);
             $detailObject->setEmail($rs['payment_voucher']['supplier']['supEmail'] ?? null);
             $detailObject->setDispatchMode("E");
-            $detailObject->setTransactorCode("transcator code");
+            $detailObject->setTransactorCode("B");
             $detailObject->setSupportingDocumentName("");
             $detailObject->setPaymentVoucherCode($rs['documentCode']);
 
@@ -194,8 +228,9 @@ class B2BResourceAPIController extends AppBaseController
         ];
 
         $excelColumnFormat = [
-            'A' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
+            'A' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
+            'B' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
+            'C' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
             'G' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
         ];
 
@@ -319,12 +354,17 @@ class B2BResourceAPIController extends AppBaseController
                 $disk = $storage;
                 $files = $disk->files($config['failure_path']);
                 foreach ($files as $file) {
-                    $filePath = $file->getRealPath();
-                    $file = file_get_contents($filePath);
-                    $batchReference = preg_quote($supplierBankTransfer->batchReference, '/'); // Escape special characters
-                    $pattern = "/Batch Number:\s*" . $batchReference . "/"; // Proper regex with delimiters
-                    if (preg_match($pattern, $file, $matches)) {
-                        return response()->file($filePath);
+                    $filePath = $file;
+                    $file_content = $storage->get($filePath);
+                    $batchReference = preg_quote($supplierBankTransfer->batchReference, '/');
+                    $pattern = "/Batch Number:\s*" . $batchReference . "/";
+                    if (preg_match($pattern, $file_content, $matches)) {
+                        return response()->stream(function () use ($file_content) {
+                            echo $file_content;
+                        }, 200, [
+                            'Content-Type' => 'application/octet-stream',
+                            'Content-Disposition' => 'attachment; filename="errors.txt"',
+                        ]);
                     }
                 }
             } catch (\Exception $exception) {

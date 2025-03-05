@@ -97,10 +97,9 @@ class BankStatus implements ShouldQueue
             foreach ($paymentTransfers as $paymentTransfer) {
                 foreach ($files as $file) {
                     try {
-                        $fileContent = file_get_contents($file);
+                        $fileContent = \Storage::disk('sftp')->get($file);
                         $batchReference = preg_quote($paymentTransfer->batchReference, '/');
                         $pattern = "/Batch Number:\s*" . $batchReference . "/";
-
                         if (preg_match($pattern, $fileContent)) {
                             $paymentTransfer->portalStatus = $portalStatus;
                             if ($submittedStatus !== null) {
