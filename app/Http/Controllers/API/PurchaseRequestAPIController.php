@@ -1331,6 +1331,8 @@ class PurchaseRequestAPIController extends AppBaseController
         });
 
         return \DataTables::of($purchaseRequests)
+            ->filter(function ($instance){  
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
