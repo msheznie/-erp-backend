@@ -160,6 +160,7 @@ class inventory
                                         ->leftJoin($table, "document_sub_products.{$column}", '=', "{$table}.id")
                                         ->leftJoin('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
                                         ->leftJoin('warehousebinlocationmaster', "{$table}.binLocation", '=', 'warehousebinlocationmaster.binLocationID') 
+                                        ->where('document_sub_products.productInID', null)
                                         ->groupBy('erp_itemledger.itemSystemCode', 'erp_itemledger.companySystemID')
                                         ->first();
 
