@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-
 /**
  * Class SlotDetailsRepository
  * @package App\Repositories
@@ -19,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  * @method SlotDetails findWithoutFail($id, $columns = ['*'])
  * @method SlotDetails find($id, $columns = ['*'])
  * @method SlotDetails first($columns = ['*'])
-*/
+ */
 class SlotDetailsRepository extends BaseRepository
 {
     /**

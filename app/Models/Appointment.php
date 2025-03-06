@@ -191,14 +191,15 @@ class Appointment extends Model
     public function getDeliveryAppointmentDetails($appointmentId)
     {
         return AppointmentDetails::select('appointment_id','po_master_id')
-        ->where('appointment_id', $appointmentId)
-        ->with(['po_master' => function ($q) {
-        $q->select('purchaseOrderID','serviceLineSystemID');
-        }])->get();
+            ->where('appointment_id', $appointmentId)
+            ->with(['po_master' => function ($q) {
+                $q->select('purchaseOrderID','serviceLineSystemID');
+            }])->get();
     }
 
     public static function checkConfirmedAppointment($slotDetailID)
     {
         return Appointment::select('id')->where('slot_detail_id', $slotDetailID)->where('confirmed_yn', 1)->exists();
     }
+
 }

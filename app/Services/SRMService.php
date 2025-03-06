@@ -447,7 +447,7 @@ class SRMService
     public function getAppointmentSlots(Request $request)
     {
         $tenantID = $request->input('tenantId');
-        $data = $this->POService->getAppointmentSlots($tenantID);
+        $data = $this->POService->getAppointmentSlots([$tenantID]);
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $arr = [];
         $x = 0;

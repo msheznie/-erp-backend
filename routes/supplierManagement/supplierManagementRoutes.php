@@ -1,8 +1,8 @@
 <?php
 /**
  * This file contains supplier management module related routes
- * 
- * 
+ *
+ *
  * */
 
 
@@ -12,9 +12,9 @@ Route::group([], function(){
     Route::group(['prefix' => 'suppliers/registration'], function () {
         Route::post('approvals', 'SupplierRegistrationApprovalController@index')->name("Get all supplier approvals");
         Route::post('approvals/status', 'SupplierRegistrationApprovalController@update')->name("Update supplier approval status");
-        
+
     });
-    
+
 });
 
 //approval - appointments
@@ -26,7 +26,7 @@ Route::group([], function(){
     Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment')->name("Reject calendar del appointment");
     Route::post('getAppointmentAttachmentList', 'AppointmentAPIController@getAppointmentAttachmentList')->name("Get appointment attachement list");
     Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById')->name("Get appointment by id");
-    
+
 });
 
 //delivery appointment
@@ -44,6 +44,7 @@ Route::group([], function(){
     Route::post('removeCalenderSlotDetail', 'SlotDetailsAPIController@removeCalenderSlotDetail')->name("Remove calender slot detail");
     Route::post('removeDateRangeSlots', 'SlotDetailsAPIController@removeDateRangeSlots')->name("Remove date range calender slot detail");
     Route::post('getSlotDetailsFormData', 'SlotDetailsAPIController@getSlotDetailsFormData')->name("Get form data slot detail");
+
 });
 
 //supplier KYC
@@ -57,6 +58,4 @@ Route::group([], function(){
     });
 
 });
-
-
 

@@ -138,7 +138,9 @@ class SlotMaster extends Model
                     }
                 ])->select('id', 'slot_master_id', 'start_date', 'end_date', 'status', 'company_id');
             },
-            'ware_house'
+            'ware_house' => function ($q) {
+                $q->select('wareHouseSystemCode', 'wareHouseCode', 'wareHouseDescription', 'isActive');
+            }
         ])
             ->when($formSrm == 0, function ($q) use ($tenantID) {
                 $q->whereIn('company_id', $tenantID);
@@ -175,15 +177,15 @@ class SlotMaster extends Model
                 $weekDay['id'] = $weekDay['id'];
                 array_push($weekDaysActive, $weekDay);
             }
-        } 
+        }
         if ($days > 0 && isset($data['weekDays']) && $data['weekDays']!='') {
             $weekDaysActive = $data['weekDays'];
         }
-        
+
         return $weekDaysActive;
     }
     public function slot_days()
     {
         return $this->hasMany('App\Models\SlotMasterWeekDays', 'slot_master_id', 'id');
-    } 
+    }
 }
