@@ -88,7 +88,7 @@ class B2BResourceAPIController extends AppBaseController
             $detailObject->setDealRefNo("");
             $detailObject->setValueDate($rs['payment_voucher']['BPVdate']);
             $detailObject->setDebitAccountNo($bankTransferBankAccountDetails->AccountNo ?? "");
-            $detailObject->setCreditAccountNo($bankMemoDetails->where('bankMemoTypeID',4)->first()['memoDetail'] ?? $bankMemoDetails->where('bankMemoTypeID',8)->first()['memoDetail']);
+            $detailObject->setCreditAccountNo($bankMemoDetails->where('bankMemoTypeID',8)->first()['memoDetail'] ?? $bankMemoDetails->where('bankMemoTypeID',4)->first()['memoDetail']);
             $detailObject->setTransactionReference($this->bankTransferService->generateBatchNo($request->companyID,$rs['documentCode'],$rs['payment_voucher']['serialNo']));
             $detailObject->setDebitNarrative(substr( $rs['payment_voucher']['BPVNarration'], 0, 35));
             $detailObject->setDebitNarrative2("");
@@ -104,25 +104,14 @@ class B2BResourceAPIController extends AppBaseController
             $formattedAddress = str_replace(',', ' ', $address);
             $formattedAddress = preg_replace('/[^a-zA-Z0-9\s]/', '', $formattedAddress);
 
-            $beneficiaryAddressLine2 = "";
-            if (strlen($supplierName) > 35) {
-                $beneficiaryName = substr($supplierName, 0, 35);
-                $beneficiaryAddressLine1 = substr($supplierName, 35);
-            } else {
-                $beneficiaryName = $supplierName;
-                if(strlen($formattedAddress) > 35)
-                {
-                    $beneficiaryAddressLine1 = substr($formattedAddress,0,35);
-                    $beneficiaryAddressLine2 = substr($formattedAddress,35);
-                }else {
-                    $beneficiaryAddressLine1 = $formattedAddress;
-                }
-            }
+            $concatinatedValue = $supplierName.' '.$formattedAddress;
+            $beneficiaryName = substr($supplierName, 0, 35);
+            $beneficiaryAddressLine1 = (strlen($supplierName) > 35) ? str_replace($beneficiaryName,'',$concatinatedValue) : $formattedAddress;
 
 
             $detailObject->setBeneficiaryName($beneficiaryName);
             $detailObject->setBeneficiaryAddress1($beneficiaryAddressLine1);  // Beneficiary Address 1
-            $detailObject->setBeneficiaryAddress2($beneficiaryAddressLine2);
+            $detailObject->setBeneficiaryAddress2("");
 
             $detailObject->setInstitutionNameAddress1($bankMemoDetails->where('bankMemoTypeID',2)->first()['memoDetail'] ?? "");
             $detailObject->setInstitutionNameAddress2("");
@@ -138,7 +127,7 @@ class B2BResourceAPIController extends AppBaseController
             $detailObject->setChargesType("BEN");
             $detailObject->setSortCodeBeneficiaryBank($bankMemoDetails->where('bankMemoTypeID',14)->first()['memoDetail'] ?? null);
             $detailObject->setIFSC($bankMemoDetails->where('bankMemoTypeID',16)->first()['memoDetail'] ?? null);
-            $detailObject->setFedwire($bankMemoDetails->where('bankMemoTypeID',18)->first()['memoDetail'] ?? null);
+            $detailObject->setFedwire($bankMemoDetails->where('bankMemoTypeID',5)->first()['memoDetail'] ?? null);
             $detailObject->setEmail($rs['payment_voucher']['supplier']['supEmail'] ?? null);
             $detailObject->setDispatchMode("E");
             $detailObject->setTransactorCode("B");
@@ -231,7 +220,7 @@ class B2BResourceAPIController extends AppBaseController
             'A' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
             'B' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
             'C' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
-            'G' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
+            'H' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
         ];
 
 
@@ -240,8 +229,8 @@ class B2BResourceAPIController extends AppBaseController
             return \Excel::create('vendorFile', function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
                 $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
                     $sheet->setColumnFormat($excelColumnFormat);
-                    $sheet->loadView($templateName, $reportData);
                     $sheet->setAutoSize(true);
+                    $sheet->loadView($templateName, $reportData);
                 });
             })->download('xlsx');
         }else {
@@ -288,7 +277,6 @@ class B2BResourceAPIController extends AppBaseController
             ];
             config(['filesystems.disks.sftp' => $configDetails]);
             $storage = \Storage::disk('sftp');
-
             $disk = $storage;
             try {
 

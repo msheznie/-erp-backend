@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\helper\CommonJobService;
 use App\Jobs\B2B\BankStatus;
+use App\Models\BankConfig;
 use Illuminate\Console\Command;
 
 class CheckB2BStatusWithBank extends Command
@@ -47,7 +48,10 @@ class CheckB2BStatusWithBank extends Command
 
         foreach ($tenants as $tenant){
             $tenantDb = $tenant->database;
-            BankStatus::dispatch($tenantDb)->onQueue("bankStatus");
+            CommonJobService::db_switch($tenantDb);
+            $getConfigDetails = BankConfig::where('slug', 'ahlibank')->exists();
+            if($getConfigDetails)
+                 BankStatus::dispatch($tenantDb)->onQueue("bankStatus");
         }
     }
 
