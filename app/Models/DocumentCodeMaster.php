@@ -116,7 +116,8 @@ class DocumentCodeMaster extends Model
         'last_serial',
         'serialization',
         'formatCount',
-        'serial_length'
+        'serial_length',
+        'company_id'
     ];
 
     /**
@@ -132,7 +133,8 @@ class DocumentCodeMaster extends Model
         'last_serial' => 'integer',
         'serialization' => 'integer',
         'formatCount' => 'integer',
-        'serial_length' => 'integer'
+        'serial_length' => 'integer',
+        'company_id' => 'integer'
     ];
 
     /**
@@ -152,8 +154,8 @@ class DocumentCodeMaster extends Model
 
     public function document_code_transactions()
     {
-        return $this->belongsTo('App\Models\DocumentCodeTransaction','document_transaction_id','id');
-    }
+        return $this->hasOne('App\Models\DocumentCodeTransaction', 'id', 'document_transaction_id');
+    }    
 
     public function doc_code_numbering_sequences()
     {

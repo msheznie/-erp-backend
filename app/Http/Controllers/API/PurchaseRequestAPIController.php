@@ -90,6 +90,8 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\GenerateMaterialRequestItem;
 use App\Models\MaterielRequestDetails;
 use App\helper\CreateExcel;
+use App\Models\DocumentCodeMaster;
+use App\Models\DocumentCodeTransaction;
 use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Models\DocumentModifyRequest;
 use App\Repositories\DocumentApprovedRepository;
@@ -1504,10 +1506,30 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        $documentCodeMasterID = 1;
-        $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
-        $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
-    
+        $documentCodeTransaction = DocumentCodeTransaction::where('document_system_id', $input['documentSystemID'])
+            ->where('company_id', $input['companySystemID'])
+            ->first();
+
+        if ($documentCodeTransaction) {
+            $transactionID = $documentCodeTransaction->id;
+            $documentCodeMaster = DocumentCodeMaster::where('document_transaction_id', $transactionID)
+                ->where('company_id', $input['companySystemID'])
+                ->first();
+
+            if ($documentCodeMaster) {
+                $documentCodeMasterID = $documentCodeMaster->id;
+                $purchaseRequestCode = $this->documentCodeConfigurationService->getDocumentCodeConfiguration($input['documentSystemID'], $input['companySystemID'],$input,$lastSerialNumber,$documentCodeMasterID,$input['serviceLineCode']);
+            }
+        }
+        
+        if($purchaseRequestCode && $purchaseRequestCode['status'] == true){
+            $input['purchaseRequestCode'] = $purchaseRequestCode['documentCode'];
+            $input['serialNumber'] = $purchaseRequestCode['docLastSerialNumber'];
+        } else {
+            $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
+            $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
+        }
+        
 
         $purchaseRequests = $this->purchaseRequestRepository->create($input);
 

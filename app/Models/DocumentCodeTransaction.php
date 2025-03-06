@@ -99,7 +99,8 @@ class DocumentCodeTransaction extends Model
         'is_active',
         'isGettingEdited',
         'isGettingEditedTime',
-        'isTypeEnable'
+        'isTypeEnable',
+        'company_id'
     ];
 
     /**
@@ -116,7 +117,8 @@ class DocumentCodeTransaction extends Model
         'is_active' => 'integer',
         'isGettingEdited' => 'integer',
         'isGettingEditedTime' => 'string',
-        'isTypeEnable' => 'integer'
+        'isTypeEnable' => 'integer',
+        'company_id' => 'integer'
     ];
 
     /**

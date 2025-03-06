@@ -312,12 +312,22 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
         
         $company_id = $input['company_id'];
 
-        $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')->where('master_id', $master_id)->get();
+        $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')
+                                ->where('master_id', $master_id)
+                                ->where('company_id', $company_id)
+                                ->get();
 
         
-        $documentCodeMaster = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
+        $documentCodeMaster = DocumentCodeMaster::with([
+                                                        'document_code_transactions' => function ($query) use ($company_id) {
+                                                            $query->where('company_id', $company_id);
+                                                        },
+                                                        'doc_code_numbering_sequences'
+                                                    ])
                                                     ->where('id', $master_id)
+                                                    ->where('company_id', $company_id)
                                                     ->first();
+                                                    
         $lastSerial = $documentCodeMaster->last_serial;
         $serialLength = $documentCodeMaster->serial_length;
         $documentSerial = str_pad($lastSerial, $serialLength, '0', STR_PAD_LEFT);

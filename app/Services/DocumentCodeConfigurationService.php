@@ -14,13 +14,20 @@ use Carbon\Carbon;
 
 class DocumentCodeConfigurationService
 {
-    public function getDocumentCodeConfiguration($companyID,$input,$lastSerialNumber,$documentCodeMasterID,$segmentCode=null)
+    public function getDocumentCodeConfiguration($documentSystemID,$companyID,$input,$lastSerialNumber,$documentCodeMasterID,$segmentCode=null)
 
     {
 
         $companyID = $companyID;
 
-        $documentCodeMaster = DocumentCodeMaster::with('document_code_transactions')->where('id', $documentCodeMasterID)->first();
+        $documentCodeMaster = DocumentCodeMaster::with([
+                            'document_code_transactions' => function ($query) use ($companyID) {
+                                $query->where('company_id', $companyID);
+                            }])
+                            ->where('company_id', $companyID)
+                            ->where('id', $documentCodeMasterID)
+                            ->first();
+
         if(!$documentCodeMaster){
             return ['status' => false,'message'=>'Document Code Master not found'];
         }
@@ -29,10 +36,16 @@ class DocumentCodeConfigurationService
         $formats = $this->getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID ,$isPreview = 0);
 
 
-        $docCodeSetupCommon = DocCodeSetupCommon::with('document_code_transactions')->where('master_id', $documentCodeMasterID)->first();
+        $docCodeSetupCommon = DocCodeSetupCommon::with([
+                            'document_code_transactions' => function ($query) use ($companyID) {
+                                $query->where('company_id', $companyID);
+                            }])
+                            ->where('company_id', $companyID)
+                            ->where('master_id', $documentCodeMasterID)
+                            ->first();
 
 
-        switch ($documentCodeMasterID)
+        switch ($documentSystemID)
         {
             case 1: //Purchase Request
                 if($docCodeSetupCommon){
@@ -130,7 +143,11 @@ class DocumentCodeConfigurationService
                         $typeID = 1;
                     }
 
-                    $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')->where('type_id', $typeID)->where('master_id', $documentCodeMasterID)->first();
+                    $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')
+                                                                    ->where('type_id', $typeID)
+                                                                    ->where('company_id', $companyID)
+                                                                    ->where('master_id', $documentCodeMasterID)
+                                                                    ->first();
                     if($docCodeSetupTypeBased){
                         $prefix = $docCodeSetupTypeBased->type->type_prefix; //format5
                         $formats[5] = $prefix;

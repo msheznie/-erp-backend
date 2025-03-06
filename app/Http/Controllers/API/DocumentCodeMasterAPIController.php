@@ -307,9 +307,13 @@ class DocumentCodeMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $module_id = $input['module_id'];
+        $company_id = $input['companyId'];
 
-        $documentCodeMasters = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
+        $documentCodeMasters = DocumentCodeMaster::with(['document_code_transactions' => function ($query) use ($company_id) {
+                                                        $query->where('company_id', $company_id);
+                                                    }, 'doc_code_numbering_sequences'])
                                                     ->where('module_id', $module_id)
+                                                    ->where('company_id', $company_id)
                                                     ->get();
 
         
@@ -318,6 +322,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
                 switch ($documentCodeMaster->document_code_transactions->document_system_id) {
                     case 1:
                             $lastSerial = PurchaseRequest::where('documentSystemID', $documentCodeMaster->document_code_transactions->document_system_id)
+                            ->where('companySystemID', $company_id)
                             ->latest('serialNumber')
                             ->first()
                             ->serialNumber;
@@ -328,6 +333,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
                         break;
                     case 2:
                         $lastSerial = ProcumentOrder::where('documentSystemID', $documentCodeMaster->document_code_transactions->document_system_id)
+                        ->where('companySystemID', $company_id)
                         ->latest('serialNumber')
                         ->first()
                         ->serialNumber;
@@ -350,9 +356,13 @@ class DocumentCodeMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
+        $company_id = $input['company_id'];
 
-        $documentCodeMasters = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
-                                                    ->where('id', $id)
+        $documentCodeMasters = DocumentCodeMaster::with([
+                                                    'document_code_transactions' => function ($query) use ($company_id) {
+                                                        $query->where('company_id', $company_id);
+                                                    }])->where('id', $id)
+                                                    ->where('company_id', $company_id)
                                                     ->first();
         $data = [
             'isGettingEdited' => 1,
@@ -371,7 +381,12 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $input = $request->all();
         $id = $input['id'];
 
-        $documentCodeMasters = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
+        $documentCodeMasters = DocumentCodeMaster::with([
+                                                        'document_code_transactions' => function ($query) use ($input) {
+                                                            $query->where('company_id', $input['company_id']);
+                                                        },
+                                                        'doc_code_numbering_sequences'
+                                                    ])
                                                     ->where('id', $id)
                                                     ->first();
         if($documentCodeMasters){
@@ -385,9 +400,11 @@ class DocumentCodeMasterAPIController extends AppBaseController
     public function isGettingCodeConfigured(Request $request)
     {
         $input = $request->all();
-        $id = $input['id'];
+        $documentSystemID = $input['documentSystemID'];
+        $company_id = $input['company_id'];
 
-        $isGettingEdited = DocumentCodeTransaction::where('id', $id)
+        $isGettingEdited = DocumentCodeTransaction::where('document_system_id', $documentSystemID)
+                                                    ->where('company_id', $company_id)
                                                     ->first();
 
         if ($isGettingEdited && $isGettingEdited->isGettingEdited == 1) {

@@ -167,6 +167,8 @@ use App\Models\GeneralLedger;
 use App\helper\CreateExcel;
 use App\helper\BudgetConsumptionService;
 use App\Jobs\DocumentAttachments\PoSentToSupplierJob;
+use App\Models\DocumentCodeMaster;
+use App\Models\DocumentCodeTransaction;
 use App\Models\SupplierBlock;
 use App\Services\DocumentCodeConfigurationService;
 
@@ -395,9 +397,30 @@ class ProcumentOrderAPIController extends AppBaseController
         }
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
-        if ($documentMaster) {
-            $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-            $input['purchaseOrderCode'] = $poCode;
+        $documentCodeTransaction = DocumentCodeTransaction::where('document_system_id', $input['documentSystemID'])
+                                ->where('company_id', $input['companySystemID'])
+                                ->first();
+
+        if ($documentCodeTransaction) {
+            $transactionID = $documentCodeTransaction->id;
+            $documentCodeMaster = DocumentCodeMaster::where('document_transaction_id', $transactionID)
+                ->where('company_id', $input['companySystemID'])
+                ->first();
+
+            if ($documentCodeMaster) {
+                $documentCodeMasterID = $documentCodeMaster->id;
+                $purchaseOrderCode = $this->documentCodeConfigurationService->getDocumentCodeConfiguration($input['documentSystemID'],$input['companySystemID'],$input,$lastSerialNumber,$documentCodeMasterID,$input['serviceLine']);
+            }
+        }
+        
+        if($purchaseOrderCode && $purchaseOrderCode['status'] == true){
+            $input['purchaseOrderCode'] = $purchaseOrderCode['documentCode'];
+            $input['serialNumber'] = $purchaseOrderCode['docLastSerialNumber'];
+        } else {
+            if ($documentMaster) {
+                $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                $input['purchaseOrderCode'] = $poCode;
+            }
         }
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
