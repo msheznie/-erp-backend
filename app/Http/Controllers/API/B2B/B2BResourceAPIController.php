@@ -190,8 +190,8 @@ class B2BResourceAPIController extends AppBaseController
                 "currency" => (int) $rs['payment_voucher']['BPVbankCurrency']
             ],
             "to" => [
-                "bankID" => (int) $bankTransfer->bankMasterID,
-                "bankAccountID" => (int) $bankTransfer->bankAccountAutoID,
+                "bankID" => (int) $rs['payment_voucher']['BPVbank'],
+                "bankAccountID" => (int) $rs['payment_voucher']['BPVAccount'],
                 "currency" => ""
             ]
         ];
