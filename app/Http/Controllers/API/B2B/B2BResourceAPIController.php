@@ -88,7 +88,14 @@ class B2BResourceAPIController extends AppBaseController
             $detailObject->setDealRefNo("");
             $detailObject->setValueDate($rs['payment_voucher']['BPVdate']);
             $detailObject->setDebitAccountNo($bankTransferBankAccountDetails->AccountNo ?? "");
-            $detailObject->setCreditAccountNo($bankMemoDetails->where('bankMemoTypeID',8)->first()['memoDetail'] ?? $bankMemoDetails->where('bankMemoTypeID',4)->first()['memoDetail']);
+
+            $creditAccountNo = optional($bankMemoDetails->where('bankMemoTypeID', 8)->first())['memoDetail'];
+
+            if (empty($creditAccountNo)) {
+                $creditAccountNo = optional($bankMemoDetails->where('bankMemoTypeID', 4)->first())['memoDetail'];
+            }
+            
+            $detailObject->setCreditAccountNo($creditAccountNo);
             $detailObject->setTransactionReference($this->bankTransferService->generateBatchNo($request->companyID,$rs['documentCode'],$rs['payment_voucher']['serialNo']));
             $detailObject->setDebitNarrative(substr( $rs['payment_voucher']['BPVNarration'], 0, 35));
             $detailObject->setDebitNarrative2("");
@@ -194,7 +201,6 @@ class B2BResourceAPIController extends AppBaseController
         $footerDetails = [
             ['S3',count($this->details),collect($this->details)->sum('credit_amount')]
         ];
-
 
         $this->vendorFile->setHeaderData($this->headerDetails);
         $this->vendorFile->setDetailsData($this->details);
