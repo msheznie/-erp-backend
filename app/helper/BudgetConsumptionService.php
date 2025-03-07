@@ -6687,11 +6687,14 @@ class BudgetConsumptionService
 				erp_budgetconsumeddata.chartOfAccountID,
 				SUM(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount
 			FROM erp_budgetconsumeddata 
+			JOIN erp_budjetdetails ON erp_budjetdetails.chartofaccountID = erp_budgetconsumeddata.chartOfAccountID 
+			AND erp_budjetdetails.companySystemID = $companyId
+			AND erp_budjetdetails.companyFinanceYearID = $financialYear
 			WHERE erp_budgetconsumeddata.consumeYN = -1 
 			AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
-			AND companySystemID = $companyId 
-			AND companyFinanceYearID = $financialYear
-			AND chartOfAccountID IN ($chartOfAccountIDs)";
+			AND erp_budgetconsumeddata.companySystemID = $companyId 
+			AND erp_budgetconsumeddata.companyFinanceYearID = $financialYear
+			AND erp_budgetconsumeddata.chartOfAccountID IN ($chartOfAccountIDs)";
 
 		if (!empty($glAccount)) {
 			if (is_array($glAccount)) {
