@@ -8,6 +8,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\DocCodeSetupCommon;
 use App\Models\DocCodeSetupTypeBased;
 use App\Models\DocumentCodeMaster;
+use App\Models\DocumentCodePrefix;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use Carbon\Carbon;
@@ -76,7 +77,7 @@ class DocumentCodeConfigurationService
                     }
         
                     $serialCode = str_pad($docLastSerialNumber, $documentCodeMaster->serial_length, '0', STR_PAD_LEFT);
-                    $finalCode = $this->generateFinalCode($docCodeSetupCommon,$formats,$serialCode);
+                    $finalCode = $this->generateFinalCode($docCodeSetupCommon,$formats,$serialCode,'common');
 
                     return ['status' => true,'message'=>'Document Code generated','documentCode'=>$finalCode,'docLastSerialNumber'=>$docLastSerialNumber];
 
@@ -128,7 +129,7 @@ class DocumentCodeConfigurationService
                         $prefix = $docCodeSetupCommon->document_code_transactions->master_prefix; //format5
                         $formats[5] = $prefix;
     
-                        $finalCode = $this->generateFinalCode($docCodeSetupCommon,$formats,$serialCode);
+                        $finalCode = $this->generateFinalCode($docCodeSetupCommon,$formats,$serialCode,'common');
     
                         return ['status' => true,'message'=>'Document Code generated','documentCode'=>$finalCode,'docLastSerialNumber'=>$docLastSerialNumber];
     
@@ -152,7 +153,7 @@ class DocumentCodeConfigurationService
                         $prefix = $docCodeSetupTypeBased->type->type_prefix; //format5
                         $formats[5] = $prefix;
     
-                       $finalCode = $this->generateFinalCode($docCodeSetupTypeBased,$formats,$serialCode);
+                       $finalCode = $this->generateFinalCode($docCodeSetupTypeBased,$formats,$serialCode,'type_based');
     
                         return ['status' => true,'message'=>'Document Code generated','documentCode'=>$finalCode,'docLastSerialNumber'=>$docLastSerialNumber];
                     } else {
@@ -233,15 +234,31 @@ class DocumentCodeConfigurationService
         return $formats;
     }
 
-    function generateFinalCode($docCodeSetup,$formats,$serialCode)
+    function generateFinalCode($docCodeSetup, $formats, $serialCode, $setupBased)
     {
-
         $formatsArray = [];
+    
         for ($i = 1; $i <= 12; $i++) {
             $format = 'format' . $i;
+    
+            if ($docCodeSetup->$format == 5) {
+                $documentCodePrefix = DocumentCodePrefix::where($setupBased . '_id', $docCodeSetup->id)
+                    ->where('format', $format)
+                    ->first();
+    
+                if ($documentCodePrefix) {
+                    $formats[$docCodeSetup->$format] = $documentCodePrefix->description;
+                } else {
+                    // Use the appropriate prefix based on setup type
+                    $formats[$docCodeSetup->$format] = ($setupBased === 'common') 
+                        ? $docCodeSetup->document_code_transactions->master_prefix 
+                        : $docCodeSetup->type->type_prefix;
+                }
+            }
+    
             $formatsArray[] = $formats[$docCodeSetup->$format] ?? '';
         }
-
+    
         return implode('', $formatsArray) . $serialCode;
     }
 }
