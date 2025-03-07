@@ -348,6 +348,11 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
+        if(isset($input['type']) &&  $input['type'] != $bookInvSuppMaster->documentType)
+        {
+            return $this->sendError('The Supplier Invoice type has changed, unable to proceed');
+
+        }
         $unbilledFilter = "";
         if ($purchaseOrderID > 0) {
             $unbilledFilter = 'AND unbilledMaster.purchaseOrderID = ' . $purchaseOrderID ;
