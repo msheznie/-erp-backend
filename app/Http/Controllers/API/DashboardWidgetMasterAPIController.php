@@ -471,7 +471,7 @@ END AS sortDashboard')
                     $query->where('approvedYN', -1);
                 })
                 ->whereIn('glCodeType', $chartofAccountType)
-                ->selectRaw('SUM(budjetAmtRpt) as amount, month')
+                ->selectRaw('SUM(budjetAmtRpt) * -1 as amount, month')
                 ->when(!empty($glAccount), function ($query) use ($glAccount) {
                     $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
                 })
