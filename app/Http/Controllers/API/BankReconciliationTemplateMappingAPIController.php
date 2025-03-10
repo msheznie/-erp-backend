@@ -120,7 +120,23 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'companySystemID' => 'required',
             'bankAccountAutoID' => 'required',
-            'assignToAccounts' => 'required'
+            'assignToAccounts' => 'required',
+            'bankName' => 'required',
+            'bankReconciliationMonth' => 'required',
+            'openingBalance' => 'required',
+            'bankAccount' => 'required',
+            'bankStatementDate' => 'required',
+            'endingBalance' => 'required',
+            'statementStartDate' => 'required',
+            'statementEndDate' => 'required',
+            'headerLine' => 'required',
+            'firstLine' => 'required',
+            'transactionNumber' => 'required',
+            'transactionDate' => 'required',
+            'debit' => 'required',
+            'credit' => 'required',
+            'description' => 'required',
+            'category' => 'required'
         ]);
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
