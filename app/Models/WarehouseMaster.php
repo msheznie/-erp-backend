@@ -159,4 +159,11 @@ class WarehouseMaster extends Model
         }
     }
 
+    public static function getAllCompanyWarehouseList($companyIDs){
+        return WarehouseMaster::select('wareHouseSystemCode', 'wareHouseDescription')
+            ->whereIn("companySystemID", $companyIDs)
+            ->where('isActive', 1)
+            ->get();
+    }
+
 }

@@ -121,4 +121,31 @@ class SlotDetails extends Model
     {
         return $this->hasmany('App\Models\Appointment', 'slot_detail_id', 'id');
     }
+
+    public static function getSlotDetails($dateFrom, $dateTo, $companyID, $warehouseID, $id = 0){
+        return SlotDetails::select('id', 'start_date', 'end_date')
+            ->with([
+                'appointment' => function ($q) {
+                    $q->select('id', 'slot_detail_id', 'confirmed_yn');
+                }
+            ])
+            ->where('company_id', $companyID)
+            ->where(function ($q) use ($dateFrom, $dateTo) {
+                $q->whereDate('start_date', '>=', $dateFrom)
+                    ->whereDate('start_date', '<=', $dateTo);
+            })
+            ->where(function ($q) use ($dateFrom, $dateTo) {
+                $q->whereDate('end_date', '>=', $dateFrom)
+                    ->whereDate('end_date', '<=', $dateTo);
+            })
+            ->when($warehouseID > 0, function ($q) use ($warehouseID, $id) {
+                $q->whereHas('slot_master', function ($q) use($warehouseID, $id) {
+                    $q->where('warehouse_id', $warehouseID)
+                        ->when($id > 0, function ($q) use ($id) {
+                            $q->where('id', '!=', $id);
+                        });
+                });
+            })->get();
+
+    }
 }

@@ -95,7 +95,7 @@ class SlotMasterRepository extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $fromDate = $fromDate->format('Y-m-d') . ' ' . $fromTime;
         $toDate = $toDate->format('Y-m-d') . ' ' . $toTime;
-        $dateRangeExist = '';
+        $dateRangeExist = [];
         $limitYN = (isset($input['limit_deliveries'])&&$input['limit_deliveries']==true)?1:0;
         if($limitYN == 1){
             if(!isset($input['noofdeliveries'])){
@@ -148,24 +148,15 @@ class SlotMasterRepository extends AppBaseController
 
 
                 if ($slotMasterID > 0) {
-                    $dateRangeExist = DB::table('slot_master')
-                        ->selectRaw('id')
-                        ->whereRaw("((( '$dateFrmTime' BETWEEN from_date AND to_date ) OR ( '$dateFrmToTime' BETWEEN from_date AND to_date))OR
-		                                ((from_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' ) OR ( to_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' )))")
-                        ->where('warehouse_id', '=', $input['wareHouse'])
-                        ->where('id', '!=', $input['slotMasterID'])
-                        ->first();
+                    $dateRangeExist = SlotDetails::getSlotDetails($frmDateOnly, $toDateOnly, $input['companyId'],
+                        $input['wareHouse'], $input['slotMasterID']);
                 }
 
                 if($slotMasterID == 0){
-                    $dateRangeExist = DB::table('slot_master')
-                        ->selectRaw('id')
-                        ->whereRaw("((( '$dateFrmTime' BETWEEN from_date AND to_date) OR ( '$dateFrmToTime' BETWEEN from_date AND to_date)) OR
-		                                ((from_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' ) OR ( to_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' )))")
-                        ->where('warehouse_id', '=', $input['wareHouse'])
-                        ->first();
+                    $dateRangeExist = SlotDetails::getSlotDetails($frmDateOnly, $toDateOnly, $input['companyId'],
+                        $input['wareHouse'], 0);
                 }
-                if (!empty($dateRangeExist)) {
+                if (count($dateRangeExist) > 0) {
                     return ['status' => false, 'message' => 'The slot is available for selected date range'];
                 }
             }

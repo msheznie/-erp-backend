@@ -41,7 +41,9 @@ Route::group([], function(){
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot')->name("Remove calendar slot");
     Route::post('getSegmentOfAppointment', 'AppointmentAPIController@getSegmentOfAppointment')->name("Get Segment Of Appointment");
     Route::post('createAppointmentGrv', 'AppointmentAPIController@createAppointmentGrv')->name("Create appointment GRV");
-
+    Route::post('removeCalenderSlotDetail', 'SlotDetailsAPIController@removeCalenderSlotDetail')->name("Remove calender slot detail");
+    Route::post('removeDateRangeSlots', 'SlotDetailsAPIController@removeDateRangeSlots')->name("Remove date range calender slot detail");
+    Route::post('getSlotDetailsFormData', 'SlotDetailsAPIController@getSlotDetailsFormData')->name("Get form data slot detail");
 });
 
 //supplier KYC

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSlotDetailsAPIRequest;
 use App\Http\Requests\API\UpdateSlotDetailsAPIRequest;
+use App\Http\Requests\API\CalendarSlotDeleteRequest;
 use App\Models\SlotDetails;
 use App\Repositories\SlotDetailsRepository;
 use Illuminate\Http\Request;
@@ -277,5 +278,35 @@ class SlotDetailsAPIController extends AppBaseController
         $slotDetails->delete();
 
         return $this->sendSuccess('Slot Details deleted successfully');
+    }
+
+    public function removeCalenderSlotDetail(Request $request)
+    {
+        $slotDetailID = $request->input('slotDetailID');
+        $deleteSlotDetail = $this->slotDetailsRepository->deleteSlotDetail($slotDetailID);
+        if($deleteSlotDetail['success'])
+        {
+            return $this->sendResponse([], 'Slot detail successfully deleted');
+        } else{
+            $statusCode = $deleteSlotDetail['code'] ?? 404;
+            return $this->sendError($deleteSlotDetail['message'], $statusCode);
+        }
+    }
+
+    public function removeDateRangeSlots(CalendarSlotDeleteRequest $request)
+    {
+        $removeMultipleSlots = $this->slotDetailsRepository->removeMultipleSlots($request);
+        if($removeMultipleSlots['status']){
+            return $this->sendResponse([], $removeMultipleSlots['message'] ?? 'Slots deleted successfully');
+        } else {
+            $statusCode = $removeMultipleSlots['code'] ?? 404;
+            return $this->sendError($removeMultipleSlots['message'], $statusCode);
+        }
+    }
+
+    public function getSlotDetailsFormData(Request $request){
+        $companyID = $request->input('companyID');
+        $filterData = $this->slotDetailsRepository->getSlotDetailsFormData($companyID);
+        return $this->sendResponse($filterData, 'Slot details from data retrieved successfully');
     }
 }

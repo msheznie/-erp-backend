@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSlotMasterAPIRequest;
 use App\Http\Requests\API\UpdateSlotMasterAPIRequest;
+use App\Models\Company;
 use App\Models\SlotMaster;
 use App\Repositories\SlotMasterRepository;
 use Illuminate\Http\Request;
@@ -316,22 +317,30 @@ class SlotMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $slot = new SlotMaster();
-        $companyID  = $input['companyID'];
+        $companyID  = $input['companyID'];$isGroup = \Helper::checkIsCompanyGroup($companyID);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($companyID);
+        }else{
+            $subCompanies = [$companyID];
+        }
         $wareHouseID = $input['warhouse'];
-        $data = $slot->getSlotData($companyID, $wareHouseID);
+        $data = $slot->getSlotData($subCompanies, 0);
         $arr = [];
         $x = 0;
         if (!empty($data)) {
             foreach ($data as $row) {
                 foreach ($row['slot_details'] as $slotDetail) {
+                    $status = collect($slotDetail->appointment)->contains('confirmed_yn', true) ? 1 : 0;
+
                     $arr[$x]['id'] = $slotDetail->id;
                     $arr[$x]['slot_master_id'] = $row->id;
                     $arr[$x]['title'] =  date("h:i A",strtotime($slotDetail->start_date)). '-'. date("h:i A",strtotime($slotDetail->end_date)). ' '.$row->ware_house->wareHouseDescription;
                     $arr[$x]['start'] = $slotDetail->start_date;
                     $arr[$x]['end'] = $slotDetail->end_date;
                     $arr[$x]['fullDay'] = 0;
-                    $arr[$x]['color'] =($slotDetail->status == 1?'#cf3000ba':'#ffc107');
-                    $arr[$x]['status'] = isset($slotDetail->status)?$slotDetail->status:0;
+                    $arr[$x]['color'] =($status == 1?'#cf3000ba':'#ffc107');
+                    $arr[$x]['status'] = $status;
                     $x++;
                 }
             }
@@ -396,6 +405,15 @@ class SlotMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $slotMasterID = $input['slotMasterID'];
+        $companyID = $input['companyID'];
+        $isGroupCompany = \Helper::checkIsCompanyGroup($companyID);
+        $companyData = [];
+        if($isGroupCompany)
+        {
+            $companiesByGroup = \Helper::getGroupCompany($companyID);
+            $companyData = Company::getCompanyList($companiesByGroup);
+        }
+
         $slotMaster = SlotMaster::with(['slot_days' => function ($query) {
             $query->with(['week_days']);
         }])
@@ -424,7 +442,9 @@ class SlotMasterAPIController extends AppBaseController
 
         return [
             'masterData' => $slotMaster,
-            'weekDayArr' =>  $weekDayArr
+            'weekDayArr' =>  $weekDayArr,
+            'company' => $companyData,
+            'is_group_company' => $isGroupCompany
         ];
     }
 

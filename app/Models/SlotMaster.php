@@ -128,10 +128,21 @@ class SlotMaster extends Model
         return $this->hasMany('App\Models\SlotDetails', 'slot_master_id', 'id');
     }
 
-    public function getSlotData($tenantID)
+    public function getSlotData($tenantID, $formSrm = 0)
     {
-        return SlotMaster::with(['slot_details', 'ware_house'])
-            /* ->where('company_id', $companyID) */
+        return SlotMaster::with([
+            'slot_details' => function ($q) {
+                $q->with([
+                    'appointment' => function ($q) {
+                        $q->select('id', 'supplier_id', 'slot_detail_id', 'confirmed_yn');
+                    }
+                ])->select('id', 'slot_master_id', 'start_date', 'end_date', 'status', 'company_id');
+            },
+            'ware_house'
+        ])
+            ->when($formSrm == 0, function ($q) use ($tenantID) {
+                $q->whereIn('company_id', $tenantID);
+            })
             /*  ->where('warehouse_id', $wareHouseID) */
             ->get();
     }
