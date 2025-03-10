@@ -34,16 +34,15 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr>
                     @foreach($detail['data'] as $detail)
+                        <tr>
                         @foreach($detail as $key => $dt)
                             @if($key != "payment_voucher_code")
                                 <th>{{$dt}}</th>
                             @endif
                         @endforeach
+                        </tr>
                     @endforeach
-                </tr>
-
                 </tbody>
 
             </table>

@@ -190,7 +190,8 @@ class PaymentBankTransfer extends Model
         'submittedDate',
         'submittedStatus',
         'portalStatus',
-        'batchReference'
+        'batchReference',
+        'batchReferencePV'
     ];
 
     /**
@@ -231,7 +232,8 @@ class PaymentBankTransfer extends Model
         'submittedDate' => 'date',
         'submittedStatus' => 'integer',
         'portalStatus' => 'integer',
-        'batchReference' => 'string'
+        'batchReference' => 'string',
+        'batchReferencePV' => 'string'
     ];
 
     /**

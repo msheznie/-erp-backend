@@ -67,6 +67,7 @@ class B2BResourceAPIController extends AppBaseController
 
         $bankMaster = BankAccount::find( PaymentBankTransfer::find($request->bankTransferID)->bankAccountAutoID,['accountCurrencyID']);
 
+        $bankTransfer = PaymentBankTransfer::find($request->bankTransferID);
 
         foreach ($result as $rs)
         {
@@ -94,9 +95,10 @@ class B2BResourceAPIController extends AppBaseController
             if (empty($creditAccountNo)) {
                 $creditAccountNo = optional($bankMemoDetails->where('bankMemoTypeID', 4)->first())['memoDetail'];
             }
-            
+
+            $batchNo = $this->bankTransferService->generateBatchNo($request->companyID,$rs['documentCode'],$rs['payment_voucher']['BPVdate'],'detail',$request->bankTransferID);
             $detailObject->setCreditAccountNo($creditAccountNo);
-            $detailObject->setTransactionReference($this->bankTransferService->generateBatchNo($request->companyID,$rs['documentCode'],$rs['payment_voucher']['serialNo']));
+            $detailObject->setTransactionReference($batchNo);
             $detailObject->setDebitNarrative(substr( $rs['payment_voucher']['BPVNarration'], 0, 35));
             $detailObject->setDebitNarrative2("");
             $detailObject->setCreditNarrative("");
@@ -143,6 +145,9 @@ class B2BResourceAPIController extends AppBaseController
 
             array_push($detailsArray, (array) $detailObject);
 
+            $bankTransfer->batchReferencePV = $batchNo;
+            $bankTransfer->save();
+
         }
 
         $this->details = $detailsArray;
@@ -157,7 +162,7 @@ class B2BResourceAPIController extends AppBaseController
         $bankTransfer = PaymentBankTransfer::find($request->bankTransferID,['bankAccountAutoID','documentDate','paymentBankTransferID','bankMasterID','narration','bankTransferDocumentCode','serialNumber']);
         $bankAccount = BankAccount::find($bankTransfer->bankAccountAutoID,['AccountNo']);
 
-        $batchNo = $this->bankTransferService->generateBatchNo($request->companyID, $bankTransfer->bankTransferDocumentCode,$bankTransfer->serialNumber);
+        $batchNo = $this->bankTransferService->generateBatchNo($request->companyID, $bankTransfer->bankTransferDocumentCode,$bankTransfer->documentDate,'header',$request->bankTransferID);
         $headerDetails = [
             [
                 "S1",
@@ -223,10 +228,9 @@ class B2BResourceAPIController extends AppBaseController
         ];
 
         $excelColumnFormat = [
-            'A' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
-            'B' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
-            'H' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
+            'B' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
+            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
+            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
         ];
 
 
@@ -237,6 +241,7 @@ class B2BResourceAPIController extends AppBaseController
                     $sheet->setColumnFormat($excelColumnFormat);
                     $sheet->setAutoSize(true);
                     $sheet->loadView($templateName, $reportData);
+                    $sheet->getStyle('C2')->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_NUMBER);
                 });
             })->download('xlsx');
         }else {
