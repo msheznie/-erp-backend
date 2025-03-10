@@ -69,6 +69,16 @@ class B2BResourceAPIController extends AppBaseController
 
         $bankTransfer = PaymentBankTransfer::find($request->bankTransferID);
 
+        if (!is_null($bankTransfer->batchReferencePV)) {
+            $array = explode('\\', $bankTransfer->batchReferencePV);
+            $nextNumber = !is_null($bankTransfer->batchReferencePV) ? end($array) + 1 : 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        $lastPart = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        $result = collect($result)->where('pulledToBankTransferYN',-1)->toArray();
         foreach ($result as $rs)
         {
 
@@ -96,7 +106,8 @@ class B2BResourceAPIController extends AppBaseController
                 $creditAccountNo = optional($bankMemoDetails->where('bankMemoTypeID', 4)->first())['memoDetail'];
             }
 
-            $batchNo = $this->bankTransferService->generateBatchNo($request->companyID,$rs['documentCode'],$rs['payment_voucher']['BPVdate'],'detail',$request->bankTransferID);
+            $documentCode = explode('\\',$rs['documentCode']);
+            $batchNo =Carbon::make($rs['payment_voucher']['BPVdate'])->year.'\\'.end($documentCode).'\\'.$lastPart;
             $detailObject->setCreditAccountNo($creditAccountNo);
             $detailObject->setTransactionReference($batchNo);
             $detailObject->setDebitNarrative(substr( $rs['payment_voucher']['BPVNarration'], 0, 35));
@@ -214,8 +225,8 @@ class B2BResourceAPIController extends AppBaseController
         if(!empty(array_flatten($this->vendorFile->detailsDataErros)) || !empty(array_flatten($this->vendorFile->headerErrors)))
         {
             return $this->sendError("Validaiton failed on some documents", 500, [
-                'detailsErrors' => (!empty(array_flatten($this->vendorFile->detailsDataErros))) ? $this->vendorFile->detailsDataErros : null,
-                'headerErrors' => (!empty(array_flatten($this->vendorFile->headerErrors))) ? $this->vendorFile->headerErrors : null
+                'detailsErrors' => (!empty(array_flatten($this->vendorFile->detailsDataErros))) ? $this->vendorFile->detailsDataErros : [],
+                'headerErrors' => (!empty(array_flatten($this->vendorFile->headerErrors))) ? $this->vendorFile->headerErrors : []
             ]);
         }
 
