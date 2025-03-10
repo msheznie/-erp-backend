@@ -58,6 +58,16 @@ class Detail
             'IFSC' => 'nullable|max:15|regex:/^[a-zA-Z0-9 ]+$/',
             'fedwire' => 'nullable|max:15|regex:/^[a-zA-Z0-9 ]+$/',
             'dispatch_mode' => 'nullable|in:E',
+            'exchange_rate' => [
+                'nullable',
+                'numeric',
+                'max:99999999',
+                function ($attribute, $value, $fail) {
+                    if ($value !== null && strlen((string) $value) > 8) {
+                        $fail("Exchange rate should have at most 8 characters in total, including the decimal point.");
+                    }
+                },
+            ],
         ];
 
         $messages = [
@@ -118,18 +128,6 @@ class Detail
             'fedwire.regex' => 'The Fedwire code cannot contain special characters,letters or spaces.'
         ];
 
-        $rules = [
-            'exchange_rate' => [
-                'nullable',
-                'numeric',
-                'max:99999999',
-                function ($attribute, $value, $fail) {
-                    if ($value !== null && strlen((string) $value) > 8) {
-                        $fail("Exchange rate should have at most 8 characters in total, including the decimal point.");
-                    }
-                },
-            ],
-        ];
 
         $validatorDetails = Validator::make($data, $rules, $messages);
 
