@@ -10084,10 +10084,15 @@ class Helper
         return bin2hex(random_bytes($length));
     }
 
+
     public static function getDefaultBirthdayTemplate()
     {
         return BirthdayTemplate::select('template', 'client_code', 'image_path')
             ->where('is_default', 1)
             ->first();
+    }
+    public static function getArrayIds($data_array)
+    {
+        return collect($data_array)->pluck('id')->filter()->values()->all();
     }
 }

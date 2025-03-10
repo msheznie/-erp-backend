@@ -29,4 +29,15 @@ class CreateTenderBidEmployeeDetailsAPIRequest extends FormRequest
             'tender_id' => 'required'
         ]; 
     }
+
+    /**
+     * Customize validation messages.
+     */
+    public function messages(): array
+    {
+        return [
+            'emp_id.required' => 'Employee ID/s are required.',
+            'tender_id.required' => 'Tender ID is required.',
+        ];
+    }
 }

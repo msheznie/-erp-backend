@@ -55,4 +55,10 @@ class SrmTenderBidEmployeeDetails extends Model
             ->where('status', true)
             ->get();
     }
+
+    public static function getTenderBidEmployees($tenderID){
+        return SrmTenderBidEmployeeDetails::select('id')
+            ->where('tender_id', $tenderID)
+            ->get();
+    }
 }

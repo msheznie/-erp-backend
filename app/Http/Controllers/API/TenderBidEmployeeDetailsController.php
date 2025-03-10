@@ -9,24 +9,27 @@ use App\Models\SrmTenderBidEmployeeDetails;
 use App\Http\Controllers\AppBaseController;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Helper\Helper;
+use App\Http\Requests\API\CreateTenderBidEmployeeDetailsAPIRequest;
+use App\Http\Requests\API\UserAccessEmployeeRequest;
+use App\Services\TenderBidEmployeeService;
 
 class TenderBidEmployeeDetailsController extends AppBaseController
 {
-    public function store(Request $request) {
+    protected $tenderBidEmployeeService;
+
+    public function __construct(TenderBidEmployeeService $tenderBidEmployeeService)
+    {
+        $this->tenderBidEmployeeService = $tenderBidEmployeeService;
+    }
+    public function store(CreateTenderBidEmployeeDetailsAPIRequest $request) {
         $input = $request->all();
-
- 
-        $validator = \Validator::make($input['data'],[
-            'emp_id' => 'required',
-            'tender_id' => 'required',
-        ]);
-        if ($validator->fails()) {           
-            return $this->sendError($validator->errors()->first());
+        $tenderBidEmpCreate = $this->tenderBidEmployeeService->storeTenderBidEmployees($input);
+        if($tenderBidEmpCreate['status']){
+            return $this->sendResponse([], $tenderBidEmpCreate['message']);
+        } else {
+            return $this->sendError($tenderBidEmpCreate['message'], $tenderBidEmpCreate['code']);
         }
-
-        $result = SrmTenderBidEmployeeDetails::create($request['data']);
-        return $this->sendResponse($result, 'Employee saved successfully');
-
     }
 
     public function getEmployees(Request $request) {
@@ -85,57 +88,32 @@ class TenderBidEmployeeDetailsController extends AppBaseController
         }
     }
 
-    public function addUserAccessEmployee(Request $request){
+    public function addUserAccessEmployee(UserAccessEmployeeRequest $request){
         $input = $request->all();
 
-        $validateInput = $this->validateUserAccessInputs($input);
-        if(!$validateInput['status']) {
-            return $this->sendError($validateInput['message'],$validateInput['code']);
-        }
-
-        DB::beginTransaction();
-        try{
-            $userId = $input['userId'];
-            $moduleId = $input['moduleId'];
-            $tenderId = $input['tenderId'];
-            $companyId = $input['companyId'];
-
-            $data = [
-                'tender_id'=> $tenderId,
-                'user_id'=> $userId,
-                'module_id'=> $moduleId,
-                'company_id'=>$companyId
-            ];
-            SRMTenderUserAccess::insert($data);
-            DB::commit();
-            return $this->sendResponse([], 'Employee added successfully');
-        }catch (\Exception $e) {
-            DB::rollBack();
-            return $this->sendError($e->getMessage());
+        $createUserAccess = $this->tenderBidEmployeeService->addUserAccessEmployees($input);
+        if($createUserAccess['status']){
+            return $this->sendResponse([], $createUserAccess['message']);
+        } else {
+            return $this->sendError($createUserAccess['message'], $createUserAccess['code']);
         }
     }
 
-    public function validateUserAccessInputs($input)
+    public function deleteAllBidMinimumApprovalDetails(Request $request){
+        $deleteEmployees = $this->tenderBidEmployeeService->deleteAllBidMinimumApprovalDetails($request);
+        if($deleteEmployees['status']){
+            return $this->sendResponse([], $deleteEmployees['message']);
+        } else {
+            return $this->sendError($deleteEmployees['message'], $deleteEmployees['code']);
+        }
+    }
+    public function deleteAllTenderUserAccess(Request $request)
     {
-        $messages = array(
-            'userId.required' => 'Employee field is required.',
-            'moduleId.required' => 'Module id field is required.',
-            'tenderId.required' => 'Tender id is required.',
-            'companyId.required' => 'Company id is required.'
-        );
-
-        $validator = \Validator::make($input, [
-            'userId' => 'required',
-            'moduleId' => 'required',
-            'tenderId' => 'required',
-            'companyId' => 'required'
-        ], $messages);
-
-        if ($validator->fails()) {
-            return ['status'=> false, 'message'=> $validator->messages(), 'code'=> 422];
+        $deleteAccessUsers = $this->tenderBidEmployeeService->deleteAllTenderUserAccess($request);
+        if($deleteAccessUsers['status']){
+            return $this->sendResponse([], $deleteAccessUsers['message']);
+        } else {
+            return $this->sendError($deleteAccessUsers['message'], $deleteAccessUsers['code']);
         }
-
-        return ['status'=> true, 'message'=> 'Success'];
     }
-
 }
