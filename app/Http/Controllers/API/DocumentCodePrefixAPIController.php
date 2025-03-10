@@ -346,7 +346,38 @@ class DocumentCodePrefixAPIController extends AppBaseController
         if (empty($documentCodePrefix)) {
             return $this->sendError('Document Code Prefix not found');
         }
-        unset($input['updated_at']);
+
+        // Validation for common_id
+        if ($input['common_id'] > 0) {
+            $existingDescription = $this->documentCodePrefixRepository
+                ->where('company_id', $documentCodePrefix->company_id)
+                ->where('description', $input['description'])
+                ->where(function ($query) use ($input) {
+                    $query->where('common_id', '!=', $input['common_id']) // Different common_id
+                        ->orWhereNotNull('type_based_id'); // Exists in type_based_id
+                })
+                ->exists();
+
+            if ($existingDescription) {
+                return $this->sendError('Description already exists for this company with a different transaction or type.');
+            }
+        }
+
+        // Validation for type_based_id
+        if ($input['type_based_id'] > 0) {
+            $existingDescription = $this->documentCodePrefixRepository
+                ->where('company_id', $documentCodePrefix->company_id)
+                ->where('description', $input['description'])
+                ->where(function ($query) use ($input) {
+                    $query->where('type_based_id', '!=', $input['type_based_id']) // Different type_based_id
+                        ->orWhereNotNull('common_id'); // Exists in common_id
+                })
+                ->exists();
+
+            if ($existingDescription) {
+                return $this->sendError('Description already exists for this company with a different type or transaction.');
+            }
+        }
 
         $updateDocumentCodePrefix = $this->documentCodePrefixRepository->update($input, $id);
 
