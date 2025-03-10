@@ -1645,9 +1645,9 @@ ORDER BY
                             $versionUpdate['tender_edit_confirm_id'] = $documentModifyRequest['id'];
                             TenderMaster::where('id', $input['id'])->update($versionUpdate);
 
-                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => 108, 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type);
+                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => 108, 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type, 'amount' => $tenderMaster->estimated_value, 'tenderTypeId' => $tenderMaster->tender_type_id);
                         } else {
-                            $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"], 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type);
+                            $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"], 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type, 'amount' => $tenderMaster->estimated_value , 'tenderTypeId' => $tenderMaster->tender_type_id);
                         }
 
 
@@ -5965,6 +5965,19 @@ ORDER BY
                 return $this->sendError($data['message']);
             }
             return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function getTenderTypeData(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getTenderTypeData($request);
+            return $data;
         }
         catch(\Exception $e)
         {

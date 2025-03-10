@@ -68,5 +68,13 @@ class TenderType extends Model
         
     ];
 
+    public static function getTenderTypeData($typeId = null)
+    {
+        if (is_null($typeId)) {
+            return self::select('id', 'name')->get();
+        }
+
+        return self::find($typeId, ['id', 'name']);
+    }
     
 }

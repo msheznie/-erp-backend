@@ -73,7 +73,9 @@ class ApprovalLevel extends Model
         'isActive',
         'is_deleted',
         'timeStamp',
-        'isDelegation'
+        'isDelegation',
+        'tenderTypeId',
+        'tenderTypeCode'
     ];
 
     /**
@@ -100,7 +102,9 @@ class ApprovalLevel extends Model
         'isCategoryWiseApproval' => 'integer',
         'categoryID' => 'integer',
         'isActive' => 'integer',
-        'is_deleted' => 'integer'
+        'is_deleted' => 'integer',
+        'tenderTypeId'=> 'integer',
+        'tenderTypeCode' => 'string',
     ];
 
     /**
@@ -135,5 +139,10 @@ class ApprovalLevel extends Model
     public function category(){
         return $this->belongsTo('App\Models\FinanceItemCategoryMaster','categoryID','itemCategoryID');
     }
-
+    public static function isExistsTenderType($tenderTypeId)
+    {
+        return ApprovalLevel::where('isActive', -1)
+            ->where('tenderTypeId', $tenderTypeId)
+            ->exists();
+    }
 }

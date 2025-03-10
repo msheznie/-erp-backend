@@ -3316,6 +3316,20 @@ class Helper
                                 }
                             }
 
+                            if ($params["document"] == 108) {
+                                if (!array_key_exists('tenderTypeId', $params)) {
+                                    return ['success' => false, 'message' => 'Tender Type parameter is missing'];
+                                }
+
+                                $tenderTypeId = $params["tenderTypeId"];
+                                $tenderApprovalLevel = Models\ApprovalLevel::isExistsTenderType($tenderTypeId);
+                                $approvalLevel->where(function ($query) use ($tenderTypeId, $tenderApprovalLevel) {
+                                    $tenderApprovalLevel
+                                        ? $query->where('tenderTypeId', $tenderTypeId)
+                                        : $query->where('tenderTypeId', -1)->orWhereNull('tenderTypeId');
+                                });
+                            }
+
                             if ($isValueWise) {
                                 if (array_key_exists('amount', $params)) {
                                     if ($params["amount"] >= 0) {

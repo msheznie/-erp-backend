@@ -1165,4 +1165,20 @@ class TenderMasterRepository extends BaseRepository
             }
         }
     }
+
+    public function getTenderTypeData($request)
+    {
+        $input = $request->all();
+        $tenderTypes =  TenderType::getTenderTypeData();
+
+        $additionalRecord = [
+            'id' => -1,
+            'name' => 'General'
+        ];
+
+        return collect([$additionalRecord])->merge($tenderTypes);
+
+
+    }
+
 }
