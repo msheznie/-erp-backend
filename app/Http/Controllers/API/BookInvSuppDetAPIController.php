@@ -534,6 +534,8 @@ class BookInvSuppDetAPIController extends AppBaseController
     {
         
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('type'));
+
         $prDetail_arr = array();
         $validator = array();
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
@@ -554,8 +556,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
         $type = isset($input['type']) ? (is_array($input['type']) ? $input['type'][0] : $input['type']) : null;
 
-    
-        if(isset($type) &&  $type != $bookInvSuppMaster->documentType)
+        if(isset($input['type']) &&  $input['type'] != $bookInvSuppMaster->documentType)
         {
             return $this->sendError('The Supplier Invoice type has changed, unable to proceed');
         }
