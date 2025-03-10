@@ -12,7 +12,7 @@ class TenderNegotiation extends Model
     // 0/1 - not started
     // 2 -started
     // 3 - completed
-    
+
     public $fillable = [
         'srm_tender_master_id',
         'status',
@@ -27,7 +27,7 @@ class TenderNegotiation extends Model
         'version'
     ];
 
-        /**
+    /**
      * The attributes that should be casted to native types.
      *
      * @var array
@@ -47,7 +47,7 @@ class TenderNegotiation extends Model
         'version' => 'integer'
     ];
 
-        /**
+    /**
      * Validation rules
      *
      * @var array
@@ -61,7 +61,7 @@ class TenderNegotiation extends Model
     {
         return $this->hasOne('App\Models\TenderMaster', 'id', 'srm_tender_master_id');
     }
-    
+
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmed_by', 'employeeSystemID');
@@ -69,7 +69,7 @@ class TenderNegotiation extends Model
 
     public function area() {
         return $this->hasOne('App\Models\TenderNegotiationArea', 'tender_negotiation_id', 'id');
-        
+
     }
 
     public function SupplierTenderNegotiation()
