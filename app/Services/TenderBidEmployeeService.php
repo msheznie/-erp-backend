@@ -7,20 +7,31 @@ use App\Models\SRMTenderUserAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Helper\Helper;
+use Illuminate\Support\Facades\Log;
 
 class TenderBidEmployeeService
 {
     public function storeTenderBidEmployees($input){
         try{
             return DB::transaction(function () use ($input) {
-                $empIds = Helper::getArrayIds($input['emp_id']);
                 $insertData = [];
+
+                if(isset($input['rfx'])){
+                    $insertData[0] = [
+                        'emp_id' => $input['emp_id'],
+                        'tender_id' => $input['tender_id']
+                    ];
+                }
+
+                $empIds = Helper::getArrayIds($input['emp_id']);
+
                 foreach($empIds as $key => $id){
                     $insertData[$key] = [
                         'emp_id' => $id,
                         'tender_id' => $input['tender_id']
                     ];
                 }
+
                 SrmTenderBidEmployeeDetails::insert($insertData);
                 return ['status' => true, 'message' => 'Employee created successfully', 'code' => 200];
             });

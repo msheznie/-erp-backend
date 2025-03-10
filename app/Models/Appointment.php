@@ -201,5 +201,5 @@ class Appointment extends Model
     {
         return Appointment::select('id')->where('slot_detail_id', $slotDetailID)->where('confirmed_yn', 1)->exists();
     }
-    
+
 }
