@@ -93,7 +93,7 @@ class Detail
             'charges_type.in' => 'Charges Type must be either OUR, BEN, or SHA.',
             'transactor_code.required' => 'Transactor Code is required.',
             'exchange_rate.numeric' => 'Exchange rate must be a number.',
-            'exchange_rate.max' => 'Exchange rate should be 8 characters.',
+            'exchange_rate.max' => 'Exchange rate should have at most 8 characters in total, including the decimal point.',
             'deal_ref_no.string' => 'Deal Reference must be a string.',
             'deal_ref_no.max' => 'Deal Reference cannot exceed 10 characters.',
             'transaction_reference.string' => 'Transaction Reference must be a string.',
@@ -116,6 +116,19 @@ class Detail
             'fedwire.max' => 'Fedwire code must not exceed 15 characters',
             'IFSC.regex' => 'The IFSC code cannot contain special characters,letters or spaces.',
             'fedwire.regex' => 'The Fedwire code cannot contain special characters,letters or spaces.'
+        ];
+
+        $rules = [
+            'exchange_rate' => [
+                'nullable',
+                'numeric',
+                'max:99999999',
+                function ($attribute, $value, $fail) {
+                    if ($value !== null && strlen((string) $value) > 8) {
+                        $fail("Exchange rate should have at most 8 characters in total, including the decimal point.");
+                    }
+                },
+            ],
         ];
 
         $validatorDetails = Validator::make($data, $rules, $messages);
