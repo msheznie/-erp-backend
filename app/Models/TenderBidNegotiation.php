@@ -41,4 +41,9 @@ class TenderBidNegotiation extends Model
     public function BidSubmissionMaster() {
         return $this->belongsTo('App\Models\BidSubmissionMaster', 'bid_submission_master_id_new', 'id');
     }
+
+    public static function getLatestNegotiationBidSubmissionMasterId($id)
+    {
+        return TenderBidNegotiation::select('bid_submission_master_id_new')->where('tender_negotiation_id', $id)->get()->toArray();
+    }
 }

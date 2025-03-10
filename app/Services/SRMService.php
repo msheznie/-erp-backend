@@ -1747,7 +1747,7 @@ class SRMService
                         $q->select('currencyID', 'CurrencyName');
                     },
                     'tender_negotiation' => function ($q) use ($supplierRegId) {
-                        $q->select('id', 'srm_tender_master_id', 'status')
+                        $q->select('id', 'srm_tender_master_id', 'status', 'version')
                             ->with([
                                 'SupplierTenderNegotiation' => function ($q) use ($supplierRegId)
                                 {
@@ -2802,6 +2802,7 @@ class SRMService
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $tender_id = $request->input('extra.tenderId');
         $tender_negotiation = $request->input('extra.tender_negotiation');
+        $multipleNegotiation = $request->input('extra.multipleNegotiation') != null ? $request->input('extra.multipleNegotiation') : false;
         $tender_negotiation_data = $request->input('extra.tender_negotiation_data');
 
         $bidSubmitted = BidSubmissionMaster::where('tender_id', $tender_id)
@@ -2820,10 +2821,9 @@ class SRMService
             $tenderNegotiation_records = TenderNegotiation::with(['area'])->where('srm_tender_master_id', $tender_id)->get();
         }
 
-        if (!empty($bidSubmitted) && count($bidSubmitted) > 0) {
+        if (!empty($bidSubmitted) && count($bidSubmitted) > 0 && !$multipleNegotiation) {
             $bidMasterId = 0;
         } else {
-
             DB::beginTransaction();
             try {
 
@@ -2884,7 +2884,7 @@ class SRMService
                 $result = BidSubmissionMaster::create($att);
                 $bidMasterId = $result['id'];
 
-                if(count($bidSubmitted) == 0 && $tender_negotiation){
+                if( $tender_negotiation){
                     $this->crateNewNegotiationTender($tender_id,$tender_negotiation_data,$bidMasterId,$supplierRegId,$att);
                 }
 
@@ -4392,11 +4392,14 @@ class SRMService
 
         if ($tenderNegotiation) {
             $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
-                $query->where('bid_submission_code_old' , $tenderNegotiationData[0]['supplier_tender_negotiation']['bidSubmissionCode']);
+                $bidSubmissionCodes = array_map(function ($tenderNegotiationData) {
+                    return $tenderNegotiationData['supplier_tender_negotiation']['bidSubmissionCode'];
+                }, $tenderNegotiationData);
+                $query->whereIn('bid_submission_code_old' , $bidSubmissionCodes);
             });
         } else {
             $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
-                $query->where('bid_submission_code_old', '!=' ,$tenderNegotiationData[0]['supplier_tender_negotiation']['bidSubmissionCode']);
+                $query->where('bid_submission_code_old', '!=', $tenderNegotiationData[0]['supplier_tender_negotiation']['bidSubmissionCode']);
             });
         }
 
@@ -4465,7 +4468,7 @@ class SRMService
                 ->where('srm_bid_submission_detail.bid_master_id',$bidMasterId)
                 ->where('srm_evaluation_criteria_details.critera_type_id',1)
                 ->count();
-            $goNoGoActiveStatus = TenderMaster::select('is_active_go_no_go')->where('id', $group['tender_id'])->first();
+            $goNoGoActiveStatus = TenderMaster::select('is_active_go_no_go', 'is_negotiation_closed', 'is_negotiation_started')->where('id', $group['tender_id'])->first();
 
             $document_type = TenderMaster::select('document_type')->where('id', $group['tender_id'])->first();
 
@@ -4708,6 +4711,8 @@ class SRMService
                 $group['tender_documents'] = $tenderNegotiationArea->tender_documents;
             }
 
+            $group['is_negotiation_closed'] = $goNoGoActiveStatus['is_negotiation_closed'];
+            $group['is_negotiation_started'] = $goNoGoActiveStatus['is_negotiation_started'];
             return $group;
         });
 

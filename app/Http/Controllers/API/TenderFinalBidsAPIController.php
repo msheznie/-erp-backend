@@ -12,6 +12,7 @@ use App\Models\Employee;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderFinalBids;
+use App\Models\TenderNegotiation;
 use App\Repositories\TenderFinalBidsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -317,10 +318,12 @@ class TenderFinalBidsAPIController extends AppBaseController
         $tenderId = $request['tenderId'];
 
         $isNegotiation = $request['isNegotiation'];
+        $latestNegotiation = [];
+        if($isNegotiation){
+            $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+        }
 
-        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
-            ->where('tender_id', $tenderId)
-            ->get();
+        $tenderBidNegotiations = TenderNegotiation::tenderBidNegotiationList($tenderId, $isNegotiation);
 
         if ($tenderBidNegotiations->count() > 0) {
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
@@ -361,6 +364,9 @@ class TenderFinalBidsAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->addColumn('latestNegotiationVersion', function () use ($isNegotiation, $latestNegotiation) {
+                return $isNegotiation ? $latestNegotiation->version : null;
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }

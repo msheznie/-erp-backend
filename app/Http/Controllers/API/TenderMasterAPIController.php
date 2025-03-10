@@ -62,7 +62,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\
+    git;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -3833,9 +3834,7 @@ ORDER BY
         $tenderId = $request['tenderId'];
         $isNegotiation = $request['isNegotiation'];
 
-        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
-            ->where('tender_id', $tenderId)
-            ->get();
+        $tenderBidNegotiations = TenderNegotiation::tenderBidNegotiationList($tenderId, $isNegotiation);;
 
         if ($tenderBidNegotiations->count() > 0) {
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
@@ -4001,9 +4000,7 @@ ORDER BY
         $tenderId = $request['tenderId'];
         $isNegotiation = $request['isNegotiation'];
 
-        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
-            ->where('tender_id', $tenderId)
-            ->get();
+        $tenderBidNegotiations = TenderNegotiation::tenderBidNegotiationList($tenderId, $isNegotiation);;
 
         if ($tenderBidNegotiations->count() > 0) {
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
@@ -4517,9 +4514,7 @@ ORDER BY
             $q->where('envelopType',3);
         }])->where('id', $tenderId)->first();
 
-        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
-            ->where('tender_id', $tenderId)
-            ->get();
+        $tenderBidNegotiations = TenderNegotiation::tenderBidNegotiationList($tenderId, $isNegotiation);
 
         if ($tenderBidNegotiations->count() > 0) {
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();

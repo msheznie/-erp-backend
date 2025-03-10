@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Models\TenderBidNegotiation;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Repositories\TenderNegotiationRepository;
@@ -22,7 +23,6 @@ use App\Models\CurrencyMaster;
 use Carbon\Carbon;
 use Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class TenderNegotiationController extends AppBaseController
@@ -75,6 +75,8 @@ class TenderNegotiationController extends AppBaseController
         }
 
         $input['currencyId'] = $updateTenderMasterRecord->currency_id;
+        $latestNegotiation = $this->tenderNegotiationRepository->getVersion($input['srm_tender_master_id']);
+        $input['version'] = $latestNegotiation ? $latestNegotiation->version + 1 : 1;
         $tenderNeotiation = $this->tenderNegotiationRepository->create($input);
         return $this->sendResponse($tenderNeotiation->toArray(), 'Tender negotiation started successfully');
 
@@ -183,6 +185,13 @@ class TenderNegotiationController extends AppBaseController
             $negotiationCode = $this->generateNegotiationSerial($input['companySystemID'],$tenderList);  
             $tender->negotiation_code = $negotiationCode['code']; 
             $tender->negotiation_serial_no = $negotiationCode['lastSerialNo']; 
+            $tender->negotiation_commercial_ranking_line_item_status = null;
+            $tender->negotiation_commercial_ranking_comment = null;
+            $tender->negotiation_combined_ranking_status = null;
+            $tender->negotiation_award_comment = null;
+            $tender->negotiation_is_awarded = null;
+            $tender->negotiation_doc_verify_comment = null;
+            $tender->negotiation_doc_verify_status = null;
             $tender->save();
             return $tender;
         }
@@ -203,13 +212,27 @@ class TenderNegotiationController extends AppBaseController
             $sort = 'desc';
         }
         $tenderId = $request['tenderId'];
+        $bidSubmissionMasterIds = [];
+        $latestNegotiationId = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+
+        if(isset($latestNegotiationId->id)){
+            $bisMasterIdArray = TenderBidNegotiation::getLatestNegotiationBidSubmissionMasterId($latestNegotiationId->id);
+            $bidSubmissionMasterIds = array_column($bisMasterIdArray, 'bid_submission_master_id_new');
+        }
+
         $query = TenderFinalBids::select('id','status','award','bid_id','com_weightage','supplier_id','tender_id','total_weightage','tech_weightage', 'combined_ranking')->with(['supplierTenderNegotiation' => function ($a) {
             $a->select('id','srm_bid_submission_master_id','bidSubmissionCode','tender_negotiation_id','suppliermaster_id');
         },'bid_submission_master' => function ($q) {
             $q->select('bidSubmittedDatetime','bidSubmissionCode','line_item_total','id','supplier_registration_id')->with(['SupplierRegistrationLink' => function ($s) {
                 $s->select('name','id');
             }]);
-        }])->where('tender_id',$tenderId)->where('status',1)->orderBy('total_weightage','desc');
+        }])->where('tender_id',$tenderId);
+
+        if(isset($latestNegotiationId->id)) {
+            $query = $query->whereIn('bid_id', $bidSubmissionMasterIds);
+        }
+
+        $query = $query->where('status',1)->orderBy('total_weightage','desc');
 
         
 

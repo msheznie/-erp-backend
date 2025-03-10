@@ -23,7 +23,8 @@ class TenderNegotiation extends Model
         'comments',
         'started_by',
         'no_to_approve',
-        'currencyId'
+        'currencyId',
+        'version'
     ];
 
         /**
@@ -42,7 +43,8 @@ class TenderNegotiation extends Model
         'comments' => 'string',
         'confirmed_at' => 'date',
         'no_to_approve' => 'integer',
-        'currencyId' => 'integer'
+        'currencyId' => 'integer',
+        'version' => 'integer'
     ];
 
         /**
@@ -78,6 +80,30 @@ class TenderNegotiation extends Model
     public function SupplierTenderNegotiationList()
     {
         return $this->hasMany('App\Models\SupplierTenderNegotiation', 'tender_negotiation_id', 'id');
+    }
+
+    public static function getTenderLatestNegotiations($tenderMasterId){
+        return TenderNegotiation::select('id', 'version')
+            ->where('srm_tender_master_id',$tenderMasterId)
+            ->where('status',2)
+            ->orderByDesc('version')
+            ->first();
+    }
+
+    public static function tenderBidNegotiationList($tenderId, $isNegotiation)
+    {
+        if($isNegotiation){
+            $latestNegotiation = self::getTenderLatestNegotiations($tenderId);
+        }
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId);
+
+        if($isNegotiation){
+            $tenderBidNegotiations = $tenderBidNegotiations->where('tender_negotiation_id', $latestNegotiation->id);
+        }
+
+        return $tenderBidNegotiations->get();
     }
 
 }
