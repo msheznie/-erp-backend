@@ -149,4 +149,8 @@ class SlotDetails extends Model
 
     }
 
+    public static function getSlotDetailCompanyID($slotDetailID)
+    {
+        return SlotDetails::select('id', 'company_id')->where('id', $slotDetailID)->first();
+    }
 }
