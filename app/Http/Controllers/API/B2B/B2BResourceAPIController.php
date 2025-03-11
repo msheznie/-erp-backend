@@ -41,6 +41,12 @@ class B2BResourceAPIController extends AppBaseController
             ->whereHas('config')
             ->exists();
 
+        $paymentBankTransfer = PaymentBankTransfer::find($request->bankTransferID);
+
+        if(isset($paymentBankTransfer) && $paymentBankTransfer->fileType == 1)
+        {
+            return $this->sendError("Cannot generate excel for employee file type",500,[]);
+        }
         if(!$bankMaster)
             return $this->sendError("The vendor file format is not available for the selected bank",500,[]);
 
