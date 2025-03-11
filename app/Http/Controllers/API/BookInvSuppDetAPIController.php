@@ -554,7 +554,6 @@ class BookInvSuppDetAPIController extends AppBaseController
         if($bookInvSuppMaster->confirmedYN){
             return $this->sendError(trans('custom.you_cannot_add_supplier_invoice_detail_this_document_already_confirmed'),500);
         }
-        $type = isset($input['type']) ? (is_array($input['type']) ? $input['type'][0] : $input['type']) : null;
 
         if(isset($input['type']) &&  $input['type'] != $bookInvSuppMaster->documentType)
         {
