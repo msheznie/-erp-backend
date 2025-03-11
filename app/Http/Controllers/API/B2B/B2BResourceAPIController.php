@@ -136,7 +136,7 @@ class B2BResourceAPIController extends AppBaseController
 
 
             $detailObject->setBeneficiaryName($beneficiaryName);
-            $detailObject->setBeneficiaryAddress1($beneficiaryAddressLine1);  // Beneficiary Address 1
+            $detailObject->setBeneficiaryAddress1(substr($beneficiaryAddressLine1,0,35));  // Beneficiary Address 1
             $detailObject->setBeneficiaryAddress2("");
 
             $detailObject->setInstitutionNameAddress1($bankMemoDetails->where('bankMemoTypeID',2)->first()['memoDetail'] ?? "");
