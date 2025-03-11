@@ -187,7 +187,7 @@ class B2BResourceAPIController extends AppBaseController
                 $bankAccount->AccountNo,
                 'MXD',
                 1,
-                $bankTransfer->narration,
+                substr($bankTransfer->narration,0,25),
                 Carbon::parse($bankTransfer->documentDate)->format('d/m/Y'),
                 $batchNo
             ]
