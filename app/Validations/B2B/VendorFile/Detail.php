@@ -47,7 +47,7 @@ class Detail
             'institution_name_address_2' => 'nullable|string|max:35|regex:/^[a-zA-Z0-9 ]+$/',
             'institution_name_address_3' => 'nullable|string|max:35|regex:/^[a-zA-Z0-9 ]+$/',
             'institution_name_address_4' => 'nullable|string|max:35|regex:/^[a-zA-Z0-9 ]+$/',
-            'swift' => 'required|alpha_num|size:8,11',
+            'swift' => 'required|alpha_num',
             'charges_type' => 'required|in:OUR,BEN,SHA',
             'transactor_code' => 'required|string',
             'debit_narrative' => 'nullable|string',
@@ -68,6 +68,15 @@ class Detail
                     }
                 },
             ],
+            'swift' => [
+                'required',
+                'alpha_num',
+                function ($attribute, $value, $fail) {
+                    if (!in_array(strlen($value), [8, 11])) {
+                        $fail('The SWIFT code must be exactly 8 or 11 characters long.');
+                    }
+                }
+            ]
         ];
 
         $messages = [
@@ -98,7 +107,6 @@ class Detail
             'institution_name_address_1.required' => 'Institution Name Address 1 is required.',
             'swift.required' => 'SWIFT Code is required.',
             'swift.alpha_num' => 'SWIFT Code must be alphanumeric.',
-            'swift.size' => 'The SWIFT code must be exactly 8 or 11 characters long',
             'charges_type.required' => 'Charges Type is required.',
             'charges_type.in' => 'Charges Type must be either OUR, BEN, or SHA.',
             'transactor_code.required' => 'Transactor Code is required.',
