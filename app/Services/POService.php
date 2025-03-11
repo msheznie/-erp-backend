@@ -168,6 +168,7 @@ class POService
             });
             })
             ->select('purchaseOrderID', 'purchaseOrderCode')
+            ->where('companySystemID', $tenantID)
             ->where('approved', -1)
             ->where('poConfirmedYN', 1)
             ->where('poCancelledYN', 0)
