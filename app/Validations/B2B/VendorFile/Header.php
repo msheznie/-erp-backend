@@ -56,6 +56,7 @@ class Header
             'index_2.required' => 'The Debit Account No index is required.',
             'index_2.numeric' => 'The Debit Account No must be a numeric value.',
             'index_2.size' => 'The Debit Account must be 13 characters.',
+            'index_2.regex' => 'The debit account number cannot contain special characters,letters or spaces.',
             'index_2.max' => 'The Debit Account cannot be more than 13 digits.',
             'index_3.required' => 'The Transfer method is required.',
             'index_3.in' => 'The Transfer method must always be MXD.',
