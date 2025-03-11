@@ -128,7 +128,7 @@ class B2BResourceAPIController extends AppBaseController
             $address = $bankMemoDetails->where('bankMemoTypeID',3)->first()['memoDetail'];
 
             $formattedAddress = str_replace(',', ' ', $address);
-            $formattedAddress = preg_replace('/[^a-zA-Z0-9\s]/', '', $formattedAddress);
+//            $formattedAddress = preg_replace('/[^a-zA-Z0-9\s]/', '', $formattedAddress);
 
             $concatinatedValue = $supplierName.' '.$formattedAddress;
             $beneficiaryName = substr($supplierName, 0, 35);
