@@ -151,14 +151,19 @@ class BidMainWork extends Model
         return $this->belongsTo('App\Models\BidSubmissionMaster', 'bid_master_id', 'id');
     }
 
-    public static function deleteNullBidMainWorkRecords($tenderId)
+    public static function deleteNullBidMainWorkRecords($tenderId,$bidMasterId)
     {
-        return self::where('tender_id', $tenderId)
-            ->where(function ($query) {
-                $query->whereNull('qty')
-                    ->orWhereNull('amount');
+        $duplicateIds = BidMainWork::where('tender_id', $tenderId)
+            ->where('bid_master_id', $bidMasterId)
+            ->whereNull('qty')
+            ->whereIn('bid_format_detail_id', function ($query) {
+                $query->select('bid_format_detail_id')
+                    ->from('srm_bid_main_work')
+                    ->groupBy('bid_format_detail_id')
+                    ->havingRaw('COUNT(*) > 1');
             })
-            ->delete();
+            ->pluck('id');
+        BidMainWork::whereIn('id', $duplicateIds)->delete();
     }
 
 }
