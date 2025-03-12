@@ -64,6 +64,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\
     git;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -3557,6 +3558,13 @@ ORDER BY
                     ->where('module_id',2);
             }, 'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
                 $q1->where('emp_id',$userId);
+            },  'tender_negotiation' => function ($q2) {
+                $q2->select('srm_tender_master_id')
+                    ->selectSub(function ($query) {
+                        $query->from('tender_negotiations as tn')
+                            ->selectRaw('MAX(version)')
+                            ->whereColumn('tn.srm_tender_master_id', 'tender_negotiations.srm_tender_master_id');
+                    }, 'version');
             }])
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('technical_eval_status', 1)
@@ -3733,6 +3741,13 @@ ORDER BY
                 ->where('module_id',3);
         },'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
             $q1->where('emp_id',$userId);
+        }, 'tender_negotiation' => function ($q2) {
+            $q2->select('srm_tender_master_id')
+                ->selectSub(function ($query) {
+                    $query->from('tender_negotiations as tn')
+                        ->selectRaw('MAX(version)')
+                        ->whereColumn('tn.srm_tender_master_id', 'tender_negotiations.srm_tender_master_id');
+                }, 'version');
         }])
             ->where(function ($query) use ($userId) {
                 $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
@@ -5314,6 +5329,13 @@ ORDER BY
                 ->where('module_id',1);
         },'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
             $q1->where('emp_id',$userId);
+        },   'tender_negotiation' => function ($q2) {
+            $q2->select('srm_tender_master_id')
+                ->selectSub(function ($query) {
+                    $query->from('tender_negotiations as tn')
+                        ->selectRaw('MAX(version)')
+                        ->whereColumn('tn.srm_tender_master_id', 'tender_negotiations.srm_tender_master_id');
+                }, 'version');
         }])
             ->where('is_negotiation_started',1)
             ->where('negotiation_published',1)
