@@ -1527,7 +1527,7 @@ class SRMService
                 'final_tender_awarded', 'tender_type_id', 'currency_id', 'document_sales_end_date',
                 'pre_bid_clarification_end_date', 'bid_submission_closing_date', 'pre_bid_clarification_method',
                 'site_visit_date', 'description_sec_lang', 'title_sec_lang', 'document_type', 'tender_document_fee',
-                'negotiation_code','site_visit_date', 'description_sec_lang', 'title_sec_lang')
+                'negotiation_code','site_visit_date', 'description_sec_lang', 'title_sec_lang', 'company_id')
                 ->with([
                     'currency:currencyID,CurrencyName',
                     'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
@@ -1563,7 +1563,7 @@ class SRMService
                 'pre_bid_clarification_method', 'no_of_alternative_solutions', 'site_visit_date',
                 'description_sec_lang', 'title_sec_lang', 'is_active_go_no_go', 'bid_submission_closing_date',
                 'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date', 'document_type',
-                'tender_document_fee', 'negotiation_code')
+                'tender_document_fee', 'negotiation_code', 'company_id')
                 ->with([
                     'currency' => function ($q){
                         $q->select('currencyID', 'CurrencyName');
@@ -1611,7 +1611,7 @@ class SRMService
                 'pre_bid_clarification_method', 'no_of_alternative_solutions', 'site_visit_date',
                 'description_sec_lang', 'title_sec_lang', 'is_active_go_no_go', 'bid_submission_closing_date',
                 'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date',
-                'negotiation_code', 'document_type', 'tender_document_fee')
+                'negotiation_code', 'document_type', 'tender_document_fee', 'company_id')
                 ->with([
                     'currency' => function ($q){
                         $q->select('currencyID', 'CurrencyName');
@@ -1711,11 +1711,12 @@ class SRMService
                 }
             })
             ->addIndexColumn()
+            ->addColumn('tenderPurchasePolicy', function ($tender) {
+                return Helper::checkPolicy($tender->company_id, 98);
+            })
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
-
-        $data['tenderPurchasePolicy'] = Helper::checkPolicy($supplierData->company_id, 98);
 
         return [
             'success' => true,
@@ -3901,6 +3902,7 @@ class SRMService
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId,$bidMasterId);
+        BidMainWork::deleteIncompleteBidMainWorkRecords($tenderId,[$bidMasterId]);
         DB::beginTransaction();
         try {
             $att['main_works_id'] = $detail['id'];
@@ -4383,7 +4385,7 @@ class SRMService
         $tenderNegotiationData = $request->input('extra.tender_negotiation_data');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
-       // $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId);
+        // $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId);
         $bidSubmitted = BidSubmissionMaster::select('id', 'uuid', 'tender_id', 'supplier_registration_id', 'status',
             'created_at', 'bidSubmissionCode', 'bidSubmittedDatetime')
             ->with([
