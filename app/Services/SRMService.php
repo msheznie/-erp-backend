@@ -3900,7 +3900,7 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-
+        $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId);
         DB::beginTransaction();
         try {
             $att['main_works_id'] = $detail['id'];
@@ -4382,6 +4382,8 @@ class SRMService
         $tenderNegotiation = $request->input('extra.tender_negotiation');
         $tenderNegotiationData = $request->input('extra.tender_negotiation_data');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId);
         $bidSubmitted = BidSubmissionMaster::select('id', 'uuid', 'tender_id', 'supplier_registration_id', 'status',
             'created_at', 'bidSubmissionCode')
             ->with([

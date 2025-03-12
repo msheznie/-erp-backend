@@ -98,8 +98,9 @@ class ApprovalLevelAPIController extends AppBaseController
         }
 
         if (isset($request->tenderTypeId)) {
-            $tenderType = TenderType::getTenderTypeData($request->tenderTypeId);
-            $input["tenderTypeCode"] =  $request->tenderTypeId == -1 ? 'General' : $tenderType->name;
+
+            $tenderType = TenderType::getTenderTypeData($input['tenderTypeId']);
+            $input["tenderTypeCode"] =  $input['tenderTypeId'] == -1 ? 'General' : $tenderType->name;
         }
 
         if(isset($input['isCategoryWiseApproval']) && $input['isCategoryWiseApproval']){
@@ -168,6 +169,12 @@ class ApprovalLevelAPIController extends AppBaseController
         if (isset($request->serviceLineSystemID)) {
             $ServiceLineCode = SegmentMaster::where('serviceLineSystemID', $input["serviceLineSystemID"])->first();
             $input["serviceLineCode"] = $ServiceLineCode->ServiceLineCode;
+        }
+
+
+        if (isset($request->tenderTypeId)) {
+            $tenderType = TenderType::getTenderTypeData($request->tenderTypeId);
+            $input["tenderTypeCode"] = $input['tenderTypeId'] == -1 ? 'General' : $tenderType->name;
         }
 
         /** @var ApprovalLevel $approvalLevel */

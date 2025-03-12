@@ -151,5 +151,14 @@ class BidMainWork extends Model
         return $this->belongsTo('App\Models\BidSubmissionMaster', 'bid_master_id', 'id');
     }
 
+    public static function deleteNullBidMainWorkRecords($tenderId)
+    {
+        return self::where('tender_id', $tenderId)
+            ->where(function ($query) {
+                $query->whereNull('qty')
+                    ->orWhereNull('amount');
+            })
+            ->delete();
+    }
 
 }
