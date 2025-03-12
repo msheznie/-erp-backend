@@ -53,7 +53,6 @@ class Detail
             'debit_narrative' => 'nullable|string',
             'credit_narrative' => 'nullable|string|max:35',
             'intermediary_account' => 'nullable|string|max:35',
-            'email' => 'nullable|email|max:100',
             'sort_code_beneficiary_bank' => 'nullable|max:15',
             'IFSC' => 'nullable|max:15|regex:/^[a-zA-Z0-9 ]+$/',
             'fedwire' => 'nullable|max:15|regex:/^[a-zA-Z0-9 ]+$/',
@@ -76,7 +75,20 @@ class Detail
                         $fail('The SWIFT code must be exactly 8 or 11 characters long.');
                     }
                 }
-            ]
+            ],
+            'email' => [
+                'nullable',
+                'string',
+                'max:100',
+                function ($attribute, $value, $fail) {
+                    $emails = explode(';', $value);
+                    foreach ($emails as $email) {
+                        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            $fail("The email '$email' is not a valid email.");
+                        }
+                    }
+                }
+            ],
         ];
 
         $messages = [
@@ -132,8 +144,8 @@ class Detail
             'sort_code_beneficiary_bank.max' => 'The sort code of beneficiary bank must not exceed 15 characters',
             'IFSC.max' => 'IFSC code must not exceed 15 characters',
             'fedwire.max' => 'Fedwire code must not exceed 15 characters',
-            'IFSC.regex' => 'The IFSC code cannot contain special characters,letters or spaces.',
-            'fedwire.regex' => 'The Fedwire code cannot contain special characters,letters or spaces.'
+            'IFSC.regex' => 'The IFSC code cannot contain special characters or spaces.',
+            'fedwire.regex' => 'The Fedwire code cannot contain special characters or spaces.'
         ];
 
 

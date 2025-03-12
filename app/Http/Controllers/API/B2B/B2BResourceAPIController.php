@@ -11,6 +11,7 @@ use App\Models\BankMemoSupplier;
 use App\Models\Company;
 use App\Models\CurrencyMaster;
 use App\Models\PaymentBankTransfer;
+use App\Models\SupplierContactDetails;
 use App\Models\SupplierCurrency;
 use App\Services\B2B\BankTransferService;
 use Carbon\Carbon;
@@ -88,6 +89,8 @@ class B2BResourceAPIController extends AppBaseController
         foreach ($result as $rs)
         {
 
+
+            $supplierContactDetailsEmails = SupplierContactDetails::where('supplierID',$rs['payment_voucher']['BPVsupplierID'])->pluck('contactPersonEmail')->implode(';');
             $detailObject = new \App\Classes\B2B\Detail();
             $supplierCurrency = SupplierCurrency::where('supplierCodeSystem',$rs['payment_voucher']['BPVsupplierID'])->where('currencyID',$rs['payment_voucher']['supplierTransCurrencyID'])->first();
             $bankMemoDetails = BankMemoSupplier::where('supplierCodeSystem',$rs['payment_voucher']['BPVsupplierID'])->where('supplierCurrencyID',$supplierCurrency->supplierCurrencyID ?? 0)->get();
@@ -154,7 +157,7 @@ class B2BResourceAPIController extends AppBaseController
             $detailObject->setSortCodeBeneficiaryBank($bankMemoDetails->where('bankMemoTypeID',14)->first()['memoDetail'] ?? null);
             $detailObject->setIFSC($bankMemoDetails->where('bankMemoTypeID',16)->first()['memoDetail'] ?? null);
             $detailObject->setFedwire($bankMemoDetails->where('bankMemoTypeID',5)->first()['memoDetail'] ?? null);
-            $detailObject->setEmail($rs['payment_voucher']['supplier']['supEmail'] ?? null);
+            $detailObject->setEmail($supplierContactDetailsEmails ?? null);
             $detailObject->setDispatchMode("E");
             $detailObject->setTransactorCode("B");
             $detailObject->setSupportingDocumentName("");
@@ -246,8 +249,10 @@ class B2BResourceAPIController extends AppBaseController
 
         $excelColumnFormat = [
             'B' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
+            'C' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_00,
             'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
             'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
+            'AG' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
         ];
 
 
