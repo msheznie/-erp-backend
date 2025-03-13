@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.65.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.65.0...v10.65.1) (2025-03-13)
+
+
+### Bug Fixes
+
+* **DA:** Delivery Appointment Calendar and Slots validations [GSUP-2333] ([4be5ef7](https://github.com/pbsgears/Gears_BackEnd/commit/4be5ef7deed7d3d9c21d609eae9c70721fb98cee))
+
 ## [10.65.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.64.0...v10.65.0) (2025-03-05)
 
 
