@@ -144,7 +144,7 @@ class POService
     public function getAppointmentSlots($tenantID)
     {
         $slot = new SlotMaster();
-        $data = $slot->getSlotData($tenantID);
+        $data = $slot->getSlotData([$tenantID], 1);
         return $data;
     }
 
@@ -168,6 +168,7 @@ class POService
             });
             })
             ->select('purchaseOrderID', 'purchaseOrderCode')
+            ->where('companySystemID', $tenantID)
             ->where('approved', -1)
             ->where('poConfirmedYN', 1)
             ->where('poCancelledYN', 0)

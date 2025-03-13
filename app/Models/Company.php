@@ -406,4 +406,8 @@ class Company extends Model
             return null;
         }
     }
+    public static function getCompanyList($companyIDs){
+        return Company::select('companySystemID', 'CompanyID', 'CompanyName')
+            ->whereIN("companySystemID", $companyIDs)->get();
+    }
 }

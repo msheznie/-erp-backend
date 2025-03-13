@@ -286,6 +286,11 @@ class SRMService
         $tenantID = $request->input('tenantId');
         $wareHouseID = $request->input('extra.wareHouseID');
         $searchText = $request->input('extra.searchText');
+        $slotDetailID = $request->input('extra.slotDetailID') ?? null;
+        if(!empty($slotDetailID)){
+            $slotDetail = SlotDetails::getSlotDetailCompanyID($slotDetailID);
+            $tenantID = $slotDetail['company_id'] ?? $tenantID;
+        }
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $poData = [];
         $data = $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID, $searchText);
