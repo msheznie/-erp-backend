@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.65.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.65.1...v10.65.2) (2025-03-14)
+
+
+### Bug Fixes
+
+* **Tender:** Incorrect Approval Display for Supplier-Submitted Documents [GSUP-2399] ([0704768](https://github.com/pbsgears/Gears_BackEnd/commit/0704768c4744388504abadf3e5fbba804ec99992))
+* **Tender:** Incorrect Approval Display for Supplier-Submitted Documents [GSUP-2399] ([#7749](https://github.com/pbsgears/Gears_BackEnd/issues/7749)) ([4bf8451](https://github.com/pbsgears/Gears_BackEnd/commit/4bf84519083f3d7fcc46f1d6468917f907b9a752))
+
 ## [10.65.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.65.0...v10.65.1) (2025-03-13)
 
 
