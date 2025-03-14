@@ -5679,7 +5679,7 @@ class SRMService
                     [
                         'srm_supplier_id' => $supplierData['data']['id'],
                         'tender_id' => $tenderData['id'],
-                        'company_id' => $supplierData['data']['company_id']
+                        'company_id' => $tenderData['company_id']
                     ],
                     [
                         'uuid' => Helper::generateSRMUuid(),
@@ -5786,7 +5786,7 @@ class SRMService
                 return $this->generateResponse(false, 'Tender data not found', $tenderData);
             }
 
-            $paymentProofData = SRMTenderPaymentProof::getPaymentProofData(127,$supplierData['company_id'],$tenderData['id'],$supplierData['id']);
+            $paymentProofData = SRMTenderPaymentProof::getPaymentProofData(127,$tenderData['company_id'],$tenderData['id'],$supplierData['id']);
 
             if(($paymentProofData))
             {
