@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateGeneralLedgerAPIRequest;
 use App\Http\Requests\API\UpdateGeneralLedgerAPIRequest;
 use App\Jobs\GeneralLedgerInsert;
@@ -42,6 +43,7 @@ use App\Models\StockCount;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
+use App\Models\Tax;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
 use App\Models\SegmentMaster;
@@ -1677,5 +1679,151 @@ class GeneralLedgerAPIController extends AppBaseController
           $sum += $data[$i][$index][$column];
         }
         return $sum;
+    }
+
+    public function updateExemptVATSegmentEntreis(Request $request)
+    {
+        $tenants = CommonJobService::tenant_list();
+
+        if(count($tenants) == 0){
+            return  "tenant list is empty";
+        }
+
+        foreach ($tenants as $tenant) {
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            $supplierInvoices = BookInvSuppMaster::whereIn('documentType',[1,3])
+                ->where('whtType','!=',0)
+                ->where('whtApplicable',1)
+                ->where('whtApplicableYN',1)
+                ->where('approved',-1)
+                ->orderBy('bookingSuppMasInvAutoID','DESC')
+                ->get();
+
+
+            $employeeInvoices = BookInvSuppMaster::where('documentType',4)
+                ->where('whtApplicableYN',1)
+                ->where('approved',-1)
+                ->orderBy('bookingSuppMasInvAutoID','DESC')
+                ->get();
+
+            $paymentVouchers = PaySupplierInvoiceMaster::where('invoiceType',3)
+                ->where('approved',-1)
+                ->where('VATAmount','>',0)
+                ->get();
+
+            foreach ($supplierInvoices as $invoice)
+            {
+                if($invoice->documentType == 3 || $invoice->documentType == 1)
+                {
+                    $checkExpenseGLExist = GeneralLedger::where('documentSystemCode',$invoice->bookingSuppMasInvAutoID)
+                        ->where('documentSystemID',11)
+                        ->where('companySystemID',$invoice->companySystemID)
+                        ->where('glAccountType','PL')
+                        ->where('serviceLineSystemID',24)->exists();
+
+                    if($checkExpenseGLExist)
+                    {
+                        $glEntreis = GeneralLedger::where('documentSystemCode',$invoice->bookingSuppMasInvAutoID)
+                            ->where('documentSystemID',11)
+                            ->where('companySystemID',$invoice->companySystemID)
+                            ->delete();
+
+                        $masterData = ['documentSystemID' => $invoice->documentSystemID,
+                            'autoID' => $invoice->bookingSuppMasInvAutoID,
+                            'companySystemID' => $invoice->companySystemID,
+                            'documentDateOveride' => $invoice->TIMESTAMP,
+                            'employeeSystemID' => $invoice->createdUserSystemID,
+                            'otherLedgers' => false
+                        ];
+
+                        GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+
+                        DB::table('migratedDocs')->insert([
+                            'documentSystemID' => $$invoice->documentSystemID,
+                            'documentSystemCode' => $invoice->bookingSuppMasInvAutoID,
+                            'documentCode' => $invoice->bookingInvCode,
+                            'comment' => "Update General Ledger",
+                            'created_at' => Carbon::now()
+                        ]);
+                    }
+                }
+            }
+
+            foreach ($employeeInvoices as $employeeInvoice)
+            {
+                $checkExpenseGLExist = GeneralLedger::where('documentSystemCode',$employeeInvoice->bookingSuppMasInvAutoID)
+                    ->where('documentSystemID',11)
+                    ->where('companySystemID',$employeeInvoice->companySystemID)
+                    ->where('glAccountType','PL')
+                    ->where('serviceLineSystemID',24)
+                    ->exists();
+
+                if($checkExpenseGLExist)
+                {
+                    $glEntreis = GeneralLedger::where('documentSystemCode',$employeeInvoice->bookingSuppMasInvAutoID)
+                        ->where('documentSystemID',11)
+                        ->where('companySystemID',$employeeInvoice->companySystemID)
+                        ->delete();
+
+                    $masterData = ['documentSystemID' => $employeeInvoice->documentSystemID,
+                        'autoID' => $employeeInvoice->bookingSuppMasInvAutoID,
+                        'companySystemID' => $employeeInvoice->companySystemID,
+                        'documentDateOveride' => $employeeInvoice->TIMESTAMP,
+                        'employeeSystemID' => $employeeInvoice->createdUserSystemID,
+                        'otherLedgers' => false
+                    ];
+
+                    GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+
+                    DB::table('migratedDocs')->insert([
+                        'documentSystemID' => $employeeInvoice->documentSystemID,
+                        'documentSystemCode' => $employeeInvoice->bookingSuppMasInvAutoID,
+                        'documentCode' => $employeeInvoice->bookingInvCode,
+                        'comment' => "Update General Ledger",
+                        'created_at' => Carbon::now()
+                    ]);
+                }
+            }
+
+            foreach ($paymentVouchers as $paymentVoucher)
+            {
+                $checkExpenseGLExist = GeneralLedger::where('documentSystemCode',$paymentVoucher->PayMasterAutoId)
+                    ->where('documentSystemID',4)
+                    ->where('companySystemID',$paymentVoucher->companySystemID)
+                    ->where('glAccountType','PL')
+                    ->exists();
+
+                if($checkExpenseGLExist)
+                {
+                    $glEntreis = GeneralLedger::where('documentSystemCode',$paymentVoucher->PayMasterAutoId)
+                        ->where('documentSystemID',4)
+                        ->where('companySystemID',$paymentVoucher->companySystemID)
+                        ->delete();
+
+                    $masterData = ['documentSystemID' => $paymentVoucher->documentSystemID,
+                        'autoID' => $paymentVoucher->PayMasterAutoId,
+                        'companySystemID' => $paymentVoucher->companySystemID,
+                        'documentDateOveride' => $paymentVoucher->TIMESTAMP,
+                        'employeeSystemID' => $paymentVoucher->createdUserSystemID,
+                        'otherLedgers' => false
+                    ];
+
+                    GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+
+                    DB::table('migratedDocs')->insert([
+                        'documentSystemID' => $paymentVoucher->documentSystemID,
+                        'documentSystemCode' => $paymentVoucher->PayMasterAutoId,
+                        'documentCode' => $paymentVoucher->BPVcode,
+                        'comment' => "Update General Ledger",
+                        'created_at' => Carbon::now()
+                    ]);
+                }
+            }
+        }
+
+
     }
 }
