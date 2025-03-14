@@ -4385,7 +4385,7 @@ class SRMService
 
        // $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId);
         $bidSubmitted = BidSubmissionMaster::select('id', 'uuid', 'tender_id', 'supplier_registration_id', 'status',
-            'created_at', 'bidSubmissionCode')
+            'created_at', 'bidSubmissionCode', 'bidSubmittedDatetime')
             ->with([
                 'SupplierRegistrationLink' => function ($q) {
                     $q->select('id', 'name');

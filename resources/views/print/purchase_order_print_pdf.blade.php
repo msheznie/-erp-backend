@@ -300,9 +300,6 @@
                         </tr>
                         <tr>
                             <td style="width: 100%" colspan="3"><p>
-                                    @if ($podata->soldToAddressDescriprion)
-                                        {!! nl2br($podata->soldToAddressDescriprion) !!}
-                                    @endif
                                 </p>
                             </td>
                         </tr>
@@ -311,6 +308,15 @@
                         </tr>
                     </table>
                     <table style="width: 100%">
+                        <tr>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.address') }}</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
+                            <td style="width: 78%">
+                                @if ($podata->soldToAddressDescriprion)
+                                    {!! nl2br($podata->soldToAddressDescriprion) !!}
+                                @endif
+                            </td>
+                        </tr>
                         <tr>
                             <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.order_contact') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
@@ -344,15 +350,13 @@
                             <td colspan="3"><span style="font-size: 13px; font-weight: bold;">{{ __('custom.supplier') }}:</span></td>
                         </tr>
                         <tr>
-                            <td colspan="3">{{$podata->supplierPrimaryCode}}</td>
-                        </tr>
-                        <tr>
                             <td colspan="3">{{$podata->supplierName}}</td>
                         </tr>
                         <tr>
-                            <td colspan="3">
-                                {!! nl2br($podata->supplierAddress) !!}
-                            </td>
+                            <td colspan="3"><br></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3"></td>
                         </tr>
                         @if($podata->supplierVATEligible)
                         <tr>
@@ -365,6 +369,13 @@
                             </td>
                         </tr>
                         @endif
+                        <tr>
+                            <td><span  style="font-weight: bold">{{ __('custom.address') }}</span></td>
+                            <td><span  style="font-weight: bold">:</span></td>
+                            <td>
+                                {!! nl2br($podata->supplierAddress) !!}
+                            </td>
+                        </tr>
                         <tr>
                             <td><span  style="font-weight: bold">{{ __('custom.contact') }}</span></td>
                             <td><span  style="font-weight: bold">:</span></td>
@@ -473,13 +484,18 @@
                             </td>
                         </tr>
                         <tr>
-                            <td colspan="3">{!! nl2br($podata->shippingAddressDescriprion) !!}</td>
+                            <td colspan="3"></td>
                         </tr>
                         <tr>
                             <td colspan="3"><span style="font-size: 13px; font-weight: bold;">&nbsp;</span></td>
                         </tr>
                     </table>
                     <table>
+                        <tr>
+                            <td style="width: 34%"><span  style="font-weight: bold"> {{ __('custom.address') }}</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
+                            <td style="width: 64%">{!! nl2br($podata->shippingAddressDescriprion) !!} </td>
+                        </tr>
                         <tr>
                             <td style="width: 34%"><span  style="font-weight: bold"> {{ __('custom.ship_contact') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
@@ -520,7 +536,14 @@
                             </td>
                         </tr>
                         <tr>
-                            <td colspan="3">{!! nl2br($podata->invoiceToAddressDescription) !!}</td>
+                            <td colspan="3"></td>
+                        </tr>
+                        <tr>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.address') }}</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
+                            <td style="width: 78%">
+                                {!! nl2br($podata->invoiceToAddressDescription) !!}
+                            </td>
                         </tr>
                         <tr>
                             <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.payment_contact') }}</span></td>

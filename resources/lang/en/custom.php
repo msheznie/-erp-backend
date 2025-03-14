@@ -574,5 +574,6 @@ return [
     "qty_issued" => "Qty Issued",
     "date_issued" => "Date Issued",
     "emp_signature" => "Emp Signature",
-    "inventory_allocation_details" => "Inventory Allocation Details"
+    "inventory_allocation_details" => "Inventory Allocation Details",
+    "address" => "Address",
 ];

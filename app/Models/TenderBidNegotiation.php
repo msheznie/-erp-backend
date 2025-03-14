@@ -44,6 +44,6 @@ class TenderBidNegotiation extends Model
 
     public static function getLatestNegotiationBidSubmissionMasterId($id)
     {
-        return TenderBidNegotiation::select('bid_submission_master_id_new')->where('tender_negotiation_id', $id)->get()->toArray();
+        return TenderBidNegotiation::select('bid_submission_master_id_new', 'bid_submission_master_id_old')->where('tender_negotiation_id', $id)->get()->toArray();
     }
 }
