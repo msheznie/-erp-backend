@@ -1174,6 +1174,7 @@ class SupplierInvoiceGlService
                     $finalData[$i]['documentRptCurrencyER'] = ExchangeSetupConfig::calculateReportingER($finalData[$i]["documentTransAmount"],$finalData[$i]["documentRptAmount"]);
                 }
             }
+            
         }
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
     }
