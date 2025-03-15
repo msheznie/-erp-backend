@@ -1223,9 +1223,9 @@ class FinancialReportAPIController extends AppBaseController
             if (count($headers) > 0) {
                 foreach ($headers as $key => $val) {
                     $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
-                    $detailsArray = array();
                     if($val->itemType == 3)
                     {
+                        $detailsArray = array();
                         foreach (ReportTemplateDetails::find($val->detID)->gl_codes as $glCodeData)
                         {
                             $detailsArray[] = $glCodeData->subcategory->detID;
@@ -1255,11 +1255,11 @@ class FinancialReportAPIController extends AppBaseController
                         $val->detail = $details;
                     }
                     $firstLevel = true;
-                    $glCodesArray = array();
                     foreach ($details as $key2 => $val2) {
                         if ($val2->isFinalLevel == 1) {
                             if($val2->itemType == 3)
                             {
+                                $glCodesArray = array();
                                 foreach (ReportTemplateDetails::find($val2->detID)->gl_codes as $glCodeData)
                                 {
                                     $glCodesArray[] = $glCodeData->subcategory->detID;
@@ -1370,41 +1370,31 @@ class FinancialReportAPIController extends AppBaseController
             $headers = collect($headers)->forget($removedFromArray)->values();
 
             // fix sub-total level values
-            $subTotalLevelOne = $outputCollect->where('isFinalLevel', 1)->where('itemType', 3);
-            $subTotalLevelTwo = $outputCollect->where('isFinalLevel', 1)->where('itemType', 2);
-            foreach ($subTotalLevelTwo as $levelTwo) {
-                $valueHolders = [];
-                foreach ($levelTwo as $key => $value) {
-                    if (strpos($key, '-') !== false) {
-                        if (is_numeric($value)) {
-                            $valueHolders[] = $key;
+            if($template->columnTemplateID == null && $template->isConsolidation == 1) {
+                $subTotalLevelTwo = $outputCollect->where('isFinalLevel', 1)->where('itemType', 2);
+                foreach ($subTotalLevelTwo as $levelTwo) {
+
+                    $glCodesArray = [];
+                    foreach (ReportTemplateDetails::find($levelTwo->detID)->gl_codes as $glCodeData) {
+                        $glCodesArray[] = $glCodeData->glAutoID;
+                    }
+
+                    if(!empty($glCodesArray)) {
+                        $outputData = $outputDetail->whereIn('glAutoID', $glCodesArray);
+
+                        $valueHolders = [];
+                        foreach ($levelTwo as $key => $value) {
+                            if (strpos($key, '-') !== false) {
+                                if (is_numeric($value)) {
+                                    $valueHolders[] = $key;
+                                }
+                            }
                         }
-                    }
-                }
 
-                foreach ($valueHolders as $valueHolder) {
-                    if(!empty($levelTwo->glCodes)) {
-                        $value = $levelTwo->glCodes->sum($valueHolder);
-                        $levelTwo->$valueHolder = $value;
-                    }
-                }
-            }
-
-            foreach ($subTotalLevelOne as $levelOne) {
-                $valueHolders = [];
-                foreach ($levelOne as $key => $value) {
-                    if (strpos($key, '-') !== false) {
-                        if (is_numeric($value)) {
-                            $valueHolders[] = $key;
+                        foreach ($valueHolders as $valueHolder) {
+                            $value = $outputData->sum($valueHolder);
+                            $levelTwo->$valueHolder = $value;
                         }
-                    }
-                }
-
-                $subLevelTypes = $subTotalLevelTwo->where('masterID', $levelOne->masterID);
-                foreach ($valueHolders as $valueHolder) {
-                    if(!empty($subLevelTypes)) {
-                        $value = $subLevelTypes->sum($valueHolder);
-                        $levelOne->$valueHolder = $value;
                     }
                 }
             }
