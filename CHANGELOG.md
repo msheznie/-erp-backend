@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.65.3](https://github.com/pbsgears/Gears_BackEnd/compare/v10.65.2...v10.65.3) (2025-03-15)
+
+
+### Bug Fixes
+
+* **general ledger:** Report template group total calculation update [GCP-6420] ([#7741](https://github.com/pbsgears/Gears_BackEnd/issues/7741)) ([effd6a0](https://github.com/pbsgears/Gears_BackEnd/commit/effd6a0cec6fc2bf829dee5ece359d10e00ab1ab))
+
 ## [10.65.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.65.1...v10.65.2) (2025-03-14)
 
 
