@@ -161,7 +161,7 @@ class Tax extends Model
 
     public function vat_categories()
     {
-        return $this->hasOne('App\Models\TaxVatCategories', 'taxVatSubCategoriesAutoID','taxCategory');
+        return $this->hasMany('App\Models\TaxVatCategories', 'taxMasterAutoID', 'taxMasterAutoID');
     }
 
     public function vat_main_categories()
