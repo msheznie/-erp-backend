@@ -1278,22 +1278,35 @@ class PaymentVoucherGlService
                     }
                 }
 
+                $exemptVatTotalExpenseData = DirectPaymentDetails::selectRaw("SUM(vatAmount) as vatAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt, serviceLineSystemID, serviceLineCode")->whereHas('vatSubCategories', function ($q) {
+                    $q->where('subCatgeoryType', 3);
+                })->WHERE('directPaymentAutoID', $masterModel["autoID"])
+                ->groupBy('serviceLineSystemID')->get();
 
-                if(!empty($exemptVatTotal) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1 && $exemptVatTotal->vatAmount > 0){
-                    $exemptVatTrans = $exemptVatTotal->vatAmount;
-                    $exemptVATLocal = $exemptVatTotal->VATAmountLocal;
-                    $exemptVatRpt = $exemptVatTotal->VATAmountRpt;
+                if(!empty($exemptVatTotalExpenseData) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1){
 
-                    $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
-                    $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
-                    $data['glCode'] = $chartOfAccountData->AccountCode;
-                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                    $data['documentTransAmount'] = $exemptVatTrans;
-                    $data['documentLocalAmount'] = $exemptVATLocal;
-                    $data['documentRptAmount'] = $exemptVatRpt;
-                    $data['timestamp'] = \Helper::currentDateTime();
-                    array_push($finalData, $data);
+                    foreach ($exemptVatTotalExpenseData as $key => $value) {
+                        if ($value->vatAmount > 0) {
+                            $exemptVatTrans = $value->vatAmount;
+                            $exemptVATLocal = $value->VATAmountLocal;
+                            $exemptVatRpt = $value->VATAmountRpt;
+
+                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
+
+                            $data['serviceLineSystemID'] = $value->serviceLineSystemID;
+                            $data['serviceLineCode'] = $value->serviceLineCode;
+                            $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
+                            $data['glCode'] = $chartOfAccountData->AccountCode;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentTransAmount'] = $exemptVatTrans;
+                            $data['documentLocalAmount'] = $exemptVATLocal;
+                            $data['documentRptAmount'] = $exemptVatRpt;
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+                        }
+                    }
+
                 }
 
                 if($masterData->expenseClaimOrPettyCash == 1)

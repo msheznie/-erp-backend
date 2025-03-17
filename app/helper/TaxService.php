@@ -1462,7 +1462,7 @@ class TaxService
 
         return $siVATCategoryDetails;
     }
-    public static function processSIExemptVatDirectInvoice($directInvoiceAutoID){
+    public static function processSIExemptVatDirectInvoice($directInvoiceAutoID, $groupByServiceLine = false){
 
         $siVATCategoryDetails = DirectInvoiceDetails::selectRaw('erp_tax_vat_sub_categories.expenseGL as expenseGL, erp_tax_vat_sub_categories.recordType as recordType, SUM(CASE 
             WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmount * exempt_vat_portion / 100 
@@ -1478,16 +1478,20 @@ class TaxService
             WHEN erp_tax_vat_sub_categories.subCatgeoryType = 1 THEN VATAmountRpt * exempt_vat_portion / 100 
             WHEN erp_tax_vat_sub_categories.subCatgeoryType = 3 THEN VATAmountRpt  
             ELSE 0
-        END) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType')
+        END) as VATAmountRpt, exempt_vat_portion, erp_tax_vat_sub_categories.subCatgeoryType as subCatgeoryType, erp_directinvoicedetails.serviceLineSystemID, erp_directinvoicedetails.serviceLineCode')
             ->whereNotNull('vatSubCategoryID')
             ->where('vatSubCategoryID', '>', 0)
             ->join('erp_tax_vat_sub_categories', 'erp_directinvoicedetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
             ->where('erp_directinvoicedetails.directInvoiceAutoID', $directInvoiceAutoID)
             ->whereIn('erp_tax_vat_sub_categories.subCatgeoryType', [1,3])
-            ->groupBy('erp_directinvoicedetails.directInvoiceAutoID')
-            ->first();
+            ->when($groupByServiceLine, function($query) {
+                $query->groupBy('erp_directinvoicedetails.directInvoiceAutoID', 'erp_directinvoicedetails.serviceLineSystemID');
+            })
+            ->when(!$groupByServiceLine, function($query) {
+                $query->groupBy('erp_directinvoicedetails.directInvoiceAutoID');
+            });
 
-        return $siVATCategoryDetails;
+        return ($groupByServiceLine) ? $siVATCategoryDetails->get() : $siVATCategoryDetails->first();
     }
 
     public static function checkSIExpenseVatDirectInvoice($directInvoiceAutoID, $chartOfAccountSystemID, $serviceLineSystemID){
