@@ -3742,13 +3742,13 @@ ORDER BY
         },'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
             $q1->where('emp_id',$userId);
         }, 'tender_negotiation' => function ($q2) {
-            $q2->select('srm_tender_master_id')
+            $q2->select('srm_tender_master_id', 'id')
                 ->selectSub(function ($query) {
                     $query->from('tender_negotiations as tn')
                         ->selectRaw('MAX(version)')
                         ->whereColumn('tn.srm_tender_master_id', 'tender_negotiations.srm_tender_master_id');
                 }, 'version');
-        }])
+        }, 'tender_negotiation.tenderBidNegotiation'])
             ->where(function ($query) use ($userId) {
                 $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
                     $q->where('user_id', $userId)

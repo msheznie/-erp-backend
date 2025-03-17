@@ -82,10 +82,14 @@ class TenderNegotiation extends Model
         return $this->hasMany('App\Models\SupplierTenderNegotiation', 'tender_negotiation_id', 'id');
     }
 
+    public function tenderBidNegotiation()
+    {
+        return $this->hasMany('App\Models\TenderBidNegotiation', 'tender_negotiation_id', 'id');
+    }
+
     public static function getTenderLatestNegotiations($tenderMasterId){
         return TenderNegotiation::select('id', 'version')
             ->where('srm_tender_master_id',$tenderMasterId)
-            ->where('status',2)
             ->orderByDesc('version')
             ->first();
     }
@@ -104,6 +108,19 @@ class TenderNegotiation extends Model
         }
 
         return $tenderBidNegotiations->get();
+    }
+
+    public static function getCurrentTenderNegotiationsId($tenderMasterId, $version){
+        return TenderNegotiation::select('id', 'version')
+            ->where('srm_tender_master_id',$tenderMasterId)
+            ->where('version', $version)
+            ->first();
+    }
+
+    public static function getCurrentTenderNegotiationsVersion($id){
+        return TenderNegotiation::select('version')
+            ->where('id', $id)
+            ->first();
     }
 
 }

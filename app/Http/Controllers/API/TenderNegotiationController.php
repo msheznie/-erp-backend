@@ -188,7 +188,6 @@ class TenderNegotiationController extends AppBaseController
             $tender->negotiation_serial_no = $negotiationCode['lastSerialNo']; 
             $tender->negotiation_commercial_ranking_line_item_status = null;
             $tender->negotiation_commercial_ranking_comment = null;
-            $tender->commercial_verify_status = null;
             $tender->negotiation_combined_ranking_status = null;
             $tender->negotiation_award_comment = null;
             $tender->negotiation_is_awarded = null;
@@ -216,9 +215,20 @@ class TenderNegotiationController extends AppBaseController
         $tenderId = $request['tenderId'];
         $tenderNegotiationId = $request['tenderNegotiationId'];
         $bidSubmissionMasterIds = [];
-        $latestNegotiationId = TenderNegotiation::getTenderLatestNegotiations($tenderId);
-        $bisMasterIdArray = TenderBidNegotiation::getLatestNegotiationBidSubmissionMasterId($tenderNegotiationId);
-        $bidSubmissionMasterIds = array_column($bisMasterIdArray, 'bid_submission_master_id_old');
+
+        $currentTenderNegotiationsVersion = TenderNegotiation::getCurrentTenderNegotiationsVersion($tenderNegotiationId);
+        if($currentTenderNegotiationsVersion->version - 1 != 0){
+            $currentTenderNegotiationsId = TenderNegotiation::getCurrentTenderNegotiationsId($tenderId, $currentTenderNegotiationsVersion->version - 1);
+        }
+
+        if(isset($currentTenderNegotiationsId)){
+            $bisMasterIdArray = TenderBidNegotiation::getLatestNegotiationBidSubmissionMasterId($currentTenderNegotiationsId->id);
+            $bidSubmissionMasterIds = array_column($bisMasterIdArray, 'bid_submission_master_id_new');
+        } elseif ($currentTenderNegotiationsVersion->version == 1){
+            $bisMasterIdArray = TenderBidNegotiation::getLatestNegotiationBidSubmissionMasterId($tenderNegotiationId);
+            $bidSubmissionMasterIds = array_column($bisMasterIdArray, 'bid_submission_master_id_old');
+        }
+
         $query = TenderFinalBids::select('id','status','award','bid_id','com_weightage','supplier_id','tender_id','total_weightage','tech_weightage', 'combined_ranking')->with(['supplierTenderNegotiation' => function ($a) {
             $a->select('id','srm_bid_submission_master_id','bidSubmissionCode','tender_negotiation_id','suppliermaster_id');
         },'bid_submission_master' => function ($q) {
@@ -227,13 +237,11 @@ class TenderNegotiationController extends AppBaseController
             }]);
         }])->where('tender_id',$tenderId);
 
-        if(isset($latestNegotiationId->id) && sizeof($bidSubmissionMasterIds) > 0) {
+        if(isset($currentTenderNegotiationsVersion->version) && sizeof($bidSubmissionMasterIds) > 0){
             $query = $query->whereIn('bid_id', $bidSubmissionMasterIds);
         }
 
         $query = $query->where('status',1)->orderBy('total_weightage','desc');
-
-        
 
         $search = $request->input('search.value');
         if ($search) {
