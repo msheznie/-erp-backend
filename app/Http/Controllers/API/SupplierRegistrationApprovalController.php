@@ -194,7 +194,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             return $this->sendError($approve["message"]);
         } else {
             if ($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
-                ThirdPartySystemNotificationJob::dispatch($db,107,$request['id']);
+                 ThirdPartySystemNotificationJob::dispatch($db,107,$request['id']);
 
                 $getUpdatedValues = SRMSupplierValues::select('user_name','name')
                     ->where('company_id',$request['company_id'])

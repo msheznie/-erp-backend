@@ -25,7 +25,9 @@ use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\DocumentApprovedRepository;
 use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
+use App\Repositories\SRMPublicLinkRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
+use App\Repositories\SupplierRegistrationLinkRepository;
 use App\Repositories\TenderBidClarificationsRepository;
 use App\Services\InvoiceService;
 use App\Services\POService;
@@ -3353,7 +3355,9 @@ WHERE
             $requestData['api_key'] =$apiKey;
             $requestData['uuid'] = $this->getSupplierUUID($requestData['id']);
             $requestData['company_id'] = $request->input('companySystemID');
+
             $request->merge($requestData);
+
             $controller =  $this->getController();
             $result = $controller->approveSupplierKYC($request);
             return $result;
@@ -3451,9 +3455,11 @@ WHERE
         $tenderBidClarificationsRepo = app(TenderBidClarificationsRepository::class);
         $documentAttachmentsRepo = app(DocumentAttachmentsRepository::class);
         $paySupplierInvoiceMasterRepository = app(PaySupplierInvoiceMasterRepository::class);
+        $supplierRegistrationLinkRepository = app(SupplierRegistrationLinkRepository::class);
+        $SRMPublicLinkRepository = app(SRMPublicLinkRepository::class);
 
         $srmService = new SRMService($bookInvoiceSupMasterRepo,$POService,$supplierService,$sharedService,$invoiceService,$supplierInvoiceItemDetailRepo,
-            $tenderBidClarificationsRepo,$documentAttachmentsRepo,$paySupplierInvoiceMasterRepository);
+            $tenderBidClarificationsRepo,$documentAttachmentsRepo,$paySupplierInvoiceMasterRepository,$supplierRegistrationLinkRepository,$SRMPublicLinkRepository);
 
         $controller = new SupplierRegistrationApprovalController($srmService);
         return $controller;

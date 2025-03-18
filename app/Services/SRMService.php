@@ -423,7 +423,7 @@ class SRMService
     public function updateSupplierInvitation(Request $request)
     {
         $invitationToken = $request->input('extra.token');
-        $supplierUuid = $request->input('supplier_uuid');
+        $supplierUuid = filled($request->input('extra.supplierUuid')) ? $request->input('extra.supplierUuid') : $request->input('supplier_uuid');
         $name = $request->input('extra.name');
         $email = $request->input('extra.email');
 
