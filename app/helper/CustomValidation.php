@@ -78,7 +78,7 @@ class CustomValidation
 
             switch ($documentSystemID) {
                 case 11: // Supplier Invoice
-                    if (($entity->directdetail && count($entity->directdetail)) || ($entity->detail && count($entity->detail))) {
+                    if (($entity->directdetail && count($entity->directdetail)) || ($entity->detail && count($entity->detail)) || ($entity->item_details && count($entity->item_details))) {
                         $detailsExist = true;
                     }
                     break;

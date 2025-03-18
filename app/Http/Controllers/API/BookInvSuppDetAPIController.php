@@ -557,7 +557,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         if(isset($input['type']) &&  $input['type'] != $bookInvSuppMaster->documentType)
         {
-            return $this->sendError('The Supplier Invoice type has changed, unable to proceed');
+            return $this->sendError('The invoice type and details have already been modified by another user');
         }
 
         DB::beginTransaction();
