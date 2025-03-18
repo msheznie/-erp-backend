@@ -3876,7 +3876,7 @@ class SRMService
         $data['documentAttachedCountIdsTechnical'] = count($documentAttachedCountIdsTechnical);
 
         if($negotiation){
-            $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId);
+            $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
             $bidSubmissionParentCode = TenderBidNegotiation::select('bid_submission_code_old')
                 ->where('bid_submission_master_id_new', $bidMasterId)
                 ->where('supplier_id', $supplierData->id)
@@ -4706,7 +4706,7 @@ class SRMService
             $group['documentAttachedCountIdsCommercial'] = count($documentAttachedCountIdsCommercial);
             $group['documentAttachedCountIdsTechnical'] = count($documentAttachedCountIdsTechnical);
 
-            $tenderNegotiationArea =  $this->getTenderNegotiationArea($tender);
+            $tenderNegotiationArea =  $this->getTenderNegotiationArea($tender, $bidMasterId);
             if($tenderNegotiationArea != null){
                 $group['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
                 $group['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
@@ -5506,9 +5506,11 @@ class SRMService
         }
     }
 
-    private function getTenderNegotiationArea($tenderId)
+    private function getTenderNegotiationArea($tenderId, $bidMasterId = 0)
     {
-        $tenderNegotiationResults = TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tenderId)->first();
+        $tenderBidNegotiationResult = TenderBidNegotiation::getNegotiationIdByBidSubmissionMasterId($bidMasterId);
+
+        $tenderNegotiationResults = TenderNegotiation::getNegotiationWithArea($tenderId, $tenderBidNegotiationResult);
 
         return ($tenderNegotiationResults) ? $tenderNegotiationResults->area : null;
     }
