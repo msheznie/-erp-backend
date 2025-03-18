@@ -51,11 +51,11 @@ class TenderBidEmployeeService
                 }
 
                 SRMTenderUserAccess::insert($data);
-                return ['status' => true, 'message' => 'Employee created successfully', 'code' => 200];
+                return ['status' => true, 'message' => 'Employee added successfully', 'code' => 200];
             });
         } catch(\Exception $ex){
             $error_code = ($ex->getCode() == 422)? 422: 500;
-            return ['status' => false, 'message' => 'Unable to create: '. $ex->getMessage(), 'code' => $error_code];
+            return ['status' => false, 'message' => 'Unable to add: '. $ex->getMessage(), 'code' => $error_code];
         }
     }
 
@@ -66,11 +66,11 @@ class TenderBidEmployeeService
                 $tenderID = $request->input('tenderID') ?? 0;
                 $tenderBidDetails = SrmTenderBidEmployeeDetails::getTenderBidEmployees($tenderID);
                 if ($tenderBidDetails->isEmpty()) {
-                    return ['status' => false, 'message' => 'Tender bid employee detail/s not found', 'code' => 404];
+                    return ['status' => false, 'message' => 'Employees not found', 'code' => 404];
                 }
 
                 $tenderBidDetails->each->delete();
-                return ['status' => true, 'message' => 'Tender bid employees deleted successfully', 'code' => 200];
+                return ['status' => true, 'message' => 'Successfully deleted', 'code' => 200];
             });
         } catch (\Exception $ex){
             $error_code = ($ex->getCode() == 422)? 422: 500;
