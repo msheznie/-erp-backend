@@ -126,7 +126,7 @@
                         </tr>
                     @endforeach
                     <tr>
-                        <td colspan="9" style="text-align: right"><b>Total:</b></td>
+                        <td colspan="10" style="text-align: right"><b>Total:</b></td>
                         <td style="text-align: left; font-weight: bold;">{{ \App\Services\Currency\CurrencyService::convertNumberFormatToNumber(\App\helper\Helper::customerLedgerReportSum($reportData[$name][$currencyKey], 'invoice'))}}</td>
                         <td style="text-align: left; font-weight: bold;">{{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber(\App\helper\Helper::customerLedgerReportSum($reportData[$name][$currencyKey], 'paid'))}}</td>
                         <td style="text-align: left; font-weight: bold;">{{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber(\App\helper\Helper::customerLedgerReportSum($reportData[$name][$currencyKey], 'balance'))}}</td>
@@ -137,7 +137,7 @@
         @endforeach
         <tbody>
             <tr>
-                <td colspan="9" style="text-align: right"><b>Grand Total:</b></td>
+                <td colspan="10" style="text-align: right"><b>Grand Total:</b></td>
                 <td style="text-align: left; font-weight: bold;">
                         @if(isset($invoiceAmount))
                         {{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber(round($invoiceAmount, $currencyDecimalPlace))}}
