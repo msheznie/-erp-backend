@@ -128,4 +128,10 @@ class TenderSupplierAssignee extends Model
         return $this->hasOne('App\Models\SupplierAssigned', 'supplierAssignedID','supplier_assigned_id');
         
     }
+
+    public static function getAssignSupplierCount($companyId, $id)
+    {
+        return TenderSupplierAssignee::where('company_id', $companyId)
+            ->where('tender_master_id', $id)->count();
+    }
 }

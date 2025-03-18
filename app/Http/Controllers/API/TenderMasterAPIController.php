@@ -1539,6 +1539,16 @@ ORDER BY
                             }
                         }
 
+                        if($input['tender_type_id'] == 3){
+                            $assignSupplier =  $this->tenderMasterRepository->checkAssignSuppliers(
+                                $input['company_id'], $input['id'], $rfq
+                            );
+
+                            if(!$assignSupplier['success']){
+                                return $assignSupplier;
+                            }
+                        }
+
                         $parentsWithoutSubLevels = DB::table('srm_evaluation_criteria_details as parent')
                             ->leftJoin('srm_evaluation_criteria_details as child', 'parent.id', '=', 'child.parent_id')
                             ->where('parent.parent_id', 0)
