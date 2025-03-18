@@ -1754,7 +1754,7 @@ class SRMService
                                     $q->select('id', 'tender_negotiation_id', 'bidSubmissionCode', 'srm_bid_submission_master_id')
                                         ->where('suppliermaster_id', $supplierRegId);
                                 }
-                            ]);
+                            ])->where('status', 2);
                     },
                     'srm_bid_submission_master' => function ($query) use ($supplierRegId) {
                         $query->select('tender_id', 'id', 'supplier_registration_id', 'bidSubmissionCode')
@@ -2853,7 +2853,7 @@ class SRMService
                 $att['uuid'] = Uuid::generate()->string;
                 $att['bid_sequence'] = 1;
 
-                if($tender_negotiation && isset($tenderNegotiation_records[0]['area']['tender_documents']) && ($tenderNegotiation_records[0]['area']['tender_documents'] == 0)){
+                if($tender_negotiation && isset($tenderNegotiation_records[sizeof($tenderNegotiation_records) - 1]['area']['tender_documents']) && ($tenderNegotiation_records[sizeof($tenderNegotiation_records) - 1]['area']['tender_documents'] == 0)){
                     $att['doc_verifiy_yn'] = $oldBidSubmission->doc_verifiy_yn;
                     $att['doc_verifiy_by_emp'] = $oldBidSubmission->doc_verifiy_by_emp;
                     $att['doc_verifiy_date'] = $oldBidSubmission->doc_verifiy_date;
@@ -2866,13 +2866,13 @@ class SRMService
 
                 }
 
-                if($tender_negotiation && isset($tenderNegotiation_records[0]['area']['pricing_schedule']) && ($tenderNegotiation_records[0]['area']['pricing_schedule'] == 0)){
+                if($tender_negotiation && isset($tenderNegotiation_records[sizeof($tenderNegotiation_records) - 1]['area']['pricing_schedule']) && ($tenderNegotiation_records[sizeof($tenderNegotiation_records) - 1]['area']['pricing_schedule'] == 0)){
                     $att['commercial_verify_status'] = $oldBidSubmission->commercial_verify_status;
                     $att['commercial_verify_at'] = $oldBidSubmission->commercial_verify_at;
                     $att['commercial_verify_by'] = $oldBidSubmission->commercial_verify_by;
                 }
 
-                if($tender_negotiation && isset($tenderNegotiation_records[0]['area']['technical_evaluation']) && ($tenderNegotiation_records[0]['area']['technical_evaluation'] == 0)){
+                if($tender_negotiation && isset($tenderNegotiation_records[sizeof($tenderNegotiation_records) - 1]['area']['technical_evaluation']) && ($tenderNegotiation_records[sizeof($tenderNegotiation_records) - 1]['area']['technical_evaluation'] == 0)){
                     $att['technical_verify_status'] = $oldBidSubmission->technical_verify_status;
                     $att['technical_verify_at'] = $oldBidSubmission->technical_verify_at;
                     $att['technical_verify_by'] = $oldBidSubmission->technical_verify_by;
@@ -5354,7 +5354,7 @@ class SRMService
     }
 
     private function crateNewNegotiationTender($tender_id, $tender_negotiation_data, $bidMasterId, $supplierRegId, $att){
-        $tenderNegotiationArea = TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tender_id)->first();
+        $tenderNegotiationArea = TenderNegotiation::select('id')->with('area')->where('id', $tender_negotiation_data[0]['id'])->first();
         $pricingSchedule = $tenderNegotiationArea->area->pricing_schedule;
         $technicalEvaluation = $tenderNegotiationArea->area->technical_evaluation;
         $tenderDocuments = $tenderNegotiationArea->area->tender_documents;
@@ -5370,6 +5370,7 @@ class SRMService
         $pricingSchedule = $tenderNegotiationArea->area->pricing_schedule;
         $technicalEvaluation = $tenderNegotiationArea->area->technical_evaluation;
         $tenderDocuments = $tenderNegotiationArea->area->tender_documents;
+
         $data['tender_id'] = $tender_id;
         $data['tender_negotiation_id'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['tender_negotiation_id'];
         $data['bid_submission_master_id_old'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id'];
