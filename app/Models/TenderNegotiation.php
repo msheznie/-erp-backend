@@ -125,9 +125,12 @@ class TenderNegotiation extends Model
 
     public static function getNegotiationWithArea($tenderId, $tenderBidNegotiationResult)
     {
-        return TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tenderId)
-            ->where('id', $tenderBidNegotiationResult->tender_negotiation_id)
-            ->first();
+        return TenderNegotiation::with('area')
+            ->where('srm_tender_master_id', $tenderId)
+            ->when($tenderBidNegotiationResult, function ($query) use ($tenderBidNegotiationResult) {
+                return $query->where('id', $tenderBidNegotiationResult->tender_negotiation_id);
+            })
+            ->first(['id']);
     }
 
 }
