@@ -360,7 +360,7 @@
                         </tr>
                         @if($podata->supplierVATEligible)
                         <tr>
-                            <td><span  style="font-weight: bold">{{ __('custom.vat') }} #</span></td>
+                            <td><span  style="font-weight: bold">{{ __('custom.vat_no') }}</span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->supplier)
