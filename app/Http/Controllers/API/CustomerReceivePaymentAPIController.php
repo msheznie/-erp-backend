@@ -3002,6 +3002,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'erp_customerreceivepayment.receivedAmount',
             'erp_customerreceivepayment.bankAmount',
             'erp_customerreceivepayment.documentType',
+            'erp_customerreceivepayment.payeeTypeID',
+            'payee.empID',
+            'payee.empName as employeeName',
+            'erp_customerreceivepayment.PayeeName',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'customerDocCurrency.DecimalPlaces As customerDocDecimalPlaces',
@@ -3032,6 +3036,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 ->where('erp_customerreceivepayment.confirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftjoin('employees AS payee', 'erp_customerreceivepayment.PayeeEmpID', '=', 'payee.employeeSystemID')
             ->leftJoin('currencymaster as customerDocCurrency', 'custTransactionCurrencyID', 'customerDocCurrency.currencyID')
             ->leftJoin('currencymaster as bankDocCurrency', 'bankCurrency', 'bankDocCurrency.currencyID')
             ->leftJoin('customermaster', 'customerID', 'customermaster.customerCodeSystem')
@@ -3096,6 +3101,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'erp_customerreceivepayment.bankAmount',
             'erp_customerreceivepayment.documentType',
             'erp_customerreceivepayment.approvedDate',
+            'erp_customerreceivepayment.payeeTypeID',
+            'payee.empID',
+            'payee.empName as employeeName',
+            'erp_customerreceivepayment.PayeeName',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'customerDocCurrency.DecimalPlaces As customerDocDecimalPlaces',
@@ -3113,6 +3122,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 ->where('erp_customerreceivepayment.confirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftjoin('employees AS payee', 'erp_customerreceivepayment.PayeeEmpID', '=', 'payee.employeeSystemID')
             ->leftJoin('currencymaster as customerDocCurrency', 'custTransactionCurrencyID', 'customerDocCurrency.currencyID')
             ->leftJoin('currencymaster as bankDocCurrency', 'bankCurrency', 'bankDocCurrency.currencyID')
             ->leftJoin('customermaster', 'customerID', 'customermaster.customerCodeSystem')
