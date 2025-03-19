@@ -2845,6 +2845,15 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.glCode,
                         erp_generalledger.glAccountType,
                         chartofaccounts.AccountDescription,
+                        CASE erp_jvmaster.jvType
+                            WHEN 0 THEN "Standard JV"
+                            WHEN 1 THEN "Accrual JV"
+                            WHEN 2 THEN "Recurring JV"
+                            WHEN 3 THEN "Salary JV"
+                            WHEN 4 THEN "Allocation JV"
+                            WHEN 5 THEN "PO Accrual JV"
+                            ELSE "Unknown"
+                        END AS jv_type,
                         IF
                             ( documentLocalAmount < 0, documentLocalAmount *- 1, 0 ) AS creditAmountLocal,
                         IF
@@ -4016,6 +4025,7 @@ class FinancialReportAPIController extends AppBaseController
                         if ($reportTypeID == 'JVDD') {
                             $data[$x]['Account Code'] = $val->glCode;
                             $data[$x]['Account Description'] = $val->AccountDescription;
+                            $data[$x]['JV Type'] = $val->jv_type;
                             $data[$x]['Type'] = $val->glAccountType;
                         }
                         if ($checkIsGroup->isGroup == 0) {
