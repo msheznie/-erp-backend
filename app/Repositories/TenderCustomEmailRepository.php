@@ -29,6 +29,7 @@ class TenderCustomEmailRepository
             'document_code' => $input['document_code'],
             'document_id' => $input['document_id'],
             'email_subject' => $input['email_subject'] ?? '',
+            'negotiation_id' => $input['negotiation_id'],
         ];
 
         try {
@@ -100,10 +101,10 @@ class TenderCustomEmailRepository
         }
     }
 
-    public function getCustomEmailData($tenderId)
+    public function getCustomEmailData($tenderId, $negotiationId)
     {
         try {
-           return DB::transaction(function () use ( $tenderId) {
+           return DB::transaction(function () use ( $tenderId, $negotiationId) {
            $tenderData = TenderMaster::getTenderByUuid($tenderId);
 
             if (!$tenderData) {
@@ -112,7 +113,7 @@ class TenderCustomEmailRepository
                     "data" => 'Not a Valid Tender UUID'
                 ];
             }
-                return TenderCustomEmail::getCustomEmailData($tenderData['id']);
+                return TenderCustomEmail::getCustomEmailData($tenderData['id'], $negotiationId);
              });
         } catch (\Exception $e) {
             return [

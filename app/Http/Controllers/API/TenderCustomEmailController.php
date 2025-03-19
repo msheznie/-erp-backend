@@ -57,7 +57,8 @@ class TenderCustomEmailController extends AppBaseController
     {
         try {
             $tenderId = $request->input('tender_uuid');
-            $responseData = $this->repository->getCustomEmailData($tenderId);
+            $negotiationId = $request->input('negotiationId');
+            $responseData = $this->repository->getCustomEmailData($tenderId, $negotiationId);
 
             if (isset($responseData['success']) && $responseData['success']) {
                 return $this->sendError('Error occurred');
