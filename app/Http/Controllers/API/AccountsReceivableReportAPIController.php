@@ -1945,6 +1945,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
         if ($reportTypeID == 'CAD') { //customer aging detail
             $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
             $output = $this->getCustomerAgingDetailQRY($request);
+            $output['data'] = array_values(json_decode(json_encode($output['data']), true));
 
             if ($output['data'] && $output['aging']) {
                 $x = 0;
@@ -1957,45 +1958,43 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $lineTotal = 0;
 
                     foreach ($output['aging'] as $val2) {
-                        $lineTotal += $val->$val2;
+                        $lineTotal += $val[$val2];
                     }
 
                     $objCustomerAgingDetailReport = new CustomerAgingDetailReport();
-                    $objCustomerAgingDetailReport->setCompanyID($val->companyID);
-                    $objCustomerAgingDetailReport->setCompanyName($val->CompanyName);
-                    $objCustomerAgingDetailReport->setDocumentCode($val->DocumentCode);
-                    $objCustomerAgingDetailReport->setDocumentDate($val->PostedDate);
-                    $objCustomerAgingDetailReport->setGlCode($val->glCode);
-                    $objCustomerAgingDetailReport->setCustomerCode($val->CutomerCode);
-                    $objCustomerAgingDetailReport->setCustomerName($val->customerName2);
-                    $objCustomerAgingDetailReport->setCreditDays($val->creditDays);
-                    $objCustomerAgingDetailReport->setDepartment($val->serviceLineName);
-                    $objCustomerAgingDetailReport->setContractID($val->Contract);
-                    $objCustomerAgingDetailReport->setInvoiceNumber($val->invoiceNumber);
-                    $objCustomerAgingDetailReport->setPoNumber($val->PONumber);
-                    $objCustomerAgingDetailReport->setInvoiceDate($val->InvoiceDate);
-                    $objCustomerAgingDetailReport->setAgeDays($val->age);
-                    $objCustomerAgingDetailReport->setInvoiceDueDate($val->invoiceDueDate);
-                    $objCustomerAgingDetailReport->setDocumentNarration($val->DocumentNarration);
-                    $objCustomerAgingDetailReport->setCurrency($val->documentCurrency);
-                    $objCustomerAgingDetailReport->setInvoiceAmount($val->invoiceAmount);
+                    $objCustomerAgingDetailReport->setCompanyID($val['companyID']);
+                    $objCustomerAgingDetailReport->setCompanyName($val['CompanyName']);
+                    $objCustomerAgingDetailReport->setDocumentCode($val['DocumentCode']);
+                    $objCustomerAgingDetailReport->setDocumentDate($val['PostedDate']);
+                    $objCustomerAgingDetailReport->setGlCode($val['glCode']);
+                    $objCustomerAgingDetailReport->setCustomerCode($val['CutomerCode']);
+                    $objCustomerAgingDetailReport->setCustomerName($val['customerName2']);
+                    $objCustomerAgingDetailReport->setCreditDays($val['creditDays']);
+                    $objCustomerAgingDetailReport->setDepartment($val['serviceLineName']);
+                    $objCustomerAgingDetailReport->setContractID($val['Contract']);
+                    $objCustomerAgingDetailReport->setInvoiceNumber($val['invoiceNumber']);
+                    $objCustomerAgingDetailReport->setPoNumber($val['PONumber']);
+                    $objCustomerAgingDetailReport->setInvoiceDate($val['InvoiceDate']);
+                    $objCustomerAgingDetailReport->setAgeDays($val['age']);
+                    $objCustomerAgingDetailReport->setInvoiceDueDate($val['invoiceDueDate']);
+                    $objCustomerAgingDetailReport->setDocumentNarration($val['DocumentNarration']);
+                    $objCustomerAgingDetailReport->setCurrency($val['documentCurrency']);
+                    $objCustomerAgingDetailReport->setInvoiceAmount($val['invoiceAmount']);
                     $objCustomerAgingDetailReport->setOutStanding($lineTotal);
 
                     array_push($data,collect($objCustomerAgingDetailReport)->toArray());
                 }
 
                 foreach ($output['data'] as $index => $val) {
-
+                    $rowIndex = $index + 1;
                     foreach ($output['aging'] as $val2) {
-                        $data[$index + 1][$val2] = $val->$val2;
+                        $data[$rowIndex][$val2] = $val[$val2];
                     }
 
-
-                    $data[$index + 1]['Current Outstanding'] = $val->subsequentBalanceAmount;
-                    $data[$index + 1]['Subsequent Collection Amount'] = $val->subsequentAmount;
-                    $data[$index + 1]['Receipt Matching/BRVNo'] = $val->brvInv;
-                    $data[$index + 1]['Collection Tracker Status'] = $val->commentAndStatus;
-
+                    $data[$rowIndex]['Current Outstanding'] = $val['subsequentBalanceAmount'];
+                    $data[$rowIndex]['Subsequent Collection Amount'] = $val['subsequentAmount'];
+                    $data[$rowIndex]['Receipt Matching/BRVNo'] = $val['brvInv'];
+                    $data[$rowIndex]['Collection Tracker Status'] = $val['commentAndStatus'];
                 }
             }
         } else {
