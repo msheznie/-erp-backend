@@ -196,9 +196,10 @@ class JvMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
         }
-
+        DB::beginTransaction();
         $resultData = JournalVoucherService::createJournalVoucher($input);
         if ($resultData["status"]) {
+            DB::commit();
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => true,
@@ -209,6 +210,7 @@ class JvMasterAPIController extends AppBaseController
                 return $this->sendResponse($resultData['data'], 'JV created successfully');
             }
         } else {
+            DB::rollback();
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
