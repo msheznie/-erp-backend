@@ -5631,7 +5631,7 @@ class SRMService
 
     public function saveSupplierInvitationStatus($request)
     {
-        $input = $request->input('extra.invitation', []);
+        $input = $request->input('extra');
         $token = md5(Carbon::now()->format('YmdHisu'));
         $newRequestData = [
             'extra' => array_merge($input, [
@@ -5649,7 +5649,7 @@ class SRMService
             return [
                 'success' => true,
                 'message' => 'Supplier Registration Saved Successfully',
-                'data' => 1,
+                'data' => $token,
             ];
         } catch (\Exception $e) {
             return [
