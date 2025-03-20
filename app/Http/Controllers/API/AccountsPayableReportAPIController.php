@@ -2288,7 +2288,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedINMatchingAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedINMatchingAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt,
+                                erp_matchdocumentmaster.BPVsupplierID
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
@@ -2301,9 +2302,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                BPVsupplierID,
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedINMatching ON InvoiceMatchedINMatching.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedINMatching.BPVsupplierID = erp_generalledger.supplierCodeSystem
                                 AND InvoiceMatchedINMatching.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedINMatching.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- invoice matched in a payment voucher document
@@ -2316,7 +2319,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedForpaymentAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedForpaymentAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt,
+                                erp_paysupplierinvoicemaster.BPVsupplierID
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
@@ -2329,9 +2333,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                BPVsupplierID,
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedForpayment ON InvoiceMatchedForpayment.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedForpayment.BPVsupplierID = erp_generalledger.supplierCodeSystem
                                 AND InvoiceMatchedForpayment.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedForpayment.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- matched debit note
@@ -2556,7 +2562,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedINMatchingAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedINMatchingAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt,
+                                erp_matchdocumentmaster.BPVsupplierID
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
@@ -2569,9 +2576,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                BPVsupplierID,
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedINMatching ON InvoiceMatchedINMatching.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedINMatching.BPVsupplierID = erp_generalledger.supplierCodeSystem
                                 AND InvoiceMatchedINMatching.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedINMatching.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- invoice matched in a payment voucher document
@@ -2584,7 +2593,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                           
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedForpaymentAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedForpaymentAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt,
+                                erp_paysupplierinvoicemaster.BPVsupplierID
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
@@ -2597,9 +2607,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                supplierCodeSystem,
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedForpayment ON InvoiceMatchedForpayment.companySystemID = erp_generalledger.companySystemID
+                                AND  InvoiceMatchedForpayment.BPVsupplierID = erp_generalledger.supplierCodeSystem
                                 AND InvoiceMatchedForpayment.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedForpayment.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- matched debit note
@@ -3500,6 +3512,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
         if($type == 1) {
             $typeSupplierQry = "erp_paysupplierinvoicedetail.supplierCodeSystem";
+            $typeSupplierQryGeneral = "supplierCodeSystem";
             $typeGeneralQry = "erp_generalledger.supplierCodeSystem";
             $typeQry = "LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem";
             $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
@@ -3511,6 +3524,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $typeSupEmpQryMain3 = "suppliermaster.suppliername";
         } else {
             $typeSupplierQry = "erp_paysupplierinvoicedetail.employeeSystemID";
+            $typeSupplierQryGeneral = "employeeSystemID";
             $typeGeneralQry = "erp_generalledger.employeeSystemID";
             $typeQry = "LEFT JOIN employees ON employees.employeeSystemID = MAINQUERY.employeeSystemID";
             $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
@@ -3683,7 +3697,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedINMatchingAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedINMatchingAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt,
+                                '.$typeSupplierQry.'
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
@@ -3696,9 +3711,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                '.$typeSupplierQryGeneral.',
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedINMatching ON InvoiceMatchedINMatching.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedINMatching.'.$typeSupplierQryGeneral.' = '.$typeGeneralQry.'
                                 AND InvoiceMatchedINMatching.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedINMatching.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- invoice matched in a payment voucher document
@@ -3711,7 +3728,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedForpaymentAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedForpaymentAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt,
+                                '.$typeSupplierQry.'
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
@@ -3724,9 +3742,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                '.$typeSupplierQryGeneral.',
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedForpayment ON InvoiceMatchedForpayment.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedForpayment.'.$typeSupplierQryGeneral.' = '.$typeGeneralQry.'
                                 AND InvoiceMatchedForpayment.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedForpayment.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- matched debit note
@@ -3877,6 +3897,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         if($type == 1) {
             $typeSupplierQry = "erp_paysupplierinvoicedetail.supplierCodeSystem";
+            $typeSupplierQryGeneral = "supplierCodeSystem";
             $typeGeneralQry = "erp_generalledger.supplierCodeSystem";
             $typeQry = "LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem";
             $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
@@ -3890,6 +3911,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $typeAgeCreditPeriod = "finalAgingDetail.creditPeriod";
         } else {
             $typeSupplierQry = "erp_paysupplierinvoicedetail.employeeSystemID";
+            $typeSupplierQryGeneral = "employeeSystemID";
             $typeGeneralQry = "erp_generalledger.employeeSystemID";
             $typeQry = "LEFT JOIN employees ON employees.employeeSystemID = MAINQUERY.employeeSystemID";
             $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
@@ -4069,7 +4091,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedINMatchingAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedINMatchingAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt,
+                                '.$typeSupplierQry.'
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
@@ -4082,9 +4105,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                '.$typeSupplierQryGeneral.',
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedINMatching ON InvoiceMatchedINMatching.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedINMatching.'.$typeSupplierQryGeneral.' = '.$typeGeneralQry.'
                                 AND InvoiceMatchedINMatching.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedINMatching.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- invoice matched in a payment voucher document
@@ -4097,7 +4122,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedForpaymentAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedForpaymentAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt,
+                                '.$typeSupplierQry.'
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
@@ -4110,9 +4136,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                '.$typeSupplierQryGeneral.',
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedForpayment ON InvoiceMatchedForpayment.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedForpayment.'.$typeSupplierQryGeneral.' = '.$typeGeneralQry.'
                                 AND InvoiceMatchedForpayment.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedForpayment.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- matched debit note
@@ -4255,6 +4283,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         if($type == 1) {
             $typeSupplierQry = "erp_paysupplierinvoicedetail.supplierCodeSystem";
+            $typeSupplierQryGeneral = "supplierCodeSystem";
             $typeGeneralQry = "erp_generalledger.supplierCodeSystem";
             $typeQry = "LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem";
             $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
@@ -4266,6 +4295,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $typeSupEmpQryMain3 = "suppliermaster.suppliername";
         } else {
             $typeSupplierQry = "erp_paysupplierinvoicedetail.employeeSystemID";
+            $typeSupplierQryGeneral = "employeeSystemID";
             $typeGeneralQry = "erp_generalledger.employeeSystemID";
             $typeQry = "LEFT JOIN employees ON employees.employeeSystemID = MAINQUERY.employeeSystemID";
             $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
@@ -4439,7 +4469,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedINMatchingAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedINMatchingAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt,
+                                '.$typeSupplierQry.'
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
@@ -4452,9 +4483,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                '.$typeSupplierQryGeneral.',
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedINMatching ON InvoiceMatchedINMatching.companySystemID = erp_generalledger.companySystemID
+                                 AND InvoiceMatchedINMatching.'.$typeSupplierQryGeneral.' = '.$typeGeneralQry.'
                                 AND InvoiceMatchedINMatching.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedINMatching.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- invoice matched in a payment voucher document
@@ -4467,7 +4500,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedForpaymentAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedForpaymentAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt,
+                                '.$typeSupplierQry.'
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
@@ -4480,9 +4514,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                '.$typeSupplierQryGeneral.',
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedForpayment ON InvoiceMatchedForpayment.companySystemID = erp_generalledger.companySystemID
+                                 AND InvoiceMatchedForpayment.'.$typeSupplierQryGeneral.' = '.$typeGeneralQry.'
                                 AND InvoiceMatchedForpayment.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedForpayment.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- matched debit note
@@ -4623,6 +4659,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         if($type == 1) {
             $typeSupplierQry = "erp_paysupplierinvoicedetail.supplierCodeSystem";
+            $typeSupplierQryGeneral = "supplierCodeSystem";
             $typeGeneralQry = "erp_generalledger.supplierCodeSystem";
             $typeQry = "LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem";
             $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
@@ -4636,6 +4673,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $typeAgeCreditPeriod = "finalAgingDetail.creditPeriod";
         } else {
             $typeSupplierQry = "erp_paysupplierinvoicedetail.employeeSystemID";
+            $typeSupplierQryGeneral = "employeeSystemID";
             $typeGeneralQry = "erp_generalledger.employeeSystemID";
             $typeQry = "LEFT JOIN employees ON employees.employeeSystemID = MAINQUERY.employeeSystemID";
             $typeSupEmpQry1 = "finalAgingDetail.supplierCodeSystem";
@@ -4814,7 +4852,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedINMatchingAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedINMatchingAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt,
+                                 '.$typeSupplierQry.'
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
@@ -4827,9 +4866,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                '.$typeSupplierQryGeneral.',
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedINMatching ON InvoiceMatchedINMatching.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedINMatching.'.$typeSupplierQryGeneral.' = '.$typeGeneralQry.'
                                 AND InvoiceMatchedINMatching.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedINMatching.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- invoice matched in a payment voucher document
@@ -4842,7 +4883,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_paysupplierinvoicedetail.bookingInvDocCode,
                                 sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedForpaymentAmountTrans,
                                 sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedForpaymentAmountLocal,
-                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt,
+                                '.$typeSupplierQry.'
                             FROM
                                 erp_paysupplierinvoicedetail
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
@@ -4855,9 +4897,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
                             GROUP BY
                                 companySystemID,
+                                '.$typeSupplierQryGeneral.',
                                 addedDocumentSystemID,
                                 bookingInvSystemCode
                                 ) AS InvoiceMatchedForpayment ON InvoiceMatchedForpayment.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedForpayment.'.$typeSupplierQryGeneral.' = '.$typeGeneralQry.'
                                 AND InvoiceMatchedForpayment.addedDocumentSystemID = erp_generalledger.documentSystemID
                                 AND InvoiceMatchedForpayment.bookingInvSystemCode = erp_generalledger.documentSystemCode
                                 LEFT JOIN (-- matched debit note
