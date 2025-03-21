@@ -86,7 +86,8 @@ class TenantEnforce
             'api/v1/approveDocumentBulk',
             'api/v1/supplier_invoice_create',
             'api/v1/journal-voucher',
-            'api/v1/sentCustomerLedger'
+            'api/v1/sentCustomerLedger',
+            'api/v1/uploadBankStatement'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {

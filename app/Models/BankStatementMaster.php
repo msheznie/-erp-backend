@@ -6,11 +6,11 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="BankReconciliationTemplateMapping",
+ *      schema="BankStatementMaster",
  *      required={""},
  *      @OA\Property(
- *          property="templateId",
- *          description="templateId",
+ *          property="statementId",
+ *          description="statementId",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
@@ -48,32 +48,28 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @OA\Property(
- *          property="bankName",
- *          description="bankName",
+ *          property="transactionCount",
+ *          description="transactionCount",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="bankAccount",
- *          description="bankAccount",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @OA\Property(
  *          property="statementStartDate",
  *          description="statementStartDate",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="string",
+ *          format="date"
  *      ),
  *      @OA\Property(
  *          property="statementEndDate",
  *          description="statementEndDate",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="string",
+ *          format="date"
  *      ),
  *      @OA\Property(
  *          property="bankReconciliationMonth",
@@ -87,74 +83,44 @@ use Eloquent as Model;
  *          description="bankStatementDate",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="string",
+ *          format="date"
  *      ),
  *      @OA\Property(
  *          property="openingBalance",
  *          description="openingBalance",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @OA\Property(
  *          property="endingBalance",
  *          description="endingBalance",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @OA\Property(
- *          property="firstLine",
- *          description="firstLine",
+ *          property="documentStatus",
+ *          description="documentStatus",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="headerLine",
- *          description="headerLine",
+ *          property="importStatus",
+ *          description="importStatus",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="transactionNumber",
- *          description="transactionNumber",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="transactionDate",
- *          description="transactionDate",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="debit",
- *          description="debit",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="credit",
- *          description="credit",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="description",
- *          description="description",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="category",
- *          description="category",
+ *          property="importError",
+ *          description="importError",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="string"
@@ -177,37 +143,31 @@ use Eloquent as Model;
  *      )
  * )
  */
-class BankReconciliationTemplateMapping extends Model
+class BankStatementMaster extends Model
 {
 
-    public $table = 'bank_reconciliation_template_mapping';
-    
+    public $table = 'bank_statement_master';
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
 
-    protected $primaryKey = 'templateId';
+    protected $primaryKey = 'statementId';
 
     public $fillable = [
         'bankAccountAutoID',
         'bankmasterAutoID',
         'companySystemID',
         'companyID',
-        'bankName',
-        'bankAccount',
+        'transactionCount',
         'statementStartDate',
         'statementEndDate',
         'bankReconciliationMonth',
         'bankStatementDate',
         'openingBalance',
         'endingBalance',
-        'firstLine',
-        'headerLine',
-        'transactionNumber',
-        'transactionDate',
-        'debit',
-        'credit',
-        'description',
-        'category',
+        'documentStatus',
+        'importStatus',
+        'importError',
         'createdDateTime',
         'timeStamp'
     ];
@@ -218,27 +178,21 @@ class BankReconciliationTemplateMapping extends Model
      * @var array
      */
     protected $casts = [
-        'templateId' => 'integer',
+        'statementId' => 'integer',
         'bankAccountAutoID' => 'integer',
         'bankmasterAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
-        'bankName' => 'string',
-        'bankAccount' => 'string',
-        'statementStartDate' => 'string',
-        'statementEndDate' => 'string',
+        'transactionCount' => 'integer',
+        'statementStartDate' => 'date',
+        'statementEndDate' => 'date',
         'bankReconciliationMonth' => 'string',
-        'bankStatementDate' => 'string',
-        'openingBalance' => 'string',
-        'endingBalance' => 'string',
-        'firstLine' => 'string',
-        'headerLine' => 'string',
-        'transactionNumber' => 'string',
-        'transactionDate' => 'string',
-        'debit' => 'string',
-        'credit' => 'string',
-        'description' => 'string',
-        'category' => 'string',
+        'bankStatementDate' => 'date',
+        'openingBalance' => 'float',
+        'endingBalance' => 'float',
+        'documentStatus' => 'integer',
+        'importStatus' => 'integer',
+        'importError' => 'string',
         'createdDateTime' => 'datetime',
         'timeStamp' => 'datetime'
     ];
@@ -251,10 +205,6 @@ class BankReconciliationTemplateMapping extends Model
     public static $rules = [
         
     ];
-
-    public function bankAccount(){
-        return $this->belongsTo('App\Models\BankAccount','bankAccountAutoID','bankAccountAutoID');
-    }
 
     
 }

@@ -151,7 +151,7 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
             ->value('bankmasterAutoID');
 
         $assignToAccounts = $input['assignToAccounts'];
-        if($input['assignToAccounts']){
+        if(isset($input['assignToAccounts'])){
             unset($input['assignToAccounts']);
         }
         if($assignToAccounts == 1) {
