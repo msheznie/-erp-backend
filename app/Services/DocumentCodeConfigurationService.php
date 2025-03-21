@@ -33,8 +33,10 @@ class DocumentCodeConfigurationService
             return ['status' => false,'message'=>'Document Code Master not found'];
         }
 
+        $documentSystemID = $documentCodeMaster->document_code_transactions->document_system_id;
+
         $sequenceID = $documentCodeMaster->numbering_sequence_id;
-        $formats = $this->getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID ,$isPreview = 0);
+        $formats = $this->getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID ,$isPreview = 0, $documentSystemID);
 
 
         $docCodeSetupCommon = DocCodeSetupCommon::with([
@@ -168,7 +170,7 @@ class DocumentCodeConfigurationService
         
     }
 
-    function getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID , $isPreview) {
+    function getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID , $isPreview, $documentSystemID) {
 
         $company = Company::with('country')->find($companyID);
 
@@ -183,7 +185,7 @@ class DocumentCodeConfigurationService
             ->where('isActive', -1)
             ->first();
     
-        if($documentCodeMasterID==1 || $documentCodeMasterID==2){
+        if($documentSystemID==1 || $documentSystemID==2){
             $currentDate = now();
             $YYYY = Carbon::parse($currentDate)->format('Y'); // format6
             $YY = Carbon::parse($currentDate)->format('y'); // format7

@@ -332,11 +332,12 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
         $lastSerial = $documentCodeMaster->last_serial;
         $serialLength = $documentCodeMaster->serial_length;
         $documentSerial = str_pad($lastSerial, $serialLength, '0', STR_PAD_LEFT);
+        $documentSystemID = $documentCodeMaster->document_code_transactions->document_system_id;
 
         if($docCodeSetupTypeBased){
             foreach ($docCodeSetupTypeBased as $key => $value) {
                 // Get the formats array from the service function
-                $formats = $this->documentCodeConfigurationService->getDocumentCodeSetupValues($company_id, 'SEG', $master_id, $isPreview = 1);
+                $formats = $this->documentCodeConfigurationService->getDocumentCodeSetupValues($company_id, 'SEG', $master_id, $isPreview = 1, $documentSystemID);
             
                 $formatsArray = [];
             
