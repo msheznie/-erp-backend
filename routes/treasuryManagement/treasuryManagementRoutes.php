@@ -69,6 +69,7 @@ Route::group([], function() {
 
     Route::resource('cheque_registers', 'ChequeRegisterAPIController');
     Route::resource('cheque_register_details', 'ChequeRegisterDetailAPIController');
+    Route::resource('cheque_update_reasons', 'ChequeUpdateReasonAPIController');
 
 });
 

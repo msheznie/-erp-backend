@@ -192,5 +192,10 @@ class ChequeRegisterDetail extends Model
         return $this->belongsTo('App\Models\Employee', 'updated_by', 'employeeSystemID');
     }
 
+    public function latestChequeUpdateReason()
+    {
+        return $this->hasOne('App\Models\ChequeUpdateReason', 'document_id', 'document_id')->latest();
+    }    
+
 
 }
