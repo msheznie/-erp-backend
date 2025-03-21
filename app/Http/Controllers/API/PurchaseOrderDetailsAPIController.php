@@ -1539,18 +1539,25 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $poID = $input['purchaseOrderID'];
 
         $details = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as poQty,unitOfMeasure,purchaseOrderMasterID,purchaseOrderDetailsID,serviceLineCode,itemCode,companySystemID,companyID,serviceLineCode,itemPrimaryCode,itemDescription,itemFinanceCategoryID,itemFinanceCategorySubID,financeGLcodebBSSystemID,financeGLcodebBS,financeGLcodePLSystemID,financeGLcodePL,includePLForGRVYN,supplierPartNumber,unitOfMeasure,unitCost,discountPercentage,discountAmount,netAmount,comment,supplierDefaultCurrencyID,supplierDefaultER,supplierItemCurrencyID,foreignToLocalER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER,addonDistCost,GRVcostPerUnitLocalCur,GRVcostPerUnitSupDefaultCur,GRVcostPerUnitSupTransCur,GRVcostPerUnitComRptCur,VATPercentage,VATAmount,VATAmountLocal,VATAmountRpt,receivedQty,markupPercentage,markupTransactionAmount,markupLocalAmount,markupReportingAmount, vatMasterCategoryID,vatSubCategoryID, exempt_vat_portion'))
-            ->with(['unit' => function ($query) {
-            }])
+            ->with([
+                'unit',
+                'grv_details' => function ($query) {
+                    $query->select('purchaseOrderDetailsID', DB::raw('SUM(netAmount) as total_net_amount'))
+                        ->groupBy('purchaseOrderDetailsID');
+                }
+            ])
             ->where('purchaseOrderMasterID', $poID)
             ->where('GRVSelectedYN', 0)
             ->where('goodsRecievedYN', '<>', 2)
             ->where('manuallyClosed', 0)
             ->get();
 
+
         foreach ($details as $detail) {
+            $currentGrvAmount = 0;
             if($detail['receivedQty'] > 0){
-                $currentGrvAmount = sprintf('%.6f', ($detail['netAmount'] / $detail['poQty']) * $detail['receivedQty']);
-                $balanceGrvAmount = sprintf('%.6f', ($detail['netAmount'] - $currentGrvAmount));
+                $currentGrvAmount += floatval(sprintf('%.6f', optional($detail->grv_details->first())->total_net_amount ?? 0));
+                $balanceGrvAmount = floatval(sprintf('%.6f', ($detail['netAmount'] - $currentGrvAmount)));
 
                 $balanceQty = sprintf('%.6f', ($detail['poQty'] - $detail['receivedQty']));
                 $detail['grvAmount'] = $balanceGrvAmount;

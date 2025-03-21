@@ -1133,7 +1133,7 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['unitCost'] = $new['GRVcostPerUnitSupTransCur'];
                         $GRVDetail_arr['discountPercentage'] = $new['discountPercentage'];
                         $GRVDetail_arr['discountAmount'] = $new['discountAmount'];
-                        $GRVDetail_arr['netAmount'] = $totalNetcost;
+                        $GRVDetail_arr['netAmount'] = $new['grvAmount'];
                         $GRVDetail_arr['comment'] = $new['comment'];
                         $GRVDetail_arr['supplierDefaultCurrencyID'] = $new['supplierDefaultCurrencyID'];
                         $GRVDetail_arr['supplierDefaultER'] = $new['supplierDefaultER'];
