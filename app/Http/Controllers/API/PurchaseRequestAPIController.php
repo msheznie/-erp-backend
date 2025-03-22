@@ -90,6 +90,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\GenerateMaterialRequestItem;
 use App\Models\MaterielRequestDetails;
 use App\helper\CreateExcel;
+use App\Models\DocCodeSetupCommon;
 use App\Models\DocumentCodeMaster;
 use App\Models\DocumentCodeTransaction;
 use App\Repositories\PurchaseRequestDetailsRepository;
@@ -1971,8 +1972,48 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
         if($input['serviceLineSystemID'] != $purchaseRequest->serviceLineSystemID){
-            $code = str_pad($purchaseRequest->serialNumber, 6, '0', STR_PAD_LEFT);
-            $input['purchaseRequestCode'] = $purchaseRequest->companyID . '\\' . $purchaseRequest->departmentID . '\\' . $input['serviceLineCode'] . '\\' . $purchaseRequest->documentID . $code;
+
+            $documentCodeTransaction = DocumentCodeTransaction::where('document_system_id',$purchaseRequest->documentSystemID)
+            ->where('company_id', $purchaseRequest->companySystemID)
+            ->first();
+            $isSegmentFormat =0;
+            if ($documentCodeTransaction) {
+                $transactionID = $documentCodeTransaction->id;
+                $documentCodeMaster = DocumentCodeMaster::where('document_transaction_id', $transactionID)
+                    ->where('company_id', $purchaseRequest->companySystemID)
+                    ->first();
+
+                $codeSetup = DocCodeSetupCommon::where('document_transaction_id', $transactionID)
+                                    ->where('company_id', $purchaseRequest->companySystemID)
+                                    ->first();
+                if ($codeSetup) {
+                    // Iterate over all the 'format' fields dynamically
+                    for ($i = 1; $i <= 12; $i++) {
+                        $field = 'format' . $i;
+                        if ($codeSetup->$field == 3) {
+                            $isSegmentFormat = 1;
+                            break; // Stop checking after the first match
+                        }
+                    }
+                }
+                
+                if($isSegmentFormat == 1){
+                    if ($documentCodeMaster) {
+                        $documentCodeMasterID = $documentCodeMaster->id;
+                        $purchaseRequestCode = $this->documentCodeConfigurationService->getDocumentCodeConfiguration($purchaseRequest->documentSystemID, $purchaseRequest->companySystemID, $input, 0, $documentCodeMasterID, $input['serviceLineCode'], $purchaseRequest->serialNumber);
+                    }
+                }
+
+            }
+            
+            if($isSegmentFormat == 1){
+                if($purchaseRequestCode && $purchaseRequestCode['status'] == true){
+                    $input['purchaseRequestCode'] = $purchaseRequestCode['documentCode'];
+                } else {
+                    $code = str_pad($purchaseRequest->serialNumber, 6, '0', STR_PAD_LEFT);
+                    $input['purchaseRequestCode'] = $purchaseRequest->companyID . '\\' . $purchaseRequest->departmentID . '\\' . $input['serviceLineCode'] . '\\' . $purchaseRequest->documentID . $code;
+                }
+            }
         }
 
         if (!empty($input['buyerEmpSystemID'])) {

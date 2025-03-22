@@ -15,7 +15,7 @@ use Carbon\Carbon;
 
 class DocumentCodeConfigurationService
 {
-    public function getDocumentCodeConfiguration($documentSystemID,$companyID,$input,$lastSerialNumber,$documentCodeMasterID,$segmentCode=null)
+    public function getDocumentCodeConfiguration($documentSystemID,$companyID,$input,$lastSerialNumber,$documentCodeMasterID,$segmentCode=null, $serialNumber=null)
 
     {
 
@@ -78,7 +78,12 @@ class DocumentCodeConfigurationService
                         }
                     }
         
-                    $serialCode = str_pad($docLastSerialNumber, $documentCodeMaster->serial_length, '0', STR_PAD_LEFT);
+                    if(isset($serialNumber) && $serialNumber != null){
+                        $serialCode = str_pad($serialNumber, $documentCodeMaster->serial_length, '0', STR_PAD_LEFT);
+                    } else {
+                        $serialCode = str_pad($docLastSerialNumber, $documentCodeMaster->serial_length, '0', STR_PAD_LEFT);
+                    }
+
                     $finalCode = $this->generateFinalCode($docCodeSetupCommon,$formats,$serialCode,'common');
 
                     return ['status' => true,'message'=>'Document Code generated','documentCode'=>$finalCode,'docLastSerialNumber'=>$docLastSerialNumber];
