@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\DocCodeSetupCommon;
 use App\Models\DocCodeSetupTypeBased;
+use App\Models\DocumentCodePrefix;
 use App\Models\DocumentCodeTransaction;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
@@ -307,9 +308,13 @@ class DocumentCodeMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $module_id = $input['module_id'];
+        $company_id = $input['companyId'];
 
-        $documentCodeMasters = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
+        $documentCodeMasters = DocumentCodeMaster::with(['document_code_transactions' => function ($query) use ($company_id) {
+                                                        $query->where('company_id', $company_id);
+                                                    }, 'doc_code_numbering_sequences'])
                                                     ->where('module_id', $module_id)
+                                                    ->where('company_id', $company_id)
                                                     ->get();
 
         
@@ -318,6 +323,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
                 switch ($documentCodeMaster->document_code_transactions->document_system_id) {
                     case 1:
                             $lastSerial = PurchaseRequest::where('documentSystemID', $documentCodeMaster->document_code_transactions->document_system_id)
+                            ->where('companySystemID', $company_id)
                             ->latest('serialNumber')
                             ->first()
                             ->serialNumber;
@@ -328,6 +334,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
                         break;
                     case 2:
                         $lastSerial = ProcumentOrder::where('documentSystemID', $documentCodeMaster->document_code_transactions->document_system_id)
+                        ->where('companySystemID', $company_id)
                         ->latest('serialNumber')
                         ->first()
                         ->serialNumber;
@@ -350,9 +357,13 @@ class DocumentCodeMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
+        $company_id = $input['company_id'];
 
-        $documentCodeMasters = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
-                                                    ->where('id', $id)
+        $documentCodeMasters = DocumentCodeMaster::with([
+                                                    'document_code_transactions' => function ($query) use ($company_id) {
+                                                        $query->where('company_id', $company_id);
+                                                    }])->where('id', $id)
+                                                    ->where('company_id', $company_id)
                                                     ->first();
         $data = [
             'isGettingEdited' => 1,
@@ -371,7 +382,12 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $input = $request->all();
         $id = $input['id'];
 
-        $documentCodeMasters = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
+        $documentCodeMasters = DocumentCodeMaster::with([
+                                                        'document_code_transactions' => function ($query) use ($input) {
+                                                            $query->where('company_id', $input['company_id']);
+                                                        },
+                                                        'doc_code_numbering_sequences'
+                                                    ])
                                                     ->where('id', $id)
                                                     ->first();
         if($documentCodeMasters){
@@ -385,9 +401,11 @@ class DocumentCodeMasterAPIController extends AppBaseController
     public function isGettingCodeConfigured(Request $request)
     {
         $input = $request->all();
-        $id = $input['id'];
+        $documentSystemID = $input['documentSystemID'];
+        $company_id = $input['company_id'];
 
-        $isGettingEdited = DocumentCodeTransaction::where('id', $id)
+        $isGettingEdited = DocumentCodeTransaction::where('document_system_id', $documentSystemID)
+                                                    ->where('company_id', $company_id)
                                                     ->first();
 
         if ($isGettingEdited && $isGettingEdited->isGettingEdited == 1) {
@@ -545,6 +563,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
                             if (!in_array(6, $flattenedFormats) && !in_array(7, $flattenedFormats)) {
                                 return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
                             }
+                            $this->updateDocumentCodePrefix($typeBased, $formats,1);
                             DocCodeSetupTypeBased::where('id', $typeBased['id'])->update($typeBased);
                             
                         }
@@ -582,6 +601,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
                             if (!in_array(6, $flattenedFormats) && !in_array(7, $flattenedFormats)) {
                                 return $this->sendError('Please select a valid financial year in either YYYY or YY format for Finance Year Based serialization.',400);
                             }
+                            $this->updateDocumentCodePrefix($common, $formats,0);
                             DocCodeSetupCommon::where('id', $common['id'])->update($common);
                             
                         }
@@ -604,6 +624,17 @@ class DocumentCodeMasterAPIController extends AppBaseController
                                                                                         'format10',
                                                                                         'format11',
                                                                                         'format12',));
+                            
+                            // Extract format values (format1 to format12)
+                            $formats = [];
+                            for ($i = 1; $i <= 12; $i++) {
+                                $key = "format$i";
+                                if (isset($common[$key])) {
+                                    $formats[] = (array) $common[$key];
+                                }
+                            }
+
+                            $this->updateDocumentCodePrefix($common, $formats,0);
                             DocCodeSetupCommon::where('id', $common['id'])->update($common);
                         }
                     }
@@ -624,6 +655,18 @@ class DocumentCodeMasterAPIController extends AppBaseController
                                                                                                 'format10',
                                                                                                 'format11',
                                                                                                 'format12',));
+
+                            // Extract format values (format1 to format12)
+                            $formats = [];
+                            for ($i = 1; $i <= 12; $i++) {
+                                $key = "format$i";
+                                if (isset($typeBased[$key])) {
+                                    $formats[] = (array) $typeBased[$key];
+                                }
+                            }
+
+                            $this->updateDocumentCodePrefix($typeBased, $formats,1);
+
                             DocCodeSetupTypeBased::where('id', $typeBased['id'])->update($typeBased);
                         }
                     }
@@ -637,6 +680,83 @@ class DocumentCodeMasterAPIController extends AppBaseController
             return $this->sendError('Error occurred in document code configuration',500);
         }
 
+    }
+
+    private function updateDocumentCodePrefix($setup, $formats, $setupBased)
+    {
+        foreach ($formats as $key => $format) {
+            if (in_array(5, $format)) {
+                // Get the setup ID and format number
+
+                $setupId = $setup['id'];
+                $company_id = $setup['company_id'];
+                $formatNumber = $key + 1; 
+                $formatColumn = 'format' . $formatNumber;
+
+                // Check if DocumentCodePrefix already exists for this setup and format
+                if($setupBased == 1){
+                    $documentCodePrefix = DocumentCodePrefix::where('type_based_id', $setupId)
+                    ->where('format', $formatColumn)
+                    ->first();
+
+                    // If it doesn't exist, create a new one
+                    if (!$documentCodePrefix) {
+                        $description = $setup['type_id'] == 1 ? 'D-PO' : 'R-PO';
+                        $documentCodePrefix = DocumentCodePrefix::create([
+                            'type_based_id' => $setupId,
+                            'format' => $formatColumn,
+                            'company_id' => $company_id,
+                            'description' => $description,
+                        ]);
+                    }
+
+                } else {
+
+                    $documentCodePrefix = DocumentCodePrefix::where('common_id', $setupId)
+                    ->where('format', $formatColumn)
+                    ->first();
+
+                    // If it doesn't exist, create a new one
+                    if (!$documentCodePrefix) {
+                        $document_transaction_id =$setup['document_transaction_id'];
+                        $docCodeTransaction = DocumentCodeTransaction::where('id', $document_transaction_id)->first();
+                        $description = $docCodeTransaction->master_prefix;
+                        $documentCodePrefix = DocumentCodePrefix::create([
+                            'common_id' => $setupId,
+                            'format' => $formatColumn,
+                            'company_id' => $company_id,
+                            'description' => $description,
+                        ]);
+                    }
+                }
+
+
+
+            } else {
+                $formatNumber = $key + 1; 
+                $formatColumn = 'format' . $formatNumber;
+                // Check if DocumentCodePrefix exists for this setup but not for this format
+                if($setupBased == 1){
+                    $documentCodePrefix = DocumentCodePrefix::where('type_based_id', $setup['id'])
+                    ->where('format', $formatColumn)
+                    ->first();
+
+                    // If it exists, delete it
+                    if ($documentCodePrefix) {
+                        $documentCodePrefix->delete();
+                    }
+                } else {
+                    $documentCodePrefix = DocumentCodePrefix::where('common_id', $setup['id'])
+                    ->where('format', $formatColumn)
+                    ->first();
+                    // If it exists, delete it
+                    if ($documentCodePrefix) {
+                        $documentCodePrefix->delete();
+                    }
+                }
+
+            }
+        }
     }
 
 }

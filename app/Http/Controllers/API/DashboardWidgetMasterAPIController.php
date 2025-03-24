@@ -430,24 +430,35 @@ END AS sortDashboard')
 
         //Budget Widget
         if(isset($input['slug']) && $input['slug'] == 'budget_widget') {
+
+            $glCategoryType = isset($input['glType']) ? $input['glType'] : '';
+            $categoryBLorPL = isset($input['glType']) && $input['glType'] == 'profit_loss' ? 2 : 1;
+            $companyCurrency = \Helper::companyCurrency($companyID);
             $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
+            $companyFinanceYearId = $currentFinancialYear->companyFinanceYearID;
+
+            $glAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+                                    ->where('catogaryBLorPLID', $categoryBLorPL)
+                                    ->get()->toArray();
 
             if(!$currentFinancialYear) {
-                return $this->sendError('Company finance year not set');
+                return $this->sendError('Company finance period not assigned !!');
             }
 
-            $companyCurrency = \Helper::companyCurrency($companyID);
+            $chartofAccountType = isset($input['glType']) && $input['glType'] == 'profit_loss' ? 
+                        ['PLI', 'PLE'] : ['BSA', 'BSL', 'BSE'];
 
             $actualConsumption = BudgetConsumptionService::getActualConsumption($companyID, 
-                                    $currentFinancialYear->companyFinanceYearID, $glAccount);
+                    $companyFinanceYearId, $glAccount, $glCategoryType, $categoryBLorPL);
                
-            $actual = collect($actualConsumption)->map(function ($value) {
+            $actualData = collect($actualConsumption)->map(function ($value) {
                 return ['amount' => $value['amount']]; })->values();
 
+            $data['glAccounts'] = $glAccounts;
             $data['financialYear'] = $currentFinancialYear;
             $data['reportingCurrency'] = $companyCurrency->reportingcurrency->CurrencyCode;
             $data['decimalPlaces'] = $companyCurrency->reportingcurrency->DecimalPlaces;
-            $data['actual'] = $actual;
+            $data['actual'] = $actualData;
             $data['budget'] = Budjetdetails::with(['budget_master.segment_by',
                 'budget_master.company'])
                ->whereHas('budget_master.company', function($query) use ($companyID) {
@@ -459,14 +470,13 @@ END AS sortDashboard')
                 })->whereHas('budget_master',function ($query) {
                     $query->where('approvedYN', -1);
                 })
-                ->whereIn('glCodeType', ['PLI', 'PLE'])
-                ->selectRaw('SUM(budjetAmtRpt) as amount, month')
+                ->whereIn('glCodeType', $chartofAccountType)
+                ->selectRaw('SUM(budjetAmtRpt) * -1 as amount, month')
                 ->when(!empty($glAccount), function ($query) use ($glAccount) {
                     $query->whereIn('erp_budjetdetails.chartOfAccountID', $glAccount);
                 })
                 ->groupBy('month')
                 ->get();
-
         }
 
         switch ($id){

@@ -29,7 +29,7 @@ class Header
     private function validateHeaderData($data)
     {
 
-        $validator = Validator::make([
+        $validator2 = Validator::make([
             'index_0' => $data[0],
             'index_1' => $data[1],
             'index_2' => $data[2],
@@ -40,8 +40,8 @@ class Header
             'index_7' => $data[7],
         ], [
             'index_0' => 'required|string|min:2',
-            'index_1' => 'required|string|size:15',
-            'index_2' => 'required|string|size:13',
+            'index_1' => 'required|string|max:15',
+            'index_2' => 'required|string|regex:/^\d+$/|max:13',
             'index_3' => 'required|in:MXD',
             'index_4' => 'required|in:1,M',
             'index_6' => 'required|date_format:d/m/Y',
@@ -52,10 +52,11 @@ class Header
             'index_0.min' => 'The Section index must be at least 2 characters.',
             'index_1.required' => 'The Company CR index is required.',
             'index_1.regex' => 'The Company CR index must match the format CRxxxxxxxxxxxxx (where x is a digit).',
-            'index_1.size' => 'The Company CR must be 15 characters.',
+            'index_1.max' => 'The Company CR cannot be more than 15 characters.',
             'index_2.required' => 'The Debit Account No index is required.',
             'index_2.numeric' => 'The Debit Account No must be a numeric value.',
             'index_2.size' => 'The Debit Account must be 13 characters.',
+            'index_2.regex' => 'The debit account number cannot contain special characters,letters or spaces.',
             'index_2.max' => 'The Debit Account cannot be more than 13 digits.',
             'index_3.required' => 'The Transfer method is required.',
             'index_3.in' => 'The Transfer method must always be MXD.',
@@ -69,9 +70,9 @@ class Header
         ]);
 
 
-        if ($validator->fails()) {
+        if ($validator2->fails()) {
             // Return validation errors as an array
-            return $validator->errors()->toArray();
+            return $validator2->errors()->toArray();
         }
 
     }

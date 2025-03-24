@@ -12,6 +12,7 @@ use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentCodeMaster;
+use App\Models\DocumentCodePrefix;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -313,31 +314,54 @@ class DocCodeSetupCommonAPIController extends AppBaseController
         $company_id = $input['company_id'];
 
 
-        $docCodeSetupCommon = DocCodeSetupCommon::with('document_code_transactions')->where('master_id', $master_id)->get();
+        $docCodeSetupCommon = DocCodeSetupCommon::with([
+                                                        'document_code_transactions' => function ($query) use ($input) {
+                                                            $query->where('company_id', $input['company_id']);
+                                                        }])
+                                                        ->where('master_id', $master_id)
+                                                        ->where('company_id', $company_id)
+                                                        ->get();
 
-        $documentCodeMaster = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
+        $documentCodeMaster = DocumentCodeMaster::with([
+                                                        'document_code_transactions' => function ($query) use ($company_id) {
+                                                            $query->where('company_id', $company_id);
+                                                        },
+                                                        'doc_code_numbering_sequences'
+                                                    ])
                                                     ->where('id', $master_id)
+                                                    ->where('company_id', $company_id)
                                                     ->first();
         $lastSerial = $documentCodeMaster->last_serial;
         $serialLength = $documentCodeMaster->serial_length;
         $documentSerial = str_pad($lastSerial, $serialLength, '0', STR_PAD_LEFT);
+        $documentSystemID = $documentCodeMaster->document_code_transactions->document_system_id;
 
         if($docCodeSetupCommon){
             foreach ($docCodeSetupCommon as $key => $value) {
-
                 // Get the formats array from the service function
-                $formats = $this->documentCodeConfigurationService->getDocumentCodeSetupValues($company_id, 'SEG', $master_id, $isPreview = 1);
-
-                // Add the prefix to the formats array
-                $formats[5] = $value->document_code_transactions->master_prefix;//format5
+                $formats = $this->documentCodeConfigurationService->getDocumentCodeSetupValues($company_id, 'SEG', $master_id, $isPreview = 1, $documentSystemID);
 
                 $formatsArray = [];
+
                 for ($i = 1; $i <= 12; $i++) {
                     $format = 'format' . $i;
+                    if ($value->$format == 5) {
+                        $documentCodePrefix = DocumentCodePrefix::where('common_id', $value->id)
+                            ->where('format', $format)
+                            ->first();
+
+                            if ($documentCodePrefix) {
+                            $formats[$value->$format] = $documentCodePrefix->description;
+                        } else {
+                            $formats[$value->$format] = $value->document_code_transactions->master_prefix;
+                        }
+                    }
+            
                     $formatsArray[] = $formats[$value->$format] ?? '';
                 }
+            
+                // Generate codePreview
                 $docCodeSetupCommon[$key]->codePreview = implode('', $formatsArray) . $documentSerial;
-
             }
         }
 

@@ -210,15 +210,18 @@ Route::group([], function() {
     Route::resource('doc_code_numbering_sequences', 'DocCodeNumberingSequenceAPIController');
     Route::resource('doc_code_setup_type_baseds', 'DocCodeSetupTypeBasedAPIController');
     Route::resource('doc_code_setup_commons', 'DocCodeSetupCommonAPIController');
+    Route::resource('document_code_prefixes', 'DocumentCodePrefixAPIController');
 
     Route::get('getDocumentCodeMasters', 'DocumentCodeMasterAPIController@getDocumentCodeMasters')->name("Get document code masters");
     Route::get('getDocumentCodemaster', 'DocumentCodeMasterAPIController@getDocumentCodemaster')->name("Get document code master");
+    Route::get('getDocumentCodePrefix', 'DocumentCodePrefixAPIController@getDocumentCodePrefix')->name("Get document code prefix");
     // Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->name("Update document code Transaction");
     Route::get('isGettingCodeConfigured', 'DocumentCodeMasterAPIController@isGettingCodeConfigured')->name("Is getting code configured");
     Route::get('getDocumentCodeSetupTypeBased', 'DocCodeSetupTypeBasedAPIController@getDocumentCodeSetupTypeBased')->name("Get document code setup type based");
     Route::post('updateTypeBasedFormat', 'DocCodeSetupTypeBasedAPIController@updateTypeBasedFormat')->name("Update type based format");
     Route::get('getDocumentCodeSetupCommon', 'DocCodeSetupCommonAPIController@getDocumentCodeSetupCommon')->name("Get document code setup common");
     Route::post('updateCommonFormat', 'DocCodeSetupCommonAPIController@updateCommonFormat')->name("Update common format");
+    Route::post('updateDocumentCodePrefix', 'DocumentCodePrefixAPIController@updateDocumentCodePrefix')->name("Update docuemnt code prefix");
     Route::post('updateDocumentCodeMaster', 'DocumentCodeMasterAPIController@updateDocumentCodeMaster')->name("Update document code master");
     Route::post('updateDocumentCode', 'DocumentCodeMasterAPIController@updateDocumentCode')->name("Update document code");
 });

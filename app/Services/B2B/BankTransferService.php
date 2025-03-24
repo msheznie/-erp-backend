@@ -15,64 +15,62 @@ class BankTransferService
 {
     public static function getBankTransferType($transferDetails)
     {
-       if(!isset($transferDetails))
-           throw new \Exception("Trasnfer details not found");
+        if (!isset($transferDetails))
+            throw new \Exception("Trasnfer details not found");
 
-       if(!isset($transferDetails['from']))
-           throw new \Exception("From bank details not found");
+        if (!isset($transferDetails['from']))
+            throw new \Exception("From bank details not found");
 
-       if(!isset($transferDetails['to']))
+        if (!isset($transferDetails['to']))
             throw new \Exception("To bank details not found");
 
 
-       if($transferDetails['from']['bankID'] == $transferDetails['to']['bankID'])
-       {
-           return "TRF";
-       }
+        if ($transferDetails['from']['bankID'] == $transferDetails['to']['bankID']) {
+            return "TRF";
+        }
 
     }
 
 
-    public function generateBatchNo($companyID,$documentCode = null,$serialNo = 0)
+    public function generateBatchNo($companyID, $documentCode = null, $documentDate, $field, $bankTransferID)
     {
-
-        if(!isset($companyID))
-            throw new \Exception("Company ID not found");
-
-
-        $company = Company::find($companyID,['companyShortCode']);
-
-        $yearAndDocCode = explode($company->companyShortCode,$documentCode)[1] ?? null;
-
-        if(!isset($yearAndDocCode))
+        if (!isset($bankTransferID))
             return new \Exception("Cannot generate Doc Code");
 
-        if(isset($serialNo) && $serialNo > 0)
-        {
-            $serialNo;
+
+        $parts = explode('\\', $documentCode);
+
+        $latest = PaymentBankTransfer::find($bankTransferID);
+        if ($field == "header") {
+            if (!is_null($latest->batchReference)) {
+                $array = explode('\\', $latest->batchReference);
+                $nextNumber = !is_null($latest->batchReference) ? end($array) + 1 : 1;
+            } else {
+                $nextNumber = 1;
+            }
+
+        } else {
+
+            if (!is_null($latest->batchReferencePV)) {
+                $array = explode('\\', $latest->batchReferencePV);
+                $nextNumber = !is_null($latest->batchReferencePV) ? end($array) + 1 : 1;
+            } else {
+                $nextNumber = 1;
+            }
+
         }
-
-        $code = $yearAndDocCode.'/'.$serialNo;
-
-        $formatted = str_replace('/', '\\', $code);
-
-        $parts = explode('\\', $formatted);
-//        $lastPart = str_pad(end($parts), 3, '0', STR_PAD_LEFT);
-        $lastPart = mt_rand(1,999);
-        $parts[key($parts)] = $lastPart;
-
-        $output = ltrim(implode('\\', $parts), '\\');
+        $lastPart = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        $output = Carbon::make($documentDate)->year . '\\' . end($parts) . '\\' . $lastPart;
 
         return $output;
     }
 
-    public function updateStatus($bankTransferID,$status)
+    public function updateStatus($bankTransferID, $status)
     {
         $bankTransfer = PaymentBankTransfer::find($bankTransferID);
 
         $bankTransfer->submittedDate = Carbon::now();
-        switch ($status)
-        {
+        switch ($status) {
             case "success" :
                 $bankTransfer->submittedStatus = 1;
                 break;
@@ -88,7 +86,6 @@ class BankTransferService
 
 
     }
-
 
 
 }

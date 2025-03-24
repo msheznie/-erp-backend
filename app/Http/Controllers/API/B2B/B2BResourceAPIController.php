@@ -11,6 +11,7 @@ use App\Models\BankMemoSupplier;
 use App\Models\Company;
 use App\Models\CurrencyMaster;
 use App\Models\PaymentBankTransfer;
+use App\Models\SupplierContactDetails;
 use App\Models\SupplierCurrency;
 use App\Services\B2B\BankTransferService;
 use Carbon\Carbon;
@@ -41,6 +42,12 @@ class B2BResourceAPIController extends AppBaseController
             ->whereHas('config')
             ->exists();
 
+        $paymentBankTransfer = PaymentBankTransfer::find($request->bankTransferID);
+
+        if(isset($paymentBankTransfer) && $paymentBankTransfer->fileType == 1)
+        {
+            return $this->sendError("Cannot generate excel for employee file type",500,[]);
+        }
         if(!$bankMaster)
             return $this->sendError("The vendor file format is not available for the selected bank",500,[]);
 
@@ -67,10 +74,23 @@ class B2BResourceAPIController extends AppBaseController
 
         $bankMaster = BankAccount::find( PaymentBankTransfer::find($request->bankTransferID)->bankAccountAutoID,['accountCurrencyID']);
 
+        $bankTransfer = PaymentBankTransfer::find($request->bankTransferID);
 
+        if (!is_null($bankTransfer->batchReferencePV)) {
+            $array = explode('\\', $bankTransfer->batchReferencePV);
+            $nextNumber = !is_null($bankTransfer->batchReferencePV) ? end($array) + 1 : 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        $lastPart = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        $result = collect($result)->where('pulledToBankTransferYN',-1)->toArray();
         foreach ($result as $rs)
         {
 
+
+            $supplierContactDetailsEmails = SupplierContactDetails::where('supplierID',$rs['payment_voucher']['BPVsupplierID'])->pluck('contactPersonEmail')->implode(';');
             $detailObject = new \App\Classes\B2B\Detail();
             $supplierCurrency = SupplierCurrency::where('supplierCodeSystem',$rs['payment_voucher']['BPVsupplierID'])->where('currencyID',$rs['payment_voucher']['supplierTransCurrencyID'])->first();
             $bankMemoDetails = BankMemoSupplier::where('supplierCodeSystem',$rs['payment_voucher']['BPVsupplierID'])->where('supplierCurrencyID',$supplierCurrency->supplierCurrencyID ?? 0)->get();
@@ -88,8 +108,17 @@ class B2BResourceAPIController extends AppBaseController
             $detailObject->setDealRefNo("");
             $detailObject->setValueDate($rs['payment_voucher']['BPVdate']);
             $detailObject->setDebitAccountNo($bankTransferBankAccountDetails->AccountNo ?? "");
-            $detailObject->setCreditAccountNo($bankMemoDetails->where('bankMemoTypeID',4)->first()['memoDetail'] ?? $bankMemoDetails->where('bankMemoTypeID',8)->first()['memoDetail']);
-            $detailObject->setTransactionReference($this->bankTransferService->generateBatchNo($request->companyID,$rs['documentCode'],$rs['payment_voucher']['serialNo']));
+
+            $creditAccountNo = optional($bankMemoDetails->where('bankMemoTypeID', 8)->first())['memoDetail'];
+
+            if (empty($creditAccountNo)) {
+                $creditAccountNo = optional($bankMemoDetails->where('bankMemoTypeID', 4)->first())['memoDetail'];
+            }
+
+            $documentCode = explode('\\',$rs['documentCode']);
+            $batchNo =Carbon::make($rs['payment_voucher']['BPVdate'])->year.'\\'.end($documentCode).'\\'.$lastPart;
+            $detailObject->setCreditAccountNo($creditAccountNo);
+            $detailObject->setTransactionReference($batchNo);
             $detailObject->setDebitNarrative(substr( $rs['payment_voucher']['BPVNarration'], 0, 35));
             $detailObject->setDebitNarrative2("");
             $detailObject->setCreditNarrative("");
@@ -102,27 +131,16 @@ class B2BResourceAPIController extends AppBaseController
             $address = $bankMemoDetails->where('bankMemoTypeID',3)->first()['memoDetail'];
 
             $formattedAddress = str_replace(',', ' ', $address);
-            $formattedAddress = preg_replace('/[^a-zA-Z0-9\s]/', '', $formattedAddress);
+//            $formattedAddress = preg_replace('/[^a-zA-Z0-9\s]/', '', $formattedAddress);
 
-            $beneficiaryAddressLine2 = "";
-            if (strlen($supplierName) > 35) {
-                $beneficiaryName = substr($supplierName, 0, 35);
-                $beneficiaryAddressLine1 = substr($supplierName, 35);
-            } else {
-                $beneficiaryName = $supplierName;
-                if(strlen($formattedAddress) > 35)
-                {
-                    $beneficiaryAddressLine1 = substr($formattedAddress,0,35);
-                    $beneficiaryAddressLine2 = substr($formattedAddress,35);
-                }else {
-                    $beneficiaryAddressLine1 = $formattedAddress;
-                }
-            }
+            $concatinatedValue = $supplierName.' '.$formattedAddress;
+            $beneficiaryName = substr($supplierName, 0, 35);
+            $beneficiaryAddressLine1 = (strlen($supplierName) > 35) ? str_replace($beneficiaryName,'',$concatinatedValue) : $formattedAddress;
 
 
             $detailObject->setBeneficiaryName($beneficiaryName);
-            $detailObject->setBeneficiaryAddress1($beneficiaryAddressLine1);  // Beneficiary Address 1
-            $detailObject->setBeneficiaryAddress2($beneficiaryAddressLine2);
+            $detailObject->setBeneficiaryAddress1(substr($beneficiaryAddressLine1,0,35));  // Beneficiary Address 1
+            $detailObject->setBeneficiaryAddress2("");
 
             $detailObject->setInstitutionNameAddress1($bankMemoDetails->where('bankMemoTypeID',2)->first()['memoDetail'] ?? "");
             $detailObject->setInstitutionNameAddress2("");
@@ -138,14 +156,17 @@ class B2BResourceAPIController extends AppBaseController
             $detailObject->setChargesType("BEN");
             $detailObject->setSortCodeBeneficiaryBank($bankMemoDetails->where('bankMemoTypeID',14)->first()['memoDetail'] ?? null);
             $detailObject->setIFSC($bankMemoDetails->where('bankMemoTypeID',16)->first()['memoDetail'] ?? null);
-            $detailObject->setFedwire($bankMemoDetails->where('bankMemoTypeID',18)->first()['memoDetail'] ?? null);
-            $detailObject->setEmail($rs['payment_voucher']['supplier']['supEmail'] ?? null);
+            $detailObject->setFedwire($bankMemoDetails->where('bankMemoTypeID',5)->first()['memoDetail'] ?? null);
+            $detailObject->setEmail($supplierContactDetailsEmails ?? null);
             $detailObject->setDispatchMode("E");
             $detailObject->setTransactorCode("B");
             $detailObject->setSupportingDocumentName("");
             $detailObject->setPaymentVoucherCode($rs['documentCode']);
 
             array_push($detailsArray, (array) $detailObject);
+
+            $bankTransfer->batchReferencePV = $batchNo;
+            $bankTransfer->save();
 
         }
 
@@ -161,7 +182,7 @@ class B2BResourceAPIController extends AppBaseController
         $bankTransfer = PaymentBankTransfer::find($request->bankTransferID,['bankAccountAutoID','documentDate','paymentBankTransferID','bankMasterID','narration','bankTransferDocumentCode','serialNumber']);
         $bankAccount = BankAccount::find($bankTransfer->bankAccountAutoID,['AccountNo']);
 
-        $batchNo = $this->bankTransferService->generateBatchNo($request->companyID, $bankTransfer->bankTransferDocumentCode,$bankTransfer->serialNumber);
+        $batchNo = $this->bankTransferService->generateBatchNo($request->companyID, $bankTransfer->bankTransferDocumentCode,$bankTransfer->documentDate,'header',$request->bankTransferID);
         $headerDetails = [
             [
                 "S1",
@@ -169,7 +190,7 @@ class B2BResourceAPIController extends AppBaseController
                 $bankAccount->AccountNo,
                 'MXD',
                 1,
-                $bankTransfer->narration,
+                substr($bankTransfer->narration,0,25),
                 Carbon::parse($bankTransfer->documentDate)->format('d/m/Y'),
                 $batchNo
             ]
@@ -190,8 +211,8 @@ class B2BResourceAPIController extends AppBaseController
                 "currency" => (int) $rs['payment_voucher']['BPVbankCurrency']
             ],
             "to" => [
-                "bankID" => (int) $bankTransfer->bankMasterID,
-                "bankAccountID" => (int) $bankTransfer->bankAccountAutoID,
+                "bankID" => (int) $rs['payment_voucher']['BPVbank'],
+                "bankAccountID" => (int) $rs['payment_voucher']['BPVAccount'],
                 "currency" => ""
             ]
         ];
@@ -206,7 +227,6 @@ class B2BResourceAPIController extends AppBaseController
             ['S3',count($this->details),collect($this->details)->sum('credit_amount')]
         ];
 
-
         $this->vendorFile->setHeaderData($this->headerDetails);
         $this->vendorFile->setDetailsData($this->details);
         $this->vendorFile->setFooterData($footerDetails);
@@ -214,8 +234,8 @@ class B2BResourceAPIController extends AppBaseController
         if(!empty(array_flatten($this->vendorFile->detailsDataErros)) || !empty(array_flatten($this->vendorFile->headerErrors)))
         {
             return $this->sendError("Validaiton failed on some documents", 500, [
-                'detailsErrors' => (!empty(array_flatten($this->vendorFile->detailsDataErros))) ? $this->vendorFile->detailsDataErros : null,
-                'headerErrors' => (!empty(array_flatten($this->vendorFile->headerErrors))) ? $this->vendorFile->headerErrors : null
+                'detailsErrors' => (!empty(array_flatten($this->vendorFile->detailsDataErros))) ? $this->vendorFile->detailsDataErros : [],
+                'headerErrors' => (!empty(array_flatten($this->vendorFile->headerErrors))) ? $this->vendorFile->headerErrors : []
             ]);
         }
 
@@ -228,10 +248,11 @@ class B2BResourceAPIController extends AppBaseController
         ];
 
         $excelColumnFormat = [
-            'A' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
-            'B' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
-            'G' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
+            'B' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
+            'C' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_00,
+            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
+            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
+            'AG' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
         ];
 
 
@@ -240,8 +261,9 @@ class B2BResourceAPIController extends AppBaseController
             return \Excel::create('vendorFile', function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
                 $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
                     $sheet->setColumnFormat($excelColumnFormat);
-                    $sheet->loadView($templateName, $reportData);
                     $sheet->setAutoSize(true);
+                    $sheet->loadView($templateName, $reportData);
+                    $sheet->getStyle('C2')->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_NUMBER);
                 });
             })->download('xlsx');
         }else {
@@ -288,7 +310,6 @@ class B2BResourceAPIController extends AppBaseController
             ];
             config(['filesystems.disks.sftp' => $configDetails]);
             $storage = \Storage::disk('sftp');
-
             $disk = $storage;
             try {
 

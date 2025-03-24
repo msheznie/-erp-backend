@@ -12,6 +12,7 @@ use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentCodeMaster;
+use App\Models\DocumentCodePrefix;
 use Carbon\Carbon;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -312,32 +313,53 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
         
         $company_id = $input['company_id'];
 
-        $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')->where('master_id', $master_id)->get();
+        $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')
+                                ->where('master_id', $master_id)
+                                ->where('company_id', $company_id)
+                                ->get();
 
         
-        $documentCodeMaster = DocumentCodeMaster::with('document_code_transactions', 'doc_code_numbering_sequences')
+        $documentCodeMaster = DocumentCodeMaster::with([
+                                                        'document_code_transactions' => function ($query) use ($company_id) {
+                                                            $query->where('company_id', $company_id);
+                                                        },
+                                                        'doc_code_numbering_sequences'
+                                                    ])
                                                     ->where('id', $master_id)
+                                                    ->where('company_id', $company_id)
                                                     ->first();
+                                                    
         $lastSerial = $documentCodeMaster->last_serial;
         $serialLength = $documentCodeMaster->serial_length;
         $documentSerial = str_pad($lastSerial, $serialLength, '0', STR_PAD_LEFT);
+        $documentSystemID = $documentCodeMaster->document_code_transactions->document_system_id;
 
         if($docCodeSetupTypeBased){
             foreach ($docCodeSetupTypeBased as $key => $value) {
-
                 // Get the formats array from the service function
-                $formats = $this->documentCodeConfigurationService->getDocumentCodeSetupValues($company_id, 'SEG',$master_id, $isPreview = 1);
-
-                // Add the prefix to the formats array
-                $formats[5] = $value->type->type_prefix; //format5
-
+                $formats = $this->documentCodeConfigurationService->getDocumentCodeSetupValues($company_id, 'SEG', $master_id, $isPreview = 1, $documentSystemID);
+            
                 $formatsArray = [];
+            
                 for ($i = 1; $i <= 12; $i++) {
                     $format = 'format' . $i;
+                    if ($value->$format == 5) {
+                        $documentCodePrefix = DocumentCodePrefix::where('type_based_id', $value->id)
+                            ->where('format', $format)
+                            ->first();
+            
+                        if ($documentCodePrefix) {
+                            $formats[$value->$format] = $documentCodePrefix->description;
+                        } else {
+                            $formats[$value->$format] = $value->type->type_prefix;
+                        }
+                    }
+            
                     $formatsArray[] = $formats[$value->$format] ?? '';
                 }
+            
+                // Generate codePreview
                 $docCodeSetupTypeBased[$key]->codePreview = implode('', $formatsArray) . $documentSerial;
-
             }
         }
 

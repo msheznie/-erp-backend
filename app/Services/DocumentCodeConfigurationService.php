@@ -8,31 +8,47 @@ use App\Models\CompanyFinanceYear;
 use App\Models\DocCodeSetupCommon;
 use App\Models\DocCodeSetupTypeBased;
 use App\Models\DocumentCodeMaster;
+use App\Models\DocumentCodePrefix;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use Carbon\Carbon;
 
 class DocumentCodeConfigurationService
 {
-    public function getDocumentCodeConfiguration($companyID,$input,$lastSerialNumber,$documentCodeMasterID,$segmentCode=null)
+    public function getDocumentCodeConfiguration($documentSystemID,$companyID,$input,$lastSerialNumber,$documentCodeMasterID,$segmentCode=null, $serialNumber=null)
 
     {
 
         $companyID = $companyID;
 
-        $documentCodeMaster = DocumentCodeMaster::with('document_code_transactions')->where('id', $documentCodeMasterID)->first();
+        $documentCodeMaster = DocumentCodeMaster::with([
+                            'document_code_transactions' => function ($query) use ($companyID) {
+                                $query->where('company_id', $companyID);
+                            }])
+                            ->where('company_id', $companyID)
+                            ->where('id', $documentCodeMasterID)
+                            ->first();
+
         if(!$documentCodeMaster){
             return ['status' => false,'message'=>'Document Code Master not found'];
         }
 
+        $documentSystemID = $documentCodeMaster->document_code_transactions->document_system_id;
+
         $sequenceID = $documentCodeMaster->numbering_sequence_id;
-        $formats = $this->getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID ,$isPreview = 0);
+        $formats = $this->getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID ,$isPreview = 0, $documentSystemID);
 
 
-        $docCodeSetupCommon = DocCodeSetupCommon::with('document_code_transactions')->where('master_id', $documentCodeMasterID)->first();
+        $docCodeSetupCommon = DocCodeSetupCommon::with([
+                            'document_code_transactions' => function ($query) use ($companyID) {
+                                $query->where('company_id', $companyID);
+                            }])
+                            ->where('company_id', $companyID)
+                            ->where('master_id', $documentCodeMasterID)
+                            ->first();
 
 
-        switch ($documentCodeMasterID)
+        switch ($documentSystemID)
         {
             case 1: //Purchase Request
                 if($docCodeSetupCommon){
@@ -62,8 +78,13 @@ class DocumentCodeConfigurationService
                         }
                     }
         
-                    $serialCode = str_pad($docLastSerialNumber, $documentCodeMaster->serial_length, '0', STR_PAD_LEFT);
-                    $finalCode = $this->generateFinalCode($docCodeSetupCommon,$formats,$serialCode);
+                    if(isset($serialNumber) && $serialNumber != null){
+                        $serialCode = str_pad($serialNumber, $documentCodeMaster->serial_length, '0', STR_PAD_LEFT);
+                    } else {
+                        $serialCode = str_pad($docLastSerialNumber, $documentCodeMaster->serial_length, '0', STR_PAD_LEFT);
+                    }
+
+                    $finalCode = $this->generateFinalCode($docCodeSetupCommon,$formats,$serialCode,'common');
 
                     return ['status' => true,'message'=>'Document Code generated','documentCode'=>$finalCode,'docLastSerialNumber'=>$docLastSerialNumber];
 
@@ -115,7 +136,7 @@ class DocumentCodeConfigurationService
                         $prefix = $docCodeSetupCommon->document_code_transactions->master_prefix; //format5
                         $formats[5] = $prefix;
     
-                        $finalCode = $this->generateFinalCode($docCodeSetupCommon,$formats,$serialCode);
+                        $finalCode = $this->generateFinalCode($docCodeSetupCommon,$formats,$serialCode,'common');
     
                         return ['status' => true,'message'=>'Document Code generated','documentCode'=>$finalCode,'docLastSerialNumber'=>$docLastSerialNumber];
     
@@ -130,12 +151,16 @@ class DocumentCodeConfigurationService
                         $typeID = 1;
                     }
 
-                    $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')->where('type_id', $typeID)->where('master_id', $documentCodeMasterID)->first();
+                    $docCodeSetupTypeBased = DocCodeSetupTypeBased::with('type')
+                                                                    ->where('type_id', $typeID)
+                                                                    ->where('company_id', $companyID)
+                                                                    ->where('master_id', $documentCodeMasterID)
+                                                                    ->first();
                     if($docCodeSetupTypeBased){
                         $prefix = $docCodeSetupTypeBased->type->type_prefix; //format5
                         $formats[5] = $prefix;
     
-                       $finalCode = $this->generateFinalCode($docCodeSetupTypeBased,$formats,$serialCode);
+                       $finalCode = $this->generateFinalCode($docCodeSetupTypeBased,$formats,$serialCode,'type_based');
     
                         return ['status' => true,'message'=>'Document Code generated','documentCode'=>$finalCode,'docLastSerialNumber'=>$docLastSerialNumber];
                     } else {
@@ -150,7 +175,7 @@ class DocumentCodeConfigurationService
         
     }
 
-    function getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID , $isPreview) {
+    function getDocumentCodeSetupValues($companyID, $segmentCode, $documentCodeMasterID , $isPreview, $documentSystemID) {
 
         $company = Company::with('country')->find($companyID);
 
@@ -165,7 +190,7 @@ class DocumentCodeConfigurationService
             ->where('isActive', -1)
             ->first();
     
-        if($documentCodeMasterID==1 || $documentCodeMasterID==2){
+        if($documentSystemID==1 || $documentSystemID==2){
             $currentDate = now();
             $YYYY = Carbon::parse($currentDate)->format('Y'); // format6
             $YY = Carbon::parse($currentDate)->format('y'); // format7
@@ -216,15 +241,31 @@ class DocumentCodeConfigurationService
         return $formats;
     }
 
-    function generateFinalCode($docCodeSetup,$formats,$serialCode)
+    function generateFinalCode($docCodeSetup, $formats, $serialCode, $setupBased)
     {
-
         $formatsArray = [];
+    
         for ($i = 1; $i <= 12; $i++) {
             $format = 'format' . $i;
+    
+            if ($docCodeSetup->$format == 5) {
+                $documentCodePrefix = DocumentCodePrefix::where($setupBased . '_id', $docCodeSetup->id)
+                    ->where('format', $format)
+                    ->first();
+    
+                if ($documentCodePrefix) {
+                    $formats[$docCodeSetup->$format] = $documentCodePrefix->description;
+                } else {
+                    // Use the appropriate prefix based on setup type
+                    $formats[$docCodeSetup->$format] = ($setupBased === 'common') 
+                        ? $docCodeSetup->document_code_transactions->master_prefix 
+                        : $docCodeSetup->type->type_prefix;
+                }
+            }
+    
             $formatsArray[] = $formats[$docCodeSetup->$format] ?? '';
         }
-
+    
         return implode('', $formatsArray) . $serialCode;
     }
 }
