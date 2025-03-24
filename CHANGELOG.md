@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.66.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.65.3...v10.66.0) (2025-03-24)
+
+
+### Features
+
+* **common:** Added balance sheet on budget widget [GCP-6330] ([#7698](https://github.com/pbsgears/Gears_BackEnd/issues/7698)) ([0305961](https://github.com/pbsgears/Gears_BackEnd/commit/03059613cc16e26d423ee6c6b94930f5aaa8acc1))
+* **common:** expense type exempt VAT segment handled [GCP-6382] ([97554fc](https://github.com/pbsgears/Gears_BackEnd/commit/97554fc8b3d064a603f37a7fc6437da240306852))
+* **configuration:** Document code config company wise [GCP-6333] ([#7699](https://github.com/pbsgears/Gears_BackEnd/issues/7699)) ([5b86a3b](https://github.com/pbsgears/Gears_BackEnd/commit/5b86a3b7e5f98998a42965f3529532c6454fd674))
+* **configuration:** Document code segment based change [GCP-6512] ([#7783](https://github.com/pbsgears/Gears_BackEnd/issues/7783)) ([600f78e](https://github.com/pbsgears/Gears_BackEnd/commit/600f78e4053e30722f85c587f9b3c2827110c8a2))
+* **configuration:** Enable multiple prefix and make them editable ([#7708](https://github.com/pbsgears/Gears_BackEnd/issues/7708)) ([8fcd15b](https://github.com/pbsgears/Gears_BackEnd/commit/8fcd15b2ade891f998f4fca5998e7e555bb1ace8))
+* **treasury management:** excel download, error message restricted for employee file typ [GCP-6406] ([261d4ec](https://github.com/pbsgears/Gears_BackEnd/commit/261d4ec55dbd313647bb2853407129df1185a3b5))
+
+
+### Bug Fixes
+
+* **accounts payable:** Fixed WHT applied SI document issues in payable reports [GCP-6371] ([#7775](https://github.com/pbsgears/Gears_BackEnd/issues/7775)) ([2494148](https://github.com/pbsgears/Gears_BackEnd/commit/2494148b94a51355d7f5b3995144a6f687e8905c))
+* **configuration:** Year validation in doc code config [GCP-6504] ([#7781](https://github.com/pbsgears/Gears_BackEnd/issues/7781)) ([ed48748](https://github.com/pbsgears/Gears_BackEnd/commit/ed487489f53727c22c1f9a03d89c7e79abbd3f9d))
+
 ## [10.65.3](https://github.com/pbsgears/Gears_BackEnd/compare/v10.65.2...v10.65.3) (2025-03-15)
 
 
