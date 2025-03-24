@@ -29,7 +29,7 @@ class TenderCustomEmailRepository
             'document_code' => $input['document_code'],
             'document_id' => $input['document_id'],
             'email_subject' => $input['email_subject'] ?? '',
-            'negotiation_id' => $input['negotiation_id'],
+            'negotiation_id' => $input['negotiation_id'] ?? '',
         ];
 
         try {
