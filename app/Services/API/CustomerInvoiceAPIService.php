@@ -693,6 +693,14 @@ class CustomerInvoiceAPIService extends AppBaseController
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
         $input['FYPeriodDateFrom'] = $FYPeriodDateFrom;
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
+
+        $autoGeneratePolicy = \Helper::checkPolicy($input['companyID'], 103);
+
+        if( $autoGeneratePolicy && (!isset($input['isAutoCreateDocument']) || (isset($input['isAutoCreateDocument']) &&!$input['isAutoCreateDocument'])))
+        {
+            $input['customerInvoiceNo'] = $bookingInvCode;
+        }
+
         try{
             $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
         }
@@ -771,6 +779,13 @@ class CustomerInvoiceAPIService extends AppBaseController
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
         } else {
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
+        }
+
+     
+        $autoGeneratePolicy = \Helper::checkPolicy($input['companySystemID'], 103);
+        if(  $autoGeneratePolicy && isset($input['invoiceAutoType']) && $input['invoiceAutoType'] == 1 && (!isset($input['isAutoCreateDocument']) || (isset($input['isAutoCreateDocument']) && !$input['isAutoCreateDocument'])))
+        {
+            $input['customerInvoiceNo'] = $input['bookingInvCode'];
         }
 
         if($isPerforma == 2) {
@@ -1188,6 +1203,18 @@ class CustomerInvoiceAPIService extends AppBaseController
                         ];
                     }
                 }
+
+                $autoGeneratePolicy = Helper::checkPolicy($input['companySystemID'], 103);
+                if( $autoGeneratePolicy && isset($input['isAutoInvoice']) && $input['isAutoInvoice'] && (!isset($input['isAutoCreateDocument']) || (isset($input['isAutoCreateDocument']) && !$input['isAutoCreateDocument'])))
+                {
+                    return [
+                        'status' => false,
+                        'code' => 500,
+                        'message' => 'Are you sure you want to update the customer invoice number as the document number',
+                        'type' => ['type' => 'autoInvoice'],
+                    ];
+                }
+
                 /**/
                 if ($isPerforma != 1) {
 
