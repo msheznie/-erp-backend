@@ -167,7 +167,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         $purchaseOrderID = $input['poID'];
 
-        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+        $purchaseOrder = ProcumentOrder::with('paymentTerms_by')->where('purchaseOrderID', $purchaseOrderID)
             ->first();
 
         if (empty($purchaseOrder)) {
@@ -179,6 +179,31 @@ class PoPaymentTermsAPIController extends AppBaseController
         if (empty($poPaymentTerms)) {
             return $this->sendError('Po Payment Terms not found');
         }
+
+        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
+
+        if(!empty($purchaseOrder->paymentTerms_by))
+        {
+            $paymentTerm = $purchaseOrder->paymentTerms_by->where('paymentTermID',$input['paymentTermID'])->first();
+
+            if($paymentTerm)
+            {
+                $paymentTerm->comAmount = $input['comAmount'];
+                $paymentTerm->comPercentage = $input['comPercentage'];
+            }
+
+            $comPercentage =  $poPaymentTerms->comPercentage ?? 0;
+
+            if(round($comPercentage,$supplierCurrencyDecimalPlace) != round($input['comPercentage'],$supplierCurrencyDecimalPlace))
+            {
+                if(!empty($purchaseOrder->paymentTerms_by->sum('comPercentage')) && (round($purchaseOrder->paymentTerms_by->sum('comPercentage'),$supplierCurrencyDecimalPlace)) > 100)
+                {
+                    return $this->sendError('Po Payment Terms total percentage cannot be greater than 100',500,['type' => 2]);
+                }
+            }
+
+        }
+
 
         /*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
                 if ($supplier) {
@@ -380,6 +405,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         $poAdvancePaymentType = PoPaymentTerms::where('poID', $purchaseOrderID)
             ->get();
+
 
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
 
