@@ -503,7 +503,7 @@ class GRVMasterAPIController extends AppBaseController
         }
         
         //getting transaction amount
-        $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
+        $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM((GRVcostPerUnitSupTransCur/unitCost) * netAmount),0) as transactionTotalSum, COALESCE(SUM((GRVcostPerUnitComRptCur/unitCost) * netAmount),0) as reportingTotalSum, COALESCE(SUM((GRVcostPerUnitLocalCur/unitCost) * netAmount),0) as localTotalSum, COALESCE(SUM((GRVcostPerUnitSupDefaultCur/unitCost) * netAmount),0) as defaultTotalSum'))
             ->where('grvAutoID', $input['grvAutoID'])
             ->first();
 
@@ -692,12 +692,11 @@ class GRVMasterAPIController extends AppBaseController
             //getting transaction amount
             if ($gRVMaster->grvTypeID == 1) {
                 $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
-                ->where('grvAutoID', $input['grvAutoID'])
-                ->first();
+                    ->where('grvAutoID', $input['grvAutoID'])
+                    ->first();
 
                 $grvDetailsData = GRVDetails::where('grvAutoID', $input['grvAutoID'])
                                             ->get();
-
                 $exemptVATAmount = 0;
                 $lineVATAmountTotal = 0;
                 foreach ($grvDetailsData as $key => $value) {
@@ -724,7 +723,7 @@ class GRVMasterAPIController extends AppBaseController
                 $grvTotalSupplierTransactionCurrency['defaultTotalSum'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'] - $currency['defaultAmount'] + $currencyVAT['defaultAmount'];
 
             } else {
-                $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
+                $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM((GRVcostPerUnitSupTransCur/unitCost) * netAmount),0) as transactionTotalSum, COALESCE(SUM((GRVcostPerUnitComRptCur/unitCost) * netAmount),0) as reportingTotalSum, COALESCE(SUM((GRVcostPerUnitLocalCur/unitCost) * netAmount),0) as localTotalSum, COALESCE(SUM((GRVcostPerUnitSupDefaultCur/unitCost) * netAmount),0) as defaultTotalSum'))
                     ->where('grvAutoID', $input['grvAutoID'])
                     ->first();
             }
@@ -749,11 +748,11 @@ class GRVMasterAPIController extends AppBaseController
                 foreach ($fetchAllGrvDetails as $row) {
                     $updateGRVDetail_log_detail = GRVDetails::find($row['grvDetailsID']);
 
-                    $logisticsCharges_TransCur = ($input['grvTotalSupplierTransactionCurrency'] == null || $input['grvTotalSupplierTransactionCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitSupTransCur']) / ($input['grvTotalSupplierTransactionCurrency'])) * $grvTotalLogisticAmount['transactionTotalSum']) / $row['noQty'];
+                    $logisticsCharges_TransCur = ($input['grvTotalSupplierTransactionCurrency'] == null || $input['grvTotalSupplierTransactionCurrency'] == 0) ? 0 : (((($row['GRVcostPerUnitSupTransCur']/$row['unitCost'])*$row['netAmount']) / ($input['grvTotalSupplierTransactionCurrency'])) * $grvTotalLogisticAmount['transactionTotalSum']) / $row['noQty'];
 
-                    $logisticsCharges_LocalCur = ($input['grvTotalLocalCurrency'] == null || $input['grvTotalLocalCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitLocalCur']) / ($input['grvTotalLocalCurrency'])) * $grvTotalLogisticAmount['localTotalSum']) / $row['noQty'];
+                    $logisticsCharges_LocalCur = ($input['grvTotalLocalCurrency'] == null || $input['grvTotalLocalCurrency'] == 0) ? 0 : (((($row['GRVcostPerUnitLocalCur']/$row['unitCost'])*$row['netAmount']) / ($input['grvTotalLocalCurrency'])) * $grvTotalLogisticAmount['localTotalSum']) / $row['noQty'];
 
-                    $logisticsChargest_RptCur = ($input['grvTotalComRptCurrency'] == null || $input['grvTotalComRptCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
+                    $logisticsChargest_RptCur = ($input['grvTotalComRptCurrency'] == null || $input['grvTotalComRptCurrency'] == 0) ? 0 : (((($row['GRVcostPerUnitComRptCur']/$row['unitCost'])*$row['netAmount']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
 
                     $updateGRVDetail_log_detail->logisticsCharges_TransCur = \Helper::roundValue($logisticsCharges_TransCur);
                     $updateGRVDetail_log_detail->logisticsCharges_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur);
@@ -876,7 +875,6 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             $different = abs($input['grvTotalSupplierTransactionCurrency'] - $grvMasterSum['masterTotalSum']);
-            
 
             if ($different < 0.01) {
                 // same
