@@ -190,7 +190,7 @@ class BidMainWork extends Model
             ->flatten();
 
         if ($latestRecords->isNotEmpty()) {
-            BidMainWork::whereIn('id', $latestRecords)->delete();
+           BidMainWork::whereIn('id', $latestRecords)->delete();
         }
     }
 
