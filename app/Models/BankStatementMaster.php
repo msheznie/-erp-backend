@@ -165,6 +165,7 @@ class BankStatementMaster extends Model
         'bankStatementDate',
         'openingBalance',
         'endingBalance',
+        'filePath',
         'documentStatus',
         'importStatus',
         'importError',
@@ -190,6 +191,7 @@ class BankStatementMaster extends Model
         'bankStatementDate' => 'date',
         'openingBalance' => 'float',
         'endingBalance' => 'float',
+        'filePath' => 'string',
         'documentStatus' => 'integer',
         'importStatus' => 'integer',
         'importError' => 'string',
@@ -206,5 +208,9 @@ class BankStatementMaster extends Model
         
     ];
 
+    public function bankAccount()
+    {
+        return $this->belongsTo('App\Models\BankAccount', 'bankAccountAutoID', 'bankAccountAutoID');
+    }
     
 }

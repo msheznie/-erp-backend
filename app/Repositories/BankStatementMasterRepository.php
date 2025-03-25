@@ -31,6 +31,7 @@ class BankStatementMasterRepository extends BaseRepository
         'bankStatementDate',
         'openingBalance',
         'endingBalance',
+        'filePath',
         'documentStatus',
         'importStatus',
         'importError',
@@ -44,5 +45,26 @@ class BankStatementMasterRepository extends BaseRepository
     public function model()
     {
         return BankStatementMaster::class;
+    }
+
+    public function bankStatementImportHistory($searchValue, $companyId)
+    {
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+
+        $bankstatementMaster = BankStatementMaster::with('bankAccount')->whereIn('companySystemID', $subCompanies);
+        if ($searchValue) {
+            $searchValue = str_replace("\\", "\\\\", $searchValue);
+            $bankstatementMaster = $bankstatementMaster->where(function ($query) use ($searchValue) {
+                $query->where('bankReconciliationMonth', 'LIKE', "%{$searchValue}%")
+                    ->orWhere('bankStatementDate', 'LIKE', "%{$searchValue}%");
+            });
+        }
+
+        return $bankstatementMaster;
     }
 }

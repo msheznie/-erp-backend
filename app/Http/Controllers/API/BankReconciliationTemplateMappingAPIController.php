@@ -135,8 +135,7 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
             'transactionDate' => 'required',
             'debit' => 'required',
             'credit' => 'required',
-            'description' => 'required',
-            'category' => 'required'
+            'description' => 'required'
         ]);
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);

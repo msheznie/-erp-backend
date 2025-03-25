@@ -1584,6 +1584,7 @@ class BankReconciliationAPIController extends AppBaseController
         $statementMaster['bankStatementDate'] = $bankStatementDate;
         $statementMaster['openingBalance'] = $openingBalance;
         $statementMaster['endingBalance'] = $endingBalance;
+        $statementMaster['filePath'] = $originalFileName;
 
         $bankStatementMaster = $this->bankStatementMaster->create($statementMaster);
         if($bankStatementMaster) {

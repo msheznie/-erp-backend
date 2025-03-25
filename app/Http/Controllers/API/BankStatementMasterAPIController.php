@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBankStatementMasterAPIRequest;
 use App\Http\Requests\API\UpdateBankStatementMasterAPIRequest;
+use App\Models\BankStatementDetail;
 use App\Models\BankStatementMaster;
 use App\Repositories\BankStatementMasterRepository;
 use Illuminate\Http\Request;
@@ -294,5 +295,43 @@ class BankStatementMasterAPIController extends AppBaseController
         $bankStatementMaster->delete();
 
         return $this->sendSuccess('Bank Statement Master deleted successfully');
+    }
+
+    public function getBankStatementImportHistory(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $request['companyId'];
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $searchValue = $request->input('search.value');
+
+        $bankTransferMaster = $this->bankStatementMasterRepository->bankStatementImportHistory($searchValue, $companyId);
+        return \DataTables::eloquent($bankTransferMaster)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('statementId', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    public function deleteBankStatement($statementId)
+    {
+        $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($statementId);
+
+        if (empty($bankStatementMaster)) {
+            return $this->sendError('Bank statement not found');
+        }
+        $bankStatementMaster->delete();
+        BankStatementDetail::where('statementId', $statementId)->delete();
+        return $this->sendResponse([], 'Bank statement deleted successfully');
     }
 }
