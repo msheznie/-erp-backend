@@ -1513,7 +1513,7 @@ class BankReconciliationAPIController extends AppBaseController
             $originalFileName = $excelUpload['filename'];
             $extension = $excelUpload['filetype'];
             $size = $excelUpload['size'];
-            $allowedExtensions = ['xlsx','xls', 'csv'];
+            $allowedExtensions = ['xlsx','xls'];
         } else {
             return $this->sendError('Invalid File',500);
         }
@@ -1521,7 +1521,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         if (!in_array($extension, $allowedExtensions))
         {
-            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls (or) .csv',500);
+            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx or .xls',500);
         }
 
         if ($size > 20000000) {
@@ -1554,7 +1554,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         /** bank validation */
         $bankName = $sheet->getCell($template['bankName'])->getValue();
-        $bankAccount = $sheet->getCell($template['bankAccount'])->getValue();
+        $bankAccount = $sheet->getCell($template['bankAccountNumber'])->getValue();
         if ($bankName != $template['bank_account']['bankName'] || $bankAccount != $template['bank_account']['AccountNo']) {
             return $this->sendError('Bank Account details not matched', 500);
         }
@@ -1562,6 +1562,8 @@ class BankReconciliationAPIController extends AppBaseController
         /** Opening balance and closing balance validation */
         $openingBalance = $sheet->getCell($template['openingBalance'])->getCalculatedValue();
         $endingBalance = $sheet->getCell($template['endingBalance'])->getCalculatedValue();
+        $openingBalance = str_replace(',', '', $openingBalance);
+        $endingBalance = str_replace(',', '', $endingBalance);
         if (!is_numeric($openingBalance) || !is_numeric($endingBalance)) {
             return $this->sendError('Opening balance and closing balance amount should be numbers', 500);
         }
@@ -1612,7 +1614,7 @@ class BankReconciliationAPIController extends AppBaseController
         if (is_numeric($date)) {
             return Date::excelToDateTimeObject($date)->format('Y-m-d');
         } else {
-            $dateFormats = ['d/m/Y', 'm/d/Y', 'm-d-Y', 'Y-m-d', 'Y/m/d'];
+            $dateFormats = ['d/m/Y', 'm/d/Y', 'm-d-Y', 'Y-m-d', 'Y/m/d', 'd/m/Y h:i:s A', 'd/m/Y h:i A'];
             foreach ($dateFormats as $format) {
                 try {
                     return Carbon::createFromFormat($format, trim($date))->format('Y-m-d');
@@ -1621,5 +1623,26 @@ class BankReconciliationAPIController extends AppBaseController
                 }
             }
         }
+    }
+
+    public function getActiveBankAccountsByBankID(Request $request)
+    {
+        $input = $request->all();
+
+        $selectedCompanyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankAccounts = BankAccount::whereIn('companySystemID', $subCompanies)
+            ->where('isAccountActive', 1)
+            ->where('bankmasterAutoID', $input['id'])
+            ->get();
+
+        return $this->sendResponse($bankAccounts, trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
     }
 }

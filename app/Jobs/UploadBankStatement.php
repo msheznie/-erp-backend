@@ -82,7 +82,7 @@ class UploadBankStatement implements ShouldQueue
 
             if ($valuesExist) {
                 $firstLine = $template['firstLine'];
-                $lastLine = $template['firstLine'] + $transactionCount;
+                $lastLine = ($template['firstLine'] + $transactionCount) - 1;
                 $detailsArray = [];
                 for ($row = $firstLine; $row <= $lastLine; $row++) {
                     $transactionNo = $sheet->getCellByColumnAndRow($columnPosition[strtolower(trim($template['transactionNumber']))], $row)->getValue();
@@ -93,7 +93,6 @@ class UploadBankStatement implements ShouldQueue
                     if(!is_null($template['category'])) {
                         $category = $sheet->getCellByColumnAndRow($columnPosition[strtolower(trim($template['category']))], $row)->getValue();
                     }
-
                     if(is_null($transactionNo) || is_null($transactionDate) || is_null($description) || (is_null($credit) && is_null($debit))) {
                         BankStatementMaster::where('statementId', $statementMaster['statementId'])
                             ->update([
@@ -103,6 +102,9 @@ class UploadBankStatement implements ShouldQueue
                         DB::commit();
                         return;
                     }
+                    $credit = str_replace(',', '', $credit);
+                    $debit = str_replace(',', '', $debit);
+
                     $detailsArray[] = [
                         'statementId' => $statementMaster['statementId'],
                         'transactionNumber' => $transactionNo,
@@ -134,7 +136,7 @@ class UploadBankStatement implements ShouldQueue
             BankStatementMaster::where('statementId', $statementMaster['statementId'])
                 ->update([
                     'importStatus' => 2,
-                    'importError' => $e->getMessage()
+                    'importError' => "Statement upload failed. Please try re-uploading."
                 ]);
         }
     }
