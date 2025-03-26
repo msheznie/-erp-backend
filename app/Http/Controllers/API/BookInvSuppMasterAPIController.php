@@ -471,6 +471,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError($customValidation["message"],500, array('type' => 'already_confirmed'));
         }
 
+        if($bookInvSuppMaster->documentType == 4 && $input['documentType'] != 4){
+            $input['supplierID'] = 0;
+            $input['supplierTransactionCurrencyID'] = 0;
+        }
+
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);
 
         $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])

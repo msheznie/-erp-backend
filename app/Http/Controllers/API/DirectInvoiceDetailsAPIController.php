@@ -156,6 +156,10 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         {
             return $this->sendError('The Supplier Invoice type has changed, unable to proceed');
         }
+
+        if ($BookInvSuppMaster->documentType == 4 && empty($BookInvSuppMaster->employeeID)) {
+            return $this->sendError('Please select an employee');
+        }
 /*        $alreadyAdded = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $BookInvSuppMaster->bookingSuppMasInvAutoID)
             ->whereHas('directdetail', function ($query) use ($input) {
                 $query->where('chartOfAccountSystemID', $input['chartOfAccountSystemID']);

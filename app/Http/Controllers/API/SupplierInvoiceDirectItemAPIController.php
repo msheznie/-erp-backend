@@ -140,6 +140,10 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             return $this->sendError('The Supplier Invoice type has changed, unable to proceed');
         }
 
+        if (empty($invoice->supplierTransactionCurrencyID)) {
+            return $this->sendError('Please select a document currency');
+        }
+
         DB::beginTransaction();
         try {
             $itemAssign = ItemAssigned::with(['item_master'])->find($input['itemCode']);
