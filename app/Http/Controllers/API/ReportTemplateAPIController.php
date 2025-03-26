@@ -187,18 +187,6 @@ class ReportTemplateAPIController extends AppBaseController
                 $data2['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $reportTemplateDetails = ReportTemplateDetails::create($data2);
 
-                $data3['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
-                $data3['description'] = 'Retained Earning';
-                $data3['itemType'] = 4;
-                $data3['sortOrder'] = 2;
-                $data3['masterID'] = $reportTemplateDetailsMaster->detID;
-                $data3['companySystemID'] = $input['companySystemID'];
-                $data3['companyID'] = $input['companyID'];
-                $data3['createdPCID'] = gethostname();
-                $data3['createdUserID'] = \Helper::getEmployeeID();
-                $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                $reportTemplateDetailsRetained = ReportTemplateDetails::create($data3);
-
                 $chartofaccount = ChartOfAccount::where('isApproved', 1)->where('catogaryBLorPL', 'PL')->get();
                 if (count($chartofaccount) > 0) {
                     foreach ($chartofaccount as $key => $val) {
@@ -219,10 +207,34 @@ class ReportTemplateAPIController extends AppBaseController
                     $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateDetails->detID)->update(['isFinalLevel' => 1]);
                 }
 
+                if(isset($input['isConsolidation']) && $input['isConsolidation']) {
+                    $data3['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                    $data3['description'] = 'NCI';
+                    $data3['itemType'] = 9;
+                    $data3['sortOrder'] = 2;
+                    $data3['masterID'] = $reportTemplateDetailsMaster->detID;
+                    $data3['companySystemID'] = $input['companySystemID'];
+                    $data3['companyID'] = $input['companyID'];
+                    $data3['createdPCID'] = gethostname();
+                    $data3['createdUserID'] = \Helper::getEmployeeID();
+                    $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $reportTemplateDetails3 = ReportTemplateDetails::create($data3);
+                }
+                else {
+                    $data3['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                    $data3['description'] = 'Retained Earning';
+                    $data3['itemType'] = 4;
+                    $data3['sortOrder'] = 2;
+                    $data3['masterID'] = $reportTemplateDetailsMaster->detID;
+                    $data3['companySystemID'] = $input['companySystemID'];
+                    $data3['companyID'] = $input['companyID'];
+                    $data3['createdPCID'] = gethostname();
+                    $data3['createdUserID'] = \Helper::getEmployeeID();
+                    $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $reportTemplateDetailsRetained = ReportTemplateDetails::create($data3);
 
-                $chartofaccountRetained = ChartOfAccount::where('isApproved', 1)->where('catogaryBLorPL', 'BS')->where('is_retained_earnings',1)->first();
-                if ($chartofaccountRetained) {
-                  
+                    $chartofaccountRetained = ChartOfAccount::where('isApproved', 1)->where('catogaryBLorPL', 'BS')->where('is_retained_earnings',1)->first();
+                    if ($chartofaccountRetained) {
                         $data5['templateMasterID'] = $reportTemplates->companyReportTemplateID;
                         $data5['templateDetailID'] = $reportTemplateDetailsRetained->detID;
                         $data5['sortOrder'] = 1;
@@ -235,11 +247,10 @@ class ReportTemplateAPIController extends AppBaseController
                         $data5['createdUserID'] = \Helper::getEmployeeID();
                         $data5['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                         ReportTemplateLinks::create($data5);
-                    
 
-                    $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateDetailsRetained->detID)->update(['isFinalLevel' => 1]);
+                        $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateDetailsRetained->detID)->update(['isFinalLevel' => 1]);
+                    }
                 }
-
             }
 
             if ($input['reportID'] == 2 && (isset($input['isConsolidation']) && $input['isConsolidation'])) {
@@ -253,8 +264,34 @@ class ReportTemplateAPIController extends AppBaseController
                 $data5['createdUserID'] = \Helper::getEmployeeID();
                 $data5['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $reportTemplateDetails1 = ReportTemplateDetails::create($data5);
+            }
+            if ($input['reportID'] == 4) {
 
+                $equity = [
+                    ["name" => "Opening Balance"],
+                    ["name" => "Profit after tax"],
+                    ["name" => "Comprehensive income"],
+                    ["name" => "Other changes"],
+                    ["name" => "Closing balance"]
+                ];
+                foreach($equity as $det)
+                {
+                    $data['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                    $data['description'] = $det['name'];
+                    $data['itemType'] = 5;
+                    $data['sortOrder'] = 1;
+                    $data['companySystemID'] = $input['companySystemID'];
+                    $data['companyID'] = $input['companyID'];
+                    $data['createdPCID'] = gethostname();
+                    $data['createdUserID'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $reportTemplateDetails = ReportTemplateDetails::create($data);
+                }
 
+            }
+
+            // Consolidation common details for balance sheet & profit & loss
+            if(in_array($input['reportID'],[1,2]) && (isset($input['isConsolidation']) && $input['isConsolidation'])) {
                 $data6['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
                 $data6['description'] = 'Share of Profit Attributable To';
                 $data6['itemType'] = 6;
@@ -291,30 +328,7 @@ class ReportTemplateAPIController extends AppBaseController
                 $data8['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $reportTemplateDetails4 = ReportTemplateDetails::create($data8);
             }
-            if ($input['reportID'] == 4) {
 
-                $equity = [
-                    ["name" => "Opening Balance"],
-                    ["name" => "Profit after tax"],
-                    ["name" => "Comprehensive income"],
-                    ["name" => "Other changes"],
-                    ["name" => "Closing balance"]
-                ];
-                foreach($equity as $det)
-                {
-                    $data['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
-                    $data['description'] = $det['name'];
-                    $data['itemType'] = 5;
-                    $data['sortOrder'] = 1;
-                    $data['companySystemID'] = $input['companySystemID'];
-                    $data['companyID'] = $input['companyID'];
-                    $data['createdPCID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                    $reportTemplateDetails = ReportTemplateDetails::create($data);
-                }
-
-            }
             DB::commit();
             return $this->sendResponse($reportTemplates->toArray(), 'Report Template saved successfully');
         } catch (\Exception $exception) {
