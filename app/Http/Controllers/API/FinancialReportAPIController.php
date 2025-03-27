@@ -22,6 +22,7 @@ use App\Models\GroupCompanyStructure;
 use App\Models\GroupParents;
 use App\Services\ConsolidationReportService;
 use App\Services\Currency\CurrencyService;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\helper\Helper;
 use App\Jobs\Report\GeneralLedgerPdfJob;
@@ -1206,7 +1207,7 @@ class FinancialReportAPIController extends AppBaseController
             $grandTotal[0] = [];
         }
 
-        if(!empty($grandTotal))
+        if(!empty($grandTotal) && count($outputDetail) > 0)
         {
             $numericKeys = collect($outputDetail->first())
                 ->keys()
@@ -1447,6 +1448,9 @@ class FinancialReportAPIController extends AppBaseController
             $segmentParentData[$value->ServiceLineCode] = (is_null($value->parent)) ? "-" : $value->parent->ServiceLineDes;
         }
 
+        if(!$grandTotal instanceof Collection){
+            $grandTotal = collect($grandTotal);
+        }
 
         return array(
             'reportData' => $headers,
@@ -1833,7 +1837,9 @@ class FinancialReportAPIController extends AppBaseController
 
                     if (isset($key) && in_array($key,["CMB","CONS"])) {
                         $data->$column = $totalShareOfAssociateProfitLoss;
-                        $response['grandTotalUncatArr'][$column] += $totalShareOfAssociateProfitLoss;
+                        if(array_key_exists($column, $response['grandTotalUncatArr'])) {
+                            $response['grandTotalUncatArr'][$column] += $totalShareOfAssociateProfitLoss;
+                        }
                         if($reportDataNetTotal) {
                             $reportDataNetTotal->$column += $totalShareOfAssociateProfitLoss;
                         }
