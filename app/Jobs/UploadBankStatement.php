@@ -102,13 +102,25 @@ class UploadBankStatement implements ShouldQueue
                         DB::commit();
                         return;
                     }
+
+                    $transactionDate = self::dateValidation($transactionDate);
+                    if(is_null($transactionDate)) {
+                        BankStatementMaster::where('statementId', $statementMaster['statementId'])
+                            ->update([
+                                'importStatus' => 2,
+                                'importError' => 'Transaction date is not in date format'
+                            ]);
+                        DB::commit();
+                        return;
+                    }
+
                     $credit = str_replace(',', '', $credit);
                     $debit = str_replace(',', '', $debit);
 
                     $detailsArray[] = [
                         'statementId' => $statementMaster['statementId'],
                         'transactionNumber' => $transactionNo,
-                        'transactionDate' => self::dateValidation($transactionDate),
+                        'transactionDate' => $transactionDate,
                         'debit' => $debit,
                         'credit' => $credit,
                         'description' => $description,

@@ -1544,6 +1544,10 @@ class BankReconciliationAPIController extends AppBaseController
         $statementStartDate = self::dateValidation($statementStartDate);
         $statementEndDate = self::dateValidation($statementEndDate);
 
+        if(is_null($bankStatementDate) || is_null($statementStartDate) || is_null($statementEndDate)) {
+            return $this->sendError('Some header level dates are not in date format.',500);
+        }
+
         $statementExists = $this->bankStatementMaster->where('companySystemID', $input['companySystemID'])
                                     ->where('bankAccountAutoID', $input['uploadBankAccount'])
                                     ->where('importStatus', 1)
