@@ -199,17 +199,25 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
     function getAuditItemInvoice($id)
     {
-        $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 
-        'bankaccount' => function ($query) {
-            $query->with('currency');
-        }, 'currency','local_currency', 'approved_by' => function ($query) {
-            $query->with('employee.details.designation')
-                ->where('documentSystemID', 20);
-        },
+        $customerInvoiceDirect = $this->with([
+            'segment', 'company', 'customer', 'tax', 'createduser',
+            'bankaccount' => function ($query) {
+                $query->with('currency');
+            },
+            'currency', 'local_currency',
+            'approved_by' => function ($query) {
+                $query->with('employee.details.designation')
+                    ->where('documentSystemID', 20);
+            },
             'issue_item_details' => function ($query) {
-                $query->with(['uom_issuing','sales_quotation', 'project']);
+                $query->with(['uom_issuing', 'sales_quotation', 'project'])
+                    ->selectRaw('*, 
+                 CASE 
+                    WHEN VATApplicableOn = 2 THEN (sellingCost * qtyIssuedDefaultMeasure) - discountAmount 
+                    ELSE sellingCost * qtyIssuedDefaultMeasure 
+                 END AS taxable_amount');
             }
-        ])->findWithoutFail($id);
+        ])->find($id);
         return $customerInvoiceDirect;
     }
 
