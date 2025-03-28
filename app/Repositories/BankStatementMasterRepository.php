@@ -59,9 +59,9 @@ class BankStatementMasterRepository extends BaseRepository
         $bankstatementMaster = BankStatementMaster::with('bankAccount')->whereIn('companySystemID', $subCompanies);
         if ($searchValue) {
             $searchValue = str_replace("\\", "\\\\", $searchValue);
-            $bankstatementMaster = $bankstatementMaster->where(function ($query) use ($searchValue) {
-                $query->where('bankReconciliationMonth', 'LIKE', "%{$searchValue}%")
-                    ->orWhere('bankStatementDate', 'LIKE', "%{$searchValue}%");
+            $bankstatementMaster = $bankstatementMaster->whereHas('bankAccount', function ($query) use ($searchValue) {
+                $query->where('bankName', 'LIKE', "%{$searchValue}%");
+                $query->orWhere('AccountNo', 'LIKE', "%{$searchValue}%");
             });
         }
 
