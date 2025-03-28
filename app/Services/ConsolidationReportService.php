@@ -88,6 +88,8 @@ class ConsolidationReportService
         $allCompanyIDs = collect($request->companySystemID)->pluck('companySystemID')->toArray();
         $childCompanyIDs = array_values(array_diff($allCompanyIDs,[$parentCompanySystemID]));
 
+        if(empty($childCompanyIDs)) $childCompanyIDs[] = 0;
+
         $currencyColumn = $request->currency == 1 ? "documentLocalAmount" : "documentRptAmount";
 
         // Generate Query Data
