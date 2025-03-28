@@ -107,7 +107,7 @@ class BankStatus implements ShouldQueue
 
             foreach ($paymentTransfers as $paymentTransfer) {
 
-                if (is_null($paymentTransfer->portalStatus) || $paymentTransfer->portalStatus == 0) {
+                if (is_null($paymentTransfer->portalStatus)) {
                     $filename = "";
 
                     if (!empty($paymentTransfer->submisison_details)) {
