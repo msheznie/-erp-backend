@@ -81,7 +81,7 @@ class BankTransferService
                 $bankTransfer->submittedStatus = 2;
                 break;
         }
-
+        $bankTransfer->portalStatus = NULL;
         $bankTransfer->save();
 
 

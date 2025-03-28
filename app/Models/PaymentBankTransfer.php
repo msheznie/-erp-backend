@@ -277,6 +277,11 @@ class PaymentBankTransfer extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'paymentBankTransferID')->where('documentSystemID',64);
     }
 
+    public function submisison_details()
+    {
+        return $this->hasOne('App\Models\B2BSubmissionFileDetail', 'bank_transfer_id', 'paymentBankTransferID')->where('latest_submitted_id','!=',0)->latest();
+    }
+
     public function getFileTypeNameAttribute()
     {
             switch ($this->fileType) {
