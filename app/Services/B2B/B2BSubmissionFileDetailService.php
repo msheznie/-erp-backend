@@ -26,10 +26,20 @@ class B2BSubmissionFileDetailService
             } else {
                 $lastestSubmitedID = $submisisonFileDetail + 1;
                 $res = B2BSubmissionFileDetail::where('bank_transfer_id',$bankTransferID)->first();
-                $res->document_date = Carbon::now();
-                $res->latest_downloaded_id = $lastestSubmitedID;
-                $res->save();
-                $result = $res;
+
+                if($res)
+                {
+                    $res->document_date = Carbon::now();
+                    $res->latest_downloaded_id = $lastestSubmitedID;
+                    $res->save();
+                    $result = $res;
+                }else {
+                    $result = B2BSubmissionFileDetail::create([
+                        'bank_transfer_id' => $bankTransferID,
+                        'document_date' => Carbon::now(),
+                        'latest_downloaded_id' => $lastestSubmitedID
+                    ]);
+                }
             }
 
             if (!$result)
