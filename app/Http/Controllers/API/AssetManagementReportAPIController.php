@@ -420,7 +420,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $totalClosingDep = 0;
                     $NBVTotal = 0;
                     $chargeDuringYear = 0;
-                    
+                    $totalChargeOnDisposal = 0;
                     $decimalPlaces = ($request->currencyID === 2) ? $companyCurrency->localcurrency->DecimalPlaces : $companyCurrency->reportingcurrency->DecimalPlaces;
                     
                     foreach ($output['data'] as $row) {
@@ -432,18 +432,22 @@ class AssetManagementReportAPIController extends AppBaseController
                         
                         if ($row->disposedDep == 0) {
                             $closingDepValue = $row->openingDep + $sumCharge - $row->disposedDep;
+                            $chargeOnDisposal = $row->disposedDep;
                         } else {
                             $closingDepValue = $row->openingDep - $row->disposedDep;
+                            $chargeOnDisposal = $row->disposedDep + $sumCharge;
                         }
 
                         $nbvValue = $row->costClosing - $closingDepValue;
                     
                         $totalClosingDep += round($closingDepValue, $decimalPlaces);  
                         $NBVTotal += round($nbvValue, $decimalPlaces);               
-                        $chargeDuringYear += round($sumCharge, $decimalPlaces);   
+                        $chargeDuringYear += round($sumCharge, $decimalPlaces);
+                        $totalChargeOnDisposal += round($chargeOnDisposal, $decimalPlaces);
                     }
 
                     return array('reportData' => $output['data'], 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'fromDate' => $fromDate, 'toDate' => $toDate, 'period' => $output['period'], 
+                    'totalChargeOnDisposal' => round($totalChargeOnDisposal, $decimalPlaces),
                     'totalClosingDep' => round($totalClosingDep, $decimalPlaces),
                     'NBVTotal' => round($NBVTotal, $decimalPlaces),
                     'chargeDuringYear' => round($chargeDuringYear, $decimalPlaces));
