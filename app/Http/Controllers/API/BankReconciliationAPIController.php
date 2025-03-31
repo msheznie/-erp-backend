@@ -1534,9 +1534,9 @@ class BankReconciliationAPIController extends AppBaseController
         $spreadsheet = IOFactory::load($filePath);
         $sheet = $spreadsheet->getActiveSheet();
 
-        $bankStatementDate = $sheet->getCell($template['bankStatementDate'])->getValue();
-        $statementStartDate = $sheet->getCell($template['statementStartDate'])->getValue();
-        $statementEndDate = $sheet->getCell($template['statementEndDate'])->getValue();
+        $bankStatementDate = isset($template['bankStatementDate']) ? $sheet->getCell($template['bankStatementDate'])->getValue() : null;
+        $statementStartDate = isset($template['statementStartDate']) ? $sheet->getCell($template['statementStartDate'])->getValue() : null;
+        $statementEndDate = isset($template['statementEndDate']) ? $sheet->getCell($template['statementEndDate'])->getValue() : null;
         if(is_null($bankStatementDate) || is_null($statementStartDate) || is_null($statementEndDate)) {
             return $this->sendError('Some header level dates are empty.',500);
         }

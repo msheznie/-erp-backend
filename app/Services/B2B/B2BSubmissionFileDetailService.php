@@ -93,7 +93,7 @@ class B2BSubmissionFileDetailService
 
     }
 
-    public function getFileNameByPath(B2BSubmissionFileDetail $detail,$path)
+    public function getFileNameByPath($detail,$path)
     {
         if ($path == "success_path") {
             $filename = "VENPAYMEOI_" . Carbon::parse($detail->document_date)->format('dmY') . "_" . str_pad($detail->latest_submitted_id, 3, '0', STR_PAD_LEFT) . "_ACK.txt";
