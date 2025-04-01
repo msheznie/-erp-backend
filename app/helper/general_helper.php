@@ -3712,7 +3712,7 @@ class Helper
         $trasToRptER = 0;
         $transToBankER = 0;
         $transToDocER = 0;
-        $transactionAmount = self::stringToFloat($transactionAmount);
+        $transactionAmount = self::formatNumberWithPrecision($transactionAmount);
 
         // get company local and reporting currency conversion
         if ($companySystemID && $transactionCurrencyID) {
@@ -8920,6 +8920,17 @@ class Helper
     public static function stringToFloat($str)
     {
         return floatval(preg_replace('/[^0-9.]/', '', $str));
+    }
+
+    public static function formatNumberWithPrecision($value) { // this method check the number and if it is less than 1 then it will return the value with 7 decimal places and its comma separated and solve scienfivic notation issue
+
+        $numericValue = (float) str_replace(',', '', $value);
+    
+        if ($numericValue >= 1) {
+            return number_format($numericValue, 7, '.', '');
+        }
+    
+        return number_format($value, 7, '.', '');
     }
 
     public static function checkPolicy($companySystemID = 0, $policyId = 0)
