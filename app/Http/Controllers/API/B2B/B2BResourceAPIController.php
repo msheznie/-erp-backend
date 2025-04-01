@@ -433,7 +433,7 @@ class B2BResourceAPIController extends AppBaseController
                 $htmlData .= "<tbody>";
 
                 foreach ($data['data'] as $key => $data) {
-                    $htmlData .= "<tr><td>{$data['status']}</td><td>{$data['file_name']}</td><td>{$data['batch_reference_no']}</td><td>{$data['reason']}</td></tr>";
+                    $htmlData .= "<tr><td>{$data['status']}</td><td>{$data['file_name']}</td><td>{$data['batch_reference_no']}</td><td style='text-align: left;'>{$data['reason']}</td></tr>";
                 }
 
                 $htmlData .= "</tbody></table>";
