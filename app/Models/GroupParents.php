@@ -41,4 +41,8 @@ class GroupParents extends Model
     public static $rules = [
 
     ];
+
+    public function companyMaster() {
+        return $this->belongsTo('App\Models\Company', 'company_system_id','companySystemID');
+    }
 }

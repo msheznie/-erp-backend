@@ -396,16 +396,38 @@ class FinancialReportAPIController extends AppBaseController
                 }
 
                 $input = $request->all();
+
+                $reportTemplate = ReportTemplate::where('companyReportTemplateID', $input['templateType'])->first();
+
                 $checkDetails = ReportTemplateDetails::where('companyReportTemplateID', $input['templateType'])->exists();
 
                 if (!$checkDetails && $input['accountType'] != 4) {
                     return $this->sendError("Report rows are not configured");
                 }
 
-                $checkColoumns = ReportTemplateColumnLink::where('templateID', $input['templateType'])->first();
+                $checkColoumns = ReportTemplateColumnLink::where('templateID', $input['templateType'])->get();
 
-                if (!$checkColoumns && $input['accountType'] != 4) {
-                    return $this->sendError("Report columns are not configured");
+                if($reportTemplate->isConsolidation == 1 && $reportTemplate->reportID == 1) {
+                    if($reportTemplate->columnTemplateID == null) {
+                        if(count($checkColoumns) > 0) {
+                            $requiredColumns = ["CONS", "ELMN", "CMB"];
+                            $missingColumns = array_values(array_diff($requiredColumns, $checkColoumns->pluck('shortCode')->toArray()));
+                            if(count($missingColumns) > 0) {
+                                $columnData = ReportTemplateColumns::whereIn('shortCode', $missingColumns)->pluck('description')->toArray();
+                                if(count($columnData) > 0) {
+                                    return $this->sendError("Column configuration not completed, assign " . join(",",$columnData) . " Column/s.");
+                                }
+                            }
+                        }
+                        else {
+                            return $this->sendError("Column configuration not completed, assign Combined, Elimination and Consolidation Columns or a Template.");
+                        }
+                    }
+                }
+                else {
+                    if ((count($checkColoumns) == 0) && $input['accountType'] != 4) {
+                        return $this->sendError("Report columns are not configured");
+                    }
                 }
 
                 $checkRows = ReportTemplateEquity::where('companySystemID', $input['selectedCompanyID'])->where('templateMasterID', $input['templateType'])->first();
@@ -8371,11 +8393,11 @@ GROUP BY
     {
 
         $input = $request->all();
-        $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->format('Y-m-d');
+        $fromDateObj = new Carbon($request->fromDate);
+        $fromDate = $fromDateObj->format('Y-m-d');
 
-        $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->format('Y-m-d');
+        $toDateObj = new Carbon($request->toDate);
+        $toDate = $toDateObj->format('Y-m-d');
 
         $financeYear = CompanyFinanceYear::find($request->companyFinanceYearID);
         $period = CompanyFinancePeriod::find($request->month);
@@ -8456,7 +8478,7 @@ GROUP BY
         if ($columnCode != 'ELMN') {
             if($columnCode == 'CMB') {
                 $dateFilter = "";
-                $firstLinkedcolumnQry = ConsolidationReportService::generateFilterQuery($fromDate, $toDate, $groupCompanyID[0], $companyID, $currencyColumn, [1], true, "gl", true);
+                $firstLinkedcolumnQry = ConsolidationReportService::generateFilterQuery($fromDateObj, $toDateObj, $groupCompanyID[0], $companyID, $currencyColumn, [1], true, "gl", true);
                 $firstLinkedcolumnQry .= " AS `" . $input['selectedColumn'] . "`,";
             }
 
@@ -8511,7 +8533,7 @@ GROUP BY
         else {
             $companyID = array_values(array_diff($companyID,$groupCompanyID));
 
-            $subsidiaryCompanyPeriodsFilterForEL = ConsolidationReportService::generateFilterQuery($fromDate, $toDate, $groupCompanyID[0], $companyID, $currencyColumn, [1], false, "el", true);
+            $subsidiaryCompanyPeriodsFilterForEL = ConsolidationReportService::generateFilterQuery($fromDateObj, $toDateObj, $groupCompanyID[0], $companyID, $currencyColumn, [1], false, "el", true);
 
             $sql = "SELECT 
                         glCode,
@@ -10847,8 +10869,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
     public function processConsolidationDataForDrillDownAndReport($input): array
     {
         $dataType = $input['selectedRow'];
-        $fromDate = Carbon::parse($input['fromDate'])->format('Y-m-d');
-        $toDate = Carbon::parse($input['toDate'])->format('Y-m-d');
+        $fromDate = Carbon::parse($input['fromDate']);
+        $toDate = Carbon::parse($input['toDate']);
 
         $currency = $input['currency'][0] ?? $input['currency'];
         $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';
@@ -10873,21 +10895,29 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
 
             // Joint venture & associate types
             $groupTypes = [2,3];
-            $periods = ConsolidationReportService::getCompanyOwnershipPeriods($fromDate, $toDate, $groupCompanySystemID, $childCompanies, $groupTypes);
+            $periods = ConsolidationReportService::getCompanyOwnershipPeriods($groupCompanySystemID, $childCompanies, $groupTypes);
 
             foreach ($periods as $period) {
-                $totalProfit = $this->getTotalProfit($serviceLineIDs,$period->company_system_id,$period->start_date,$period->end_date,$amountColumn);
+                $rowStartDate = Carbon::parse($period->start_date);
+                $rowEndDate = ($period->end_date == null) ? $toDate : Carbon::parse($period->end_date);
 
-                if(abs($totalProfit) != 0) {
-                    $parentPortion = ($totalProfit * $period->holding_percentage) / 100;
+                if($rowStartDate->isBetween($fromDate, $toDate) || $rowEndDate->isBetween($fromDate, $toDate)) {
+                    $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
+                    $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
 
-                    $data[] = [
-                        'company' => $period->company_system_id,
-                        'type' => $this->getCompanyType($period->group_type),
-                        'holdingPercentage' => $period->holding_percentage,
-                        'companyProfit' => $totalProfit,
-                        'parentPortion' => $parentPortion
-                    ];
+                    $totalProfit = $this->getTotalProfit($serviceLineIDs,$period->company_system_id,$queryStartDate->format("Y-m-d"),$queryEndDate->format("Y-m-d"),$amountColumn);
+
+                    if(abs($totalProfit) != 0) {
+                        $parentPortion = ($totalProfit * $period->holding_percentage) / 100;
+
+                        $data[] = [
+                            'company' => $period->companyMaster->CompanyName,
+                            'type' => $this->getCompanyType($period->group_type),
+                            'holdingPercentage' => $period->holding_percentage,
+                            'companyProfit' => $totalProfit,
+                            'parentPortion' => $parentPortion
+                        ];
+                    }
                 }
             }
         }
@@ -10895,23 +10925,28 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
 
             // Subsidiary types
             $groupTypes = [1];
-            $periods = ConsolidationReportService::getCompanyOwnershipPeriods($fromDate, $toDate, $groupCompanySystemID, $childCompanies, $groupTypes);
+            $periods = ConsolidationReportService::getCompanyOwnershipPeriods($groupCompanySystemID, $childCompanies, $groupTypes);
 
             foreach ($periods as $period) {
-                $totalProfit = $this->getTotalProfit($serviceLineIDs, $period->company_system_id, $period->start_date, $period->end_date, $amountColumn);
+                $rowStartDate = Carbon::parse($period->start_date);
+                $rowEndDate = ($period->end_date == null) ? $toDate : Carbon::parse($period->end_date);
 
-                if (abs($totalProfit) != 0) {
-                    // calculate NCI percentage
-                    $nciPercentage = 100 - $period->holding_percentage;
-                    $parentPortion = ($totalProfit * $nciPercentage) / 100;
+                if($rowStartDate->isBetween($fromDate, $toDate) || $rowEndDate->isBetween($fromDate, $toDate)) {
+                    $totalProfit = $this->getTotalProfit($serviceLineIDs, $period->company_system_id, $rowStartDate->format("Y-m-d"), $rowEndDate->format("Y-m-d"), $amountColumn);
 
-                    $data[] = [
-                        'company' => $period->company_system_id,
-                        'type' => $this->getCompanyType(1),
-                        'holdingPercentage' => $nciPercentage,
-                        'companyProfit' => $totalProfit,
-                        'parentPortion' => $parentPortion
-                    ];
+                    if (abs($totalProfit) != 0) {
+                        // calculate NCI percentage
+                        $nciPercentage = 100 - $period->holding_percentage;
+                        $parentPortion = ($totalProfit * $nciPercentage) / 100;
+
+                        $data[] = [
+                            'company' => $period->companyMaster->CompanyName,
+                            'type' => $this->getCompanyType(1),
+                            'holdingPercentage' => $nciPercentage,
+                            'companyProfit' => $totalProfit,
+                            'parentPortion' => $parentPortion
+                        ];
+                    }
                 }
             }
         }
@@ -10930,7 +10965,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
             ->whereIn('serviceLineSystemID', $serviceLineIDs)
             ->where('glAccountTypeID', 2)
             ->where('companySystemID', $company)
-            ->whereBetween('documentDate', [$fromDate, $toDate])
+            ->whereBetween(DB::raw('DATE(documentDate)'), [$fromDate, $toDate])
             ->first();
 
         return $totalProfit->$amountColumn * -1;

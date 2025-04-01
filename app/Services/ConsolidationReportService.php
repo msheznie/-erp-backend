@@ -8,14 +8,11 @@ use Illuminate\Support\Facades\DB;
 
 class ConsolidationReportService
 {
-    public static function getCompanyOwnershipPeriods($fromDate, $toDate, $parentCompanySystemID, $childCompanyIDs, $groupTypes) {
-        return GroupParents::select('company_system_id', 'holding_percentage', 'start_date', 'group_type')
-            ->selectRaw("COALESCE(end_date, ?) as end_date", [$toDate])
+    public static function getCompanyOwnershipPeriods($parentCompanySystemID, $childCompanyIDs, $groupTypes) {
+        return GroupParents::with('companyMaster')
             ->whereIn('company_system_id', $childCompanyIDs)
             ->where('parent_company_system_id', $parentCompanySystemID)
             ->whereIn('group_type', $groupTypes)
-            ->whereBetween('start_date', [$fromDate, $toDate])
-            ->whereBetween(DB::raw("COALESCE(end_date, '{$toDate}')"), [$fromDate, $toDate])
             ->orderBy('company_system_id')
             ->orderBy('start_date')
             ->get();
@@ -33,7 +30,7 @@ class ConsolidationReportService
     public static function generateFilterQuery($fromDate, $toDate, $parentCompanySystemID, $childCompanyIDs, $currencyColumn, $groupTypes, $isCombinedFilter, $alias, $isDropDown): string
     {
         // Get periods
-        $periods = self::getCompanyOwnershipPeriods($fromDate, $toDate, $parentCompanySystemID, $childCompanyIDs,$groupTypes);
+        $periods = self::getCompanyOwnershipPeriods($parentCompanySystemID, $childCompanyIDs,$groupTypes);
 
         $companyPeriodsFilterData = [];
 
@@ -44,23 +41,34 @@ class ConsolidationReportService
             $periodDates = $periods->where('company_system_id',$companyID);
             $periodConditions = [];
             foreach ($periodDates as $periodDate) {
-                $periodConditions[] = $alias . ".documentDate BETWEEN '" . $periodDate->start_date . "' AND '" . $periodDate->end_date . "'";
+
+                $rowStartDate = Carbon::parse($periodDate->start_date);
+                $rowEndDate = ($periodDate->end_date == null) ? $toDate : Carbon::parse($periodDate->end_date);
+
+                if($rowStartDate->isBetween($fromDate, $toDate) || $rowEndDate->isBetween($fromDate, $toDate)) {
+                    $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
+                    $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
+
+                    $periodConditions[] = "DATE(" . $alias . ".documentDate) BETWEEN '" . $queryStartDate->format("Y-m-d") . "' AND '" . $queryEndDate->format("Y-m-d") . "'";
+                }
             }
 
-            $filter .= " AND (" . join(" OR ", $periodConditions) . ") THEN ";
-            if($isCombinedFilter) {
-                $filter .= $alias . "." . $currencyColumn . " * -1";
-            }
-            else {
-                $filter .= $alias . "." . $currencyColumn;
-            }
+            if (!empty($periodConditions)) {
+                $filter .= " AND (" . join(" OR ", $periodConditions) . ") THEN ";
+                if($isCombinedFilter) {
+                    $filter .= $alias . "." . $currencyColumn . " * -1";
+                }
+                else {
+                    $filter .= $alias . "." . $currencyColumn;
+                }
 
-            $companyPeriodsFilterData[] = $filter;
+                $companyPeriodsFilterData[] = $filter;
+            }
         }
 
         // Add parent company
         if($isCombinedFilter) {
-            $companyPeriodsFilterData[] = "WHEN " . $alias . ".companySystemID = " . $parentCompanySystemID . " AND (" . $alias . ".documentDate BETWEEN '" . $fromDate . "' AND '" . $toDate . "') THEN " . $alias . "." . $currencyColumn . " * -1";
+            $companyPeriodsFilterData[] = "WHEN " . $alias . ".companySystemID = " . $parentCompanySystemID . " AND (DATE(" . $alias . ".documentDate) BETWEEN '" . $fromDate->format("Y-m-d") . "' AND '" . $toDate->format("Y-m-d") . "') THEN " . $alias . "." . $currencyColumn . " * -1";
         }
 
         // Generate filter query
@@ -78,8 +86,8 @@ class ConsolidationReportService
     }
 
     public static function generateConsolidationReportData($request, $consolidationKeys) {
-        $fromDate = Carbon::parse($request->fromDate)->format("Y-m-d");
-        $toDate = Carbon::parse($request->toDate)->format("Y-m-d");
+        $fromDate = Carbon::parse($request->fromDate);
+        $toDate = Carbon::parse($request->toDate);
 
         $servicelineIDs = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
 
