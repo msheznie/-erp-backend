@@ -679,7 +679,7 @@ class TaxService
 
         if (!$exemptVAT && !$exemptVATPortainateFlag) {
             $masterData = GRVMaster::with(['details' => function ($query) {
-                                        $query->selectRaw("SUM((GRVcostPerUnitLocalCur/unitCost) * netAmount) as localAmount, SUM((GRVcostPerUnitComRptCur/unitCost) * netAmount) as rptAmount,SUM((GRVcostPerUnitSupTransCur/unitCost) * netAmount) as transAmount,SUM((VATAmount/unitCost) * netAmount) as transVATAmount,SUM((VATAmountLocal/unitCost) * netAmount) as localVATAmount ,SUM((VATAmountRpt/unitCost) * netAmount) as rptVATAmount ,grvAutoID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER");
+                                        $query->selectRaw("SUM(GRVcostPerUnitLocalCur*noQty) as localAmount, SUM(GRVcostPerUnitComRptCur*noQty) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount ,grvAutoID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER");
                                     }])->find($grvAutoID);
 
             if (isset($masterData->details[0])){
@@ -690,7 +690,7 @@ class TaxService
 
         } else {
             $masterData = GRVMaster::with(['details' => function ($query) {
-                                    $query->selectRaw("SUM((GRVcostPerUnitLocalCur/unitCost) * netAmount) as localAmount, SUM((GRVcostPerUnitComRptCur/unitCost) * netAmount) as rptAmount,SUM((GRVcostPerUnitSupTransCur/unitCost) * netAmount) as transAmount,SUM((VATAmount/unitCost) * netAmount) as transVATAmount,SUM((VATAmountLocal/unitCost) * netAmount) as localVATAmount ,SUM((VATAmountRpt/unitCost) * netAmount) as rptVATAmount ,grvAutoID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER")
+                                    $query->selectRaw("SUM(GRVcostPerUnitLocalCur*noQty) as localAmount, SUM(GRVcostPerUnitComRptCur*noQty) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount ,grvAutoID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER")
                                          ->whereHas('vat_sub_category', function($query) {
                                             $query->where('subCatgeoryType', '!=', 3);
                                          })
@@ -708,7 +708,7 @@ class TaxService
             $vatData['masterVATRpt'] = ($masterData) ? $masterData->details[0]->rptVATAmount : 0;
 
             //get portainateAccounts
-           $exemptPotianteData = GRVDetails::selectRaw("((VATAmount/unitCost) * netAmount) as transVATAmount,((VATAmountLocal/unitCost) * netAmount) as localVATAmount ,(VATAmountRpt/unitCost) * netAmount) as rptVATAmount ,grvAutoID, vatSubCategoryID, financeGLcodebBSSystemID, financeGLcodePLSystemID, exempt_vat_portion, grvDetailsID, includePLForGRVYN")
+           $exemptPotianteData = GRVDetails::selectRaw("(VATAmount*noQty) as transVATAmount,(VATAmountLocal*noQty) as localVATAmount ,(VATAmountRpt*noQty) as rptVATAmount ,grvAutoID, vatSubCategoryID, financeGLcodebBSSystemID, financeGLcodePLSystemID, exempt_vat_portion, grvDetailsID, includePLForGRVYN")
                                   ->where('grvAutoID', $grvAutoID)
                                   ->whereHas('vat_sub_category', function($query) {
                                     $query->where('subCatgeoryType', '!=',3);
@@ -752,7 +752,7 @@ class TaxService
 
 
             //get balansheet account
-            $bsVAT = GRVDetails::selectRaw("SUM((VATAmount/unitCost) * netAmount) as transVATAmount,SUM((VATAmountLocal/unitCost) * netAmount) as localVATAmount ,SUM((VATAmountRpt/unitCost) * netAmount) as rptVATAmount ,grvAutoID, vatSubCategoryID, financeGLcodebBSSystemID")
+            $bsVAT = GRVDetails::selectRaw("SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount ,grvAutoID, vatSubCategoryID, financeGLcodebBSSystemID")
                               ->where('grvAutoID', $grvAutoID)
                               ->whereHas('vat_sub_category', function($query) {
                                 $query->where('subCatgeoryType', 3);
@@ -776,7 +776,7 @@ class TaxService
                 $bsVATData[$value['financeGLcodebBSSystemID']] = $temp;
             }
 
-            $plVAT = GRVDetails::selectRaw("SUM((VATAmount/unitCost) * netAmount) as transVATAmount,SUM((VATAmountLocal/unitCost) * netAmount) as localVATAmount ,SUM((VATAmountRpt/unitCost) * netAmount) as rptVATAmount ,grvAutoID, vatSubCategoryID, financeGLcodePLSystemID")
+            $plVAT = GRVDetails::selectRaw("SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount ,grvAutoID, vatSubCategoryID, financeGLcodePLSystemID")
                               ->where('grvAutoID', $grvAutoID)
                               ->whereHas('vat_sub_category', function($query) {
                                 $query->where('subCatgeoryType', 3);
@@ -1179,53 +1179,42 @@ class TaxService
             if (isset($value->vat_sub_category->subCatgeoryType) && $value->vat_sub_category->subCatgeoryType == 1 && $value->exempt_vat_portion > 0) {
                 
                 $normalVAT = $value->VATAmount - ($value->VATAmount * ($value->exempt_vat_portion /100));
-                $totalTransAmount += ((($value->GRVcostPerUnitSupTransCur/$value->unitCost)*$value->netAmount) + (($normalVAT/$value->unitCost)*$value->netAmount));
-                $totalTransVATAmount += (($normalVAT/$value->unitCost)*$value->netAmount);
+                $totalTransAmount += (($value->GRVcostPerUnitSupTransCur * $value->noQty) + ($normalVAT * $value->noQty));
+                $totalTransVATAmount += ($normalVAT * $value->noQty);
 
                 $normalVATRpt = $value->VATAmountRpt - ($value->VATAmountRpt * ($value->exempt_vat_portion /100));
-                $totalRptAmount += ((($value->GRVcostPerUnitComRptCur/$value->unitCost)*$value->netAmount) + (($normalVATRpt/$value->unitCost)*$value->netAmount));
-                $totalRptVATAmount += (($normalVATRpt/$value->unitCost)*$value->netAmount);
+                $totalRptAmount += (($value->GRVcostPerUnitComRptCur * $value->noQty) + ($normalVATRpt * $value->noQty));
+                $totalRptVATAmount += ($normalVATRpt * $value->noQty);
 
                 $normalVATLocal = $value->VATAmountLocal - ($value->VATAmountLocal * ($value->exempt_vat_portion /100));
-                $totalLocalAmount += ((($value->GRVcostPerUnitLocalCur/$value->unitCost)*$value->netAmount) + (($normalVATLocal/$value->unitCost)*$value->netAmount));
-                $totalLocalVATAmount += (($normalVATLocal/$value->unitCost)*$value->netAmount);
+                $totalLocalAmount += (($value->GRVcostPerUnitLocalCur * $value->noQty) + ($normalVATLocal * $value->noQty));
+                $totalLocalVATAmount += ($normalVATLocal * $value->noQty);
 
-                $exemptVATTrans += ((($value->VATAmount - $normalVAT)/$value->unitCost)*$value->netAmount);
-                $exemptVATRpt += ((($value->VATAmountRpt - $normalVATRpt)/$value->unitCost)*$value->netAmount);
-                $exemptVATLocal += ((($value->VATAmountLocal - $normalVATLocal)/$value->unitCost)*$value->netAmount);
+                $exemptVATTrans += (($value->VATAmount - $normalVAT) * $value->noQty);
+                $exemptVATRpt += (($value->VATAmountRpt - $normalVATRpt) * $value->noQty);
+                $exemptVATLocal += (($value->VATAmountLocal - $normalVATLocal) * $value->noQty);
 
             } else if (isset($value->vat_sub_category->subCatgeoryType) && $value->vat_sub_category->subCatgeoryType == 3) {
-                $totalTransAmount += (($value->GRVcostPerUnitSupTransCur/$value->unitCost)*$value->netAmount);
-                $totalRptAmount += (($value->GRVcostPerUnitComRptCur/$value->unitCost)*$value->netAmount);
-                $totalLocalAmount += (($value->GRVcostPerUnitLocalCur/$value->unitCost)*$value->netAmount);
+                $totalTransAmount += ($value->GRVcostPerUnitSupTransCur * $value->noQty);
+                $totalRptAmount += ($value->GRVcostPerUnitComRptCur * $value->noQty);
+                $totalLocalAmount += ($value->GRVcostPerUnitLocalCur * $value->noQty);
 
-                $exemptVATTrans += (($value->VATAmount/$value->unitCost)*$value->netAmount);
-                $exemptVATRpt += (($value->VATAmountRpt/$value->unitCost)*$value->netAmount);
-                $exemptVATLocal += (($value->VATAmountLocal/$value->unitCost)*$value->netAmount);
+                $exemptVATTrans += ($value->VATAmount * $value->noQty);
+                $exemptVATRpt += ($value->VATAmountRpt * $value->noQty);
+                $exemptVATLocal += ($value->VATAmountLocal * $value->noQty);
             } else {
-                $totalTransAmount += ((($value->GRVcostPerUnitSupTransCur/$value->unitCost)*$value->netAmount)
-                                        + (($value->VATAmount/$value->unitCost)*$value->netAmount));
-                $totalTransVATAmount += (($value->VATAmount/$value->unitCost)*$value->netAmount);
+                $totalTransAmount += (($value->GRVcostPerUnitSupTransCur * $value->noQty) + ($value->VATAmount * $value->noQty));
+                $totalTransVATAmount += ($value->VATAmount * $value->noQty);
 
-                $totalRptAmount += ((($value->GRVcostPerUnitComRptCur/$value->unitCost)*$value->netAmount)
-                                        + (($value->VATAmountRpt/$value->unitCost)*$value->netAmount));
-                $totalRptVATAmount += (($value->VATAmountRpt/$value->unitCost)*$value->netAmount);
+                $totalRptAmount += (($value->GRVcostPerUnitComRptCur * $value->noQty) + ($value->VATAmountRpt * $value->noQty));
+                $totalRptVATAmount += ($value->VATAmountRpt * $value->noQty);
 
-                $totalLocalAmount += ((($value->GRVcostPerUnitLocalCur/$value->unitCost)*$value->netAmount)
-                                        + (($value->VATAmountLocal/$value->unitCost)*$value->netAmount));
-                $totalLocalVATAmount += (($value->VATAmountLocal/$value->unitCost)*$value->netAmount);
+                $totalLocalAmount += (($value->GRVcostPerUnitLocalCur * $value->noQty) + ($value->VATAmountLocal * $value->noQty));
+                $totalLocalVATAmount += ($value->VATAmountLocal * $value->noQty);
             }
         }
 
-        return ['totalTransAmount' => $totalTransAmount,
-                'totalTransVATAmount' => $totalTransVATAmount,
-                'totalRptAmount' => $totalRptAmount,
-                'totalLocalAmount' => $totalLocalAmount,
-                'totalRptVATAmount' => $totalRptVATAmount,
-                'totalLocalVATAmount' => $totalLocalVATAmount,
-                'exemptVATTrans' => $exemptVATTrans,
-                'exemptVATRpt' => $exemptVATRpt,
-                'exemptVATLocal' => $exemptVATLocal];
+        return ['totalTransAmount' => $totalTransAmount, 'totalTransVATAmount' => $totalTransVATAmount, 'totalRptAmount' => $totalRptAmount, 'totalLocalAmount' => $totalLocalAmount, 'totalRptVATAmount' => $totalRptVATAmount, 'totalLocalVATAmount' => $totalLocalVATAmount, 'exemptVATTrans' => $exemptVATTrans, 'exemptVATRpt' => $exemptVATRpt, 'exemptVATLocal' => $exemptVATLocal];
     }
 
     public static function processGRVDetailVATForUnbilled($grvDetailsID)
