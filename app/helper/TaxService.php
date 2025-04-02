@@ -708,7 +708,7 @@ class TaxService
             $vatData['masterVATRpt'] = ($masterData) ? $masterData->details[0]->rptVATAmount : 0;
 
             //get portainateAccounts
-           $exemptPotianteData = GRVDetails::selectRaw("((VATAmount/unitCost) * netAmount) as transVATAmount,((VATAmountLocal/unitCost) * netAmount) as localVATAmount ,((VATAmountRpt/unitCost) * netAmount) as rptVATAmount ,grvAutoID, vatSubCategoryID, financeGLcodebBSSystemID, financeGLcodePLSystemID, exempt_vat_portion, grvDetailsID, includePLForGRVYN")
+           $exemptPotianteData = GRVDetails::selectRaw("((VATAmount/unitCost) * netAmount) as transVATAmount,((VATAmountLocal/unitCost) * netAmount) as localVATAmount ,(VATAmountRpt/unitCost) * netAmount) as rptVATAmount ,grvAutoID, vatSubCategoryID, financeGLcodebBSSystemID, financeGLcodePLSystemID, exempt_vat_portion, grvDetailsID, includePLForGRVYN")
                                   ->where('grvAutoID', $grvAutoID)
                                   ->whereHas('vat_sub_category', function($query) {
                                     $query->where('subCatgeoryType', '!=',3);
@@ -716,6 +716,7 @@ class TaxService
                                   ->where('exempt_vat_portion', '>', 0)
                                   ->get();
 
+            
             foreach ($exemptPotianteData as $key => $value) {
                 $exemptVATTransAmount = $value->transVATAmount * ($value->exempt_vat_portion/100);
                 $vatData['masterVATTrans'] += ($value->transVATAmount - $exemptVATTransAmount);
