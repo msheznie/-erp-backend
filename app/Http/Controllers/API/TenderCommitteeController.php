@@ -128,6 +128,9 @@ class TenderCommitteeController extends AppBaseController
     public function tenderUserAccessData($tenderId,$companyId,$moduleId)
     {
         $employees = SrmEmployees::select('id', 'emp_id', 'company_id', 'is_active')
+            ->whereHas('employee', function ($query) {
+                $query->where('empActive', 1)->where('discharegedYN','!=',-1);
+            })
             ->with(['employee' => function ($q) {
                 $q->select('employeeSystemID', DB::raw("CONCAT(empID, ' | ', empFullName) as empFullDetails"));
             }])
