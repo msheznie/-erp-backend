@@ -148,6 +148,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
             $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $input['prefix'])
                                                           ->where('companyReportTemplateID', $input['companyReportTemplateID'])
+                                                          ->where('companySystemID', $input['companySystemID'])
                                                           ->first();
             if ($checkPrefixDuplicate) {
                 return $this->sendError("Prefix already exists.", 500);
@@ -281,11 +282,12 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             if ($input['serialLength'] == 0) {
                 return $this->sendError("Serial Number length cannot be zero.", 500);
             }
-            $existingRecord = ReportTemplateDetails::find($input['detID']);
             $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $input['prefix'])
                                                           ->where('detID', '!=', $input['detID'])
+                                                          ->where('companyReportTemplateID', $input['companyReportTemplateID'])
+                                                          ->where('companySystemID', $input['companySystemID'])
                                                           ->first();
-            if ($checkPrefixDuplicate && $existingRecord && $existingRecord->prefix !== $input['prefix']) {
+            if ($checkPrefixDuplicate) {
                 return $this->sendError("Prefix already exists.", 500);
             }
         }
