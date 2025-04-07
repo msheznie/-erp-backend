@@ -107,7 +107,9 @@ class TenderCommitteeController extends AppBaseController
     public function getActiveEmployeesForBid(Request $request) {
 
         $exisitingEmployeeIDs = SrmTenderBidEmployeeDetails::where('tender_id',$request['tender_id'])->pluck('emp_id')->toArray();
-        $srmEmployees = SrmEmployees::where('company_id',$request['companyId'])->where('is_active',true)->whereNotIn('emp_id',$exisitingEmployeeIDs)->with('employee')->get();
+        $srmEmployees = SrmEmployees::where('company_id',$request['companyId'])->where('is_active',true)->whereNotIn('emp_id',$exisitingEmployeeIDs)->whereHas('employee', function ($query) {
+            $query->where('empActive', 1)->where('discharegedYN','!=',-1);
+        })->with('employee')->get();
         $data['employeeApproval'] = [];
         $data['bidOpeningUserDrop'] = $this->tenderUserAccessData($request['tender_id'],$request['companyId'],1);
         $data['commercialBidOpeningUserDrop'] = $this->tenderUserAccessData($request['tender_id'],$request['companyId'],2);
@@ -126,6 +128,9 @@ class TenderCommitteeController extends AppBaseController
     public function tenderUserAccessData($tenderId,$companyId,$moduleId)
     {
         $employees = SrmEmployees::select('id', 'emp_id', 'company_id', 'is_active')
+            ->whereHas('employee', function ($query) {
+                $query->where('empActive', 1)->where('discharegedYN','!=',-1);
+            })
             ->with(['employee' => function ($q) {
                 $q->select('employeeSystemID', DB::raw("CONCAT(empID, ' | ', empFullName) as empFullDetails"));
             }])

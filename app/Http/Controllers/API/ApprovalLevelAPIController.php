@@ -22,6 +22,7 @@ use App\Models\DocumentMaster;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\SegmentMaster;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\TenderType;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\DocumentApproved;
 use App\Repositories\ApprovalLevelRepository;
@@ -31,6 +32,7 @@ use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class ApprovalLevelController
@@ -93,6 +95,12 @@ class ApprovalLevelAPIController extends AppBaseController
         if (isset($request->serviceLineSystemID)) {
             $ServiceLineCode = SegmentMaster::where('serviceLineSystemID', $input["serviceLineSystemID"])->first();
             $input["serviceLineCode"] = $ServiceLineCode->ServiceLineCode;
+        }
+
+        if (isset($request->tenderTypeId)) {
+
+            $tenderType = TenderType::getTenderTypeData($input['tenderTypeId']);
+            $input["tenderTypeCode"] =  $input['tenderTypeId'] == -1 ? 'General' : $tenderType->name;
         }
 
         if(isset($input['isCategoryWiseApproval']) && $input['isCategoryWiseApproval']){
@@ -161,6 +169,12 @@ class ApprovalLevelAPIController extends AppBaseController
         if (isset($request->serviceLineSystemID)) {
             $ServiceLineCode = SegmentMaster::where('serviceLineSystemID', $input["serviceLineSystemID"])->first();
             $input["serviceLineCode"] = $ServiceLineCode->ServiceLineCode;
+        }
+
+
+        if (isset($request->tenderTypeId)) {
+            $tenderType = TenderType::getTenderTypeData($request->tenderTypeId);
+            $input["tenderTypeCode"] = $input['tenderTypeId'] == -1 ? 'General' : $tenderType->name;
         }
 
         /** @var ApprovalLevel $approvalLevel */
@@ -271,6 +285,30 @@ class ApprovalLevelAPIController extends AppBaseController
                                                     $query->where('serviceLineWise', 1)
                                                           ->where('serviceLineSystemID', $input['serviceLineSystemID']);
                                                })
+                                                ->when(
+                                                    isset($input['tenderTypeId']) && $input['tenderTypeId'] == -1,
+                                                    function ($query) {
+                                                        $query->where(function ($query) {
+                                                            $query->where('tenderTypeId', -1)
+                                                                ->orWhereNull('tenderTypeId');
+                                                        });
+                                                    }
+                                                )
+                                                ->when(
+                                                    array_key_exists('tenderTypeId', $input) && $input['tenderTypeId'] != -1 && !is_null($input['tenderTypeId']),
+                                                    function ($query) use ($input) {
+                                                        $query->where('tenderTypeId', $input['tenderTypeId']);
+                                                    }
+                                                )
+                                                ->when(
+                                                    !array_key_exists('tenderTypeId', $input) || is_null($input['tenderTypeId']),
+                                                    function ($query) {
+                                                        $query->where(function ($query) {
+                                                            $query->where('tenderTypeId', -1)
+                                                                ->orWhereNull('tenderTypeId');
+                                                        });
+                                                    }
+                                                )
                                                ->when((isset($input['serviceLineWise']) && !$input['serviceLineWise']) || !isset($input['serviceLineWise']), function($query) {
                                                     $query->where('serviceLineWise', 0)
                                                           ->whereNull('serviceLineSystemID');

@@ -29,40 +29,41 @@ class TenderCustomEmailRepository
             'document_code' => $input['document_code'],
             'document_id' => $input['document_id'],
             'email_subject' => $input['email_subject'] ?? '',
+            'negotiation_id' => $input['negotiation_id'] ?? '',
         ];
 
         try {
             return DB::transaction(function () use ($input, $data, $additionalData) {
-            $tenderData = TenderMaster::getTenderByUuid($data['tender_uuid']);
-            if(!$tenderData){
-                return [
-                    "success" => false,
-                    "data" => 'Not a Valid Tender UUID'
-                ];
-            }
-            foreach ($data['supplier_uuid'] as $supplierUuid) {
-                $supplierId = SRMService::getSupplierRegIdByUUID($supplierUuid);
-                if(!$supplierId){
+                $tenderData = TenderMaster::getTenderByUuid($data['tender_uuid']);
+                if(!$tenderData){
                     return [
                         "success" => false,
-                        "data" => 'Not a Valid Supplier UUID'
+                        "data" => 'Not a Valid Tender UUID'
                     ];
                 }
+                foreach ($data['supplier_uuid'] as $supplierUuid) {
+                    $supplierId = SRMService::getSupplierRegIdByUUID($supplierUuid);
+                    if(!$supplierId){
+                        return [
+                            "success" => false,
+                            "data" => 'Not a Valid Supplier UUID'
+                        ];
+                    }
 
-                $data['supplier_id'] = $supplierId;
+                    $data['supplier_id'] = $supplierId;
 
-                $recordData = array_merge($data, $additionalData);
-                $result = TenderCustomEmail::createOrUpdateCustomEmail(
-                    ['tender_id' => $tenderData->id, 'supplier_id' => $supplierId],
-                    $recordData
-                );
+                    $recordData = array_merge($data, $additionalData);
+                    $result = TenderCustomEmail::createOrUpdateCustomEmail(
+                        ['tender_id' => $tenderData->id, 'supplier_id' => $supplierId],
+                        $recordData
+                    );
 
-                if (!$result) {
-                    return ['success' => false, 'data' => 'Failed to save record.'];
+                    if (!$result) {
+                        return ['success' => false, 'data' => 'Failed to save record.'];
+                    }
                 }
-            }
 
-            return ['success' => true, 'data' => 'Saved successfully'];
+                return ['success' => true, 'data' => 'Saved successfully'];
 
             });
         } catch (\Exception $e) {
@@ -73,23 +74,23 @@ class TenderCustomEmailRepository
     public function getCustomEmailSupplier($tenderId, $supplierUuid, $documentCode)
     {
         try {
-        return DB::transaction(function () use ( $tenderId, $supplierUuid, $documentCode) {
+            return DB::transaction(function () use ( $tenderId, $supplierUuid, $documentCode) {
 
-        $tenderData = TenderMaster::getTenderByUuid($tenderId);
-        if(!$tenderData){
-            return [
-                "success" => false,
-                "data" => 'Not a Valid Tender UUID'
-            ];
-        }
-        $supplierId = SRMService::getSupplierRegIdByUUID($supplierUuid);
-        if(!$supplierId){
-            return [
-                "success" => false,
-                "data" => 'Not a Valid Supplier UUID'
-            ];
-        }
-            return TenderCustomEmail::getCustomEmailSupplier($tenderData['id'], $supplierId, $documentCode);
+                $tenderData = TenderMaster::getTenderByUuid($tenderId);
+                if(!$tenderData){
+                    return [
+                        "success" => false,
+                        "data" => 'Not a Valid Tender UUID'
+                    ];
+                }
+                $supplierId = SRMService::getSupplierRegIdByUUID($supplierUuid);
+                if(!$supplierId){
+                    return [
+                        "success" => false,
+                        "data" => 'Not a Valid Supplier UUID'
+                    ];
+                }
+                return TenderCustomEmail::getCustomEmailSupplier($tenderData['id'], $supplierId, $documentCode);
             });
         } catch (\Exception $e) {
 
@@ -100,20 +101,20 @@ class TenderCustomEmailRepository
         }
     }
 
-    public function getCustomEmailData($tenderId)
+    public function getCustomEmailData($tenderId, $negotiationId)
     {
         try {
-           return DB::transaction(function () use ( $tenderId) {
-           $tenderData = TenderMaster::getTenderByUuid($tenderId);
+            return DB::transaction(function () use ( $tenderId, $negotiationId) {
+                $tenderData = TenderMaster::getTenderByUuid($tenderId);
 
-            if (!$tenderData) {
-                return [
-                    "success" => false,
-                    "data" => 'Not a Valid Tender UUID'
-                ];
-            }
-                return TenderCustomEmail::getCustomEmailData($tenderData['id']);
-             });
+                if (!$tenderData) {
+                    return [
+                        "success" => false,
+                        "data" => 'Not a Valid Tender UUID'
+                    ];
+                }
+                return TenderCustomEmail::getCustomEmailData($tenderData['id'], $negotiationId);
+            });
         } catch (\Exception $e) {
             return [
                 "success" => false,
@@ -126,14 +127,14 @@ class TenderCustomEmailRepository
     {
         try {
             return DB::transaction(function () use ( $tenderId, $supplierUuid) {
-               $tenderData = TenderMaster::getTenderByUuid($tenderId);
+                $tenderData = TenderMaster::getTenderByUuid($tenderId);
                 if(!$tenderData){
                     return [
                         "success" => false,
                         "data" => 'Not a Valid Tender UUID'
                     ];
                 }
-               $supplierId = SRMService::getSupplierRegIdByUUID($supplierUuid);
+                $supplierId = SRMService::getSupplierRegIdByUUID($supplierUuid);
                 if(!$supplierId){
                     return [
                         "success" => false,
@@ -141,10 +142,10 @@ class TenderCustomEmailRepository
                     ];
                 }
 
-                    return TenderCustomEmail::where('tender_id', $tenderData['id'])
-                            ->where('supplier_id', $supplierId)
-                            ->delete() > 0;
-                    });
+                return TenderCustomEmail::where('tender_id', $tenderData['id'])
+                        ->where('supplier_id', $supplierId)
+                        ->delete() > 0;
+            });
         } catch (\Exception $e) {
             return [
                 "success" => false,

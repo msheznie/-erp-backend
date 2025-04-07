@@ -21,7 +21,8 @@ class TenderCustomEmail extends Model
         'cc_email',
         'email_subject',
         'email_body',
-        'document_id'
+        'document_id',
+        'negotiation_id'
     ];
 
     public function supplier()
@@ -33,15 +34,17 @@ class TenderCustomEmail extends Model
     {
         return $this->hasOne('App\Models\DocumentAttachments','attachmentID', 'document_id');
     }
+
     public static function createOrUpdateCustomEmail($list, $data)
     {
         return self::updateOrCreate($list, $data);
     }
 
-    public static function getCustomEmailData($tenderId)
+    public static function getCustomEmailData($tenderId, $negotiationId)
     {
         $records = self::where('tender_id', $tenderId)
-            ->with('supplier')
+            ->with(['supplier'])
+            ->where('negotiation_id', $negotiationId)
             ->get();
 
         $responseData = [];
@@ -51,7 +54,7 @@ class TenderCustomEmail extends Model
             $responseData[] = [
                 'id' => $record->id,
                 'supplier_uuid' => $supplier->uuid,
-                'supplier_name' => $supplier ? $supplier->name : null,
+                'supplier_name' => $supplier ? $supplier->name : null
             ];
         }
 

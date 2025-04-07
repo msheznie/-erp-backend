@@ -112,8 +112,8 @@ class SupplierTenderNegotiation extends Model
     public static function getSupplierList($negotiationId, $tenderId)
     {
         $suppliers = SupplierTenderNegotiation::select('id', 'suppliermaster_id')->where('tender_negotiation_id', $negotiationId)
-            ->whereDoesntHave('supplierCustomEmail', function ($query) use ($tenderId) {
-                $query->where('tender_id', $tenderId);
+            ->whereDoesntHave('supplierCustomEmail', function ($query) use ($tenderId, $negotiationId) {
+                $query->where('tender_id', $tenderId)->where('negotiation_id', $negotiationId);
             })
             ->with(['supplier' => function ($query) {
                 $query->select('id','uuid', 'name');

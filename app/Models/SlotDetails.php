@@ -74,7 +74,7 @@ class SlotDetails extends Model
 {
 
     public $table = 'slot_details';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -109,7 +109,7 @@ class SlotDetails extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function slot_master()

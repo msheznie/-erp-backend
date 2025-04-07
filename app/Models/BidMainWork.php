@@ -91,7 +91,7 @@ class BidMainWork extends Model
 {
 
     public $table = 'srm_bid_main_work';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -139,7 +139,7 @@ class BidMainWork extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function tender_boq_items(){
@@ -151,5 +151,47 @@ class BidMainWork extends Model
         return $this->belongsTo('App\Models\BidSubmissionMaster', 'bid_master_id', 'id');
     }
 
+    public static function deleteNullBidMainWorkRecords($tenderId,$bidMasterId)
+    {
+        $duplicateIds = BidMainWork::where('tender_id', $tenderId)
+            ->where('bid_master_id', $bidMasterId)
+            ->whereNull('qty')
+            ->whereIn('bid_format_detail_id', function ($query) {
+                $query->select('bid_format_detail_id')
+                    ->from('srm_bid_main_work')
+                    ->groupBy('bid_format_detail_id')
+                    ->havingRaw('COUNT(*) > 1');
+            })
+            ->pluck('id');
+        BidMainWork::whereIn('id', $duplicateIds)->delete();
+    }
+
+    public static function deleteIncompleteBidMainWorkRecords($tenderId, $bidMasterId)
+    {
+        $latestRecords = BidMainWork::where('tender_id', $tenderId)
+            ->whereIn('bid_master_id', $bidMasterId)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->groupBy(function ($item) {
+                return implode('|', [
+                    $item->main_works_id,
+                    $item->bid_master_id,
+                    $item->tender_id,
+                    $item->bid_format_detail_id,
+                    $item->qty
+                ]);
+            })
+            ->filter(function ($group) {
+                return $group->count() > 1;
+            })
+            ->map(function ($group) {
+                return $group->slice(1)->pluck('id');
+            })
+            ->flatten();
+
+        if ($latestRecords->isNotEmpty()) {
+           BidMainWork::whereIn('id', $latestRecords)->delete();
+        }
+    }
 
 }

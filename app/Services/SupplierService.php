@@ -8,6 +8,7 @@ use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class SupplierService
 {
@@ -65,6 +66,7 @@ class SupplierService
             'email' => $email,
         ];
 
+        LOG::info($token);
         return DB::table('srm_supplier_registration_link')->where('token', $token)->update($data);
     }
 

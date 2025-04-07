@@ -40,4 +40,11 @@ class TenderNegotiationRepository extends BaseRepository
     public function withRelations($id,$relations) {
         return $this->where('id',$id)->select(['srm_tender_master_id','status','approved_yn','comments','confirmed_yn','no_to_approve','id','confirmed_by'])->with($relations)->get();
     }
+
+    public function getVersion($id)
+    {
+        return TenderNegotiation::where('srm_tender_master_id', $id)
+            ->orderByDesc('version')
+            ->first();
+    }
 }

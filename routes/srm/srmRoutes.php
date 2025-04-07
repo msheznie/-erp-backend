@@ -304,4 +304,6 @@ Route::post('saveCustomEmail', 'TenderCustomEmailController@store')->name("creat
 Route::post('getSupplierListCustomEmail', 'TenderCustomEmailController@getSupplierListCustomEmail')->name("Get Negotiation Custom Email Supplier List");
 Route::post('removeCustomEmailSupplier', 'TenderCustomEmailController@deleteBySupplierId')->name("Remove Negotiation Supplier Custom Email");
 Route::post('getCustomEmailSupplier', 'TenderCustomEmailController@getCustomEmailSupplier')->name("Get Negotiation Supplier Custom Email");
+Route::post('deleteAllBidMinimumApprovalDetails', 'TenderBidEmployeeDetailsController@deleteAllBidMinimumApprovalDetails')->name("Delete All Bid Minimum Approval Details");
+Route::post('deleteAllTenderUserAccess', 'TenderBidEmployeeDetailsController@deleteAllTenderUserAccess')->name("Delete All Tender User Access");
 /*TenderPaymentDetailAPIController*/

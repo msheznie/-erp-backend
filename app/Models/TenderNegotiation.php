@@ -12,7 +12,7 @@ class TenderNegotiation extends Model
     // 0/1 - not started
     // 2 -started
     // 3 - completed
-    
+
     public $fillable = [
         'srm_tender_master_id',
         'status',
@@ -23,10 +23,11 @@ class TenderNegotiation extends Model
         'comments',
         'started_by',
         'no_to_approve',
-        'currencyId'
+        'currencyId',
+        'version'
     ];
 
-        /**
+    /**
      * The attributes that should be casted to native types.
      *
      * @var array
@@ -42,10 +43,11 @@ class TenderNegotiation extends Model
         'comments' => 'string',
         'confirmed_at' => 'date',
         'no_to_approve' => 'integer',
-        'currencyId' => 'integer'
+        'currencyId' => 'integer',
+        'version' => 'integer'
     ];
 
-        /**
+    /**
      * Validation rules
      *
      * @var array
@@ -59,7 +61,7 @@ class TenderNegotiation extends Model
     {
         return $this->hasOne('App\Models\TenderMaster', 'id', 'srm_tender_master_id');
     }
-    
+
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmed_by', 'employeeSystemID');
@@ -67,7 +69,7 @@ class TenderNegotiation extends Model
 
     public function area() {
         return $this->hasOne('App\Models\TenderNegotiationArea', 'tender_negotiation_id', 'id');
-        
+
     }
 
     public function SupplierTenderNegotiation()
@@ -78,6 +80,57 @@ class TenderNegotiation extends Model
     public function SupplierTenderNegotiationList()
     {
         return $this->hasMany('App\Models\SupplierTenderNegotiation', 'tender_negotiation_id', 'id');
+    }
+
+    public function tenderBidNegotiation()
+    {
+        return $this->hasMany('App\Models\TenderBidNegotiation', 'tender_negotiation_id', 'id');
+    }
+
+    public static function getTenderLatestNegotiations($tenderMasterId){
+        return TenderNegotiation::select('id', 'version')
+            ->where('srm_tender_master_id',$tenderMasterId)
+            ->orderByDesc('version')
+            ->first();
+    }
+
+    public static function tenderBidNegotiationList($tenderId, $isNegotiation)
+    {
+        if($isNegotiation){
+            $latestNegotiation = self::getTenderLatestNegotiations($tenderId);
+        }
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId);
+
+        if($isNegotiation){
+            $tenderBidNegotiations = $tenderBidNegotiations->where('tender_negotiation_id', $latestNegotiation->id);
+        }
+
+        return $tenderBidNegotiations->get();
+    }
+
+    public static function getCurrentTenderNegotiationsId($tenderMasterId, $version){
+        return TenderNegotiation::select('id', 'version')
+            ->where('srm_tender_master_id',$tenderMasterId)
+            ->where('version', $version)
+            ->first();
+    }
+
+    public static function getCurrentTenderNegotiationsVersion($id){
+        return TenderNegotiation::select('version')
+            ->where('id', $id)
+            ->first();
+    }
+
+    public static function getNegotiationWithArea($tenderId, $tenderBidNegotiationResult)
+    {
+        return TenderNegotiation::with('area')
+            ->where('srm_tender_master_id', $tenderId)
+            ->when($tenderBidNegotiationResult, function ($query) use ($tenderBidNegotiationResult) {
+                return $query->where('id', $tenderBidNegotiationResult->tender_negotiation_id);
+            })
+            ->first(['id']);
     }
 
 }

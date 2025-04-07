@@ -62,6 +62,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\
+git;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -1537,6 +1539,16 @@ ORDER BY
                             }
                         }
 
+                        if($input['tender_type_id'] == 3){
+                            $assignSupplier =  $this->tenderMasterRepository->checkAssignSuppliers(
+                                $input['company_id'], $input['id'], $rfq
+                            );
+
+                            if(!$assignSupplier['success']){
+                                return $assignSupplier;
+                            }
+                        }
+
                         $parentsWithoutSubLevels = DB::table('srm_evaluation_criteria_details as parent')
                             ->leftJoin('srm_evaluation_criteria_details as child', 'parent.id', '=', 'child.parent_id')
                             ->where('parent.parent_id', 0)
@@ -1644,9 +1656,9 @@ ORDER BY
                             $versionUpdate['tender_edit_confirm_id'] = $documentModifyRequest['id'];
                             TenderMaster::where('id', $input['id'])->update($versionUpdate);
 
-                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => 108, 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type);
+                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => 108, 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type, 'amount' => $tenderMaster->estimated_value, 'tenderTypeId' => $tenderMaster->tender_type_id);
                         } else {
-                            $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"], 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type);
+                            $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"], 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type, 'amount' => $tenderMaster->estimated_value , 'tenderTypeId' => $tenderMaster->tender_type_id);
                         }
 
 
@@ -2537,7 +2549,7 @@ ORDER BY
             $dataEmail['alertMessage'] = "Invitation for ".$docType." ";
             $dataEmail['empEmail'] = $emailFormatted;
             $body = "Dear Supplier," . "<br /><br />" . "
-            I trust this message finds you well." . "<br /><br />" . "
+            We trust this message finds you well." . "<br /><br />" . "
             We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
             If your company is interested in participating in the ".$docType." process, please click on the link below." . "<br /><br />" . "
             " . "<b>" . " ".$docType." Title :" . "</b> " . $tenderTitle . "<br /><br />" . "
@@ -3248,7 +3260,7 @@ ORDER BY
         $data['calendarDates'] = DB::select($qry);
         $data['calendarDatesAll'] = DB::select($qryAll);
         $current_date = date('Y-m-d H:i:s');
-
+        $commercialDateCheckResult = false;
         $stage = $data['master']['stage'];
         $current_date2 = Carbon::createFromFormat('Y-m-d H:i:s', $current_date);
 
@@ -3262,7 +3274,7 @@ ORDER BY
             $opening_commer_date_comp = $data['master']['commerical_bid_opening_date'];
             $closing_commer_date_comp = $data['master']['commerical_bid_closing_date'];
 
-            $result1 = $current_date2->gt($opening_commer_date_comp);
+            $commercialDateCheckResult = $current_date2->gt($opening_commer_date_comp);
             if ($closing_commer_date_comp == null) {
                 $result2 = true;
             } else {
@@ -3272,7 +3284,7 @@ ORDER BY
 
 
 
-            if ($result1 && $result2) {
+            if ($commercialDateCheckResult && $result2) {
                 $is_comm_date_disable = true;
             }
         }
@@ -3300,6 +3312,7 @@ ORDER BY
 
         $data['master']['disable_date'] = $is_date_disable;
         $data['master']['bid_opening_date_status'] = $result3;
+        $data['master']['comm_opening_date_status'] = $commercialDateCheckResult;
         $data['master']['is_comm_date_disable'] = $is_comm_date_disable;
         $data['master']['is_emp_approval_active'] = $is_emp_approval_active;
         $data['master']['tender_bids'] = $this->getTenderBits($request);
@@ -3556,6 +3569,13 @@ ORDER BY
                     ->where('module_id',2);
             }, 'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
                 $q1->where('emp_id',$userId);
+            },  'tender_negotiation' => function ($q2) {
+                $q2->select('srm_tender_master_id')
+                    ->selectSub(function ($query) {
+                        $query->from('tender_negotiations as tn')
+                            ->selectRaw('MAX(version)')
+                            ->whereColumn('tn.srm_tender_master_id', 'tender_negotiations.srm_tender_master_id');
+                    }, 'version');
             }])
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('technical_eval_status', 1)
@@ -3732,7 +3752,14 @@ ORDER BY
                 ->where('module_id',3);
         },'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
             $q1->where('emp_id',$userId);
-        }])
+        }, 'tender_negotiation' => function ($q2) {
+            $q2->select('srm_tender_master_id', 'id')
+                ->selectSub(function ($query) {
+                    $query->from('tender_negotiations as tn')
+                        ->selectRaw('MAX(version)')
+                        ->whereColumn('tn.srm_tender_master_id', 'tender_negotiations.srm_tender_master_id');
+                }, 'version');
+        }, 'tender_negotiation.tenderBidNegotiation'])
             ->where(function ($query) use ($userId) {
                 $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
                     $q->where('user_id', $userId)
@@ -3833,9 +3860,7 @@ ORDER BY
         $tenderId = $request['tenderId'];
         $isNegotiation = $request['isNegotiation'];
 
-        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
-            ->where('tender_id', $tenderId)
-            ->get();
+        $tenderBidNegotiations = TenderNegotiation::tenderBidNegotiationList($tenderId, $isNegotiation);;
 
         if ($tenderBidNegotiations->count() > 0) {
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
@@ -4001,9 +4026,7 @@ ORDER BY
         $tenderId = $request['tenderId'];
         $isNegotiation = $request['isNegotiation'];
 
-        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
-            ->where('tender_id', $tenderId)
-            ->get();
+        $tenderBidNegotiations = TenderNegotiation::tenderBidNegotiationList($tenderId, $isNegotiation);;
 
         if ($tenderBidNegotiations->count() > 0) {
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
@@ -4173,6 +4196,10 @@ ORDER BY
 
     public function getPricingItems($bidMasterId, $tenderId)
     {
+        if (!empty($bidMasterId)) {
+            BidMainWork::deleteIncompleteBidMainWorkRecords($tenderId, $bidMasterId);
+        }
+
         return PricingScheduleMaster::with(['tender_bid_format_master', 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
             $q->with(['bid_main_works' => function ($q) use ($bidMasterId) {
                 $q->whereIn('bid_master_id', $bidMasterId);
@@ -4517,9 +4544,7 @@ ORDER BY
             $q->where('envelopType',3);
         }])->where('id', $tenderId)->first();
 
-        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
-            ->where('tender_id', $tenderId)
-            ->get();
+        $tenderBidNegotiations = TenderNegotiation::tenderBidNegotiationList($tenderId, $isNegotiation);
 
         if ($tenderBidNegotiations->count() > 0) {
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
@@ -5116,17 +5141,17 @@ ORDER BY
             ->whereHas('tenderMaster', function ($q) use ($companyId) {
                 $q->where('company_id', $companyId);
             })->with(['area' => function ($query)  use ($input) {
-            $query->select('pricing_schedule','technical_evaluation','tender_documents','id','tender_negotiation_id');
-        },'tenderMaster' => function ($q) use ($input){
-            $q->select('title', 'uuid', 'description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id', 'is_negotiation_closed');
-            $q->with(['currency' => function ($c) use ($input) {
-                $c->select('CurrencyName','currencyID','CurrencyCode');
-            },'tender_type' => function ($t) {
-                $t->select('id','name','description');
-            },'envelop_type' => function ($e) {
-                $e->select('id','name','description');
+                $query->select('pricing_schedule','technical_evaluation','tender_documents','id','tender_negotiation_id');
+            },'tenderMaster' => function ($q) use ($input){
+                $q->select('title', 'uuid', 'description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id', 'is_negotiation_closed');
+                $q->with(['currency' => function ($c) use ($input) {
+                    $c->select('CurrencyName','currencyID','CurrencyCode');
+                },'tender_type' => function ($t) {
+                    $t->select('id','name','description');
+                },'envelop_type' => function ($e) {
+                    $e->select('id','name','description');
+                }]);
             }]);
-        }]);
 
         if (array_key_exists('tenderNegotiationSatus', $input) && isset($input['tenderNegotiationSatus'])) {
             if ($input['tenderNegotiationSatus'] == 3) {
@@ -5319,6 +5344,13 @@ ORDER BY
                 ->where('module_id',1);
         },'tenderBidMinimumApproval'=> function ($q1) use ($userId) {
             $q1->where('emp_id',$userId);
+        },   'tender_negotiation' => function ($q2) {
+            $q2->select('srm_tender_master_id')
+                ->selectSub(function ($query) {
+                    $query->from('tender_negotiations as tn')
+                        ->selectRaw('MAX(version)')
+                        ->whereColumn('tn.srm_tender_master_id', 'tender_negotiations.srm_tender_master_id');
+                }, 'version');
         }])
             ->where('is_negotiation_started',1)
             ->where('negotiation_published',1)
@@ -5346,8 +5378,7 @@ ORDER BY
                 })
                     ->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
                         $q1->where('emp_id', $userId);
-                    })
-                    ->orWhere('document_system_id', 113);
+                    });
             })
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
 
@@ -5970,6 +6001,19 @@ ORDER BY
                 return $this->sendError($data['message']);
             }
             return $this->sendResponse($data, $data['message']);
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function getTenderTypeData(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getTenderTypeData($request);
+            return $data;
         }
         catch(\Exception $e)
         {

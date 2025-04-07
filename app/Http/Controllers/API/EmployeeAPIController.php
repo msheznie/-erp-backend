@@ -38,6 +38,7 @@ use App\Repositories\EmployeeRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
@@ -301,10 +302,12 @@ class EmployeeAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
+        $child = \Helper::getSimilarGroupCompanies($companyId);
 
         $srm_employees = SrmEmployees::where('company_id',$companyId)->pluck('emp_id')->toArray();
 
-        $employeeData = Employee::whereNotIn('employeeSystemID',$srm_employees)->where('empCompanySystemID',$companyId)->where('discharegedYN','!=',-1);
+        $employeeData = Employee::whereNotIn('employeeSystemID',$srm_employees)->whereIn('empCompanySystemID',$child)->where('discharegedYN','!=',-1)
+            ->where('empActive', 1);
         
         $employees = $employeeData->get();
 

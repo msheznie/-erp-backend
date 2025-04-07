@@ -795,6 +795,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 ->whereDoesntHave('evaluation_criteria_details', function ($query) use($request) {
                     $query->where('tender_id', '=', $request['tenderMasterId']);
                 })
+                ->wherehas('evaluation_criteria_master_details')
                 ->get();
         }
 

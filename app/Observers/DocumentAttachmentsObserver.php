@@ -29,7 +29,7 @@ class DocumentAttachmentsObserver
         $type = 2;
         if($obj && isset($employee))
         {
-           $empId = $employee->employeeSystemID;
+           $empId = $employee->employeeSystemID ?? -1;
            $data['companySystemID'] =$tender->getAttribute('companySystemID');
            $data['documentSystemID'] = $tender->getAttribute('documentSystemID');
            $data['documentID'] = $tender->getAttribute('documentID');

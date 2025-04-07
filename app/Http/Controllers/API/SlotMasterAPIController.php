@@ -317,7 +317,8 @@ class SlotMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $slot = new SlotMaster();
-        $companyID  = $input['companyID'];$isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $companyID  = $input['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
             $subCompanies = \Helper::getGroupCompany($companyID);

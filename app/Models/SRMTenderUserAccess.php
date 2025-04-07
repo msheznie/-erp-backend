@@ -113,5 +113,13 @@ class SRMTenderUserAccess extends Model
     {
         return $this->hasOne('App\Models\Employee', 'employeeSystemID', 'user_id');
     }
+
+    public static function getTenderUserAccessByModule($tenderID, $companyID, $moduleID){
+        return SRMTenderUserAccess::select('id')
+            ->where('tender_id', $tenderID)
+            ->where('company_id', $companyID)
+            ->where('module_id', $moduleID)
+            ->get();
+    }
     
 }

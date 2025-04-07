@@ -546,7 +546,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             }else{
                 $alertMessage = "Invitation for ".$docType." ";
                 $body = "Dear Supplier," . "<br /><br />" . "
-            I trust this message finds you well." . "<br /><br />" . "
+            We trust this message finds you well." . "<br /><br />" . "
             We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
             If your company is interested in participating in the ".$docType." process, please click on the link below." . "<br /><br />" . "
             " . "<b>" . " ".$docType." Title :" . "</b> " . $tenderMaster['title'] . "<br /><br />" . "

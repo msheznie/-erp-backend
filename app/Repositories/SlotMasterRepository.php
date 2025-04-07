@@ -148,6 +148,7 @@ class SlotMasterRepository extends AppBaseController
 
 
                 if ($slotMasterID > 0) {
+
                     $dateRangeExist = SlotDetails::getSlotDetails($frmDateOnly, $toDateOnly, $input['companyId'],
                         $input['wareHouse'], $input['slotMasterID']);
                 }
@@ -231,18 +232,18 @@ class SlotMasterRepository extends AppBaseController
         $interval = new DateInterval('P1D');
         $daterange = new DatePeriod($begin, $interval, $end);
         $slotWeekDays = SlotMasterWeekDays::with(['week_days'])->where('slot_master_id', $id)->get();
-        foreach ($slotWeekDays as $val) { 
-                foreach ($daterange as $date) {
-                    if ($val['week_days']['description'] == $date->format("l")) {
-                        $data['slot_master_id'] = $id;
-                        $data['start_date'] = $date->format("Y-m-d") . ' ' . $fromTime;
-                        $data['end_date'] = $date->format("Y-m-d") . ' ' . $toTime;
-                        $data['status'] = 0;
-                        $data['company_id'] = $companyID;
-                        $data['created_by'] = Helper::getEmployeeSystemID();
-                        $insertCalanderDetails = SlotDetails::create($data);
-                    }
-                } 
+        foreach ($slotWeekDays as $val) {
+            foreach ($daterange as $date) {
+                if ($val['week_days']['description'] == $date->format("l")) {
+                    $data['slot_master_id'] = $id;
+                    $data['start_date'] = $date->format("Y-m-d") . ' ' . $fromTime;
+                    $data['end_date'] = $date->format("Y-m-d") . ' ' . $toTime;
+                    $data['status'] = 0;
+                    $data['company_id'] = $companyID;
+                    $data['created_by'] = Helper::getEmployeeSystemID();
+                    $insertCalanderDetails = SlotDetails::create($data);
+                }
+            }
         }
         if ($insertCalanderDetails) {
             return ['status' => true, 'message' => "Successfully Saved."];

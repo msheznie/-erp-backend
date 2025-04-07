@@ -32,6 +32,7 @@ use App\Models\SRMTenderTechnicalEvaluationAttachment;
 use App\Models\TenderBoqItems;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
+use App\Models\TenderSupplierAssignee;
 use App\Models\TenderType;
 use App\Services\GeneralService;
 use App\Services\SRMService;
@@ -1165,4 +1166,37 @@ class TenderMasterRepository extends BaseRepository
             }
         }
     }
+
+    public function getTenderTypeData($request)
+    {
+        $input = $request->all();
+        $tenderTypes =  TenderType::getTenderTypeData();
+
+        $additionalRecord = [
+            'id' => -1,
+            'name' => 'General'
+        ];
+
+        return collect([$additionalRecord])->merge($tenderTypes);
+
+
+    }
+
+    public function checkAssignSuppliers($companyId, $id, $rfq)
+    {
+
+        $assignSupplier =  TenderSupplierAssignee::getAssignSupplierCount($companyId, $id);
+        $type = $rfq ? 'RFX' : 'Tender';
+
+
+        if ($assignSupplier != 1) {
+            return [
+                'success' => false,
+                'message' => 'Single Sourcing ' .$type. ' allows only one supplier. Please remove
+                                     additional suppliers before confirming'];
+        }
+
+        return ['success' => true];
+    }
+
 }
