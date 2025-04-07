@@ -2813,6 +2813,15 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.glCode,
                         erp_generalledger.glAccountType,
                         chartofaccounts.AccountDescription,
+                       CASE erp_jvmaster.jvType
+                            WHEN 0 THEN "Standard JV"
+                            WHEN 1 THEN "Accrual JV"
+                            WHEN 2 THEN "Recurring JV"
+                            WHEN 3 THEN "Salary JV"
+                            WHEN 4 THEN "Allocation JV"
+                            WHEN 5 THEN "PO Accrual JV"
+                            ELSE "Unknown"
+                        END AS jv_type,
                         IF
                             ( documentLocalAmount < 0, documentLocalAmount *- 1, 0 ) AS creditAmountLocal,
                         IF
@@ -2873,15 +2882,6 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.glCode,
                         erp_generalledger.glAccountType,
                         chartofaccounts.AccountDescription,
-                        CASE erp_jvmaster.jvType
-                            WHEN 0 THEN "Standard JV"
-                            WHEN 1 THEN "Accrual JV"
-                            WHEN 2 THEN "Recurring JV"
-                            WHEN 3 THEN "Salary JV"
-                            WHEN 4 THEN "Allocation JV"
-                            WHEN 5 THEN "PO Accrual JV"
-                            ELSE "Unknown"
-                        END AS jv_type,
                         IF
                             ( documentLocalAmount < 0, documentLocalAmount *- 1, 0 ) AS creditAmountLocal,
                         IF
