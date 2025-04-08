@@ -22,12 +22,15 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBankReconciliationAPIRequest;
 use App\Http\Requests\API\UpdateBankReconciliationAPIRequest;
+use App\Jobs\UploadBankStatement;
 use App\Models\BankAccount;
 use App\Models\BankLedger;
 use App\Models\BankMaster;
 use App\Models\BankReconciliation;
 use App\Models\BankReconciliationDocuments;
 use App\Models\BankReconciliationRefferedBack;
+use App\Models\BankReconciliationTemplateMapping;
+use App\Models\BankStatementMaster;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -50,9 +53,14 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use PHPExcel_IOFactory;
 
 /**
  * Class BankReconciliationController
@@ -64,12 +72,14 @@ class BankReconciliationAPIController extends AppBaseController
     private $bankReconciliationRepository;
     private $bankLedgerRepository;
     private $bankReconciliationDocument;
+    private $bankStatementMaster;
 
-    public function __construct(BankReconciliationRepository $bankReconciliationRepo, BankLedgerRepository $bankLedgerRepo, BankReconciliationDocumentsRepository $bankReconciliationDocumentsRepo)
+    public function __construct(BankReconciliationRepository $bankReconciliationRepo, BankLedgerRepository $bankLedgerRepo, BankReconciliationDocumentsRepository $bankReconciliationDocumentsRepo, BankStatementMaster $bankStatementMasterRepo)
     {
         $this->bankReconciliationRepository = $bankReconciliationRepo;
         $this->bankLedgerRepository = $bankLedgerRepo;
         $this->bankReconciliationDocument = $bankReconciliationDocumentsRepo;
+        $this->bankStatementMaster = $bankStatementMasterRepo;
     }
 
     /**
@@ -1471,5 +1481,172 @@ class BankReconciliationAPIController extends AppBaseController
         }
         $DataReturn = $this->bankReconciliationDocument->create($document);
         return $this->sendResponse($DataReturn->toArray(), 'Additional entry created successfully.');
+    }
+
+    public function uploadBankStatement(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required',
+            'uploadBank' => 'required',
+            'uploadBankAccount' => 'required',
+            'transactionCount' => 'required',
+            'uploadStatement' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $template = BankReconciliationTemplateMapping::with('bankAccount')
+                                    ->where('bankAccountAutoID', $input['uploadBankAccount'])
+                                    ->where('companySystemID', $input['companySystemID'])
+                                    ->first();
+        if(!$template) {
+            /*** later need to modify to configure template and then continue */
+            return $this->sendError('Template not configured', 500);
+        }
+        $template = $template->toArray();
+
+        $excelUpload = $input['uploadStatement'];
+        if(isset($excelUpload)) {
+            $decodeFile = base64_decode($excelUpload['file']);
+            $originalFileName = $excelUpload['filename'];
+            $extension = $excelUpload['filetype'];
+            $size = $excelUpload['size'];
+            $allowedExtensions = ['xlsx','xls'];
+        } else {
+            return $this->sendError('Invalid File',500);
+        }
+
+
+        if (!in_array($extension, $allowedExtensions))
+        {
+            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx or .xls',500);
+        }
+
+        if ($size > 20000000) {
+            return $this->sendError('The maximum size allow to upload is 20 MB',500);
+        }
+
+        $disk = 'local';
+        Storage::disk($disk)->put($originalFileName, $decodeFile);
+        $filePath = Storage::disk($disk)->path($originalFileName);
+        $spreadsheet = IOFactory::load($filePath);
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $bankStatementDate = isset($template['bankStatementDate']) ? $sheet->getCell($template['bankStatementDate'])->getValue() : null;
+        $statementStartDate = isset($template['statementStartDate']) ? $sheet->getCell($template['statementStartDate'])->getValue() : null;
+        $statementEndDate = isset($template['statementEndDate']) ? $sheet->getCell($template['statementEndDate'])->getValue() : null;
+        if(is_null($bankStatementDate) || is_null($statementStartDate) || is_null($statementEndDate)) {
+            return $this->sendError('Some header level dates are empty.',500);
+        }
+        $bankStatementDate = self::dateValidation($bankStatementDate);
+        $statementStartDate = self::dateValidation($statementStartDate);
+        $statementEndDate = self::dateValidation($statementEndDate);
+
+        if(is_null($bankStatementDate) || is_null($statementStartDate) || is_null($statementEndDate)) {
+            return $this->sendError('Some header level dates are not in date format.',500);
+        }
+
+        $statementExists = $this->bankStatementMaster->where('companySystemID', $input['companySystemID'])
+                                    ->where('bankAccountAutoID', $input['uploadBankAccount'])
+                                    ->where('importStatus', 1)
+                                    ->where('bankStatementDate', $bankStatementDate)->first();
+        if($statementExists) {
+            return $this->sendError('Bank Statement already uploaded!', 500);
+        }
+
+        /** bank validation */
+        $bankName = $sheet->getCell($template['bankName'])->getValue();
+        $bankAccount = $sheet->getCell($template['bankAccountNumber'])->getValue();
+        if ($bankName != $template['bank_account']['bankName'] || $bankAccount != $template['bank_account']['AccountNo']) {
+            return $this->sendError('Bank Account details not matched', 500);
+        }
+
+        /** Opening balance and closing balance validation */
+        $openingBalance = $sheet->getCell($template['openingBalance'])->getCalculatedValue();
+        $endingBalance = $sheet->getCell($template['endingBalance'])->getCalculatedValue();
+        $openingBalance = str_replace(',', '', $openingBalance);
+        $endingBalance = str_replace(',', '', $endingBalance);
+        if (!is_numeric($openingBalance) || !is_numeric($endingBalance)) {
+            return $this->sendError('Opening balance and closing balance amount should be numbers', 500);
+        }
+
+        /** dates validation */
+        $bankReconciliationMonth = $sheet->getCell($template['bankReconciliationMonth'])->getValue();
+
+        /*** create bank statement master record - tbl = bank_statement_master */
+        $statementMaster['bankAccountAutoID'] = $input['uploadBankAccount'];
+        $statementMaster['bankmasterAutoID'] = $input['uploadBank'];
+        $statementMaster['companySystemID'] = $input['companySystemID'];
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $statementMaster['companyID'] = $company->CompanyID;
+        }
+        $statementMaster['transactionCount'] = $input['transactionCount'];
+        $statementMaster['statementStartDate'] = $statementStartDate;
+        $statementMaster['statementEndDate'] = $statementEndDate;
+        $statementMaster['bankReconciliationMonth'] = $bankReconciliationMonth;
+        $statementMaster['bankStatementDate'] = $bankStatementDate;
+        $statementMaster['openingBalance'] = $openingBalance;
+        $statementMaster['endingBalance'] = $endingBalance;
+        $statementMaster['filePath'] = $originalFileName;
+
+        $bankStatementMaster = $this->bankStatementMaster->create($statementMaster);
+        if($bankStatementMaster) {
+            $db = isset($request->db) ? $request->db : "";
+            $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+            if (Storage::disk($disk)->exists($originalFileName)) {
+                Storage::disk($disk)->delete($originalFileName);
+            }
+            $uploadData = [
+                'objPHPExcel' => $objPHPExcel,
+                'uploadedCompany' =>  $input['companySystemID'],
+                'template' => $template,
+                'statementMaster' => $bankStatementMaster->toArray(),
+                'transactionCount' => $input['transactionCount']
+            ];
+            UploadBankStatement::dispatch($db, $uploadData);
+            return $this->sendResponse([], 'Statement Upload send to queue.');
+        } else {
+            return $this->sendError('Bank statement master not created', 500);
+        }
+    }
+
+    function dateValidation($date)
+    {
+        if (is_numeric($date)) {
+            return Date::excelToDateTimeObject($date)->format('Y-m-d');
+        } else {
+            $dateFormats = ['d/m/Y', 'm/d/Y', 'm-d-Y', 'Y-m-d', 'Y/m/d', 'd/m/Y h:i:s A', 'd/m/Y h:i A'];
+            foreach ($dateFormats as $format) {
+                try {
+                    return Carbon::createFromFormat($format, trim($date))->format('Y-m-d');
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+        }
+    }
+
+    public function getActiveBankAccountsByBankID(Request $request)
+    {
+        $input = $request->all();
+
+        $selectedCompanyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankAccounts = BankAccount::whereIn('companySystemID', $subCompanies)
+            ->where('isAccountActive', 1)
+            ->where('bankmasterAutoID', $input['id'])
+            ->get();
+
+        return $this->sendResponse($bankAccounts, trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
     }
 }

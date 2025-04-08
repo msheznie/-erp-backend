@@ -45,9 +45,12 @@ Route::group([], function() {
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
     Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
 
+    Route::post('uploadBankStatement', 'BankReconciliationAPIController@uploadBankStatement')->name('Upload Bank Statement');
     Route::post('createTemplateMapping', 'BankReconciliationTemplateMappingAPIController@store')->name('Add bank reconciliation template mapping');
     Route::get('getTemplateMappingDetails', 'BankReconciliationTemplateMappingAPIController@getTemplateMappingDetails')->name('Get template mapping details');
-
+    Route::post('getBankStatementImportHistory', 'BankStatementMasterAPIController@getBankStatementImportHistory')->name('Get bank statement import history');
+    Route::post('deleteBankStatement/{id}', 'BankStatementMasterAPIController@deleteBankStatement');
+    Route::get('getActiveBankAccountsByBankID', 'BankReconciliationAPIController@getActiveBankAccountsByBankID')->name('Get active bank accounts by bank id');
 });
 
 //Cheque Register
@@ -69,6 +72,7 @@ Route::group([], function() {
 
     Route::resource('cheque_registers', 'ChequeRegisterAPIController');
     Route::resource('cheque_register_details', 'ChequeRegisterDetailAPIController');
+    Route::resource('cheque_update_reasons', 'ChequeUpdateReasonAPIController');
 
 });
 

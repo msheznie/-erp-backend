@@ -7,6 +7,7 @@ use App\Http\Controllers\API\AccountsReceivableReportAPIController;
 use App\Http\Controllers\AppBaseController;
 use App\Models\CustomerContactDetails;
 use App\Models\CustomerMaster;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -61,7 +62,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
             $reportTypeID = $input['reportTypeID'];
             $baseController = app()->make(AppBaseController::class);
             $databaseName = $this->db ?? 'local';
-            $path = public_path() . '/uploads/emailAttachment/customer_ledger_' . $databaseName . '_' . $input['companySystemID'] . '_' . $customerCodeSystem;
+            $path = public_path() . '/uploads/emailAttachment/customer_ledger_' . Carbon::now()->format('dmY') . '_' . $input['companySystemID'] . '_' . $customerCodeSystem;
             if (!file_exists($path)) {
                 File::makeDirectory($path, 0777, true, true);
             }

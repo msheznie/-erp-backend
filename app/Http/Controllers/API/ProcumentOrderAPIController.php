@@ -613,6 +613,8 @@ class ProcumentOrderAPIController extends AppBaseController
         $newlyUpdatedPoTotalAmountCheck = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRoundForComp));
         $advancedPaymentCheckAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $advancedPayment));
 
+        $this->recalculateTermsAndConditionsPercentage($input['purchaseOrderID'],$newlyUpdatedPoTotalAmountWithoutRoundForComp);
+
         $advancedPaymentPercentage = PoPaymentTerms::where('poID',$id)->sum('comPercentage');
         if(isset($input['isConfirm']) && $input['isConfirm']) {
             $epsilon = 0.00001;
@@ -1016,6 +1018,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->VATAmountLocal = 0;
             $procumentOrderUpdate->VATAmountRpt = 0;
         }
+
         if (($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) || $isAmendAccess == 1) {
 
             if((isset($isSupplierBlocked) && $isSupplierBlocked) && ($procumentOrderUpdate->poTypeID == 1))
@@ -1205,13 +1208,14 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('Advance payment request is pending');
             }
 
+
             //getting total sum of Po Payment Terms
             $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum, IFNULL(SUM(comPercentage),0) as paymentTotalPercentage'))
                 ->where('poID', $input['purchaseOrderID'])
                 ->first();
 
             $paymentTotalSumComp = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $paymentTotalSum['paymentTotalSum']));
-            if ($paymentTotalSumComp > 0 && $paymentTotalSum['paymentTotalPercentage'] != 100) {
+            if ($paymentTotalSumComp > 0) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
                 } else {
                     return $this->sendError('Payment terms total is not matching with the PO total');
@@ -1413,6 +1417,7 @@ class ProcumentOrderAPIController extends AppBaseController
         } // closing amend if condition
 
         TaxService::updatePOVAT($id);
+
         return $this->sendReponseWithDetails($procumentOrder->toArray(), 'Procurement Order updated successfully',1,$confirm['data'] ?? null);
     }
 
@@ -1438,6 +1443,33 @@ class ProcumentOrderAPIController extends AppBaseController
         return $this->sendResponse($id, 'Procurement Order deleted successfully');
     }
 
+    private function recalculateTermsAndConditionsPercentage($purchaseOrderID,$netAmount)
+    {
+
+        if(empty($purchaseOrderID))
+            return $this->sendError("Procument Order not found");
+
+        $procumentOrder = ProcumentOrder::where('purchaseOrderID',$purchaseOrderID)->with('paymentTerms_by')->first();
+
+        $paymentTerms = $procumentOrder->paymentTerms_by;
+        $totalPercentage = 0;
+        foreach ($paymentTerms as $paymentTerm)
+        {
+            if($paymentTerm->comAmount > 0)
+            {
+                $paymentTerm->comPercentage =  ($paymentTerm->comAmount) / ($netAmount) * 100;
+                $totalPercentage += $paymentTerm->comPercentage;
+
+                if($totalPercentage > 100)
+                {
+                    $paymentTerm->delete();
+                }else {
+                    $paymentTerm->save();
+                }
+
+            }
+        }
+    }
     public function getProcumentOrderByDocumentType(Request $request)
     {
         $input = $request->all();

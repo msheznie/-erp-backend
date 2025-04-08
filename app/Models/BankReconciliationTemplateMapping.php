@@ -193,7 +193,7 @@ class BankReconciliationTemplateMapping extends Model
         'companySystemID',
         'companyID',
         'bankName',
-        'bankAccount',
+        'bankAccountNumber',
         'statementStartDate',
         'statementEndDate',
         'bankReconciliationMonth',
@@ -224,7 +224,7 @@ class BankReconciliationTemplateMapping extends Model
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'bankName' => 'string',
-        'bankAccount' => 'string',
+        'bankAccountNumber' => 'string',
         'statementStartDate' => 'string',
         'statementEndDate' => 'string',
         'bankReconciliationMonth' => 'string',
@@ -251,6 +251,10 @@ class BankReconciliationTemplateMapping extends Model
     public static $rules = [
         
     ];
+
+    public function bankAccount(){
+        return $this->belongsTo('App\Models\BankAccount','bankAccountAutoID','bankAccountAutoID');
+    }
 
     
 }

@@ -19,4 +19,16 @@ class CurrencyService
     public static function convertNumberFormatToNumber($value) {
         return ($value) ? +(str_replace(',','',$value)) : 0;
     }
+
+    public static function formatNumberWithPrecision($value) {
+
+        $numericValue = (float) str_replace(',', '', $value);
+    
+        if ($numericValue >= 1) {
+            return number_format($numericValue, 7, '.', '');
+        }
+    
+        return number_format($value, 7, '.', '');
+    }
+    
 }

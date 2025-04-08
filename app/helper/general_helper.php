@@ -3712,7 +3712,7 @@ class Helper
         $trasToRptER = 0;
         $transToBankER = 0;
         $transToDocER = 0;
-        $transactionAmount = self::stringToFloat($transactionAmount);
+        $transactionAmount = self::formatNumberWithPrecision($transactionAmount);
 
         // get company local and reporting currency conversion
         if ($companySystemID && $transactionCurrencyID) {
@@ -8922,6 +8922,17 @@ class Helper
         return floatval(preg_replace('/[^0-9.]/', '', $str));
     }
 
+    public static function formatNumberWithPrecision($value) { // this method check the number and if it is less than 1 then it will return the value with 7 decimal places and its comma separated and solve scienfivic notation issue
+
+        $numericValue = (float) str_replace(',', '', $value);
+    
+        if ($numericValue >= 1) {
+            return number_format($numericValue, 7, '.', '');
+        }
+    
+        return number_format($value, 7, '.', '');
+    }
+
     public static function checkPolicy($companySystemID = 0, $policyId = 0)
     {
 
@@ -10045,50 +10056,52 @@ class Helper
             {
                 $percentage = $invmaster->supplier->tax->whtPercentage;
             }
-
-            $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
-            if( $invmaster->supplier->whtApplicableYN == 1)
+            if(isset($invmaster->supplier))
             {
-                $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
-            }
+                $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
+                if( $invmaster->supplier->whtApplicableYN == 1)
+                {
+                    $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
+                }
 
-            $whtTotalAmountDirect = 0;
+                $whtTotalAmountDirect = 0;
 
-            $items = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
-                ->with(['unit' => function ($query) {
-                }, 'vat_sub_category'])->get();
+                $items = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                    ->with(['unit' => function ($query) {
+                    }, 'vat_sub_category'])->get();
 
-            foreach ($items as $index => $item) {
-                if ($item->VATAmount != 0) {
-                    $item->whtApplicable = false;
-                    $item->whtAmount = 0;
-                } else {
-                    if ($invmaster->whtApplicable == false) {
+                foreach ($items as $index => $item) {
+                    if ($item->VATAmount != 0) {
                         $item->whtApplicable = false;
                         $item->whtAmount = 0;
                     } else {
-                        $isWhtapp = true;
-                        $item->whtApplicable = true;
-                        if ($item->whtEdited == 0) {
-                            $item->whtAmount = $item->netAmount * ($percentage  / 100);
-                        }
-                        if ($invmaster->documentType == 3 && $invmaster->whtApplicable == true) {
-                            $whtTotalAmountDirect += $item->whtAmount;
+                        if ($invmaster->whtApplicable == false) {
+                            $item->whtApplicable = false;
+                            $item->whtAmount = 0;
+                        } else {
+                            $isWhtapp = true;
+                            $item->whtApplicable = true;
+                            if ($item->whtEdited == 0) {
+                                $item->whtAmount = $item->netAmount * ($percentage  / 100);
+                            }
+                            if ($invmaster->documentType == 3 && $invmaster->whtApplicable == true) {
+                                $whtTotalAmountDirect += $item->whtAmount;
+                            }
                         }
                     }
+
+                    SupplierInvoiceDirectItem::where('id', $item->id)->update([
+                        'whtAmount' => $item->whtAmount,
+                        'whtApplicable' => $item->whtApplicable,
+                    ]);
                 }
 
-                SupplierInvoiceDirectItem::where('id', $item->id)->update([
-                    'whtAmount' => $item->whtAmount,
-                    'whtApplicable' => $item->whtApplicable,
-                ]);
-            }
-
-            $invmaster->whtAmount = $whtTotalAmountDirect;
-            $invmaster->whtPercentage = $percentage;
-            // $bookInvSuppMaster->whtApplicable = $whtTrue;
-            // $bookInvSuppMaster->whtEdited = false;
-            $invmaster->save();
+                $invmaster->whtAmount = $whtTotalAmountDirect;
+                $invmaster->whtPercentage = $percentage;
+                // $bookInvSuppMaster->whtApplicable = $whtTrue;
+                // $bookInvSuppMaster->whtEdited = false;
+                $invmaster->save();
+            }    
         }
 
     }

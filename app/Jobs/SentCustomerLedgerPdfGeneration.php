@@ -85,6 +85,11 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
             /*** make pdf file */
             $html = view('print.customer_ledger_template_one', $dataArr)->render();
             $pdf = \App::make('dompdf.wrapper');
+
+            if (!file_exists($path)) {
+                File::makeDirectory($path, 0777, true, true);
+            }
+
             $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save($path.'/customer_ledger_' . $customerCodeSystem . '_' . $reportCount . '.pdf');
 
         } else {
@@ -107,6 +112,11 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
             /*** make pdf file */
             $html = view('print.customer_ledger_template_two', $dataArr)->render();
             $pdf = \App::make('dompdf.wrapper');
+
+            if (!file_exists($path)) {
+                File::makeDirectory($path, 0777, true, true);
+            }
+
             $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save($path . '/customer_ledger_' . $customerCodeSystem . '_' . $reportCount . '.pdf');
 
         }

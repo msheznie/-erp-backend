@@ -548,124 +548,167 @@
             </table>
         @endif
 
-        @if ($request->template <> 1 && !$request->line_invoiceDetails)
-            <table class="table table-bordered" style="width: 100%;">
-                <thead>
-                <tr class="theme-tr-head">
-                    <th style="width:3%"></th>
-                    <th style="width:10%;text-align: center">GL Code</th>
-                    <th style="width:50%;text-align: center">GL Code Description</th>
-                    <th style="width:20%;text-align: center">Segment</th>
-                    <th style="width:10%;text-align: center">UoM</th>
-                    <th style="width:10%;text-align: center">QTY</th>
-                    <th style="width:10%;text-align: center">Unit Rate</th>
-                    <th style="width:10%;text-align: center">Total Amount</th>
-                </tr>
-                </thead>
-                <tbody>
-                {{$decimal = 2}}
-                {{$x=1}}
-                {{$directTraSubTotal=0}}
-                {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
-                @foreach ($request->invoicedetails as $item)
-                    {{$directTraSubTotal +=$item->invoiceAmount}}
-                    <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                        <td>{{$x}}</td>
-                        <td style="text-align: left">{{$item->glCode}}</td>
-                        <td style="text-align: left">{{$item->glCodeDes}}</td>
-                        <td class="text-left">{{isset($item->department->ServiceLineDes)?$item->department->ServiceLineDes:''}}</td>
-                        <td class="text-left" style="text-align: left">{{$item->unit->UnitShortCode}}</td>
-                        <td class="text-right" style="text-align: right">{{number_format($item->invoiceQty,2)}}</td>
-                        <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
-                        <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
-                    </tr>
-                    {{ $x++ }}
-                @endforeach
-                </tbody>
+        @php
+            $currencyCode = empty($request->currency) ? '' : $request->currency->CurrencyCode;
+            $decimalPlaces = empty($request->currency) ? 2 : $request->currency->DecimalPlaces;
+        @endphp
 
-            </table>
+        @if(in_array($request->isPerforma, [2, 3, 4, 5]))
+            @if ($request)
+                    <table class="table table-bordered" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th colspan="5" style="text-align: center">Item Details</th>
+                                <th colspan="8" style="text-align: center">Price ({{ $currencyCode }})</th>
+                            </tr>
+                            <tr class="theme-tr-head">
+                                <th style="text-align: center">#</th>
+                                <th style="text-align: center">Description</th>
+                                <th style="text-align: center">Project</th>
+                                <th style="text-align: center">Ref No</th>
+                                <th style="text-align: center">UOM</th>
+                                <th style="text-align: center">QTY</th>
+                                <th style="text-align: center">Sales Price</th>
+                                <th style="text-align: center">Dis %</th>
+                                <th style="text-align: center">Discount Amount</th>
+                                <th style="text-align: center">Selling Unit Price</th>
+                                <th style="text-align: center">Taxable Amount</th>
+                                <th style="text-align: center">VAT</th>
+                                <th style="text-align: center">Net Amount ({{ $currencyCode }})</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{$x=1}}
+                            {{$directTraSubTotal=0}}
+                        @foreach ($request->issue_item_details as $item)
+                            {{$directTraSubTotal +=$item->sellingTotal}}
+                            <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                                <td>{{$x}}</td>
+                                <td class="text-left">{{$item->itemPrimaryCode .' - '.$item->itemDescription}}</td>
+                                <td class="text-left">  @if($item->project)
+                                    {{$item->project->projectCode.' - '.$item->project->description}} @else - @endif
+                                </td>
+                                <td class="text-left">{{$item->part_no}}</td>
+                                <td class="text-left">{{$item->uom_issuing->UnitShortCode}}</td>
+                                <td class="text-right">{{$item->qtyIssuedDefaultMeasure}}</td>
+                                <td class="text-right">{{number_format($item->salesPrice, $decimalPlaces)}}</td>
+                                <td class="text-right">{{$item->discountPercentage}}</td>
+                                <td class="text-right">{{number_format($item->discountAmount, $decimalPlaces)}}</td>
+                                <td class="text-right">{{number_format($item->sellingCostAfterMargin, $decimalPlaces)}}</td>
+                                <td class="text-right">{{number_format($item->taxable_amount, $decimalPlaces)}}</td>
+                                <td class="text-right">{{number_format($item->VATAmount, $decimalPlaces)}}</td>
+                                <td class="text-right">{{number_format($item->sellingTotal, $decimalPlaces)}}</td>
+                            </tr>
+                            {{ $x++ }}
+                        @endforeach
+                        </tbody>
+
+                    </table>
+                @endif
+        @else
+            @if ($request->template <> 1 && !$request->line_invoiceDetails)
+                    <table class="table table-bordered" style="width: 100%;">
+                        <thead>
+                        <tr class="theme-tr-head">
+                            <th style="width:3%"></th>
+                            <th style="width:10%;text-align: center">GL Code</th>
+                            <th style="width:40%;text-align: center">GL Code Description</th>
+                            <th style="width:20%;text-align: center">Segment</th>
+                            <th style="width:10%;text-align: center">UoM</th>
+                            <th style="width:10%;text-align: center">QTY</th>
+                            <th style="width:10%;text-align: center">Unit Rate</th>
+                            <th style="width:10%;text-align: center">Total Amount</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {{$x=1}}
+                        {{$directTraSubTotal=0}}
+                        @foreach ($request->invoicedetails as $item)
+                            {{$directTraSubTotal +=$item->invoiceAmount}}
+                            <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                                <td>{{$x}}</td>
+                                <td class="text-left">{{$item->glCode}}</td>
+                                <td class="text-left">{{$item->glCodeDes}}</td>
+                                <td class="text-left">{{isset($item->department->ServiceLineDes)?$item->department->ServiceLineDes:''}}</td>
+                                <td class="text-left">{{$item->unit->UnitShortCode}}</td>
+                                <td class="text-right">{{number_format($item->invoiceQty,2)}}</td>
+                                <td class="text-right">{{number_format($item->unitCost, $decimalPlaces)}}</td>
+                                <td class="text-right">{{number_format($item->invoiceAmount, $decimalPlaces)}}</td>
+                            </tr>
+                            {{ $x++ }}
+                        @endforeach
+                        </tbody>
+
+                    </table>
+                @endif
         @endif
     </div>
+
     <div class="row">
         <table style="width:100%;" class="table table-bordered">
             <tbody>
-            <tr>
-                <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                <td class="text-left" style="width: 20%;border-bottom: none !important"><span
-                            class="font-weight-bold"
-                            style="border-bottom: none !important;font-size: 11.5px">Total:</span>
-                </td>
-                <td class="text-right"
-                    style="font-size: 11.5px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
-                <span class="font-weight-bold">
-                @if ($request->invoicedetails)
-                        {{number_format($directTraSubTotal, $numberFormatting)}}
-                    @endif
-                </span>
-                </td>
-            </tr>
+                <tr>
+                    <td style="width: 60%;border:none !important;"></td>
+                    <td class="text-left" style="border:none !important;">
+                        <span class="font-weight-bold" style="border-bottom: none !important; font-size: 11.5px;">Total:</span>
+                    </td>
+                    <td class="text-right" style="font-size: 11.5px; border-left: 1px solid #EBEBEB !important; border-right: 1px solid #EBEBEB !important;">
+                        <span class="font-weight-bold">
+                            @if ($request->invoicedetails)
+                                {{ number_format($directTraSubTotal, $decimalPlaces) }}
+                            @endif
+                        </span>
+                    </td>
+                </tr>
 
             @if ($request->tax)
-                {{$directTraSubTotal+=$request->tax->amount}}
+                {{$directTraSubTotal += $request->tax->amount}}
                 <tr>
-                    <td style="border:none !important;">
-                        &nbsp;
+                    <td style="width: 60%;border:none !important;"></td>
+                    <td class="text-left" style="border:none !important;">
+                        <span class="font-weight-bold" style="font-size: 11.5px;">
+                            VAT Amount ({{ number_format($request->tax->taxPercent, $decimalPlaces) }}%)
+                        </span>
                     </td>
-                    <td class="text-left" style="border:none !important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11.5px">VAT Amount ({{$request->tax->taxPercent}} %)
-                            </span></td>
-                    <td class="text-right"
-                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
-                                class="font-weight-bold">{{number_format($request->tax->amount, $numberFormatting)}}</span>
+                    <td class="text-right" style="font-size: 11.5px; border-left: 1px solid #EBEBEB !important; border-right: 1px solid #EBEBEB !important;">
+                        <span class="font-weight-bold">
+                            {{ number_format($request->tax->amount, $decimalPlaces) }}
+                        </span>
                     </td>
                 </tr>
 
                 <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                        &nbsp;
+                    <td style="width: 60%;border:none !important;"></td>
+                    <td class="text-left" style="border:none !important;">
+                        <span class="font-weight-bold" style="font-size: 11.5px;">Net Amount</span>
                     </td>
-                    <td class="text-left" style="border:none !important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11.5px">Net Amount</span>
-                    </td>
-                    <td class="text-right"
-                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
-                            <span class="font-weight-bold">
-
-                                    {{number_format($directTraSubTotal, $numberFormatting)}}
-
-                            </span>
+                    <td class="text-right" style="font-size: 11.5px; border-left: 1px solid #EBEBEB !important; border-right: 1px solid #EBEBEB !important; background-color: #EBEBEB;">
+                        <span class="font-weight-bold">
+                            {{ number_format($directTraSubTotal, $decimalPlaces) }}
+                        </span>
                     </td>
                 </tr>
 
                 <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                        &nbsp;
+                    <td style="width: 60%;border:none !important;"></td>
+                    <td class="text-left" style="border:none !important;">
+                        <span class="font-weight-bold" style="font-size: 11.5px;">Net Amount in Word</span>
                     </td>
-                    <td class="text-left" style="border:none !important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11.5px">Net Amount in Word</span>
-                    </td>
-                    <td class="text-right"
-                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
-                            <span class="font-weight-bold">
-
-                                {{$request->amount_word}}
-                                @if ($request->floatAmt > 0)
-                                and
-                                {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
-                                @endif
-                                
-                                only
-
-                            </span>
+                    <td class="text-right" style="font-size: 11.5px; border-left: 1px solid #EBEBEB !important; border-right: 1px solid #EBEBEB !important; background-color: #EBEBEB;">
+                        <span class="font-weight-bold">
+                            {{$request->amount_word}}
+                            @if ($request->floatAmt > 0)
+                                and {{ $request->floatAmt }} / {{ $decimalPlaces == 3 ? '1000' : '100' }}
+                            @endif
+                            only
+                        </span>
                     </td>
                 </tr>
             @endif
             </tbody>
         </table>
     </div>
+
 </div>
 
 <div id="footer">

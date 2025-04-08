@@ -534,6 +534,8 @@ class BookInvSuppDetAPIController extends AppBaseController
     {
         
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('type'));
+
         $prDetail_arr = array();
         $validator = array();
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
@@ -553,6 +555,10 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_add_supplier_invoice_detail_this_document_already_confirmed'),500);
         }
 
+        if(isset($input['type']) &&  $input['type'] != $bookInvSuppMaster->documentType)
+        {
+            return $this->sendError('The invoice type and details have already been modified by another user');
+        }
 
         DB::beginTransaction();
         try {

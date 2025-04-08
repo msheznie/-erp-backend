@@ -131,8 +131,8 @@ class SupplierInvoiceTaxLedgerService
                 {
 
                     $vatPortion = $value->exempt_vat_portion;
-                    $exemptAmount =   ($vatPortion/100) * $value->localVATAmount ;
-                    $standardAmount = $value->localVATAmount - $exemptAmount;
+                    $exemptAmount =   ($vatPortion/100) * $value->transVATAmount ;
+                    $standardAmount = $value->transVATAmount - $exemptAmount;
 
 
                     $info = [
@@ -273,7 +273,7 @@ class SupplierInvoiceTaxLedgerService
                             $ledgerDetailsData['VATAmount'] =  \Helper::roundValue($value1['amount']);
                             $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                             $ledgerDetailsData['transAmount'] = \Helper::roundValue($value1['amount']);
-                            $ledgerDetailsData['recoverabilityAmount'] =\Helper::roundValue($currencyConversionVAT['localAmount']);
+                            $ledgerDetailsData['recoverabilityAmount'] = \Helper::roundValue($value1['amount']);
                             $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
                             $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
                             $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
@@ -330,8 +330,8 @@ class SupplierInvoiceTaxLedgerService
                 {
                  
                     $vatPortion = $value->exempt_vat_portion;
-                    $exemptAmount =   ($vatPortion/100) * $value->localVATAmount ;
-                    $standardAmount = $value->localVATAmount - $exemptAmount;
+                    $exemptAmount =   ($vatPortion/100) * $value->transVATAmount ;
+                    $standardAmount = $value->transVATAmount - $exemptAmount;
                     $info = [
                         ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
                         ["amount" => $standardAmount,"subcat" => $value->vatSubCategoryID,"mastercat" => $value->vatMasterCategoryID,"inVat" => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,

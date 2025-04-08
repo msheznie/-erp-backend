@@ -83,8 +83,8 @@ use ExchangeSetupConfig;
 
 class PaymentVoucherGlService
 {
-	public static function processEntry($masterModel)
-	{
+    public static function processEntry($masterModel)
+    {
         $data = [];
         $taxLedgerData = [];
         $finalData = [];

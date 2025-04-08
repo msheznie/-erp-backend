@@ -22,6 +22,7 @@ use App\Models\DeliveryOrder;
 use App\Models\ItemIssueMaster;
 use App\Models\StockTransfer;
 use App\Models\GRVMaster;
+use App\Services\Currency\CurrencyService;
 
 class inventory
 {
@@ -81,10 +82,10 @@ class inventory
 
 
                 if (!empty($itemLedgerRec)) {
-                    $output['wacValueLocal'] = $itemLedgerRec->wacCostLocal;
-                    $output['wacValueReporting'] = $itemLedgerRec->wacCostRpt;
-                    $output['totalWacCostLocal'] = $itemLedgerRec->totalWacCostLocal;
-                    $output['totalWacCostRpt'] = $itemLedgerRec->totalWacCostRpt;
+                    $output['wacValueLocal'] = CurrencyService::formatNumberWithPrecision(($itemLedgerRec->wacCostLocal));
+                    $output['wacValueReporting'] = CurrencyService::formatNumberWithPrecision(($itemLedgerRec->wacCostRpt));
+                    $output['totalWacCostLocal'] = CurrencyService::formatNumberWithPrecision(($itemLedgerRec->totalWacCostLocal));
+                    $output['totalWacCostRpt'] = CurrencyService::formatNumberWithPrecision(($itemLedgerRec->totalWacCostRpt));
                     $output['inOutQty'] = $itemLedgerRec->inOutQty;
                 }
 

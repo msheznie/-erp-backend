@@ -26,7 +26,7 @@ class BankReconciliationTemplateMappingRepository extends BaseRepository
         'companySystemID',
         'companyID',
         'bankName',
-        'bankAccount',
+        'bankAccountNumber',
         'statementStartDate',
         'statementEndDate',
         'bankReconciliationMonth',

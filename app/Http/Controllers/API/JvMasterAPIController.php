@@ -196,9 +196,10 @@ class JvMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
         }
-
+        DB::beginTransaction();
         $resultData = JournalVoucherService::createJournalVoucher($input);
         if ($resultData["status"]) {
+            DB::commit();
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => true,
@@ -209,6 +210,7 @@ class JvMasterAPIController extends AppBaseController
                 return $this->sendResponse($resultData['data'], 'JV created successfully');
             }
         } else {
+            DB::rollback();
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
@@ -325,7 +327,7 @@ class JvMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
-            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency', 'modified_by','type']);
+            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency', 'modified_by']);
         $input = $this->convertArrayToValue($input);
 
         $jvMaster = $this->jvMasterRepository->findWithoutFail($id);

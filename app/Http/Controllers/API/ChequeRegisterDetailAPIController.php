@@ -31,6 +31,7 @@ use App\Repositories\ChequeRegisterDetailRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\ChequeUpdateReason;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -334,7 +335,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         $isExistPolicyGCNFCR = ($is_exist_policy_GCNFCR) ? true : false;
 
-        $chequeRegisterDetails = ChequeRegisterDetail::with(['document', 'pdc_printed_history' => function($query) {
+        $chequeRegisterDetails = ChequeRegisterDetail::with(['document','latestChequeUpdateReason', 'pdc_printed_history' => function($query) {
                                     $query->with(['cheque_printed_by', 'changed_by', 'pay_supplier', 'currency']);
                                 }])->where('cheque_register_master_id', $id);
         $search = $request->input('search.value');
@@ -459,6 +460,18 @@ class ChequeRegisterDetailAPIController extends AppBaseController
                 if ($isChange){
                     $this->chequeRegisterDetailRepository->update(
                         ['status' => 0, 'document_id' => null, 'document_master_id' => null,'updated_by'=>Helper::getEmployeeSystemID(), 'updated_pc'=>gethostname()], $input['id']);    // update unused status to old cheque
+                    $currentupdateReasonData = [
+                        'document_id' => $document_id,
+                        'is_switch' => 0,
+                        'update_switch_reason' => $input['update_switch_reason'],
+                        'current_cheque_id' => $unUsedChequeRegisterDetails->cheque_no,
+                        'previous_cheque_id' =>null,
+                        'created_by' => Helper::getEmployeeSystemID(),
+                        'updated_by' => Helper::getEmployeeSystemID(),
+                    ];            
+                    $createCurrentUpdateReason = ChequeUpdateReason::create($currentupdateReasonData);
+                    $createPreviousUpdateReason = ChequeUpdateReason::create($currentupdateReasonData);
+
                 }else{
                     $this->chequeRegisterDetailRepository->update(['status' => 2, 'cancel_narration' => $input['cancel_narration'],'updated_by'=>Helper::getEmployeeSystemID(), 'updated_pc'=>gethostname()], $input['id']);    // update cancel status to old cheque
                 }
@@ -624,6 +637,29 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
             $from_cheque_details->save();
             $to_cheque_details->save();
+
+            $fromData = [
+                'document_id' => $from_cheque_details->document_id,
+                'is_switch' => 1,
+                'update_switch_reason' => $input['update_switch_reason'],
+                'current_cheque_id' => $to_cheque_details->cheque_no,
+                'previous_cheque_id' => $from_cheque_details->cheque_no,
+                'created_by' => Helper::getEmployeeSystemID(),
+                'updated_by' => Helper::getEmployeeSystemID(),
+            ];
+            
+            $toData = [
+                'document_id' => $to_cheque_details->document_id,
+                'is_switch' => 1,
+                'update_switch_reason' => $input['update_switch_reason'],
+                'current_cheque_id' => $from_cheque_details->cheque_no,
+                'previous_cheque_id' => $to_cheque_details->cheque_no,
+                'created_by' => Helper::getEmployeeSystemID(),
+                'updated_by' => Helper::getEmployeeSystemID(),
+            ];
+
+            $createFromSwitchReason = ChequeUpdateReason::create($fromData);
+            $createToSwitchReason = ChequeUpdateReason::create($toData);
 
             $output['from_cheque_details'] = $from_cheque_details;
             $output['to_cheque_details'] = $to_cheque_details;

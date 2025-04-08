@@ -134,7 +134,15 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         if (empty($invoice)) {
             return $this->sendError('Supplier Invoice not found');
         }
+        
+        if(isset($input['type']) &&  $input['type'] != $invoice->documentType)
+        {
+            return $this->sendError('The Supplier Invoice type has changed, unable to proceed');
+        }
 
+        if (empty($invoice->supplierTransactionCurrencyID)) {
+            return $this->sendError('Please select a document currency');
+        }
 
         DB::beginTransaction();
         try {

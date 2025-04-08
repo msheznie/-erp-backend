@@ -214,16 +214,18 @@ class GrvGlService
                 $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
                 $exemptVatRpt = $exemptExpenseDetails->VATAmountRpt;
 
-                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
-                $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
-                $data['glCode'] = $chartOfAccountData->AccountCode;
-                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                $data['documentTransAmount'] = $exemptVatTrans;
-                $data['documentLocalAmount'] = $exemptVATLocal;
-                $data['documentRptAmount'] = $exemptVatRpt;
-                $data['timestamp'] = \Helper::currentDateTime();
-                array_push($finalData, $data);
+                if($exemptVatTrans != 0) {
+                    $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
+                    $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
+                    $data['glCode'] = $chartOfAccountData->AccountCode;
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['documentTransAmount'] = $exemptVatTrans;
+                    $data['documentLocalAmount'] = $exemptVATLocal;
+                    $data['documentRptAmount'] = $exemptVatRpt;
+                    $data['timestamp'] = \Helper::currentDateTime();
+                    array_push($finalData, $data);
+                }
             }
 
 

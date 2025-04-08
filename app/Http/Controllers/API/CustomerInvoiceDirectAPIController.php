@@ -1783,6 +1783,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($id) {
             $output['isVATEligible'] = $master->vatRegisteredYN;
         }
+
+        $autoGeneratePolicy = Helper::checkPolicy($companyId, 103);
+        $output['autoGeneratePolicy'] = $autoGeneratePolicy;
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
@@ -4455,5 +4458,26 @@ WHERE
             }
 
            return $total;
+    }
+    
+    public function setCustomerInvoiceForActivePolicy(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+        $id = $input['id'];
+        $autoGeneratePolicy = \Helper::checkPolicy($companyId, 103);
+        if($autoGeneratePolicy)
+        {
+            $customerInvoiceDirect = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$id)->first();
+            if ($customerInvoiceDirect && empty($customerInvoiceDirect->customerInvoiceNo)) {
+                $detail['customerInvoiceNo'] = $customerInvoiceDirect->bookingInvCode;
+                $customerInvoiceDirect->update($detail);
+            }
+         
+        }
+
+        return $this->sendResponse(true, 'Record checked successfully');
+
     }
 }
