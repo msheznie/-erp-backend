@@ -1,5 +1,90 @@
 # Changelog
 
+## 10.67.0 (2025-04-08)
+
+
+### Features
+
+* **accounts payable:** resolve TB and P&L mismatch by updating segment for exempt VAT expense ([5880817](https://github.com/pbsgears/Gears_BackEnd/commit/5880817bf5aa758cc20a597cf55ae567f6a5f501))
+* **accounts payable:** Supplier invoice details are not showing when updating an Item Invoice to any type of invoice [GCP-6372] ([#7760](https://github.com/pbsgears/Gears_BackEnd/issues/7760)) ([4873988](https://github.com/pbsgears/Gears_BackEnd/commit/4873988c146b42c4b20af25aaf40f02e8958b547))
+* **accounts payable:** User should be validated when adding details to an invoice fields [GCP-6544] ([#7797](https://github.com/pbsgears/Gears_BackEnd/issues/7797)) ([a0dc0a7](https://github.com/pbsgears/Gears_BackEnd/commit/a0dc0a72423bb428d36c78755abd72d6f1d1d541))
+* **accounts payable:** validation check when adding the invoice [GCP-6506] ([#7786](https://github.com/pbsgears/Gears_BackEnd/issues/7786)) ([5e658d1](https://github.com/pbsgears/Gears_BackEnd/commit/5e658d1f9bf50569ebd3612423ecfc45b357e1dd))
+* **accounts receivable:** Customer Invoice auto generation [GCP-5744] ([#7779](https://github.com/pbsgears/Gears_BackEnd/issues/7779)) ([874cecb](https://github.com/pbsgears/Gears_BackEnd/commit/874cecbd42efaf1ace81bf560b7bb34ff3310dff))
+* **accounts receivable:** Customer ledger report alignment issue [GCP-6304] ([#7731](https://github.com/pbsgears/Gears_BackEnd/issues/7731)) ([1172606](https://github.com/pbsgears/Gears_BackEnd/commit/117260664dfcb41f8d6ff9cbde8cf6411accd8c4))
+* **common:** consolidation balance sheet template configuration [GCP-5190] ([#7796](https://github.com/pbsgears/Gears_BackEnd/issues/7796)) ([0491171](https://github.com/pbsgears/Gears_BackEnd/commit/04911716438c7afd30619ca780fb69de6ebbe489))
+* **DA:** Delivery Appointment Calendar and Slots validations [GSUP-2333] ([#7697](https://github.com/pbsgears/Gears_BackEnd/issues/7697)) ([b7a96ed](https://github.com/pbsgears/Gears_BackEnd/commit/b7a96ed1d3791c414504a2701b6e8956d7a30a32))
+* **general ledger:** Added jv type column in jv details report [GCP-5729] ([#7768](https://github.com/pbsgears/Gears_BackEnd/issues/7768)) ([2487b50](https://github.com/pbsgears/Gears_BackEnd/commit/2487b506dbd83f25ad49edf2fe9e12eb6e06352e))
+* **group report:** Consolidation report ownership changes [GCP-5192] ([#7747](https://github.com/pbsgears/Gears_BackEnd/issues/7747)) ([1b8bb48](https://github.com/pbsgears/Gears_BackEnd/commit/1b8bb4895e70e3e7fc8a7b8124fc716099f0310c))
+* **RFX:** RFX - Bid Opening [GSUP-2421] ([#7832](https://github.com/pbsgears/Gears_BackEnd/issues/7832)) ([12d08b6](https://github.com/pbsgears/Gears_BackEnd/commit/12d08b6e685819687d995b811b3e4394bdf52fa6))
+* **SRM:** Allow Multiple Rounds of Negotiations for Tenders.[GSUP-1806] ([#7707](https://github.com/pbsgears/Gears_BackEnd/issues/7707)) ([e92d384](https://github.com/pbsgears/Gears_BackEnd/commit/e92d384b91ba7b4b86fe66afb6975bc09dba424b))
+* **srm:** Supplier Portal PO Print PDF view [GSUP-2344] ([#7748](https://github.com/pbsgears/Gears_BackEnd/issues/7748)) ([f28ac2a](https://github.com/pbsgears/Gears_BackEnd/commit/f28ac2a766bc7989a9e9a9b2a76e0c3ef8e87110))
+* **SRM:** Tender Committee Enhancement to Add Users [GSUP-2452] ([#7813](https://github.com/pbsgears/Gears_BackEnd/issues/7813)) ([2581300](https://github.com/pbsgears/Gears_BackEnd/commit/25813001bb874eaa3835d90c6a4bb3fc68e07002))
+* **Tender:** During the bid submision, Supplier unable to complete the Commercial Bid Submission [GSUP-2207] ([5eef082](https://github.com/pbsgears/Gears_BackEnd/commit/5eef0822bdfd3f2166c9c894c6fdca73b5d0bd55))
+* **Tender:** Tender committee multi select and delete option [GSUP-2162]  ([#7706](https://github.com/pbsgears/Gears_BackEnd/issues/7706)) ([15352ec](https://github.com/pbsgears/Gears_BackEnd/commit/15352ecd476e4287b97dba879e473b30e01aa155))
+* **treasury management:** Introduced bank statement import history view [GCP-5977] ([#7787](https://github.com/pbsgears/Gears_BackEnd/issues/7787)) ([a666179](https://github.com/pbsgears/Gears_BackEnd/commit/a666179234fff3f2d98ba0907e52aad593ed4edc))
+* **treasury management:** New feature added to Import bank statement [GCP-5976] ([#7769](https://github.com/pbsgears/Gears_BackEnd/issues/7769)) ([2a2d33c](https://github.com/pbsgears/Gears_BackEnd/commit/2a2d33cb330d92b88557598f847db02010605675))
+* **treasury management:** provide cheque update reason [GCP-6377] ([#7778](https://github.com/pbsgears/Gears_BackEnd/issues/7778)) ([99517e7](https://github.com/pbsgears/Gears_BackEnd/commit/99517e7298b024673dbbf0a51646f0ca9c86089b))
+* **treasury management:** Update vendor file submission based on final bank discussion [GCP-6477] ([#7808](https://github.com/pbsgears/Gears_BackEnd/issues/7808)) ([5ff4cdf](https://github.com/pbsgears/Gears_BackEnd/commit/5ff4cdf8af479fe8845ed660cdb14950fb95f452))
+
+
+### Bug Fixes
+
+* **account receivable:** Customer aging report excel allignment issue fixed [GCP-6326] ([#7767](https://github.com/pbsgears/Gears_BackEnd/issues/7767)) ([8cdf55c](https://github.com/pbsgears/Gears_BackEnd/commit/8cdf55ce2448765be26bf07eaa1c860135d09eb2))
+* **accounts payable:** Supplier invoice Type change issue [GCP-6158] ([e2d271a](https://github.com/pbsgears/Gears_BackEnd/commit/e2d271a42053b21424c3448ce8b4744437ea6811))
+* **accounts receivable:** Default customer invoice template should reflect all invoice types [GCP-6472] ([#7806](https://github.com/pbsgears/Gears_BackEnd/issues/7806)) ([14674bf](https://github.com/pbsgears/Gears_BackEnd/commit/14674bf464796ce86e153c18307fb778ad6f22ab))
+* **accounts receivable:** Showing correct employee & Customer name in RV approval page [GCP-6078] ([#7764](https://github.com/pbsgears/Gears_BackEnd/issues/7764)) ([e9d58ac](https://github.com/pbsgears/Gears_BackEnd/commit/e9d58ac6fe53962be4b3c957c76bcf470476f9c7))
+* **accounts receivable:** while send customer ledger report to customer directory not found fixes [GCP-6537] ([#7823](https://github.com/pbsgears/Gears_BackEnd/issues/7823)) ([cb769d9](https://github.com/pbsgears/Gears_BackEnd/commit/cb769d92b3587785808adb365d9a3ff3aa4655f6))
+* **asset management:** Fixed total amount mismatch in asset registry details 2 report [GCP-6579] ([#7814](https://github.com/pbsgears/Gears_BackEnd/issues/7814)) ([6cc717d](https://github.com/pbsgears/Gears_BackEnd/commit/6cc717dc340b614358aca7833422ee1da99b242e))
+* **asset management:** Issue with Total Amount in the Asset Register  Detail 2 Report [GCP-6282] ([#7801](https://github.com/pbsgears/Gears_BackEnd/issues/7801)) ([824229b](https://github.com/pbsgears/Gears_BackEnd/commit/824229bd0dc9ab05b60d60ee17a12f725fa01953))
+* **configuration:** Duplicate prefixes are validated across all report templates in the Report Template [GCP-6606] ([#7834](https://github.com/pbsgears/Gears_BackEnd/issues/7834)) ([b6beb4b](https://github.com/pbsgears/Gears_BackEnd/commit/b6beb4b7509ff5382c3986918a2af847aa0cfca8))
+* **DA:** Delivery Appointment Calendar and Slots validations [GSUP-2333] ([70a3d91](https://github.com/pbsgears/Gears_BackEnd/commit/70a3d9177c988b5fff7f121072526131c010e41d))
+* **DA:** Supplier cannot view the pending/approved delivery appointments [GSUP-2430] ([#7790](https://github.com/pbsgears/Gears_BackEnd/issues/7790)) ([c506559](https://github.com/pbsgears/Gears_BackEnd/commit/c506559b56abe1ac8b2295c02d35fdd4985b0228))
+* **general ledger:** Allowing to edit the type of salary JV [GCP-5750] ([#7703](https://github.com/pbsgears/Gears_BackEnd/issues/7703)) ([8a8a9a3](https://github.com/pbsgears/Gears_BackEnd/commit/8a8a9a390927ee6b6526cfdefed122a637af298c))
+* **general ledger:** Fixed document code duplication in journal voucher [GCP-6218] ([#7777](https://github.com/pbsgears/Gears_BackEnd/issues/7777)) ([20db11c](https://github.com/pbsgears/Gears_BackEnd/commit/20db11c0a3bf99774f1cad7af8ffc779e93d94d3))
+* **inventory:** Fixed exempt GL entry adding zero value in GRV ledger entries [GCP-5930] ([#7771](https://github.com/pbsgears/Gears_BackEnd/issues/7771)) ([7f0497c](https://github.com/pbsgears/Gears_BackEnd/commit/7f0497c65f0cbaa817e89922bf8cbefc7eaf0d5d))
+* **inventory:** Fixed GRV Qty is automatically reset after pulling from PO [GCP-6083] ([#7780](https://github.com/pbsgears/Gears_BackEnd/issues/7780)) ([3645a99](https://github.com/pbsgears/Gears_BackEnd/commit/3645a99b2fa7c44543b61fbf4e91a8a4da65e396))
+* **inventory:** Inventory WAC Values and Adjustment issues fixes [GCP-6156] ([#7716](https://github.com/pbsgears/Gears_BackEnd/issues/7716)) ([d9a76a3](https://github.com/pbsgears/Gears_BackEnd/commit/d9a76a39c92b306e2db300c170390f0de9573a22))
+* **procurement:** PO confirmation bypass on T&C mismatch and incorrect % update on amount [GCP-6238] ([#7788](https://github.com/pbsgears/Gears_BackEnd/issues/7788)) ([6fecfd0](https://github.com/pbsgears/Gears_BackEnd/commit/6fecfd02477d58a84357db9003995da6725283db))
+* **srm:** Display incorrect VAT number in print preview of PO [GSUP-2418] ([#7766](https://github.com/pbsgears/Gears_BackEnd/issues/7766)) ([289e9f8](https://github.com/pbsgears/Gears_BackEnd/commit/289e9f8b9f10511c19f445efefb51b5ec7264898))
+* **treasury management:** sentry issue on bank reconsilation and bank trasfer fixes [GCP-6573] ([#7822](https://github.com/pbsgears/Gears_BackEnd/issues/7822)) ([f379433](https://github.com/pbsgears/Gears_BackEnd/commit/f3794332afd673d1bbeb2a480c239d608c9a6889))
+
+
+### Miscellaneous Chores
+
+* release 10.53.2 ([2dda1c4](https://github.com/pbsgears/Gears_BackEnd/commit/2dda1c4c47e0398cfe262440dd3d05c4fe2d5f24))
+* release 10.53.2 ([2026f98](https://github.com/pbsgears/Gears_BackEnd/commit/2026f98092dd143f20148d158d84c846cbc4d7df))
+* release 10.53.2 ([556ccf1](https://github.com/pbsgears/Gears_BackEnd/commit/556ccf1a5ba8b01f091077373b61454860e26f36))
+* release 10.53.2 ([b6ca2ba](https://github.com/pbsgears/Gears_BackEnd/commit/b6ca2ba5fd3101c3305beb90b83bb047d1d282db))
+* release 10.53.2 ([7cf56b6](https://github.com/pbsgears/Gears_BackEnd/commit/7cf56b673dd1bf6b9bcc1dadace74e9d3ae0e525))
+* release 10.53.2 ([ad092fd](https://github.com/pbsgears/Gears_BackEnd/commit/ad092fd8102c45f635c4c4045c84813b39a7ee7b))
+* release 10.53.2 ([deef3f1](https://github.com/pbsgears/Gears_BackEnd/commit/deef3f1f58549bdca413770ff69153745575364d))
+* release 10.53.2 ([b050d72](https://github.com/pbsgears/Gears_BackEnd/commit/b050d729aed701299d647526642b966d3f2398f7))
+* release 10.53.2 ([e308c39](https://github.com/pbsgears/Gears_BackEnd/commit/e308c39a3056d5209fde75b6de7c9615fd3603d1))
+* release 10.53.2 ([5ad2b47](https://github.com/pbsgears/Gears_BackEnd/commit/5ad2b47153b939a92c3eb95c1c6017afd6aa19bd))
+* release 10.53.2 ([a03ae68](https://github.com/pbsgears/Gears_BackEnd/commit/a03ae68b6fb92d1db99d6c91e2ca8963556e664a))
+* release 10.53.2 ([01e8c6e](https://github.com/pbsgears/Gears_BackEnd/commit/01e8c6ee5a30f5f631c3398ed0bfaecf8b75f058))
+* release 10.53.2 ([b2b0e7d](https://github.com/pbsgears/Gears_BackEnd/commit/b2b0e7d4dc18cbcc2d19bab7b855ccd471581285))
+* release 10.53.2 ([b846530](https://github.com/pbsgears/Gears_BackEnd/commit/b84653091fd80f8074e4aa5f6c78931ac475b2ab))
+* release 10.53.2 ([4bb768a](https://github.com/pbsgears/Gears_BackEnd/commit/4bb768a3b81c6c896fda0d8c49130ef9e957a30a))
+* release 10.53.2 ([646e97f](https://github.com/pbsgears/Gears_BackEnd/commit/646e97f321deeca9299a61bcd5a891b02ae83f1d))
+* release 10.54.0 ([6b9e8a3](https://github.com/pbsgears/Gears_BackEnd/commit/6b9e8a33832ba67480cbf713519002e8ae76f1f3))
+* release 10.54.0 ([4daf64b](https://github.com/pbsgears/Gears_BackEnd/commit/4daf64b863ad79893460c33ebe4e38aab03f5f38))
+* release 10.54.0 ([1b68a05](https://github.com/pbsgears/Gears_BackEnd/commit/1b68a05fdf563c7096fd2cbbe2841376fc9a7b62))
+* release 10.54.0 ([a40d196](https://github.com/pbsgears/Gears_BackEnd/commit/a40d19694d8d96ce502d533de0d3d9f00dcc2188))
+* release 10.54.0 ([0bcd1bb](https://github.com/pbsgears/Gears_BackEnd/commit/0bcd1bbb94d14b6922e6e7469c934050fbac2b6f))
+* release 10.54.0 ([2d87eae](https://github.com/pbsgears/Gears_BackEnd/commit/2d87eaecd9c25aafa065300c032128978d34b58a))
+* release 10.54.0 ([347c051](https://github.com/pbsgears/Gears_BackEnd/commit/347c0512ae2b282794f9109acca9ef56231ff11c))
+* release 10.54.0 ([81d7a60](https://github.com/pbsgears/Gears_BackEnd/commit/81d7a609a26312e7de349ed8eeaabe48a2f234f4))
+* release 10.54.0 ([f0e50b9](https://github.com/pbsgears/Gears_BackEnd/commit/f0e50b9b6e4f44c877c970eb118a0a15b7f36925))
+* release 10.54.0 ([abb37b1](https://github.com/pbsgears/Gears_BackEnd/commit/abb37b1a54c512de7514989e5797583178d36c5d))
+* release 10.54.0 ([dadda68](https://github.com/pbsgears/Gears_BackEnd/commit/dadda684a87bc0af2594b5c7425e896b7e149dfb))
+* release 10.54.0 ([5153110](https://github.com/pbsgears/Gears_BackEnd/commit/51531101c4da9b7ccd2851b514bf38fc8ce82508))
+* release 10.54.0 ([c4cb74c](https://github.com/pbsgears/Gears_BackEnd/commit/c4cb74cd3ac50323a8577eebb9389ebdcb3ea4a1))
+* release 10.54.0 ([f0302c9](https://github.com/pbsgears/Gears_BackEnd/commit/f0302c94768b2655a7ad66992dd8ed965ccd67ce))
+* release 10.54.0 ([2966249](https://github.com/pbsgears/Gears_BackEnd/commit/2966249a49bf52e65d25cdc4fc81131bb07260e0))
+* release 10.54.0 ([3cec78b](https://github.com/pbsgears/Gears_BackEnd/commit/3cec78baa0c492888a04e4344549ccde1c37d740))
+* release 10.67.0 ([#7855](https://github.com/pbsgears/Gears_BackEnd/issues/7855)) ([52b780b](https://github.com/pbsgears/Gears_BackEnd/commit/52b780b483ff4a53f733beddcfe3afe77c2d6111))
+
 ## [10.66.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.65.3...v10.66.0) (2025-03-24)
 
 
