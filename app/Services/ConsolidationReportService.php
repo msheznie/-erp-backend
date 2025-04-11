@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\GeneralLedger;
 use App\Models\GroupParents;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,7 @@ class ConsolidationReportService
         foreach ($companyIDs as $companyID) {
             $filter = "WHEN " . $alias . ".companySystemID = " . $companyID;
 
-            $periodDates = $periods->where('company_system_id',$companyID);
+            $periodDates = $periods->where('company_system_id',$companyID)->where('group_type', 1);
             $periodConditions = [];
             foreach ($periodDates as $periodDate) {
 
@@ -66,9 +67,28 @@ class ConsolidationReportService
             }
         }
 
-        // Add parent company
         if($isCombinedFilter) {
+            // Add parent company
             $companyPeriodsFilterData[] = "WHEN " . $alias . ".companySystemID = " . $parentCompanySystemID . " AND (DATE(" . $alias . ".documentDate) BETWEEN '" . $fromDate->format("Y-m-d") . "' AND '" . $toDate->format("Y-m-d") . "') THEN " . $alias . "." . $currencyColumn . " * -1";
+
+            // Add Joint venture and Associate company periods data for BS report CMB column
+            $periodDates = $periods->whereIn('group_type', [2,3]);
+            foreach ($periodDates as $periodDate) {
+
+                $rowStartDate = Carbon::parse($periodDate->start_date);
+                $rowEndDate = ($periodDate->end_date == null) ? $toDate : Carbon::parse($periodDate->end_date);
+
+                if($rowStartDate->isBetween($fromDate, $toDate) || $rowEndDate->isBetween($fromDate, $toDate)) {
+                    $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
+                    $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
+
+                    $filter = "WHEN " . $alias . ".companySystemID = " . $periodDate->company_system_id;
+                    $filter .= " AND DATE(" . $alias . ".documentDate) BETWEEN '" . $queryStartDate->format("Y-m-d") . "' AND '" . $queryEndDate->format("Y-m-d") . "'";
+                    $filter .= " THEN (" . $alias . "." . $currencyColumn . " * -1) * " . ($periodDate->holding_percentage / 100);
+
+                    $companyPeriodsFilterData[] = $filter;
+                }
+            }
         }
 
         // Generate filter query
@@ -85,9 +105,133 @@ class ConsolidationReportService
         }
     }
 
+    public static function getTotalProfit($serviceLineIDs, $company, $fromDate, $toDate, $amountColumn) {
+        $totalProfit = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')
+            ->whereIn('serviceLineSystemID', $serviceLineIDs)
+            ->where('companySystemID', $company)
+            ->whereBetween(DB::raw('DATE(documentDate)'), [$fromDate, $toDate])
+            ->first();
+
+        return $totalProfit->$amountColumn * -1;
+    }
+
+    public static function getCompanyType($companyType): ?string {
+        $type = null;
+        switch ($companyType) {
+            case 1;
+                $type = "Subsidary";
+                break;
+            case 2;
+                $type = "Associate";
+                break;
+            case 3;
+                $type = "Joint venture";
+                break;
+        }
+        return $type;
+    }
+
+    public static function processConsolidationDataForDrillDownAndReport($input): array {
+        $dataType = $input['selectedRow'];
+        $fromDate = Carbon::parse($input['fromDate']);
+        $toDate = Carbon::parse($input['toDate']);
+
+        $currency = $input['currency'][0] ?? $input['currency'];
+        $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';
+
+        // selected sub companies
+        $companySystemIDs = collect($input['companySystemID']);
+        // selected group company
+        $groupCompanySystemID = collect($input['groupCompanySystemID'])->pluck('companySystemID')->toArray();
+        $serviceLineIDs = collect($input['serviceLineSystemID'])->pluck('serviceLineSystemID')->toArray();
+
+        // check the selected item
+        $dataType = explode('-',$dataType);
+
+        // remove group company from sub companies
+        $childCompanies = array_values(
+            $companySystemIDs->pluck('companySystemID')->diff($groupCompanySystemID)->toArray()
+        );
+
+        $data = [];
+
+        if (in_array($dataType[0],['CMB','CONS'])) {
+
+            // Joint venture & associate types
+            $groupTypes = [2,3];
+            $periods = self::getCompanyOwnershipPeriods($groupCompanySystemID, $childCompanies, $groupTypes);
+
+            foreach ($periods as $period) {
+                $rowStartDate = Carbon::parse($period->start_date);
+                $rowEndDate = ($period->end_date == null) ? $toDate : Carbon::parse($period->end_date);
+
+                if ($rowStartDate->isBetween($fromDate, $toDate) || $rowEndDate->isBetween($fromDate, $toDate)) {
+                    $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
+                    $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
+
+                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn);
+
+                    if (abs($totalProfit) != 0) {
+                        $parentPortion = ($totalProfit * $period->holding_percentage) / 100;
+
+                        $data[] = [
+                            'company' => $period->companyMaster->CompanyName,
+                            'type' => self::getCompanyType($period->group_type),
+                            'holdingPercentage' => $period->holding_percentage,
+                            'companyProfit' => $totalProfit,
+                            'parentPortion' => $parentPortion
+                        ];
+                    }
+                }
+            }
+        }
+        else {
+
+            // Subsidiary types
+            $groupTypes = [1];
+            $periods = self::getCompanyOwnershipPeriods($groupCompanySystemID, $childCompanies, $groupTypes);
+
+            foreach ($periods as $period) {
+                $rowStartDate = Carbon::parse($period->start_date);
+                $rowEndDate = ($period->end_date == null) ? $toDate : Carbon::parse($period->end_date);
+
+                if ($rowStartDate->isBetween($fromDate, $toDate) || $rowEndDate->isBetween($fromDate, $toDate)) {
+                    $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
+                    $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
+
+                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn);
+
+                    if (abs($totalProfit) != 0) {
+                        // calculate NCI percentage
+                        $nciPercentage = 100 - $period->holding_percentage;
+                        $parentPortion = ($totalProfit * $nciPercentage) / 100;
+
+                        $data[] = [
+                            'company' => $period->companyMaster->CompanyName,
+                            'type' => self::getCompanyType(1),
+                            'holdingPercentage' => $nciPercentage,
+                            'companyProfit' => $totalProfit,
+                            'parentPortion' => $parentPortion
+                        ];
+                    }
+                }
+            }
+        }
+
+        // calculate total amount
+        $total = collect($data)->sum('parentPortion');
+
+        return [
+            'data' => $data,
+            'total' => $total
+        ];
+    }
+
     public static function generateConsolidationReportData($request, $consolidationKeys) {
         $fromDate = Carbon::parse($request->fromDate);
         $toDate = Carbon::parse($request->toDate);
+
+        $showZeroGL = $request->showZeroGL ?? false;
 
         $servicelineIDs = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
 
@@ -116,16 +260,35 @@ class ConsolidationReportService
         $consQuery .= " AS `" . $consColumnName . "`";
 
         $serviceLineIDsCondition = "serviceLineSystemID IN (" . join(',', $servicelineIDs) . ")";
-        $glAccountTypeIDCondition = "glAccountTypeID = " . 2;
         $templateIDCondition = "templateMasterID = " . $request->templateType;
 
-        $zeroRemoveConditions = [];
-        foreach ($columnNames as $columnName) {
-            $zeroRemoveConditions[] = "final.`" . $columnName . "` != 0";
+        $containsCMB = array_filter($consolidationKeys, function ($item) {
+            return strpos($item, "CMB") !== false;
+        });
+
+        $zeroRemoveCondition = "";
+        // Check if hide zero value condition checked
+        if (!$showZeroGL) {
+            $zeroRemoveConditions = [];
+
+            foreach ($columnNames as $columnName) {
+                $zeroRemoveConditions[] = "final.`" . $columnName . "` != 0";
+            }
+
+            $zeroRemoveCondition = "WHERE (" . join(" OR ", $zeroRemoveConditions) . ")";
         }
 
-        $subsidiaryCompanyPeriodsFilterForGL = self::generateFilterQuery($fromDate, $toDate, $parentCompanySystemID, $childCompanyIDs, $currencyColumn, [1], true, "gl", false);
-        $subsidiaryCompanyPeriodsFilterForEL = self::generateFilterQuery($fromDate, $toDate, $parentCompanySystemID, $childCompanyIDs, $currencyColumn, [1], false, "el", false);
+        if (($request->accountType == 1) && ($request->type == 2) && (count($containsCMB) > 0)) {
+            // If the report is balance sheet, retrieve GL in subsidiary, associate & joint venture types
+            $groupTypes = [1,2,3];
+        }
+        else {
+            // If the report is not balance sheet, retrieve GL in subsidiary
+            $groupTypes = [1];
+        }
+
+        $combinedColumnCompanyPeriods = self::generateFilterQuery($fromDate, $toDate, $parentCompanySystemID, $childCompanyIDs, $currencyColumn, $groupTypes, true, "gl", false);
+        $eliminationColumnCompanyPeriods = self::generateFilterQuery($fromDate, $toDate, $parentCompanySystemID, $childCompanyIDs, $currencyColumn, [1], false, "el", false);
 
         $sql = "SELECT *
                 FROM
@@ -147,7 +310,7 @@ class ConsolidationReportService
                         INNER JOIN erp_companyreporttemplatedetails AS rtd ON rtl.templateDetailID = rtd.detID
                         LEFT JOIN (
                             SELECT
-                                " . $subsidiaryCompanyPeriodsFilterForGL . " AS `" . $cmbColumnName . "`,
+                                " . $combinedColumnCompanyPeriods . " AS `" . $cmbColumnName . "`,
                                 0 AS `" . $elmnColumnName . "`,
                                 0 AS `" . $consColumnName . "`,
                                 gl.chartOfAccountSystemID
@@ -156,26 +319,24 @@ class ConsolidationReportService
                             WHERE
                                 gl.companySystemID IN (" . join(",", $allCompanyIDs) . ")
                                 AND gl." . $serviceLineIDsCondition . "
-                                AND gl." . $glAccountTypeIDCondition . "
                             GROUP BY gl.chartOfAccountSystemID
                     ) AS gl ON rtl.glAutoID = gl.chartOfAccountSystemID
                     LEFT JOIN (
                         SELECT
                             el.chartOfAccountSystemID,
-                            " . $subsidiaryCompanyPeriodsFilterForEL . " AS `" . $elmnColumnName . "`
+                            " . $eliminationColumnCompanyPeriods . " AS `" . $elmnColumnName . "`
                         FROM
                             erp_elimination_ledger AS el
                         WHERE
                             el.companySystemID IN (" . join(",", $childCompanyIDs) . ")
                             AND el." . $serviceLineIDsCondition . "
-                            AND el." . $glAccountTypeIDCondition . "
                         GROUP BY el.chartOfAccountSystemID
                     ) AS el ON el.chartOfAccountSystemID = rtl.glAutoID
                     WHERE 
                         rtl." . $templateIDCondition . "
                         AND rtl.glAutoID IS NOT NULL
                 ) AS final
-                WHERE " . join(" OR ", $zeroRemoveConditions) . "
+                " . $zeroRemoveCondition . "
                 ORDER BY final.glAutoID";
 
         return DB::select($sql);
