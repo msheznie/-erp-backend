@@ -441,7 +441,11 @@ class ChequeRegisterDetailAPIController extends AppBaseController
                     PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
                           ->where('documentmasterAutoID', $document_id)
                           ->where('chequeNo', $chequeRegisterDetails->cheque_no)
-                          ->update(['chequeNo' => $unUsedChequeRegisterDetails->cheque_no, 'chequePrinted' => 0, 'chequePrintedDate' => null, 'chequePrintedBy' => null]);
+                          ->update(['chequeRegisterAutoID' => $unUsedChequeRegisterDetails->id,
+                                    'chequeNo' => $unUsedChequeRegisterDetails->cheque_no,
+                                    'chequePrinted' => 0,
+                                    'chequePrintedDate' => null,
+                                    'chequePrintedBy' => null]);
                 } else {
                     // update supplier invoice master
                     PaySupplierInvoiceMaster::find($document_id)->update(
