@@ -635,8 +635,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $unallocatedTotal = 0;
                             if ($outputDetail['data']) {
                                 foreach ($outputDetail['data'] as $valDet) {
-                                    if($val->supplierCodeSystem == $valDet->supplierCodeSystem) {
-                                        $unallocatedTotal += $valDet->unAllocatedAmount;
+                                    if (isset($val->supplierCodeSystem) && isset($valDet->supplierCodeSystem) && isset($val->glCode) && isset($valDet->glCode)) {
+                                        if($val->supplierCodeSystem == $valDet->supplierCodeSystem && $val->glCode == $valDet->glCode) {
+                                            $unallocatedTotal += $valDet->unAllocatedAmount;
+                                        }
                                     }
                                 }
                             }
@@ -1530,8 +1532,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $unallocatedTotal = 0;
                                 if ($outputDetail['data']) {
                                     foreach ($outputDetail['data'] as $valDet) {
-                                        if($val->supplierCodeSystem == $valDet->supplierCodeSystem) {
-                                            $unallocatedTotal += $valDet->unAllocatedAmount;
+                                        if (isset($val->supplierCodeSystem) && isset($valDet->supplierCodeSystem) && isset($val->glCode) && isset($valDet->glCode)) {
+                                            if($val->supplierCodeSystem == $valDet->supplierCodeSystem && $val->glCode == $valDet->glCode) {
+                                                $unallocatedTotal += $valDet->unAllocatedAmount;
+                                            }
                                         }
                                     }
                                 }
