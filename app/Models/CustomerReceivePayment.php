@@ -744,6 +744,12 @@ class CustomerReceivePayment extends Model
         return $q->join('erp_custreceivepaymentdet','erp_custreceivepaymentdet.custReceivePaymentAutoID','erp_customerreceivepayment.custReceivePaymentAutoID');
     }
 
+    public function bank_info()
+    {
+        return $this->belongsTo('App\Models\BankMaster', 'bankID', 'bankmasterAutoID');
+    }
+
+
     public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'currency',$columnAs = 'currencyByName'){
         return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_customerreceivepayment.'.$column)
         ->addSelect($as.".CurrencyName as ".$columnAs);
