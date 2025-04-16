@@ -133,6 +133,7 @@ class TaxService
             $data['percentage'] = $taxDetails->percentage;
             $data['vatSubCategoryID'] = $taxDetails->taxVatSubCategoriesAutoID;
             $data['vatMasterCategoryID'] = $taxDetails->mainCategory;
+            $data['subCatgeoryType'] = $taxDetails->subCatgeoryType;
         } else {
             $defaultVAT = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
                     $q->where('companySystemID', $companySystemID)
@@ -150,6 +151,7 @@ class TaxService
                 $data['applicableOn'] = $defaultVAT->applicableOn;
                 $data['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
                 $data['vatMasterCategoryID'] = $defaultVAT->mainCategory;
+                $data['subCatgeoryType'] = $defaultVAT->subCatgeoryType;
                 $data['percentage'] = $defaultVAT->percentage;
             } else {
                 if ($isSupplier) {
@@ -209,7 +211,6 @@ class TaxService
                 } else {
                     if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
                         $vatDetails = self::getVATDetailsByItem($companySystemID, $updateData['itemCode']);
-
                         if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
                             return ['status' => false, 'message' => "Please assign a vat category to this item (or) setup a default vat category"];
                         }
@@ -262,6 +263,13 @@ class TaxService
                 if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
                     $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
                     $vatSubCategoryID = $updateData['vatSubCategoryID'];
+
+                    $checkExemptVatValidaiton = self::exmptVATValidation($updateData);
+                   if(!$checkExemptVatValidaiton['status'])
+                   {
+                       return $checkExemptVatValidaiton;
+                   }
+
                 } else {
                     if ($documentType == 3 || $documentType == 1 || $documentType == 4) {
                         if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
@@ -333,6 +341,20 @@ class TaxService
 
         return ['status' => true, 'vatMasterCategoryID' => $vatMasterCategoryID, 'vatSubCategoryID' => $vatSubCategoryID];
 
+    }
+
+    public static  function exmptVATValidation($updateData)
+    {
+        if(!empty($updateData['exempt_vat_portion']))
+        {
+            $vatCategory = TaxVatCategories::find($updateData['vatSubCategoryID'],['subCatgeoryType','taxVatSubCategoriesAutoID']);
+            if(isset($vatCategory) && $vatCategory->subCatgeoryType != 3)
+            {
+                return ['status' => false, 'message' => "The exempt VAT category has not been created. Please set up the required category before proceeding"];
+            }
+        }else {
+            return ['status' => true];
+        }
     }
 
     public static function getDefaultVAT($companySystemID = 0, $partyID = 0, $isSupplier = 1)
