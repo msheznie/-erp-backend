@@ -242,5 +242,8 @@ class PaymentVoucherBankChargeDetails extends Model
         return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'payMasterAutoID', 'PayMasterAutoId');
     }
 
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
     
 }

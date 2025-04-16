@@ -2962,7 +2962,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['project','supplier', 'bankaccount'=> function($query){
+            ->with(['project','supplier', 'bank_charge'=> function ($query) {
+                $query->with('segment');
+            }, 'bankaccount'=> function($query){
                 $query->with('currency');
             }, 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
@@ -4442,7 +4444,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
-            ->with(['project','supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
+            ->with(['project','supplier', 'bank_charge'=> function ($query) {
+                $query->with('segment');
+            }, 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 }, 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
@@ -4485,6 +4489,8 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $advancePayDetailTotTra = AdvancePaymentDetails::where('PayMasterAutoId', $id)
             ->sum('paymentAmount');
 
+        $bankChargeAndOthersTot = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$id)->sum('dpAmount');
+        
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $output->companySystemID)
         ->where('isYesNO', 1)
@@ -4499,7 +4505,8 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             'supplierdetailTotTra' => $supplierdetailTotTra,
             'directDetailTotTra' => $directDetailTotTra,
             'isProjectBase' => $isProjectBase,
-            'advancePayDetailTotTra' => $advancePayDetailTotTra
+            'advancePayDetailTotTra' => $advancePayDetailTotTra,
+            'bankChargeAndOthersTot' => $bankChargeAndOthersTot
         );
 
         $time = strtotime("now");

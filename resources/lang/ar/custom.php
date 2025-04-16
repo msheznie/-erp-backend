@@ -425,6 +425,8 @@ return [
     'cheque_no' => 'رقم الشيك',
     'cheque_date' => 'تاريخ الشيك',
     'booking_inv_code' => 'رمز الفاتورة',
+    'gl_account' => 'حساب دفتر الأستاذ العام',
+    'bank_charges_others' => 'رسوم البنك وغيرها',
     'po_number' => 'رقم أمر الشراء',
     'supplier_invoice_no' => 'رقم فاتورة المورد',
     'invoice_amount' => 'مبلغ الفاتورة',
