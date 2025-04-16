@@ -19,6 +19,7 @@ use App\Models\Company;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Tax;
+use App\Models\TaxLedger;
 use App\Models\TaxType;
 use App\Repositories\TaxRepository;
 use Carbon\Carbon;
@@ -148,9 +149,23 @@ class TaxAPIController extends AppBaseController
         }
 
         if($taxCategory == 3){
-            $isTaxExists = Tax::where('companySystemID',$input['companySystemID'])->where('taxDescription',$input['taxDescription'])->exists();
+            $isTaxExists = Tax::where('companySystemID',$input['companySystemID'])
+                                ->where('taxDescription',$input['taxDescription'])
+                                ->exists();
             if($isTaxExists){
                 return $this->sendError('Tax description already exists', 500);
+            }
+
+            $isWhtTypeExists = Tax::where('taxCategory',3)
+                                    ->where('companySystemID',$input['companySystemID'])
+                                    ->where('whtType',$input['whtType'])
+                                    ->where('isActive',true)
+                                    ->exists();
+
+            if($isWhtTypeExists)
+            {
+                $whtType = $input['whtType'] == 0 ? "WHT on Gross Amount" : "WHT on Net Gross Amount";
+                return $this->sendError("WHT type ".$whtType." is already defined. You cannot create more than one active WHT Type ", 500);
             }
 
             if(($input['isDefault'] == 1) && ($input['isActive'] == 0)){
@@ -158,7 +173,10 @@ class TaxAPIController extends AppBaseController
             }
 
             if($input['isDefault'] == 1){
-                $defaultTax = Tax::where('taxCategory',3)->where('isDefault',1)->where('companySystemID', $input['companySystemID'])->first();
+                $defaultTax = Tax::where('taxCategory',3)
+                                    ->where('isDefault',1)
+                                    ->where('companySystemID', $input['companySystemID'])
+                                    ->first();
                 if($defaultTax){
                     $defaultTax->isDefault = 0;
                     $defaultTax->save();
@@ -349,6 +367,20 @@ class TaxAPIController extends AppBaseController
                 return $this->sendError('Default WHT cannot change inactive', 500);
             }
 
+            $glAccountID = $input['inputVatGLAccountAutoID'] ?? null;
+
+            $checkGLExistsOnTaxLedger = TaxLedger::where('inputVATGlAccountID', $glAccountID)
+                ->orWhere('inputVatTransferAccountID', $glAccountID)
+                ->orWhere('outputVatTransferGLAccountID', $glAccountID)
+                ->orWhere('outputVatGLAccountID', $glAccountID)
+                ->exists();
+
+
+            if(empty($checkGLExistsOnTaxLedger) && ($tax['inputVatGLAccountAutoID'] != $input['inputVatGLAccountAutoID']))
+            {
+                return $this->sendError("The transaction has already been posted to the selected GL.",500);
+            }
+
             if(($tax->isDefault == 0) && ($input['isDefault'] == 1)){
                 $defaultTax = Tax::where('taxCategory',3)->where('isDefault',1)->where('companySystemID', $input['companySystemID'])->first();
                 if($defaultTax){
@@ -431,7 +463,7 @@ class TaxAPIController extends AppBaseController
     public function getTaxMasterDatatable(Request $request)
     {
         $input = $request->all();
-        $tax = Tax::with(['authority', 'type']);
+        $tax = Tax::with(['authority', 'type'])->where('taxCategory','!=',1);
         $companiesByGroup = "";
 
         if (array_key_exists('selectedCompanyID', $input)) {
@@ -482,7 +514,8 @@ class TaxAPIController extends AppBaseController
                                         })->get();
 
         $taxType = TaxType::all();
-        $taxCategory = array(array('value' => 1, 'label' => 'Other'), array('value' => 2, 'label' => 'VAT'), array('value' => 3, 'label' => 'WHT'));
+//        $taxCategory = array(array('value' => 1, 'label' => 'Other'), array('value' => 2, 'label' => 'VAT'), array('value' => 3, 'label' => 'WHT'));
+        $taxCategory = array(array('value' => 2, 'label' => 'VAT'), array('value' => 3, 'label' => 'WHT'));
 
         $suppliers = SupplierAssigned::where('companySystemID',$selectedCompanyId)
             ->where('isAssigned',-1)
