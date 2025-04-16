@@ -431,8 +431,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
        
 
             $group_companies = Helper::getSimilarGroupCompanies($companySystemID);
-            $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
-                $query->whereIn('companySystemID', $group_companies)
+            $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID) {
+                $query->where('companySystemID', $companySystemID)
                     ->where('approved', -1)
                     ->where('poType_N', '!=',5)// poType_N = 5 =>work order
                     ->where('poCancelledYN', 0)
@@ -455,8 +455,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 ->groupBy('itemSystemCode')
                 ->sum('inOutQty');
 
-            $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($group_companies) {
-                $query->whereIn('companySystemID', $group_companies)
+            $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($companySystemID) {
+                $query->where('companySystemID', $companySystemID)
                     ->where('grvTypeID', 2)
                     ->where('approved', -1)
                     ->groupBy('erp_grvmaster.companySystemID');
@@ -502,11 +502,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     }
 
     public function updateQtyOnOrder(request $request){
-        $itemCode = $request[0];
-        $companySystemID = PurchaseRequestDetails::select('companySystemID')->where('itemCode', $itemCode)->first();
-        $group_companies = Helper::getSimilarGroupCompanies($companySystemID->companySystemID);
-            $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
-                $query->whereIn('companySystemID', $group_companies)
+
+        $itemCode = $request->itemCode;
+        $companySystemID = $request->companyId;
+
+        $group_companies = Helper::getSimilarGroupCompanies($companySystemID);
+            $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID) {
+                $query->where('companySystemID', $companySystemID)
                     ->where('approved', -1)
                     ->where('poType_N', '!=',5)// poType_N = 5 =>work order
                     ->where('poCancelledYN', 0)
@@ -523,8 +525,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     ]
                 )
                 ->sum('noQty');
-            $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($group_companies) {
-                $query->whereIn('companySystemID', $group_companies)
+            $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($companySystemID) {
+                $query->where('companySystemID', $companySystemID)
                     ->where('grvTypeID', 2)
                     ->where('approved', -1)
                     ->groupBy('erp_grvmaster.companySystemID');
@@ -1094,10 +1096,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
         $PRRequestedDate = $pr->timeStamp;
-        $result['history'] = PurchaseOrderDetails::whereHas('order', function ($query) use ($childCompanies,$PRRequestedDate) {
-            $query->whereIn('companySystemID', $childCompanies)
+        $result['history'] = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID,$PRRequestedDate) {
+            $query->where('companySystemID', $companySystemID)
                 ->where('approved', -1)
-                ->whereIn('goodsRecievedYN', [0,1])
                 ->where('poType_N', '!=',5)// poType_N = 5 =>work order
                 ->where('approvedDate', '<=',$PRRequestedDate)
                 ->where('poCancelledYN', 0)
@@ -1110,10 +1111,17 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         })
             ->where('manuallyClosed',0)
             ->where('itemCode', $itemCode)
-            ->withCount(['grv_details AS grv_qty'=> function($query) use($childCompanies,$PRRequestedDate){
+
+            ->whereDoesntHave('grv_details', function ($query) {
+                $query->whereHas('grv_master', function ($q) {
+                    $q->where('approved', -1);
+                });
+            })
+            
+            ->withCount(['grv_details AS grv_qty'=> function($query) use($companySystemID,$PRRequestedDate){
                 $query->select(DB::raw("COALESCE(SUM(noQty),0) as grvNoQty"))
-                    ->whereHas('grv_master',function ($query) use($childCompanies, $PRRequestedDate){
-                        $query->whereIn('companySystemID', $childCompanies)
+                    ->whereHas('grv_master',function ($query) use($companySystemID, $PRRequestedDate){
+                        $query->where('companySystemID', $companySystemID)
                             ->where('grvTypeID', 2)
                             ->where('approvedDate', '<=',$PRRequestedDate);
                     })
@@ -1132,7 +1140,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             }])
             ->with(['order.currency','unit','order.location'])->get();
 
-        $result['item'] = ItemAssigned::whereIn('companySystemID',$childCompanies)->where('itemCodeSystem',$itemCode)->first();
+        $result['item'] = ItemAssigned::where('companySystemID',$companySystemID)->where('itemCodeSystem',$itemCode)->first();
 
         return $this->sendResponse($result, 'Purchase Request Details retrieved successfully');
     }
