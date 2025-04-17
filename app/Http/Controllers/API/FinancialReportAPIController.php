@@ -1120,7 +1120,7 @@ class FinancialReportAPIController extends AppBaseController
         $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey));
 
         // Detail query
-        $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey));
+        $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey,$linkedcolumnQry2));
 
         // Generate consolidation data & merge with existing detail data
         if($template->columnTemplateID == null && $template->isConsolidation == 1) {
@@ -1339,10 +1339,11 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
                             $outputData = $outputDetail->whereIn('templateDetailID', $detailsArray)->sortBy('sortOrder')->values();
+
                             $data =  $outputData
                                 ->reduce(function ($carry, $item) use ($val) {
                                     foreach ($item as $key => $value) {
-                                        if (strpos($key, '-') !== false) {
+                                        if ((substr(explode('-', $key)[0], -3) === 'YTD') && strpos($key, '-') !== false) {
                                             if (is_numeric($value)) {
                                                 $carry[$key] = ($carry[$key] ?? 0) + $value;
                                             }
@@ -1369,7 +1370,7 @@ class FinancialReportAPIController extends AppBaseController
                                     $glCodesArray = array();
                                     foreach (ReportTemplateDetails::find($val2->detID)->gl_codes as $glCodeData)
                                     {
-                                        $glCodesArray[] = $glCodeData->subcategory->detID;
+                                        $glCodesArray[] = $glCodeData->subcategory->detID ?? null;
                                     }
                                     if(!empty($glCodesArray))
                                     {
@@ -7536,7 +7537,7 @@ GROUP BY
         return $output;
     }
 
-    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey)
+    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey,$linkedcolumnQry2)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -7641,7 +7642,19 @@ GROUP BY
             $generalLedgerGroup = ' ,erp_generalledger.serviceLineSystemID';
         }
 
-        $sql = 'SELECT * FROM (SELECT
+        $linkedcolumnQry2WithoutSum = preg_replace('/SUM\((.*?)\)/', '$1', $linkedcolumnQry2);
+
+        $sql = 'SELECT * FROM (select 
+        '.$linkedcolumnQry2WithoutSum.',
+        b.glCode,
+        b.glDescription,
+        b.glAutoID,
+        b.templateDetailID,
+        b.linkCatType,
+        b.templateCatType,
+        b.controlAccountType,
+        b.sortOrder
+	from (SELECT
     ' . $secondLinkedcolumnQry . '
     erp_companyreporttemplatelinks.glCode,
     erp_companyreporttemplatelinks.glDescription,
@@ -7681,7 +7694,7 @@ FROM
 WHERE
     erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
-    erp_companyreporttemplatelinks.sortOrder) a '.$whereNonZero;
+    erp_companyreporttemplatelinks.sortOrder) b ) a '.$whereNonZero;
 
         $output = \DB::select($sql);
         return $output;
