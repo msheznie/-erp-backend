@@ -275,33 +275,24 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
-	erp_documentapproved.approvalLevelID,
-	erp_documentapproved.rollLevelOrder,
-	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
-	'' as approval_remarks,
 	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
 	erp_documentapproved.documentCode,
-	erp_itemissuemaster.comment as comments,
+	erp_purchaserequest.comments,
 	erp_documentapproved.docConfirmedDate,
 	erp_documentapproved.approvedDate,
-	employees.empName AS confirmedEmployee,
+	employees.empName AS approvedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
-	currencymaster.DecimalPlaces,
+	currencymaster.DecimalPlaces as DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	SUM(erp_itemissuedetails.issueCostLocalTotal) AS DocumentValue,
-	-- erp_itemissuedetails.issueCostLocalTotal AS DocumentValue,
 	0 AS amended,
-	employeesdepartments.employeeID,
-	employeesdepartments.approvalDeligated,
 	erp_documentapproved.approvedYN,
-	erp_itemissuemaster.issueType AS documentType,
-	'' as srmValue
+	erp_itemissuemaster.issueType AS documentType
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
