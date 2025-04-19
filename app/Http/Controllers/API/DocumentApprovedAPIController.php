@@ -282,7 +282,7 @@ SELECT
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
 	erp_documentapproved.documentCode,
-	erp_purchaserequest.comments,
+	erp_itemissuemaster.comment,
 	erp_documentapproved.docConfirmedDate,
 	erp_documentapproved.approvedDate,
 	employees.empName AS approvedEmployee,
