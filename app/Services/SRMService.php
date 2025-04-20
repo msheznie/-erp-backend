@@ -6079,5 +6079,11 @@ class SRMService
         return $this->generateResponse(true, 'Payment details retrieved successfully',$paymentMethod);
     }
 
+    public static function apiRoutes()
+    {
+        return [
+            'api/v1/srm/requests'
+        ];
 
+    }
 }
