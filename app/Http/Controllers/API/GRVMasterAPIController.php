@@ -520,14 +520,8 @@ class GRVMasterAPIController extends AppBaseController
 
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
             if ($gRVMaster->grvTypeID == 1) {
-                $grvVatDetails = GRVDetails::where('grvAutoID', $input['grvAutoID'])->get();
-                foreach ($grvVatDetails as $grvVatDetail) {
-                    if ($grvVatDetail->VATAmount > 0) {
-                        if ($grvVatDetail->vatMasterCategoryID == null || $grvVatDetail->vatSubCategoryID == null) {
-                            return $this->sendError("Please assign a vat category to this item (or) setup a default vat category");
-                        }
-                    }
-                }
+
+
 
                 $taxes = Tax::with(['vat_categories'])->where('companySystemID',$input['companySystemID'])->get();
                 $vatCategoreis = array();
@@ -536,10 +530,24 @@ class GRVMasterAPIController extends AppBaseController
                     $vatCategoreis[] = $tax->vat_categories;
                 }
 
-                if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
-                {
-                    return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
+
+                $grvVatDetails = GRVDetails::where('grvAutoID', $input['grvAutoID'])->get();
+                foreach ($grvVatDetails as $grvVatDetail) {
+                    if ($grvVatDetail->VATAmount > 0) {
+                        if ($grvVatDetail->vatMasterCategoryID == null || $grvVatDetail->vatSubCategoryID == null) {
+                            return $this->sendError("Please assign a vat category to this item (or) setup a default vat category");
+                        }
+                    }
+
+                    if($grvVatDetail->vatSubCategoryID == 3 && $grvVatDetail->exempt_vat_portion > 0)
+                    {
+                        if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
+                        {
+                            return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
+                        }
+                    }
                 }
+
             }
 
             if($gRVMaster->grvTypeID == 2)

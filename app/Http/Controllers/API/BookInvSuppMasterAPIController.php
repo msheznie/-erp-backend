@@ -686,10 +686,37 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $vatCategoreis[] = $tax->vat_categories;
                 }
 
-                if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
+                $details = [];
+
+                if ($input['documentType'] == 1)
                 {
-                    return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
+                    $details = $bookInvSuppMaster->directdetail;
                 }
+
+
+                if ($input['documentType'] == 3)
+                {
+                    $details = $bookInvSuppMaster->item_details;
+                }
+
+                if ($input['documentType'] == 4)
+                {
+                    $details = $bookInvSuppMaster->directdetail;
+                }
+
+                foreach ($details as $dt)
+                {
+                    $dt->exempt_vat_portion = 6;
+                    if($dt->vatSubCategoryID == 3 && $dt->exempt_vat_portion > 0)
+                    {
+
+                        if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
+                        {
+                            return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
+                        }
+                    }
+                }
+
             }
 
             $validator = \Validator::make($input, [

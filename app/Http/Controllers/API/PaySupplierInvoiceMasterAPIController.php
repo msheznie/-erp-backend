@@ -1661,7 +1661,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $vatCategoreis[] = $tax->vat_categories;
                     }
 
-                    if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
+                    if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0 && $paySupplierInvoiceMaster->directdetail->where('vatSubCategoryID',3)->count() > 0)
                     {
                         return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
                     }
