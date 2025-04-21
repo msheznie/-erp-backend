@@ -523,7 +523,9 @@ class GRVMasterAPIController extends AppBaseController
 
 
 
-                $taxes = Tax::with(['vat_categories'])->where('companySystemID',$input['companySystemID'])->get();
+                $taxes = Tax::with(['vat_categories' => function($query) {
+                    $query->where('isActive', true);
+                }])->where('companySystemID',$input['companySystemID'])->get();
                 $vatCategoreis = array();
                 foreach ($taxes as $tax)
                 {

@@ -679,7 +679,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             if($input['documentType'] == 1 || $input['documentType'] == 3 || $input['documentType'] == 4)
             {
-                $taxes = Tax::with(['vat_categories'])->where('companySystemID',$input['companySystemID'])->get();
+                $taxes = Tax::with(['vat_categories'=> function($query) {
+                    $query->where('isActive', true);
+                }])->where('companySystemID',$input['companySystemID'])->get();
                 $vatCategoreis = array();
                 foreach ($taxes as $tax)
                 {
