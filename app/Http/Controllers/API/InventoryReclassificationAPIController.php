@@ -198,6 +198,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $lastSerial = InventoryReclassification::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('inventoryreclassificationID', 'desc')
+            ->lockForUpdate()
             ->first();
 
         $lastSerialNumber = 1;

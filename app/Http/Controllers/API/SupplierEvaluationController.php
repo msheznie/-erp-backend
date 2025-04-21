@@ -64,6 +64,7 @@ class SupplierEvaluationController extends AppBaseController
 
         $lastSerial = SupplierEvaluation::where('companySystemID', $input['companySystemID'])
                             ->orderBy('evaluationSerialNo', 'desc')
+                            ->lockForUpdate()
                             ->first();
         $lastSerialNumber = 1;
         if ($lastSerial) {

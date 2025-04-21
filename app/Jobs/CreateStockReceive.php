@@ -628,6 +628,7 @@ class CreateStockReceive implements ShouldQueue
                                 ->where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
                                 ->where('serialNo', '>', 0)
                                 ->orderBy('stockReceiveAutoID', 'desc')
+                                ->lockForUpdate()
                                 ->first();
                             if ($lastSerial) {
                                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;

@@ -205,6 +205,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $lastSerial = StockAdjustment::where('companySystemID', $input['companySystemID'])
                                     ->where('companyFinanceYearID', $input['companyFinanceYearID'])
                                     ->orderBy('serialNo', 'desc')
+                                    ->lockForUpdate()
                                     ->first();
 
         $lastSerialNumber = 1;

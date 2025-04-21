@@ -412,6 +412,7 @@ class MaterielRequestAPIController extends AppBaseController
         $lastSerial = MaterielRequest::where('companySystemID', $input['companySystemID'])
                                         ->where('documentSystemID', $input['documentSystemID'])
                                         ->orderBy('serialNumber', 'desc')
+                                        ->lockForUpdate()
                                         ->first();
 
         $lastSerialNumber = 1;
@@ -939,6 +940,7 @@ class MaterielRequestAPIController extends AppBaseController
             $lastSerial = MaterielRequest::where('companySystemID', $input['companySystemID'])
                 ->where('documentSystemID', $input['documentSystemID'])
                 ->orderBy('serialNumber', 'desc')
+                ->lockForUpdate()
                 ->first();
 
             $lastSerialNumber = 1;

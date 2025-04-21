@@ -138,6 +138,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                     $lastSerial = GRVMaster::where('companySystemID', $this->data['companySystemID'])
                     ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
                     ->orderBy('grvSerialNo', 'desc')
+                    ->lockForUpdate()
                     ->first();
         
                     $lastSerialNumber = 1;

@@ -281,11 +281,13 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('documentSystemID', $input['documentSystemID'])
                 ->where('poType_N', 5)
                 ->orderBy('purchaseOrderID', 'desc')
+                ->lockForUpdate()
                 ->first();
         } else {
             $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
                 ->where('documentSystemID', $input['documentSystemID'])
                 ->orderBy('purchaseOrderID', 'desc')
+                ->lockForUpdate()
                 ->first();
         }
 

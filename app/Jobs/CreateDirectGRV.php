@@ -100,6 +100,7 @@ class CreateDirectGRV implements ShouldQueue
                         ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
                         ->where('grvSerialNo', '>', 0)
                         ->orderBy('grvSerialNo', 'desc')
+                        ->lockForUpdate()
                         ->first();
 
                     $grvInvLastSerialNumber = 1;

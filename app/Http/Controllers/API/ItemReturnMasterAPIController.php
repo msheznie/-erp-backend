@@ -206,6 +206,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $lastSerial = ItemReturnMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('serialNo', 'desc')
+            ->lockForUpdate()
             ->first();
 
         $lastSerialNumber = 1;

@@ -858,6 +858,7 @@ class GRVDetailsAPIController extends AppBaseController
                 $lastSerial = GRVMaster::where('companySystemID', $grvMasterData['companySystemID'])
                 ->where('companyFinanceYearID', $grvMasterData['companyFinanceYearID'])
                 ->orderBy('grvSerialNo', 'desc')
+                ->lockForUpdate()
                 ->first();
 
                 $lastSerialNumber = 1;
