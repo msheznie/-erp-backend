@@ -113,7 +113,28 @@ class PurchaseReturnGlService
             $q->where('subCatgeoryType', 3);
         })->WHERE('purhaseReturnAutoID', $masterModel["autoID"])->first();
 
+        $exemptVatPortionTotal = PurchaseReturnDetails::selectRaw("SUM((VATAmount * noQty) * (exempt_vat_portion / 100) ) as vatAmount, SUM((VATAmountLocal * noQty) * (exempt_vat_portion / 100) ) as VATAmountLocal, SUM((VATAmountRpt * noQty) * (exempt_vat_portion / 100) ) as VATAmountRpt")->whereHas('vatSubCategories', function ($q) {
+            $q->where('subCatgeoryType', 1);
+        })->WHERE('purhaseReturnAutoID', $masterModel["autoID"])->first();
+
         $valEligible = TaxService::checkGRVVATEligible($masterData->companySystemID, $masterData->supplierID);
+
+
+        $grvCostDetails = PurchaseReturnDetails::selectRaw("SUM(erp_purchasereturndetails.noQty * erp_grvdetails.unitCost) as amount , erp_purchasereturndetails.grvAutoID")
+                                            ->join('erp_grvdetails', 'erp_grvdetails.grvDetailsID', '=', 'erp_purchasereturndetails.grvDetailsID')
+                                            ->WHERE('erp_purchasereturndetails.purhaseReturnAutoID', $masterModel["autoID"])
+                                            ->first();
+        $grvUnitCostTran = 0;        
+        $grvUnitCostRpt = 0;        
+        $grvUnitCostLocal = 0;                                    
+        if ($grvCostDetails) {
+            $grvUnitCostTran = $grvCostDetails['amount'];
+            $grvCostConvertion = \Helper::convertAmountToLocalRpt(3,$grvCostDetails->grvAutoID,$grvCostDetails->amount);
+            $grvUnitCostRpt = $grvCostConvertion['reportingAmount'];        
+            $grvUnitCostLocal = $grvCostConvertion['localAmount'];    
+        }                                    
+
+     
 
         $rcmActivated = TaxService::isPRNRCMActivation($masterModel["autoID"]);
         $vatDetails = TaxService::processPRVAT($masterModel["autoID"]);
@@ -169,14 +190,16 @@ class PurchaseReturnGlService
 
             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
             $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
+
+
             if(!empty($exemptVatTotal) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1 && $exemptVatTotal->vatAmount > 0){
-                $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transAmount + $exemptVATTransAmount);
-                $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localAmount + $exemptVATLocalAmount);
-                $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptAmount + $exemptVATRptAmount);
+                $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostTran + $exemptVATTransAmount + $transVATAmount : $grvUnitCostTran  - $exemptVATTransAmount));
+                $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostLocal + $exemptVATLocalAmount + $localVATAmount : $grvUnitCostLocal  - $exemptVATLocalAmount));
+                $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostRpt + $exemptVATRptAmount + $rptVATAmount : $grvUnitCostRpt  - $exemptVATRptAmount));
             } else {
-                $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->transAmount + $transVATAmount : $masterData->details[0]->transAmount - $exemptVATTransAmount));
-                $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->localAmount + $localVATAmount : $masterData->details[0]->localAmount - $exemptVATLocalAmount));
-                $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->rptAmount + $rptVATAmount : $masterData->details[0]->rptAmount - $exemptVATRptAmount));
+                $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostTran + $exemptVATTransAmount + $transVATAmount : $grvUnitCostTran  - $exemptVATTransAmount));
+                $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostLocal + $exemptVATLocalAmount + $localVATAmount : $grvUnitCostLocal  - $exemptVATLocalAmount));
+                $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostRpt + $exemptVATRptAmount + $rptVATAmount : $grvUnitCostRpt  - $exemptVATRptAmount));
             }
             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -285,12 +308,12 @@ class PurchaseReturnGlService
                     }
                 }
             }
-
-            if(!empty($exemptVatTotal) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1 && $exemptVatTotal->vatAmount > 0){
-                $exemptVatTrans = $exemptVatTotal->vatAmount;
-                $exemptVATLocal = $exemptVatTotal->VATAmountLocal;
-                $exemptVatRpt = $exemptVatTotal->VATAmountRpt;
-
+           
+            if($exemptVATTransAmount > 0 && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1 ){
+                $exemptVatTrans = $exemptVatTotal->vatAmount + $exemptVatPortionTotal->vatAmount;
+                $exemptVATLocal = $exemptVatTotal->VATAmountLocal + $exemptVatPortionTotal->VATAmountLocal;
+                $exemptVatRpt = $exemptVatTotal->VATAmountRpt + $exemptVatPortionTotal->VATAmountRpt;
+                
                 $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $expenseCOA->expenseGL)->where('companySystemID', $masterData->companySystemID)->first();
                 $data['chartOfAccountSystemID'] = $expenseCOA->expenseGL;
                 $data['glCode'] = $chartOfAccountData->AccountCode;
@@ -302,7 +325,6 @@ class PurchaseReturnGlService
                 $data['timestamp'] = \Helper::currentDateTime();
                 array_push($finalData, $data);
             }
-
             if ($bs) {
                 $transBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['transVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['transVATAmount'] : 0;
                 $rptBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['rptVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['rptVATAmount'] : 0;
