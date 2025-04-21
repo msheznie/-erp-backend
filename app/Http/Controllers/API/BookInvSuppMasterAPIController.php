@@ -677,6 +677,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+            if($input['documentType'] == 1 || $input['documentType'] == 3 || $input['documentType'] == 4)
+            {
+                $taxes = Tax::with(['vat_categories'])->where('companySystemID',$input['companySystemID'])->get();
+                $vatCategoreis = array();
+                foreach ($taxes as $tax)
+                {
+                    $vatCategoreis[] = $tax->vat_categories;
+                }
+
+                if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
+                {
+                    return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
+                }
+            }
 
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
