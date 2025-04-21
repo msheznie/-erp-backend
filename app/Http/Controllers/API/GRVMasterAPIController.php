@@ -539,7 +539,7 @@ class GRVMasterAPIController extends AppBaseController
                         }
                     }
 
-                    if($grvVatDetail->vatSubCategoryID == 3 && $grvVatDetail->exempt_vat_portion > 0)
+                    if($grvVatDetail->exempt_vat_portion > 0)
                     {
                         if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
                         {

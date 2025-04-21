@@ -706,8 +706,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                 foreach ($details as $dt)
                 {
-                    $dt->exempt_vat_portion = 6;
-                    if($dt->vatSubCategoryID == 3 && $dt->exempt_vat_portion > 0)
+                    if($dt->exempt_vat_portion > 0)
                     {
 
                         if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
