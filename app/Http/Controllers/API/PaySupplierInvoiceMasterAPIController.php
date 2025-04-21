@@ -20,6 +20,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
 use App\Models\PaymentVoucherBankChargeDetails;
+use App\Models\Tax;
 use App\Services\PaymentVoucherServices;
 use ExchangeSetupConfig;
 use App\helper\Helper;
@@ -1365,7 +1366,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
             $input['companySystemID'] = $companySystemID;
 
-         
+
             if ($input['payeeType'] == 1) {
                 if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
                     $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
@@ -1414,7 +1415,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 {
                     $input['directPaymentPayee'] = $emp->empFullName;
                 }
-                
+
             }
 
             if ($input['invoiceType'] == 7) {
@@ -1430,7 +1431,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['employeeAdvanceAccount'] = null;
                 $input['employeeAdvanceAccountSystemID'] = null;
             }
-            
+
 
             if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
                 if (isset($input['interCompanyToSystemID'])) {
@@ -1515,7 +1516,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     //PaySupplierInvoiceMaster::where('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->update(['BPVbankCurrencyER' => $input['BPVbankCurrencyER'], 'localCurrencyER' => $input['localCurrencyER'], 'companyRptCurrencyER' => $input['companyRptCurrencyER']]);
                 }
             }
-      
+
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
                     $input['directPaymentpayeeYN'] = -1;
@@ -1548,7 +1549,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['directPaymentPayeeEmpID'] = null;
                 }
             }
-            
+
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
             if (isset($input['chequePaymentYN'])) {
@@ -1604,7 +1605,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
                 }
             }
-            
+
             $input['BPVdate'] = new Carbon($input['BPVdate']);
             $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
             Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
@@ -1651,6 +1652,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
+
+                if ($input['invoiceType'] == 3) {
+                    $taxes = Tax::with(['vat_categories'])->where('companySystemID',$input['companySystemID'])->get();
+                    $vatCategoreis = array();
+                    foreach ($taxes as $tax)
+                    {
+                        $vatCategoreis[] = $tax->vat_categories;
+                    }
+
+                    if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
+                    {
+                        return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
+                    }
+                }
                 // checking minus value
                 if ($input['invoiceType'] == 2) {
 
