@@ -181,10 +181,18 @@ class PaymentVoucherGlService
                     $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                     $data['documentTransAmount'] = \Helper::roundValue($siApData->transAmount);
                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                    $data['documentLocalCurrencyER'] = $si->transAmount/$si->localAmount;
+                    if($si->localAmount == 0) {
+                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                    } else {
+                        $data['documentLocalCurrencyER'] = $si->transAmount/$si->localAmount;
+                    }
                     $data['documentLocalAmount'] = \Helper::roundValue($siApData->localAmount);
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                    $data['documentRptCurrencyER'] = $si->transAmount/$si->rptAmount;
+                    if($si->rptAmount == 0) {
+                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                    } else {
+                        $data['documentRptCurrencyER'] = $si->transAmount/$si->rptAmount;
+                    }
                     $data['documentRptAmount'] = \Helper::roundValue($siApData->rptAmount);
                     if($isMasterExchangeRateChanged)
                     {
