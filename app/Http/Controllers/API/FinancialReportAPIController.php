@@ -7630,19 +7630,21 @@ GROUP BY
 
 
         $generalLedgerGroup = '';
+        $linkedcolumnQry2WithoutSum = preg_replace('/SUM\((.*?)\)/', '$1', $linkedcolumnQry2);
+
         if ($columnTemplateID == 1) {
+            $linkedcolumnQry2WithoutSum .= ',b.compID';
             $secondLinkedcolumnQry .= ' gl.compID,';
             $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
             $budgetJoin = ' AND gl.compID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
         } else if ($columnTemplateID == 2) {
+            $linkedcolumnQry2WithoutSum .= ',b.serviceLineID';
             $secondLinkedcolumnQry .= ' gl.serviceLineID,';
             $firstLinkedcolumnQry .= ' erp_generalledger.serviceLineSystemID AS serviceLineID,';
             $budgetJoin = ' AND gl.serviceLineID = budget.serviceLineSystemID';
             $generalLedgerGroup = ' ,erp_generalledger.serviceLineSystemID';
         }
-
-        $linkedcolumnQry2WithoutSum = preg_replace('/SUM\((.*?)\)/', '$1', $linkedcolumnQry2);
 
         $sql = 'SELECT * FROM (select 
         '.$linkedcolumnQry2WithoutSum.',
