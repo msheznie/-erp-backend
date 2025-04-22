@@ -408,6 +408,10 @@ class DocumentCodeMasterAPIController extends AppBaseController
                                                     ->where('company_id', $company_id)
                                                     ->first();
 
+        if (!$isGettingEdited) {
+            return $this->sendError('Document Code Transaction not found', 404);
+        }
+
         if ($isGettingEdited && $isGettingEdited->isGettingEdited == 1) {
             return $this->sendError('Document code configuration in progress', 500);
         }
