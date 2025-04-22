@@ -222,7 +222,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
                         }
                     }
                 }
-                if(!empty($vatCategory) && $vatCategory->where('isActive',1)->where('isDefault',1)->isNotEmpty() && ($vatCategory->where('isDefault',1)->where('isActive',1)->first()->taxVatSubCategoriesAutoID != $input['taxVatSubCategoriesAutoID']) && $input['isActive'])
+                if(!empty($vatCategory) && $vatCategory->where('isActive',1)->isNotEmpty() && ($vatCategory->where('isActive',1)->first()->taxVatSubCategoriesAutoID != $input['taxVatSubCategoriesAutoID']) && $input['isActive'] && empty($input['dirt']))
                 {
                     if(empty($input['isDefault']))
                     {
@@ -392,6 +392,9 @@ class TaxVatCategoriesAPIController extends AppBaseController
 
 
         $checkCustomValidaiton = $this->checkCustomValidaitons($input);
+
+        if(isset($input['dirt']))
+            unset($input['dirt']);
 
         if(empty($checkCustomValidaiton['success']))
         {

@@ -347,6 +347,19 @@ class TaxAPIController extends AppBaseController
         }
 
         if($taxCategory == 3){
+            $isWhtTypeExists = Tax::where('taxCategory',3)
+                ->where('companySystemID',$input['companySystemID'])
+                ->where('whtType',$input['whtType'])
+                ->where('isActive',true)
+                ->where('taxMasterAutoID','!=',$input['taxMasterAutoID'])
+                ->exists();
+
+            if($isWhtTypeExists)
+            {
+                $whtType = $input['whtType'] == 0 ? "WHT on Gross Amount" : "WHT on Net Gross Amount";
+                return $this->sendError("WHT type ".$whtType." is already defined. You cannot create more than one active WHT Type ", 500);
+            }
+
             $isTaxExists = Tax::where('companySystemID',$input['companySystemID'])->where('taxMasterAutoID', '!=' , $id)->where('taxDescription',$input['taxDescription'])->exists();
             if($isTaxExists){
                 return $this->sendError('Tax description already exists', 500);
