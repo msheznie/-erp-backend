@@ -6631,9 +6631,9 @@ class BudgetConsumptionService
         if (!empty($glAccount)) {
             if (is_array($glAccount)) {
                 $glAccountList = implode(',', $glAccount);
-                $query .= " AND erp_budgetconsumeddata.chartOfAccountID IN ($glAccountList)";
+                $query .= " AND cd.chartOfAccountID IN ($glAccountList)";
             } else {
-                $query .= " AND erp_budgetconsumeddata.chartOfAccountID = $glAccount";
+                $query .= " AND cd.chartOfAccountID = $glAccount";
             }
         }
 
@@ -6736,9 +6736,9 @@ class BudgetConsumptionService
 		if (!empty($glAccount)) {
 			if (is_array($glAccount)) {
 				$glAccountList = implode(',', $glAccount);
-				$query .= " AND erp_budgetconsumeddata.chartOfAccountID IN ($glAccountList)";
+				$query .= " AND cd.chartOfAccountID IN ($glAccountList)";
 			} else {
-				$query .= " AND erp_budgetconsumeddata.chartOfAccountID = $glAccount";
+				$query .= " AND cd.chartOfAccountID = $glAccount";
 			}
 		}
 
