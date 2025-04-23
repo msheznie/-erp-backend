@@ -159,7 +159,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
 
 
                 if ($location != null) {
-                    $location = Location::where('locationName', $location)->where('companySystemID', $uploadedCompany)->first();
+                    $location = Location::where('locationName', $location)->first();
                     if (empty($location)) {
                         throw new AssetCostingException("Location not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                     }
