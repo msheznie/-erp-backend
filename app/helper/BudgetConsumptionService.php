@@ -6655,12 +6655,12 @@ class BudgetConsumptionService
 			];
 		}
 
-		foreach ($data as $key => $dataValue) {	
+		foreach ($data as $key => $dataValue) {
 			$month = $dataValue->month;
 
 			$consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) {
 				$query->with(['grv_details' => function ($query) {
-					$query->select('grvDetailsID', 'grvAutoID', 'purchaseOrderMastertID', 
+					$query->select('grvDetailsID', 'grvAutoID', 'purchaseOrderMastertID',
 							'purchaseOrderDetailsID', 'financeGLcodePLSystemID', 'netAmount')
 						->with(['grv_master' => function ($query) {
 							$query->with('details')->select('grvAutoID', 'grvPrimaryCode', 'approved',
@@ -6681,18 +6681,18 @@ class BudgetConsumptionService
 			->where('documentSystemID', 2)
 			->where('month', $month)
 			->get();
-		
+
 			$committedAmount = 0;
 			$actuallConsumptionAmount = 0;
-			
+
 			foreach ($consumedAmountOfPO as $key => $value) {
 				if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
 					$committedAmount += $value->consumedRptAmount;
 				}
-			}	
-				
+			}
+
 			$actuallConsumptionAmount = $dataValue->consumed_amount - $committedAmount;
-	
+
 			$results[$month] = [
 				'amount' => ($results[$month]['actuallConsumptionAmount'] ?? 0) + $actuallConsumptionAmount
 			];
@@ -6751,12 +6751,12 @@ class BudgetConsumptionService
 			];
 		}
 
-		foreach ($data as $key => $dataValue) {	
+		foreach ($data as $key => $dataValue) {
 			$month = $dataValue->month;
 
 			$consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) {
 				$query->with(['grv_details' => function ($query) {
-					$query->select('grvDetailsID', 'grvAutoID', 'purchaseOrderMastertID', 
+					$query->select('grvDetailsID', 'grvAutoID', 'purchaseOrderMastertID',
 							'purchaseOrderDetailsID', 'financeGLcodePLSystemID', 'netAmount')
 						->with(['grv_master' => function ($query) {
 							$query->with('details')->select('grvAutoID', 'grvPrimaryCode', 'approved',
@@ -6777,14 +6777,14 @@ class BudgetConsumptionService
 			->where('documentSystemID', 2)
 			->where('month', $month)
 			->get();
-		
+
 			$tot = 0;
 			$committedAmount = 0;
 			$partiallyReceivedAmount = 0;
 			$actuallConsumptionAmount = 0;
 			$fixedCOmmitedAmount = 0;
-			$grv_details = [];		
-				
+			$grv_details = [];
+
 
 				foreach ($consumedAmountOfPO as $key => $value) {
 					if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
@@ -6814,7 +6814,7 @@ class BudgetConsumptionService
 											$fixed_assets =  FixedAssetMaster::where('costglCodeSystemID', $value->chartOfAccountID)
 											->where('docOriginDocumentSystemID',3)
 											->where('docOriginSystemCode',$grv->grv_master->grvAutoID)->get();
-		
+
 											if($fixed_assets) {
 												foreach($fixed_assets as $asset) {
 													if($asset->approved == -1) {
@@ -6823,10 +6823,10 @@ class BudgetConsumptionService
 												}
 											}
 											array_push($grv_details,$grv->grv_master->grvAutoID);
-										}	
+										}
 									}
 								}
-								
+
 								$totalCommitedAmount = $notRecivedPoNonFixedAsset->remainingAmount + $notRecivedPoNonFixedAsset->receivedAmount;
 								$tot+=$totalCommitedAmount;
 							} else {
@@ -6839,7 +6839,7 @@ class BudgetConsumptionService
 										}
 									}
 								}
-		
+
 								$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
 								$currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
 								$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
@@ -6853,11 +6853,12 @@ class BudgetConsumptionService
                     $commited_amount = $commited_amount < 1?0:$commited_amount;
                     $currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
                     $committedAmount = $currencyConversionRptAmount['reportingAmount'];
-				}	
+				}
 
 				$consumAssetamount = FixedAssetMaster::selectRaw('SUM(costUnitRpt) as amount')
 				->where('costglCodeSystemID', $dataValue->chartOfAccountID)
 				->where('approved',-1)
+				->where('companySystemID', $companyId)
 				->groupBy('costglCodeSystemID')->first();
 				if($consumAssetamount) {
 					$actuallConsumptionAmount = $consumAssetamount->amount;
