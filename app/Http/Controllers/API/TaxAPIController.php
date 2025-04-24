@@ -159,12 +159,11 @@ class TaxAPIController extends AppBaseController
             $isWhtTypeExists = Tax::where('taxCategory',3)
                                     ->where('companySystemID',$input['companySystemID'])
                                     ->where('whtType',$input['whtType'])
-                                    ->where('isActive',true)
                                     ->exists();
 
             if($isWhtTypeExists)
             {
-                $whtType = $input['whtType'] == 0 ? "WHT on Gross Amount" : "WHT on Net Gross Amount";
+                $whtType = $input['whtType'] == 0 ? "WHT on Gross Amount" : "WHT on Net Amount";
                 return $this->sendError("WHT type ".$whtType." is already defined. You cannot create more than one active WHT Type ", 500);
             }
 
@@ -356,7 +355,7 @@ class TaxAPIController extends AppBaseController
 
             if($isWhtTypeExists)
             {
-                $whtType = $input['whtType'] == 0 ? "WHT on Gross Amount" : "WHT on Net Gross Amount";
+                $whtType = $input['whtType'] == 0 ? "WHT on Gross Amount" : "WHT on Net Amount";
                 return $this->sendError("WHT type ".$whtType." is already defined. You cannot create more than one active WHT Type ", 500);
             }
 
@@ -378,20 +377,6 @@ class TaxAPIController extends AppBaseController
 
             if(($tax->isDefault == 1) && ($input['isActive'] == 0)){
                 return $this->sendError('Default WHT cannot change inactive', 500);
-            }
-
-            $glAccountID = $input['inputVatGLAccountAutoID'] ?? null;
-
-            $checkGLExistsOnTaxLedger = TaxLedger::where('inputVATGlAccountID', $glAccountID)
-                ->orWhere('inputVatTransferAccountID', $glAccountID)
-                ->orWhere('outputVatTransferGLAccountID', $glAccountID)
-                ->orWhere('outputVatGLAccountID', $glAccountID)
-                ->exists();
-
-
-            if(empty($checkGLExistsOnTaxLedger) && ($tax['inputVatGLAccountAutoID'] != $input['inputVatGLAccountAutoID']))
-            {
-                return $this->sendError("The transaction has already been posted to the selected GL.",500);
             }
 
             if(($tax->isDefault == 0) && ($input['isDefault'] == 1)){
