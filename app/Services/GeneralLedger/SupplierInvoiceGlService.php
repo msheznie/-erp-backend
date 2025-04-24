@@ -680,7 +680,7 @@ class SupplierInvoiceGlService
                             }
 
 
-                            if(($exemptExpenseDIDetails->exempt_vat_portion > 0 && $exemptExpenseDIDetails->subCatgeoryType == 1) && ($expenseCOA && $expenseCOA->expenseGL == null)) {
+                            if(($exemptExpenseDIDetails->exempt_vat_portion > 0 && $exemptExpenseDIDetails->subCatgeoryType == 1) && ($expenseCOA && $expenseCOA->expenseGL != null)) {
                                 $exemptVatTrans = $exemptExpenseDIDetails->VATAmount * $exemptExpenseDIDetails->exempt_vat_portion / 100;
                                 $exemptVATLocal = $exemptExpenseDIDetails->VATAmountLocal * $exemptExpenseDIDetails->exempt_vat_portion / 100;
                                 $exemptVatRpt = $exemptExpenseDIDetails->VATAmountRpt * $exemptExpenseDIDetails->exempt_vat_portion / 100;
