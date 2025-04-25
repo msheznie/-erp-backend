@@ -8548,7 +8548,7 @@ GROUP BY
 
                 foreach ($periods as $period) {
                     $rowStartDate = Carbon::parse($period->start_date);
-                    $rowEndDate = ($period->end_date == null) ? $toDate : Carbon::parse($period->end_date);
+                    $rowEndDate = ($period->end_date == null) ? $toDateObj : Carbon::parse($period->end_date);
 
                     if ($rowStartDate->isBetween($fromDateObj, $toDateObj) || $rowEndDate->isBetween($fromDateObj, $toDateObj)) {
                         $queryStartDate = ($fromDateObj >= $rowStartDate) ? $fromDateObj : $rowStartDate;
