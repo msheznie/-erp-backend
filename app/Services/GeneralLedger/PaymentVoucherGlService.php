@@ -88,7 +88,12 @@ class PaymentVoucherGlService
         $data = [];
         $taxLedgerData = [];
         $finalData = [];
-        $empID = Employee::find($masterModel['employeeSystemID']);
+        if($masterModel['employeeSystemID'] == "SYSTEM"){
+            $empID = Employee::where('empID',$masterModel['employeeSystemID'])->first();
+        }
+        else{
+            $empID = Employee::find($masterModel['employeeSystemID']);
+        }
         $masterData = PaySupplierInvoiceMaster::with(['bank', 'financeperiod_by', 'transactioncurrency', 'localcurrency', 'rptcurrency'])->find($masterModel["autoID"]);
         $linkDocument = null;
         //get balancesheet account

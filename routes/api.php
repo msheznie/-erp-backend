@@ -56,6 +56,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('cancel_customer_invoice', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
             Route::post('supplier_invoice_create','BookInvSuppMasterAPIController@createSupplierInvoices');
             Route::post('journal-voucher','JvMasterAPIController@createJournalVoucher');
+            Route::post('create_payment_vouchers','PaySupplierInvoiceMasterAPIController@createPaymentVoucherAPI');
             Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocumentStatus');
         });
         
