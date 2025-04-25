@@ -821,7 +821,7 @@ class SupplierInvoiceGlService
                     }
                 }
 
-                if (TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
+                if (TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"]) && $totalVATAmount > 0) {
                     // output vat transfer entry
                     $taxOutputVATTransfer = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
                     if (!empty($taxOutputVATTransfer)) {
@@ -834,9 +834,9 @@ class SupplierInvoiceGlService
                             $data['glCode'] = $chartOfAccountData->AccountCode;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                            $data['documentTransAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVAT'] + $vatDetails['exemptVAT'])));
-                            $data['documentLocalAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATLocal'] + $vatDetails['exemptVATLocal'])));
-                            $data['documentRptAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATRpt'] + $vatDetails['exemptVATRpt'])));
+                            $data['documentTransAmount'] = !TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"]) ? \Helper::roundValue(ABS(($vatDetails['totalVAT'] + $vatDetails['exemptVAT']))) : \Helper::roundValue(ABS(($vatDetails['totalVAT'])));
+                            $data['documentLocalAmount'] = !TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"]) ? \Helper::roundValue(ABS(($vatDetails['totalVATLocal'] + $vatDetails['exemptVATLocal']))) : \Helper::roundValue(ABS(($vatDetails['totalVATLocal'])));
+                            $data['documentRptAmount'] = !TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"]) ? \Helper::roundValue(ABS(($vatDetails['totalVATRpt'] + $vatDetails['exemptVATRpt']))) : \Helper::roundValue(ABS(($vatDetails['totalVATRpt'])));
 
                             if ($retentionPercentage > 0 && $masterData->documentType != 4) {
                                 $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
@@ -868,9 +868,9 @@ class SupplierInvoiceGlService
                             $data['glCode'] = $chartOfAccountData->AccountCode;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                            $data['documentTransAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVAT'] + $vatDetails['exemptVAT']))) * -1;
-                            $data['documentLocalAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATLocal'] + $vatDetails['exemptVATLocal']))) * -1;
-                            $data['documentRptAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATRpt'] + $vatDetails['exemptVATRpt']))) * -1;
+                            $data['documentTransAmount'] = !TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"]) ? \Helper::roundValue(ABS(($vatDetails['totalVAT'] + $vatDetails['exemptVAT']))) * -1 : \Helper::roundValue(ABS(($vatDetails['totalVAT']))) * -1;
+                            $data['documentLocalAmount'] = !TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"]) ? \Helper::roundValue(ABS(($vatDetails['totalVATLocal'] + $vatDetails['exemptVATLocal']))) * -1 : \Helper::roundValue(ABS(($vatDetails['totalVATLocal'] ))) * -1;
+                            $data['documentRptAmount'] = !TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"]) ? \Helper::roundValue(ABS(($vatDetails['totalVATRpt'] + $vatDetails['exemptVATRpt']))) * -1 : \Helper::roundValue(ABS(($vatDetails['totalVATRpt']))) * -1;
 
                             if ($retentionPercentage > 0 && $masterData->documentType != 4) {
                                 $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));

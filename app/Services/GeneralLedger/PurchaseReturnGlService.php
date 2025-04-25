@@ -191,15 +191,19 @@ class PurchaseReturnGlService
             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
             $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
 
+            $transBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['transVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['transVATAmount'] : 0;
+            $rptBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['rptVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['rptVATAmount'] : 0;
+            $localBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['localVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['localVATAmount'] : 0;
+
 
             if(!empty($exemptVatTotal) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1 && $exemptVatTotal->vatAmount > 0){
-                $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostTran + $exemptVATTransAmount + $transVATAmount : $grvUnitCostTran  - $exemptVATTransAmount));
-                $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostLocal + $exemptVATLocalAmount + $localVATAmount : $grvUnitCostLocal  - $exemptVATLocalAmount));
-                $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostRpt + $exemptVATRptAmount + $rptVATAmount : $grvUnitCostRpt  - $exemptVATRptAmount));
+                $data['documentTransAmount'] = $rcmActivated ? ($bs->transAmount + $transBSVAT):($bs->transAmount + $transBSVAT + $transVATAmount + $exemptVATTransAmount);
+                $data['documentLocalAmount'] = $rcmActivated ? ($bs->localAmount + $localBSVAT): ($bs->localAmount + $localBSVAT  + $localVATAmount + $exemptVATLocalAmount);
+                $data['documentRptAmount'] =  $rcmActivated ? ($bs->rptAmount + $rptBSVAT): ($bs->rptAmount + $rptBSVAT  + $rptVATAmount + $exemptVATRptAmount) ;
             } else {
-                $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostTran + $exemptVATTransAmount + $transVATAmount : $grvUnitCostTran  - $exemptVATTransAmount));
-                $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostLocal + $exemptVATLocalAmount + $localVATAmount : $grvUnitCostLocal  - $exemptVATLocalAmount));
-                $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $grvUnitCostRpt + $exemptVATRptAmount + $rptVATAmount : $grvUnitCostRpt  - $exemptVATRptAmount));
+                $data['documentTransAmount'] = $rcmActivated ? ($bs->transAmount + $transBSVAT): ($bs->transAmount + $transBSVAT + $transVATAmount);
+                $data['documentLocalAmount'] = $rcmActivated ? ($bs->localAmount + $localBSVAT): ($bs->localAmount + $localBSVAT  + $localVATAmount);
+                $data['documentRptAmount'] =  $rcmActivated ? ($bs->rptAmount + $rptBSVAT): ($bs->rptAmount + $rptBSVAT  + $rptVATAmount) ;
             }
             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;

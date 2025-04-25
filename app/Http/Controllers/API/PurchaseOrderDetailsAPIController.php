@@ -322,6 +322,17 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
+
+        $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($companySystemID) {
+            $query->where('companySystemID', $companySystemID);
+        })->where('isActive', 1)->first();
+        
+
+        if($purchaseOrder->poTypeID == 2 && ($expenseCOA && $expenseCOA->isDefault) && $purchaseOrder->rcmActivated)
+        {
+            return $this->sendError('Invalid transaction: RCM and Exempt VAT cannot be selected together. Please change the VAT category to proceed');
+        }
+
         $companyPolicyMaster = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
             ->where('companySystemID', $companySystemID)
             ->first();

@@ -209,7 +209,7 @@ class GrvGlService
                 $query->where('companySystemID', $masterData->companySystemID);
             })->where('isActive', 1)->first();
 
-            if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null){
+            if(!empty($exemptExpenseDetails) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && !$rcmActivated){
                 $exemptVatTrans = $exemptExpenseDetails->VATAmount;
                 $exemptVATLocal = $exemptExpenseDetails->VATAmountLocal;
                 $exemptVatRpt = $exemptExpenseDetails->VATAmountRpt;
@@ -272,7 +272,7 @@ class GrvGlService
 
                     $taxDataOutputTransfer = TaxService::getOutputVATTransferGLAccount($masterData->companySystemID);
                     Log::info('Inside the Vat Entry OutputVATTransferGLAccoun Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                    if (!empty($taxDataOutputTransfer)) {
+                    if (!empty($taxDataOutputTransfer) && ($rcmActivated && $transVATAmount > 0)) {
                         $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxDataOutputTransfer->outputVatTransferGLAccountAutoID)
                             ->where('companySystemID', $masterData->companySystemID)
                             ->first();
@@ -283,9 +283,9 @@ class GrvGlService
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
-                            $data['documentTransAmount'] = \Helper::roundValue(($transVATAmount + $exemptVATTrans)) * -1;
-                            $data['documentLocalAmount'] = \Helper::roundValue(($localVATAmount + $exemptVATLocal)) * -1;
-                            $data['documentRptAmount'] = \Helper::roundValue(($rptVATAmount + $exemptVATRpt)) * -1;
+                            $data['documentTransAmount'] = !$rcmActivated ? \Helper::roundValue(($transVATAmount + $exemptVATTrans)) * -1 : \Helper::roundValue(($transVATAmount)) * -1;
+                            $data['documentLocalAmount'] = !$rcmActivated ? \Helper::roundValue(($localVATAmount + $exemptVATLocal)) * -1 : \Helper::roundValue(($localVATAmount)) * -1;
+                            $data['documentRptAmount'] = !$rcmActivated ? \Helper::roundValue(($rptVATAmount + $exemptVATRpt)) * -1 : \Helper::roundValue(($rptVATAmount )) * -1;
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
@@ -322,15 +322,15 @@ class GrvGlService
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
 
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + $transBSVAT + $exemptVATTransAmount);
+                    $data['documentTransAmount'] = $rcmActivated && $expenseCOA->recordType == 2 ? \Helper::roundValue(ABS($val->transAmount) - $exemptVATTrans): \Helper::roundValue(ABS($val->transAmount) + $transBSVAT + $exemptVATTransAmount);
 
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] =  \Helper::roundValue(ABS($val->localAmount) + $localBSVAT + $exemptVATLocalAmount);
+                    $data['documentLocalAmount'] =  $rcmActivated && $expenseCOA->recordType == 2 ? \Helper::roundValue(ABS($val->localAmount) - $exemptVATLocal):  \Helper::roundValue(ABS($val->localAmount) + $localBSVAT + $exemptVATLocalAmount);
 
                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->companyReportingER;
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + $rptBSVAT + $exemptVATRptAmount);
+                    $data['documentRptAmount'] = $rcmActivated && $expenseCOA->recordType == 2 ? \Helper::roundValue(ABS($val->rptAmount) - $exemptVATRpt): \Helper::roundValue(ABS($val->rptAmount) + $rptBSVAT + $exemptVATRptAmount);
                     $data['timestamp'] = \Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
