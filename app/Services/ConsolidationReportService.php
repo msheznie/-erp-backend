@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\GeneralLedger;
 use App\Models\GroupParents;
+use App\Models\ReportTemplate;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -105,10 +106,11 @@ class ConsolidationReportService
         }
     }
 
-    public static function getTotalProfit($serviceLineIDs, $company, $fromDate, $toDate, $amountColumn) {
+    public static function getTotalProfit($serviceLineIDs, $company, $fromDate, $toDate, $amountColumn, $glType) {
         $totalProfit = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')
             ->whereIn('serviceLineSystemID', $serviceLineIDs)
             ->where('companySystemID', $company)
+            ->where('glAccountTypeID', $glType)
             ->whereBetween(DB::raw('DATE(documentDate)'), [$fromDate, $toDate])
             ->first();
 
@@ -138,6 +140,9 @@ class ConsolidationReportService
 
         $currency = $input['currency'][0] ?? $input['currency'];
         $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';
+
+        $reportTemplate = ReportTemplate::find($input["templateType"]);
+        $glAccountTypeId = $reportTemplate->categoryBLorPL == "BS" ? 1 : 2;
 
         // selected sub companies
         $companySystemIDs = collect($input['companySystemID']);
@@ -169,7 +174,7 @@ class ConsolidationReportService
                     $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
                     $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
 
-                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn);
+                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn, $glAccountTypeId);
 
                     if (abs($totalProfit) != 0) {
                         $parentPortion = ($totalProfit * $period->holding_percentage) / 100;
@@ -199,7 +204,7 @@ class ConsolidationReportService
                     $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
                     $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
 
-                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn);
+                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn, $glAccountTypeId);
 
                     if (abs($totalProfit) != 0) {
                         // calculate NCI percentage

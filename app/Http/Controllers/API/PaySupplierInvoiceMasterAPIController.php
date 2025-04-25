@@ -19,6 +19,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
+use App\Jobs\CreatePaymentVoucher;
 use App\Models\DocumentSystemMapping;
 use App\Models\PaymentVoucherBankChargeDetails;
 use App\Models\Tax;
@@ -3988,8 +3989,8 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
     public function createPaymentVoucherAPI(Request $request){
 
         $input = $request->all();
-        $header = $request->header('Authorization');
         $db = isset($request->db) ? $request->db : "";
+        $authorization = $request->header('Authorization');
 
         $pvs = $input['payment_vouchers'] ?? null;
 
@@ -4017,13 +4018,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 return $this->sendError("Company details not found");
             }
 
-            $paymentVouchers = PaymentVoucherServices::storePaymentVouchersFromAPI($db, $input);
+            CreatePaymentVoucher::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
 
-            if (count($paymentVouchers['successDocumentList']) > 0) {
-                $this->storeToDocumentSystemMapping(4,$paymentVouchers['successDocumentList'],$header);
-            }
-
-            return $this->sendResponse($paymentVouchers['finalDataset'], null);
+            return $this->sendResponse([],"Payment voucher request has been successfully queued for processing!");
         }
         else {
             return $this->sendError("Invalid Data Format");
