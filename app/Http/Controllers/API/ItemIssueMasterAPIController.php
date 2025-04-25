@@ -262,7 +262,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $input['wareHouseFromDes'] = $warehouse->wareHouseDescription;
             }
         }
-
+        DB::beginTransaction();
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
@@ -313,7 +313,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input['RollLevForApp_curr'] = 1;
 
         $itemIssueMasters = $this->itemIssueMasterRepository->create($input);
-
+        DB::commit();
         return $this->sendResponse($itemIssueMasters->toArray(), 'Item Issue Master saved successfully');
     }
 

@@ -229,257 +229,267 @@ class ProcumentOrderAPIController extends AppBaseController
 
     public function store(CreateProcumentOrderAPIRequest $request)
     {
-        $input = $request->all();
-      
-        $input = $this->convertArrayToValue($input);
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
 
-        if (!isset($input['supplierID']) || (isset($input['supplierID']) && is_null($input['supplierID']))) {
-            return $this->sendError('Please select a supplier', 500);
-        }
+            $input = $this->convertArrayToValue($input);
 
-        if (isset($input['preCheck']) && $input['preCheck']) {
-            $company = Company::where('companySystemID', $input['companySystemID'])->first();
-            if (!empty($company) && $company->vatRegisteredYN == 1 && !Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
-                return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));
+            if (!isset($input['supplierID']) || (isset($input['supplierID']) && is_null($input['supplierID']))) {
+                DB::rollBack();
+                return $this->sendError('Please select a supplier', 500);
             }
-        }
 
-        if (isset($input['WO_PeriodFrom'])) {
-            if ($input['WO_PeriodFrom']) {
-                $input['WO_PeriodFrom'] = new Carbon($input['WO_PeriodFrom']);
-                $WO_PeriodFrom = $input['WO_PeriodFrom'];
-            }
-        }
-
-        if (isset($input['WO_PeriodTo'])) {
-            if ($input['WO_PeriodTo']) {
-                $input['WO_PeriodTo'] = new Carbon($input['WO_PeriodTo']);
-                $WO_PeriodTo = $input['WO_PeriodTo'];
-            }
-        }
-
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
-        if ($input['documentSystemID'] == 5) {
-            if ($input['WO_PeriodFrom'] > $input['WO_PeriodTo']) {
-                return $this->sendError('WO Period From cannot be greater than WO Period To', 500);
-            }
-        }
-
-        $poDate = now();
-
-        $input['budgetYear'] = CompanyFinanceYear::budgetYearByDate($poDate, $input['companySystemID']);
-
-        $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
-        $input['departmentID'] = 'PROC';
-
-        if ($input['documentSystemID'] == 5 && $input['poType_N'] == 5) {
-            $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
-                ->where('documentSystemID', $input['documentSystemID'])
-                ->where('poType_N', 5)
-                ->orderBy('purchaseOrderID', 'desc')
-                ->lockForUpdate()
-                ->first();
-        } else {
-            $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
-                ->where('documentSystemID', $input['documentSystemID'])
-                ->orderBy('purchaseOrderID', 'desc')
-                ->lockForUpdate()
-                ->first();
-        }
-
-        $input['POOrderedDate'] = now();
-
-        $lastSerialNumber = 1;
-        if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
-        }
-
-        $erpAddress = ErpAddress::where("companySystemID", $input['companySystemID'])
-            ->where('isDefault', -1)
-            ->get();
-
-        if (!empty($erpAddress)) {
-            foreach ($erpAddress as $address) {
-                if ($address['addressTypeID'] == 1) {
-                    $input['shippingAddressID'] = $address['addressID'];
-                    $input['shippingAddressDescriprion'] = $address['addressDescrption'];
-                    $input['shipTocontactPersonID'] = $address['contactPersonID'];
-                    $input['shipTocontactPersonTelephone'] = $address['contactPersonTelephone'];
-                    $input['shipTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
-                    $input['shipTocontactPersonEmail'] = $address['contactPersonEmail'];
-                } else if ($address['addressTypeID'] == 2) {
-                    $input['invoiceToAddressID'] = $address['addressID'];
-                    $input['invoiceToAddressDescription'] = $address['addressDescrption'];
-                    $input['invoiceTocontactPersonID'] = $address['contactPersonID'];
-                    $input['invoiceTocontactPersonTelephone'] = $address['contactPersonTelephone'];
-                    $input['invoiceTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
-                    $input['invoiceTocontactPersonEmail'] = $address['contactPersonEmail'];
-                } else if ($address['addressTypeID'] == 3) {
-                    $input['soldToAddressID'] = $address['addressID'];
-                    $input['soldToAddressDescriprion'] = $address['addressDescrption'];
-                    $input['soldTocontactPersonID'] = $address['contactPersonID'];
-                    $input['soldTocontactPersonTelephone'] = $address['contactPersonTelephone'];
-                    $input['soldTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
-                    $input['soldTocontactPersonEmail'] = $address['contactPersonEmail'];
-                    $input['vat_number'] = $address['vat_number'];
+            if (isset($input['preCheck']) && $input['preCheck']) {
+                $company = Company::where('companySystemID', $input['companySystemID'])->first();
+                if (!empty($company) && $company->vatRegisteredYN == 1 && !Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
+                    DB::rollBack();
+                    return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));
                 }
             }
-        }
-        //calculate total months in WO type
-        if ($input['documentSystemID'] == 5) {
+
             if (isset($input['WO_PeriodFrom'])) {
-                $input['WO_PeriodFrom'] = $WO_PeriodFrom;
-                $input['WO_PeriodTo'] = $WO_PeriodTo;
-                $input['WO_NoOfGeneratedTimes'] = 0;
-                $ts1 = strtotime($WO_PeriodFrom);
-                $ts2 = strtotime($WO_PeriodTo);
-
-                $year1 = date('Y', $ts1);
-                $year2 = date('Y', $ts2);
-
-                $month1 = date('n', $ts1);
-                $month2 = date('n', $ts2);
-
-                $input['WO_NoOfAutoGenerationTimes'] = abs((($year2 - $year1) * 12) + ($month2 - $month1) + 1);
+                if ($input['WO_PeriodFrom']) {
+                    $input['WO_PeriodFrom'] = new Carbon($input['WO_PeriodFrom']);
+                    $WO_PeriodFrom = $input['WO_PeriodFrom'];
+                }
             }
-        }
 
-        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
-        if ($segment) {
-            $input['serviceLine'] = $segment->ServiceLineCode;
-        }
-
-        $input['serialNumber'] = $lastSerialNumber;
-
-        if (isset($input['expectedDeliveryDate'])) {
-            if ($input['expectedDeliveryDate']) {
-                $input['expectedDeliveryDate'] = new Carbon($input['expectedDeliveryDate']);
+            if (isset($input['WO_PeriodTo'])) {
+                if ($input['WO_PeriodTo']) {
+                    $input['WO_PeriodTo'] = new Carbon($input['WO_PeriodTo']);
+                    $WO_PeriodTo = $input['WO_PeriodTo'];
+                }
             }
-        }
 
-        $document = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
-        if ($document) {
-            $input['documentID'] = $document->documentID;
-        }
+            $id = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
-            ->where('documentSystemID', $input['documentSystemID'])
-            ->first();
+            if ($input['documentSystemID'] == 5) {
+                if ($input['WO_PeriodFrom'] > $input['WO_PeriodTo']) {
+                    DB::rollBack();
+                    return $this->sendError('WO Period From cannot be greater than WO Period To', 500);
+                }
+            }
 
-        if ($companyDocumentAttachment) {
-            $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;
-        }
+            $poDate = now();
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+            $input['budgetYear'] = CompanyFinanceYear::budgetYearByDate($poDate, $input['companySystemID']);
 
-        //var_dump($companyCurrencyConversion);
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if ($company) {
-            $input['companyID'] = $company->CompanyID;
-            $input['localCurrencyID'] = $company->localCurrencyID;
-            $input['companyReportingCurrencyID'] = $company->reportingCurrency;
-            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-        }
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = $user->employee['empID'];
+            $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+            $input['departmentID'] = 'PROC';
 
-        if (isset($input['partiallyGRVAllowed']) && $input['partiallyGRVAllowed']) {
-            $input['partiallyGRVAllowed'] = -1;
-        } else {
-            $input['partiallyGRVAllowed'] = 0;
-        }
-        if (isset($input['logisticsAvailable']) && $input['logisticsAvailable']) {
-            $input['logisticsAvailable'] = -1;
-        } else {
-            $input['logisticsAvailable'] = 0;
-        }
-        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+            if ($input['documentSystemID'] == 5 && $input['poType_N'] == 5) {
+                $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+                    ->where('documentSystemID', $input['documentSystemID'])
+                    ->where('poType_N', 5)
+                    ->orderBy('purchaseOrderID', 'desc')
+                    ->lockForUpdate()
+                    ->first();
+            } else {
+                $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+                    ->where('documentSystemID', $input['documentSystemID'])
+                    ->orderBy('purchaseOrderID', 'desc')
+                    ->lockForUpdate()
+                    ->first();
+            }
 
-        $documentCodeTransaction = DocumentCodeTransaction::where('document_system_id', $input['documentSystemID'])
-                                ->where('company_id', $input['companySystemID'])
-                                ->first();
+            $input['POOrderedDate'] = now();
 
-        if ($documentCodeTransaction) {
-            $transactionID = $documentCodeTransaction->id;
-            $documentCodeMaster = DocumentCodeMaster::where('document_transaction_id', $transactionID)
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
+            }
+
+            $erpAddress = ErpAddress::where("companySystemID", $input['companySystemID'])
+                ->where('isDefault', -1)
+                ->get();
+
+            if (!empty($erpAddress)) {
+                foreach ($erpAddress as $address) {
+                    if ($address['addressTypeID'] == 1) {
+                        $input['shippingAddressID'] = $address['addressID'];
+                        $input['shippingAddressDescriprion'] = $address['addressDescrption'];
+                        $input['shipTocontactPersonID'] = $address['contactPersonID'];
+                        $input['shipTocontactPersonTelephone'] = $address['contactPersonTelephone'];
+                        $input['shipTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
+                        $input['shipTocontactPersonEmail'] = $address['contactPersonEmail'];
+                    } else if ($address['addressTypeID'] == 2) {
+                        $input['invoiceToAddressID'] = $address['addressID'];
+                        $input['invoiceToAddressDescription'] = $address['addressDescrption'];
+                        $input['invoiceTocontactPersonID'] = $address['contactPersonID'];
+                        $input['invoiceTocontactPersonTelephone'] = $address['contactPersonTelephone'];
+                        $input['invoiceTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
+                        $input['invoiceTocontactPersonEmail'] = $address['contactPersonEmail'];
+                    } else if ($address['addressTypeID'] == 3) {
+                        $input['soldToAddressID'] = $address['addressID'];
+                        $input['soldToAddressDescriprion'] = $address['addressDescrption'];
+                        $input['soldTocontactPersonID'] = $address['contactPersonID'];
+                        $input['soldTocontactPersonTelephone'] = $address['contactPersonTelephone'];
+                        $input['soldTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
+                        $input['soldTocontactPersonEmail'] = $address['contactPersonEmail'];
+                        $input['vat_number'] = $address['vat_number'];
+                    }
+                }
+            }
+            //calculate total months in WO type
+            if ($input['documentSystemID'] == 5) {
+                if (isset($input['WO_PeriodFrom'])) {
+                    $input['WO_PeriodFrom'] = $WO_PeriodFrom;
+                    $input['WO_PeriodTo'] = $WO_PeriodTo;
+                    $input['WO_NoOfGeneratedTimes'] = 0;
+                    $ts1 = strtotime($WO_PeriodFrom);
+                    $ts2 = strtotime($WO_PeriodTo);
+
+                    $year1 = date('Y', $ts1);
+                    $year2 = date('Y', $ts2);
+
+                    $month1 = date('n', $ts1);
+                    $month2 = date('n', $ts2);
+
+                    $input['WO_NoOfAutoGenerationTimes'] = abs((($year2 - $year1) * 12) + ($month2 - $month1) + 1);
+                }
+            }
+
+            $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+            if ($segment) {
+                $input['serviceLine'] = $segment->ServiceLineCode;
+            }
+
+            $input['serialNumber'] = $lastSerialNumber;
+
+            if (isset($input['expectedDeliveryDate'])) {
+                if ($input['expectedDeliveryDate']) {
+                    $input['expectedDeliveryDate'] = new Carbon($input['expectedDeliveryDate']);
+                }
+            }
+
+            $document = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+            if ($document) {
+                $input['documentID'] = $document->documentID;
+            }
+
+            $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
+                ->where('documentSystemID', $input['documentSystemID'])
+                ->first();
+
+            if ($companyDocumentAttachment) {
+                $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;
+            }
+
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+
+            //var_dump($companyCurrencyConversion);
+            $company = Company::where('companySystemID', $input['companySystemID'])->first();
+            if ($company) {
+                $input['companyID'] = $company->CompanyID;
+                $input['localCurrencyID'] = $company->localCurrencyID;
+                $input['companyReportingCurrencyID'] = $company->reportingCurrency;
+                $input['vatRegisteredYN'] = $company->vatRegisteredYN;
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
+
+            if (isset($input['partiallyGRVAllowed']) && $input['partiallyGRVAllowed']) {
+                $input['partiallyGRVAllowed'] = -1;
+            } else {
+                $input['partiallyGRVAllowed'] = 0;
+            }
+            if (isset($input['logisticsAvailable']) && $input['logisticsAvailable']) {
+                $input['logisticsAvailable'] = -1;
+            } else {
+                $input['logisticsAvailable'] = 0;
+            }
+            $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
+            $documentCodeTransaction = DocumentCodeTransaction::where('document_system_id', $input['documentSystemID'])
                 ->where('company_id', $input['companySystemID'])
                 ->first();
 
-            if ($documentCodeMaster) {
-                $documentCodeMasterID = $documentCodeMaster->id;
-                $purchaseOrderCode = $this->documentCodeConfigurationService->getDocumentCodeConfiguration($input['documentSystemID'],$input['companySystemID'],$input,$lastSerialNumber,$documentCodeMasterID,$input['serviceLine']);
+            if ($documentCodeTransaction) {
+                $transactionID = $documentCodeTransaction->id;
+                $documentCodeMaster = DocumentCodeMaster::where('document_transaction_id', $transactionID)
+                    ->where('company_id', $input['companySystemID'])
+                    ->first();
+
+                if ($documentCodeMaster) {
+                    $documentCodeMasterID = $documentCodeMaster->id;
+                    $purchaseOrderCode = $this->documentCodeConfigurationService->getDocumentCodeConfiguration($input['documentSystemID'],$input['companySystemID'],$input,$lastSerialNumber,$documentCodeMasterID,$input['serviceLine']);
+                }
             }
-        }
-        
-        if($purchaseOrderCode && $purchaseOrderCode['status'] == true){
-            $input['purchaseOrderCode'] = $purchaseOrderCode['documentCode'];
-            $input['serialNumber'] = $purchaseOrderCode['docLastSerialNumber'];
-        } else {
-            if ($documentMaster) {
-                $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-                $input['purchaseOrderCode'] = $poCode;
+
+            if($purchaseOrderCode && $purchaseOrderCode['status'] == true){
+                $input['purchaseOrderCode'] = $purchaseOrderCode['documentCode'];
+                $input['serialNumber'] = $purchaseOrderCode['docLastSerialNumber'];
+            } else {
+                if ($documentMaster) {
+                    $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                    $input['purchaseOrderCode'] = $poCode;
+                }
             }
+
+            $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
+            if ($supplier) {
+                $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
+                $input['supplierName'] = $supplier->supplierName;
+                $input['supplierAddress'] = $supplier->address;
+                $input['supplierTelephone'] = $supplier->telephone;
+                $input['supplierFax'] = $supplier->fax;
+                $input['supplierEmail'] = $supplier->supEmail;
+                $input['creditPeriod'] = $supplier->creditPeriod;
+            }
+
+            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
+                ->where('isDefault', -1)
+                ->first();
+
+            if ($supplierCurrency) {
+                $input['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
+                $input['supplierTransactionER'] = 1;
+            }
+
+            $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
+
+            if ($currencyConversionDefaultMaster) {
+                $input['supplierDefaultER'] = $currencyConversionDefaultMaster['transToDocER'];
+            }
+
+            $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
+
+            if ($supplierAssignedDetai) {
+                $input['supplierVATEligible'] = $supplierAssignedDetai->vatEligible;
+                $input['VATPercentage'] = 0; // $supplierAssignedDetai->vatPercentage;
+            }
+
+            $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 57)
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
+
+            if ($allocateItemToSegment && $allocateItemToSegment->isYesNO == 1) {
+                $input['allocateItemToSegment'] = 1;
+            }
+
+            $procumentOrders = $this->procumentOrderRepository->create($input);
+
+            if(isset($input["tenderUUID"])){
+                $tender = TenderMaster::getTenderByUuid($input["tenderUUID"]);
+                $po['po_id'] = $procumentOrders->purchaseOrderID;
+                $po['tender_id'] = $tender->id;
+                $po['company_id'] = $input["companySystemID"];
+                $po['status'] = 1;
+                $this->tenderPoRepository->create($po);
+            }
+
+            DB::commit();
+            return $this->sendResponse($procumentOrders->toArray(), 'Procurement Order saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage(), 500);
         }
-
-        $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
-        if ($supplier) {
-            $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
-            $input['supplierName'] = $supplier->supplierName;
-            $input['supplierAddress'] = $supplier->address;
-            $input['supplierTelephone'] = $supplier->telephone;
-            $input['supplierFax'] = $supplier->fax;
-            $input['supplierEmail'] = $supplier->supEmail;
-            $input['creditPeriod'] = $supplier->creditPeriod;
-        }
-
-        $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
-            ->where('isDefault', -1)
-            ->first();
-
-        if ($supplierCurrency) {
-            $input['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
-            $input['supplierTransactionER'] = 1;
-        }
-
-        $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
-
-        if ($currencyConversionDefaultMaster) {
-            $input['supplierDefaultER'] = $currencyConversionDefaultMaster['transToDocER'];
-        }
-
-        $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
-            ->where('companySystemID', $input['companySystemID'])
-            ->first();
-
-        if ($supplierAssignedDetai) {
-            $input['supplierVATEligible'] = $supplierAssignedDetai->vatEligible;
-            $input['VATPercentage'] = 0; // $supplierAssignedDetai->vatPercentage;
-        }
-
-        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 57)
-            ->where('companySystemID', $input['companySystemID'])
-            ->first();
-
-        if ($allocateItemToSegment && $allocateItemToSegment->isYesNO == 1) {
-            $input['allocateItemToSegment'] = 1;
-        }
-
-        $procumentOrders = $this->procumentOrderRepository->create($input);
-
-        if(isset($input["tenderUUID"])){
-            $tender = TenderMaster::getTenderByUuid($input["tenderUUID"]);
-            $po['po_id'] = $procumentOrders->purchaseOrderID;
-            $po['tender_id'] = $tender->id;
-            $po['company_id'] = $input["companySystemID"];
-            $po['status'] = 1;
-            $this->tenderPoRepository->create($po);
-        }
-
-        return $this->sendResponse($procumentOrders->toArray(), 'Procurement Order saved successfully');
     }
 
     /**

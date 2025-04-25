@@ -53,6 +53,7 @@ class SupplierEvaluationController extends AppBaseController
      */
     public function store(CreateSupplierEvaluationAPIRequest $request)
     {
+        DB::beginTransaction();
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
         $input['created_by'] = Helper::getEmployeeSystemID();
@@ -94,7 +95,7 @@ class SupplierEvaluationController extends AppBaseController
                 SupplierEvaluationTableDetails::insert($insertTableRow);
             }
         }
-
+        DB::commit();
         return $this->sendResponse($supplierEvaluation->toArray(), 'Supplier evaluation created successfully');
     }
 

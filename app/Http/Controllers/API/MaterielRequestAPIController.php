@@ -383,6 +383,7 @@ class MaterielRequestAPIController extends AppBaseController
      */
     public function store(CreateMaterielRequestAPIRequest $request)
     {
+        DB::beginTransaction();
         $input = $this->convertArrayToValue($request->all());
 
         $employee = \Helper::getEmployeeInfo();
@@ -399,6 +400,7 @@ class MaterielRequestAPIController extends AppBaseController
         ]);
 
         if ($validator->fails()) {
+            DB::rollBack();
             return $this->sendError($validator->messages(), 422);
         }
 
@@ -443,6 +445,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $materielRequests = $this->materielRequestRepository->create($input);
 
+        DB::commit();
         return $this->sendResponse($materielRequests->toArray(), 'Materiel Request saved successfully');
     }
 

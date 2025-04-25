@@ -144,6 +144,7 @@ class StockReceiveAPIController extends AppBaseController
      */
     public function store(CreateStockReceiveAPIRequest $request)
     {
+        DB::beginTransaction();
         $input = $request->all();
 
         $input = $this->convertArrayToValue($input);
@@ -154,6 +155,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
+            DB::rollBack();
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
@@ -161,6 +163,7 @@ class StockReceiveAPIController extends AppBaseController
         $inputParam["departmentSystemID"] = 10;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
+            DB::rollBack();
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else{
             $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
@@ -182,6 +185,7 @@ class StockReceiveAPIController extends AppBaseController
         ]);
 
         if ($validator->fails()) {
+            DB::rollBack();
             return $this->sendError($validator->messages(), 422);
         }
 
@@ -197,6 +201,7 @@ class StockReceiveAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
+            DB::rollBack();
             return $this->sendError('Receive date is not within the selected financial period !', 500);
         }
 
@@ -204,15 +209,18 @@ class StockReceiveAPIController extends AppBaseController
                                     ->first();
 
         if (!$warehouse) {
+            DB::rollBack();
             return $this->sendError('Location To not found', 500);
         }
 
         if ($warehouse->manufacturingYN == 1) {
             if (is_null($warehouse->WIPGLCode)) {
+                DB::rollBack();
                 return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
             } else {
                 $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companyToSystemID']);
                 if (!$checkGLIsAssigned) {
+                    DB::rollBack();
                     return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
                 }
             }
@@ -237,10 +245,12 @@ class StockReceiveAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
+            DB::rollBack();
             return $this->sendError('Selected segment is not active. Please select an active segment', 500);
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
+            DB::rollBack();
             return $this->sendError('Location From and Location To  cannot be same', 500);
         }
 
@@ -296,6 +306,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $stockReceives = $this->stockReceiveRepository->create($input);
 
+        DB::commit();
         return $this->sendResponse($stockReceives->toArray(), 'Stock Receive saved successfully');
     }
 

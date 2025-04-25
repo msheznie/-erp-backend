@@ -199,6 +199,7 @@ class StockAdjustmentAPIController extends AppBaseController
             return $this->sendError('Document date is not within the selected financial period !', 500);
         }
 
+        DB::beginTransaction();
         $input['documentSystemID'] = 7;
         $input['documentID'] = 'SA';
 
@@ -218,11 +219,13 @@ class StockAdjustmentAPIController extends AppBaseController
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }else{
+            DB::rollBack();
             return $this->sendError('Segment not found',500);
         }
 
         $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['location'])->first();
         if (empty($warehouse)) {
+            DB::rollBack();
             return $this->sendError('Location not found',500);
         }
 
@@ -254,7 +257,7 @@ class StockAdjustmentAPIController extends AppBaseController
         }
 
         $stockAdjustments = $this->stockAdjustmentRepository->create($input);
-
+        DB::commit();
         return $this->sendResponse($stockAdjustments->toArray(), 'Stock Adjustment saved successfully');
     }
 

@@ -213,6 +213,7 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('GRV date is not within the financial period!');
         }
 
+        DB::beginTransaction();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
@@ -313,7 +314,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         $gRVMasters = $this->gRVMasterRepository->create($input);
-
+        DB::commit();
         return $this->sendResponse($gRVMasters->toArray(), 'GRV Master saved successfully');
     }
 
