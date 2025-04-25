@@ -25,6 +25,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CreateExcel;
 use App\Models\AccruavalFromOPMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
@@ -1061,6 +1062,7 @@ GROUP BY
     public function jvDetailsExportToCSV(Request $request){
         $input = $request->all();
         $id = isset($input['id'])?$input['id']:0;
+        $companyId = $input['companySystemID'];
         $jvMaster = JvMaster::find($id);
         $data = array();
         $type = isset($input['type'])?$input['type']:'csv';
@@ -1097,27 +1099,22 @@ GROUP BY
             $x++;
         }
 
-         \Excel::create('jv_details', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data);
-                $sheet->setColumnFormat(array(
-                    'A' => '@',
-                    'C' => '@',
-                    'D' => '@',
-                    'E' => '@',
-                    'F' => '@',
-                    'G' => '@',
-                    'H' => '@'
-                ));
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('A1:H1')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:H1' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        $companyMaster = Company::find($companyId);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
 
-        return $this->sendResponse(array(), 'successfully export');
+
+        $path = 'general-ledger/journal-voucher/excel/';
+        $basePath = CreateExcel::process($data,$type,'jv_details',$path, $detail_array);
+        
+        if($basePath == ''){     
+            return $this->sendError('Unable to export excel');
+        }else{     
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
     }
 
     public function generateAllocation(Request $request)
