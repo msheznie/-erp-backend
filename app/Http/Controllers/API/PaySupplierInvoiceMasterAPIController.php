@@ -3154,6 +3154,12 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             return $this->sendError('Customer Receive Payment not found');
         }
 
+        if ($output) {
+            $bankChargeCount = $output->bank_charge->count();
+        } else {
+            $bankChargeCount = 0;
+        }
+
         $refernaceDoc = \Helper::getCompanyDocRefNo($output->companySystemID, $output->documentSystemID);
 
         $transDecimal = 2;
@@ -3198,7 +3204,8 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             'directDetailTotTra' => $directDetailTotTra,
             'isProjectBase' => $isProjectBase,
             'advancePayDetailTotTra' => $advancePayDetailTotTra,
-            'bankChargeAndOthersTot' => $bankChargeAndOthersTot
+            'bankChargeAndOthersTot' => $bankChargeAndOthersTot,
+            'bankChargeCount' => $bankChargeCount
         );
 
         $time = strtotime("now");

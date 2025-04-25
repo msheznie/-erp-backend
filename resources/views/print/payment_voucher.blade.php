@@ -430,11 +430,20 @@
                         <td style="text-align: right">{{number_format($ddet->paymentBalancedAmount, $transDecimal)}}</td>
                     </tr>
                 @endforeach
+                @if ($bankChargeCount == 0)
+                    <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                        <td colspan="5" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
+                        <td style="text-align: right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
+                        <td style="text-align: right"
+                            style="background-color: rgb(215,215,215)">{{number_format($supplierdetailTotTra, $transDecimal)}}</td>
+                        <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff"></td>
+                    </tr>
+                @endif
                 </tbody>
             </table>
         </div>
 
-        @if ($masterdata->invoiceType == 2)
+        @if ($masterdata->invoiceType == 2 && $bankChargeCount > 0)
         <div style="margin-top: 30px">
             <h4>{{ __('custom.bank_charges_others') }}</h4>
             <table class="table table-bordered" style="width: 100%;">
@@ -461,20 +470,20 @@
             </table>
         </div>
         @endif
-        <div style="margin-top: 30px">
-            <table class="table" style="width: 50%; margin-left: auto; margin-right: 0;">
-                <tbody>
-                    <tr style="border-top: 1px solid #333 !important; border-bottom: 1px solid #333 !important;">
-                        <td colspan="2" style="text-align: right; background-color: rgb(215,215,215);">
-                            {{ __('custom.total_payment') }}
-                        </td>
-                        <td colspan="2" style="text-align: right; background-color: rgb(215,215,215);">
-                            {{ number_format($supplierdetailTotTra + $bankChargeAndOthersTot, $transDecimal) }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>            
-        </div>
+
+        @if ($bankChargeCount > 0)
+            <div style="margin-top: 30px">
+                <table class="table" style="width: 25%; margin-left: auto; margin-right: 0;">
+                    <tbody>
+                        <tr style="border-top: 1px solid #333 !important; border-bottom: 1px solid #333 !important;">
+                            <td colspan="2" style="text-align: right; background-color: rgb(215,215,215);">
+                                {{ __('custom.total_payment') }} : {{ number_format($supplierdetailTotTra + $bankChargeAndOthersTot, $transDecimal) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            
+            </div>
+        @endif
         <br>
     @endif
     @if($masterdata->invoiceType == 3)
