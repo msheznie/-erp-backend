@@ -1457,10 +1457,10 @@ class ProcumentOrderAPIController extends AppBaseController
         {
             if($paymentTerm->comAmount > 0)
             {
-                $paymentTerm->comPercentage =  ($paymentTerm->comAmount) / ($netAmount) * 100;
+                $paymentTerm->comPercentage = ($netAmount > 0) ? ($paymentTerm->comAmount) / ($netAmount) * 100 : 0;
                 $totalPercentage += $paymentTerm->comPercentage;
 
-                if($totalPercentage > 100)
+                if((float) sprintf("%.7f", $totalPercentage) > 100)
                 {
                     $paymentTerm->delete();
                 }else {
