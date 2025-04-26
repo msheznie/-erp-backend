@@ -22,6 +22,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Jobs\AddBulkItem\PoAddBulkItemJob;
+use App\Models\CurrencyMaster;
 use App\Services\ProcurementOrder\ProcurementOrderService;
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
@@ -262,6 +263,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $index = $input['skip'] + 1;
         foreach($items as $item) {
             $item['index'] = $index;
+            $currencyID = ($item->supplierItemCurrencyID) ?? 3;
+            $item->netAmount = round($item->netAmount,$currencyID);
             $index++;
         }
 
