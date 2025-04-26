@@ -196,7 +196,7 @@ class PurchaseReturnGlService
             $localBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['localVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['localVATAmount'] : 0;
 
 
-            if(!empty($exemptVatTotal) && !empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1 && $exemptVatTotal->vatAmount > 0){
+            if(!empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1){
                 $data['documentTransAmount'] = $rcmActivated ? ($bs->transAmount + $transBSVAT):($bs->transAmount + $transBSVAT + $transVATAmount + $exemptVATTransAmount);
                 $data['documentLocalAmount'] = $rcmActivated ? ($bs->localAmount + $localBSVAT): ($bs->localAmount + $localBSVAT  + $localVATAmount + $exemptVATLocalAmount);
                 $data['documentRptAmount'] =  $rcmActivated ? ($bs->rptAmount + $rptBSVAT): ($bs->rptAmount + $rptBSVAT  + $rptVATAmount + $exemptVATRptAmount) ;
