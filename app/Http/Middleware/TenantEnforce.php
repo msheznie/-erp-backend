@@ -97,11 +97,11 @@ class TenantEnforce
 
         if (env('IS_MULTI_TENANCY', false)) {
 
-            
+
             $url = $request->getHttpHost();
             $url_array = explode('.', $url);
             $subDomain = $url_array[0];
-           
+
             if ($subDomain == 'www') {
                 $subDomain = $url_array[1];
             }
@@ -125,7 +125,7 @@ class TenantEnforce
                     }
 
                     $loginData = DB::table('tenant_login')->where('tenantID', $tenant->id)->first();
-                
+
                     if ($loginData && $loginData->loginType == 4) {
                         $loginConfig = json_decode($loginData->config, true);
 
