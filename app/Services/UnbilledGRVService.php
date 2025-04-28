@@ -90,11 +90,11 @@ class UnbilledGRVService
                 $unbillRes = UnbilledGrvGroupBy::insert($output->toArray());
 
                 $lastUnbilledGrvGroupBy = UnbilledGrvGroupBy::orderBy('unbilledgrvAutoID', 'DESC')->first();
-                $output = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,NOW() as grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionCurrencyER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,ROUND(SUM(reqAmountTransCur_amount),7) as totTransactionAmount,ROUND(SUM(reqAmountInPOLocalCur),7) as totLocalAmount, ROUND(SUM(reqAmountInPORptCur),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp, ROUND(SUM(erp_purchaseorderadvpayment.VATAmount),7) as totalVATAmount, ROUND(SUM(erp_purchaseorderadvpayment.VATAmountLocal),7) as totalVATAmountLocal, ROUND(SUM(erp_purchaseorderadvpayment.VATAmountRpt),7) as totalVATAmountRpt, 1 as logisticYN")
+                $output = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,NOW() as grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionCurrencyER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,ROUND(SUM(reqAmountTransCur_amount),7) as totTransactionAmount,ROUND(SUM(reqAmountInPOLocalCur),7) as totLocalAmount, ROUND(SUM(reqAmountInPORptCur),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp, ROUND(erp_purchaseorderadvpayment.VATAmount,7) as totalVATAmount, ROUND(erp_purchaseorderadvpayment.VATAmountLocal,7) as totalVATAmountLocal, ROUND(erp_purchaseorderadvpayment.VATAmountRpt,7) as totalVATAmountRpt, 1 as logisticYN")
                                             ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
                                             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
                                             ->where('erp_purchaseorderadvpayment.grvAutoID',$masterModel["autoID"])
-                                            ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID')
+                                            ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID','erp_purchaseorderadvpayment.currencyID')
                                             ->get();
                 if($output){
                     foreach ($output as $key => $value) {
@@ -102,9 +102,9 @@ class UnbilledGRVService
 
                         $value->grvDate = $postedDateGl;
 
-                        $value->totTransactionAmount = $value->totTransactionAmount + $vatData['vatOnPOTotalAmountTrans'];
-                        $value->totRptAmount = $value->totRptAmount + $vatData['vatOnPOTotalAmountRpt'];
-                        $value->totLocalAmount = $value->totLocalAmount + $vatData['vatOnPOTotalAmountLocal'];
+                        $value->totTransactionAmount = $value->totTransactionAmount + $value->totalVATAmount;
+                        $value->totRptAmount = $value->totRptAmount + $value->totalVATAmountRpt;
+                        $value->totLocalAmount = $value->totLocalAmount + $value->totalVATAmountLocal;
 
                         $value->totalVATAmount = $vatData['vatOnPOTotalAmountTrans'];
                         $value->totalVATAmountLocal = $vatData['vatOnPOTotalAmountLocal'];

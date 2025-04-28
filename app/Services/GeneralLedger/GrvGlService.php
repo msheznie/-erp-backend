@@ -133,7 +133,7 @@ class GrvGlService
             ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
             ->where('erp_purchaseorderadvpayment.grvAutoID', $masterModel["autoID"])
-            ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID', 'erp_purchaseorderadvpayment.supplierID')
+            ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID', 'erp_purchaseorderadvpayment.supplierID', 'erp_purchaseorderadvpayment.currencyID')
             ->get();
 
 
@@ -144,11 +144,6 @@ class GrvGlService
         Log::info($unbilledGRVVATAddVatOnPO);
 
         if ($masterData) {
-
-            $unbilledTransVATAmount =  $unbilledGRVVATAddVatOnPO['vatOnPOTotalAmountTrans'];
-            $unbilledLocalVATAmount =  $unbilledGRVVATAddVatOnPO['vatOnPOTotalAmountLocal'];
-            $unbilledRptVATAmount   =  $unbilledGRVVATAddVatOnPO['vatOnPOTotalAmountRpt'];
-
             $transVATAmount = isset($vatDetails['masterVATTrans']) ? $vatDetails['masterVATTrans'] : 0;
             $localVATAmount = isset($vatDetails['masterVATLocal']) ? $vatDetails['masterVATLocal'] : 0;
             $rptVATAmount = isset($vatDetails['masterVATRpt']) ? $vatDetails['masterVATRpt'] : 0;
@@ -228,12 +223,11 @@ class GrvGlService
                 }
             }
 
-
-             if ((($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && ($vatDetails['masterVATTrans'] || $exemptVATTrans)) || ($unbilledTransVATAmount > 0)) {
+            if ((($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && ($vatDetails['masterVATTrans'] || $exemptVATTrans))) {
                 Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                 $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
 
-                if ($vatDetails['masterVATTrans'] > 0 || $unbilledTransVATAmount > 0) {
+                if ($vatDetails['masterVATTrans'] > 0) {
                     if (!empty($taxData)) {
                         $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxData->inputVatTransferGLAccountAutoID)
                             ->where('companySystemID', $masterData->companySystemID)
@@ -246,9 +240,9 @@ class GrvGlService
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
 
-                            $data['documentTransAmount'] = \Helper::roundValue($vatDetails['masterVATTrans'] + $unbilledTransVATAmount);
-                            $data['documentLocalAmount'] = \Helper::roundValue($vatDetails['masterVATLocal'] + $unbilledLocalVATAmount);
-                            $data['documentRptAmount'] = \Helper::roundValue($vatDetails['masterVATRpt'] + $unbilledRptVATAmount);
+                            $data['documentTransAmount'] = \Helper::roundValue($vatDetails['masterVATTrans']);
+                            $data['documentLocalAmount'] = \Helper::roundValue($vatDetails['masterVATLocal']);
+                            $data['documentRptAmount'] = \Helper::roundValue($vatDetails['masterVATRpt']);
 
                             array_push($finalData, $data);
 
@@ -265,8 +259,46 @@ class GrvGlService
                     }
                 }
 
+                if($unbilledGRV) {
+                    foreach ($unbilledGRV as $val) {
+                        $unbilledTransVATAmount =  $val['VATAmount'];
+                        $unbilledLocalVATAmount =  $val['VATAmountLocal'];
+                        $unbilledRptVATAmount   =  $val['VATAmountRpt'];
 
+                        $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
 
+                        if (!empty($taxData)) {
+                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxData->inputVatTransferGLAccountAutoID)
+                                ->where('companySystemID', $masterData->companySystemID)
+                                ->first();
+
+                            if (!empty($chartOfAccountData)) {
+                                $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                $data['supplierCodeSystem'] = $val['supplierID'];
+                                $data['glCode'] = $chartOfAccountData->AccountCode;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                                $data['documentTransCurrencyID'] = $val['supplierTransactionCurrencyID'];
+                                $data['documentTransCurrencyER'] = $val['supplierTransactionCurrencyER'];
+                                $data['documentTransAmount'] = \Helper::roundValue($unbilledTransVATAmount);
+
+                                $data['documentRptCurrencyID'] = $val['companyReportingCurrencyID'];
+                                $data['documentRptCurrencyER'] = $val['companyReportingER'];
+                                $data['documentRptAmount'] = \Helper::roundValue($unbilledRptVATAmount);
+
+                                $data['documentLocalCurrencyID'] = $val['localCurrencyID'];
+                                $data['documentLocalCurrencyER'] = $val['localCurrencyER'];
+                                $data['documentLocalAmount'] = \Helper::roundValue($unbilledLocalVATAmount);
+
+                                array_push($finalData, $data);
+
+                                $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
+
+                            }
+                        }
+                    }
+                }
 
                 if(TaxService::isGRVRCMActivation($masterModel["autoID"])){
 
@@ -376,8 +408,8 @@ class GrvGlService
             if ($unbilledGRV) {
                 foreach ($unbilledGRV as $val) {
 
-                    //$vatData = TaxService::poLogisticForLineWise($val);
-                    $vatData = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"],0,$val->supplierID);
+                    $vatData = TaxService::poLogisticForLineWise($val);
+                    //$vatData = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"],0,$val->supplierID);
 
                     Log::info('$unbilledGRV item');
                     Log::info($val);
