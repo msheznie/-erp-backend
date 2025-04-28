@@ -721,7 +721,7 @@ class GRVDetailsAPIController extends AppBaseController
         {
             $currencyID = ($item->supplierItemCurrencyID) ?? 3;
             $decimal = CurrencyMaster::find($currencyID)->DecimalPlaces;
-            $item->netAmount = round(round($item->unitCost,$decimal) * $item->poQty,$decimal);
+            $item->netAmount = round(round($item->unitCost,$decimal) * $item->noQty,$decimal);
         }
 
         return $this->sendResponse($items->toArray(), 'GRV details retrieved successfully');
