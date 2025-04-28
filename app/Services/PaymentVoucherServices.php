@@ -768,20 +768,19 @@ class PaymentVoucherServices
             $input['pdcChequeYN'] = 0;
         }
 
-        if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == false) {
+        if ((isset($input['pdcChequeYN']) && !$input['pdcChequeYN']) || $input['paymentMode'] != 2 ) {
 
-            $isPdcLog = PdcLog::where('documentSystemID', $input['documentSystemID'])
-                ->where('documentmasterAutoID', $input['PayMasterAutoId'])
-                ->first();
-
-            if(!empty($isPdcLog)) {
-                ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])->where('document_master_id', $input['documentSystemID'])->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
-
-                PdcLog::where('documentSystemID', $input['documentSystemID'])
-                    ->where('documentmasterAutoID', $input['PayMasterAutoId'])
-                    ->delete();
-            }
-
+            PdcLog::where('documentmasterAutoID', $id)
+                ->where('documentSystemID', $input['documentSystemID'])
+                ->where('companySystemID', $companySystemID)
+                ->delete();
+            ChequeRegisterDetail::where('document_id', $id)
+                ->where('company_id', $companySystemID)
+                ->update([
+                    'document_id' => null,
+                    'document_master_id' => null,
+                    'status' => 0,
+                ]);
         }
 
 
