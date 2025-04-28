@@ -2663,6 +2663,44 @@ class SRMService
     {
         $tenderMasterId = $request->input('extra.tenderId');
         $attachmentId = $request->input('extra.attachmentId');
+        $tender = TenderMaster::where('id', $tenderMasterId)->select('id','document_type')->first();
+
+        $attachment = DocumentAttachments::where('attachmentID', $attachmentId)
+            ->where(function($query) use($tender){
+                if($tender->document_type == 0) {
+                    $type = 108;
+                } else {
+                    $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+            })
+            ->first();
+
+        $fileContent = Storage::disk('s3')->get($attachment['path']); // Get raw file content from S3
+        $base64 = base64_encode($fileContent);
+        $mimeType = Storage::disk('s3')->mimeType($attachment['path']); // Detect correct MIME type
+
+        $data = [
+            'base64' => $base64,
+            'mimeType' => $mimeType,
+            'extension' => strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION)),
+            'filename' => basename($attachment['path'])
+        ];
+
+        return [
+            'success' => true,
+            'message' => 'Consolidated view data Successfully fetched',
+            'data' => $data
+        ];
+
+
+
+
+
+
+
+        /*$tenderMasterId = $request->input('extra.tenderId');
+        $attachmentId = $request->input('extra.attachmentId');
         $tender = TenderMaster::where('id',$tenderMasterId)->select('id','document_type')->first();
 
         $attachment = DocumentAttachments::where('attachmentID', $attachmentId)
@@ -2685,7 +2723,7 @@ class SRMService
             'success' => true,
             'message' => 'Consolidated view data Successfully get',
             'data' => $data
-        ];
+        ];*/
     }
 
     public function getGoNoGoBidSubmissionData($request, $negotiationStatus = false, $arr = [])
