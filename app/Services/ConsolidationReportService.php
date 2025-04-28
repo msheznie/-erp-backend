@@ -106,7 +106,7 @@ class ConsolidationReportService
         }
     }
 
-    public static function getTotalProfit($serviceLineIDs, $company, $fromDate, $toDate, $amountColumn, $glType) {
+    public static function getTotalProfit($serviceLineIDs, $company, $fromDate, $toDate, $amountColumn, $glType = 2) {
         $totalProfit = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')
             ->whereIn('serviceLineSystemID', $serviceLineIDs)
             ->where('companySystemID', $company)
@@ -141,9 +141,6 @@ class ConsolidationReportService
         $currency = $input['currency'][0] ?? $input['currency'];
         $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';
 
-        $reportTemplate = ReportTemplate::find($input["templateType"]);
-        $glAccountTypeId = $reportTemplate->categoryBLorPL == "BS" ? 1 : 2;
-
         // selected sub companies
         $companySystemIDs = collect($input['companySystemID']);
         // selected group company
@@ -174,7 +171,7 @@ class ConsolidationReportService
                     $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
                     $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
 
-                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn, $glAccountTypeId);
+                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn);
 
                     if (abs($totalProfit) != 0) {
                         $parentPortion = ($totalProfit * $period->holding_percentage) / 100;
@@ -204,7 +201,7 @@ class ConsolidationReportService
                     $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
                     $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
 
-                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn, $glAccountTypeId);
+                    $totalProfit = self::getTotalProfit($serviceLineIDs, $period->company_system_id, $queryStartDate->format("Y-m-d"), $queryEndDate->format("Y-m-d"), $amountColumn);
 
                     if (abs($totalProfit) != 0) {
                         // calculate NCI percentage
