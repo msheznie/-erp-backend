@@ -326,7 +326,6 @@ class CreatePaymentVoucher implements ShouldQueue
                                         if (isset($request['supplier'])) {
                                             $supplier = SupplierMaster::where('primarySupplierCode', $request['supplier'])
                                                 ->orWhere('registrationNumber',$request['supplier'])
-                                                ->where('primaryCompanySystemID',$companyId)
                                                 ->first();
 
                                             if ($supplier) {
@@ -335,7 +334,7 @@ class CreatePaymentVoucher implements ShouldQueue
                                                         ->where('companySystemID', $companyId)
                                                         ->first();
 
-                                                    if ($supplierAssign) {
+                                                    if ($supplierAssign && $supplierAssign->isAssigned == -1) {
                                                         if ($supplierAssign->isActive == 1) {
                                                             if($supplierAssign->isBlocked != 0){
                                                                 $errorData[] = [
@@ -634,17 +633,31 @@ class CreatePaymentVoucher implements ShouldQueue
                         ->first();
 
                     if ($financeYear) {
-                        $financePeriod = CompanyFinancePeriod::where('companySystemID',$companyId)
+                        $financePeriodGL = CompanyFinancePeriod::where('companySystemID',$companyId)
                             ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
                             ->where('isActive', -1)
                             ->whereMonth('dateFrom',$payInvoiceDate->month)
                             ->whereMonth('dateTo',$payInvoiceDate->month)
-                            ->where(function ($query) {
-                                $query->where('departmentSystemID',1)
-                                    ->orWhere('departmentSystemID',5);
-                            })
+                            ->where('departmentSystemID', 5)
                             ->first();
-                        if (!$financePeriod) {
+
+                        if ($financePeriodGL) {
+                            $financePeriodAP = CompanyFinancePeriod::where('companySystemID',$companyId)
+                                ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
+                                ->where('isActive', -1)
+                                ->whereMonth('dateFrom',$payInvoiceDate->month)
+                                ->whereMonth('dateTo',$payInvoiceDate->month)
+                                ->where('departmentSystemID', 1)
+                                ->first();
+
+                            if (!$financePeriodAP) {
+                                $errorData[] = [
+                                    'field' => "pay_invoice_date",
+                                    'message' => ["Financial period related to the selected pay invoice date is not active for the specified department."]
+                                ];
+                            }
+                        }
+                        else {
                             $errorData[] = [
                                 'field' => "pay_invoice_date",
                                 'message' => ["Financial period related to the selected pay invoice date is not active for the specified department."]
@@ -750,7 +763,7 @@ class CreatePaymentVoucher implements ShouldQueue
                     'BPVNarration' => $request['narration'],
                     'BPVdate' => $payInvoiceDate->toDateString(),
                     'companyFinanceYearID' => $financeYear->companyFinanceYearID,
-                    'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
+                    'companyFinancePeriodID' => $financePeriodAP->companyFinancePeriodID,
                     'rcmActivated' => $reverseChargeMechanism,
                     'BPVchequeDate' => Carbon::today()->startOfDay()->format('Y-m-d'),
                     'companySystemID' => $companyId,
