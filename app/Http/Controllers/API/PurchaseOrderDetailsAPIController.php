@@ -264,7 +264,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         foreach($items as $item) {
             $item['index'] = $index;
             $currencyID = ($item->supplierItemCurrencyID) ?? 3;
-            $item->netAmount = round($item->netAmount,$currencyID);
+            $decimal = CurrencyMaster::find($currencyID)->DecimalPlaces;
+            $item->netAmount = round(round($item->unitCost,$decimal) * $item->noQty,$decimal);
             $index++;
         }
 
@@ -709,6 +710,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
                             $prDetail_arr['unitCost'] = $new['poUnitAmount'];
+
                             $prDetail_arr['netAmount'] = ($new['poUnitAmount'] * $new['poQty']);
                             // Get VAT percentage for item
 
