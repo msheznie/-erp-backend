@@ -720,7 +720,8 @@ class GRVDetailsAPIController extends AppBaseController
         foreach ($items as $item)
         {
             $currencyID = ($item->supplierItemCurrencyID) ?? 3;
-            $item->netAmount = round($item->netAmount,CurrencyMaster::find($currencyID)->DecimalPlaces);
+            $decimal = CurrencyMaster::find($currencyID)->DecimalPlaces;
+            $item->netAmount = round(round($item->unitCost,$decimal) * $item->poQty,$decimal);
         }
 
         return $this->sendResponse($items->toArray(), 'GRV details retrieved successfully');
@@ -1137,12 +1138,9 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['poQty'] = $new['poQty'];
                         $grvMaster = GRVMaster::find($grvAutoID);
 
-                        if($grvMaster->grvTypeID == 2) // po based GRV
-                        {
-                            $totalNetcost = $new['netAmount'];
-                        }else {
-                            $totalNetcost = $new['GRVcostPerUnitSupTransCur'] * $new['noQty'];
-                        }
+
+                        $totalNetcost = $new['GRVcostPerUnitSupTransCur'] * $new['noQty'];
+
                         $GRVDetail_arr['unitCost'] = $new['GRVcostPerUnitSupTransCur'];
                         $GRVDetail_arr['discountPercentage'] = $new['discountPercentage'];
                         $GRVDetail_arr['discountAmount'] = $new['discountAmount'];
