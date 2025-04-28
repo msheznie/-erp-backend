@@ -262,18 +262,43 @@ class SRMService
     public function getPoPrintData(Request $request)
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
-        $data = $this->POService->getPoPrintData($purchaseOrderID);
-        return [
-            'success' => true,
-            'message' => 'Purchase order print data successfully get',
-            'data' => $data
-        ];
+        $supplierMasterId = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $data = $this->POService->getPoPrintData($purchaseOrderID, $supplierMasterId);
+
+        if(!empty($data))
+        {
+            return [
+                'success' => true,
+                'message' => 'Purchase order print data successfully get',
+                'data' => $data
+            ];
+        } else
+        {
+            return [
+                'success' => false,
+                'message' => 'Access Denied',
+                'data' => []
+            ];
+        }
+
     }
 
     public function getPoAddons(Request $request)
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
         $data = $this->POService->getPoAddons($purchaseOrderID);
+
+        $supplierMasterId = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $supplierIDValidate = $this->POService->getPoPrintData($purchaseOrderID, $supplierMasterId);
+        if(empty($supplierIDValidate))
+        {
+            return [
+                'success' => false,
+                'message' => 'Access Denied',
+                'data' => []
+            ];
+        }
+
         return [
             'success' => true,
             'message' => 'Purchase order addon successfully get',
