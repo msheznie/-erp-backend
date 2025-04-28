@@ -27,5 +27,7 @@
             "path": "./node_modules/cz-conventional-changelog"
         }
     },
+
     "version": "10.68.0"
+
 }

@@ -6329,4 +6329,5 @@ class SRMService
         $encrypted = openssl_encrypt($string, $cipher, $key, OPENSSL_RAW_DATA, $iv);
         return base64_encode($iv . $encrypted);
     }
+
 }

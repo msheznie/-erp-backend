@@ -49,6 +49,7 @@
 
 * **procurement:** PO payment order terms get deleted while save changes fixes [GCP-7029] ([#7892](https://github.com/pbsgears/Gears_BackEnd/issues/7892)) ([b12f637](https://github.com/pbsgears/Gears_BackEnd/commit/b12f63762c39a08a806d65a331de769c7a1bff1e))
 
+
 ## 10.67.0 (2025-04-08)
 
 
