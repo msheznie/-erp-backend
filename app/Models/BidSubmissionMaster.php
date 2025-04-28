@@ -174,4 +174,12 @@ class BidSubmissionMaster extends Model
         return $this->hasMany(DocumentAttachments::class, 'documentSystemCode','tender_id');
 
     }
+
+    public static function getBidSubmissionData($tenderID, $bidID, $supplierId){
+        return self::where([
+            'id' => $bidID,
+            'tender_id' => $tenderID,
+            'supplier_registration_id' =>$supplierId
+        ])->first();
+    }
 }

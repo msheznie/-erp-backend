@@ -2498,6 +2498,17 @@ class SRMService
     {
         $tenderMasterId = $request->input('extra.tenderId');
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $supplierTender = TenderMasterSupplier::getSupplierTender($tenderMasterId, $supplierRegId);
+
+        if(!$supplierTender){
+            return [
+                'success' => false,
+                'message' => "You don't have access.",
+                'data' => []
+            ];
+        }
+
         $assignDocumentTypesDeclared = [1];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderMasterId)->whereNotIn('document_type_id',[2, 3])->pluck('document_type_id')->toArray();
         $tenderDates = [];
@@ -2701,6 +2712,36 @@ class SRMService
             $critera_type_id = $request->input('extra.critera_type_id');
             $bidMasterId = $request->input('extra.bidMasterId');
             $negotiation = $request->input('extra.negotiation');
+            $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+            $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierRegId);
+            if(empty($isBidExists))
+            {
+                return [
+                    'success' => false,
+                    'message' => 'No record found!',
+                    'data' => []
+                ];
+            }
+
+
+           /* $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+            if(!$supplierTender){
+                return [
+                    'success' => true,
+                    'message' => 'No record found!',
+                    'data' => []
+                ];
+            }*/
+
+            /*$supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+            if(!$supplierBidValidation){
+                return [
+                    'success' => true,
+                    'message' => 'Invalid supplier tender bid master!',
+                    'data' => []
+                ];
+            }*/
         }
 
         if($negotiation){
@@ -2830,6 +2871,15 @@ class SRMService
         $tender_negotiation = $request->input('extra.tender_negotiation');
         $multipleNegotiation = $request->input('extra.multipleNegotiation') != null ? $request->input('extra.multipleNegotiation') : false;
         $tender_negotiation_data = $request->input('extra.tender_negotiation_data');
+
+        $supplierTender = TenderMasterSupplier::getSupplierTender($tender_id, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
 
         $bidSubmitted = BidSubmissionMaster::where('tender_id', $tender_id)
             ->where('supplier_registration_id', $supplierRegId)
@@ -3317,6 +3367,37 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
         $envelopType = $request->input('extra.envelopType');
+
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierRegId);
+        if(empty($isBidExists))
+        {
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
+
+       // $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+       /* if(!$supplierTender){
+            return [
+                'success' => true,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }*/
+
+       /* $supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+        if(!$supplierBidValidation){
+            return [
+                'success' => true,
+                'message' => 'Invalid supplier tender bid master!',
+                'data' => []
+            ];
+        }*/
+
         $assignDocumentTypesDeclared = [1,2,3];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderId)->pluck('document_type_id')->toArray();
         $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
@@ -3373,6 +3454,37 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $envelopType = $request->input('extra.envelopType');
         $negotiation = $request->input('extra.negotiation');
+
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierRegId);
+        if(empty($isBidExists))
+        {
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
+
+        /*$supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => true,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }*/
+
+     /*   $supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+        if(!$supplierBidValidation){
+            return [
+                'success' => true,
+                'message' => 'Invalid supplier tender bid master!',
+                'data' => []
+            ];
+        }*/
+
         $assignDocumentTypesDeclared = [1,2,3];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderId)->pluck('document_type_id')->toArray();
         $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
@@ -3532,6 +3644,36 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $negotiation = $request->input('extra.negotiation');
 
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierRegId);
+        if(empty($isBidExists))
+        {
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
+
+        /*$supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => true,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }*/
+
+       /* $supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+        if(!$supplierBidValidation){
+            return [
+                'success' => true,
+                'message' => 'Invalid supplier tender bid master!',
+                'data' => []
+            ];
+        }*/
+
         if($negotiation){
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
             $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
@@ -3615,6 +3757,34 @@ class SRMService
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
         $negotiation = $request->input('extra.negotiation');
+        $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierData->id);
+        if(empty($isBidExists))
+        {
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
+
+
+        /*$supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }*/
+
+        /*$supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+        if(!$supplierBidValidation){
+            return [
+                'success' => false,
+                'message' => 'Invalid supplier tender bid master!',
+                'data' => []
+            ];
+        }*/
 
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
 
@@ -4409,6 +4579,15 @@ class SRMService
         $tenderNegotiation = $request->input('extra.tender_negotiation');
         $tenderNegotiationData = $request->input('extra.tender_negotiation_data');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
 
         // $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId);
         $bidSubmitted = BidSubmissionMaster::select('id', 'uuid', 'tender_id', 'supplier_registration_id', 'status',
