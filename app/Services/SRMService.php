@@ -2678,8 +2678,8 @@ class SRMService
                 $query->where('documentSystemID', $type);
             })
             ->first();
-
-        $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
+        
+        $data['attachmentPath'] = $this->encryptUrl(Helper::getFileUrlFromS3($attachment['path']));
         $data['extension'] = strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));
         return [
             'success' => true,
@@ -6110,5 +6110,14 @@ class SRMService
             'api/v1/srm/requests'
         ];
 
+    }
+
+    function encryptUrl($string)
+    {
+        $key = hex2bin(env('SRM_SECRET_KEY'));
+        $cipher = 'AES-256-CBC';
+        $iv = random_bytes(openssl_cipher_iv_length($cipher)); // 16 bytes random IV
+        $encrypted = openssl_encrypt($string, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+        return base64_encode($iv . $encrypted);
     }
 }
