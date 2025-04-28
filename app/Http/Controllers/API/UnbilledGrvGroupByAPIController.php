@@ -464,6 +464,7 @@ HAVING ROUND(
                                                         $query->where('poID', $value->purchaseOrderID);
                                                     })
                                                     ->where('erp_purchaseorderadvpayment.supplierID',$value->supplierID)
+                                                    ->where('erp_purchaseorderadvpayment.currencyID',$bookInvSuppMaster->supplierTransactionCurrencyID)
                                                     ->groupBy('erp_purchaseorderadvpayment.poAdvPaymentID');
 
                 $grv_details = $grvDetails->get();
