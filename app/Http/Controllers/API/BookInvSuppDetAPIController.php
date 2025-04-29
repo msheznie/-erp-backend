@@ -690,7 +690,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                         //reqAmountInPOTransCur
                         $padpTotal = PoAdvancePayment::where('poID',$temp['purchaseOrderID'])
                                                   ->where('supplierID',$temp['supplierID'])
-                                                  ->sum('reqAmountInPOTransCur');
+                                                  ->sum('reqAmountTransCur_amount');
 
                         $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $temp['purchaseOrderID'])
                             ->where('supplierID', $temp['supplierID'])
