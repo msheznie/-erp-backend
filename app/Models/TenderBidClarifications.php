@@ -199,4 +199,7 @@ class TenderBidClarifications extends Model
         return $claData->supplier_id == $supplierRegId || $claData->is_public == 1;
     }
 
+    public static function checkSupplierBidClarification($tenderId, $supplierID){
+        return self::where('tender_master_id', $tenderId)->where('supplier_id', $supplierID)->exists();
+    }
 }
