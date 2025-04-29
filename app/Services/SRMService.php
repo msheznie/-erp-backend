@@ -2498,16 +2498,22 @@ class SRMService
     {
         $tenderMasterId = $request->input('extra.tenderId');
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tenderData = TenderMaster::where('id',$tenderMasterId)->select('id','document_type','tender_type_id')->first();
 
         $supplierTender = TenderMasterSupplier::getSupplierTender($tenderMasterId, $supplierRegId);
 
-        if(!$supplierTender){
+        if (
+            ($tenderData['final_tender_awarded'] != 1 || $tenderData['negotiation_is_awarded'] != 1)
+            && $tenderData['tender_type_id'] != 1
+            && !$supplierTender
+        ) {
             return [
                 'success' => false,
                 'message' => "You don't have access.",
-                'data' => []
+                'data' => [],
             ];
         }
+
 
         $assignDocumentTypesDeclared = [1];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderMasterId)->whereNotIn('document_type_id',[2, 3])->pluck('document_type_id')->toArray();
@@ -2661,7 +2667,7 @@ class SRMService
             ->where('status', 1)
 
             ->get();
-        $data['tenders'] = TenderMaster::where('id',$tenderMasterId)->select('id','document_type')->first();
+        $data['tenders'] = $tenderData;
 
         return [
             'success' => true,
@@ -2689,7 +2695,7 @@ class SRMService
                 $query->where('documentSystemID', $type);
             })
             ->first();
-        
+
         $data['attachmentPath'] = $this->encryptUrl(Helper::getFileUrlFromS3($attachment['path']));
         $data['extension'] = strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));
         return [
