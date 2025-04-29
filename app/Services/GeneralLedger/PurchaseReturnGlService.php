@@ -196,14 +196,27 @@ class PurchaseReturnGlService
             $localBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['localVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['localVATAmount'] : 0;
 
 
+            $logisticTrans = 0;
+            $logisticLocal = 0;
+            $logisticRpt = 0;
+
+            if ($logisticData) {
+                foreach ($logisticData as $val) {
+                    $logisticTrans += $val->logisticAmountTransTotal;
+                    $logisticLocal += $val->logisticAmountLocalTotal;  
+                    $logisticRpt+= $val->logisticAmountRptTotal;
+                }
+            }
+
+
             if(!empty($expenseCOA) && $expenseCOA->expenseGL != null && $expenseCOA->recordType == 1){
-                $data['documentTransAmount'] = $rcmActivated ? ($bs->transAmount + $transBSVAT):($bs->transAmount + $transBSVAT + $transVATAmount + $exemptVATTransAmount);
-                $data['documentLocalAmount'] = $rcmActivated ? ($bs->localAmount + $localBSVAT): ($bs->localAmount + $localBSVAT  + $localVATAmount + $exemptVATLocalAmount);
-                $data['documentRptAmount'] =  $rcmActivated ? ($bs->rptAmount + $rptBSVAT): ($bs->rptAmount + $rptBSVAT  + $rptVATAmount + $exemptVATRptAmount) ;
+                $data['documentTransAmount'] = $rcmActivated ? ($bs->transAmount + $transBSVAT - $logisticTrans):($bs->transAmount + $transBSVAT + $transVATAmount + $exemptVATTransAmount - $logisticTrans);
+                $data['documentLocalAmount'] = $rcmActivated ? ($bs->localAmount + $localBSVAT - $logisticLocal): ($bs->localAmount + $localBSVAT  + $localVATAmount + $exemptVATLocalAmount - $logisticLocal);
+                $data['documentRptAmount'] =  $rcmActivated ? ($bs->rptAmount + $rptBSVAT - $logisticRpt): ($bs->rptAmount + $rptBSVAT  + $rptVATAmount + $exemptVATRptAmount - $logisticRpt) ;
             } else {
-                $data['documentTransAmount'] = $rcmActivated ? ($bs->transAmount + $transBSVAT): ($bs->transAmount + $transBSVAT + $transVATAmount);
-                $data['documentLocalAmount'] = $rcmActivated ? ($bs->localAmount + $localBSVAT): ($bs->localAmount + $localBSVAT  + $localVATAmount);
-                $data['documentRptAmount'] =  $rcmActivated ? ($bs->rptAmount + $rptBSVAT): ($bs->rptAmount + $rptBSVAT  + $rptVATAmount) ;
+                $data['documentTransAmount'] = $rcmActivated ? ($bs->transAmount + $transBSVAT - $logisticTrans): ($bs->transAmount + $transBSVAT + $transVATAmount - $logisticTrans);
+                $data['documentLocalAmount'] = $rcmActivated ? ($bs->localAmount + $localBSVAT - $logisticLocal): ($bs->localAmount + $localBSVAT  + $localVATAmount - $logisticLocal);
+                $data['documentRptAmount'] =  $rcmActivated ? ($bs->rptAmount + $rptBSVAT - $logisticRpt): ($bs->rptAmount + $rptBSVAT  + $rptVATAmount - $logisticRpt) ;
             }
             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;

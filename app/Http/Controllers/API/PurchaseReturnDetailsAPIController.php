@@ -35,6 +35,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use App\helper\ItemTracking;
+use App\Models\PurchaseReturnLogistic;
 
 /**
  * Class PurchaseReturnDetailsController
@@ -887,6 +888,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                         $subProduct->delete();
                     }
                 } else if ($cvDetail->trackingType == 1) {
+
                     $deleteBatch = ItemTracking::revertBatchTrackingSoldStatus($purchaseReturn->documentSystemID, $cvDetail->purhasereturnDetailID);
 
                     if (!$deleteBatch['status']) {
@@ -896,6 +898,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
 
                 $deleteDetail = PurchaseReturnDetails::where('purhasereturnDetailID', $cvDetail['purhasereturnDetailID'])->delete();
+                PurchaseReturnLogistic::where('purchaseReturnID', $cvDetail['purhaseReturnAutoID'])->delete();
             }
         }
         return $this->sendResponse($purchaseReturnAutoID, 'Purchase Return details deleted successfully');
