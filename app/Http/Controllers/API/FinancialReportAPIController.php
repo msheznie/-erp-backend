@@ -1343,8 +1343,10 @@ class FinancialReportAPIController extends AppBaseController
                             $data =  $outputData
                                 ->reduce(function ($carry, $item) use ($val) {
                                     foreach ($item as $key => $value) {
-                                        if ((substr(explode('-', $key)[0], -3) === 'YTD') && strpos($key, '-') !== false) {
-                                            if (is_numeric($value)) {
+                                        if (strpos($key, '-') !== false) {
+                                            $tempKeyValue = explode('-', $key);
+                                            $columnData = ReportTemplateColumns::where('shortCode', $tempKeyValue[0])->first();
+                                            if (isset($columnData) && !in_array($columnData->type, [4,5]) && is_numeric($value)) {
                                                 $carry[$key] = ($carry[$key] ?? 0) + $value;
                                             }
                                         }
