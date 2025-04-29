@@ -97,22 +97,24 @@ class CreatePaymentVoucher implements ShouldQueue
             $detailIndex = 0;
             $details = $paymentVoucher['details'] ?? null;
 
-            foreach ($details as $detail) {
+            if ($details != null) {
+                foreach ($details as $detail) {
 
-                $datasetDetails = self::validatePVDetailsData($paymentVoucher,$detail);
+                    $datasetDetails = self::validatePVDetailsData($paymentVoucher,$detail);
 
-                if ($datasetDetails['status']) {
-                    $detailsDataSets[$masterIndex][] = $datasetDetails['data'];
+                    if ($datasetDetails['status']) {
+                        $detailsDataSets[$masterIndex][] = $datasetDetails['data'];
+                    }
+                    else {
+                        $detailData['errors'][] = [
+                            'index' => $detailIndex + 1,
+                            'error' => $datasetDetails['data']
+                        ];
+                        unset($detailsDataSets[$masterIndex]);
+                    }
+
+                    $detailIndex++;
                 }
-                else {
-                    $detailData['errors'][] = [
-                        'index' => $detailIndex + 1,
-                        'error' => $datasetDetails['data']
-                    ];
-                    unset($detailsDataSets[$masterIndex]);
-                }
-
-                $detailIndex++;
             }
 
             if (empty($headerData['errors']) && empty($detailData['errors']) && empty($fieldErrors)) {
@@ -484,7 +486,7 @@ class CreatePaymentVoucher implements ShouldQueue
                                 $employee = Employee::where('empID', $request['employee'])
                                     ->when(Helper::checkHrmsIntergrated($companyId), function ($query) use ($request) {
                                         $query->orWhereHas('hr_emp', function ($q) use ($request) {
-                                            $q->orWhere('EmpSecondaryCode', $request['employee']);
+                                            $q->where('EmpSecondaryCode', $request['employee']);
                                         });
                                     })->first();
 

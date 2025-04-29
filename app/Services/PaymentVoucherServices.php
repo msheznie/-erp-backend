@@ -40,6 +40,7 @@ use App\Models\SupplierMaster;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\Tax;
 use App\Models\Taxdetail;
+use App\Models\TaxVatCategories;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -2305,9 +2306,29 @@ class PaymentVoucherServices
             $defaultVAT = TaxService::getDefaultVAT($payMaster->companySystemID, $payMaster->BPVsupplierID);
             $input['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
             if (isset($input['VATPercentage']) && $input['VATPercentage'] == 0) {
-                $input['VATPercentage'] = $defaultVAT['percentage'];
+                if (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
+                    $input['VATPercentage'] = 0;
+                }
+                else {
+                    $input['VATPercentage'] = $defaultVAT['percentage'];
+                }
             }
             $input['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
+
+            if (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
+                if ($defaultVAT['percentage'] == 0) {
+                    if ((isset($input['VATPercentage']) && $input['VATPercentage'] != 0) || (isset($input['vat_amount']) && $input['vat_amount'] != 0)) {
+                        $defaultData = TaxVatCategories::where('mainCategory', 2)->where('subCatgeoryType', 1)->where('isActive', 1)->first();
+                        if (!empty($defaultData)) {
+                            $input['vatSubCategoryID'] = $defaultData->taxVatSubCategoriesAutoID;
+                            $input['vatMasterCategoryID'] = $defaultData->mainCategory;
+                        }
+                    }
+                    else {
+                        $input['VATPercentage'] = 0;
+                    }
+                }
+            }
         }
 
         $directPaymentDetails = DirectPaymentDetails::create($input);
@@ -2625,6 +2646,15 @@ class PaymentVoucherServices
                 $input['toBankAmount'] = \Helper::roundValue($bankAmount2);
             }
         }
+
+        unset(
+            $input['vatMasterCategoryAutoID'],
+            $input['itemPrimaryCode'],
+            $input['itemDescription'],
+            $input['subCategoryArray'],
+            $input['subCatgeoryType'],
+            $input['exempt_vat_portion']
+        );
 
         DirectPaymentDetails::where('directPaymentDetailsID',$id)->update(array_except($input, ['isAutoCreateDocument']));
 
