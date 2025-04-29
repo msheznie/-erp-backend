@@ -1112,11 +1112,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             ->where('manuallyClosed',0)
             ->where('itemCode', $itemCode)
 
-            ->whereDoesntHave('grv_details', function ($query) {
-                $query->whereHas('grv_master', function ($q) {
-                    $q->where('approved', -1);
-                });
-            })
             
             ->withCount(['grv_details AS grv_qty'=> function($query) use($companySystemID,$PRRequestedDate){
                 $query->select(DB::raw("COALESCE(SUM(noQty),0) as grvNoQty"))
