@@ -1693,7 +1693,10 @@ class SRMService
                             $query->where('negotiation_is_awarded', 1)
                                 ->where('final_tender_awarded', 1);
                         });
-                })->where('published_yn', 1);
+                })->where('published_yn', 1)
+                ->whereHas('srmTenderMasterSuppliers', function ($q) use ($supplierRegId) {
+                    $q->where('purchased_by', '=', $supplierRegId);
+                });
         }
 
         if($is_rfx)
@@ -2498,21 +2501,45 @@ class SRMService
     {
         $tenderMasterId = $request->input('extra.tenderId');
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $tenderData = TenderMaster::where('id',$tenderMasterId)->select('id','document_type','tender_type_id')->first();
+        $tenderData = TenderMaster::where('id',$tenderMasterId)->select('id','document_type','tender_type_id','final_tender_awarded','negotiation_is_awarded')->first();
 
         $supplierTender = TenderMasterSupplier::getSupplierTender($tenderMasterId, $supplierRegId);
 
-        if (
-            ($tenderData['final_tender_awarded'] != 1 || $tenderData['negotiation_is_awarded'] != 1)
-            && $tenderData['tender_type_id'] != 1
-            && !$supplierTender
-        ) {
+        $finalAwarded = $tenderData['final_tender_awarded'] == 1;
+        $negotiationAwarded = $tenderData['negotiation_is_awarded'] == 1;
+        $isNonTenderType = $tenderData['tender_type_id'] != 1;
+        $hasSupplierAccess = $supplierTender !== null;
+
+        if (($finalAwarded || $negotiationAwarded) && !$hasSupplierAccess) {
             return [
                 'success' => false,
-                'message' => "You don't have access.",
+                'message' => "You don't have access",
                 'data' => [],
             ];
         }
+
+        if ((!$finalAwarded || !$negotiationAwarded) && !$hasSupplierAccess) {
+            return [
+                'success' => false,
+                'message' => "You don't have access",
+                'data' => [],
+            ];
+        }
+
+        /* Log::info($supplierTender);
+         if (
+
+             (($tenderData['final_tender_awarded'] == 1 || $tenderData['negotiation_is_awarded'] == 1)
+             && $tenderData['tender_type_id'] != 1)
+             ||
+             ( !$supplierTender)
+         ) {
+             return [
+                 'success' => false,
+                 'message' => "You don't have access.",
+                 'data' => [],
+             ];
+         }*/
 
 
         $assignDocumentTypesDeclared = [1];
