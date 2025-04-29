@@ -2505,26 +2505,23 @@ class SRMService
 
         $supplierTender = TenderMasterSupplier::getSupplierTender($tenderMasterId, $supplierRegId);
 
-        $finalAwarded = $tenderData['final_tender_awarded'] == 1;
-        $negotiationAwarded = $tenderData['negotiation_is_awarded'] == 1;
-        $isNonTenderType = $tenderData['tender_type_id'] != 1;
-        $hasSupplierAccess = $supplierTender !== null;
-
-        if (($finalAwarded || $negotiationAwarded) && !$hasSupplierAccess) {
+        if (($tenderData['final_tender_awarded'] == 1 || $tenderData['negotiation_is_awarded'] == 1) && (!$supplierTender))
+        {
             return [
                 'success' => false,
-                'message' => "You don't have access",
+                'message' => "You don't have access.",
                 'data' => [],
+            ];
+
+        } else if (($tenderData['final_tender_awarded'] != 1 || $tenderData['negotiation_is_awarded'] != 1) && (!$supplierTender)) {
+
+            return [
+                    'success' => false,
+                    'message' => "You don't have access.",
+                    'data' => [],
             ];
         }
 
-        if ((!$finalAwarded || !$negotiationAwarded) && !$hasSupplierAccess) {
-            return [
-                'success' => false,
-                'message' => "You don't have access",
-                'data' => [],
-            ];
-        }
 
         /* Log::info($supplierTender);
          if (
