@@ -2113,15 +2113,6 @@ class SRMService
             ];
         }
 
-        $supplierTender = TenderMasterSupplier::getSupplierTender($extra['tenderId'], $supplierRegId);
-        if(!$supplierTender){
-            return [
-                'success' => false,
-                'message' => 'No record found!',
-                'data' => []
-            ];
-        }
-
         try {
             $data = TenderMaster::select('id')
                 ->with(['tenderPreBidClarification' => function ($q) use ($SearchText, $supplierRegId) {
