@@ -182,4 +182,21 @@ class TenderBidClarifications extends Model
     {
         return $this->hasOne('App\Models\TenderMaster', 'id', 'tender_master_id');
     }
+    public static function getPreBidTenderID($preBidId){
+        $bidData = self::select('tender_master_id')->where('id', $preBidId)->first();
+        return $bidData->tender_master_id ?? 0;
+    }
+    public static function checkAccessForTenderBid($preBidId, $supplierRegId)
+    {
+        $claData = self::select('supplier_id', 'is_public')
+            ->where('id', $preBidId)
+            ->first();
+
+        if (!$claData) {
+            return false;
+        }
+
+        return $claData->supplier_id == $supplierRegId || $claData->is_public == 1;
+    }
+
 }
