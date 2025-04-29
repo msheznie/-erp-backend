@@ -188,15 +188,9 @@ class TenderBidClarifications extends Model
     }
     public static function checkAccessForTenderBid($preBidId, $supplierRegId)
     {
-        $claData = self::select('supplier_id', 'is_public')
+        return self::select('supplier_id', 'is_public')
             ->where('id', $preBidId)
             ->first();
-
-        if (!$claData) {
-            return false;
-        }
-
-        return $claData->supplier_id == $supplierRegId || $claData->is_public == 1;
     }
 
     public static function checkSupplierBidClarification($tenderId, $supplierID){
