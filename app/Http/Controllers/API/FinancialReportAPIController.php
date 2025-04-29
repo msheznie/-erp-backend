@@ -1921,13 +1921,15 @@ class FinancialReportAPIController extends AppBaseController
                         }
                     }
 
-                    $shareHolder = $details->where('itemType', 7)->where('netProfitStatus', 0)->first();
-                    if($shareHolder) {
-                        foreach ($response['columns'] as $column) {
-                            $key = explode("-", $column)[0];
-                            if (isset($key) && ($key == "CONS")) {
-                                if($reportDataNetTotal) {
-                                    $shareHolder->$column = $reportDataNetTotal->$column - $totalNCIAmount;
+                    if ($request['accountType'] != 1) {
+                        $shareHolder = $details->where('itemType', 7)->where('netProfitStatus', 0)->first();
+                        if($shareHolder) {
+                            foreach ($response['columns'] as $column) {
+                                $key = explode("-", $column)[0];
+                                if (isset($key) && ($key == "CONS")) {
+                                    if($reportDataNetTotal) {
+                                        $shareHolder->$column = $reportDataNetTotal->$column - $totalNCIAmount;
+                                    }
                                 }
                             }
                         }

@@ -6,6 +6,7 @@ use App\helper\CommonJobService;
 use App\helper\Helper;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
@@ -173,7 +174,7 @@ class CreatePaymentVoucher implements ShouldQueue
                         }
 
                         if($documentStatus) {
-                            $confirmDataSet = $masterInsert['data'];
+                            $confirmDataSet = PaySupplierInvoiceMaster::find($pvMasterAutoId)->toArray();
                             $confirmDataSet['confirmedYN'] = 1;
                             $confirmDataSet['payeeType'] = $masterDataset['payeeType'];
                             $confirmDataSet['paymentMode'] = $masterDataset['paymentMode'];
@@ -315,144 +316,6 @@ class CreatePaymentVoucher implements ShouldQueue
             if (is_int($request['payment_type'])) {
                 if ($request['payment_type'] == 1) {
                     $paymentType = 3;
-
-                    if (isset($request['payee_type'])) {
-                        if (is_int($request['payee_type'])) {
-                            if (in_array($request['payee_type'],[1,2,3])) {
-
-                                switch ($request['payee_type']) {
-                                    // Validate Supplier
-                                    case 1:
-                                        if (isset($request['supplier'])) {
-                                            $supplier = SupplierMaster::where('primarySupplierCode', $request['supplier'])
-                                                ->orWhere('registrationNumber',$request['supplier'])
-                                                ->first();
-
-                                            if ($supplier) {
-                                                if ($supplier->approvedYN == 1) {
-                                                    $supplierAssign = SupplierAssigned::where('supplierCodeSytem', $supplier->supplierCodeSystem)
-                                                        ->where('companySystemID', $companyId)
-                                                        ->first();
-
-                                                    if ($supplierAssign && $supplierAssign->isAssigned == -1) {
-                                                        if ($supplierAssign->isActive == 1) {
-                                                            if($supplierAssign->isBlocked != 0){
-                                                                $errorData[] = [
-                                                                    'field' => "supplier",
-                                                                    'message' => ["Selected supplier is blocked."]
-                                                                ];
-                                                            }
-                                                        }
-                                                        else {
-                                                            $errorData[] = [
-                                                                'field' => "supplier",
-                                                                'message' => ["Selected supplier is not active."]
-                                                            ];
-                                                        }
-                                                    }
-                                                    else {
-                                                        $errorData[] = [
-                                                            'field' => "supplier",
-                                                            'message' => ["Selected supplier is not assigned to the company."]
-                                                        ];
-                                                    }
-                                                }
-                                                else {
-                                                    $errorData[] = [
-                                                        'field' => "supplier",
-                                                        'message' => ["Selected supplier is not approved."]
-                                                    ];
-                                                }
-                                            }
-                                            else {
-                                                $errorData[] = [
-                                                    'field' => "supplier",
-                                                    'message' => ["Selected Payee type (supplier) is not available in the system."]
-                                                ];
-                                            }
-                                        }
-                                        else {
-                                            $errorData[] = [
-                                                'field' => "supplier",
-                                                'message' => ["supplier field is required."]
-                                            ];
-                                        }
-
-                                        break;
-                                    // Validate Employee
-                                    case 2:
-                                        if (isset($request['employee'])) {
-                                            $employee = Employee::where('empID', $request['employee']);
-                                            if(Helper::checkHrmsIntergrated($companyId)){
-                                                $employee = $employee->whereHas('hr_emp', function($q) use ($request) {
-                                                    $q->orWhere('EmpSecondaryCode', $request['employee']);
-                                                });
-                                            }
-                                            $employee = $employee->first();
-
-                                            if ($employee) {
-                                                if ($employee->empActive == 1) {
-                                                    if($employee->discharegedYN != 0){
-                                                        $errorData[] = [
-                                                            'field' => "employee",
-                                                            'message' => ["Selected employee has already been discharged."]
-                                                        ];
-                                                    }
-                                                }
-                                                else {
-                                                    $errorData[] = [
-                                                        'field' => "employee",
-                                                        'message' => ["Selected employee is not active."]
-                                                    ];
-                                                }
-                                            }
-                                            else {
-                                                $errorData[] = [
-                                                    'field' => "employee",
-                                                    'message' => ["Selected Payee Type (employee) is not available in the system."]
-                                                ];
-                                            }
-                                        }
-                                        else {
-                                            $errorData[] = [
-                                                'field' => "employee",
-                                                'message' => ["employee field is required."]
-                                            ];
-                                        }
-
-                                        break;
-                                    // Validate Other
-                                    case 3:
-                                        if (!isset($request['other'])) {
-                                            $errorData[] = [
-                                                'field' => "other",
-                                                'message' => ["other field is required."]
-                                            ];
-                                        }
-
-                                        break;
-                                }
-                            }
-                            else {
-                                $errorData[] = [
-                                    'field' => "payee_type",
-                                    'message' => ["Selected payee type not match with system"]
-                                ];
-                            }
-                        }
-                        else {
-                            $errorData[] = [
-                                'field' => "payee_type",
-                                'message' => ["Payee Type must be an integer"]
-                            ];
-                        }
-                    }
-                    else {
-                        $errorData[] = [
-                            'field' => "payee_type",
-                            'message' => ["Payee Type field is required"]
-                        ];
-                    }
                 }
                 else {
                     $errorData[] = [
@@ -472,6 +335,220 @@ class CreatePaymentVoucher implements ShouldQueue
             $errorData[] = [
                 'field' => "payment_type",
                 'message' => ["payment_type field is required."]
+            ];
+        }
+
+        $dateValidation = false;
+        if (isset($request['pay_invoice_date'])) {
+            $data = self::validateAPIDate($request['pay_invoice_date']);
+            if ($data) {
+                $dateValidation = true;
+                $payInvoiceDate = Carbon::parse($request['pay_invoice_date']);
+
+                if ($payInvoiceDate->lessThanOrEqualTo(Carbon::today())) {
+                    $financeYear = CompanyFinanceYear::where('companySystemID',$companyId)
+                        ->where('isDeleted',0)
+                        ->where('bigginingDate','<=',$payInvoiceDate)
+                        ->where('endingDate','>=',$payInvoiceDate)
+                        ->where('isActive', -1)
+                        ->first();
+
+                    if ($financeYear) {
+                        $financePeriodGL = CompanyFinancePeriod::where('companySystemID',$companyId)
+                            ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
+                            ->where('isActive', -1)
+                            ->whereMonth('dateFrom',$payInvoiceDate->month)
+                            ->whereMonth('dateTo',$payInvoiceDate->month)
+                            ->where('departmentSystemID', 5)
+                            ->first();
+
+                        if ($financePeriodGL) {
+                            $financePeriodAP = CompanyFinancePeriod::where('companySystemID',$companyId)
+                                ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
+                                ->where('isActive', -1)
+                                ->whereMonth('dateFrom',$payInvoiceDate->month)
+                                ->whereMonth('dateTo',$payInvoiceDate->month)
+                                ->where('departmentSystemID', 1)
+                                ->first();
+
+                            if (!$financePeriodAP) {
+                                $errorData[] = [
+                                    'field' => "pay_invoice_date",
+                                    'message' => ["Financial period related to the selected pay invoice date is not active for the specified department."]
+                                ];
+                            }
+                        }
+                        else {
+                            $errorData[] = [
+                                'field' => "pay_invoice_date",
+                                'message' => ["Financial period related to the selected pay invoice date is not active for the specified department."]
+                            ];
+                        }
+                    }
+                    else{
+                        $errorData[] = [
+                            'field' => "pay_invoice_date",
+                            'message' => ["Financial year related to the selected pay invoice date is either not active or not created."]
+                        ];
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "pay_invoice_date",
+                        'message' => ["Payment voucher date must be today or before"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "pay_invoice_date",
+                    'message' => ["pay_invoice_date format is invalid"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "pay_invoice_date",
+                'message' => ["pay_invoice_date field is required"]
+            ];
+        }
+
+        if (isset($request['payee_type'])) {
+            if (is_int($request['payee_type'])) {
+                if (in_array($request['payee_type'],[1,2,3])) {
+
+                    switch ($request['payee_type']) {
+                        // Validate Supplier
+                        case 1:
+                            if (isset($request['supplier'])) {
+                                $supplier = SupplierMaster::where('primarySupplierCode', $request['supplier'])
+                                    ->orWhere('registrationNumber',$request['supplier'])
+                                    ->first();
+
+                                if ($supplier) {
+                                    if ($supplier->approvedYN == 1) {
+                                        $supplierAssign = SupplierAssigned::where('supplierCodeSytem', $supplier->supplierCodeSystem)
+                                            ->where('companySystemID', $companyId)
+                                            ->first();
+
+                                        if ($supplierAssign && $supplierAssign->isAssigned == -1) {
+                                            if ($supplierAssign->isActive == 1) {
+                                                $invoiceDate = $request['pay_invoice_date'] ?? null;
+                                                $validatorResult = Helper::checkBlockSuppliers($invoiceDate, $supplier->supplierCodeSystem);
+                                                if (!$validatorResult['success']) {
+                                                    $errorData[] = [
+                                                        'field' => "supplier",
+                                                        'message' => ["Selected supplier is blocked."]
+                                                    ];
+                                                }
+                                            }
+                                            else {
+                                                $errorData[] = [
+                                                    'field' => "supplier",
+                                                    'message' => ["Selected supplier is not active."]
+                                                ];
+                                            }
+                                        }
+                                        else {
+                                            $errorData[] = [
+                                                'field' => "supplier",
+                                                'message' => ["Selected supplier is not assigned to the company."]
+                                            ];
+                                        }
+                                    }
+                                    else {
+                                        $errorData[] = [
+                                            'field' => "supplier",
+                                            'message' => ["Selected supplier is not approved."]
+                                        ];
+                                    }
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "supplier",
+                                        'message' => ["Selected Payee type (supplier) is not available in the system."]
+                                    ];
+                                }
+                            }
+                            else {
+                                $errorData[] = [
+                                    'field' => "supplier",
+                                    'message' => ["supplier field is required."]
+                                ];
+                            }
+
+                            break;
+                        // Validate Employee
+                        case 2:
+                            if (isset($request['employee'])) {
+                                $employee = Employee::where('empID', $request['employee'])
+                                    ->when(Helper::checkHrmsIntergrated($companyId), function ($query) use ($request) {
+                                        $query->orWhereHas('hr_emp', function ($q) use ($request) {
+                                            $q->orWhere('EmpSecondaryCode', $request['employee']);
+                                        });
+                                    })->first();
+
+                                if ($employee) {
+                                    if ($employee->empActive == 1) {
+                                        if($employee->discharegedYN != 0){
+                                            $errorData[] = [
+                                                'field' => "employee",
+                                                'message' => ["Selected employee has already been discharged."]
+                                            ];
+                                        }
+                                    }
+                                    else {
+                                        $errorData[] = [
+                                            'field' => "employee",
+                                            'message' => ["Selected employee is not active."]
+                                        ];
+                                    }
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "employee",
+                                        'message' => ["Selected Payee Type (employee) is not available in the system."]
+                                    ];
+                                }
+                            }
+                            else {
+                                $errorData[] = [
+                                    'field' => "employee",
+                                    'message' => ["employee field is required."]
+                                ];
+                            }
+
+                            break;
+                        // Validate Other
+                        case 3:
+                            if (!isset($request['other'])) {
+                                $errorData[] = [
+                                    'field' => "other",
+                                    'message' => ["other field is required."]
+                                ];
+                            }
+
+                            break;
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "payee_type",
+                        'message' => ["Selected payee type not match with system"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "payee_type",
+                    'message' => ["Payee Type must be an integer"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "payee_type",
+                'message' => ["Payee Type field is required"]
             ];
         }
 
@@ -619,79 +696,6 @@ class CreatePaymentVoucher implements ShouldQueue
             $errorData[] = $fieldErrors;
         }
 
-        if (isset($request['pay_invoice_date'])) {
-            $data = self::validateAPIDate($request['pay_invoice_date']);
-            if ($data) {
-                $payInvoiceDate = Carbon::parse($request['pay_invoice_date']);
-
-                if ($payInvoiceDate->lessThanOrEqualTo(Carbon::today())) {
-                    $financeYear = CompanyFinanceYear::where('companySystemID',$companyId)
-                        ->where('isDeleted',0)
-                        ->where('bigginingDate','<=',$payInvoiceDate)
-                        ->where('endingDate','>=',$payInvoiceDate)
-                        ->where('isActive', -1)
-                        ->first();
-
-                    if ($financeYear) {
-                        $financePeriodGL = CompanyFinancePeriod::where('companySystemID',$companyId)
-                            ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
-                            ->where('isActive', -1)
-                            ->whereMonth('dateFrom',$payInvoiceDate->month)
-                            ->whereMonth('dateTo',$payInvoiceDate->month)
-                            ->where('departmentSystemID', 5)
-                            ->first();
-
-                        if ($financePeriodGL) {
-                            $financePeriodAP = CompanyFinancePeriod::where('companySystemID',$companyId)
-                                ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
-                                ->where('isActive', -1)
-                                ->whereMonth('dateFrom',$payInvoiceDate->month)
-                                ->whereMonth('dateTo',$payInvoiceDate->month)
-                                ->where('departmentSystemID', 1)
-                                ->first();
-
-                            if (!$financePeriodAP) {
-                                $errorData[] = [
-                                    'field' => "pay_invoice_date",
-                                    'message' => ["Financial period related to the selected pay invoice date is not active for the specified department."]
-                                ];
-                            }
-                        }
-                        else {
-                            $errorData[] = [
-                                'field' => "pay_invoice_date",
-                                'message' => ["Financial period related to the selected pay invoice date is not active for the specified department."]
-                            ];
-                        }
-                    }
-                    else{
-                        $errorData[] = [
-                            'field' => "pay_invoice_date",
-                            'message' => ["Financial year related to the selected pay invoice date is either not active or not created."]
-                        ];
-                    }
-                }
-                else {
-                    $errorData[] = [
-                        'field' => "pay_invoice_date",
-                        'message' => ["Payment voucher date must be today or before"]
-                    ];
-                }
-            }
-            else {
-                $errorData[] = [
-                    'field' => "pay_invoice_date",
-                    'message' => ["pay_invoice_date format is invalid"]
-                ];
-            }
-        }
-        else {
-            $errorData[] = [
-                'field' => "pay_invoice_date",
-                'message' => ["pay_invoice_date field is required"]
-            ];
-        }
-
         if (isset($request['reverse_charge_mechanism'])) {
             if (is_int($request['reverse_charge_mechanism'])) {
                 if (in_array($request['reverse_charge_mechanism'], [1,2])) {
@@ -803,49 +807,66 @@ class CreatePaymentVoucher implements ShouldQueue
 
         // Validate GL Code
         if (isset($request['gl_account'])) {
-            $chartOfAccount = ChartOfAccountsAssigned::with('chartofaccount')
-                ->where('companySystemID', $companyId)
+            $chartOfAccount = ChartOfAccount::where('primaryCompanySystemID', $companyId)
                 ->where('AccountCode',$request['gl_account'])
                 ->first();
 
             if ($chartOfAccount){
-                if (($chartOfAccount->isActive == 1) && ($chartOfAccount->isAssigned == -1)) {
-                    if ($chartOfAccount->isBank == 0) {
-                        $chartOfAccountMaster = $chartOfAccount->chartofaccount;
-                        if ($chartOfAccountMaster->isApproved == 1) {
-                            if ($chartOfAccount->controllAccountYN == 0) {
-                                if ($chartOfAccount->controlAccountsSystemID == 1) {
+                if ($chartOfAccount->isApproved == 1) {
+                    if ($chartOfAccount->isActive == 1) {
+                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('companySystemID', $companyId)
+                            ->where('chartOfAccountSystemID', $chartOfAccount->chartOfAccountSystemID)->first();
+
+                        if ($chartOfAccountAssigned && $chartOfAccountAssigned->isAssigned == -1) {
+                            if ($chartOfAccountAssigned->isActive == 1) {
+                                if ($chartOfAccountAssigned->isBank == 0) {
+                                    if ($chartOfAccountAssigned->controllAccountYN == 0) {
+                                        if ($chartOfAccountAssigned->controlAccountsSystemID == 1) {
+                                            $errorData[] = [
+                                                'field' => "gl_account",
+                                                'message' => ["Selected GL code is of type 'Income' and is not allowed for this transaction."]
+                                            ];
+                                        }
+                                    }
+                                    else {
+                                        $errorData[] = [
+                                            'field' => "gl_account",
+                                            'message' => ["Selected GL code is a control account and cannot be used."]
+                                        ];
+                                    }
+                                }
+                                else {
                                     $errorData[] = [
                                         'field' => "gl_account",
-                                        'message' => ["Selected GL code is of type 'Income' and is not allowed for this transaction."]
+                                        'message' => ["Selected GL code is bank gl code."]
                                     ];
                                 }
                             }
                             else {
                                 $errorData[] = [
                                     'field' => "gl_account",
-                                    'message' => ["Selected GL code is a control account and cannot be used."]
+                                    'message' => ["Selected GL code is not active"]
                                 ];
                             }
                         }
                         else {
                             $errorData[] = [
                                 'field' => "gl_account",
-                                'message' => ["Selected GL code is not approved."]
+                                'message' => ["Selected GL code is not assigned to the company."]
                             ];
                         }
                     }
                     else {
                         $errorData[] = [
                             'field' => "gl_account",
-                            'message' => ["Selected GL code is bank gl code."]
+                            'message' => ["Selected GL code is not active"]
                         ];
                     }
                 }
                 else {
                     $errorData[] = [
                         'field' => "gl_account",
-                        'message' => ["Selected GL code is either not active or not assigned to the company."]
+                        'message' => ["Selected GL code is not approved."]
                     ];
                 }
             }
