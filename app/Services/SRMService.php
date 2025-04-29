@@ -2185,7 +2185,6 @@ class SRMService
         $tenderId = TenderBidClarifications::getPreBidTenderID($id);
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
-<<<<<<< HEAD
         $checkAccess = TenderBidClarifications::checkAccessForTenderBid($id, $supplierRegId);
 
         if( $checkAccess['is_public']==0 && ($checkAccess['supplier_id']!=$supplierRegId || $checkAccess['supplier_id']!=$userId))
@@ -2197,15 +2196,6 @@ class SRMService
                     'data' => []
                 ];
             }
-=======
-        
-        if($supplierRegId!=$userId || !$supplierTender){
-            return [
-                'success' => false,
-                'message' => 'No record found!',
-                'data' => []
-            ];
->>>>>>> 4d3754ffa (chore(General): Document Download [GSUP-267])
         }
 
 

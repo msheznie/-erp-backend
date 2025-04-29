@@ -297,7 +297,8 @@ class Company extends Model
         $awsPolicy = Helper::checkPolicy($this->masterCompanySystemIDReorting, 50);
 
         if ($awsPolicy) {
-            return Helper::getFileUrlFromS3($this->logoPath);    
+            $expiry_time = config('filesystems.disks.s3.file_expiry_time');
+             return Helper::getFileUrlFromS3($this->logoPath, $expiry_time);
         } else {
             return $this->logoPath;
         }
