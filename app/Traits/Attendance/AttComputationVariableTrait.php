@@ -13,6 +13,7 @@ trait AttComputationVariableTrait{
     public $clockOut;
     public $gracePeriod;
     public $isGracePeriodSet =0;
+    public $onDutyDtObj;
     public $shiftHoursObj;
     public $shiftHours = null;
     public $shiftId;
