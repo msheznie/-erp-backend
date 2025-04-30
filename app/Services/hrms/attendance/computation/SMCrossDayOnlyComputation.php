@@ -25,6 +25,7 @@ class SMCrossDayOnlyComputation{
     public $shiftHoursObj;
     public $shiftHours;
     public $gracePeriod;
+    public $onDutyDtObj;
 
 
     public $companyId;
@@ -239,18 +240,18 @@ class SMCrossDayOnlyComputation{
             return false;
         }
 
-        $out = $this->clockOutDtObj;
+        $t1 = $this->clockOutDtObj;
 
-        if(empty($out)){
+        if(empty($t1)){
             return false;
         }
 
-        $in = ($this->isShiftHoursSet && $this->onDutyDateTime >= $this->clockInDtObj)
-            ? $this->onDutyDateTime
+        $t2 = ($this->isShiftHoursSet && $this->onDutyDtObj >= $this->clockInDtObj)
+            ? $this->onDutyDtObj
             : $this->clockInDtObj;
 
 
-        $totWorkingHoursObj = $out->diff($in);
+        $totWorkingHoursObj = $t1->diff($t2);
         $hours = $totWorkingHoursObj->format('%h');
         $minutes = $totWorkingHoursObj->format('%i');
         $this->actualWorkingHours = ($hours * 60) + $minutes;
