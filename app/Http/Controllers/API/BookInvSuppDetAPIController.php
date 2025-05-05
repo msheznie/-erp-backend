@@ -998,19 +998,25 @@ class BookInvSuppDetAPIController extends AppBaseController
                     $examptVal = TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
                 }
             }
-        
-            $totalVATAmount = ($unbilledData['logisticYN']) ? TaxService::poLogisticVATDistributionForGRV($grvDetail->grvAutoID,0,$grvDetail->supplierID)['vatOnPOTotalAmountTrans'] : $examptVal;
-             if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
-                $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);
-                $VATAmount = $totalVATAmount * $percentage;
-                    $details['VATAmount'] = \Helper::roundValue($VATAmount);
 
-                    $VATAmountLocal = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->localCurrencyID, $VATAmount, $groupMaster->localCurrencyER);
-                    $details['VATAmountLocal'] = \Helper::roundValue($VATAmountLocal);
+//            $totalVATAmount = ($unbilledData['logisticYN']) ? TaxService::poLogisticVATDistributionForGRV($grvDetail->grvAutoID,0,$grvDetail->supplierID)['vatOnPOTotalAmountTrans'] : $examptVal;
+//             if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
+//                $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);
+//                $VATAmount = $totalVATAmount * $percentage;
+//                    $details['VATAmount'] = \Helper::roundValue($VATAmount);
+//
+//                    $VATAmountLocal = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->localCurrencyID, $VATAmount, $groupMaster->localCurrencyER);
+//                    $details['VATAmountLocal'] = \Helper::roundValue($VATAmountLocal);
+//
+//
+//                    $VATAmountRpt = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->companyReportingCurrencyID, $VATAmount, $groupMaster->companyReportingER);
+//                    $details['VATAmountRpt'] = \Helper::roundValue($VATAmountRpt);
+//            }
 
-                    
-                    $VATAmountRpt = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->companyReportingCurrencyID, $VATAmount, $groupMaster->companyReportingER);
-                    $details['VATAmountRpt'] = \Helper::roundValue($VATAmountRpt);
+            if($value['logisticID'] > 0){
+                $details['VATAmount'] = \Helper::roundValue($value['VATAmount']);
+                $details['VATAmountLocal'] = \Helper::roundValue($value['VATAmountLocal']);
+                $details['VATAmountRpt'] = \Helper::roundValue($value['VATAmountRpt']);
             }
 
             $createRes = SupplierInvoiceItemDetail::create($details);
