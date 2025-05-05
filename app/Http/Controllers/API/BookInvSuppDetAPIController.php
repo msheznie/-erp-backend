@@ -1026,7 +1026,6 @@ class BookInvSuppDetAPIController extends AppBaseController
         return ['status' => true, 'data' => $totalPullAmount];
     }
 
-
     public function checkPurchaseReturnsAndUpdateBookInvDetail($grvAutoID, $bookingSuppMasInvAutoID)
     {
         $unbilledData = UnbilledGrvGroupBy::where('grvAutoID', $grvAutoID)
