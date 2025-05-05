@@ -306,6 +306,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
         DB::beginTransaction();
         try {
                 $input = $request->all();
+                $tenderMaster = TenderMaster::find($input['documentSystemCode']);
                 $version = 1;
                 $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode',$input['documentSystemCode'])->latest('id')->first();
                 if(isset($is_vsersion_exit))
@@ -339,18 +340,18 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 $tender_data['tender_edit_version_id'] = $documentModifyRequest['id'];
                 $result = $namespacedModel::where('id', $input['documentSystemCode'])->update($tender_data);
                 
-                $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["companySystemID"], 'document' => $input["document_master_id"],'reference_document_id' => $input["requested_document_master_id"]);
+                $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["companySystemID"], 'document' => $input["document_master_id"],'reference_document_id' => $input["requested_document_master_id"],'document_type' => $tenderMaster->document_type,'amount' => $tenderMaster->estimated_value,'tenderTypeId' => $tenderMaster->tender_type_id);
                 $confirm = \Helper::confirmDocument($params);
-           
 
-                DB::commit();
+
                 if (!$confirm["success"]) {
-                    DB::rollback();
+                    DB::rollBack();
                     return ['success' => false, 'message' => $confirm["message"]];
-                } else {
-                    return ['success' => true, 'message' => 'Tender modify request sent successfully'];
                 }
 
+                DB::commit();
+
+                return ['success' => true, 'message' => 'Tender modify request sent successfully'];
 
             } catch (\Exception $e) {
                 DB::rollback();
