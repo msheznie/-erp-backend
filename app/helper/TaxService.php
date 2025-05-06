@@ -959,6 +959,7 @@ class TaxService
                                                                ->where('exempt_vat_portion', 0);
                                                            })
                                                            ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                                                           ->where('supplierInvoAmount', '>', 0)
                                                            ->groupBy('bookingSuppMasInvAutoID')
                                                            ->first();
 
