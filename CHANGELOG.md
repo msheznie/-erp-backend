@@ -1,5 +1,47 @@
 # Changelog
 
+## [10.68.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.67.1...v10.68.0) (2025-05-07)
+
+
+### Features
+
+* **accounts payable:** Added Employee advance account details for aging report [GCP-6439] ([#7865](https://github.com/pbsgears/Gears_BackEnd/issues/7865)) ([1de1bd0](https://github.com/pbsgears/Gears_BackEnd/commit/1de1bd07c34df486504f2ac3c9b51dd8ec53779a))
+* **accounts payable:** Payment Voucher API configuration [GCP-6835] ([#7902](https://github.com/pbsgears/Gears_BackEnd/issues/7902)) ([6092543](https://github.com/pbsgears/Gears_BackEnd/commit/6092543eddc3af0becf53f0b12816691baa19a53))
+* **accounts payable:** Show Bank and other details in PV print preview & pdf [GCP-6135] ([#7861](https://github.com/pbsgears/Gears_BackEnd/issues/7861)) ([e62fe45](https://github.com/pbsgears/Gears_BackEnd/commit/e62fe45bcefedcb3975093c990e396a94c4e5f08))
+* **accounts payable:** Show the bank charges only if it is available [GCP-7126] ([#7905](https://github.com/pbsgears/Gears_BackEnd/issues/7905)) ([b81fbd6](https://github.com/pbsgears/Gears_BackEnd/commit/b81fbd62a77cc17256a72f18b44d790738e71ca0))
+* **asset management:** gl code is not posting on gl review [GCP-6894] ([#7867](https://github.com/pbsgears/Gears_BackEnd/issues/7867)) ([8f4fac2](https://github.com/pbsgears/Gears_BackEnd/commit/8f4fac252f543efeff1f0e456c4e141b701a2669))
+* **general ledger:** Show arabic in JV print pdf [GCP-6543] ([#7864](https://github.com/pbsgears/Gears_BackEnd/issues/7864)) ([87ad114](https://github.com/pbsgears/Gears_BackEnd/commit/87ad114c1f4fe3671b9dfc570cc3da0e08872be0))
+* **group report:** Balance sheet consolidation report configuration [GCP-6535] ([#7859](https://github.com/pbsgears/Gears_BackEnd/issues/7859)) ([24d0332](https://github.com/pbsgears/Gears_BackEnd/commit/24d0332dff6acb6114ad0654279e713163f9e201))
+* **group report:** consolidation dill down changes [GCP-7157] ([#7923](https://github.com/pbsgears/Gears_BackEnd/issues/7923)) ([d637b72](https://github.com/pbsgears/Gears_BackEnd/commit/d637b72504148d6a2ac8d91240ddf32ead0f96af))
+* **inventory:** The Tax & Unbilled GRV entries updating wrongly in PR [GCP-7032] ([#7901](https://github.com/pbsgears/Gears_BackEnd/issues/7901)) ([6097e1b](https://github.com/pbsgears/Gears_BackEnd/commit/6097e1b681bc5c877bd9f37843bd98fca73e023e))
+* **system admin:** Add validations for VAT and WHT setup to prevent duplicates and restrict GL changes after posting [GCP-6587] ([#7862](https://github.com/pbsgears/Gears_BackEnd/issues/7862)) ([000297b](https://github.com/pbsgears/Gears_BackEnd/commit/000297bf4c9797f04f006f002f1eefe047b46db7))
+
+
+### Bug Fixes
+
+* **accounts payable:** Exempt VAT error fixed and error message added [GCP-6547] ([#7860](https://github.com/pbsgears/Gears_BackEnd/issues/7860)) ([1278257](https://github.com/pbsgears/Gears_BackEnd/commit/1278257465d01d7715ab4f8769cbd895e4ab84c0))
+* **accounts payable:** Fix amount mismatch in Supplier Invoice Booking due to logistics [GCP-6370] ([#7912](https://github.com/pbsgears/Gears_BackEnd/issues/7912)) ([29755f6](https://github.com/pbsgears/Gears_BackEnd/commit/29755f621d643b03ccdf3dd407dcc270b79f638a))
+* **accounts payable:** Fixed PV entries not posting for 0 net amount documents [GCP-6532] ([#7885](https://github.com/pbsgears/Gears_BackEnd/issues/7885)) ([093e759](https://github.com/pbsgears/Gears_BackEnd/commit/093e7596397f3fe0e58681573a856776f1c9eaa3))
+* **accounts payable:** Fixed unallocated column showing wrong amount in suppler aging report for advance GL [GCP-6645] ([#7857](https://github.com/pbsgears/Gears_BackEnd/issues/7857)) ([434f94f](https://github.com/pbsgears/Gears_BackEnd/commit/434f94f3e7c6a4739885930c5cc71c9904b50188))
+* **accounts payable:** system showing error message while pull PO in supplier invoice fix [GCP-7226] ([#7947](https://github.com/pbsgears/Gears_BackEnd/issues/7947)) ([19f4dbf](https://github.com/pbsgears/Gears_BackEnd/commit/19f4dbff308a2bbc2ccf63624566b12700a62bf8))
+* **accounts receivable:** Resolve error when cancelling accounts receivable [GCP-6643] ([#7858](https://github.com/pbsgears/Gears_BackEnd/issues/7858)) ([16f03d1](https://github.com/pbsgears/Gears_BackEnd/commit/16f03d1ad6a8a3e880c4cc18f129d29649de4a99))
+* **asset management:** Asset costing bulk upload validate asset category for company [GCP-6545] ([#7883](https://github.com/pbsgears/Gears_BackEnd/issues/7883)) ([0901791](https://github.com/pbsgears/Gears_BackEnd/commit/0901791c48df3dd35ae253b209bda326b0aff798))
+* **asset management:** Fixed asset code getting skipped on upload error [GCP-6640] ([#7869](https://github.com/pbsgears/Gears_BackEnd/issues/7869)) ([31bcb88](https://github.com/pbsgears/Gears_BackEnd/commit/31bcb88319cd7c70c9ad7ba2dcdba745f9065d91))
+* **asset management:** NBV Issue with Asset Register Detail Report [GCP-6550] ([#7887](https://github.com/pbsgears/Gears_BackEnd/issues/7887)) ([d946370](https://github.com/pbsgears/Gears_BackEnd/commit/d946370b4bf04b1b80ecc4af2f0a0d942b73adc1))
+* **attendance:** Incorrect Actual Hours Calc if employee clock in before on duty time - Rota shift [GHR-3251] ([98f9779](https://github.com/pbsgears/Gears_BackEnd/commit/98f9779098264cf627d8b1b2ebb28b082a000003))
+* **common:** Fixed actual consumption month wise issue[GCP-6510] ([#7886](https://github.com/pbsgears/Gears_BackEnd/issues/7886)) ([5628b83](https://github.com/pbsgears/Gears_BackEnd/commit/5628b830a9841feb448216cc783df8ec478deb80))
+* **common:** Sentry issue in document code configuration [GCP-7033] ([#7884](https://github.com/pbsgears/Gears_BackEnd/issues/7884)) ([bf37c16](https://github.com/pbsgears/Gears_BackEnd/commit/bf37c160895597f579091e1177501afe2d851c0c))
+* **general ledger:** finanical report gl code details not showing correct formula column [GCP-6305] ([#7868](https://github.com/pbsgears/Gears_BackEnd/issues/7868)) ([e6c5c39](https://github.com/pbsgears/Gears_BackEnd/commit/e6c5c39a273d7ba5ec78aed8b6c0ca31a0229c81))
+* **inventory:** Show Currency & Total in MI Approval list & Print [GCP-6258] ([#7871](https://github.com/pbsgears/Gears_BackEnd/issues/7871)) ([fd3e853](https://github.com/pbsgears/Gears_BackEnd/commit/fd3e8538d90839b2152d79045d3fd063e3313ce4))
+* **inventory:** Show Currency & Total in MI Approval list & Print [GCP-6258] ([#7873](https://github.com/pbsgears/Gears_BackEnd/issues/7873)) ([35ba750](https://github.com/pbsgears/Gears_BackEnd/commit/35ba75098781cc7bafc0f97c4fff22f3e42722f1))
+* **inventory:** Show Currency & Total in MI Approval list & Print [GCP-6258] ([#7874](https://github.com/pbsgears/Gears_BackEnd/issues/7874)) ([ab561d3](https://github.com/pbsgears/Gears_BackEnd/commit/ab561d3c2429e02a97cc5162503984ec73c7e80c))
+* **inventory:** Show Currency & Total in MI Approval list & Print [GCP-6258] ([#7875](https://github.com/pbsgears/Gears_BackEnd/issues/7875)) ([e087c2d](https://github.com/pbsgears/Gears_BackEnd/commit/e087c2d51606f7b08881b58ba2241ccb44d214b6))
+* **inventory:** The GL entries updating wrongly in Purchase Return [GCP-6492] ([#7870](https://github.com/pbsgears/Gears_BackEnd/issues/7870)) ([3e48ac4](https://github.com/pbsgears/Gears_BackEnd/commit/3e48ac4a7368ecaf703af2f8c10b7d6a12554f12))
+* **procurement:** Fixed document code duplication issue in procurement module documents [GCP-6631] ([#7872](https://github.com/pbsgears/Gears_BackEnd/issues/7872)) ([9493ae0](https://github.com/pbsgears/Gears_BackEnd/commit/9493ae0cf8c8c2ebff2adc2723b82a7ddc1e94c7))
+* **procurement:** Show current logged company PO in qty on order [GCP-6528] ([#7863](https://github.com/pbsgears/Gears_BackEnd/issues/7863)) ([3a03939](https://github.com/pbsgears/Gears_BackEnd/commit/3a03939090bb2b1a9f1e486c53e3bb122a94eed6))
+* **treasury management:** Fixed bank reconciliation mismatch opening & closing balance [GCP-6624] ([#7866](https://github.com/pbsgears/Gears_BackEnd/issues/7866)) ([be2a4c2](https://github.com/pbsgears/Gears_BackEnd/commit/be2a4c28fb34796a8d2994743fb50604f8741bfd))
+* **treasury managment:** Fixed PV details duplicate in multiple cheques [GCP-6435] ([#7856](https://github.com/pbsgears/Gears_BackEnd/issues/7856)) ([15201e9](https://github.com/pbsgears/Gears_BackEnd/commit/15201e91a2ee38b4615a6ad54068dd36648209ca))
+
 ## [10.67.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.67.0...v10.67.1) (2025-04-26)
 
 
