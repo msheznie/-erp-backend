@@ -433,6 +433,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $lastSerial = MaterielRequest::where('companySystemID', $input['companySystemID'])
             ->where('documentSystemID', $inputData['documentSystemID'])
             ->orderBy('serialNumber', 'desc')
+            ->lockForUpdate()
             ->first();
 
             $lastSerialNumber = 1;
@@ -1454,6 +1455,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
             ->where('documentSystemID', $input['documentSystemID'])
             ->orderBy('purchaseRequestID', 'desc')
+            ->lockForUpdate()
             ->first();
 
         $lastSerialNumber = 1;
@@ -1620,6 +1622,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
             ->where('documentSystemID', $input['documentSystemID'])
             ->orderBy('purchaseRequestID', 'desc')
+            ->lockForUpdate()
             ->first();
 
         $lastSerialNumber = 1;

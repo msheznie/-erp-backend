@@ -6601,30 +6601,53 @@ class BudgetConsumptionService
 	}
 
 	private static function actualConsumptionPandL($companyId, $chartOfAccountIDs, $financialYear, $glAccount) {
-		$query = "SELECT 
-				erp_budgetconsumeddata.companySystemID, 
-				erp_budgetconsumeddata.Year, 
-				erp_budgetconsumeddata.companyFinanceYearID,
-				month,
-				SUM(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount
-			FROM erp_budgetconsumeddata 
-			WHERE erp_budgetconsumeddata.consumeYN = -1 
-			AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
-			AND companySystemID = $companyId 
-			AND companyFinanceYearID = $financialYear
-			AND chartOfAccountID IN ($chartOfAccountIDs)";
+        $query = "SELECT 
+                    cd.companySystemID, 
+                    cd.Year, 
+                    cd.companyFinanceYearID,
+                    CASE
+                        WHEN cd.documentID = 'JV' THEN
+                            MONTH ( jv.JVdate) 
+                        WHEN cd.documentID = 'GRV' THEN
+                            MONTH ( grv.grvDate)
+                        WHEN cd.documentID = 'PRN' THEN
+                            MONTH ( pr.purchaseReturnDate)
+                        ELSE cd.month
+                    END AS month,
+                    SUM(cd.consumedRptAmount) AS consumed_amount
+                FROM erp_budgetconsumeddata as cd 
+                LEFT JOIN erp_jvmaster as jv ON cd.documentSystemCode = jv.jvMasterAutoId
+                AND cd.documentID = 'JV'
+                LEFT JOIN erp_grvmaster grv ON cd.documentSystemCode = grv.grvAutoID 
+                AND cd.documentID = 'GRV' 
+                LEFT JOIN erp_purchasereturnmaster pr ON cd.documentSystemCode = pr.purhaseReturnAutoID 
+                AND cd.documentID = 'PRN' 
+                WHERE cd.consumeYN = -1 
+                AND (cd.projectID = 0 OR cd.projectID IS NULL)
+                AND cd.companySystemID = $companyId 
+                AND cd.companyFinanceYearID = $financialYear
+                AND cd.chartOfAccountID IN ($chartOfAccountIDs)";
 
-		if (!empty($glAccount)) {
-			if (is_array($glAccount)) {
-				$glAccountList = implode(',', $glAccount);
-				$query .= " AND erp_budgetconsumeddata.chartOfAccountID IN ($glAccountList)";
-			} else {
-				$query .= " AND erp_budgetconsumeddata.chartOfAccountID = $glAccount";
-			}
-		}
+        if (!empty($glAccount)) {
+            if (is_array($glAccount)) {
+                $glAccountList = implode(',', $glAccount);
+                $query .= " AND cd.chartOfAccountID IN ($glAccountList)";
+            } else {
+                $query .= " AND cd.chartOfAccountID = $glAccount";
+            }
+        }
 
-		$query .= " GROUP BY month";
-		$data = DB::select($query);
+        $query .= "GROUP BY 
+		            CASE
+                        WHEN cd.documentID = 'JV' THEN
+                            MONTH ( jv.JVdate) 
+                        WHEN cd.documentID = 'GRV' THEN
+                            MONTH ( grv.grvDate)
+                        WHEN cd.documentID = 'PRN' THEN
+                            MONTH ( pr.purchaseReturnDate)
+                        ELSE cd.month
+                    END";
+        $data = DB::select($query);
 
 		for ($i = 1; $i <= 12; $i++) {
 			$results[$i] = [
@@ -6632,12 +6655,12 @@ class BudgetConsumptionService
 			];
 		}
 
-		foreach ($data as $key => $dataValue) {	
+		foreach ($data as $key => $dataValue) {
 			$month = $dataValue->month;
 
 			$consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) {
 				$query->with(['grv_details' => function ($query) {
-					$query->select('grvDetailsID', 'grvAutoID', 'purchaseOrderMastertID', 
+					$query->select('grvDetailsID', 'grvAutoID', 'purchaseOrderMastertID',
 							'purchaseOrderDetailsID', 'financeGLcodePLSystemID', 'netAmount')
 						->with(['grv_master' => function ($query) {
 							$query->with('details')->select('grvAutoID', 'grvPrimaryCode', 'approved',
@@ -6658,18 +6681,18 @@ class BudgetConsumptionService
 			->where('documentSystemID', 2)
 			->where('month', $month)
 			->get();
-		
+
 			$committedAmount = 0;
 			$actuallConsumptionAmount = 0;
-			
+
 			foreach ($consumedAmountOfPO as $key => $value) {
 				if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
 					$committedAmount += $value->consumedRptAmount;
 				}
-			}	
-				
+			}
+
 			$actuallConsumptionAmount = $dataValue->consumed_amount - $committedAmount;
-	
+
 			$results[$month] = [
 				'amount' => ($results[$month]['actuallConsumptionAmount'] ?? 0) + $actuallConsumptionAmount
 			];
@@ -6680,46 +6703,60 @@ class BudgetConsumptionService
 
 	private static function actualConsumptionBL($companyId, $chartOfAccountIDs, $financialYear, $glAccount) {
 		$query = "SELECT 
-				erp_budgetconsumeddata.companySystemID, 
-				erp_budgetconsumeddata.Year, 
-				erp_budgetconsumeddata.companyFinanceYearID,
-				erp_budgetconsumeddata.month,
-				erp_budgetconsumeddata.chartOfAccountID,
-				SUM(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount
-			FROM erp_budgetconsumeddata 
-			JOIN erp_budjetdetails ON erp_budjetdetails.chartofaccountID = erp_budgetconsumeddata.chartOfAccountID 
-			AND erp_budjetdetails.companySystemID = $companyId
-			AND erp_budjetdetails.companyFinanceYearID = $financialYear
-			WHERE erp_budgetconsumeddata.consumeYN = -1 
-			AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
-			AND erp_budgetconsumeddata.companySystemID = $companyId 
-			AND erp_budgetconsumeddata.companyFinanceYearID = $financialYear
-			AND erp_budgetconsumeddata.chartOfAccountID IN ($chartOfAccountIDs)";
+                    cd.companySystemID, 
+                    cd.Year, 
+                    cd.companyFinanceYearID,
+                    CASE
+                        WHEN cd.documentID = 'JV' THEN
+                            MONTH ( jv.JVdate) 
+                        WHEN cd.documentID = 'GRV' THEN
+                            MONTH ( grv.grvDate)
+                        WHEN cd.documentID = 'PRN' THEN
+                            MONTH ( pr.purchaseReturnDate)
+                        ELSE cd.month
+                    END AS month,
+                    cd.chartOfAccountID,
+                    SUM(cd.consumedRptAmount) AS consumed_amount
+                FROM erp_budgetconsumeddata as cd
+                JOIN erp_budjetdetails as bd ON bd.chartofaccountID = cd.chartOfAccountID 
+                AND bd.companySystemID = $companyId
+                AND bd.companyFinanceYearID = $financialYear
+                LEFT JOIN erp_jvmaster as jv ON cd.documentSystemCode = jv.jvMasterAutoId
+                AND cd.documentID = 'JV'
+                LEFT JOIN erp_grvmaster grv ON cd.documentSystemCode = grv.grvAutoID 
+                AND cd.documentID = 'GRV' 
+                LEFT JOIN erp_purchasereturnmaster pr ON cd.documentSystemCode = pr.purhaseReturnAutoID 
+                AND cd.documentID = 'PRN'
+                WHERE cd.consumeYN = -1 
+                AND (cd.projectID = 0 OR cd.projectID IS NULL)
+                AND cd.companySystemID = $companyId 
+                AND cd.companyFinanceYearID = $financialYear
+                AND cd.chartOfAccountID IN ($chartOfAccountIDs)";
 
 		if (!empty($glAccount)) {
 			if (is_array($glAccount)) {
 				$glAccountList = implode(',', $glAccount);
-				$query .= " AND erp_budgetconsumeddata.chartOfAccountID IN ($glAccountList)";
+				$query .= " AND cd.chartOfAccountID IN ($glAccountList)";
 			} else {
-				$query .= " AND erp_budgetconsumeddata.chartOfAccountID = $glAccount";
+				$query .= " AND cd.chartOfAccountID = $glAccount";
 			}
 		}
 
 		$query .= " GROUP BY chartOfAccountID";
 		$data = DB::select($query);
-		
+
 		for ($i = 1; $i <= 12; $i++) {
 			$results[$i] = [
 				'amount' => 0
 			];
 		}
-		
-		foreach ($data as $key => $dataValue) {	
+
+		foreach ($data as $key => $dataValue) {
 			$month = $dataValue->month;
 
 			$consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) {
 				$query->with(['grv_details' => function ($query) {
-					$query->select('grvDetailsID', 'grvAutoID', 'purchaseOrderMastertID', 
+					$query->select('grvDetailsID', 'grvAutoID', 'purchaseOrderMastertID',
 							'purchaseOrderDetailsID', 'financeGLcodePLSystemID', 'netAmount')
 						->with(['grv_master' => function ($query) {
 							$query->with('details')->select('grvAutoID', 'grvPrimaryCode', 'approved',
@@ -6740,15 +6777,15 @@ class BudgetConsumptionService
 			->where('documentSystemID', 2)
 			->where('month', $month)
 			->get();
-		
+
 			$tot = 0;
 			$committedAmount = 0;
 			$partiallyReceivedAmount = 0;
 			$actuallConsumptionAmount = 0;
 			$fixedCOmmitedAmount = 0;
-			$grv_details = [];		
-				
-			
+			$grv_details = [];
+
+
 				foreach ($consumedAmountOfPO as $key => $value) {
 					if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
 						$committedAmount += $value->consumedRptAmount;
@@ -6777,7 +6814,7 @@ class BudgetConsumptionService
 											$fixed_assets =  FixedAssetMaster::where('costglCodeSystemID', $value->chartOfAccountID)
 											->where('docOriginDocumentSystemID',3)
 											->where('docOriginSystemCode',$grv->grv_master->grvAutoID)->get();
-		
+
 											if($fixed_assets) {
 												foreach($fixed_assets as $asset) {
 													if($asset->approved == -1) {
@@ -6786,10 +6823,10 @@ class BudgetConsumptionService
 												}
 											}
 											array_push($grv_details,$grv->grv_master->grvAutoID);
-										}	
+										}
 									}
 								}
-								
+
 								$totalCommitedAmount = $notRecivedPoNonFixedAsset->remainingAmount + $notRecivedPoNonFixedAsset->receivedAmount;
 								$tot+=$totalCommitedAmount;
 							} else {
@@ -6802,7 +6839,7 @@ class BudgetConsumptionService
 										}
 									}
 								}
-		
+
 								$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
 								$currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
 								$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
@@ -6811,16 +6848,17 @@ class BudgetConsumptionService
 							}
 						}
 					}
-				}	
-				
-				$commited_amount = $tot - $fixedCOmmitedAmount;
-				$commited_amount = $commited_amount < 1?0:$commited_amount;							
-				$currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
-				$committedAmount = $currencyConversionRptAmount['reportingAmount'];
-	
+
+                    $commited_amount = $tot - $fixedCOmmitedAmount;
+                    $commited_amount = $commited_amount < 1?0:$commited_amount;
+                    $currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
+                    $committedAmount = $currencyConversionRptAmount['reportingAmount'];
+				}
+
 				$consumAssetamount = FixedAssetMaster::selectRaw('SUM(costUnitRpt) as amount')
 				->where('costglCodeSystemID', $dataValue->chartOfAccountID)
 				->where('approved',-1)
+				->where('companySystemID', $companyId)
 				->groupBy('costglCodeSystemID')->first();
 				if($consumAssetamount) {
 					$actuallConsumptionAmount = $consumAssetamount->amount;

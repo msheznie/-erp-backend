@@ -269,6 +269,58 @@ WHERE
 	AND erp_documentapproved.documentSystemID IN ( 1, 50, 51 ) 
 	AND erp_documentapproved.employeeSystemID = $employeeSystemID
 	) AS PendingRequestApprovals UNION ALL
+
+SELECT
+	* 
+FROM
+	(
+SELECT
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_itemissuemaster.comment,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS approvedEmployee,
+	customermaster.CustomerName AS SupplierOrCustomer,
+	currencymaster.DecimalPlaces as DecimalPlaces ,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	SUM(erp_itemissuedetails.issueCostLocalTotal) AS DocumentValue,
+	0 AS amended,
+	erp_documentapproved.approvedYN,
+	erp_itemissuemaster.issueType AS documentType
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_itemissuemaster ON erp_itemissuemaster.companySystemID = erp_documentapproved.companySystemID 
+	INNER JOIN erp_itemissuedetails ON erp_itemissuedetails.itemIssueAutoID = erp_itemissuemaster.itemIssueAutoID
+	AND erp_itemissuemaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_itemissuemaster.itemIssueAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_itemissuemaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_itemissuemaster.confirmedYN = 1 
+	AND erp_itemissuemaster.approved =-1
+	LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_itemissuemaster.customerSystemID
+	INNER JOIN currencymaster ON currencymaster.currencyID = localCurrencyID 
+WHERE
+	erp_documentapproved.approvedYN = -1 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 8 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	group by erp_itemissuedetails.itemIssueAutoID
+	) AS PendingMaterialIssueApprovals
+UNION ALL
+
 SELECT
 	* 
 FROM
@@ -1118,9 +1170,10 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
-	2,
-	'' AS DocumentCurrency,
-	'' AS DocumentValue,
+	currencymaster.DecimalPlaces,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	SUM(erp_itemissuedetails.issueCostLocalTotal) AS DocumentValue,
+	-- erp_itemissuedetails.issueCostLocalTotal AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	employeesdepartments.approvalDeligated,
@@ -1136,12 +1189,14 @@ FROM
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_itemissuemaster ON erp_itemissuemaster.companySystemID = erp_documentapproved.companySystemID 
+	INNER JOIN erp_itemissuedetails ON erp_itemissuedetails.itemIssueAutoID = erp_itemissuemaster.itemIssueAutoID
 	AND erp_itemissuemaster.documentSystemID = erp_documentapproved.documentSystemID 
 	AND erp_itemissuemaster.itemIssueAutoID = erp_documentapproved.documentSystemCode 
 	AND erp_itemissuemaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_itemissuemaster.confirmedYN = 1 
 	AND erp_itemissuemaster.approved = 0
 	LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_itemissuemaster.customerSystemID
+	INNER JOIN currencymaster ON currencymaster.currencyID = localCurrencyID 
 WHERE
 	erp_documentapproved.approvedYN = 0 
 	AND erp_documentapproved.rejectedYN = 0 
@@ -1149,6 +1204,7 @@ WHERE
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 8 ) 
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	group by erp_itemissuedetails.itemIssueAutoID
 	) AS PendingMaterialIssueApprovals
 UNION ALL
 SELECT

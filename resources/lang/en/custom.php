@@ -429,6 +429,8 @@ return [
     'cheque_no' => 'Cheque No',
     'cheque_date' => 'Cheque Date',
     'booking_inv_code' => 'Booking Inv Code',
+    'gl_account' => 'GL Account',
+    'bank_charges_others' => 'Bank Charges & Others',
     'po_number' => 'PO Number',
     'supplier_invoice_no' => 'Supplier Invoice No',
     'invoice_amount' => 'Invoice Amount',

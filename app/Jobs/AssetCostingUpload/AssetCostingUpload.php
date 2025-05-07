@@ -82,6 +82,7 @@ class AssetCostingUpload implements ShouldQueue
 
         $assetFinanceCategory = AssetFinanceCategory::with(['costaccount', 'accdepaccount', 'depaccount', 'disaccount'])->find($auditCategory);
 
+        TemporaryAssetSerial::truncate();
         $allSerialRecords = FinanceCategorySerial::select('id as serialID', 'lastSerialNo')->get();
 
         $pushArray = $allSerialRecords->map(function ($record) {

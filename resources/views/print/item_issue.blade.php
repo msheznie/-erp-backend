@@ -275,6 +275,7 @@
                 <th style="text-align: left;">{{ __('custom.qty') }}</th>
                 <th style="text-align: left;">{{ __('custom.cost') }}({{ $entity->localCurrencyCode }})</th>
                 <th style="text-align: left;">{{ __('custom.comments') }}</th>
+                <th style="text-align: left;">{{ __('custom.total_amount') }}</th>
             </tr>
             </thead>
             <tbody>
@@ -298,6 +299,7 @@
                     <td style="text-align: left; padding-left: 5px;">
                         {{$item->comments}}
                     </td>
+                    <td style="text-align: right; padding-right: 5px;">{{round($item->issueCostLocalTotal,$entity->localDecimalPlaces)}}</td>
                 </tr>
             @endforeach
             </tbody>

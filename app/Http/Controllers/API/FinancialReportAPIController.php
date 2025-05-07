@@ -1041,7 +1041,7 @@ class FinancialReportAPIController extends AppBaseController
         }
     }
 
-    public function generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained, $companyWiseTemplate = false)
+    public function generateCustomizedFRReport($request, $showZeroGL, $showRetained, $companyWiseTemplate = false)
     {
 
 
@@ -1120,7 +1120,7 @@ class FinancialReportAPIController extends AppBaseController
         $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey));
 
         // Detail query
-        $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey));
+        $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey,$linkedcolumnQry2));
 
         // Generate consolidation data & merge with existing detail data
         if($template->columnTemplateID == null && $template->isConsolidation == 1) {
@@ -1157,6 +1157,36 @@ class FinancialReportAPIController extends AppBaseController
 
                 // fix sub-total level values
                 $subTotalLevelTwo = $outputCollect->where('isFinalLevel', 1)->where('itemType', 2);
+
+                if ($template->reportID == 1) {
+                    // BS report retain earning total level
+                    $subTotalLevelTwo = $subTotalLevelTwo->merge($outputCollect->where('isFinalLevel', 1)->where('itemType', 4));
+
+                    $reportDataNetTotal = $outputCollect->where('netProfitStatus', 1)->where('itemType', 3)->first();
+                    // Add net total hidden row for BS report if not available. (use this for calculate NCI & Share Holder amount finally)
+                    if (empty($reportDataNetTotal)) {
+                        $hiddenTotal = [
+                            'detDescription' => 'Total',
+                            'detID' => 0,
+                            'isFinalLevel' => 0,
+                            'sortOrder' => 10,
+                            'masterID' => null,
+                            'itemType' => 3,
+                            'netProfitStatus' => 1,
+                            'hideHeader' => 1,
+                            'expanded' => 1,
+                            'bgColor' => null,
+                            'fontColor' => '#000000'
+                        ];
+
+                        foreach ($columnHeaderMapping as $key => $value) {
+                            $hiddenTotal[$key] = $outputDetail->sum($key);
+                        }
+                        
+                        $outputCollect->push((object) $hiddenTotal);
+                    }
+                }
+
                 foreach ($subTotalLevelTwo as $levelTwo) {
 
                     $glCodesArray = [];
@@ -1298,132 +1328,137 @@ class FinancialReportAPIController extends AppBaseController
 
             if (count($headers) > 0) {
                 foreach ($headers as $key => $val) {
-                    $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
-                    if($val->itemType == 3)
-                    {
-                        $detailsArray = array();
-                        foreach (ReportTemplateDetails::find($val->detID)->gl_codes as $glCodeData)
+                    if ($val->detID != 0) {
+                        $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
+                        if($val->itemType == 3)
                         {
-                            $detailsArray[] = $glCodeData->subcategory->detID;
-                        }
-
-                        $outputData = $outputDetail->whereIn('templateDetailID', $detailsArray)->sortBy('sortOrder')->values();
-                        $data =  $outputData
-                            ->reduce(function ($carry, $item) use ($val) {
-                                foreach ($item as $key => $value) {
-                                    if (strpos($key, '-') !== false) {
-                                        if (is_numeric($value)) {
-                                            $carry[$key] = ($carry[$key] ?? 0) + $value;
-                                        }
-                                    }
-
-                                }
-                                return $carry;
-                            }, []);
-
-                        foreach ($data as $key => $value) {
-                            if (collect($val)->contains($key)) {
-                                $val->$key = $value;
-                            }
-                        }
-
-                    }else {
-                        $val->detail = $details;
-                    }
-                    $firstLevel = true;
-                    foreach ($details as $key2 => $val2) {
-                        if ($val2->isFinalLevel == 1) {
-                            if($val2->itemType == 3)
+                            $detailsArray = array();
+                            foreach (ReportTemplateDetails::find($val->detID)->gl_codes as $glCodeData)
                             {
-                                $glCodesArray = array();
-                                foreach (ReportTemplateDetails::find($val2->detID)->gl_codes as $glCodeData)
-                                {
-                                    $glCodesArray[] = $glCodeData->subcategory->detID;
-                                }
-                                if(!empty($glCodesArray))
-                                {
-                                    $outputData = $outputDetail->whereIn('templateDetailID', $glCodesArray)->sortBy('sortOrder')->values();
-                                    $data =  $outputData
-                                        ->reduce(function ($carry, $item) use ($val2) {
-                                            foreach ($item as $key => $value) {
-                                                if (strpos($key, '-') !== false) {
-                                                    if (is_numeric($value)) {
-                                                        $carry[$key] = ($carry[$key] ?? 0) + $value;
-                                                    }
-                                                }
-
-                                            }
-                                            return $carry;
-                                        }, []);
-                                    foreach ($data as $key => $value) {
-                                        if (collect($val2)->contains($key)) {
-                                            $val2->$key = $value;
-                                        }
-                                    }
-                                }
-
-                            }else {
-                                $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                                $detailsArray[] = $glCodeData->subcategory->detID;
                             }
 
-                            if (strpos($val2->detDescription, "Retained Earning") !== false && $showRetained == false) {
-                                if($val2->detDescription == "Retained Earning")
-                                {
-                                    $retainedCode = '';
-                                    $retainedDes = '';
-                                    if (!empty($val2->glCodes)) {
-                                        $glAutoIDs = collect($val2->glCodes)->pluck('glAutoID');
+                            $outputData = $outputDetail->whereIn('templateDetailID', $detailsArray)->sortBy('sortOrder')->values();
 
-                                        if ($glAutoIDs->isNotEmpty()) {
-                                            $isRetained = ChartOfAccount::whereIn('chartOfAccountSystemID', $glAutoIDs)
-                                                ->where('is_retained_earnings', 1)
-                                                ->first();
-
-                                            if ($isRetained) {
-                                                $retainedCode = $isRetained->AccountCode;
-                                                $retainedDes = $isRetained->AccountDescription;
+                            $data =  $outputData
+                                ->reduce(function ($carry, $item) use ($val) {
+                                    foreach ($item as $key => $value) {
+                                        if (strpos($key, '-') !== false) {
+                                            $tempKeyValue = explode('-', $key);
+                                            $columnData = ReportTemplateColumns::where('shortCode', $tempKeyValue[0])->first();
+                                            if (isset($columnData) && !in_array($columnData->type, [4,5]) && is_numeric($value)) {
+                                                $carry[$key] = ($carry[$key] ?? 0) + $value;
                                             }
                                         }
+
                                     }
-                                    $val2->detDescription = $val2->detDescription.' ('.$retainedCode.' -'.$retainedDes.')';
+                                    return $carry;
+                                }, []);
+
+                            foreach ($data as $key => $value) {
+                                if (collect($val)->contains($key)) {
+                                    $val->$key = $value;
                                 }
-                                $val2->glCodes = null;
                             }
-                        } else {
-                            $detailLevelTwo = $outputCollect->where('masterID', $val2->detID)->sortBy('sortOrder')->values();
-                            $val2->detail = $detailLevelTwo;
-                            $secondLevel = true;
-                            foreach ($detailLevelTwo as $key3 => $val3) {
-                                if ($val3->isFinalLevel == 1) {
-                                    if($val3->itemType == 3)
+
+                        }else {
+                            $val->detail = $details;
+                        }
+                        $firstLevel = true;
+                        foreach ($details as $key2 => $val2) {
+                            if ($val2->isFinalLevel == 1) {
+                                if($val2->itemType == 3)
+                                {
+                                    $glCodesArray = array();
+                                    foreach (ReportTemplateDetails::find($val2->detID)->gl_codes as $glCodeData)
                                     {
-                                        $val3 = $this->getGlCodes($outputDetail,$val3);
-                                    }else {
-                                        $val3->glCodes = $outputDetail->where('templateDetailID', $val3->detID)->sortBy('sortOrder')->values();
+                                        $glCodesArray[] = $glCodeData->subcategory->detID ?? null;
                                     }
-                                } else {
-                                    $detailLevelThree = $outputCollect->where('masterID', $val3->detID)->sortBy('sortOrder')->values();
-                                    $val3->detail = $detailLevelThree;
-                                    $thirdLevel = true;
-                                    foreach ($detailLevelThree as $key4 => $val4) {
-                                        if ($val4->isFinalLevel == 1) {
-                                            if($val4->itemType == 3)
-                                            {
-                                                $val4 = $this->getGlCodes($outputDetail,$val4);
-                                            }else {
-                                                $val4->glCodes = $outputDetail->where('templateDetailID', $val4->detID)->sortBy('sortOrder')->values();
+                                    if(!empty($glCodesArray))
+                                    {
+                                        $outputData = $outputDetail->whereIn('templateDetailID', $glCodesArray)->sortBy('sortOrder')->values();
+                                        $data =  $outputData
+                                            ->reduce(function ($carry, $item) use ($val2) {
+                                                foreach ($item as $key => $value) {
+                                                    if (strpos($key, '-') !== false) {
+                                                        if (is_numeric($value)) {
+                                                            $carry[$key] = ($carry[$key] ?? 0) + $value;
+                                                        }
+                                                    }
+
+                                                }
+                                                return $carry;
+                                            }, []);
+                                        foreach ($data as $key => $value) {
+                                            if (collect($val2)->contains($key)) {
+                                                $val2->$key = $value;
                                             }
-                                        } else {
-                                            $detailLevelFour = $outputCollect->where('masterID', $val4->detID)->sortBy('sortOrder')->values();
-                                            $val4->detail = $detailLevelFour;
-                                            $fourthLevel = true;
-                                            foreach ($detailLevelFour as $key5 => $val5) {
-                                                if ($val5->isFinalLevel == 1) {
-                                                    if($val5->itemType == 3)
-                                                    {
-                                                        $val5 = $this->getGlCodes($outputDetail,$val5);
-                                                    }else {
-                                                        $val5->glCodes = $outputDetail->where('templateDetailID', $val5->detID)->sortBy('sortOrder')->values();
+                                        }
+                                    }
+
+                                }else {
+                                    $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                                }
+
+                                if (strpos($val2->detDescription, "Retained Earning") !== false && $showRetained == false) {
+                                    if($val2->detDescription == "Retained Earning")
+                                    {
+                                        $retainedCode = '';
+                                        $retainedDes = '';
+                                        if (!empty($val2->glCodes)) {
+                                            $glAutoIDs = collect($val2->glCodes)->pluck('glAutoID');
+
+                                            if ($glAutoIDs->isNotEmpty()) {
+                                                $isRetained = ChartOfAccount::whereIn('chartOfAccountSystemID', $glAutoIDs)
+                                                    ->where('is_retained_earnings', 1)
+                                                    ->first();
+
+                                                if ($isRetained) {
+                                                    $retainedCode = $isRetained->AccountCode;
+                                                    $retainedDes = $isRetained->AccountDescription;
+                                                }
+                                            }
+                                        }
+                                        $val2->detDescription = $val2->detDescription.' ('.$retainedCode.' -'.$retainedDes.')';
+                                    }
+                                    $val2->glCodes = null;
+                                }
+                            } else {
+                                $detailLevelTwo = $outputCollect->where('masterID', $val2->detID)->sortBy('sortOrder')->values();
+                                $val2->detail = $detailLevelTwo;
+                                $secondLevel = true;
+                                foreach ($detailLevelTwo as $key3 => $val3) {
+                                    if ($val3->isFinalLevel == 1) {
+                                        if($val3->itemType == 3)
+                                        {
+                                            $val3 = $this->getGlCodes($outputDetail,$val3);
+                                        }else {
+                                            $val3->glCodes = $outputDetail->where('templateDetailID', $val3->detID)->sortBy('sortOrder')->values();
+                                        }
+                                    } else {
+                                        $detailLevelThree = $outputCollect->where('masterID', $val3->detID)->sortBy('sortOrder')->values();
+                                        $val3->detail = $detailLevelThree;
+                                        $thirdLevel = true;
+                                        foreach ($detailLevelThree as $key4 => $val4) {
+                                            if ($val4->isFinalLevel == 1) {
+                                                if($val4->itemType == 3)
+                                                {
+                                                    $val4 = $this->getGlCodes($outputDetail,$val4);
+                                                }else {
+                                                    $val4->glCodes = $outputDetail->where('templateDetailID', $val4->detID)->sortBy('sortOrder')->values();
+                                                }
+                                            } else {
+                                                $detailLevelFour = $outputCollect->where('masterID', $val4->detID)->sortBy('sortOrder')->values();
+                                                $val4->detail = $detailLevelFour;
+                                                $fourthLevel = true;
+                                                foreach ($detailLevelFour as $key5 => $val5) {
+                                                    if ($val5->isFinalLevel == 1) {
+                                                        if($val5->itemType == 3)
+                                                        {
+                                                            $val5 = $this->getGlCodes($outputDetail,$val5);
+                                                        }else {
+                                                            $val5->glCodes = $outputDetail->where('templateDetailID', $val5->detID)->sortBy('sortOrder')->values();
+                                                        }
                                                     }
                                                 }
                                             }
@@ -1432,14 +1467,12 @@ class FinancialReportAPIController extends AppBaseController
                                 }
                             }
                         }
-                    }
-                    if ($val->itemType != 3 && $val->itemType != 5) {
-                        if (count($details) == 0) {
-                            $removedFromArray[] = $key;
+                        if ($val->itemType != 3 && $val->itemType != 5) {
+                            if (count($details) == 0) {
+                                $removedFromArray[] = $key;
+                            }
                         }
                     }
-
-
                 }
             }
 
@@ -1772,7 +1805,7 @@ class FinancialReportAPIController extends AppBaseController
                 
                 $response = $request->accountType == 4 ?
                     $this->generateCustomizedFREquityReport($request, $showZeroGL, $consolidationStatus, $showRetained) :
-                    $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, $showRetained);
+                    $this->generateCustomizedFRReport($request, $showZeroGL, $showRetained);
 
                 if ($request->type == 2) {
                     /**
@@ -1851,7 +1884,7 @@ class FinancialReportAPIController extends AppBaseController
             // Calculate Share of Associates Profit/Loss amount
             if(isset($data->itemType) && ($data->itemType == 5) && ($data->netProfitStatus == 0)) {
                 $request['selectedRow'] = "CONS-0000";
-                $output = $this->processConsolidationDataForDrillDownAndReport($request);
+                $output = ConsolidationReportService::processConsolidationDataForDrillDownAndReport($request);
                 $totalShareOfAssociateProfitLoss = $output['total'];
 
                 foreach ($response['columns'] as $column) {
@@ -1872,7 +1905,7 @@ class FinancialReportAPIController extends AppBaseController
             // Calculate NCI & Share Holder amount
             if(isset($data->itemType) && ($data->itemType == 6) && ($data->netProfitStatus == 0)) {
                 $request['selectedRow'] = "NCI-0000";
-                $output = $this->processConsolidationDataForDrillDownAndReport($request);
+                $output = ConsolidationReportService::processConsolidationDataForDrillDownAndReport($request);
                 $totalNCIAmount = $output['total'];
 
                 $details = collect($data->detail);
@@ -1888,13 +1921,15 @@ class FinancialReportAPIController extends AppBaseController
                         }
                     }
 
-                    $shareHolder = $details->where('itemType', 7)->where('netProfitStatus', 0)->first();
-                    if($shareHolder) {
-                        foreach ($response['columns'] as $column) {
-                            $key = explode("-", $column)[0];
-                            if (isset($key) && ($key == "CONS")) {
-                                if($reportDataNetTotal) {
-                                    $shareHolder->$column = $reportDataNetTotal->$column - $totalNCIAmount;
+                    if ($request['accountType'] != 1) {
+                        $shareHolder = $details->where('itemType', 7)->where('netProfitStatus', 0)->first();
+                        if($shareHolder) {
+                            foreach ($response['columns'] as $column) {
+                                $key = explode("-", $column)[0];
+                                if (isset($key) && ($key == "CONS")) {
+                                    if($reportDataNetTotal) {
+                                        $shareHolder->$column = $reportDataNetTotal->$column - $totalNCIAmount;
+                                    }
                                 }
                             }
                         }
@@ -7506,7 +7541,7 @@ GROUP BY
         return $output;
     }
 
-    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey)
+    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL, $cominedColumnKey,$linkedcolumnQry2)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -7599,19 +7634,33 @@ GROUP BY
 
 
         $generalLedgerGroup = '';
+        $linkedcolumnQry2WithoutSum = preg_replace('/SUM\((.*?)\)/', '$1', $linkedcolumnQry2);
+
         if ($columnTemplateID == 1) {
+            $linkedcolumnQry2WithoutSum .= ',b.compID';
             $secondLinkedcolumnQry .= ' gl.compID,';
             $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
             $budgetJoin = ' AND gl.compID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
         } else if ($columnTemplateID == 2) {
+            $linkedcolumnQry2WithoutSum .= ',b.serviceLineID';
             $secondLinkedcolumnQry .= ' gl.serviceLineID,';
             $firstLinkedcolumnQry .= ' erp_generalledger.serviceLineSystemID AS serviceLineID,';
             $budgetJoin = ' AND gl.serviceLineID = budget.serviceLineSystemID';
             $generalLedgerGroup = ' ,erp_generalledger.serviceLineSystemID';
         }
 
-        $sql = 'SELECT * FROM (SELECT
+        $sql = 'SELECT * FROM (select 
+        '.$linkedcolumnQry2WithoutSum.',
+        b.glCode,
+        b.glDescription,
+        b.glAutoID,
+        b.templateDetailID,
+        b.linkCatType,
+        b.templateCatType,
+        b.controlAccountType,
+        b.sortOrder
+	from (SELECT
     ' . $secondLinkedcolumnQry . '
     erp_companyreporttemplatelinks.glCode,
     erp_companyreporttemplatelinks.glDescription,
@@ -7651,7 +7700,7 @@ FROM
 WHERE
     erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
-    erp_companyreporttemplatelinks.sortOrder) a '.$whereNonZero;
+    erp_companyreporttemplatelinks.sortOrder) b ) a '.$whereNonZero;
 
         $output = \DB::select($sql);
         return $output;
@@ -8399,6 +8448,8 @@ GROUP BY
         $toDateObj = new Carbon($request->toDate);
         $toDate = $toDateObj->format('Y-m-d');
 
+        $reportTemplate = ReportTemplate::where('companyReportTemplateID',$input['templateType'])->first();
+
         $financeYear = CompanyFinanceYear::find($request->companyFinanceYearID);
         $period = CompanyFinancePeriod::find($request->month);
 
@@ -8476,59 +8527,57 @@ GROUP BY
         }
 
         if ($columnCode != 'ELMN') {
-            if($columnCode == 'CMB') {
+            if ($columnCode == 'CMB') {
                 $dateFilter = "";
-                $firstLinkedcolumnQry = ConsolidationReportService::generateFilterQuery($fromDateObj, $toDateObj, $groupCompanyID[0], $companyID, $currencyColumn, [1], true, "gl", true);
-                $firstLinkedcolumnQry .= " AS `" . $input['selectedColumn'] . "`,";
+                if(is_array($groupCompanyID) && isset($groupCompanyID[0])) {
+                    $firstLinkedcolumnQry = ConsolidationReportService::generateFilterQuery($fromDateObj, $toDateObj, $groupCompanyID[0], $companyID, $currencyColumn, [1], true, "gl", true);
+                    $firstLinkedcolumnQry .= " AS `" . $input['selectedColumn'] . "`,";
+                }
             }
 
-            $sql = "SELECT 
-                        `" . $input['selectedColumn'] . "`,
-                        glCode,
-                        AccountDescription,
-                        documentCode,
-                        documentDate,
-                        ServiceLineDes,
-                        partyName,
-                        documentNarration,
-                        clientContractID,
-                        documentSystemCode,
-                        documentSystemID 
-                    FROM 
-                        (
-                            SELECT
-                                " . $firstLinkedcolumnQry . "
-                                glCode,
-                                AccountDescription,
-                                documentCode,
-                                documentDate,
-                                serviceline.ServiceLineDes,
-                                gl.documentNarration,
-                                gl.clientContractID,
-                                IF(
-                                    gl.documentSystemID = 87 OR 
-                                    gl.documentSystemID = 20 OR 
-                                    gl.documentSystemID = 21 OR 
-                                    gl.documentSystemID = 19 OR 
-                                    gl.documentSystemID = 71, 
-                                        customermaster.CustomerName, 
-                                        suppliermaster.supplierName 
-                                ) AS partyName, 
-                                gl.documentSystemCode,
-                                gl.documentSystemID
-                            FROM
-                                erp_generalledger AS gl
-                            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = gl.chartOfAccountSystemID
-                            LEFT JOIN serviceline ON serviceline.serviceLineSystemID = gl.serviceLineSystemID
-                            LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = gl.supplierCodeSystem
-                            LEFT JOIN customermaster ON customermaster.customerCodeSystem = gl.supplierCodeSystem 
-                            WHERE
-                                gl.chartOfAccountSystemID = " . $input['glAutoID'] . " AND
-                                gl.companySystemID IN (" . join(",",$companyID) . ")
-                                " . $servicelineQry . " " . $dateFilter . " " . $documentQry . "
-                            GROUP BY GeneralLedgerID
-                        ) a 
-                    WHERE a.`" . $input['selectedColumn'] . "` != 0";
+            $drillDownData = $this->reportTemplateGLDrillDownQryData($input, $firstLinkedcolumnQry, $companyID, $servicelineQry, $dateFilter, $documentQry);
+
+            if (($reportTemplate->reportID == 1) && ($reportTemplate->isConsolidation == 1) && ($columnCode == 'CMB')) {
+                foreach ($drillDownData as $data) {
+                    if(is_array($groupCompanyID) && isset($groupCompanyID[0])) {
+                        $data->type = ($data->companySystemID == $groupCompanyID[0]) ? "Parent" : "Subsidiary";
+                    }
+                    $data->companyProfit = $data->{$input['selectedColumn']};
+                    $data->holdingPercentage = "100";
+                }
+
+                // Add Joint venture & Associate document data
+                $groupTypes = [2,3];
+                $periods = ConsolidationReportService::getCompanyOwnershipPeriods($groupCompanyID[0], $companyID, $groupTypes);
+
+                foreach ($periods as $period) {
+                    $rowStartDate = Carbon::parse($period->start_date);
+                    $rowEndDate = ($period->end_date == null) ? $toDateObj : Carbon::parse($period->end_date);
+
+                    if ($rowStartDate->isBetween($fromDateObj, $toDateObj) || $rowEndDate->isBetween($fromDateObj, $toDateObj)) {
+                        $queryStartDate = ($fromDateObj >= $rowStartDate) ? $fromDateObj : $rowStartDate;
+                        $queryEndDate = ($toDateObj <= $rowEndDate) ? $toDateObj : $rowEndDate;
+
+                        $filter = "WHEN gl.companySystemID = " . $period->company_system_id;
+                        $filter .= " AND (DATE(gl.documentDate) BETWEEN '" . $queryStartDate->format("Y-m-d") . "' AND '" . $queryEndDate->format("Y-m-d") . "')";
+                        $filter .= " THEN (gl." . $currencyColumn . " * -1) * " . ($period->holding_percentage / 100);
+                        $filter = "IFNULL(CASE " . $filter . " ELSE 0 END, 0) AS `" . $input['selectedColumn'] . "`,";
+
+                        $drillDownDataOtherTypes = $this->reportTemplateGLDrillDownQryData($input, $filter, $companyID, $servicelineQry, $dateFilter, $documentQry);
+
+                        foreach ($drillDownDataOtherTypes as $data) {
+                            $data->type = ConsolidationReportService::getCompanyType($period->group_type);
+                            $data->holdingPercentage = $period->holding_percentage;
+                            // Reverse calculate initial amount using company portion & holding percentage value
+                            $data->companyProfit = $data->{$input['selectedColumn']} / ($period->holding_percentage / 100);
+
+                            $drillDownData[] = $data;
+                        }
+                    }
+                }
+            }
+
+            return $drillDownData;
         }
         else {
             $companyID = array_values(array_diff($companyID,$groupCompanyID));
@@ -8572,10 +8621,66 @@ GROUP BY
                                 el.chartOfAccountSystemID = " . $input['glAutoID'] . " 
                                 AND el.companySystemID IN (" . join(",", $companyID) . ") 
                                 AND el.serviceLineSystemID IN (" . join(",", $serviceline) . ")
-                                AND el.glAccountTypeID = 2
                         ) el
                     WHERE el.`" . $input['selectedColumn'] . "` != 0";
+
+            return DB::select($sql);
         }
+    }
+
+    public function reportTemplateGLDrillDownQryData($input, $linkedColumnQry, $companyID, $servicelineQry, $dateFilter, $documentQry) {
+        $sql = "SELECT 
+                        `" . $input['selectedColumn'] . "`,
+                        glCode,
+                        AccountDescription,
+                        documentCode,
+                        documentDate,
+                        ServiceLineDes,
+                        partyName,
+                        documentNarration,
+                        clientContractID,
+                        documentSystemCode,
+                        documentSystemID,
+                        CompanyName,
+                        companySystemID 
+                    FROM 
+                        (
+                            SELECT
+                                " . $linkedColumnQry . "
+                                glCode,
+                                AccountDescription,
+                                documentCode,
+                                documentDate,
+                                serviceline.ServiceLineDes,
+                                gl.documentNarration,
+                                gl.clientContractID,
+                                IF(
+                                    gl.documentSystemID = 87 OR 
+                                    gl.documentSystemID = 20 OR 
+                                    gl.documentSystemID = 21 OR 
+                                    gl.documentSystemID = 19 OR 
+                                    gl.documentSystemID = 71, 
+                                        customermaster.CustomerName, 
+                                        suppliermaster.supplierName 
+                                ) AS partyName, 
+                                gl.documentSystemCode,
+                                gl.documentSystemID,
+                                companymaster.CompanyName,
+                                companymaster.companySystemID
+                            FROM
+                                erp_generalledger AS gl
+                            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = gl.chartOfAccountSystemID
+                            LEFT JOIN serviceline ON serviceline.serviceLineSystemID = gl.serviceLineSystemID
+                            LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = gl.supplierCodeSystem
+                            LEFT JOIN customermaster ON customermaster.customerCodeSystem = gl.supplierCodeSystem 
+                            LEFT JOIN companymaster ON companymaster.companySystemID = gl.companySystemID 
+                            WHERE
+                                gl.chartOfAccountSystemID = " . $input['glAutoID'] . " AND
+                                gl.companySystemID IN (" . join(",",$companyID) . ")
+                                " . $servicelineQry . " " . $dateFilter . " " . $documentQry . "
+                            GROUP BY GeneralLedgerID
+                        ) a 
+                    WHERE a.`" . $input['selectedColumn'] . "` != 0";
 
         return DB::select($sql);
     }
@@ -10846,7 +10951,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
 
         $search = $request->input('search.value');
 
-        $output = $this->processConsolidationDataForDrillDownAndReport($input);
+        $output = ConsolidationReportService::processConsolidationDataForDrillDownAndReport($input);
 
         if ($search) {
             $output['data'] = array_filter($output['data'], function ($item) use ($search) {
@@ -10864,128 +10969,6 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
             ->with('orderCondition', $sort)
             ->with('total', $output['total'])
             ->make(true);
-    }
-
-    public function processConsolidationDataForDrillDownAndReport($input): array
-    {
-        $dataType = $input['selectedRow'];
-        $fromDate = Carbon::parse($input['fromDate']);
-        $toDate = Carbon::parse($input['toDate']);
-
-        $currency = $input['currency'][0] ?? $input['currency'];
-        $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';
-
-        // selected sub companies
-        $companySystemIDs = collect($input['companySystemID']);
-        // selected group company
-        $groupCompanySystemID = collect($input['groupCompanySystemID'])->pluck('companySystemID')->toArray();
-        $serviceLineIDs = collect($input['serviceLineSystemID'])->pluck('serviceLineSystemID')->toArray();
-
-        // check the selected item
-        $dataType = explode('-',$dataType);
-
-        // remove group company from sub companies
-        $childCompanies = array_values(
-            $companySystemIDs->pluck('companySystemID')->diff($groupCompanySystemID)->toArray()
-        );
-
-        $data = [];
-
-        if(in_array($dataType[0],['CMB','CONS'])) {
-
-            // Joint venture & associate types
-            $groupTypes = [2,3];
-            $periods = ConsolidationReportService::getCompanyOwnershipPeriods($groupCompanySystemID, $childCompanies, $groupTypes);
-
-            foreach ($periods as $period) {
-                $rowStartDate = Carbon::parse($period->start_date);
-                $rowEndDate = ($period->end_date == null) ? $toDate : Carbon::parse($period->end_date);
-
-                if($rowStartDate->isBetween($fromDate, $toDate) || $rowEndDate->isBetween($fromDate, $toDate)) {
-                    $queryStartDate = ($fromDate >= $rowStartDate) ? $fromDate : $rowStartDate;
-                    $queryEndDate = ($toDate <= $rowEndDate) ? $toDate : $rowEndDate;
-
-                    $totalProfit = $this->getTotalProfit($serviceLineIDs,$period->company_system_id,$queryStartDate->format("Y-m-d"),$queryEndDate->format("Y-m-d"),$amountColumn);
-
-                    if(abs($totalProfit) != 0) {
-                        $parentPortion = ($totalProfit * $period->holding_percentage) / 100;
-
-                        $data[] = [
-                            'company' => $period->companyMaster->CompanyName,
-                            'type' => $this->getCompanyType($period->group_type),
-                            'holdingPercentage' => $period->holding_percentage,
-                            'companyProfit' => $totalProfit,
-                            'parentPortion' => $parentPortion
-                        ];
-                    }
-                }
-            }
-        }
-        else {
-
-            // Subsidiary types
-            $groupTypes = [1];
-            $periods = ConsolidationReportService::getCompanyOwnershipPeriods($groupCompanySystemID, $childCompanies, $groupTypes);
-
-            foreach ($periods as $period) {
-                $rowStartDate = Carbon::parse($period->start_date);
-                $rowEndDate = ($period->end_date == null) ? $toDate : Carbon::parse($period->end_date);
-
-                if($rowStartDate->isBetween($fromDate, $toDate) || $rowEndDate->isBetween($fromDate, $toDate)) {
-                    $totalProfit = $this->getTotalProfit($serviceLineIDs, $period->company_system_id, $rowStartDate->format("Y-m-d"), $rowEndDate->format("Y-m-d"), $amountColumn);
-
-                    if (abs($totalProfit) != 0) {
-                        // calculate NCI percentage
-                        $nciPercentage = 100 - $period->holding_percentage;
-                        $parentPortion = ($totalProfit * $nciPercentage) / 100;
-
-                        $data[] = [
-                            'company' => $period->companyMaster->CompanyName,
-                            'type' => $this->getCompanyType(1),
-                            'holdingPercentage' => $nciPercentage,
-                            'companyProfit' => $totalProfit,
-                            'parentPortion' => $parentPortion
-                        ];
-                    }
-                }
-            }
-        }
-
-        // calculate total amount
-        $total = collect($data)->sum('parentPortion');
-
-        return [
-            'data' => $data,
-            'total' => $total
-        ];
-    }
-
-    public function getTotalProfit($serviceLineIDs, $company, $fromDate, $toDate, $amountColumn) {
-        $totalProfit = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')
-            ->whereIn('serviceLineSystemID', $serviceLineIDs)
-            ->where('glAccountTypeID', 2)
-            ->where('companySystemID', $company)
-            ->whereBetween(DB::raw('DATE(documentDate)'), [$fromDate, $toDate])
-            ->first();
-
-        return $totalProfit->$amountColumn * -1;
-    }
-
-    public function getCompanyType($companyType): ?string
-    {
-        $type = null;
-        switch ($companyType) {
-            case 1;
-                $type = "Subsidary";
-                break;
-            case 2;
-                $type = "Associate";
-                break;
-            case 3;
-                $type = "Joint venture";
-                break;
-        }
-        return $type;
     }
     
 }

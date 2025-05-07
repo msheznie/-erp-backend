@@ -88,7 +88,12 @@ class PaymentVoucherGlService
         $data = [];
         $taxLedgerData = [];
         $finalData = [];
-        $empID = Employee::find($masterModel['employeeSystemID']);
+        if($masterModel['employeeSystemID'] == "SYSTEM"){
+            $empID = Employee::where('empID',$masterModel['employeeSystemID'])->first();
+        }
+        else{
+            $empID = Employee::find($masterModel['employeeSystemID']);
+        }
         $masterData = PaySupplierInvoiceMaster::with(['bank', 'financeperiod_by', 'transactioncurrency', 'localcurrency', 'rptcurrency'])->find($masterModel["autoID"]);
         $linkDocument = null;
         //get balancesheet account
@@ -181,10 +186,18 @@ class PaymentVoucherGlService
                     $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                     $data['documentTransAmount'] = \Helper::roundValue($siApData->transAmount);
                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                    $data['documentLocalCurrencyER'] = $si->transAmount/$si->localAmount;
+                    if($si->localAmount == 0) {
+                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                    } else {
+                        $data['documentLocalCurrencyER'] = $si->transAmount/$si->localAmount;
+                    }
                     $data['documentLocalAmount'] = \Helper::roundValue($siApData->localAmount);
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                    $data['documentRptCurrencyER'] = $si->transAmount/$si->rptAmount;
+                    if($si->rptAmount == 0) {
+                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                    } else {
+                        $data['documentRptCurrencyER'] = $si->transAmount/$si->rptAmount;
+                    }
                     $data['documentRptAmount'] = \Helper::roundValue($siApData->rptAmount);
                     if($isMasterExchangeRateChanged)
                     {

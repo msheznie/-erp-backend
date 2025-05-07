@@ -94,7 +94,7 @@ class UnbilledGRVService
                                             ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
                                             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
                                             ->where('erp_purchaseorderadvpayment.grvAutoID',$masterModel["autoID"])
-                                            ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID')
+                                            ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID','erp_purchaseorderadvpayment.currencyID')
                                             ->get();
                 if($output){
                     foreach ($output as $key => $value) {
@@ -102,9 +102,9 @@ class UnbilledGRVService
 
                         $value->grvDate = $postedDateGl;
 
-                        $value->totTransactionAmount = $value->totTransactionAmount + $vatData['vatOnPOTotalAmountTrans'];
-                        $value->totRptAmount = $value->totRptAmount + $vatData['vatOnPOTotalAmountRpt'];
-                        $value->totLocalAmount = $value->totLocalAmount + $vatData['vatOnPOTotalAmountLocal'];
+                        $value->totTransactionAmount = $value->totTransactionAmount + $value->totalVATAmount;
+                        $value->totRptAmount = $value->totRptAmount + $value->totalVATAmountRpt;
+                        $value->totLocalAmount = $value->totLocalAmount + $value->totalVATAmountLocal;
 
                         $value->totalVATAmount = $vatData['vatOnPOTotalAmountTrans'];
                         $value->totalVATAmountLocal = $vatData['vatOnPOTotalAmountLocal'];

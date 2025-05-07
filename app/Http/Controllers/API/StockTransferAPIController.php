@@ -261,10 +261,12 @@ class StockTransferAPIController extends AppBaseController
                 return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500);
             }
         }
+        DB::beginTransaction();
 
         $lastSerial = StockTransfer::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('serialNo', 'desc')
+            ->lockForUpdate()
             ->first();
 
         $lastSerialNumber = 1;
@@ -279,10 +281,12 @@ class StockTransferAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
+            DB::rollBack();
             return $this->sendError('Selected segment is not active. Please select an active segment', 500);
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
+            DB::rollBack();
             return $this->sendError('Location From and Location To  cannot be same', 500);
         }
 
@@ -337,7 +341,7 @@ class StockTransferAPIController extends AppBaseController
         }
 
         $stockTransfers = $this->stockTransferRepository->create($input);
-
+        DB::commit();
         return $this->sendResponse($stockTransfers->toArray(), 'Stock Transfer saved successfully');
     }
 

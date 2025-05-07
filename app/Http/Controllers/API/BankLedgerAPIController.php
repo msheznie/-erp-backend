@@ -328,10 +328,12 @@ class BankLedgerAPIController extends AppBaseController
                     return $this->sendError(trans('custom.gl_data_cannot_be_found_for_this_document'), 500);
                 }
 
-                if ($input['bankClearedYN']) {
-                    $updateArray['bankClearedYN'] = -1;
-                } else {
-                    $updateArray['bankClearedYN'] = 0;
+                $updateArray['bankClearedYN'] = ($input['bankClearedYN'])
+                    ? ($bankLedger->trsClearedYN == -1 ? -1 : 0)
+                    : 0;
+
+                if(!$bankLedger->trsClearedYN) {
+                    return $this->sendError('Treasury not cleared for this document '.$bankLedger->documentCode, 500);
                 }
 
                 if ($updateArray['bankClearedYN']) {

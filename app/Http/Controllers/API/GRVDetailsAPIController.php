@@ -711,12 +711,18 @@ class GRVDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $grvAutoID = $input['grvAutoID'];
-
         $items = GRVDetails::where('grvAutoID', $grvAutoID)
             ->with(['unit' => function ($query) {
             }, 'po_master' => function ($query) {
             }, 'prn_master', 'item_by'])
             ->get();
+
+        foreach ($items as $item)
+        {
+            $currencyID = ($item->supplierItemCurrencyID) ?? 3;
+            $decimal = CurrencyMaster::find($currencyID)->DecimalPlaces;
+            $item->netAmount = round(round($item->unitCost,$decimal) * $item->noQty,$decimal);
+        }
 
         return $this->sendResponse($items->toArray(), 'GRV details retrieved successfully');
     }
@@ -729,7 +735,7 @@ class GRVDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            
+
             $id = Auth::id();
             $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
@@ -752,7 +758,7 @@ class GRVDetailsAPIController extends AppBaseController
                     $grvMasterData['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
                     $grvMasterData['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
                 }
-        
+
                 unset($inputParam);
 
                 $currentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
@@ -771,7 +777,7 @@ class GRVDetailsAPIController extends AppBaseController
                     if ($grvMasterData['stampDate']) {
                         $grvMasterData['stampDate'] = Carbon::parse($grvMasterData['stampDate'])->format('Y-m-d') . ' 00:00:00';
                     }
-        
+
                     if ($grvMasterData['stampDate'] > $currentDate) {
                         return $this->sendError('Stamp date can not be greater than current date', 500);
                     }
@@ -784,11 +790,11 @@ class GRVDetailsAPIController extends AppBaseController
                     $warehouse = WarehouseMaster::where("wareHouseSystemCode", $grvMasterData['grvLocation'])
                     ->where('companySystemID', $grvMasterData['companySystemID'])
                     ->first();
-    
+
                     if (!$warehouse) {
                     return $this->sendError('Location not found', 500);
                     }
-    
+
                     if ($warehouse->manufacturingYN == 1) {
                         if (is_null($warehouse->WIPGLCode)) {
                             return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
@@ -808,7 +814,7 @@ class GRVDetailsAPIController extends AppBaseController
                 $documentDate = $grvMasterData['grvDate'];
                 $monthBegin = $grvMasterData['FYBiggin'];
                 $monthEnd = $grvMasterData['FYEnd'];
-        
+
                 if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
                 } else {
                     return $this->sendError('GRV date is not within the financial period!');
@@ -841,9 +847,9 @@ class GRVDetailsAPIController extends AppBaseController
                     $grvMasterData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     $grvMasterData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 }
-        
+
                 $grvMasterData['supplierTransactionER'] = 1;
-        
+
                 $supplier = SupplierMaster::where('supplierCodeSystem', $grvMasterData['supplierID'])->first();
                 if ($supplier) {
                     $grvMasterData['supplierPrimaryCode'] = $supplier->primarySupplierCode;
@@ -858,6 +864,7 @@ class GRVDetailsAPIController extends AppBaseController
                 $lastSerial = GRVMaster::where('companySystemID', $grvMasterData['companySystemID'])
                 ->where('companyFinanceYearID', $grvMasterData['companyFinanceYearID'])
                 ->orderBy('grvSerialNo', 'desc')
+                ->lockForUpdate()
                 ->first();
 
                 $lastSerialNumber = 1;
@@ -1076,7 +1083,7 @@ class GRVDetailsAPIController extends AppBaseController
                         $financeGLcodebBSSystemID = null;
                     }
 
-                  
+
                     // checking the qty request is matching with sum total
                     if ($new['poQty'] >= $new['noQty']) {
                         $GRVDetail_arr['grvAutoID'] = $grvAutoID;
@@ -1105,17 +1112,17 @@ class GRVDetailsAPIController extends AppBaseController
                         //         $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
                         //     }
 
-                        
-                        // }  
-                        
-                       
+
+                        // }
+
+
 
                         $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
                         $GRVDetail_arr['financeGLcodebBS'] = $financeGLcodebBS;
                         $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
                         $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
-                        
-                    
+
+
                         $GRVDetail_arr['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                         $GRVDetail_arr['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
                         $GRVDetail_arr['includePLForGRVYN'] = $new['includePLForGRVYN'];
@@ -1129,7 +1136,11 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['trackingType'] = (isset($itemMaster->trackingType)) ? $itemMaster->trackingType : null;
                         $GRVDetail_arr['prvRecievedQty'] = $new['receivedQty'];
                         $GRVDetail_arr['poQty'] = $new['poQty'];
+                        $grvMaster = GRVMaster::find($grvAutoID);
+
+
                         $totalNetcost = $new['GRVcostPerUnitSupTransCur'] * $new['noQty'];
+
                         $GRVDetail_arr['unitCost'] = $new['GRVcostPerUnitSupTransCur'];
                         $GRVDetail_arr['discountPercentage'] = $new['discountPercentage'];
                         $GRVDetail_arr['discountAmount'] = $new['discountAmount'];

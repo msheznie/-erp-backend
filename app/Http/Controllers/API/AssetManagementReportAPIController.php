@@ -3284,7 +3284,7 @@ FROM
 		erp_fa_assetdepreciationperiods
 		INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
 	WHERE
-		erp_fa_depmaster.approved =- 1  AND DATE(erp_fa_depmaster.depDate) <= '$asOfDate'
+		erp_fa_depmaster.approved =- 1  AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodEndDate) <= '$asOfDate'
 	GROUP BY
 		faID 
 	) t ON erp_fa_asset_master.faID = t.faID
@@ -3376,12 +3376,15 @@ WHERE
         // asset depreciation
 
         $additionDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"Charge For The Period" as description,2 as type')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
-            $q->whereBetween(DB::raw('DATE(depDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo]);
+            //$q->whereBetween(DB::raw('DATE(depDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo]);
             $q->where('approved', -1);
         })->whereHas('asset_by', function ($q) use ($request) {
             $q->assetType($request->typeID);
             $q->isApproved();
-        })->ofCompany($companyID);
+        })
+        ->whereDate('depForFYperiodStartDate', '>=', $financeYear->bigginingDate)
+        ->whereDate('depForFYperiodEndDate', '<=', $financePeriod->dateTo)
+        ->ofCompany($companyID);
 
         $disposalDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQryDisposal . $assetCategoryDepQryTotDisposal . '"Disposal" as description,3 as type')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
             $q->whereDate('depDate', '<', $financePeriod->dateTo);
@@ -3489,9 +3492,12 @@ WHERE
                 $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
                     $q->with(['category_by', 'sub_category_by']);
                 }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
-                    $q->whereBetween(DB::raw('DATE(depDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo]);
+                    //$q->whereBetween(DB::raw('DATE(depDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo]);
                     $q->where('approved', -1);
-                })->whereHas('asset_by', function ($q) use ($request) {
+                })
+                ->whereDate('depForFYperiodStartDate', '>=', $financeYear->bigginingDate)
+                ->whereDate('depForFYperiodEndDate', '<=', $financePeriod->dateTo)
+                ->whereHas('asset_by', function ($q) use ($request) {
                     $q->assetType($request->typeID);
                     $q->isApproved();
                     $search = $request->input('search.value');
@@ -3878,7 +3884,7 @@ WHERE
             $periodQry2 .= 'IFNULL(`' . $val->format('M-Y') . '`,0) as `' . $val->format('M-Y') . '`,';
             $periodArr[] = $val->format('M-Y');
         }
-
+        $toDateNew = Carbon::createFromFormat('Y-m-d', $toDate)->addDay()->toDateString();
         $query = 'SELECT 
                 ' . $periodQry2 . '
                 COSTGLCODE,
@@ -3940,8 +3946,8 @@ WHERE
                     LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
                     LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
                     LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
-                    LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
-                    AND "' . $toDate . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
+                    LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodStartDate) >= "' . $fromDate . '"
+                    AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodEndDate) <= "' . $toDateNew . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
                     LEFT JOIN ( 
                     SELECT 0 as openingDep,IFNULL(SUM(' . $currencyColumnDep . '),0) as additionDep,SUM(IF
                     ( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 )) AS disposedDep,
@@ -3950,8 +3956,8 @@ WHERE
                     FROM erp_fa_assetdepreciationperiods
                     INNER JOIN erp_fa_asset_master ON  erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID
                     INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID 
-                    AND erp_fa_depmaster.approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
-                    AND "' . $toDate . '" GROUP BY erp_fa_assetdepreciationperiods.faID 
+                    AND erp_fa_depmaster.approved = -1 AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodStartDate) >= "' . $fromDate . '"
+                    AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodEndDate) <= "' . $toDateNew . '" GROUP BY erp_fa_assetdepreciationperiods.faID 
                     ) dep2 ON dep2.faID3 = erp_fa_asset_master.faID
                     WHERE DATE(erp_fa_asset_master.postedDate) BETWEEN "' . $fromDate . '" 
                     AND "' . $toDate . '" AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') 
@@ -3993,8 +3999,8 @@ WHERE
                     LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
                     LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
                     LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
-                    LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
-                    AND "' . $toDate . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
+                    LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodStartDate) >= "' . $fromDate . '"
+                    AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodEndDate) <= "' . $toDateNew . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
                     LEFT JOIN (
                      SELECT IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep, SUM(IF
                     ( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 )) AS disposedDep,
@@ -4045,8 +4051,8 @@ WHERE
                     LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
                     LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
                     LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
-                    LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
-                    AND "' . $toDate . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
+                    LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodStartDate) >= "' . $fromDate . '"
+                    AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodEndDate) <= "' . $toDateNew . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
                     LEFT JOIN ( SELECT IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep,0 as disposedDep,(IFNULL(SUM(' . $currencyColumnDep . '),0)+ 0 - 0) as closingDep, faID as faID3 
                     FROM erp_fa_assetdepreciationperiods 
                     INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) < "' . $fromDate . '" 
@@ -4143,7 +4149,7 @@ WHERE
                                 erp_fa_assetdepreciationperiods
                                 INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
                             WHERE
-                                erp_fa_depmaster.approved =- 1  AND DATE(erp_fa_depmaster.depDate) <= '$asOfDate'
+                                erp_fa_depmaster.approved =- 1  AND DATE(erp_fa_assetdepreciationperiods.depForFYperiodEndDate) <= '$asOfDate'
                             GROUP BY
                                 faID 
                         ) t ON erp_fa_asset_master.faID = t.faID

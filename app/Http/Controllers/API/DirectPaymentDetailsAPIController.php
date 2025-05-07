@@ -39,6 +39,7 @@ use App\Repositories\DirectPaymentDetailsRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
+use App\Services\PaymentVoucherServices;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -160,149 +161,17 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
+        $createDocument = PaymentVoucherServices::storeDirectPaymentDetails($input);
 
-        if (empty($payMaster)) {
-            return $this->sendError('Payment voucher not found');
+        if ($createDocument['status']) {
+            return $this->sendResponse($createDocument['data'], $createDocument['message']);
         }
-
-        if($payMaster->confirmedYN){
-            return $this->sendError('You cannot add Direct Payment Detail, this document already confirmed',500);
+        else {
+            return $this->sendError(
+                $createDocument['message'],
+                isset($createDocument['code']) && ($createDocument['code'] != 404) ? $createDocument['code'] : 404
+            );
         }
-
-
-        $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
-
-        if (empty($bankMaster)) {
-            return $this->sendError('Selected Bank is not active');
-        }
-
-        $bankAccount = BankAccount::isActive()->find($payMaster->BPVAccount);
-
-        if (empty($bankAccount)) {
-            return $this->sendError('Selected Bank Account is not active');
-        }
-
-        $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
-        if (empty($chartOfAccount)) {
-            return $this->sendError('Chart of Account not found');
-        }
-
-        if ($chartOfAccount->controlAccountsSystemID == 1) {
-            return $this->sendError('Cannot add a revenue GL code');
-        }
-
-        $company = Company::find($input['companySystemID']);
-        if (empty($company)) {
-            return $this->sendError('Company not found');
-        }
-
-        if ($bankAccount->chartOfAccountSystemID == $input['chartOfAccountSystemID']) {
-            return $this->sendError('You are trying to select the same bank account');
-        }
-
-        if ($payMaster->expenseClaimOrPettyCash == 6 || $payMaster->expenseClaimOrPettyCash == 7) {
-
-            if(empty($payMaster->interCompanyToSystemID)){
-                return $this->sendError('Please select a company to');
-            }
-
-            $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'relatedPartyYN' => 1]);
-            if (count($directPaymentDetails) > 0) {
-                return $this->sendError('Cannot add GL code as there is a related party GL code added.');
-            }
-
-            $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'relatedPartyYN' => 0]);
-            if (count($directPaymentDetails) > 0) {
-                if ($chartOfAccount->relatedPartyYN) {
-                    return $this->sendError('Cannot add related party GL code as there is a GL code added.');
-                }
-            }
-
-        }
-
-        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 1]);
-        if (count($directPaymentDetails) > 0) {
-            return $this->sendError('Cannot add GL code as there is a bank GL code added.');
-        }
-
-        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 0]);
-
-        if (count($directPaymentDetails) > 0) {
-            if ($chartOfAccount->isBank) {
-                return $this->sendError('Cannot add bank account GL code as there is a GL code added.');
-            }
-        }
-
-        $input['companyID'] = $company->CompanyID;
-
-        $input['glCode'] = $chartOfAccount->AccountCode;
-        $input['glCodeDes'] = $chartOfAccount->AccountDescription;
-        $input['glCodeIsBank'] = $chartOfAccount->isBank;
-        $input['relatedPartyYN'] = $chartOfAccount->relatedPartyYN;
-
-        $input['supplierTransCurrencyID'] = $payMaster->supplierTransCurrencyID;
-        $input['supplierTransER'] = 1;
-        $input['DPAmountCurrency'] = $payMaster->supplierTransCurrencyID;
-        $input['DPAmountCurrencyER'] = 1;
-        $input['localCurrency'] = $payMaster->localCurrencyID;
-        $input['localCurrencyER'] = $payMaster->localCurrencyER;
-        $input['comRptCurrency'] = $payMaster->companyRptCurrencyID;
-        $input['comRptCurrencyER'] = $payMaster->companyRptCurrencyER;
-
-        if ($chartOfAccount->isBank) {
-            $account = BankAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->where('companySystemID', $input['companySystemID'])->first();
-            if($account) {
-                $input['bankCurrencyID'] = $account->accountCurrencyID;
-                $conversionAmount = \Helper::currencyConversion($input['companySystemID'], $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
-                $input['bankCurrencyER'] = $conversionAmount["transToDocER"];
-            }else{
-                return $this->sendError('No bank account found for the selected GL code.');
-            }
-        } else {
-            $input['bankCurrencyID'] = $payMaster->BPVbankCurrency;
-            $input['bankCurrencyER'] = $payMaster->BPVbankCurrencyER;
-        }
-
-        if ($payMaster->projectID) {
-            $input['detail_project_id'] = $payMaster->projectID;
-        }
-
-        if($payMaster->directPaymentPayeeEmpID > 0 && $payMaster->directPaymentPayeeSelectEmp == -1){
-            $employeeSegment = SrpEmployeeDetails::where('EIdNo',$payMaster->directPaymentPayeeEmpID)->first();
-            if($employeeSegment && $employeeSegment->segmentID > 0){
-                $segment = SegmentMaster::where('serviceLineSystemID',$employeeSegment->segmentID)->where('isActive',1)->first();
-                if($segment){
-                    $input['serviceLineSystemID'] = $segment->serviceLineSystemID;
-                    $input['serviceLineCode'] = $segment->ServiceLineCode;
-                }
-            }
-        }
-
-        if ($payMaster->BPVsupplierID) {
-            $input['supplierTransCurrencyID'] = $payMaster->supplierTransCurrencyID;
-            $input['supplierTransER'] = $payMaster->supplierTransCurrencyER;
-        }
-
-        if ($payMaster->FYBiggin) {
-            $finYearExp = explode('-', $payMaster->FYBiggin);
-            $input['budgetYear'] = $finYearExp[0];
-        } else {
-            $input['budgetYear'] = CompanyFinanceYear::budgetYearByDate(now(), $input['companySystemID']);
-        }
-
-        $isVATEligible = TaxService::checkCompanyVATEligible($payMaster->companySystemID);
-
-        if ($isVATEligible) {
-            $defaultVAT = TaxService::getDefaultVAT($payMaster->companySystemID, $payMaster->BPVsupplierID);
-            $input['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
-            $input['VATPercentage'] = $defaultVAT['percentage'];
-            $input['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
-        }
-
-        $directPaymentDetails = $this->directPaymentDetailsRepository->create($input);
-
-        return $this->sendResponse($directPaymentDetails->toArray(), 'Direct Payment Details saved successfully');
     }
 
     /**
@@ -406,263 +275,19 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['segment', 'chartofaccount','to_bank']);
         $input = $this->convertArrayToValue($input);
-        $serviceLineError = array('type' => 'serviceLine');
-        /** @var DirectPaymentDetails $directPaymentDetails */
-        $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($id);
 
-        if (empty($directPaymentDetails)) {
-            return $this->sendError('Direct Payment Details not found');
+        $updateDocument = PaymentVoucherServices::updateDirectPaymentDetails($id, $input);
+
+        if ($updateDocument['status']) {
+            return $this->sendResponse($updateDocument['data'], $updateDocument['message']);
         }
-
-        if(isset($input['detail_project_id'])){
-            $input['detail_project_id'] = $input['detail_project_id'];
-        } else {
-            $input['detail_project_id'] = null;
+        else {
+            return $this->sendError(
+                $updateDocument['message'],
+                isset($updateDocument['code']) && ($updateDocument['code'] != 404) ? $updateDocument['code'] : 404,
+                $updateDocument['type'] ?? array('type' => '')
+            );
         }
-
-        $payMaster = null;
-        
-        if(isset($input['directPaymentAutoID'])){
-            $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
-        }
-
-        if (empty($payMaster)) {
-            return $this->sendError('Direct Payment Supp Master not found');
-        }
-
-        if($payMaster->confirmedYN){
-            return $this->sendError('You cannot update Direct Payment Detail, this document already confirmed',500);
-        }
-
-
-        $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
-
-        if (empty($bankMaster)) {
-            return $this->sendError('Selected Bank is not active');
-        }
-
-        $bankAccount = BankAccount::isActive()->find($payMaster->BPVAccount);
-
-        if (empty($bankAccount)) {
-            return $this->sendError('Selected Bank Account is not active');
-        }
-
-        if (isset($input['serviceLineSystemID'])) {
-
-            if ($input['serviceLineSystemID'] > 0) {
-                $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
-                if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Department not found');
-                }
-
-                if ($checkDepartmentActive->isActive == 0) {
-                    $this->directPaymentDetailsRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
-                    return $this->sendError('Please select an active department', 500, $serviceLineError);
-                }
-
-                $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
-            }
-        }
-
-        if($input['serviceLineSystemID'] == 0){
-            $input['serviceLineSystemID'] = null;
-            $input['serviceLineCode'] = null;
-        }
-
-        $conversionAmount = \Helper::convertAmountToLocalRpt(202, $input["directPaymentDetailsID"], ABS($input['DPAmount']));
-
-        $input['localAmount'] = \Helper::roundValue($conversionAmount['localAmount']);
-        $input['comRptAmount'] = \Helper::roundValue($conversionAmount['reportingAmount']);
-        $input['bankAmount'] = \Helper::roundValue($conversionAmount['defaultAmount']);
-
-
-        $isVATEligible = TaxService::checkCompanyVATEligible($payMaster->companySystemID);
-        if($payMaster->invoiceType == 3) {
-
-
-            $allocatedSum = ExpenseAssetAllocation::where('documentDetailID', $input['directPaymentDetailsID'])
-            ->where('documentSystemID', $payMaster->documentSystemID)
-            ->where('documentSystemCode', $input['directPaymentAutoID'])
-            ->sum('amount');
-
-            
-            if ($allocatedSum > $input['DPAmount']) {
-                return $this->sendError("Allocated amount cannot be greater than the detail amount.");
-            }
-            
-            $allocatedQtySum = ExpenseEmployeeAllocation::where('documentDetailID', $input['directPaymentDetailsID'])
-            ->where('documentSystemID', $payMaster->documentSystemID)
-            ->where('documentSystemCode', $input['directPaymentAutoID'])
-            ->sum('amount');
-
-            if ($allocatedQtySum > $input['DPAmount']) {
-                return $this->sendError("Allocated amount cannot be greater than the detail amount.");
-            }
-           
-
-            if ($isVATEligible && $payMaster->expenseClaimOrPettyCash != 15) {
-                $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
-                    ->where('companyPolicyCategoryID', 67)
-                    ->where('isYesNO', 1)
-                    ->first();
-                $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
-
-                $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['vatAmount']);
-                if ($policy == true) {
-                    $input['VATAmountLocal'] = \Helper::roundValue($input['vatAmount'] / $payMaster->localCurrencyER);
-                    $input['VATAmountRpt'] = \Helper::roundValue($input['vatAmount'] / $payMaster->companyRptCurrencyER);
-                }
-                if ($policy == false) {
-                    $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                    $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                }
-                $input['vatAmount'] = \Helper::roundValue($input['vatAmount']);
-
-                $input['netAmount'] = isset($input['netAmount']) ? \Helper::stringToFloat($input['netAmount']) : 0;
-                $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['netAmount']);
-
-                if ($policy == true) {
-                    $input['netAmountLocal'] = \Helper::roundValue($input['netAmount'] / $payMaster->localCurrencyER);
-                    $input['netAmountRpt'] = \Helper::roundValue($input['netAmount'] / $payMaster->companyRptCurrencyER);
-                }
-                if ($policy == false) {
-                    $input['netAmountLocal'] = \Helper::roundValue($totalCurrencyConversion['localAmount']);
-                    $input['netAmountRpt'] = \Helper::roundValue($totalCurrencyConversion['reportingAmount']);
-                }
-            }
-        }
-        $epsilon = 0.000001;
-        $isBankChanges = false;
-
-        if ($directPaymentDetails->glCodeIsBank) {
-            if($payMaster->expenseClaimOrPettyCash == 15 && $payMaster->invoiceType == 3 && abs($directPaymentDetails->interBankAmount - $input['interBankAmount']) > $epsilon &&  abs($directPaymentDetails->bankCurrencyER - $input['bankCurrencyER']) < 0.000001)
-            {
-                if(\Helper::roundValue(floatval($input['interBankAmount'])) == 0)
-                {
-                    return $this->sendError('Inter Bank Amount cannot be zero');
-                }
-
-                $input["bankCurrencyER"] = \Helper::roundValue($input['DPAmount'] / \Helper::roundValue(floatval($input['interBankAmount'])));
-                $isBankChanges = true;
-            }
-        }
-        if(\Helper::roundValue(floatval($input['bankCurrencyER'])) == 0)
-        {
-            return $this->sendError('Bank exchange cannot be zero');
-        }
-
-        if ($directPaymentDetails->glCodeIsBank) {
-            $trasToDefaultER = $input["bankCurrencyER"];
-            $bankAmount = 0;
-            if ($bankAccount->accountCurrencyID == $directPaymentDetails->bankCurrencyID) {
-                $bankAmount = $input['DPAmount'];
-            } else {
-                if ($trasToDefaultER > $directPaymentDetails->DPAmountCurrencyER) {
-                    if ($trasToDefaultER > 1) {
-                        $bankAmount = $input['DPAmount'] / $trasToDefaultER;
-                    } else {
-                        $bankAmount = $input['DPAmount'] * $trasToDefaultER;
-                    }
-                } else {
-                    If ($trasToDefaultER > 1) {
-                        $bankAmount = $input['DPAmount'] * $trasToDefaultER;
-                    } else {
-                        $bankAmount = $input['DPAmount'] / $trasToDefaultER;
-                    }
-                }
-            }
-
-            if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->localCurrency) {
-                $input['localAmount'] = \Helper::roundValue($bankAmount);
-                $input['localCurrencyER'] = $input["bankCurrencyER"];
-            }else{
-                $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->localCurrency)->first();
-                if ($conversion->conversion > 1) {
-                    if ($conversion->conversion > 1) {
-                        $input['localAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
-                    } else {
-                        $input['localAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
-                    }
-                } else {
-                    if ($conversion->conversion > 1) {
-                        $input['localAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
-                    } else {
-                        $input['localAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
-                    }
-                }
-            }
-
-            if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->comRptCurrency) {
-                $input['comRptAmount'] = \Helper::roundValue($bankAmount);
-                $input['comRptCurrencyER'] = $input["bankCurrencyER"];
-            }else{
-                $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->comRptCurrency)->first();
-                if ($conversion->conversion > 1) {
-                    if ($conversion->conversion > 1) {
-                        $input['comRptAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
-                    } else {
-                        $input['comRptAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
-                    }
-                } else {
-                    if ($conversion->conversion > 1) {
-                        $input['comRptAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
-                    } else {
-                        $input['comRptAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
-                    }
-                }
-            }
-
-            $input['bankAmount'] = \Helper::roundValue($bankAmount);
-            $input['interBankAmount'] = \Helper::roundValue($bankAmount);
-        }
-
-        if ($directPaymentDetails->toBankCurrencyID) {
-            $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->supplierTransCurrencyID)->where('subCurrencyID', $directPaymentDetails->toBankCurrencyID)->first();
-            $conversion = $conversion->conversion;
-            $bankAmount2 = 0;
-            
-            /*if ($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
-                $bankAmount2 = $input['DPAmount'];*/
-            if ($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->localCurrency) {
-                $bankAmount2 = $input['localAmount'];
-            } else if($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->comRptCurrency){
-                $bankAmount2 = $input['comRptAmount'];
-            }else
-             {
-                if ($conversion > $directPaymentDetails->DPAmountCurrencyER) {
-                    if ($conversion > 1) {
-                        $bankAmount2 = $input['DPAmount'] / $conversion;
-                    } else {
-                        $bankAmount2 = $input['DPAmount'] * $conversion;
-                    }
-                } else {
-                    If ($conversion > 1) {
-                        $bankAmount2 = $input['DPAmount'] * $conversion;
-                    } else {
-                        $bankAmount2 = $input['DPAmount'] / $conversion;
-                    }
-                }
-            }
-
-            if ($payMaster->interCompanyToSystemID) {
-                $companyCurrencyConversion = \Helper::currencyConversion($payMaster->interCompanyToSystemID, $directPaymentDetails->toBankCurrencyID, $directPaymentDetails->toBankCurrencyID, $bankAmount2);
-
-                $input['toCompanyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $input['toCompanyLocalCurrencyAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
-                $input['toCompanyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['toCompanyRptCurrencyAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
-                $input['toBankCurrencyER'] = $conversion;
-                $input['toBankAmount'] = \Helper::roundValue($bankAmount2);
-            }
-        }
-
-        $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
-
-        // update master table
-        PaySupplier::updateMaster($input['directPaymentAutoID']);
-
-
-     return $this->sendResponse($directPaymentDetails->toArray(), 'DirectPaymentDetails updated successfully');
     }
 
     /**

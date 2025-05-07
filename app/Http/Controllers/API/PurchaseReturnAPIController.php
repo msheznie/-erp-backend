@@ -239,9 +239,11 @@ class PurchaseReturnAPIController extends AppBaseController
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
 
+        DB::beginTransaction();
         $lastSerial = PurchaseReturn::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('serialNo', 'desc')
+            ->lockForUpdate()
             ->first();
 
         $lastSerialNumber = 1;
@@ -297,7 +299,7 @@ class PurchaseReturnAPIController extends AppBaseController
         }
 
         $purchaseReturns = $this->purchaseReturnRepository->create($input);
-
+        DB::commit();
         return $this->sendResponse($purchaseReturns->toArray(), 'Purchase Return saved successfully');
     }
 

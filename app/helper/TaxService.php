@@ -133,6 +133,7 @@ class TaxService
             $data['percentage'] = $taxDetails->percentage;
             $data['vatSubCategoryID'] = $taxDetails->taxVatSubCategoriesAutoID;
             $data['vatMasterCategoryID'] = $taxDetails->mainCategory;
+            $data['subCatgeoryType'] = $taxDetails->subCatgeoryType;
         } else {
             $defaultVAT = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
                     $q->where('companySystemID', $companySystemID)
@@ -150,6 +151,7 @@ class TaxService
                 $data['applicableOn'] = $defaultVAT->applicableOn;
                 $data['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
                 $data['vatMasterCategoryID'] = $defaultVAT->mainCategory;
+                $data['subCatgeoryType'] = $defaultVAT->subCatgeoryType;
                 $data['percentage'] = $defaultVAT->percentage;
             } else {
                 if ($isSupplier) {
@@ -209,7 +211,6 @@ class TaxService
                 } else {
                     if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
                         $vatDetails = self::getVATDetailsByItem($companySystemID, $updateData['itemCode']);
-
                         if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
                             return ['status' => false, 'message' => "Please assign a vat category to this item (or) setup a default vat category"];
                         }
@@ -958,6 +959,7 @@ class TaxService
                                                                ->where('exempt_vat_portion', 0);
                                                            })
                                                            ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                                                           ->where('supplierInvoAmount', '>', 0)
                                                            ->groupBy('bookingSuppMasInvAutoID')
                                                            ->first();
 

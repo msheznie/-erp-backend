@@ -143,6 +143,7 @@ class StockCountAPIController extends AppBaseController
      */
     public function store(Request $request)
     {
+        DB::beginTransaction();
         $input = $request->all();
 
         $input = $this->convertArrayToValue($input);
@@ -155,6 +156,7 @@ class StockCountAPIController extends AppBaseController
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
+            DB::rollBack();
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
@@ -162,6 +164,7 @@ class StockCountAPIController extends AppBaseController
         $inputParam["departmentSystemID"] = 10;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
+            DB::rollBack();
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
             $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
@@ -180,6 +183,7 @@ class StockCountAPIController extends AppBaseController
         ]);
 
         if ($validator->fails()) {
+            DB::rollBack();
             return $this->sendError($validator->messages(), 422);
         }
 
@@ -194,6 +198,7 @@ class StockCountAPIController extends AppBaseController
         $monthEnd = $input['FYEnd'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
+            DB::rollBack();
             return $this->sendError('Document date is not within the selected financial period !', 500);
         }
 
@@ -204,6 +209,7 @@ class StockCountAPIController extends AppBaseController
         $lastSerial = StockCount::where('companySystemID', $input['companySystemID'])
                                 ->where('companyFinanceYearID', $input['companyFinanceYearID'])
                                 ->orderBy('serialNo', 'desc')
+                                ->lockForUpdate()
                                 ->first();
 
         $lastSerialNumber = 1;
@@ -216,19 +222,23 @@ class StockCountAPIController extends AppBaseController
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }else{
+            DB::rollBack();
             return $this->sendError('Segment not found',500);
         }
 
         if ($segment->isActive == 0) {
+            DB::rollBack();
             return $this->sendError('Please select a active Segment', 500);
         }
 
         $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['location'])->first();
         if (empty($warehouse)) {
+            DB::rollBack();
             return $this->sendError('Location not found',500);
         }
 
         if ($warehouse->isActive == 0) {
+            DB::rollBack();
             return $this->sendError('Please select a active location.', 500);
         }
 
@@ -242,6 +252,7 @@ class StockCountAPIController extends AppBaseController
             $checkProducts = $this->stockCountRepository->validateProductsForStockCount($input, $items);
 
             if (count($checkProducts['usedItems']) > 0) {
+                DB::rollBack();
                 return $this->sendError('You cannot used these items, these items have been pulled in the following documents', 500, array('type' => 'used_items', 'used_items' => $checkProducts['usedItems']));
             }
         } else {
@@ -284,8 +295,6 @@ class StockCountAPIController extends AppBaseController
             $input['stockCountCode'] = $stockCountCode;
         }
 
-
-        DB::beginTransaction();
         try {
             $errorMessage = [];
             $stockCount = $this->stockCountRepository->create($input);

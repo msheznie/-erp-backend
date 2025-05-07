@@ -1652,10 +1652,12 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $time = strtotime("now");
         $fileName = 'journal_voucher_' . $id . '_' . $time . '.pdf';
         $html = view('print.journal_voucher', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public function approvalPreCheckJV(Request $request)

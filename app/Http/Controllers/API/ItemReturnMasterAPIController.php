@@ -186,6 +186,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        DB::beginTransaction();
         if (isset($input['ReturnDate'])) {
             if ($input['ReturnDate']) {
                 $input['ReturnDate'] = new Carbon($input['ReturnDate']);
@@ -197,6 +198,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $monthEnd = $input['FYEnd'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
+            DB::rollBack();
             return $this->sendError('Return date is not within the selected financial period !', 500);
         }
 
@@ -206,6 +208,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $lastSerial = ItemReturnMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('serialNo', 'desc')
+            ->lockForUpdate()
             ->first();
 
         $lastSerialNumber = 1;
@@ -247,7 +250,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
 
         $itemReturnMasters = $this->itemReturnMasterRepository->create($input);
-
+        DB::commit();
         return $this->sendResponse($itemReturnMasters->toArray(), 'Item Return Master saved successfully');
     }
 

@@ -53,6 +53,7 @@ use App\Models\CurrencyMaster;
 use App\Models\Employee;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\GeneralLedger;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierContactDetails;
@@ -178,22 +179,49 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $slug = "employee-control-account";
 
+        $isDetailConfiguredCOA = [];
         $isConfigured = SystemGlCodeScenario::where('isActive', 1)->where('slug',$slug)->first();
-        $isDetailConfigured = ($isConfigured) ? SystemGlCodeScenarioDetail::where('systemGLScenarioID', $isConfigured->id)->where('companySystemID', $companiesByGroup)->first() : [];
-
+        $isDetailConfigured = ($isConfigured) ? SystemGlCodeScenarioDetail::where('systemGLScenarioID', $isConfigured->id)->whereIn('companySystemID', $companiesByGroup)->where('chartOfAccountSystemID', '!=', null)->get() : [];
         if(!empty($isConfigured) && !empty($isDetailConfigured)) {
-            $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->where('isActive', 1)->where('isAssigned', -1)->first();
+            $isDetailConfiguredCOA = $isDetailConfigured->pluck('chartOfAccountSystemID')->toArray();
+            $isDetailConfiguredCompId = $isDetailConfigured->pluck('companySystemID')->toArray();
+            $isChartOfAccountConfigured = ChartOfAccountsAssigned::whereIn('chartOfAccountSystemID', $isDetailConfiguredCOA)->whereIn('companySystemID', $isDetailConfiguredCompId)->where('isActive', 1)->where('isAssigned', -1)->first();
             if(!empty($isChartOfAccountConfigured)) {
-                $controlAccountEmployeeID = $isDetailConfigured->chartOfAccountSystemID;
-                $controlAccountEmployee = ChartOfAccount::where('chartOfAccountSystemID', $controlAccountEmployeeID)->get();
+                $controlAccountEmployee = ChartOfAccount::whereIn('chartOfAccountSystemID', $isDetailConfiguredCOA)->get();
             } else {
-                $controlAccountEmployee = [];
+                $controlAccountEmployee = collect();
             }
         } else {
-            $controlAccountEmployee = [];
+            $controlAccountEmployee = collect();
         }
 
-        
+        /*** Employee Advance Account Fetching */
+        $controlAccountEmployeeAdvance = [];
+        $isConfiguredEmpAdvanceAccount = SystemGlCodeScenario::where('isActive', 1)->where('slug','employee-advance-account')->first();
+        $isDetailConfiguredEmpAdvanceAccount = ($isConfiguredEmpAdvanceAccount) ? SystemGlCodeScenarioDetail::where('systemGLScenarioID', $isConfiguredEmpAdvanceAccount->id)->where('chartOfAccountSystemID', '!=', null)->whereIn('companySystemID', $companiesByGroup)->get() : [];
+        if(!empty($isConfiguredEmpAdvanceAccount) && !empty($isDetailConfiguredEmpAdvanceAccount)) {
+            $chartOfAccountSystemID = $isDetailConfiguredEmpAdvanceAccount->pluck('chartOfAccountSystemID')->toArray();
+            $advanceGlCompId = $isDetailConfiguredEmpAdvanceAccount->pluck('companySystemID')->toArray();
+            $empAdvanceCOA = ChartOfAccountsAssigned::whereIn('chartOfAccountSystemID', $chartOfAccountSystemID)->whereIn('companySystemID', $advanceGlCompId)->where('isActive', 1)->where('isAssigned', -1)->first();
+            if (!empty($empAdvanceCOA)) {
+                $controlAccountEmployeeAdvance = $chartOfAccountSystemID;
+                $currentAdvanceAccount = ChartOfAccount::whereIn('chartOfAccountSystemID', $controlAccountEmployeeAdvance)->get();
+                if (!empty($currentAdvanceAccount)) {
+                    $controlAccountEmployee = $controlAccountEmployee->merge($currentAdvanceAccount);
+                }
+            }
+        }
+
+        $controlAccountEmployeeAdvance = array_merge($controlAccountEmployeeAdvance, $isDetailConfiguredCOA);
+        $empAdvanceAccounts = PaySupplierInvoiceMaster::where('employeeAdvanceAccountSystemID', '!=', null)->whereNotIn('employeeAdvanceAccountSystemID', $controlAccountEmployeeAdvance)->whereIn('companySystemID', $companiesByGroup)->groupBy('employeeAdvanceAccountSystemID')->pluck('employeeAdvanceAccountSystemID');
+        if (!empty($empAdvanceAccounts)) {
+            $oldControlAccountEmployee = ChartOfAccount::whereIn('chartOfAccountSystemID', $empAdvanceAccounts)->get();
+            if (!empty($oldControlAccountEmployee)) {
+                $controlAccountEmployee = $controlAccountEmployee->merge($oldControlAccountEmployee);
+            }
+        }
+        /*** End of Employee Advance Account Fetching */
+
         $categories = FinanceItemCategoryMaster::all();
         $output = array(
             'controlAccount' => $controlAccount,
@@ -635,8 +663,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $unallocatedTotal = 0;
                             if ($outputDetail['data']) {
                                 foreach ($outputDetail['data'] as $valDet) {
-                                    if($val->supplierCodeSystem == $valDet->supplierCodeSystem) {
-                                        $unallocatedTotal += $valDet->unAllocatedAmount;
+                                    if (isset($val->supplierCodeSystem) && isset($valDet->supplierCodeSystem) && isset($val->glCode) && isset($valDet->glCode)) {
+                                        if($val->supplierCodeSystem == $valDet->supplierCodeSystem && $val->glCode == $valDet->glCode) {
+                                            $unallocatedTotal += $valDet->unAllocatedAmount;
+                                        }
                                     }
                                 }
                             }
@@ -1530,8 +1560,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $unallocatedTotal = 0;
                                 if ($outputDetail['data']) {
                                     foreach ($outputDetail['data'] as $valDet) {
-                                        if($val->supplierCodeSystem == $valDet->supplierCodeSystem) {
-                                            $unallocatedTotal += $valDet->unAllocatedAmount;
+                                        if (isset($val->supplierCodeSystem) && isset($valDet->supplierCodeSystem) && isset($val->glCode) && isset($valDet->glCode)) {
+                                            if($val->supplierCodeSystem == $valDet->supplierCodeSystem && $val->glCode == $valDet->glCode) {
+                                                $unallocatedTotal += $valDet->unAllocatedAmount;
+                                            }
                                         }
                                     }
                                 }

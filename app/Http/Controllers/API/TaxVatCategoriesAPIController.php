@@ -7,6 +7,7 @@ use App\Http\Requests\API\CreateTaxVatCategoriesAPIRequest;
 use App\Http\Requests\API\UpdateTaxVatCategoriesAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\TaxLedger;
 use App\Models\VatSubCategoryType;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
@@ -129,7 +130,6 @@ class TaxVatCategoriesAPIController extends AppBaseController
     public function store(CreateTaxVatCategoriesAPIRequest $request)
     {
         $input = $request->all();
-//
         $input = $this->convertArrayToSelectedValue($input, array('recordType'));
         if(!(isset($input['taxMasterAutoID']) && $input['taxMasterAutoID'])){
             return $this->sendError('Tax Master Auto ID is not found',500);
@@ -157,6 +157,15 @@ class TaxVatCategoriesAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+
+        //check custom validaiton
+        $checkCustomValidaiton = $this->checkCustomValidaitons($input);
+
+        if(empty($checkCustomValidaiton['success']))
+        {
+            return $this->sendError($checkCustomValidaiton['message'],500);
+        }
+
         // check duplicated subcategory
         $isDuplicated = TaxVatCategories::where('subCategoryDescription',$input['subCategoryDescription'])->where('taxMasterAutoID',$input['taxMasterAutoID'])->exists();
         if($isDuplicated){
@@ -171,6 +180,71 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $taxVatCategories = $this->taxVatCategoriesRepository->create($input);
 
         return $this->sendResponse($taxVatCategories->toArray(), 'Tax Vat Categories saved successfully');
+    }
+
+    private function checkCustomValidaitons($input)
+    {
+        $taxMaster = Tax::with(['vat_categories'])->where('taxMasterAutoID',$input['taxMasterAutoID'])->first();
+
+        if($taxMaster && $taxMaster->vat_categories->isNotEmpty())
+        {
+            $vatCategory = $taxMaster->vat_categories->where('subCatgeoryType',$input['subCatgeoryType'])->sortByDesc('taxVatSubCategoriesAutoID');
+            $vatCategoryFirst = $vatCategory->first();
+            $subCategoryType = VatSubCategoryType::find($input['subCatgeoryType']);
+            if(empty($input['taxVatSubCategoriesAutoID']))
+            {
+                if($vatCategory->isNotEmpty()){
+                    return [
+                        'success' => false,
+                        "message" => "VAT subcategory ".$subCategoryType->type." is already defined. You cannot create more than one active VAT subcategory"
+                    ];
+                }
+            }else {
+                $masterTaxVatCategory = TaxVatCategories::find($input['taxVatSubCategoriesAutoID']);
+                if($vatCategoryFirst && isset($vatCategoryFirst->subCatgeoryType) && $vatCategoryFirst->subCatgeoryType == 3)
+                {
+                    if(!empty($vatCategoryFirst->expenseGL))
+                    {
+                        $expenseGL = $vatCategoryFirst->expenseGL;
+
+                        $checkGLExistsOnTaxLedger = TaxLedger::where('inputVATGlAccountID', $expenseGL)
+                            ->orWhere('inputVatTransferAccountID', $expenseGL)
+                            ->orWhere('outputVatTransferGLAccountID', $expenseGL)
+                            ->orWhere('outputVatGLAccountID', $expenseGL)
+                            ->exists();
+
+                        if(($masterTaxVatCategory->isDefault  == $input['isDefault']) && $checkGLExistsOnTaxLedger && ($expenseGL != $input['expenseGL']) && $vatCategoryFirst->recordType == 1)
+                        {
+                            return [
+                                'success' => false,
+                                "message" =>  "The transaction has already been posted to the selected GL"
+                            ];
+                        }
+                    }
+                }
+                if(!empty($vatCategory) && $vatCategory->where('isActive',1)->isNotEmpty() && ($vatCategory->where('isActive',1)->first()->taxVatSubCategoriesAutoID != $input['taxVatSubCategoriesAutoID']) && $input['isActive'] && empty($input['dirt']))
+                {
+                    if(empty($input['isDefault']))
+                    {
+                        return [
+                            'success' => false,
+                            'message' => "You cannot have multiple VAT categories in a single type."
+                        ];
+                    }else {
+                        return [
+                            'success' => false,
+                            'message' => "Only one catgeory can be default."
+                        ];
+                    }
+                }
+            }
+
+        }
+
+        return [
+            'success' => true,
+            'message' => "success"
+        ];
     }
 
     /**
@@ -314,6 +388,17 @@ class TaxVatCategoriesAPIController extends AppBaseController
 
         if (!$taxData) {
             return $this->sendError('Tax Master not found',500);
+        }
+
+
+        $checkCustomValidaiton = $this->checkCustomValidaitons($input);
+
+        if(isset($input['dirt']))
+            unset($input['dirt']);
+
+        if(empty($checkCustomValidaiton['success']))
+        {
+            return $this->sendError($checkCustomValidaiton['message'],500);
         }
 
         if (isset($input['isDefault']) && $input['isDefault']) {

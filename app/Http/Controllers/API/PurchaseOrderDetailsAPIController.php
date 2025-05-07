@@ -22,6 +22,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Jobs\AddBulkItem\PoAddBulkItemJob;
+use App\Models\CurrencyMaster;
 use App\Services\ProcurementOrder\ProcurementOrderService;
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
@@ -262,6 +263,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $index = $input['skip'] + 1;
         foreach($items as $item) {
             $item['index'] = $index;
+            $currencyID = ($item->supplierItemCurrencyID) ?? 3;
+            $decimal = CurrencyMaster::find($currencyID)->DecimalPlaces;
+            $item->netAmount = round(round($item->unitCost,$decimal) * $item->noQty,$decimal);
             $index++;
         }
 
@@ -320,6 +324,17 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
+        }
+
+
+        $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($companySystemID) {
+            $query->where('companySystemID', $companySystemID);
+        })->where('isActive', 1)->first();
+        
+
+        if($purchaseOrder->poTypeID == 2 && ($expenseCOA && $expenseCOA->isDefault) && $purchaseOrder->rcmActivated)
+        {
+            return $this->sendError('Invalid transaction: RCM and Exempt VAT cannot be selected together. Please change the VAT category to proceed');
         }
 
         $companyPolicyMaster = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -695,6 +710,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
                             $prDetail_arr['unitCost'] = $new['poUnitAmount'];
+
                             $prDetail_arr['netAmount'] = ($new['poUnitAmount'] * $new['poQty']);
                             // Get VAT percentage for item
 

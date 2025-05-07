@@ -34,6 +34,7 @@ use App\Models\ChartOfAccount;
 use App\Models\PurchaseOrderDetails;
 use App\Models\BudgetConsumedData;
 use App\Models\SupplierEvaluationTemplate;
+use App\Models\Tax;
 use App\Models\TaxVatCategories;
 use App\Models\ErpItemLedger;
 use App\Models\Taxdetail;
@@ -212,6 +213,7 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('GRV date is not within the financial period!');
         }
 
+        DB::beginTransaction();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
@@ -257,6 +259,7 @@ class GRVMasterAPIController extends AppBaseController
         $lastSerial = GRVMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('grvSerialNo', 'desc')
+            ->lockForUpdate()
             ->first();
 
         $lastSerialNumber = 1;
@@ -311,7 +314,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         $gRVMasters = $this->gRVMasterRepository->create($input);
-
+        DB::commit();
         return $this->sendResponse($gRVMasters->toArray(), 'GRV Master saved successfully');
     }
 
@@ -355,7 +358,6 @@ class GRVMasterAPIController extends AppBaseController
     public function update($id, UpdateGRVMasterAPIRequest $request)
     {
         $input = $request->all();
-
 
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
@@ -402,7 +404,7 @@ class GRVMasterAPIController extends AppBaseController
                 }
             }
         }
-        
+
         $grvType = GRVTypes::where('grvTypeID', $input['grvTypeID'])->first();
         if ($grvType) {
             $input['grvType'] = $grvType->idERP_GrvTpes;
@@ -447,7 +449,7 @@ class GRVMasterAPIController extends AppBaseController
                 }
             }
         }
-        
+
         if ($input['grvLocation'] != $gRVMaster->grvLocation) {
             $resWareHouseUpdate = ItemTracking::updateTrackingDetailWareHouse($input['grvLocation'], $id, $gRVMaster->documentSystemID);
 
@@ -460,7 +462,7 @@ class GRVMasterAPIController extends AppBaseController
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
-        
+
         // changing supplier related details when supplier changed
         if ($gRVMaster->supplierID != $input['supplierID']) {
             $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
@@ -472,7 +474,7 @@ class GRVMasterAPIController extends AppBaseController
                 $input['supplierFax'] = $supplier->fax;
                 $input['supplierEmail'] = $supplier->supEmail;
             }
-            
+
             $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
                 ->where('isDefault', -1)
                 ->first();
@@ -487,7 +489,7 @@ class GRVMasterAPIController extends AppBaseController
                     $input['supplierDefaultER'] = $erCurrency->ExchangeRate;
                 }
             }
-                
+
             // adding supplier grv details
             $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
                 ->where('companySystemID', $input['companySystemID'])
@@ -501,7 +503,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
         }
-        
+
         //getting transaction amount
         $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
             ->where('grvAutoID', $input['grvAutoID'])
@@ -520,6 +522,19 @@ class GRVMasterAPIController extends AppBaseController
 
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
             if ($gRVMaster->grvTypeID == 1) {
+
+
+
+                $taxes = Tax::with(['vat_categories' => function($query) {
+                    $query->where('isActive', true);
+                }])->where('companySystemID',$input['companySystemID'])->get();
+                $vatCategoreis = array();
+                foreach ($taxes as $tax)
+                {
+                    $vatCategoreis[] = $tax->vat_categories;
+                }
+
+
                 $grvVatDetails = GRVDetails::where('grvAutoID', $input['grvAutoID'])->get();
                 foreach ($grvVatDetails as $grvVatDetail) {
                     if ($grvVatDetail->VATAmount > 0) {
@@ -527,7 +542,16 @@ class GRVMasterAPIController extends AppBaseController
                             return $this->sendError("Please assign a vat category to this item (or) setup a default vat category");
                         }
                     }
+
+                    if($grvVatDetail->exempt_vat_portion > 0)
+                    {
+                        if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
+                        {
+                            return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
+                        }
+                    }
                 }
+
             }
 
             if($gRVMaster->grvTypeID == 2)
@@ -724,7 +748,11 @@ class GRVMasterAPIController extends AppBaseController
                 $grvTotalSupplierTransactionCurrency['defaultTotalSum'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'] - $currency['defaultAmount'] + $currencyVAT['defaultAmount'];
 
             } else {
-                $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
+//                $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
+//                    ->where('grvAutoID', $input['grvAutoID'])
+//                    ->first();
+
+                $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
                     ->where('grvAutoID', $input['grvAutoID'])
                     ->first();
             }
@@ -938,7 +966,7 @@ class GRVMasterAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
       
-     
+
         $gRVMaster = $this->gRVMasterRepository->update($input, $id);
 
 

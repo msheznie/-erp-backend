@@ -13,7 +13,6 @@ use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetMaster;
 use App\Models\Location;
 use App\Models\SegmentMaster;
-use App\Models\TemporaryAssetSerial;
 use App\Models\UploadAssetCosting;
 use App\Services\GeneralLedger\AssetCreationService;
 use App\Validations\AssetManagement\ValidateAssetCreation;
@@ -108,7 +107,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     throw new AssetCostingException("Department not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
-                $segment = SegmentMaster::where('ServiceLineCode', $assetCostingValue[1])->first();
+                $segment = SegmentMaster::where('ServiceLineCode', $assetCostingValue[1])->where('companySystemID', $uploadedCompany)->first();
                 if (empty($segment)) {
                     throw new AssetCostingException("Segment not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
@@ -172,19 +171,19 @@ class AssetCostingUploadSubJob implements ShouldQueue
                 $residualRpt = $residualRpt ?? 0;
 
                 $mainCategory = $assetCostingValue[6];
-                $mainCategoryData = FixedAssetCategory::where('catCode', $mainCategory)->first();
+                $mainCategoryData = FixedAssetCategory::where('catCode', $mainCategory)->where('companySystemID', $uploadedCompany)->first();
                 if (empty($mainCategoryData)) {
                     throw new AssetCostingException("Main category not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
                 $subCategory = $assetCostingValue[7];
 
-                $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->first();
+                $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->where('companySystemID', $uploadedCompany)->first();
                 if (empty($subCategoryData)) {
                     throw new AssetCostingException("Sub category not found", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
 
-                $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->where('faCatID', $mainCategoryData->faCatID)->first();
+                $subCategoryData = FixedAssetCategorySub::where('suCatCode', $subCategory)->where('faCatID', $mainCategoryData->faCatID)->where('companySystemID', $uploadedCompany)->first();
                 if (empty($subCategoryData)) {
                     throw new AssetCostingException("The subcategory code is not associated with the main category", $logUploadAssetCosting->assetCostingUploadID, ($uploadCount + $startRow));
                 }
@@ -318,7 +317,6 @@ class AssetCostingUploadSubJob implements ShouldQueue
 
                 if ($newCounterValue == $totalRecords) {
                     UploadAssetCosting::where('id', $logUploadAssetCosting->assetCostingUploadID)->update(['uploadStatus' => 1]);
-                    TemporaryAssetSerial::truncate();
                 }
                 DB::commit();
             }

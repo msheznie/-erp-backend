@@ -164,7 +164,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         }
 
         unset($inputParam);
-
+        DB::beginTransaction();
         $input['inventoryReclassificationDate'] = new Carbon($input['inventoryReclassificationDate']);
 
         $monthBegin = $input['FYBiggin'];
@@ -172,6 +172,7 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
         } else {
+            DB::rollBack();
             return $this->sendError('Reclassification date is not within financial period!', 500);
         }
 
@@ -198,6 +199,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $lastSerial = InventoryReclassification::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('inventoryreclassificationID', 'desc')
+            ->lockForUpdate()
             ->first();
 
         $lastSerialNumber = 1;
@@ -222,7 +224,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
         $inventoryReclassifications = $this->inventoryReclassificationRepository->create($input);
-
+        DB::commit();
         return $this->sendResponse($inventoryReclassifications->toArray(), 'Inventory Reclassification saved successfully');
     }
 

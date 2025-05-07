@@ -93,7 +93,6 @@ class AssetCreationService extends AppBaseController
             FixedAssetDepreciationMaster::whereIn('depMasterAutoID', $depMasterAutoIDs)->delete();
             FixedAssetDepreciationPeriod::where('faID', $createdFA->faID)->delete();
         }
-        TemporaryAssetSerial::truncate();
         FixedAssetMaster::where('assetCostingUploadID', $assetCostingUploadID)->forceDelete();
     }
 

@@ -661,7 +661,7 @@ class FixedAssetMaster extends Model
         'postToGLYN' => 'integer',
         'postToGLCodeSystemID' => 'integer',
         'deleteComment' => 'string',
-        'postToGLCode' => 'integer',
+        'postToGLCode' => 'string',
         'empID' => 'integer',
         'assetCostingUploadID' => 'integer'
 
