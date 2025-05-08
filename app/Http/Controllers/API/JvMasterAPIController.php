@@ -621,6 +621,7 @@ AND hrms_jvmaster.companyID = '" . $companyID . "'" . $where);
     {
         $companySystemID = $request['companyId'];
         $accruvalMasterID = $request['accruvalMasterID'];
+        $currencyId = $request['currencyId'];
 
         $company = Company::where('companySystemID', $companySystemID)->first();
 
@@ -643,8 +644,15 @@ AND hrms_jvmaster.companyID = '" . $companyID . "'" . $where);
                 'chartofaccounts.chartOfAccountSystemID',
                 'chartofaccounts.AccountDescription',
                 'hrms_jvdetails.localCurrency',
-                DB::raw('SUM(IF(localAmount < 0, localAmount * -1, 0)) AS CreditAmount'),
-                DB::raw('SUM(IF(localAmount > 0, localAmount, 0)) AS DebitAmount')
+                DB::raw('SUM(IF(hrms_jvdetails.localCurrency = ' . $currencyId .
+                    ' AND hrms_jvdetails.localAmount > 0, hrms_jvdetails.localAmount, 0)) +
+                SUM(IF(hrms_jvdetails.rptCurrency = ' . $currencyId .
+                    ' AND hrms_jvdetails.rptAmount > 0, hrms_jvdetails.rptAmount, 0)) AS CreditAmount'),
+
+                DB::raw('SUM(IF(hrms_jvdetails.localCurrency = ' . $currencyId .
+                    ' AND hrms_jvdetails.localAmount < 0, hrms_jvdetails.localAmount * -1, 0)) +
+                SUM(IF(hrms_jvdetails.rptCurrency = ' . $currencyId .
+                    ' AND hrms_jvdetails.rptAmount < 0, hrms_jvdetails.rptAmount * -1, 0)) AS DebitAmount')
             )
             ->join('chartofaccounts', 'hrms_jvdetails.GlCode', '=', 'chartofaccounts.AccountCode')
             ->leftJoin('serviceline', function ($join) {

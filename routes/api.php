@@ -125,6 +125,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 });
 
                 Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode');
+                Route::get('getCompanyCurrency', 'CurrencyMasterAPIController@getCompanyCurrency');
                 Route::resource('users', 'UserAPIController');
                 Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
 
