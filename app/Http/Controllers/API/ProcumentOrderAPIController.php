@@ -458,10 +458,12 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
                 ->where('companySystemID', $input['companySystemID'])
+                ->where('isAssigned', -1)
+                ->where('isActive', 1)
                 ->first();
 
-            if ($supplierAssignedDetai) {
-                $input['supplierVATEligible'] = $supplierAssignedDetai->vatEligible;
+            if ($supplierAssignedDetai && $supplier) {
+                $input['supplierVATEligible'] = $supplier->vatEligible;
                 $input['VATPercentage'] = 0; // $supplierAssignedDetai->vatPercentage;
             }
 
