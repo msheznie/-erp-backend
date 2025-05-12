@@ -875,7 +875,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     // $calculateItemTax = (($itemDiscont['VATPercentage'] / 100) * $calculateItemDiscount) + $calculateItemDiscount;
                     $vatLineAmount = $itemDiscont['VATAmount']; //($calculateItemTax - $calculateItemDiscount);
 
-                    $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
+                    $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount,null,true);
 
                     $currencyConversionForLineAmount = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatLineAmount);
 
@@ -914,7 +914,9 @@ class ProcumentOrderAPIController extends AppBaseController
                         $itemDiscont['companySystemID'],
                         $input['supplierTransactionCurrencyID'],
                         $input['supplierTransactionCurrencyID'],
-                        $calculateItemDiscount
+                        $calculateItemDiscount,
+                        null,
+                        true
                     );
 
                     $currencyConversionLineDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateItemDiscount);

@@ -453,7 +453,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $grvCost = $input['unitCost'];
 
         if ($grvCost > 0) {
-            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $grvCost);
+            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $grvCost,null,true);
 
             $input['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
             $input['GRVcostPerUnitSupTransCur'] = $grvCost;
@@ -466,7 +466,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         // adding supplier Default CurrencyID base currency conversion
         if ($grvCost > 0) {
-            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $grvCost);
+            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $grvCost,null,true);
 
             $input['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
             $input['purchaseRetcostPerUniSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
@@ -748,7 +748,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['supplierCatalogMasterID'] = isset($new['supplierCatalogMasterID']) ? $new['supplierCatalogMasterID'] : 0;
 
                             if ($new['poUnitAmount'] > 0) {
-                                $currencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $new['poUnitAmount']);
+                                $currencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $new['poUnitAmount'],null,true);
 
                                 $prDetail_arr['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                                 $prDetail_arr['GRVcostPerUnitSupTransCur'] = $new['poUnitAmount'];
@@ -1012,7 +1012,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
 
             if ($discountedUnitPrice > 0) {
-                $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
+                $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice,null,true);
 
                 $input['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                 $input['GRVcostPerUnitSupTransCur'] = $discountedUnitPrice;

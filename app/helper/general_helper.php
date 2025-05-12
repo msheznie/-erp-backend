@@ -3696,7 +3696,7 @@ class Helper
      * @param null $bankAccountAutoID - bank account ID
      * @return trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount
      */
-    public static function currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $transactionAmount, $bankAccountAutoID = null)
+    public static function currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $transactionAmount, $bankAccountAutoID = null,$roundOff = false)
     {
         $locaCurrencyID = null;
         $reportingCurrencyID = null;
@@ -3722,9 +3722,9 @@ class Helper
                 $reportingCurrencyID = $companyCurrency->reportingCurrency;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $locaCurrencyID)->first();
 
-                $trasToLocER = $conversion->conversion;
+                $trasToLocER = $roundOff ? self::roundValue($conversion->conversion) : $conversion->conversion;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $reportingCurrencyID)->first();
-                $trasToRptER = $conversion->conversion;
+                $trasToRptER = $roundOff ? self::roundValue($conversion->conversion) : $conversion->conversion;
 
                 if ($transactionCurrencyID == $reportingCurrencyID) {
                     $reportingAmount = $transactionAmount;
@@ -10122,4 +10122,6 @@ class Helper
     {
         return collect($data_array)->pluck('id')->filter()->values()->all();
     }
+
+
 }
