@@ -123,6 +123,7 @@ class PurchaseRequest extends Model
         'serialNumber',
         'purchaseRequestCode',
         'comments',
+        'internalNotes',
         'location',
         'priority',
         'deliveryLocation',

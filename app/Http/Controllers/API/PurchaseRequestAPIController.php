@@ -2028,6 +2028,10 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
+        if (!empty($input['internalNotes']) && strlen($input['internalNotes']) > 250) {
+            return $this->sendError('Internal notes should be less than or equal to 250 characters', 500);
+        }
+
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $user->employee['empID'];
 
