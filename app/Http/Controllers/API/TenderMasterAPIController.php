@@ -3126,8 +3126,7 @@ ORDER BY
                 })
                     ->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
                         $q1->where('emp_id', $userId);
-                    })
-                    ->orWhere('document_system_id', 113);
+                    });
             })
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('company_id', $companyId);
 
@@ -3585,8 +3584,7 @@ ORDER BY
                         ->where('module_id',2);
                 })->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
                     $q1->where('emp_id', $userId);
-                })
-                    ->orWhere('document_system_id', 113);
+                });
             });
 
         if($isNegotiation == 1){
@@ -3764,8 +3762,7 @@ ORDER BY
                 })
                     ->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
                         $q1->where('emp_id', $userId);
-                    })
-                    ->orWhere('document_system_id', 113);
+                    });
             })
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
