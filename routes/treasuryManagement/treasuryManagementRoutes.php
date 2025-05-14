@@ -44,6 +44,7 @@ Route::group([], function() {
     Route::resource('bank_ledgers', 'BankLedgerAPIController');
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
     Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
+    Route::resource('bankReconciliationRule', 'BankReconciliationRulesAPIController');
 
     Route::post('uploadBankStatement', 'BankReconciliationAPIController@uploadBankStatement')->name('Upload Bank Statement');
     Route::post('createTemplateMapping', 'BankReconciliationTemplateMappingAPIController@store')->name('Add bank reconciliation template mapping');
@@ -51,6 +52,9 @@ Route::group([], function() {
     Route::post('getBankStatementImportHistory', 'BankStatementMasterAPIController@getBankStatementImportHistory')->name('Get bank statement import history');
     Route::post('deleteBankStatement/{id}', 'BankStatementMasterAPIController@deleteBankStatement');
     Route::get('getActiveBankAccountsByBankID', 'BankReconciliationAPIController@getActiveBankAccountsByBankID')->name('Get active bank accounts by bank id');
+    Route::post('getBankStatementUploadRules', 'BankReconciliationRulesAPIController@getBankStatementUploadRules')->name('Get active bank accounts by bank id');
+    Route::get('getMatchingRuleDetails', 'BankReconciliationRulesAPIController@getMatchingRuleDetails')->name('Get matching rule details');
+    Route::post('updateDefaultRule', 'BankReconciliationRulesAPIController@updateDefaultRule')->name('Upload default matching rule');
 });
 
 //Cheque Register
