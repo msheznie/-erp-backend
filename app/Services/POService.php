@@ -22,7 +22,7 @@ class POService
      * @return array
      */
 
-    public function getPoPrintData($purchaseOrderID)
+    public function getPoPrintData($purchaseOrderID, $supplierMasterId)
     {
         $poBasicData = ProcumentOrder::find($purchaseOrderID);
         $createdDateTime = ($poBasicData) ? Carbon::parse($poBasicData->createdDateTime) : null;
@@ -109,6 +109,11 @@ class POService
         ])->first();
 
         if (!empty($output)) {
+
+            if($supplierMasterId != $output['supplierID'])
+            {
+                return [];
+            }
 
             foreach ($output->detail as $item) {
 

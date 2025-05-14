@@ -28,8 +28,9 @@ class UpdateTenderCalendarDaysRequest extends FormRequest
             ];
 
         $tenderData = TenderMaster::getTenderByUuid($this->input('tenderCode'));
+        $isTender = $this->input('isTender');
 
-        if($tenderData['stage'] == 1)
+        if($tenderData['stage'] == 1 && $isTender == 1)
         {
 
             $rules = array_merge($rules, [
@@ -39,7 +40,7 @@ class UpdateTenderCalendarDaysRequest extends FormRequest
         }
 
 
-        if($tenderData['stage'] == 2)
+        if($tenderData['stage'] == 2 && $isTender == 1)
         {
 
             $rules = array_merge($rules, [

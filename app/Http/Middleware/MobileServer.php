@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 use App\Services\MobileAccessRouteService;
+use App\Services\SRMService;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +21,16 @@ class MobileServer
         if (env('MOBILE_SERVER', false)) {
             
             if(in_array($request->route()->uri, $routes['routes']))
+            {
+                return $next($request);
+            }
+
+            return $this->errorMsgs("Unauthorized Access",401);
+        } 
+
+        if (env('SRM_API_SERVER', false)) {
+            
+            if(in_array($request->route()->uri, SRMService::apiRoutes()))
             {
                 return $next($request);
             }

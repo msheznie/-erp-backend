@@ -457,6 +457,7 @@ class TenderMasterRepository extends BaseRepository
         {
             $input = $request->all();
             $tenderData = TenderMaster::getTenderByUuid($input['tenderCode']);
+            $isTender = $input['isTender'];
 
 
             if(empty($tenderData)){
@@ -464,7 +465,7 @@ class TenderMasterRepository extends BaseRepository
             }
 
             $formattedDatesAndTime = $this->getFormattedDatesAndTime($input,$tenderData);
-            $validationResult = $this->validateTenderDates($formattedDatesAndTime,$tenderData);
+            $validationResult = $this->validateTenderDates($formattedDatesAndTime,$tenderData,$isTender);
             if (!$validationResult['success']) {
                 return $validationResult;
             }
@@ -484,7 +485,7 @@ class TenderMasterRepository extends BaseRepository
         }
     }
 
-    private function validateTenderDates($data,$tenderData)
+    private function validateTenderDates($data,$tenderData,$isTender)
     {
         $submissionClosingDate = $data['submissionClosingDate'];
         $submissionOpeningDate = $data['submissionOpeningDate'];
@@ -509,7 +510,7 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
         }
 
-        if($tenderData['stage'] == 1)
+        if($tenderData['stage'] == 1 && $isTender == 1)
         {
             if ($submissionClosingDate >= $bidOpeningStartDate) {
                 return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
@@ -523,35 +524,26 @@ class TenderMasterRepository extends BaseRepository
 
         if($tenderData['stage'] == 2)
         {
+            if ($submissionClosingDate > $technicalStartDate) {
+                return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission to date and time'];
+            }
+            if ($technicalStartDate > $commercialStartDate) {
+                return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
+            }
 
-            if (!is_null($commercialEndDate)) {
-                if ($commercialStartDate > $commercialEndDate) {
+            if($isTender == 1){
+                if (!is_null($commercialEndDate) && $commercialStartDate > $commercialEndDate) {
                     return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
                 }
-            }
 
-            if ($submissionClosingDate > $technicalStartDate) {
-                return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission from date and time'];
-            }
-
-
-            if (is_null($technicalEndDate)) {
-                if ($technicalStartDate > $commercialStartDate) {
-                    return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
-                }
-            } else {
-                if (($technicalEndDate >= $commercialStartDate)) {
+                if (!is_null($technicalEndDate) && ($technicalEndDate >= $commercialStartDate)) {
                     return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
                 }
-            }
 
-
-            if (!empty($technicalStartDate) && !empty($technicalEndDate)) {
-                if ($technicalStartDate > $technicalEndDate) {
+                if (!empty($technicalStartDate) && !empty($technicalEndDate && $technicalStartDate > $technicalEndDate)) {
                     return ['success' => false, 'message' => 'Technical Bid Opening to date and time should greater than Technical Bid Opening from date and time'];
                 }
             }
-
         }
 
         return ['success' => true];

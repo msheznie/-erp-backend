@@ -68,7 +68,8 @@ return [
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
-            'use_path_style_endpoint' => true
+            'use_path_style_endpoint' => true,
+            'file_expiry_time' => '+60 minutes'
         ],
 
         's3SRM' => [

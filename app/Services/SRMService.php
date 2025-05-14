@@ -75,6 +75,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use stdClass;
 use Throwable;
 use Webpatser\Uuid\Uuid;
@@ -94,6 +95,7 @@ use App\Repositories\PaySupplierInvoiceMasterRepository;
 use App\Models\GRVDetails;
 use App\Models\SupplierInvoiceItemDetail;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Config;
 class SRMService
 {
     private $POService = null;
@@ -261,19 +263,45 @@ class SRMService
 
     public function getPoPrintData(Request $request)
     {
+        config(['filesystems.disks.s3.file_expiry_time' => env('SRM_URL_EXPIRY', '+5 seconds')]);
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
-        $data = $this->POService->getPoPrintData($purchaseOrderID);
-        return [
-            'success' => true,
-            'message' => 'Purchase order print data successfully get',
-            'data' => $data
-        ];
+        $supplierMasterId = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $data = $this->POService->getPoPrintData($purchaseOrderID, $supplierMasterId);
+
+        if(!empty($data))
+        {
+            return [
+                'success' => true,
+                'message' => 'Purchase order print data successfully get',
+                'data' => $data
+            ];
+        } else
+        {
+            return [
+                'success' => false,
+                'message' => 'Access Denied',
+                'data' => []
+            ];
+        }
+
     }
 
     public function getPoAddons(Request $request)
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
         $data = $this->POService->getPoAddons($purchaseOrderID);
+
+        $supplierMasterId = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $supplierIDValidate = $this->POService->getPoPrintData($purchaseOrderID, $supplierMasterId);
+        if(empty($supplierIDValidate))
+        {
+            return [
+                'success' => false,
+                'message' => 'Access Denied',
+                'data' => []
+            ];
+        }
+
         return [
             'success' => true,
             'message' => 'Purchase order addon successfully get',
@@ -552,7 +580,7 @@ class SRMService
     {
         $appointmentID = $request->input('extra.appointmentID');
 
-        $data = Appointment::select('id', 'primary_code')
+        $data = Appointment::select('id', 'primary_code', 'supplier_id')
             ->with([
                 'detail' => function ($q) {
                     $q->select('qty', 'foc_qty', 'total_amount_after_foc', 'expiry_date', 'batch_no', 'manufacturer',
@@ -575,6 +603,19 @@ class SRMService
                             }]);
                 }])
             ->where('id', $appointmentID)->first();
+
+        $supplierMasterId = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        if(!empty($data))
+        {
+            if($supplierMasterId != $data['supplier_id'])
+            {
+                return [
+                    'success' => false,
+                    'message' => 'Access Denied',
+                    'data' => []
+                ];
+            }
+        }
 
         return [
             'success' => true,
@@ -773,6 +814,15 @@ class SRMService
         $id = $request->input('extra.id');
         $typeId = (int) $request->input('extra.typeId');
         $masterData = $this->invoiceService->getInvoiceDetailsById($id, $supplierID);
+        config(['filesystems.disks.s3.file_expiry_time' => env('SRM_URL_EXPIRY', '+5 seconds')]);
+        if($supplierID != $masterData['supplierID'])
+        {
+            return [
+                'success' => false,
+                'message' => 'Access Denied',
+                'data' => []
+            ];
+        }
 
         switch($typeId) {
             case 0:
@@ -1668,7 +1718,10 @@ class SRMService
                             $query->where('negotiation_is_awarded', 1)
                                 ->where('final_tender_awarded', 1);
                         });
-                })->where('published_yn', 1);
+                })->where('published_yn', 1)
+                ->whereHas('srmTenderMasterSuppliers', function ($q) use ($supplierRegId) {
+                    $q->where('purchased_by', '=', $supplierRegId);
+                });
         }
 
         if($is_rfx)
@@ -1741,7 +1794,7 @@ class SRMService
             $query = TenderMaster::select('id', 'title', 'description', 'description_sec_lang', 'title_sec_lang',
                 'document_sales_start_date', 'pre_bid_clarification_start_date', 'bid_submission_opening_date',
                 'currency_id', 'bid_submission_closing_date', 'is_negotiation_closed', 'site_visit_date',
-                'document_sales_end_date', 'pre_bid_clarification_end_date'
+                'document_sales_end_date', 'pre_bid_clarification_end_date', 'document_type'
             )
                 ->with([
                     'currency' => function ($q) {
@@ -1768,6 +1821,17 @@ class SRMService
                     },
                     'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                         $q->where('purchased_by', '=', $supplierRegId);
+                    },
+                    'DocumentAttachments' => function ($q) {
+                        $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
+                            'attachmentDescription', 'documentSystemCode')
+                            ->whereHas('tender_document_types', function ($t) {
+                                $t->where('system_generated', 1)
+                                    ->where('sort_order', 1);
+                            })
+                            ->with(['tender_document_types' => function ($t) {
+                                $t->select('id', 'system_generated', 'sort_order');
+                            }]);
                     }
                 ])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                     $q->where('purchased_by', '=', $supplierRegId);
@@ -1901,6 +1965,17 @@ class SRMService
         if (isset($input['extra']['SearchText'])) {
             $SearchText = $input['extra']['SearchText'];
         }
+
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
+
         try {
             $queryRecordsCount = TenderFaq::where('tender_master_id', $tenderId)->firstOrFail()->toArray();
             if (sizeof($queryRecordsCount)) {
@@ -2024,9 +2099,18 @@ class SRMService
         if (isset($extra['SearchText'])) {
             $SearchText = $extra['SearchText'];
         }
-
+        $supplierId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         if (isset($extra['isMyClarification']) && $extra['isMyClarification'] == true) {
-            $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+            $supplierRegId = $supplierId;
+        }
+
+        $supplierTender = TenderMasterSupplier::getSupplierTender($extra['tenderId'], $supplierId);
+        if(!$supplierTender){
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
         }
 
         try {
@@ -2096,7 +2180,36 @@ class SRMService
     public function getPreBidClarificationsResponse(Request $request)
     {
         $id = $request->input('extra.prebidId');
+        $userId = $request->input('extra.id');
         $employeeId = Helper::getEmployeeSystemID();
+        $tenderId = TenderBidClarifications::getPreBidTenderID($id);
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        $checkAccess = TenderBidClarifications::checkAccessForTenderBid($id, $supplierRegId);
+
+        if( $checkAccess['is_public']==0 && ($checkAccess['supplier_id']!=$supplierRegId || $checkAccess['supplier_id']!=$userId))
+        {
+            if(($supplierRegId!=$userId || !$supplierTender)){
+                return [
+                    'success' => false,
+                    'message' => 'No record found!',
+                    'data' => []
+                ];
+            }
+        }
+
+
+        if( $checkAccess['is_public']==1)
+        {
+            if(($supplierRegId!=$userId || !$supplierTender)){
+
+                return [
+                    'success' => false,
+                    'message' => 'No record found!',
+                    'data' => []
+                ];
+            }
+        }
 
         $data['response'] = TenderBidClarifications::select('supplier_id', 'is_anonymous', 'is_public', 'is_closed',
             'parent_id', 'created_at', 'posted_by_type', 'id', 'post', 'document_system_id', 'is_checked', 'user_id')
@@ -2391,9 +2504,9 @@ class SRMService
 
         $queryRecordsCount = DocumentAttachments::where('documentSystemID', 106)
             ->where('documentSystemCode', $appointmentID)
-            ->firstOrFail()->toArray();
+            ->get();
 
-        if (sizeof($queryRecordsCount)) {
+        if (!empty($queryRecordsCount)) {
             $result = DocumentAttachments::select('attachmentDescription', 'originalFileName', 'path', 'attachmentID')
                 ->where('documentSystemID', 106)
                 ->where('documentSystemCode', $appointmentID)
@@ -2417,13 +2530,26 @@ class SRMService
     {
         $attachmentID = $request->input('extra.attachmentID');
 
-        $data = DocumentAttachments::where('attachmentID', $attachmentID)
-            ->delete();
+        $attachment = DocumentAttachments::where('attachmentID', $attachmentID)->first();
+
+        if (!$attachment) {
+            return [
+                'success' => false,
+                'message' => 'Attachment not found.',
+            ];
+        }
+
+        $path = $attachment->path;
+        if ($path && Storage::disk('s3')->exists($path)) {
+            Storage::disk('s3')->delete($path);
+        }
+
+        $attachment->delete();
 
         return [
             'success' => true,
-            'message' => 'Attachment deleted successfully ',
-            'data' => $data
+            'message' => 'Attachment deleted successfully.',
+            'data' => $attachmentID,
         ];
     }
 
@@ -2473,6 +2599,44 @@ class SRMService
     {
         $tenderMasterId = $request->input('extra.tenderId');
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $tenderData = TenderMaster::where('id',$tenderMasterId)->select('id','document_type','tender_type_id','final_tender_awarded','negotiation_is_awarded')->first();
+
+        $supplierTender = TenderMasterSupplier::getSupplierTender($tenderMasterId, $supplierRegId);
+
+        if (($tenderData['final_tender_awarded'] == 1 || $tenderData['negotiation_is_awarded'] == 1) && (!$supplierTender))
+        {
+            return [
+                'success' => false,
+                'message' => "You don't have access.",
+                'data' => [],
+            ];
+
+        } else if (($tenderData['final_tender_awarded'] != 1 || $tenderData['negotiation_is_awarded'] != 1) && (!$supplierTender)) {
+
+            return [
+                'success' => false,
+                'message' => "You don't have access.",
+                'data' => [],
+            ];
+        }
+
+
+        /* Log::info($supplierTender);
+         if (
+
+             (($tenderData['final_tender_awarded'] == 1 || $tenderData['negotiation_is_awarded'] == 1)
+             && $tenderData['tender_type_id'] != 1)
+             ||
+             ( !$supplierTender)
+         ) {
+             return [
+                 'success' => false,
+                 'message' => "You don't have access.",
+                 'data' => [],
+             ];
+         }*/
+
         $assignDocumentTypesDeclared = [1];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderMasterId)->whereNotIn('document_type_id',[2, 3])->pluck('document_type_id')->toArray();
         $tenderDates = [];
@@ -2625,7 +2789,7 @@ class SRMService
             ->where('status', 1)
 
             ->get();
-        $data['tenders'] = TenderMaster::where('id',$tenderMasterId)->select('id','document_type')->first();
+        $data['tenders'] = $tenderData;
 
         return [
             'success' => true,
@@ -2654,8 +2818,25 @@ class SRMService
             })
             ->first();
 
-        $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
-        $data['extension'] = strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));
+
+        config(['filesystems.disks.s3.endpoint' => env('AWS_URL_SRM')]);
+
+        $extension = strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));
+
+        $expiryTime = env('SRM_URL_EXPIRY', '+5 seconds');
+
+        $allowedExtensions = ['txt', 'xlsx', 'docx', 'csv'];
+
+        if (in_array($extension, $allowedExtensions)) {
+            $expiryTime = env('SRM_OFFICE_FILE_EXPIRY', '+10 seconds');
+        }
+
+        $data['attachmentPath'] = $this->encryptUrl(Helper::getFileUrlFromS3($attachment['path'], $expiryTime));
+
+        $data['extension'] = $extension;
+
+        config(['filesystems.disks.s3.endpoint' => env('AWS_URL')]);
+
         return [
             'success' => true,
             'message' => 'Consolidated view data Successfully get',
@@ -2676,6 +2857,36 @@ class SRMService
             $critera_type_id = $request->input('extra.critera_type_id');
             $bidMasterId = $request->input('extra.bidMasterId');
             $negotiation = $request->input('extra.negotiation');
+            $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+            $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierRegId);
+            if(empty($isBidExists))
+            {
+                return [
+                    'success' => false,
+                    'message' => 'No record found!',
+                    'data' => []
+                ];
+            }
+
+
+            /* $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+             if(!$supplierTender){
+                 return [
+                     'success' => true,
+                     'message' => 'No record found!',
+                     'data' => []
+                 ];
+             }*/
+
+            /*$supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+            if(!$supplierBidValidation){
+                return [
+                    'success' => true,
+                    'message' => 'Invalid supplier tender bid master!',
+                    'data' => []
+                ];
+            }*/
         }
 
         if($negotiation){
@@ -2805,6 +3016,15 @@ class SRMService
         $tender_negotiation = $request->input('extra.tender_negotiation');
         $multipleNegotiation = $request->input('extra.multipleNegotiation') != null ? $request->input('extra.multipleNegotiation') : false;
         $tender_negotiation_data = $request->input('extra.tender_negotiation_data');
+
+        $supplierTender = TenderMasterSupplier::getSupplierTender($tender_id, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
 
         $bidSubmitted = BidSubmissionMaster::where('tender_id', $tender_id)
             ->where('supplier_registration_id', $supplierRegId)
@@ -3229,6 +3449,20 @@ class SRMService
         $criteriaDetail = $request->input('extra.criteriaDetail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
+        $validator = Validator::make($criteriaDetail, [
+            'bid_submission_detail.score_id' => 'numeric'
+        ], [
+            'bid_submission_detail.score_id.numeric' => 'Numeric value is required.'
+        ]);
+
+        if ($validator->fails()) {
+            return [
+                'success' => false,
+                'message' => implode(', ', $validator->errors()->all()),
+                'data' => [],
+            ];
+        }
+
         DB::beginTransaction();
         try {
             if ($criteriaDetail['bid_submission_detail']['score_id'] > 0 && $criteriaDetail['bid_submission_detail']['score_id'] != null) {
@@ -3292,6 +3526,37 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
         $envelopType = $request->input('extra.envelopType');
+
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierRegId);
+        if(empty($isBidExists))
+        {
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
+
+        // $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        /* if(!$supplierTender){
+             return [
+                 'success' => true,
+                 'message' => 'No record found!',
+                 'data' => []
+             ];
+         }*/
+
+        /* $supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+         if(!$supplierBidValidation){
+             return [
+                 'success' => true,
+                 'message' => 'Invalid supplier tender bid master!',
+                 'data' => []
+             ];
+         }*/
+
         $assignDocumentTypesDeclared = [1,2,3];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderId)->pluck('document_type_id')->toArray();
         $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
@@ -3348,6 +3613,37 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $envelopType = $request->input('extra.envelopType');
         $negotiation = $request->input('extra.negotiation');
+
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierRegId);
+        if(empty($isBidExists))
+        {
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
+
+        /*$supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => true,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }*/
+
+        /*   $supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+           if(!$supplierBidValidation){
+               return [
+                   'success' => true,
+                   'message' => 'Invalid supplier tender bid master!',
+                   'data' => []
+               ];
+           }*/
+
         $assignDocumentTypesDeclared = [1,2,3];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderId)->pluck('document_type_id')->toArray();
         $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
@@ -3507,6 +3803,36 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $negotiation = $request->input('extra.negotiation');
 
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierRegId);
+        if(empty($isBidExists))
+        {
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
+
+        /*$supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => true,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }*/
+
+        /* $supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+         if(!$supplierBidValidation){
+             return [
+                 'success' => true,
+                 'message' => 'Invalid supplier tender bid master!',
+                 'data' => []
+             ];
+         }*/
+
         if($negotiation){
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
             $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
@@ -3590,6 +3916,34 @@ class SRMService
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
         $negotiation = $request->input('extra.negotiation');
+        $isBidExists = BidSubmissionMaster::getBidSubmissionData($tenderId,$bidMasterId,$supplierData->id);
+        if(empty($isBidExists))
+        {
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
+
+
+        /*$supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }*/
+
+        /*$supplierBidValidation = BidSubmissionMaster::checkSupplierTenderBid($tenderId, $bidMasterId, $supplierRegId);
+        if(!$supplierBidValidation){
+            return [
+                'success' => false,
+                'message' => 'Invalid supplier tender bid master!',
+                'data' => []
+            ];
+        }*/
 
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
 
@@ -3903,6 +4257,23 @@ class SRMService
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId,$bidMasterId);
         BidMainWork::deleteIncompleteBidMainWorkRecords($tenderId,[$bidMasterId]);
+
+        $validator = Validator::make($detail, [
+            'bid_main_work.qty' => 'nullable|numeric',
+            'bid_main_work.amount' => 'nullable|numeric'
+        ], [
+            'bid_main_work.qty.numeric' => 'Qty numeric value is required.',
+            'bid_main_work.amount.numeric' => 'Amount numeric value is required.'
+        ]);
+
+        if ($validator->fails()) {
+            return [
+                'success' => false,
+                'message' => implode(', ', $validator->errors()->all()),
+                'data' => [],
+            ];
+        }
+
         DB::beginTransaction();
         try {
             $att['main_works_id'] = $detail['id'];
@@ -4016,6 +4387,24 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $validator = Validator::make($detail, [
+            'bid_boq.qty' => 'nullable|numeric',
+            'bid_boq.unit_amount' => 'nullable|numeric',
+            'bid_boq.total_amount' => 'nullable|numeric'
+        ], [
+            'bid_boq.qty.numeric' => 'Qty must be a numeric value',
+            'bid_boq.unit_amount.numeric' => 'Unit amount must be a numeric value',
+            'bid_boq.amount.total_amount' => 'Total amount must be a numeric value'
+        ]);
+
+        if ($validator->fails()) {
+            return [
+                'success' => false,
+                'message' => implode(', ', $validator->errors()->all()),
+                'data' => [],
+            ];
+        }
 
         $tenderMainWork = PricingScheduleDetail::where('id', $detail['main_work_id'])->first();
 
@@ -4237,7 +4626,7 @@ class SRMService
         $noOfBids = $request->input('extra.noOfBids') + 1;
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $lastSerialNumber = 1;
-
+        $type = $request->input('extra.rfx') ? 'rfx' : 'tender';
 
 
 
@@ -4293,7 +4682,7 @@ class SRMService
             if( count($submittedCount) > $noOfBids){
                 return [
                     'success' => false,
-                    'message' => 'Cannot have more than '.(int)$noOfBids.' bids for this tender',
+                    'message' => 'Cannot have more than '.(int)$noOfBids.' bids for this '.$type.'',
                     'data' =>  ' '
                 ];
             }
@@ -4384,6 +4773,15 @@ class SRMService
         $tenderNegotiation = $request->input('extra.tender_negotiation');
         $tenderNegotiationData = $request->input('extra.tender_negotiation_data');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
+        if(!$supplierTender){
+            return [
+                'success' => false,
+                'message' => 'No record found!',
+                'data' => []
+            ];
+        }
 
         // $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId);
         $bidSubmitted = BidSubmissionMaster::select('id', 'uuid', 'tender_id', 'supplier_registration_id', 'status',
@@ -4886,7 +5284,7 @@ class SRMService
                 $prebidConfig['prebid_data'] = $dataPrebid;
                 $prebidConfig['parentIdList'] = $parentIdArr;
                 $prebidConfig['nonParentIdList'] = $nonParentIdArr;
-                $basePath = CreateExcel::process($dataPrebid, $type, $fileNamePreBid, $path, $prebidConfig);
+                $basePath = $this->encryptUrl(CreateExcel::process($dataPrebid, $type, $fileNamePreBid, $path, $prebidConfig));
 
                 if($basePath == '')
                 {
@@ -4945,7 +5343,7 @@ class SRMService
             'nonParentIdList' => [],
         ];
 
-        $basePath = CreateExcel::process($dataPO, $type, $fileName, $path, $reportConfig);
+        $basePath = $this->encryptUrl(CreateExcel::process($dataPO, $type, $fileName, $path, $reportConfig));
 
         return $basePath
             ? ['success' => true, 'message' => 'Successfully retrieved', 'data' => $basePath]
@@ -5052,6 +5450,27 @@ class SRMService
     {
         $id = $request->input('extra.id');
         $documentSystemID = $request->input('extra.documentSystemID');
+
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $masterData = null;
+        if($documentSystemID == 11)
+        {
+            $masterData = $this->invoiceService->getInvoiceDetailsById($id, $supplierID);
+        }
+        elseif($documentSystemID == 4)
+        {
+            $masterData = PaySupplierInvoiceMaster::select('BPVsupplierID as supplierID')
+                ->where('PayMasterAutoId', $id)->first();
+        }
+
+        if($supplierID != $masterData['supplierID'])
+        {
+            return [
+                'success' => false,
+                'message' => 'Access Denied',
+                'data' => []
+            ];
+        }
 
         $query = DocumentAttachments::select(
             [
@@ -5311,8 +5730,18 @@ class SRMService
     public function getPaymentVouchersDetails(Request $request)
     {
         $input = $request->all();
-
+        config(['filesystems.disks.s3.file_expiry_time' => env('SRM_URL_EXPIRY', '+5 seconds')]);
         $masterData = $this->supplierService->getPaySupplierInvoiceDetails($input);
+
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        if($supplierID != $masterData['BPVsupplierID'])
+        {
+            return [
+                'success' => false,
+                'message' => 'Access Denied',
+                'data' => []
+            ];
+        }
 
         if (!empty($masterData)) {
             $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
@@ -6079,5 +6508,20 @@ class SRMService
         return $this->generateResponse(true, 'Payment details retrieved successfully',$paymentMethod);
     }
 
+    public static function apiRoutes()
+    {
+        return [
+            'api/v1/srm/requests'
+        ];
 
+    }
+
+    function encryptUrl($string)
+    {
+        $key = hex2bin(env('SRM_SECRET_KEY'));
+        $cipher = 'AES-256-CBC';
+        $iv = random_bytes(openssl_cipher_iv_length($cipher)); // 16 bytes random IV
+        $encrypted = openssl_encrypt($string, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+        return base64_encode($iv . $encrypted);
+    }
 }

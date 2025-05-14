@@ -121,4 +121,8 @@ class TenderMasterSupplier extends Model
     public function supplierDetails(){
         return $this->hasOne(SupplierRegistrationLink::class,'id','purchased_by');
     }
+
+    public static function getSupplierTender($tenderID, $supplier_id){
+        return self::where('tender_master_id', $tenderID)->where('purchased_by', $supplier_id)->exists();
+    }
 }

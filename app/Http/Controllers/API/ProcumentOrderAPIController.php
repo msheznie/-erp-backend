@@ -526,9 +526,9 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrder->isLocalSupplier = Helper::isLocalSupplier($procumentOrder->supplierID, $procumentOrder->companySystemID);
 
         $isExpectedDeliveryDateEnabled = CompanyPolicyMaster::where('companyPolicyCategoryID', 71)
-        ->where('companySystemID', $procumentOrder->companySystemID)
-        ->where('isYesNO', 1)
-        ->exists();
+            ->where('companySystemID', $procumentOrder->companySystemID)
+            ->where('isYesNO', 1)
+            ->exists();
         $procumentOrder->isExpectedDeliveryDateEnabled = $isExpectedDeliveryDateEnabled;
         $procumentOrder['poDiscountPercentageToTooltip'] = $procumentOrder->poDiscountPercentage;
         $procumentOrder->poDiscountPercentage = round($procumentOrder->poDiscountPercentage,2);
@@ -574,7 +574,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location','poDiscountPercentageToTooltip']);
         $input = $this->convertArrayToValue($input);
 
-        
+
         if (isset($input['isSupplierBlocked'])) {
             $isSupplierBlocked = $input['isSupplierBlocked'];
             unset($input['isSupplierBlocked']);
@@ -587,7 +587,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if (isset($input['totalSubOrderAmountPreview'])) {
             unset($input['totalSubOrderAmountPreview']);
         }
-        
+
         if (isset($input['totalAddonAmountPreview'])) {
             unset($input['totalAddonAmountPreview']);
         }
@@ -607,7 +607,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
 
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
-               //getting addon Total for PO
+        //getting addon Total for PO
         $poAddonMasterSum = PoAddons::select(DB::raw('COALESCE(SUM(amount),0) as addonTotalSum'))
             ->where('poId', $input['purchaseOrderID'])
             ->first();
@@ -620,7 +620,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
         $newlyUpdatedPoTotalAmountWithoutRoundForComp = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']) - $input['poDiscountAmount'];
         // $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
-       // $newlyUpdatedPoTotalAmount = bcdiv($newlyUpdatedPoTotalAmountWithoutRound,1,$supplierCurrencyDecimalPlace);
+        // $newlyUpdatedPoTotalAmount = bcdiv($newlyUpdatedPoTotalAmountWithoutRound,1,$supplierCurrencyDecimalPlace);
         $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
         $newlyUpdatedPoTotalAmountCheck = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRoundForComp));
         $advancedPaymentCheckAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $advancedPayment));
@@ -635,11 +635,11 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
-        
+
         if(isset($input['isConfirm'])) {
             unset($input['isConfirm']);
         }
-        
+
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
 
         if (isset($input['expectedDeliveryDate']) && $input['expectedDeliveryDate']) {
@@ -654,7 +654,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['WO_PeriodTo'] = new Carbon($input['WO_PeriodTo']);
         }
 
-      
+
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
@@ -709,7 +709,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->serviceLine = $segment->ServiceLineCode;
         }
 
-     
+
         $procumentOrderUpdate->modifiedPc = gethostname();
         $procumentOrderUpdate->modifiedUser = $user->employee['empID'];
         $procumentOrderUpdate->modifiedUserSystemID = $user->employee['employeeSystemID'];
@@ -733,7 +733,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($supplierCurrency) {
             $procumentOrderUpdate->supplierDefaultCurrencyID = $supplierCurrency->currencyID;
             $procumentOrderUpdate->supplierTransactionER = 1;
-            
+
             $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
 
             if ($currencyConversionDefaultMaster) {
@@ -742,7 +742,7 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
 
- 
+
         $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
         $poAddonMasterSumRounded = round($poAddonMasterSum['addonTotalSum'], $supplierCurrencyDecimalPlace);
         $poVATMasterSumRounded = round($poMasterVATSum['masterTotalVATSum'], $supplierCurrencyDecimalPlace);
@@ -751,10 +751,10 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($procumentOrder->rcmActivated) {
             $poVATMasterSumRounded = 0;
         }
-        
+
         if(isset($input['isConfirm'])) {
             unset($input['isConfirm']);
-        } 
+        }
 
 
         if ($input['poDiscountAmount'] > $newlyUpdatedPoTotalAmount) {
@@ -764,7 +764,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']);
         $poMasterSumDeductedNotRounded = ($poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'] + $poMasterVATSum['masterTotalVATSum'] - $input['poDiscountAmount']);
 
-   
+
 
         $input['poTotalSupplierTransactionCurrency'] = \Helper::roundValue($poMasterSumDeductedNotRounded);
 
@@ -776,7 +776,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->companyReportingER = \Helper::roundValue($currencyConversionMaster['trasToRptER']);
         $procumentOrderUpdate->localCurrencyER = \Helper::roundValue($currencyConversionMaster['trasToLocER']);
 
- 
+
         // updating coloum
         if ($input['documentSystemID'] != 5 && $input['poType_N'] != 5) {
             $procumentOrderUpdate->WO_PeriodFrom = null;
@@ -806,7 +806,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->poTotalSupplierDefaultCurrency = \Helper::roundValue($currencyConversionMaster['documentAmount']);
 
 
-        
+
         if ($procumentOrder->supplierID != $input['supplierID']) {
             $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
             if ($supplier) {
@@ -861,9 +861,9 @@ class ProcumentOrderAPIController extends AppBaseController
                         $checkVATCategory = TaxVatCategories::with(['type'])->find($itemDiscont['vatSubCategoryID']);
                         if ($checkVATCategory) {
                             if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $itemDiscont['exempt_vat_portion'] > 0 && $itemDiscont['VATAmount'] > 0) {
-                               $exemptVAT = $itemDiscont['VATAmount'] * ($itemDiscont['exempt_vat_portion'] / 100);
+                                $exemptVAT = $itemDiscont['VATAmount'] * ($itemDiscont['exempt_vat_portion'] / 100);
 
-                               $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
+                                $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
                             } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
                                 $calculateItemDiscount = $calculateItemDiscount + $itemDiscont['VATAmount'];
                             }
@@ -1040,9 +1040,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
                 $validatorResult = \Helper::checkBlockSuppliers($block_date,$input['supplierID']);
 
-                if (!$validatorResult['success']) {              
-                     return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
-    
+                if (!$validatorResult['success']) {
+                    return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+
                 }
             }
 
@@ -1150,9 +1150,9 @@ class ProcumentOrderAPIController extends AppBaseController
             $checkAltUnit = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)->where('altUnit','!=',0)->where('altUnitValue',0)->count();
 
             $allAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
-            ->where('companySystemID',  $procumentOrder->companySystemID)
-            ->first();
-      
+                ->where('companySystemID',  $procumentOrder->companySystemID)
+                ->first();
+
             if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
                 return $this->sendError('Every Alternative UOM should have Alternative UOM Qty', 500);
             }
@@ -1247,7 +1247,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     if($payment['comAmount']) {
                         $paymentPercentageAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $payment['comAmount']));
                     }else {
-                      $paymentPercentageAmount = round(($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])), $supplierCurrencyDecimalPlace);
+                        $paymentPercentageAmount = round(($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])), $supplierCurrencyDecimalPlace);
                     }
                     // $payAdCompAmount = round($payment['comAmount'], $supplierCurrencyDecimalPlace);
                     $payAdCompAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $payment['comAmount']));
@@ -1926,9 +1926,9 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)
-                             ->whereHas('item_category_type', function ($query) {
-                                $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
-                            });
+            ->whereHas('item_category_type', function ($query) {
+                $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+            });
 
 
         if ($policy == 0 && $financeCategoryId != 0) {
@@ -1994,8 +1994,8 @@ class ProcumentOrderAPIController extends AppBaseController
                 $query->select('vatNumber', 'supplierCodeSystem');
             }, 'approved' => function ($query) {
                 $query->with(['employee'=>function($query2){
-                        $query2->with(['hr_emp'=>function($query3){
-                            $query3->with(['designation']);
+                    $query2->with(['hr_emp'=>function($query3){
+                        $query3->with(['designation']);
                     }]);
                 }]);
                 $query->where('rejectedYN', 0);
@@ -2017,7 +2017,7 @@ class ProcumentOrderAPIController extends AppBaseController
         ])->first();
 
 
-         $is_specification = false;       
+        $is_specification = false;
 
         if (!empty($output)) {
 
@@ -2025,9 +2025,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
                 if(isset($item->item->specification) || (isset($item->item->specification) && $item->item->specification != null))
                 {
-                    $is_specification = true; 
+                    $is_specification = true;
                 }
-       
+
                 $date = $output->createdDateTime;
 
                 $item->inhand = ErpItemLedger::where('itemSystemCode', $item->itemCode)
@@ -2039,21 +2039,21 @@ class ProcumentOrderAPIController extends AppBaseController
                 $to = new Carbon($date);
 
                 $item->lastThreeMonthIssued = (ErpItemLedger::where('itemSystemCode', $item->itemCode)
-                    ->where('companySystemID', $item->companySystemID)
-                    ->where('documentSystemID', 8)
-                    ->whereBetween('transactionDate', [$from, $to])
-                    ->sum('inOutQty')) * -1;
+                        ->where('companySystemID', $item->companySystemID)
+                        ->where('documentSystemID', 8)
+                        ->whereBetween('transactionDate', [$from, $to])
+                        ->sum('inOutQty')) * -1;
             }
         }
         $output['is_specification'] = $is_specification;
-        
+
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-        ->where('companySystemID', $output->companySystemID)
-        ->where('isYesNO', 1)
-        ->exists();
+            ->where('companySystemID', $output->companySystemID)
+            ->where('isYesNO', 1)
+            ->exists();
 
         $output['isProjectBase'] = $isProjectBase;
-        
+
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
@@ -2417,16 +2417,16 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderID)
             ->first();
-       if($purchaseOrder->grvRecieved == 2) {
-           $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID',$detailExistGRV->grvAutoID)->get();
-           foreach($puchaseReturnDetails as $puchaseReturnDetail) {
-              $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
-           }
-           if($fullyRetuned) {
-                 return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
-           }else {
-                 return $this->sendError('Cannot cancel, GRV is created for this PO');
-           }
+        if($purchaseOrder->grvRecieved == 2) {
+            $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID',$detailExistGRV->grvAutoID)->get();
+            foreach($puchaseReturnDetails as $puchaseReturnDetail) {
+                $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
+            }
+            if($fullyRetuned) {
+                return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+            }else {
+                return $this->sendError('Cannot cancel, GRV is created for this PO');
+            }
         }
         if (!empty($detailExistGRV)) {
             if ($type == 1) {
@@ -2507,17 +2507,17 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         $poAdvancePaymentType = PoPaymentTerms::where('poID', $purchaseOrderID)
-                                              ->where('LCPaymentYN', 2)
-                                              ->first();
+            ->where('LCPaymentYN', 2)
+            ->first();
 
         if ($poAdvancePaymentType) {
             $advancePayment = PoAdvancePayment::where('poTermID', $poAdvancePaymentType->paymentTermID)->first();
 
             if ($advancePayment && isset($advancePayment->selectedToPayment) && $advancePayment->selectedToPayment == 0) {
-                $advancePayment->cancelledYN = 1; 
-                $advancePayment->cancelledComment = $input['cancelComments']; 
-                $advancePayment->cancelledByEmployeeSystemID = \Helper::getEmployeeSystemID(); 
-                $advancePayment->cancelledDate = Carbon::now(); 
+                $advancePayment->cancelledYN = 1;
+                $advancePayment->cancelledComment = $input['cancelComments'];
+                $advancePayment->cancelledByEmployeeSystemID = \Helper::getEmployeeSystemID();
+                $advancePayment->cancelledDate = Carbon::now();
 
                 $advancePayment->save();
             }
@@ -2566,7 +2566,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
-        
+
         CancelDocument::sendEmail($input);
 
         return $this->sendResponse($purchaseOrderID, 'Order canceled successfully ');
@@ -3349,7 +3349,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
     public function getProcumentOrderPrintPDF(Request $request)
     {
-        
+
         $id = $request->get('id');
         $paymentTerms = $request->get('paymentTerms');
         $detailsComment = $request->get('detailsComment');
@@ -3388,7 +3388,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                 foreach ($item->detail as $val) {
                     if(isset($val->item->specification) || $val->item->specification != null)
                     {
-                        $is_specification = 1; 
+                        $is_specification = 1;
                         break;
                     }
                 }
@@ -3441,15 +3441,15 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         if ($checkCompanyIsMerged) {
             $isMergedCompany = true;
         }
-        
+
         $checkAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
-        ->where('companySystemID', $procumentOrder->companySystemID)
-        ->first();
+            ->where('companySystemID', $procumentOrder->companySystemID)
+            ->first();
 
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-        ->where('companySystemID', $procumentOrder->companySystemID)
-        ->where('isYesNO', 1)
-        ->exists();
+            ->where('companySystemID', $procumentOrder->companySystemID)
+            ->where('isYesNO', 1)
+            ->exists();
 
         $supplierID = $outputRecord[0]->supplierID;
         $purchaseOrderID = $outputRecord[0]->purchaseOrderID;
@@ -4306,7 +4306,7 @@ WHERE
     {
         $id = $request->get('id');
 
-    
+
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
@@ -4333,7 +4333,7 @@ WHERE
         if (!isset($input['fromAmend'])) {
             $purchaseOrder->rcmActivated = isset($input['rcmActivated']) ? $input['rcmActivated'] : 0;
         }
-        
+
         if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
             if (!isset($input['fromAmend'])) {
                 $purchaseOrder->rcmActivated = 0;
@@ -5652,7 +5652,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         {
             $doc_name = 'purchase_direct_order';
             $doc_name_path = 'purchase_direct_order/';
-        }   
+        }
         else if($input['documentId'] == 5)
         {
             $doc_name = 'purchase_work_order';
@@ -5664,17 +5664,17 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $detail_array = array(
             'company_code'=>$companyCode
         );
-        
+
         $path = 'procurement/'.$doc_name_path.'excel/';
         $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+            return $this->sendError('Unable to export excel');
         }
         else
         {
-             return $this->sendResponse($basePath, trans('custom.success_export'));
+            return $this->sendResponse($basePath, trans('custom.success_export'));
         }
     }
 
@@ -7121,7 +7121,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $tracingData['docAutoID'] = $purchaseRequest->purchaseRequestID;
         $tracingData['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by ? $purchaseRequest->currency_by->CurrencyCode : "" . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by ? $purchaseRequest->currency_by->DecimalPlaces : 2) . $cancelStatus;
 
-        
+
         foreach ($poData as $keyPo => $valuePo) {
             // if($valuePo['purchaseOrderMasterID'] == 1165)
             // {
@@ -7140,8 +7140,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $tempPo['docAutoID'] = $valuePo['order']['purchaseOrderID'];
             $tempPo['title'] = "{Doc Code :} " . $valuePo['order']['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($valuePo['order']['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $valuePo['order']['currency']['CurrencyCode'] . " -- {Document Amount :} " . number_format($valuePo['order']['poTotalSupplierTransactionCurrency'], $valuePo['order']['currency']['DecimalPlaces'])." -- {Total Amount :} " . number_format($totalPo, $valuePo['order']['currency']['DecimalPlaces']) . $cancelStatus;
 
-            $grvTototal = 0;        
-            
+            $grvTototal = 0;
+
             foreach ($valuePo['grv'] as $key => $value) {
                 $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
 
@@ -7157,17 +7157,17 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 {
                     if($valuePo['purchaseOrderMasterID'] == $detail['purchaseOrderMastertID'])
                     {
-                           $detailTotalAmount+=$detail['netAmount'];   
+                        $detailTotalAmount+=$detail['netAmount'];
                     }
 
                 }
-                
+
                 $temp['documentSystemID'] = $value['grv_master']['documentSystemID'];
                 $temp['docAutoID'] = $value['grv_master']['grvAutoID'];
                 $temp['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Document Amount :} " . number_format($detailTotalAmount, $value['grv_master']['currency_by']['DecimalPlaces']) ." -- {Total Amount  :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
 
                 foreach ($value['invoices'] as $key1 => $value1) {
-                    
+
                     $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                     $temp1 = [];
                     $temp1['name'] = "Supplier Invoice";
@@ -7180,16 +7180,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     foreach($value1['suppinvmaster']['detail'] as $detail)
                     {
                         if($value['grvAutoID'] == $detail['grvAutoID'])
-                        {   
-                            $detailInvoiceTotalAmount+=$detail['totLocalAmount'];   
-                          
+                        {
+                            $detailInvoiceTotalAmount+=$detail['totLocalAmount'];
+
                         }
                     }
                     $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
                     $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
                     $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Document Amount :} " . number_format($detailInvoiceTotalAmount, $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . " -- {Total Amount  :} " . number_format($value1['suppinvmaster']['bookingAmountLocal'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']).$cancelStatus;
 
-                 
+
                     foreach ($value1['payments'] as $key2 => $value2) {
                         $temp2 = [];
                         if (isset($value2['payment_master'])) {
@@ -7348,18 +7348,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         {
             if ($procumentOrder->poTypeID == 1) {
                 $poIdsArray = (is_array($poID)) ? $poID : [$poID];
-    
+
                 $prDetails = PurchaseOrderDetails::whereIn('purchaseOrderMasterID', $poIdsArray)
                     ->groupBy('purchaseRequestID')
                     ->get();
-    
+
                 $prIDS = $prDetails->pluck('purchaseRequestID');
-    
+
                 $trData = [];
                 foreach ($prIDS as $key => $value) {
                     $trData[] = $this->getPurchaseRequestTracingData($value, $type, $poID, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId, $debitNoteID);
                 }
-    
+
                 return $trData;
             } else {
                 $procumentOrderData = ProcumentOrder::with(['currency'])
@@ -7373,17 +7373,17 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 } else {
                     $tempPo['cssClass'] = "ngx-org-step-two";
                 }
-    
+
                 $tempPo['documentSystemID'] = $procumentOrderData['documentSystemID'];
                 $tempPo['docAutoID'] = $procumentOrderData['purchaseOrderID'];
                 $tempPo['title'] = "{Doc Code :} " . $procumentOrderData['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($procumentOrderData['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $procumentOrderData['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($procumentOrderData['poTotalSupplierTransactionCurrency'], $procumentOrderData['currency']['DecimalPlaces']) . $cancelStatus;
-    
+
                 $grvData = $this->getPOtoPaymentChainForTracing($procumentOrder, $grvAutoID, $bookingSuppMasInvAutoID, $type, $debitNoteID);
                 if (sizeof($grvData) > 0) {
                     foreach ($grvData as $key => $value) {
                         $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
-                       
-                        $temp = []; 
+
+                        $temp = [];
                         $temp['name'] = "Good Receipt Voucher";
                         if ($type == 'grv' && ($value['grv_master']['grvAutoID'] == $grvAutoID)) {
                             $temp['cssClass'] = "ngx-org-step-three root-tracing-node";
@@ -7395,15 +7395,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         {
                             if($value['purchaseOrderMastertID'] == $detail['purchaseOrderMastertID'])
                             {
-                                   $detailTotalAmount+=$detail['netAmount'];   
+                                $detailTotalAmount+=$detail['netAmount'];
                             }
-        
+
                         }
-                        
+
                         $temp['documentSystemID'] = $value['grv_master']['documentSystemID'];
                         $temp['docAutoID'] = $value['grv_master']['grvAutoID'];
                         $temp['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Document Amount :} " . number_format($detailTotalAmount, $value['grv_master']['currency_by']['DecimalPlaces']) ." -- {Total Amount :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']). $cancelStatus;
-                  
+
                         foreach ($value['invoices'] as $key1 => $value1) {
                             $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                             $temp1 = [];
@@ -7412,21 +7412,21 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 $temp1['cssClass'] = "ngx-org-step-four root-tracing-node";
                             } else {
                                 $temp1['cssClass'] = "ngx-org-step-four";
-                            }     
+                            }
                             $detailInvoiceTotalAmount = 0;
                             foreach($value1['suppinvmaster']['detail'] as $detail)
                             {
                                 if($value['grvAutoID'] == $detail['grvAutoID'])
-                                {   
-                                    $detailInvoiceTotalAmount+=$detail['totLocalAmount'];   
-                                  
+                                {
+                                    $detailInvoiceTotalAmount+=$detail['totLocalAmount'];
+
                                 }
                             }
 
                             $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
                             $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
                             $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($detailInvoiceTotalAmount, $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) ." -- {Total Amount :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']). $cancelStatus;
-    
+
                             foreach ($value1['payments'] as $key2 => $value2) {
                                 $temp2 = [];
                                 if (isset($value2['payment_master'])) {
@@ -7435,14 +7435,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     } else {
                                         $temp2['cssClass'] = "ngx-org-step-five";
                                     }
-    
+
                                     $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                                     $temp2['name'] = "Payment";
                                     $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                                     $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
                                     $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
-    
-    
+
+
                                     $debitNotes = PaySupplierInvoiceDetail::selectRaw('sum(supplierDefaultAmount) as supplierDefaultAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID, bookingInvDocCode, bookingInvoiceDate')
                                         ->where('PayMasterAutoId', $value2['payment_master']['PayMasterAutoId'])
                                         ->where('addedDocumentType', 4)
@@ -7452,11 +7452,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                         }])
                                         ->groupBy('bookingInvSystemCode')
                                         ->get();
-    
-    
+
+
                                     foreach ($debitNotes as $key => $value) {
                                         $tempDeb = [];
-    
+
                                         if ($type == "debit" && ($debitNoteID == $value->bookingInvSystemCode)) {
                                             $tempDeb['cssClass'] = "ngx-org-step-six root-tracing-node";
                                         } else {
@@ -7466,11 +7466,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                         $tempDeb['documentSystemID'] = 15;
                                         $tempDeb['docAutoID'] = $value->bookingInvSystemCode;
                                         $tempDeb['title'] = "{Doc Code :} " . $value->bookingInvDocCode . " -- {Doc Date :} " . Carbon::parse($value->bookingInvoiceDate)->format('Y-m-d') . " -- {Currency :} " . $value['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format(ABS($value->supplierDefaultAmount), $value['payment_master']['transactioncurrency']['DecimalPlaces']);
-    
+
                                         $temp2['childs'][] = $tempDeb;
                                     }
                                 }
-    
+
                                 if (isset($value2['matching_master'])) {
                                     if ($type == 'debit' && $debitNoteID == $value2['matching_master']['PayMasterAutoId']) {
                                         $temp2['cssClass'] = "ngx-org-step-five root-tracing-node";
@@ -7482,14 +7482,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
                                     $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['matchingDocCode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['matchingDocdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['matchingAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
                                 }
-    
+
                                 $temp1['childs'][] = $temp2;
                             }
-    
+
                             $temp['childs'][] = $temp1;
                         }
-    
-    
+
+
                         $returnes = PurchaseReturnDetails::selectRaw('sum(netAmountLocal) as localAmount,
                                                          sum(netAmountRpt) as rptAmount, sum(netAmount) as transAmount,grvAutoID,purhaseReturnAutoID')
                             ->where('grvAutoID', $value['grv_master']['grvAutoID'])
@@ -7499,7 +7499,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             ->groupBy('purhaseReturnAutoID')
                             ->get()
                             ->toArray();
-    
+
                         foreach ($returnes as $key1 => $value1) {
                             if (isset($value1['master'])) {
                                 $temp1 = [];
@@ -7508,28 +7508,28 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 $temp1['documentSystemID'] = $value1['master']['documentSystemID'];
                                 $temp1['docAutoID'] = $value1['master']['purhaseReturnAutoID'];
                                 $temp1['title'] = "{Doc Code :} " . $value1['master']['purchaseReturnCode'] . " -- {Doc Date :} " . Carbon::parse($value1['master']['purchaseReturnDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['master']['currency_by']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['transAmount'], $value1['master']['currency_by']['DecimalPlaces']);
-    
+
                                 $temp['childs'][] = $temp1;
                             }
                         }
-    
+
                         $tempPo['childs'][] = $temp;
                     }
                 }
-    
+
                 $tempAdPay = [];
-    
+
                 $advancePayments = AdvancePaymentDetails::selectRaw('PayMasterAutoId, supplierTransCurrencyID, SUM(supplierTransAmount) as transAmount')
                     ->with(['pay_invoice', 'supplier_currency'])
                     ->where('purchaseOrderID', $procumentOrderData['purchaseOrderID'])
                     ->groupBy('purchaseOrderID');
-    
+
                 if (!is_null($PayMasterAutoId)) {
                     $advancePayments = $advancePayments->where('PayMasterAutoId', $PayMasterAutoId);
                 }
-    
+
                 $advancePayments = $advancePayments->get();
-    
+
                 foreach ($advancePayments as $keyAd => $valueAd) {
                     $tempAdPay['name'] = "Payment Voucher";
                     if ($type == 'pv' && ($valueAd->PayMasterAutoId == $PayMasterAutoId)) {
@@ -7537,14 +7537,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     } else {
                         $tempAdPay['cssClass'] = "ngx-org-step-three";
                     }
-    
+
                     $tempAdPay['documentSystemID'] = $valueAd->pay_invoice->documentSystemID;
                     $tempAdPay['docAutoID'] = $valueAd->pay_invoice->PayMasterAutoId;
                     $tempAdPay['title'] = "{Doc Code :} " . $valueAd->pay_invoice->BPVcode . " -- {Doc Date :} " . Carbon::parse($valueAd->pay_invoice->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $valueAd->supplier_currency->CurrencyCode . " -- {Amount :} " . number_format($valueAd->transAmount, $valueAd->supplier_currency->DecimalPlaces);
-    
+
                     $tempPo['childs'][] = $tempAdPay;
                 }
-    
+
                 $tracingData[] = $tempPo;
                 return $tracingData;
             }
@@ -7569,8 +7569,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             if ($paymount_vaoucher->invoiceType == 7) {
                 $matchingData = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
-                                                   ->where('documentSystemID', 4)
-                                                   ->get();
+                    ->where('documentSystemID', 4)
+                    ->get();
 
                 foreach ($matchingData as $matchKey => $matchValue) {
                     $tempDeb = [];
@@ -8013,7 +8013,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $temp2['cssClass'] = "ngx-org-step-two";
                 }
                 if($value2['matching_master']['documentSystemID'] == 4)
-                {   
+                {
                     $temp2['name'] = "Payment";
                 }
                 else if($value2['matching_master']['documentSystemID'] == 15)
@@ -8068,8 +8068,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $paymentsInvoiceMatch = $paymentsInvoiceMatch->get();
 
-       // $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
-       $totalInvoices = array_merge($paymentsInvoice->toArray(), $paymentsInvoiceMatch->toArray());
+        // $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
+        $totalInvoices = array_merge($paymentsInvoice->toArray(), $paymentsInvoiceMatch->toArray());
         $cancelStatus = ($invoiceMaster->cancelYN == -1) ? " -- @Cancelled@" : "";
         $tracingData['name'] = "Supplier Invoice";
         if ($type == "supInv" && ($bookingSuppMasInvAutoID == $invoiceMaster->bookingSuppMasInvAutoID)) {
@@ -8095,17 +8095,17 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
 
             }
-            
+
             if (isset($value2['matching_master'])) {
                 if ($type == "debit" && ($debitNoteID == $value2['matching_master']['PayMasterAutoId'])) {
                     $temp2['cssClass'] = "ngx-org-step-two root-tracing-node";
                 } else {
                     $temp2['cssClass'] = "ngx-org-step-two";
                 }
-                
+
 
                 if($value2['matching_master']['documentSystemID'] == 4)
-                {   
+                {
                     $temp2['name'] = "Payment";
                 }
                 else if($value2['matching_master']['documentSystemID'] == 15)
@@ -8117,7 +8117,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
                 $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['matchedAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
             }
-            
+
             $tracingData['childs'][] = $temp2;
         }
 
@@ -8390,12 +8390,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 ->groupBy('directReceiptAutoID')
                 ->where('directReceiptAutoID', $custReceivePaymentAutoID)
                 ->first();
-                
-                if ($recieptVouchers) {
-                    $recieptVouchers = $recieptVouchers->toArray();
-                } else {
-                    $recieptVouchers = [];
-                }
+
+            if ($recieptVouchers) {
+                $recieptVouchers = $recieptVouchers->toArray();
+            } else {
+                $recieptVouchers = [];
+            }
 
 
             $tracingData[][] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
@@ -8416,13 +8416,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             } else {
                 $recieptVouchers = DirectReceiptDetail::selectRaw('sum(netAmountLocal) as localAmount,
                                              sum(netAmountRpt) as rptAmount, SUM(netAmount) as transAmount,directReceiptAutoID')
-                ->with(['master' => function ($query) {
-                    $query->with(['currency']);
-                }])
-                ->groupBy('directReceiptAutoID')
-                ->where('directReceiptAutoID', $custReceivePaymentAutoID)
-                ->first();
-                
+                    ->with(['master' => function ($query) {
+                        $query->with(['currency']);
+                    }])
+                    ->groupBy('directReceiptAutoID')
+                    ->where('directReceiptAutoID', $custReceivePaymentAutoID)
+                    ->first();
+
                 if ($recieptVouchers) {
                     $recieptVouchers = $recieptVouchers->toArray();
                 } else {
@@ -8504,10 +8504,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         // xxxxxxx
 
         $advancePayments = AdvanceReceiptDetails::selectRaw('custReceivePaymentAutoID, customerTransCurrencyID, SUM(supplierTransAmount) as transAmount')
-                    ->with(['master', 'customer_currency'])
-                    ->where('salesOrderID', $quotationMasterID)
-                    ->groupBy('salesOrderID');
-    
+            ->with(['master', 'customer_currency'])
+            ->where('salesOrderID', $quotationMasterID)
+            ->groupBy('salesOrderID');
+
         if (!is_null($custReceivePaymentAutoID)) {
             $advancePayments = $advancePayments->where('custReceivePaymentAutoID', $custReceivePaymentAutoID);
         }
@@ -9027,7 +9027,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $size = $excelUpload[0]['size'];
 
             $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['requestID'])
-                                               ->first();
+                ->first();
 
             if (empty($purchaseOrder)) {
                 return $this->sendError('Procument Order not found', 500);
@@ -9066,8 +9066,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $allowItemToTypePolicy = false;
             $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 64)
-                                                ->where('companySystemID', $purchaseOrder->companySystemID)
-                                                ->first();
+                ->where('companySystemID', $purchaseOrder->companySystemID)
+                ->first();
 
             if ($allowItemToType) {
                 if ($allowItemToType->isYesNO) {
@@ -9120,7 +9120,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data['isBulkItemJobRun'] = 1;
                 ProcumentOrder::where('purchaseOrderID', $purchaseOrder->purchaseOrderID)->update($data);
 
-                $db = isset($input['db']) ? $input['db'] : ""; 
+                $db = isset($input['db']) ? $input['db'] : "";
                 AddMultipleItems::dispatch(array_filter($record),($purchaseOrder->toArray()),$db,Auth::id());
             } else {
                 return $this->sendError('No Records found!', 500);
@@ -9139,11 +9139,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $input = $request->all();
 
         $exemptVATPO = PurchaseOrderDetails::with(['order'])
-                                            ->whereHas('vat_sub_category', function($query) {
-                                                $query->where('subCatgeoryType', 3);
-                                            })
-                                            ->whereHas('order')
-                                            ->get();
+            ->whereHas('vat_sub_category', function($query) {
+                $query->where('subCatgeoryType', 3);
+            })
+            ->whereHas('order')
+            ->get();
 
         DB::beginTransaction();
         try {
@@ -9154,8 +9154,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($value->order->supplierTransactionCurrencyID);
                     //getting total sum of PO detail Amount
                     $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-                                                    ->where('purchaseOrderMasterID', $value->order->purchaseOrderID)
-                                                    ->first();
+                        ->where('purchaseOrderMasterID', $value->order->purchaseOrderID)
+                        ->first();
 
                     $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
 
@@ -9174,9 +9174,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         $checkVATCategory = TaxVatCategories::with(['type'])->find($value->vatSubCategoryID);
                         if ($checkVATCategory) {
                             if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $value->exempt_vat_portion > 0 && $value->VATAmount > 0) {
-                               $exemptVAT = $value->VATAmount * ($value->exempt_vat_portion / 100);
+                                $exemptVAT = $value->VATAmount * ($value->exempt_vat_portion / 100);
 
-                               $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
+                                $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
                             } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
                                 $calculateItemDiscount = $calculateItemDiscount + $value->VATAmount;
                             }
@@ -9194,27 +9194,27 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
 
                     $poUpdateData = [
-                            'GRVcostPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
-                            'GRVcostPerUnitSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
-                            'GRVcostPerUnitSupTransCur' => \Helper::roundValue($calculateItemDiscount),
-                            'GRVcostPerUnitComRptCur' => \Helper::roundValue($currencyConversion['reportingAmount']),
-                            'purchaseRetcostPerUniSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
-                            'purchaseRetcostPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
-                            'purchaseRetcostPerUnitTranCur' => \Helper::roundValue($calculateItemDiscount),
-                            'purchaseRetcostPerUnitRptCur' => \Helper::roundValue($currencyConversion['reportingAmount'])
-                        ];
+                        'GRVcostPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
+                        'GRVcostPerUnitSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
+                        'GRVcostPerUnitSupTransCur' => \Helper::roundValue($calculateItemDiscount),
+                        'GRVcostPerUnitComRptCur' => \Helper::roundValue($currencyConversion['reportingAmount']),
+                        'purchaseRetcostPerUniSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
+                        'purchaseRetcostPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
+                        'purchaseRetcostPerUnitTranCur' => \Helper::roundValue($calculateItemDiscount),
+                        'purchaseRetcostPerUnitRptCur' => \Helper::roundValue($currencyConversion['reportingAmount'])
+                    ];
 
 
                     PurchaseOrderDetails::where('purchaseOrderDetailsID', $value->purchaseOrderDetailsID)
                         ->update($poUpdateData);
 
- 
+
                     $grvDetail = GRVDetails::where('purchaseOrderDetailsID', $value->purchaseOrderDetailsID)
-                                          ->first();
+                        ->first();
 
                     if ($grvDetail) {
                         if ($grvDetail->landingCost_TransCur >= $grvDetail->GRVcostPerUnitSupTransCur) {
-                            
+
                             $oldLandingTrans = $grvDetail->landingCost_TransCur - $grvDetail->GRVcostPerUnitSupTransCur;
                             $oldLandingLocal = $grvDetail->landingCost_LocalCur - $grvDetail->GRVcostPerUnitLocalCur;
                             $oldLandingRpt = $grvDetail->landingCost_RptCur - $grvDetail->GRVcostPerUnitComRptCur;
@@ -9252,8 +9252,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 if ($grvData) {
                     $generalLedger = GeneralLedger::where('documentSystemID', 3)
-                                                  ->where('documentSystemCode', $value)
-                                                  ->first();
+                        ->where('documentSystemCode', $value)
+                        ->first();
 
                     if ($generalLedger) {
                         $updateData = [
@@ -9264,8 +9264,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         ];
 
                         $deleteGL = GeneralLedger::where('documentSystemID', 3)
-                                                  ->where('documentSystemCode', $value)
-                                                  ->delete();
+                            ->where('documentSystemCode', $value)
+                            ->delete();
 
                         $masterData = [
                             'documentSystemID' => $grvData->documentSystemID,
@@ -9273,12 +9273,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             'companySystemID' => $grvData->companySystemID,
                             'employeeSystemID' => $updateData['createdUserSystemID']
                         ];
-                    
+
                         GeneralLedgerInsert::dispatch($masterData);
 
                         $generalLedger = GeneralLedger::where('documentSystemID', 3)
-                                                  ->where('documentSystemCode', $value)
-                                                  ->update($updateData);
+                            ->where('documentSystemCode', $value)
+                            ->update($updateData);
                     }
                 }
             }
@@ -9302,18 +9302,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
-                                        ->where('companySystemID', $purchaseOrder->companySystemID)
-                                        ->first();
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->first();
 
 
         $notifyCutOffDate = false;
         $notifyCutOffDateMessages = [];
         if ($checkBudget && $checkBudget->isYesNO) {
             $budgetConsumedData = BudgetConsumptionService::getConsumptionData($input['documentSystemID'], $input['purchaseOrderID']);
-            
+
             if (count($budgetConsumedData['budgetmasterIDs']) > 0) {
                 $budgetIds = array_unique($budgetConsumedData['budgetmasterIDs']);
-                
+
                 foreach ($budgetIds as $key => $value) {
                     $budgetMaster = BudgetMaster::with(['finance_year_by'])->find($value);
 
