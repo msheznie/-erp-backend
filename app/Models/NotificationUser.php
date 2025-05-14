@@ -122,4 +122,17 @@ class NotificationUser extends Model
         return $this->hasOne('App\Models\NotificationUserDayCheck', 'notificationUserID', 'id');
     }
 
+    public static function getUsers($comScenarioID)
+    {
+        return self::selectRaw('empID, applicableCategoryID')
+            ->where('companyScenarionID', $comScenarioID)
+            ->where('isActive', 1)
+            ->whereHas('notificationUserDayCheck', function ($q) {
+                $q->where('emailNotification', 1);
+            })
+            ->with('notificationUserDayCheck')
+            ->get();
+    }
+
+
 }

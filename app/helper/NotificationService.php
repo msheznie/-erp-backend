@@ -134,6 +134,11 @@ class NotificationService
                         $department->proceed();
                         $details = [];
                         break;
+                    case 47:
+                        $supplier = new SupplierExpiryNotificationService($companyID, $notDaySetup);
+                        $supplier->proceed();
+                        $details = [];
+                        break;
 
                     default:
                         Log::error("Applicable category configuration not exist for scenario {$scenario_des}");
