@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.69.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.68.0...v10.69.0) (2025-05-14)
+
+
+### Features
+
+* **General:** Document Viewer Link encryption [GSUP-2672] ([#7919](https://github.com/pbsgears/Gears_BackEnd/issues/7919)) ([fb2a914](https://github.com/pbsgears/Gears_BackEnd/commit/fb2a914e21532a610de43fbbebe91492f0541d2f))
+* SRM server seperation ([#7876](https://github.com/pbsgears/Gears_BackEnd/issues/7876)) ([07486ba](https://github.com/pbsgears/Gears_BackEnd/commit/07486ba69aa80bee2f963cd13d4caa1e76bd15b5))
+* **srm:** Admin option to change the RFX Calendar Dates [GSUP-2386] ([#7978](https://github.com/pbsgears/Gears_BackEnd/issues/7978)) ([1fe0cf2](https://github.com/pbsgears/Gears_BackEnd/commit/1fe0cf26ada39ad1b2be4c1f9397d32386c44ce6))
+* **srm:** Enforce Backend Validation Across All API Endpoints | Purchase Order [GSUP-2670] ([#7917](https://github.com/pbsgears/Gears_BackEnd/issues/7917)) ([4297dfd](https://github.com/pbsgears/Gears_BackEnd/commit/4297dfd5d3240f41a002b6a077ae5f6b24d6b5ad))
+
+
+### Bug Fixes
+
+* **Tender:** Error Displayed When Editing/Amending Tender with Amount Approval Enabled [GSUP-2683] ([#7979](https://github.com/pbsgears/Gears_BackEnd/issues/7979)) ([30f14f3](https://github.com/pbsgears/Gears_BackEnd/commit/30f14f3b00cc57daf044c61e2c617c2a80c6a4a1))
+
 ## [10.68.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.67.1...v10.68.0) (2025-05-07)
 
 
