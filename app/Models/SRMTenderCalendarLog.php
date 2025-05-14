@@ -83,7 +83,7 @@ class SRMTenderCalendarLog extends Model
 {
 
     public $table = 'srm_tender_calendar_dates_edit_log';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -180,5 +180,5 @@ class SRMTenderCalendarLog extends Model
             ->latest('created_at')
             ->first();
     }
-    
+
 }

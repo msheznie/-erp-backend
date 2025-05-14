@@ -1003,6 +1003,8 @@ ORDER BY
             return $this->validateDates($input['id'], $rfq);
         }
 
+        $documentSystemID = $rfq ? 113 : 108;
+
         $site_visit_date = null;
         $technical_bid_opening_time = null;
         $technical_bid_opening_date = null;
@@ -1152,15 +1154,15 @@ ORDER BY
             $bid_sub_date = $bid_submission_closing_date;
         }
 
-        if (!$rfq && isset($pre_bid_clarification_start_date) && ($document_sales_start_date > $pre_bid_clarification_start_date)) {
+        if (isset($document_sales_start_date) && isset($pre_bid_clarification_start_date) && ($document_sales_start_date > $pre_bid_clarification_start_date)) {
             return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
         }
 
-        if (!$rfq && isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_start_date > $bid_submission_closing_date)) {
+        if (isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_start_date > $bid_submission_closing_date)) {
             return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
         }
 
-        if (!$rfq && isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_end_date >= $bid_submission_closing_date)) {
+        if (isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_end_date >= $bid_submission_closing_date)) {
             return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than bid submission to date and time'];
         }
 
@@ -1366,9 +1368,10 @@ ORDER BY
             $input['bank_account_id'] = null;
         }
         // Check Total Technical weightage
-        $result = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('level',1)->sum('weightage');
-        if($result >100){
-            return ['success' => false, 'message' => 'Total technical weightage cannot exceed 100 percent'];
+        $response = $this->tenderMasterRepository->validateTechnicalEvaluationCriteria($input['id'], 1, 2);
+
+        if (!$response['success']) {
+            return $response;
         }
 
         if($input['estimated_value'] > $input['allocated_budget'] ){
@@ -1631,7 +1634,7 @@ ORDER BY
                             $modifyData['documentSystemCode'] = $input['id'];
                             $modifyData['version'] = $is_vsersion_exit->version;
                             $modifyData['document_master_id'] = 118;
-                            $modifyData['requested_document_master_id'] = 108;
+                            $modifyData['requested_document_master_id'] = $documentSystemID;
                             $modifyData['type'] = $is_vsersion_exit->type;
                             $modifyData['status'] = 1;
                             $modifyData['serial_number'] = $lastSerialNumber;
@@ -1653,7 +1656,7 @@ ORDER BY
                             $versionUpdate['tender_edit_confirm_id'] = $documentModifyRequest['id'];
                             TenderMaster::where('id', $input['id'])->update($versionUpdate);
 
-                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => 108, 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type, 'amount' => $tenderMaster->estimated_value, 'tenderTypeId' => $tenderMaster->tender_type_id);
+                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => $documentSystemID, 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type, 'amount' => $tenderMaster->estimated_value, 'tenderTypeId' => $tenderMaster->tender_type_id);
                         } else {
                             $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"], 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type, 'amount' => $tenderMaster->estimated_value , 'tenderTypeId' => $tenderMaster->tender_type_id);
                         }
@@ -3574,10 +3577,7 @@ ORDER BY
                     }, 'version');
             }])
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-            ->where('technical_eval_status', 1)
-            ->where('doc_verifiy_status', 1)
             ->where('company_id', $companyId)
-            ->where('go_no_go_status', 1)
             ->where(function ($query) use ($userId) {
                 $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
                     $q->where('user_id', $userId)
@@ -3663,6 +3663,17 @@ ORDER BY
 
 
         return \DataTables::eloquent($query)
+            ->filter(function ($query) {
+                $query->where(function ($q) {
+                    $q->where('stage', '<>', 2)
+                        ->orWhere(function ($subQuery) {
+                            $subQuery->where('stage', '=', 2)
+                                ->where('technical_eval_status', 1)
+                                ->where('doc_verifiy_status', 1)
+                                ->where('go_no_go_status', 1);
+                        });
+                });
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -3828,6 +3839,17 @@ ORDER BY
 
 
         return \DataTables::eloquent($query)
+
+            ->filter(function ($query) {
+                $query->where(function ($q) {
+                    $q->where('stage', '<>', 1)
+                        ->orWhere(function ($subQuery) {
+                            $subQuery->where('stage', '=', 1)
+                                ->where('doc_verifiy_status', 1)
+                                ->where('go_no_go_status', 1);
+                        });
+                });
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -3843,7 +3865,7 @@ ORDER BY
     public function getTechnicalRanking(Request $request)
     {
         $input = $request->all();
-
+        $this->tenderMasterRepository->checkRankingEmptyRecords($request);
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -5934,20 +5956,6 @@ ORDER BY
             return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
-
-    public function getCalendarDateAuditLogDetail(Request $request)
-    {
-        try
-        {
-            $data = $this->tenderMasterRepository->getCalendarDateAuditLogDetail($request);
-            return $data;
-        }
-        catch(\Exception $e)
-        {
-            return $this->sendError('Unexpected Error: ' . $e->getMessage());
-        }
-    }
-
 
     public function getContractTypes(CompanyValidateAPIRequest $request)
     {
