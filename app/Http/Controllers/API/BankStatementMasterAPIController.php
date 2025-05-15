@@ -334,4 +334,29 @@ class BankStatementMasterAPIController extends AppBaseController
         BankStatementDetail::where('statementId', $statementId)->delete();
         return $this->sendResponse([], 'Bank statement deleted successfully');
     }
+
+    public function getBankStatementWorkBook(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $searchValue = $request->input('search.value');
+        $companyId = $request['companyId'];
+
+        $bankTransferMaster = $this->bankStatementMasterRepository->bankStatementWorkBook($searchValue, $companyId);
+        return \DataTables::eloquent($bankTransferMaster)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('statementId', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
 }
