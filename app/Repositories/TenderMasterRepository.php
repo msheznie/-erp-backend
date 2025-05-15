@@ -508,15 +508,16 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
         }
 
+        if ((isset($documentSalesStartDate) && isset($documentSalesEndDate)) && (($documentSalesStartDate > $documentSalesEndDate))) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
+        }
+
+        if (!is_null($documentSalesStartDate) && $documentSalesStartDate > $submissionOpeningDate) {
+            return ['success' => false, 'message' => 'Bid submission from date and time should greater than document sales from date and time'];
+        }
+
         if($tenderData['stage'] == 1 && $isTender == 1)
         {
-            if ((isset($documentSalesStartDate) && isset($documentSalesEndDate)) && (($documentSalesStartDate > $documentSalesEndDate))) {
-                return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
-            }
-
-            if (!is_null($documentSalesStartDate) && $documentSalesStartDate > $submissionOpeningDate) {
-                return ['success' => false, 'message' => 'Bid submission from date and time should greater than document sales from date and time'];
-            }
 
             if ($submissionClosingDate >= $bidOpeningStartDate) {
                 return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
@@ -537,19 +538,17 @@ class TenderMasterRepository extends BaseRepository
                 return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
             }
 
-            if($isTender == 1){
-                if (!is_null($commercialEndDate) && $commercialStartDate > $commercialEndDate) {
+                if (!is_null($commercialEndDate) && !is_null($commercialStartDate) && $commercialStartDate > $commercialEndDate) {
                     return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
                 }
 
-                if (!is_null($technicalEndDate) && ($technicalEndDate >= $commercialStartDate)) {
+                if (!is_null($technicalEndDate) && !is_null($commercialStartDate) && ($technicalEndDate >= $commercialStartDate)) {
                     return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
                 }
 
                 if (!empty($technicalStartDate) && !empty($technicalEndDate && $technicalStartDate > $technicalEndDate)) {
                     return ['success' => false, 'message' => 'Technical Bid Opening to date and time should greater than Technical Bid Opening from date and time'];
                 }
-            }
         }
 
         return ['success' => true];
