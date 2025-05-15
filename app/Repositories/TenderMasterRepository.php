@@ -487,6 +487,8 @@ class TenderMasterRepository extends BaseRepository
 
     private function validateTenderDates($data,$tenderData,$isTender)
     {
+        $documentSalesStartDate = $data['documentSalesStartDate'];
+        $documentSalesEndDate = $data['documentSalesEndDate'];
         $submissionClosingDate = $data['submissionClosingDate'];
         $submissionOpeningDate = $data['submissionOpeningDate'];
         $bidOpeningStartDate = $data['bidOpeningStartDate'];
@@ -502,16 +504,20 @@ class TenderMasterRepository extends BaseRepository
         $bidClosingDate = $tenderData['bid_submission_closing_date'];
         $currentDate = (Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()));
 
-        if ($employee->isSuperAdmin != -1) {
-            return ['success' => false, 'message' => 'You do not have permission to edit this record'];
-        }
-
         if ($submissionOpeningDate > $submissionClosingDate) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
         }
 
         if($tenderData['stage'] == 1 && $isTender == 1)
         {
+            if ((isset($documentSalesStartDate) && isset($documentSalesEndDate)) && (($documentSalesStartDate > $documentSalesEndDate))) {
+                return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
+            }
+
+            if (!is_null($documentSalesStartDate) && $documentSalesStartDate > $submissionOpeningDate) {
+                return ['success' => false, 'message' => 'Bid submission from date and time should greater than document sales from date and time'];
+            }
+
             if ($submissionClosingDate >= $bidOpeningStartDate) {
                 return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
             }
@@ -551,8 +557,10 @@ class TenderMasterRepository extends BaseRepository
     private function getFormattedDatesAndTime($input, $tenderData)
     {
         return [
+            'documentSalesStartDate' => $this->parseDateTime($input, 'documentSalesStartDate', 'documentSalesStartTime'),
+            'documentSalesEndDate' => $this->parseDateTime($input, 'documentSalesEndDate', 'documentSalesEndTime'),
             'submissionClosingDate' => $this->parseDateTime($input, 'submissionClosingDate', 'bidSubmissionClosingTime'),
-            'submissionOpeningDate' => Carbon::parse($tenderData['bid_submission_opening_date']),
+            'submissionOpeningDate' => $this->parseDateTime($input, 'submissionOpeningDate', 'bidSubmissionOpeningTime'),
             'bidOpeningStartDate' => $this->parseDateTime($input, 'bidOpeningStartDate', 'bidOpeningStarDateTime'),
             'bidOpeningEndDate' => $this->parseDateTime($input, 'bidOpeningEndDate', 'bidOpeningEndDateTime'),
             'technicalStartDate' => $this->parseDateTime($input, 'technicalBidOpeningStartDate', 'technicalBidOpeningStarDateTime'),
@@ -579,6 +587,9 @@ class TenderMasterRepository extends BaseRepository
                 $tenderMaster = TenderMaster::find($tenderData['id']);
                 $calendarLog = $this->insertCalendarLog($formattedDatesAndTime, $tenderData, $input);
                 $data = [
+                    'document_sales_start_date' => $formattedDatesAndTime['documentSalesStartDate'] ?? null,
+                    'document_sales_end_date' => $formattedDatesAndTime['documentSalesEndDate'] ?? null,
+                    'bid_submission_opening_date' => $formattedDatesAndTime['submissionOpeningDate'] ?? null,
                     'bid_submission_closing_date' => $formattedDatesAndTime['submissionClosingDate'] ?? null,
                     'bid_opening_date' => $formattedDatesAndTime['bidOpeningStartDate'] ?? null,
                     'bid_opening_end_date' => $formattedDatesAndTime['bidOpeningEndDate'] ?? null,
@@ -666,9 +677,61 @@ class TenderMasterRepository extends BaseRepository
         ] ;
     }
 
+    public function getCalendarDateAuditLogs($request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $tenderData = TenderMaster::getTenderByUuid($input['tenderCode']);
+        if (empty($tenderData)) {
+            return ['success' => false, 'message' => 'Tender not found'];
+        }
+        $calendarDataAuditLog = SRMTenderCalendarLog::getCalenderDatesEditLogs($tenderData['id'],
+            $tenderData['company_id'],null,true);
+
+        return \DataTables::of($calendarDataAuditLog)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function getCalendarDateAuditLogDetail($request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
+        if (empty($tenderData)) {
+            return ['success' => false, 'message' => 'Tender not found'];
+        }
+        $calendarDataAuditLogDetails = SRMTenderCalendarLog::getCalenderDatesEditLogs(
+            $tenderData['id'], $input['companyId'], $input['sort']);
+
+        return \DataTables::of($calendarDataAuditLogDetails)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
     public function insertCalendarLog($formattedDatesAndTime, $tenderData, $input)
     {
         return DB::transaction(function () use ($formattedDatesAndTime, $tenderData, $input) {
+
+            $calendarDatesExists = SRMTenderCalendarLog::checkCalendarDatesExists(
+                $tenderData['id'], $tenderData['company_id']);
+
+            $sort = $calendarDatesExists['sort'] ? $calendarDatesExists['sort'] + 1 : 1;
+
+
             $logData = [];
             $baseData = [
                 'tender_id' => $tenderData['id'],
@@ -676,6 +739,7 @@ class TenderMasterRepository extends BaseRepository
                 'created_by' => Helper::getEmployeeSystemID(),
                 'created_at' => Helper::currentDateTime(),
                 'narration' => $input['comment'],
+                'sort' => $sort,
             ];
 
             $fields = $this->getFieldMappings();
@@ -719,6 +783,21 @@ class TenderMasterRepository extends BaseRepository
     private function getFieldMappings(): array
     {
         return [
+            'documentSalesStartDate' => [
+                'oldField' => 'document_sales_start_date',
+                'descriptionDate' => 'Document Sales from date',
+                'descriptionTime' => 'Document Sales from time',
+            ],
+            'documentSalesEndDate' => [
+                'oldField' => 'document_sales_end_date',
+                'descriptionDate' => 'Document Sales to date',
+                'descriptionTime' => 'Document Sales to time',
+            ],
+            'submissionOpeningDate' => [
+                'oldField' => 'bid_submission_opening_date',
+                'descriptionDate' => 'Bid Submission from date',
+                'descriptionTime' => 'Bid Submission from time',
+            ],
             'submissionClosingDate' => [
                 'oldField' => 'bid_submission_closing_date',
                 'descriptionDate' => 'Bid Submission to date',

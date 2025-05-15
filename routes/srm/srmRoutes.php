@@ -299,6 +299,8 @@ Route::post('rejectSupplierWiseTender', 'TenderMasterAPIController@rejectSupplie
 Route::post('getSupplierWiseProofApproved', 'TenderMasterAPIController@getSupplierWiseProofApproved');
 Route::post('updateTenderCalendarDays', 'TenderMasterAPIController@updateTenderCalendarDays');
 Route::post('getTenderCalendarValidation', 'TenderMasterAPIController@getTenderCalendarValidation');
+Route::post('getCalendarDateAuditLogs', 'TenderMasterAPIController@getCalendarDateAuditLogs');
+Route::post('getCalendarDateAuditLogDetail', 'TenderMasterAPIController@getCalendarDateAuditLogDetail');
 Route::post('getNegotiationStartedSupplierList', 'TenderNegotiationController@getNegotiationStartedSupplierList')->name("Get tender negotiated supplier list");
 Route::post('saveCustomEmail', 'TenderCustomEmailController@store')->name("create Custom tender email");
 Route::post('getSupplierListCustomEmail', 'TenderCustomEmailController@getSupplierListCustomEmail')->name("Get Negotiation Custom Email Supplier List");

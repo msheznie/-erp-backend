@@ -684,11 +684,8 @@ class TenderMasterAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
         $data['master']['comment'] = SRMTenderCalendarLog::getNarration($input['tenderMasterId'], $companySystemID);
 
-        $bidClosingDate = $data['master']['bid_submission_closing_date'];
-        $currentDate = (Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()));
-
         $showEditIcon = false;
-        if ($bidClosingDate && $currentDate->greaterThan($bidClosingDate) && $employee->isSuperAdmin == -1) {
+        if ($data['master']['commercial_ranking_line_item_status'] == 0  && $data['master']['is_negotiation_started'] == 0 && $data['master']['approved'] == -1) {
             $showEditIcon = true;
         }
 
@@ -5927,6 +5924,33 @@ ORDER BY
             return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
+
+    public function getCalendarDateAuditLogs(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getCalendarDateAuditLogs($request);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function getCalendarDateAuditLogDetail(Request $request)
+    {
+        try
+        {
+            $data = $this->tenderMasterRepository->getCalendarDateAuditLogDetail($request);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
 
     public function getContractTypes(CompanyValidateAPIRequest $request)
     {

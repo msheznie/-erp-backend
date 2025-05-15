@@ -130,6 +130,11 @@ class SRMTenderCalendarLog extends Model
         'created_by' => 'required'
     ];
 
+    public function createdBy()
+    {
+        return $this->belongsTo('App\Models\Employee', 'created_by', 'employeeSystemID');
+    }
+
     public static function getNarration($tenderId, $companyId){
         return self::where('tender_id', $tenderId)
             ->where('company_id', $companyId)
@@ -137,6 +142,43 @@ class SRMTenderCalendarLog extends Model
             ->pluck('narration')
             ->first();
 
+    }
+
+    public static function getCalenderDatesEditLogs($tenderId, $companyId, $sort = null, $isGrouped = false)
+    {
+        return self::select(
+            'id',
+            'filed_description',
+            'narration',
+            'old_value',
+            'new_value',
+            'created_at',
+            'created_by',
+            'sort',
+            'tender_id',
+            'company_id'
+        )
+            ->with(['createdBy' => function ($q) {
+                $q->select('employeeSystemID', 'empName');
+            }])
+            ->where('tender_id', $tenderId)
+            ->where('company_id', $companyId)
+            ->when($sort, function ($query) use ($sort) {
+                return $query->where('sort', $sort);
+            })
+            ->when($isGrouped, function ($query) {
+                return $query->groupBy('sort');
+            })
+            ->get();
+    }
+
+    public static function checkCalendarDatesExists($tenderId, $companyId)
+    {
+        return SRMTenderCalendarLog::select('sort')
+            ->where('tender_id', $tenderId)
+            ->where('company_id', $companyId)
+            ->latest('created_at')
+            ->first();
     }
     
 }
