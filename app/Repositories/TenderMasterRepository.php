@@ -516,14 +516,14 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => 'Bid submission from date and time should greater than document sales from date and time'];
         }
 
-        if($tenderData['stage'] == 1 && $isTender == 1)
+        if($tenderData['stage'] == 1)
         {
 
-            if ($submissionClosingDate >= $bidOpeningStartDate) {
+            if (!is_null($bidOpeningStartDate) && $submissionClosingDate >= $bidOpeningStartDate) {
                 return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
             }
 
-            if ($bidOpeningStartDate > $bidOpeningEndDate) {
+            if (!is_null($bidOpeningStartDate) && !is_null($bidOpeningEndDate) && $bidOpeningStartDate > $bidOpeningEndDate) {
                 return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
             }
         }
