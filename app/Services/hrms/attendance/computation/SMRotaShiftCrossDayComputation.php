@@ -172,12 +172,12 @@ class SMRotaShiftCrossDayComputation{
             return false;
         }
 
-        $t1 = $this->clockOutDtObj;
-        $t2 = ($this->isShiftHoursSet && $this->onDutyDtObj >= $this->clockInDtObj)
-            ? $this->onDutyDtObj
+        $out = $this->clockOutDtObj;
+        $in = ($this->isShiftHoursSet && $this->onDutyDateTime >= $this->clockInDtObj)
+            ? $this->onDutyDateTime
             : $this->clockInDtObj;
 
-        $totWorkingHoursObj = $t1->diff($t2);
+        $totWorkingHoursObj = $out->diff($in);
         $hours = $totWorkingHoursObj->format('%h');
         $minutes = $totWorkingHoursObj->format('%i');
         $this->actualWorkingHours = ($hours * 60) + $minutes;

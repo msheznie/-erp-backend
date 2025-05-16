@@ -131,7 +131,7 @@ class SMAttendancePullingService{
         )";
 
         $chunks = array_chunk($empIdList, $this->chunkSize);
-
+        $i = 1;
         foreach ($chunks as $chunk) {
             $qWithEmpIds = $q . " AND l.empID IN (" . implode(",", $chunk) . ")";
             $tempAttData = DB::table(DB::raw("($qWithEmpIds) as tempTable"))
@@ -142,11 +142,12 @@ class SMAttendancePullingService{
 
             $this->tempData = $tempAttData;
             if (empty($this->tempData)) {
-                Log::error('No records found for pulling step-1'.$this->log_suffix(__LINE__));
-                return false;
+                Log::error('No records found for pulling step-1 and chunk-'.$i.' '.$this->log_suffix(__LINE__));
+                continue;
             }
 
             $this->insertToTempTb();
+            $i++;
         }
 
         return true;
@@ -182,6 +183,9 @@ class SMAttendancePullingService{
         DB::table(DB::raw("($q) as tempTable"))
             ->orderBy('autoID')
             ->chunk($this->chunkSize, function ($tempAttData) {
+                if (empty($tempAttData)) {
+                    return true;
+                }
                 foreach ($tempAttData as $row) {
                     DB::table('srp_erp_pay_empattendancetemptable')
                         ->where('autoID', $row->autoID)

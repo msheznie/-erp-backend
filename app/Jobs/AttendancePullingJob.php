@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use App\enums\modules\Modules;
+use App\Services\hrms\attendance\SMAttendancePullingService;
+use App\Services\hrms\modules\HrModuleAssignService;
 use Illuminate\Bus\Queueable;
 use App\helper\CommonJobService;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
@@ -45,16 +48,21 @@ class AttendancePullingJob implements ShouldQueue
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
 
         $db_name = CommonJobService::get_tenant_db($this->tenantId);
-        
-        if(empty($db_name)){
-            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
-        }
-        else{
 
-            CommonJobService::db_switch( $db_name );
-            
-            $obj = new AttendanceDataPullingService($this->companyId, $this->pullingDate, $this->isClockOutPulling);
-            $obj->execute();
+        if(empty($db_name)){
+            return Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
+
+        CommonJobService::db_switch( $db_name );
+        $isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
+
+        if($isShiftModule){
+            $obj = new SMAttendancePullingService($this->companyId, $this->pullingDate, $this->isClockOutPulling);
+            $obj->execute();
+            return;
+        }
+
+        $obj = new AttendanceDataPullingService($this->companyId, $this->pullingDate, $this->isClockOutPulling);
+        $obj->execute();
     }
 }
