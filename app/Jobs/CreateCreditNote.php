@@ -364,7 +364,6 @@ class CreateCreditNote implements ShouldQueue
         $errorData = $fieldErrors = [];
 
         $companyId = $request['company_id'] ?? null;
-        // dd($request);
         // Validate Customer
         if (isset($request['customer'])) {
             $customer = CustomerAssigned::join('customermaster', 'customerassigned.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
@@ -521,6 +520,9 @@ class CreateCreditNote implements ShouldQueue
                 ];
             }
         }
+        else {
+            $debitNote = null;
+        }
 
         // Validate secondaryLogoCompanySystemID
         if (isset($request['secondaryLogoCompanySystemID'])) {
@@ -533,7 +535,10 @@ class CreateCreditNote implements ShouldQueue
                     'message' => ["The selected Secondary Logo Company is not available in the system"]
                 ];
             }
-        } 
+        }
+        else {
+            $secondaryLogoCompany = null;
+        }
 
         //Validate vat_applicable
         if (isset($request['vat_applicable'])) {
@@ -586,9 +591,9 @@ class CreateCreditNote implements ShouldQueue
                     'customerID' => $customer->customerCodeSystem,
                     'projectID' => $project->id,
                     'customerCurrencyID' => $currency->currencyID,
-                    'debitNoteAutoID' => $debitNote ? $debitNote->debitNoteAutoID : null,
+                    'debitNoteAutoID' => $debitNote != null ? $debitNote->debitNoteAutoID : null,
                     'comments' => $request['comments'],
-                    'secondaryLogoCompanySystemID' => $secondaryLogoCompany ? $secondaryLogoCompany->companySystemID : null,
+                    'secondaryLogoCompanySystemID' => $secondaryLogoCompany != null ? $secondaryLogoCompany->companySystemID : null,
                     'creditNoteDate' => $request['document_date'],
                     'companyFinanceYearID' => $financeYear->companyFinanceYearID,
                     'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
