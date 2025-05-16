@@ -89,7 +89,9 @@ class TenantEnforce
             'api/v1/sentCustomerLedger',
             'api/v1/uploadBankStatement',
             'api/v1/payment-voucher',
-            'api/v1/credit-note'
+            'api/v1/credit-note',
+            'api/v1/chequeRegisterDetailSwitch',
+            'api/v1/chequeRegisterDetailCancellation'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {

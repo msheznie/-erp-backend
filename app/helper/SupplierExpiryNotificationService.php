@@ -11,7 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Employee;
-
+use App\Models\Company;
 
 class SupplierExpiryNotificationService
 {
@@ -25,7 +25,7 @@ class SupplierExpiryNotificationService
     private $sentMailCount = 0;
     private $expiryDate = null;
     private $expiredSuppliers = [];
-
+    private $companyName;
     public function __construct($company, $setup)
     {
         ['companyScenarionID' => $comScenarioId, 'beforeAfter' => $type, 'days' => $days] = $setup;
@@ -39,6 +39,9 @@ class SupplierExpiryNotificationService
     public function proceed()
     {
         $this->expiryDate = NotificationService::get_filter_date($this->type, $this->days);
+
+        $company = Company::find($this->companyId);
+        $this->companyName = $company->CompanyName;
 
         $expiredSuppliers = SupplierMaster::whereDate('registrationExprity',$this->expiryDate)->where('isActive',1)->where('isBlocked',0)
             ->get();
@@ -155,7 +158,7 @@ class SupplierExpiryNotificationService
             $mailBody .= "<br/>";
             $mailBody .= $this->expiryTable($this->expiredSuppliers);
             $mailBody .= "<br/>";
-            $mailBody .= "Best Regards,<br/> System Administrator,<br/> OSOS Training.";
+            $mailBody .= "Best Regards,<br/> System Administrator,<br/> {$this->companyName}.";
             $empEmail = $mailTo->empEmail;
             $subject = $this->mailSubject;
             NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mailBody);

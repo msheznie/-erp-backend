@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Jobs\CheckRegisterNotificationJob;
 
 /**
  * Class ChequeRegisterDetailController
@@ -459,7 +460,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
                         ]
                     );
                 }
-
+                
                 // update cheque register details
                 if ($isChange){
                     $this->chequeRegisterDetailRepository->update(
@@ -475,6 +476,27 @@ class ChequeRegisterDetailAPIController extends AppBaseController
                     ];            
                     $createCurrentUpdateReason = ChequeUpdateReason::create($currentupdateReasonData);
                     $createPreviousUpdateReason = ChequeUpdateReason::create($currentupdateReasonData);
+
+
+                    $db = isset($request->db) ? $request->db : "";
+                    $bpvCode = isset($input['document']['BPVcode']) ? $input['document']['BPVcode'] : '-';
+
+                    $companyId = $input['companySystemID'];
+                    $params = [
+                        'companyId' => $input['companySystemID'],
+                        'is_switch' => 0,
+                        'details' => [
+                            [
+                                'amendBy' =>  Helper::getEmployeeName(),
+                                'amenDate' => $input['updated_at'],
+                                'document' => $bpvCode,
+                                'current' => $unUsedChequeRegisterDetails->cheque_no, 
+                                'previous' => $input['cheque_no'],
+                                'reason' => $input['update_switch_reason']
+                            ],
+                        ]
+                    ];
+                    CheckRegisterNotificationJob::dispatch($db, $params); 
 
                 }else{
                     $this->chequeRegisterDetailRepository->update(['status' => 2, 'cancel_narration' => $input['cancel_narration'],'updated_by'=>Helper::getEmployeeSystemID(), 'updated_pc'=>gethostname()], $input['id']);    // update cancel status to old cheque
@@ -667,6 +689,34 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
             $output['from_cheque_details'] = $from_cheque_details;
             $output['to_cheque_details'] = $to_cheque_details;
+
+        
+
+            $db = isset($request->db) ? $request->db : "";
+            $params = [
+                'companyId' => $input['companySystemID'],
+                'is_switch' => 1,
+                'details' => [
+                    [
+                        'amendBy' =>  Helper::getEmployeeName(),
+                        'amenDate' => $createFromSwitchReason->updated_at,
+                        'document' => $from_cheque_details->document['BPVcode'],
+                        'current' => $to_cheque_details->cheque_no, 
+                        'previous' => $from_cheque_details->cheque_no,
+                        'reason' => $input['update_switch_reason']
+                    ],
+                    [
+                        'amendBy' =>  Helper::getEmployeeName(),
+                        'amenDate' => $createFromSwitchReason->updated_at,
+                        'document' => $to_cheque_details->document['BPVcode'],
+                        'current' => $from_cheque_details->cheque_no, 
+                        'previous' => $to_cheque_details->cheque_no,
+                        'reason' => $input['update_switch_reason']
+                    ]
+                ]
+            ];
+            CheckRegisterNotificationJob::dispatch($db, $params); 
+
 
             DB::commit();
             return $this->sendResponse($output,'Cheques are switch between the documents successfully');
