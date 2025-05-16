@@ -380,6 +380,8 @@ class SMAttendancePullingService{
             $shiftHours = ($row['shiftType'] == Shifts::OPEN)? $row['workingHour']: $obj->shiftHours;
             $shiftHours = (empty($shiftHours))? 0: $shiftHours;
             $locationOut = $isCrossDay ? $obj->clockOutFloorId : $row['location_out'];
+            $clockInDate = $isCrossDay ? $obj->clockInDate : null;
+            $clockOutDate = $isCrossDay ? $obj->clockOutDate : null;
 
             $this->data[] = [
                 'empID' => $empId,
@@ -400,6 +402,8 @@ class SMAttendancePullingService{
 
                 'checkIn' => $obj->clockIn,
                 'checkOut' => $obj->clockOut,
+                'check_in_date' => $clockInDate,
+                'check_out_date' => $clockOutDate,
                 'work_out_detail_id'=> $row['detailId'],
                 'presentTypeID' => $obj->presentAbsentType,
 

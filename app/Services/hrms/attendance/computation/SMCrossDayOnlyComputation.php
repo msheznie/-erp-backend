@@ -309,8 +309,7 @@ class SMCrossDayOnlyComputation{
 
     public function rotaGeneralComputation(){
 
-        $this->lateHoursComputation();
-
+        $this->rotaLateHoursComputation();
 
         $clockInDt = new DateTime($this->clockInDateTime);
 
@@ -365,6 +364,25 @@ class SMCrossDayOnlyComputation{
 
         if ($this->clockOut == '00:00:00' || empty($this->clockOut)) {
             $this->clockOut = null;
+        }
+    }
+
+    function rotaLateHoursComputation(){
+        if (!$this->clockInDateTime) {
+            return false;
+        }
+
+        $clockInDtObj = $this->clockInDtObj;
+        $tempOnDutyDt = $this->onDutyDateTime;
+        $tempOnDutyDtObj = $tempOnDutyDt->modify("+{$this->gracePeriod} minutes");
+
+        if ($clockInDtObj > $tempOnDutyDtObj) {
+            $this->presentAbsentType = AbsentType::LATE;
+
+            $interval = $clockInDtObj->diff($this->onDutyDateTime);
+            $hours = ($interval->format('%h') != 0) ? $interval->format('%h') : 0;
+            $minutes = ($interval->format('%i') != 0) ? $interval->format('%i') : 0;
+            $this->lateHours = $hours * 60 + $minutes;
         }
     }
 }
