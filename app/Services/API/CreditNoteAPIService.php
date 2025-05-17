@@ -156,6 +156,7 @@ class CreditNoteAPIService extends AppBaseController
 
         $inputData['VATAmount'] = $request['vatAmount'];
         $inputData['netAmount'] = $request['netAmount'];
+        $inputData['serviceLineSystemID'] = $request['serviceLineSystemID'];
         $inputData['creditNoteAutoID'] = $creditNoteAutoID;
         $inputData['companyID'] = $master->companyID;
         $inputData['companySystemID'] = $companySystemID;

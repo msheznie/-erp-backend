@@ -12,10 +12,12 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerCurrency;
+use App\Models\CustomerMaster;
 use App\Models\DebitNote;
 use App\Models\Employee;
 use App\Models\ErpProjectMaster;
@@ -366,21 +368,47 @@ class CreateCreditNote implements ShouldQueue
         $companyId = $request['company_id'] ?? null;
         // Validate Customer
         if (isset($request['customer'])) {
+            $approvedCustomer = CustomerMaster::where('primaryCompanySystemID', $companyId)
+                ->where('CutomerCode', $request['customer'])
+                ->orWhere('customer_registration_no',$request['customer'])
+                ->first();
+
+            if ($approvedCustomer) {
+                if($approvedCustomer->approvedYN == 0) {
+                    $errorData[] = [
+                        'field' => "customer",
+                        'message' => ["Selected Customer is not approved"]
+                    ];
+                }
+            }
+
             $customer = CustomerAssigned::join('customermaster', 'customerassigned.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
                 ->where('customermaster.customer_registration_no', $request['customer'])
                 ->orWhere('customerassigned.CutomerCode',$request['customer'])
                 ->where('companySystemID', $request['company_id'])
-                ->where('isActive', 1)
-                ->where('isAssigned', -1)
                 ->first();
 
             if(!$customer){
                 $errorData[] = [
                     'field' => "customer",
-                    'message' => ["Invalid Customer Code"]
+                    'message' => ["Selected Customer is not available in the system"]
                 ];
             }
             else {
+
+                if($customer->isActive == 0) {
+                    $errorData[] = [
+                        'field' => "customer",
+                        'message' => ["Selected Customer is not active"]
+                    ];
+                }
+
+                if($customer->isAssigned == 0) {
+                    $errorData[] = [
+                        'field' => "customer",
+                        'message' => ["Selected Customer is not assigned to the company"]
+                    ];
+                }
 
                 // Validate Currency
                 if (isset($request['currency'])) {
@@ -388,14 +416,21 @@ class CreateCreditNote implements ShouldQueue
                     $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
                         ->where('currencymaster.CurrencyCode', $request['currency'])
                         ->where('customerCodeSystem', $customer->customerCodeSystem)
-                        ->where('isAssigned', -1)
                         ->first();
 
                     if(!$currency){
                         $errorData[] = [
                             'field' => "currency",
-                            'message' => ["Selected currency is not available in the system OR The selected currency is not assigned to the customer"]
+                            'message' => ["Selected currency is not available in the system."]
                         ];
+                    } else {
+                        if($currency->isAssigned != -1) {
+                            $errorData[] = [
+                                'field' => "currency",
+                                'message' => ["The selected currency is not assigned to customer"]
+                            ];
+                            
+                        }
                     }
                 }
                 else {
@@ -407,7 +442,7 @@ class CreateCreditNote implements ShouldQueue
 
                 // Validate Document Date
                 if (isset($request['document_date'])) {
-                    if(DateTime::createFromFormat('Y-m-d', $request['document_date'])) {
+                    if(DateTime::createFromFormat('d-m-Y', $request['document_date'])) {
                         $documentDate = Carbon::parse($request['document_date']);
 
                         $invoiceDueDate = $documentDate->copy();
@@ -485,27 +520,33 @@ class CreateCreditNote implements ShouldQueue
         }
 
         // Validate Project
-        if (isset($request['project'])) {
-            $project = ErpProjectMaster::where('companySystemID', $request['company_id'])
-                                        ->where('projectCode', $request['project'])     
-                                        ->first();
-            if(!$project){
-                $errorData[] = [
-                    'field' => "project",
-                    'message' => ["The selected project code does not match with the system."]
-                ];
+        $checkProjectPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $request['company_id'])
+        ->where('isYesNO', 1)
+        ->exists();
+
+        if($checkProjectPolicy){
+            if (isset($request['project'])) {
+                $project = ErpProjectMaster::where('companySystemID', $request['company_id'])
+                                            ->where('projectCode', $request['project'])     
+                                            ->first();
+                if(!$project){
+                    $errorData[] = [
+                        'field' => "project",
+                        'message' => ["The selected project code does not match with the system."]
+                    ];
+                }
             }
-        }  else {
-            $errorData[] = [
-                'field' => "project",
-                'message' => ["project field is required"]
-            ];
+            else {
+                $project = null;
+            }
+        } else {
+            $project = null;
         }
 
         // Validate Debit Note
         if (isset($request['debit_note'])) {
             $debitNote = DebitNote::where('companySystemID', $request['company_id'])
-                ->where('approved', -1)
                 ->where('refferedBackYN', 0)
                 ->where('debitNoteCode', $request['debit_note'])
                 ->whereHas('company', function ($query) {
@@ -518,6 +559,14 @@ class CreateCreditNote implements ShouldQueue
                     'field' => "debit_note",
                     'message' => ["Selected debit note code is  not available in the system."]
                 ];
+            } else {
+                if($debitNote->approved == 0) {
+                    $errorData[] = [
+                        'field' => "debit_note",
+                        'message' => ["The selected debit note has not been approved"]
+                    ];
+
+                }
             }
         }
         else {
@@ -589,7 +638,7 @@ class CreateCreditNote implements ShouldQueue
                 'status' => true,
                 'data' => [
                     'customerID' => $customer->customerCodeSystem,
-                    'projectID' => $project->id,
+                    'projectID' => $project != null ? $project->id : null,
                     'customerCurrencyID' => $currency->currencyID,
                     'debitNoteAutoID' => $debitNote != null ? $debitNote->debitNoteAutoID : null,
                     'comments' => $request['comments'],
@@ -696,17 +745,27 @@ class CreateCreditNote implements ShouldQueue
         }
 
         // Validate Project
-        if (isset($request['project'])) {
-            $project = ErpProjectMaster::where('projectCode', $request['project'])->first();
 
-            if (!$project) {
-                $errorData[] = [
-                    'field' => "project",
-                    'message' => ["The selected project code does not match with the system."]
-                ];
+        $checkProjectPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        if($checkProjectPolicy){
+            if (isset($request['project'])) {
+                $project = ErpProjectMaster::where('projectCode', $request['project'])->first();
+    
+                if (!$project) {
+                    $errorData[] = [
+                        'field' => "project",
+                        'message' => ["The selected project code does not match with the system."]
+                    ];
+                }
             }
-        }
-        else {
+            else {
+                $project = null;
+            }
+        } else {
             $project = null;
         }
 
@@ -836,7 +895,7 @@ class CreateCreditNote implements ShouldQueue
             $request['vat_amount'] = ($request['amount'] * $request['vat_percentage']) / 100;
         }
 
-        $netAmount = $request['amount'] + $request['vat_amount'];
+        $netAmount = $request['amount'] - $request['vat_amount'];
 
         if (empty($errorData)) {
             $returnData = [
