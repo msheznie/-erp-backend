@@ -56,6 +56,7 @@ Route::group([], function() {
     Route::get('getMatchingRuleDetails', 'BankReconciliationRulesAPIController@getMatchingRuleDetails')->name('Get matching rule details');
     Route::post('updateDefaultRule', 'BankReconciliationRulesAPIController@updateDefaultRule')->name('Upload default matching rule');
     Route::post('getBankStatementWorkBook', 'BankStatementMasterAPIController@getBankStatementWorkBook')->name('Upload default matching rule');
+    Route::get('validateWorkbookCreation', 'BankStatementMasterAPIController@validateWorkbookCreation')->name('Validate workbook creation');
 });
 
 //Cheque Register

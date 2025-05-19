@@ -4,9 +4,11 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBankStatementMasterAPIRequest;
 use App\Http\Requests\API\UpdateBankStatementMasterAPIRequest;
+use App\Models\BankReconciliation;
 use App\Models\BankStatementDetail;
 use App\Models\BankStatementMaster;
 use App\Repositories\BankStatementMasterRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -358,5 +360,34 @@ class BankStatementMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function validateWorkbookCreation(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'statementId' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $statementId = $input['statementId'];
+        $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($statementId);
+
+        $exists = BankReconciliation::where('approvedYN', 0)->where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)->first();
+        if (!empty($exists)) {
+            return $this->sendError('There is a bank reconciliation '. $exists->bankRecPrimaryCode .' pending for approval for this account. Please check.');
+        }
+
+        $validateAsOfDate = BankReconciliation::where('bankRecAsOf', '>=', Carbon::parse($bankStatementMaster->statementEndDate))->where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)->first();
+        if (!empty($validateAsOfDate)) {
+            return $this->sendError('Bank reconciliation already available. Proceed for the as-of date.');
+        }
+
+        $update['documentStatus'] = 1;
+        $this->bankStatementMasterRepository->update($update, $statementId);
+
+        return $this->sendResponse([], 'Workbook validation success.');
     }
 }
