@@ -373,126 +373,123 @@ class CreateCreditNote implements ShouldQueue
                 ->orWhere('customer_registration_no',$request['customer'])
                 ->first();
 
+            if(!$approvedCustomer){
+                $errorData[] = [
+                    'field' => "customer",
+                    'message' => ["Selected Customer is not available in the system"]
+                ];
+            }
+
             if ($approvedCustomer) {
                 if($approvedCustomer->approvedYN == 0) {
                     $errorData[] = [
                         'field' => "customer",
                         'message' => ["Selected Customer is not approved"]
                     ];
-                }
-            }
-
-            $customer = CustomerAssigned::join('customermaster', 'customerassigned.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
-                ->where('customermaster.customer_registration_no', $request['customer'])
-                ->orWhere('customerassigned.CutomerCode',$request['customer'])
-                ->where('companySystemID', $request['company_id'])
-                ->first();
-
-            if(!$customer){
-                $errorData[] = [
-                    'field' => "customer",
-                    'message' => ["Selected Customer is not available in the system"]
-                ];
-            }
-            else {
-
-                if($customer->isActive == 0) {
-                    $errorData[] = [
-                        'field' => "customer",
-                        'message' => ["Selected Customer is not active"]
-                    ];
-                }
-
-                if($customer->isAssigned == 0) {
-                    $errorData[] = [
-                        'field' => "customer",
-                        'message' => ["Selected Customer is not assigned to the company"]
-                    ];
-                }
-
-                // Validate Currency
-                if (isset($request['currency'])) {
-                    $request['currency'] = strtoupper($request['currency']);
-
-                    $isCurrencyAvailable = CurrencyMaster::where('CurrencyCode', $request['currency'])
-                                                        ->first();
-                    if(!$isCurrencyAvailable){
+                } else {
+                    $customer = CustomerAssigned::Where('CutomerCode',$approvedCustomer->CutomerCode)
+                    ->where('companySystemID', $request['company_id'])
+                    ->where('isAssigned', -1)
+                    ->first();
+    
+                    if(!$customer){
                         $errorData[] = [
-                            'field' => "currency",
-                            'message' => ["Selected currency is not available in the system."]
+                            'field' => "customer",
+                            'message' => ["Selected Customer is not assigned to the company"]
                         ];
-                    }
-
-                    $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
-                        ->where('currencymaster.CurrencyCode', $request['currency'])
-                        ->where('customerCodeSystem', $customer->customerCodeSystem)
-                        ->where('isAssigned', -1)
-                        ->first();
-
-                    if(!$currency){
-                        $errorData[] = [
-                            'field' => "currency",
-                            'message' => ["The selected currency is not assigned to customer"]
-                        ];
-                    }
-                }
-                else {
-                    $errorData[] = [
-                        'field' => "currency",
-                        'message' => ["currency field is required"]
-                    ];
-                }
-
-                // Validate Document Date
-                if (isset($request['document_date'])) {
-                    if(DateTime::createFromFormat('d-m-Y', $request['document_date'])) {
-                        $documentDate = Carbon::parse($request['document_date']);
-
-                        $invoiceDueDate = $documentDate->copy();
-                        $invoiceDueDate->addDays($customer->creditDays);
-
-                        // Validate Financial Year & Period
-                        $financeYear = CompanyFinanceYear::where('companySystemID',$request['company_id'])
-                            ->where('isDeleted',0)
-                            ->where('isActive',-1)
-                            ->where('bigginingDate','<=',$documentDate)
-                            ->where('endingDate','>=',$documentDate)
-                            ->first();
-
-                        if($financeYear){
-                            $financePeriod = CompanyFinancePeriod::where('companySystemID',$request['company_id'])
-                                ->where('departmentSystemID',4)
-                                ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
-                                ->where('isActive',-1)
-                                ->whereMonth('dateFrom',$documentDate->month)
-                                ->whereMonth('dateTo',$documentDate->month)
-                                ->first();
-                            if(!$financePeriod){
+                    } else {
+                        if($customer->isActive == 0) {
+                            $errorData[] = [
+                                'field' => "customer",
+                                'message' => ["Selected Customer is not active"]
+                            ];
+                        }
+        
+                        // Validate Currency
+                        if (isset($request['currency'])) {
+                            $request['currency'] = strtoupper($request['currency']);
+        
+                            $isCurrencyAvailable = CurrencyMaster::where('CurrencyCode', $request['currency'])
+                                                                ->first();
+                            if(!$isCurrencyAvailable){
                                 $errorData[] = [
-                                    'field' => "document_date",
-                                    'message' => ["Financial period related to the selected Document date is not active for the specified department."]
+                                    'field' => "currency",
+                                    'message' => ["Selected currency is not available in the system."]
+                                ];
+                            }
+        
+                            $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
+                                ->where('currencymaster.CurrencyCode', $request['currency'])
+                                ->where('customerCodeSystem', $customer->customerCodeSystem)
+                                ->where('isAssigned', -1)
+                                ->first();
+        
+                            if(!$currency){
+                                $errorData[] = [
+                                    'field' => "currency",
+                                    'message' => ["The selected currency is not assigned to customer"]
                                 ];
                             }
                         }
-                        else{
+                        else {
+                            $errorData[] = [
+                                'field' => "currency",
+                                'message' => ["currency field is required"]
+                            ];
+                        }
+        
+                        // Validate Document Date
+                        if (isset($request['document_date'])) {
+                            if(DateTime::createFromFormat('d-m-Y', $request['document_date'])) {
+                                $documentDate = Carbon::parse($request['document_date']);
+        
+                                $invoiceDueDate = $documentDate->copy();
+                                $invoiceDueDate->addDays($customer->creditDays);
+        
+                                // Validate Financial Year & Period
+                                $financeYear = CompanyFinanceYear::where('companySystemID',$request['company_id'])
+                                    ->where('isDeleted',0)
+                                    ->where('isActive',-1)
+                                    ->where('bigginingDate','<=',$documentDate)
+                                    ->where('endingDate','>=',$documentDate)
+                                    ->first();
+        
+                                if($financeYear){
+                                    $financePeriod = CompanyFinancePeriod::where('companySystemID',$request['company_id'])
+                                        ->where('departmentSystemID',4)
+                                        ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
+                                        ->where('isActive',-1)
+                                        ->whereMonth('dateFrom',$documentDate->month)
+                                        ->whereMonth('dateTo',$documentDate->month)
+                                        ->first();
+                                    if(!$financePeriod){
+                                        $errorData[] = [
+                                            'field' => "document_date",
+                                            'message' => ["Financial period related to the selected Document date is not active for the specified department."]
+                                        ];
+                                    }
+                                }
+                                else{
+                                    $errorData[] = [
+                                        'field' => "document_date",
+                                        'message' => ["Financial year related to the selected document date is either not active or not created."]
+                                    ];
+                                }
+                            }
+                            else {
+                                $errorData[] = [
+                                    'field' => "document_date",
+                                    'message' => ["document_date format is invalid"]
+                                ];
+                            }
+                        }
+                        else {
                             $errorData[] = [
                                 'field' => "document_date",
-                                'message' => ["Financial year related to the selected document date is either not active or not created."]
+                                'message' => ["document_date field is required"]
                             ];
                         }
                     }
-                    else {
-                        $errorData[] = [
-                            'field' => "document_date",
-                            'message' => ["document_date format is invalid"]
-                        ];
-                    }
-                }
-                else {
-                    $errorData[] = [
-                        'field' => "document_date",
-                        'message' => ["document_date field is required"]
-                    ];
                 }
             }
         }
