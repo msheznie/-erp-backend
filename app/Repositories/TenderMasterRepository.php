@@ -531,10 +531,10 @@ class TenderMasterRepository extends BaseRepository
 
         if($tenderData['stage'] == 2)
         {
-            if ($submissionClosingDate > $technicalStartDate) {
+            if (!is_null($technicalStartDate) && $submissionClosingDate > $technicalStartDate) {
                 return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission to date and time'];
             }
-            if ($technicalStartDate > $commercialStartDate) {
+            if (!is_null($technicalStartDate) && !is_null($commercialStartDate) && $technicalStartDate > $commercialStartDate) {
                 return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
             }
 
