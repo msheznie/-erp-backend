@@ -413,24 +413,27 @@ class CreateCreditNote implements ShouldQueue
                 // Validate Currency
                 if (isset($request['currency'])) {
                     $request['currency'] = strtoupper($request['currency']);
+
+                    $isCurrencyAvailable = CurrencyMaster::where('CurrencyCode', $request['currency'])
+                                                        ->first();
+                    if(!$isCurrencyAvailable){
+                        $errorData[] = [
+                            'field' => "currency",
+                            'message' => ["Selected currency is not available in the system."]
+                        ];
+                    }
+
                     $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
                         ->where('currencymaster.CurrencyCode', $request['currency'])
                         ->where('customerCodeSystem', $customer->customerCodeSystem)
+                        ->where('isAssigned', -1)
                         ->first();
 
                     if(!$currency){
                         $errorData[] = [
                             'field' => "currency",
-                            'message' => ["Selected currency is not available in the system."]
+                            'message' => ["The selected currency is not assigned to customer"]
                         ];
-                    } else {
-                        if($currency->isAssigned != -1) {
-                            $errorData[] = [
-                                'field' => "currency",
-                                'message' => ["The selected currency is not assigned to customer"]
-                            ];
-                            
-                        }
                     }
                 }
                 else {
@@ -853,6 +856,8 @@ class CreateCreditNote implements ShouldQueue
                     'message' => ["vat_percentage must be a numeric"]
                 ];
             }
+        } else {
+            $request['vat_percentage'] = 0;
         }
 
         // Validate VAT Amount
@@ -875,6 +880,8 @@ class CreateCreditNote implements ShouldQueue
                     'message' => ["vat_amount must be a numeric"]
                 ];
             }
+        }  else {
+            $request['vat_amount'] = 0;
         }
 
         if ($amountValidation && ($vatPercentageValidation && $vatAmountValidation)) {
