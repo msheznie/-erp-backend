@@ -3178,6 +3178,10 @@ WHERE
 
 
         return \DataTables::of($output)
+            ->editColumn('internalNotes', function($row) {
+                return $row->internalNotes;
+            })
+            ->rawColumns(['internalNotes', 'Actions'])
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
             ->with('orderCondition', $sort)
