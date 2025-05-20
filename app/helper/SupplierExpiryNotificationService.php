@@ -43,8 +43,10 @@ class SupplierExpiryNotificationService
         $company = Company::find($this->companyId);
         $this->companyName = $company->CompanyName;
 
-        $expiredSuppliers = SupplierMaster::whereDate('registrationExprity',$this->expiryDate)->where('isActive',1)->where('isBlocked',0)
-            ->get();
+        $expiredSuppliers = SupplierMaster::whereHas('assigned',function($query) use($company){
+                $query->where('companySystemID',$company->companySystemID);
+             })->whereDate('registrationExprity',$this->expiryDate)->where('approvedYN',1)->where('isActive',1)->where('isBlocked',0)
+               ->get();
 
         if (count($expiredSuppliers) == 0) {
             $log = "Expiry suppliers does not exist for type: {$this->type} and days: {$this->days}";
@@ -187,7 +189,7 @@ class SupplierExpiryNotificationService
                 $mailBody .= "<br/>";
                 $mailBody .= $this->expiryTableSuppliers($row);
                 $mailBody .= "<br/>";
-                $mailBody .= "Best Regards,<br/> System Administrator,<br/> OSOS Training.";
+                $mailBody .= "Best Regards,<br/> System Administrator,<br/> {$this->companyName}.";
                 $empEmail = $row['supEmail'];
                 $subject = $this->mailSubject;
 
