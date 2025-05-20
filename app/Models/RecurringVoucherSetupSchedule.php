@@ -249,6 +249,11 @@ class RecurringVoucherSetupSchedule extends Model
         return $this->belongsTo('App\Models\RecurringVoucherSetup', 'recurringVoucherAutoId', 'recurringVoucherAutoId');
     }
 
+    public function detail()
+    {
+        return $this->hasMany('App\Models\RecurringVoucherSetupScheDet', 'recurringVoucherSheduleAutoId', 'rrvSetupScheduleAutoID');
+    }
+
     public function generateDocument()
     {
         $documentType = $this->master->documentType;

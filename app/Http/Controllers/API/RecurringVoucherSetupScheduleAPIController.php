@@ -272,7 +272,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                 );
             }
             else{
-
+                
                 $employee = \Helper::getEmployeeInfo();
 
                 if(count($input) == 1){
@@ -395,7 +395,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
     {
         $masterId = $request['recurringVoucherAutoId'];
 
-        $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->with('generateDocument')->get();
+        $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->with(['generateDocument','detail'])->get();
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
