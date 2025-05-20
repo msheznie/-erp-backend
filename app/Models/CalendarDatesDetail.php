@@ -147,5 +147,21 @@ class CalendarDatesDetail extends Model
         }
 
     }
+
+    public static function updateCalendarDates($tenderId, $companyId, $calendarDateId, $dates)
+    {
+        CalendarDatesDetail::where('tender_id', $tenderId)
+            ->where('company_id', $companyId)
+            ->where('calendar_date_id', $calendarDateId)
+            ->update($dates);
+    }
+
+    public static function getCalendarDateDetail($tenderId, $companyId, $calendarDateId)
+    {
+        return CalendarDatesDetail::where('tender_id', $tenderId)
+            ->where('company_id', $companyId)
+            ->where('calendar_date_id', $calendarDateId)
+            ->first();
+    }
     
 }

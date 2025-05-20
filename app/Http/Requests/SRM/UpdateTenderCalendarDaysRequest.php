@@ -62,6 +62,30 @@ class UpdateTenderCalendarDaysRequest extends FormRequest
 
         }
 
+        if($this->input('hasPreBidClarifications'))
+        {
+            $rules = array_merge($rules, [
+                'preBidClarificationStartDate' => 'required',
+                'preBidClarificationStartTime' => 'required',
+            ]);
+        }
+
+        if($this->input('hasSiteVisitDate'))
+        {
+            $rules = array_merge($rules, [
+                'siteVisitStartDate' => 'required',
+                'siteVisitStartTime' => 'required',
+            ]);
+        }
+
+        if($this->input('calendarDates'))
+        {
+            $rules = array_merge($rules, [
+                'calendarDates.*.from_date' => 'required',
+                'calendarDates.*.to_date'   => 'required',
+            ]);
+        }
+
 
 
         return $rules;
@@ -86,7 +110,13 @@ class UpdateTenderCalendarDaysRequest extends FormRequest
             'commercialBidOpeningStarDateTime.required' => 'Commercial Bid Opening start date is required',
             'technicalBidOpeningEndDateTime.required' => 'Technical bid opening to time is required',
             'commercialBidOpeningEndDateTime.required' => 'Commercial Bid Opening  to time is required',
+            'preBidClarificationStartDate.required' => 'Pre Bid Clarification  from Date is required',
+            'preBidClarificationStartTime.required' => 'Pre Bid Clarification  from time is required',
+            'siteVisitStartDate.required' => 'Site Visit  from Date is required',
+            'siteVisitStartTime.required' => 'Site Visit  from time is required',
             'comment.required' => 'Comment is required',
+            'calendarDates.*.from_date.required' => 'Each calendar date type entry must have a from date.',
+            'calendarDates.*.to_date.required'   => 'Each calendar date type entry must have a to date.',
         ];
     }
 }

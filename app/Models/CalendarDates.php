@@ -97,5 +97,11 @@ class CalendarDates extends Model
         return $this->hasOne('App\Models\CalendarDatesDetail', 'calendar_date_id', 'id');
     }
 
+    public static function calendarDateMap($calendarDates)
+    {
+        return CalendarDates::whereIn('id', array_column($calendarDates, 'id'))
+            ->get()->keyBy('id');
+    }
+
     
 }
