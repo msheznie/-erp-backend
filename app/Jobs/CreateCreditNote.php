@@ -368,12 +368,11 @@ class CreateCreditNote implements ShouldQueue
         $companyId = $request['company_id'] ?? null;
         // Validate Customer
         if (isset($request['customer'])) {
-            $approvedCustomer = CustomerMaster::where('primaryCompanySystemID', $companyId)
-                                ->where(function ($query) use ($request) {
-                                    $query->where('CutomerCode', $request['customer'])
-                                        ->orWhere('customer_registration_no', $request['customer']);
-                                })
-                                ->first();
+            $approvedCustomer = CustomerMaster::where(function ($query) use ($request) {
+                                                    $query->where('CutomerCode', $request['customer'])
+                                                        ->orWhere('customer_registration_no', $request['customer']);
+                                                })
+                                                ->first();
 
             if(!$approvedCustomer){
                 $errorData[] = [
@@ -674,8 +673,7 @@ class CreateCreditNote implements ShouldQueue
 
         // Validate GL Code
         if (isset($request['gl_code'])) {
-            $chartOfAccount = ChartOfAccount::where('primaryCompanySystemID', $companyId)
-                ->where('AccountCode',$request['gl_code'])
+            $chartOfAccount = ChartOfAccount::where('AccountCode',$request['gl_code'])
                 ->first();
 
             if ($chartOfAccount){
