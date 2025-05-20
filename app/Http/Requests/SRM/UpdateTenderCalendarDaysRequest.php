@@ -22,7 +22,9 @@ class UpdateTenderCalendarDaysRequest extends FormRequest
         $rules =
             [
                 'tenderCode' => 'required',
+                'submissionOpeningDate' => 'required',
                 'submissionClosingDate' => 'required',
+                'bidSubmissionOpeningTime' => 'required',
                 'bidSubmissionClosingTime' => 'required',
                 'comment' => 'required',
             ];
@@ -70,7 +72,9 @@ class UpdateTenderCalendarDaysRequest extends FormRequest
         return [
             'supplierId.required' => 'Supplier id is required',
             'tenderCode.required' => 'Tender Code id is required',
+            'submissionOpeningDate.required' => 'Bid Submission from Date is required',
             'submissionClosingDate.required' => 'Bid Submission to Date is required',
+            'bidSubmissionOpeningTime.required' => 'Bid Submission from time is required',
             'bidSubmissionClosingTime.required' => 'Bid Submission to time is required',
             'bidOpeningStartDate.required' => 'Bid Opening start date is required',
             'bidOpeningEndDate.required' => 'Bid Opening end date is required',
