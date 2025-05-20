@@ -80,35 +80,42 @@ class CheckRegisterNotificationService
     {
         $body = '<b>Cheque Replacement Details: <b>';
         $body .= "<br/>";
-        $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th style="text-align: center;border: 1px solid black;">Document Number</th>
-                        <th style="text-align: center;border: 1px solid black;">Previous Value</th>
-                        <th style="text-align: center;border: 1px solid black;">Current Value</th>
-                        <th style="text-align: center;border: 1px solid black;">Amended By</th>
-                        <th style="text-align: center;border: 1px solid black;">Amended Date & Time</th> 
-                        <th style="text-align: center;border: 1px solid black;">Reason for Replacement</th>                                            
-                                  
-                    </tr>
-                </thead>';
-        $body .= '<tbody>';
+        foreach ($this->details as $row) 
+        {
+            $body .= " Document no :  <span style='font-weight:100'>{$row['document']} </span>";
+            $body .= "<br/>";
+            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Previous Val</th>
+                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Current Val</th>
+                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Amended By</th>
+                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Amended Date </th> 
+                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Reason for Replacement</th>                                            
+                                    
+                        </tr>
+                    </thead>';
+            $body .= '<tbody>';
 
-        $x = 1;
-        foreach ($this->details as $row) {
+            $x = 1;
+        
 
-            $body .= '<tr>
-                <td style="text-align:center;border: 1px solid black;">' . $row['document'] . '</td>  
-                <td style="text-align:center;border: 1px solid black;">' . $row['previous'] . '</td>  
-                <td style="text-align:center;border: 1px solid black;">' . $row['current'] . '</td>  
-                <td style="text-align:center;border: 1px solid black;">' . $row['amendBy'] . '</td>  
-                <td style="text-align:center;border: 1px solid black;">' . date('Y-m-d', strtotime($row['amenDate'])) . '</td> 
-                <td style="text-align:center;border: 1px solid black;">' . $row['reason'] . '</td>                 
-                </tr>';
-            $x++;
-        }
-        $body .= '</tbody>
-        </table>';
+                $body .= '<tr>
+                    <td style="text-align:center;font-weight:100;border: 1px solid black;">' . $row['previous'] . '</td>  
+                    <td style="text-align:center;font-weight:100;border: 1px solid black;">' . $row['current'] . '</td>  
+                    <td style="text-align:center;font-weight:100;border: 1px solid black;">' . $row['amendBy'] . '</td>  
+                    <td style="text-align:center;font-weight:100;border: 1px solid black;">' . date('Y-m-d', strtotime($row['amenDate'])) . '</td> 
+                    <td style="text-align:center;font-weight:100;border: 1px solid black;">' . $row['reason'] . '</td>                 
+                    </tr>';
+                $x++;
+        
+            $body .= '</tbody>
+            </table>';
+             $body .= "<br/>";
+             $body .= "<br/>";
+          }
+        $body .= "<br/>";
+        $body .= "<br/>";
         return $body;
     }
 

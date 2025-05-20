@@ -44,7 +44,7 @@ class SupplierExpiryNotificationService
         $this->companyName = $company->CompanyName;
 
         $expiredSuppliers = SupplierMaster::whereHas('assigned',function($query) use($company){
-                $query->where('companySystemID',$company->companySystemID);
+                $query->where('companySystemID',$company->companySystemID)->where('isAssigned',-1);
              })->whereDate('registrationExprity',$this->expiryDate)->where('approvedYN',1)->where('isActive',1)->where('isBlocked',0)
                ->get();
 
