@@ -63,8 +63,15 @@ class BankReconciliationRulesRepository extends BaseRepository
         $bankReconciliationRules = BankReconciliationRules::where('bankAccountAutoID', $bankAccountId)->whereIn('companySystemID', $subCompanies);
         if ($searchValue) {
             $searchValue = str_replace("\\", "\\\\", $searchValue);
-            $bankReconciliationRules = $bankReconciliationRules->whereHas('bankAccount', function ($query) use ($searchValue) {
-                $query->where('ruleDescription', 'LIKE', "%{$searchValue}%");
+            $bankReconciliationRules = $bankReconciliationRules->where(function ($query) use ($searchValue) {
+                $query->where('ruleDescription', 'LIKE', "%{$searchValue}%")
+                    ->orWhereRaw("
+                                  CASE transactionType
+                                      WHEN 1 THEN 'Payment Voucher'
+                                      WHEN 2 THEN 'Receipt Voucher'
+                                      ELSE NULL
+                                  END LIKE ?
+                              ", ["%{$searchValue}%"]);
             });
         }
 
