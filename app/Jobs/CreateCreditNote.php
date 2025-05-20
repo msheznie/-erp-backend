@@ -369,9 +369,11 @@ class CreateCreditNote implements ShouldQueue
         // Validate Customer
         if (isset($request['customer'])) {
             $approvedCustomer = CustomerMaster::where('primaryCompanySystemID', $companyId)
-                ->where('CutomerCode', $request['customer'])
-                ->orWhere('customer_registration_no',$request['customer'])
-                ->first();
+                                ->where(function ($query) use ($request) {
+                                    $query->where('CutomerCode', $request['customer'])
+                                        ->orWhere('customer_registration_no', $request['customer']);
+                                })
+                                ->first();
 
             if(!$approvedCustomer){
                 $errorData[] = [
@@ -416,19 +418,19 @@ class CreateCreditNote implements ShouldQueue
                                     'field' => "currency",
                                     'message' => ["Selected currency is not available in the system."]
                                 ];
-                            }
-        
-                            $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
+                            } else {
+                                $currency = CustomerCurrency::join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
                                 ->where('currencymaster.CurrencyCode', $request['currency'])
                                 ->where('customerCodeSystem', $customer->customerCodeSystem)
                                 ->where('isAssigned', -1)
                                 ->first();
         
-                            if(!$currency){
-                                $errorData[] = [
-                                    'field' => "currency",
-                                    'message' => ["The selected currency is not assigned to customer"]
-                                ];
+                                if(!$currency){
+                                    $errorData[] = [
+                                        'field' => "currency",
+                                        'message' => ["The selected currency is not assigned to customer"]
+                                    ];
+                                }
                             }
                         }
                         else {
