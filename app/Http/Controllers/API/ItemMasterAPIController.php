@@ -1827,6 +1827,14 @@ class ItemMasterAPIController extends AppBaseController
             $query->whereDoesntHave('material_issue_details', function($query) use ($input) {
                 $query->where('itemIssueAutoID', $input['itemIssueAutoID']);
             });
+        })->when((isset($input['deliveryOrderId']) && $input['deliveryOrderId'] > 0), function($query) use ($input) {
+                $query->whereHas('item_category_type', function ($query) {
+                    $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems());
+                });
+                $query->whereDoesntHave('deliveryOrderDetails', function($query) use ($input) {
+                    $query->where('deliveryOrderID', $input['deliveryOrderId']);
+                });
+                $query->where('financeCategoryMaster', '!=' ,3);
         });
 
         if (array_key_exists('financeCategoryMaster', $input)) {
