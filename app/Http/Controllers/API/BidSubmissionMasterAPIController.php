@@ -936,7 +936,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('srm_evaluation_criteria_details.critera_type_id', 2)
             ->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
-            ->where('srm_bid_submission_master.doc_verifiy_status','!=', 2)
+                ->where(function ($query) {
+                    $query->where('srm_tender_master.stage', 1)
+                        ->orWhere('srm_bid_submission_master.doc_verifiy_status', '!=', 2);
+                })
             ->where('srm_bid_submission_master.tender_id', $tenderId)
             ->havingRaw("(srm_tender_master.stage != 2 OR weightage >= passing_weightage)");
         }
