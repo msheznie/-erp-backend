@@ -835,73 +835,75 @@ class CreateCreditNote implements ShouldQueue
             ];
         }
 
-        // Validate VAT Percentage
-        $vatPercentageValidation = false;
-        if (isset($request['vat_percentage'])) {
-            if (gettype($request['vat_percentage']) != 'string') {
-                if ($request['vat_percentage'] >= 0) {
-                    $vatPercentageValidation = true;
+        if($masterData['vat_applicable'] == 1){
+            // Validate VAT Percentage
+            $vatPercentageValidation = false;
+            if (isset($request['vat_percentage'])) {
+                if (gettype($request['vat_percentage']) != 'string') {
+                    if ($request['vat_percentage'] >= 0) {
+                        $vatPercentageValidation = true;
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "vat_percentage",
+                            'message' => ["vat_percentage must be at least 0"]
+                        ];
+                    }
                 }
                 else {
                     $errorData[] = [
                         'field' => "vat_percentage",
-                        'message' => ["vat_percentage must be at least 0"]
+                        'message' => ["vat_percentage must be a numeric"]
                     ];
                 }
             }
-            else {
-                $errorData[] = [
-                    'field' => "vat_percentage",
-                    'message' => ["vat_percentage must be a numeric"]
-                ];
-            }
-        } else {
-            $request['vat_percentage'] = 0;
-        }
 
-        // Validate VAT Amount
-        $vatAmountValidation = false;
-        if (isset($request['vat_amount'])) {
-            if (gettype($request['vat_amount']) != 'string') {
-                if ($request['vat_amount'] >= 0) {
-                    $vatAmountValidation = true;
+            // Validate VAT Amount
+            $vatAmountValidation = false;
+            if (isset($request['vat_amount'])) {
+                if (gettype($request['vat_amount']) != 'string') {
+                    if ($request['vat_amount'] >= 0) {
+                        $vatAmountValidation = true;
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "vat_amount",
+                            'message' => ["vat_amount must be at least 0"]
+                        ];
+                    }
                 }
                 else {
                     $errorData[] = [
                         'field' => "vat_amount",
-                        'message' => ["vat_amount must be at least 0"]
+                        'message' => ["vat_amount must be a numeric"]
                     ];
                 }
             }
-            else {
-                $errorData[] = [
-                    'field' => "vat_amount",
-                    'message' => ["vat_amount must be a numeric"]
-                ];
+
+            if ($amountValidation && ($vatPercentageValidation && $vatAmountValidation)) {
+                $vatAmount = ($request['amount'] * $request['vat_percentage']) / 100;
+                if ($vatAmount != $request['vat_amount']) {
+                    $errorData[] = [
+                        'field' => "vat_amount",
+                        'message' => ["VAT% and VAT Amount is not matching"]
+                    ];
+                }
             }
-        }  else {
+
+            if ($amountValidation && (!$vatPercentageValidation && $vatAmountValidation)) {
+                $request['vat_percentage'] = ($request['vat_amount'] / $request['amount']) * 100;
+            }
+
+            if ($amountValidation && ($vatPercentageValidation && !$vatAmountValidation)) {
+                $request['vat_amount'] = ($request['amount'] * $request['vat_percentage']) / 100;
+            }
+
+            $netAmount = $request['amount'] - $request['vat_amount'];
+        } else {
+            $request['vat_percentage'] = 0;
             $request['vat_amount'] = 0;
+            $netAmount = $request['amount'];
         }
-
-        if ($amountValidation && ($vatPercentageValidation && $vatAmountValidation)) {
-            $vatAmount = ($request['amount'] * $request['vat_percentage']) / 100;
-            if ($vatAmount != $request['vat_amount']) {
-                $errorData[] = [
-                    'field' => "vat_amount",
-                    'message' => ["VAT% and VAT Amount is not matching"]
-                ];
-            }
-        }
-
-        if ($amountValidation && (!$vatPercentageValidation && $vatAmountValidation)) {
-            $request['vat_percentage'] = ($request['vat_amount'] / $request['amount']) * 100;
-        }
-
-        if ($amountValidation && ($vatPercentageValidation && !$vatAmountValidation)) {
-            $request['vat_amount'] = ($request['amount'] * $request['vat_percentage']) / 100;
-        }
-
-        $netAmount = $request['amount'] - $request['vat_amount'];
 
         if (empty($errorData)) {
             $returnData = [
@@ -912,8 +914,8 @@ class CreateCreditNote implements ShouldQueue
                     'ServiceLineCode' => $request['segment'],
                     'comments' => $request['comments'] ?? null,
                     'amount' => $request['amount'],
-                    'VATPercentage' => $request['vat_percentage'] ?? 0,
-                    'vatAmount' => $request['vat_amount'] ?? 0,
+                    'VATPercentage' => $request['vat_percentage'],
+                    'vatAmount' => $request['vat_amount'],
                     'netAmount' => $netAmount,
                     'detail_project_id' => $project != null ? $project->id : null,
                     'companySystemID' => $companyId,
