@@ -25,6 +25,8 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
+use App\Models\Tax;
+use App\Models\TaxVatCategories;
 use App\Services\API\CreditNoteAPIService;
 use App\Services\DocumentAutoApproveService;
 use App\Services\PaymentVoucherServices;
@@ -834,69 +836,103 @@ class CreateCreditNote implements ShouldQueue
         }
 
         if($masterData['vat_applicable'] == 1){
-            // Validate VAT Percentage
-            $vatPercentageValidation = false;
-            if (isset($request['vat_percentage'])) {
-                if (gettype($request['vat_percentage']) != 'string') {
-                    if ($request['vat_percentage'] >= 0) {
-                        $vatPercentageValidation = true;
-                    }
-                    else {
+            $isCompanyVATEligible = Company::where('companySystemID', $companyId)
+                ->where('vatRegisteredYN', 1)
+                ->exists();
+            if(!$isCompanyVATEligible){
+                $errorData[] = [
+                    'field' => "vat_applicable",
+                    'message' => ["VAT is not registered for this company"]
+                ];
+            } else {
+                $isCompanyVatSetup = Tax::where('companySystemID', $companyId)
+                    ->where('taxCategory', 2)
+                    ->where('isActive', 1)
+                    ->first();
+
+                if(!$isCompanyVatSetup){
+                    $errorData[] = [
+                        'field' => "vat_applicable",
+                        'message' => ["VAT setup is not created for this company"]
+                    ];
+                } else {
+                    $isvatCategories = TaxVatCategories::where('taxMasterAutoID', $isCompanyVatSetup->taxMasterAutoID)
+                    ->where('isActive', 1)
+                    ->where('subCatgeoryType',1)
+                    ->exists();
+
+                    if(!$isvatCategories){
                         $errorData[] = [
-                            'field' => "vat_percentage",
-                            'message' => ["vat_percentage must be at least 0"]
+                            'field' => "vat_applicable",
+                            'message' => ["VAT subcategory not created "]
                         ];
+                    } else {
+                        // Validate VAT Percentage
+                        $vatPercentageValidation = false;
+                        if (isset($request['vat_percentage'])) {
+                            if (gettype($request['vat_percentage']) != 'string') {
+                                if ($request['vat_percentage'] >= 0) {
+                                    $vatPercentageValidation = true;
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "vat_percentage",
+                                        'message' => ["vat_percentage must be at least 0"]
+                                    ];
+                                }
+                            }
+                            else {
+                                $errorData[] = [
+                                    'field' => "vat_percentage",
+                                    'message' => ["vat_percentage must be a numeric"]
+                                ];
+                            }
+                        }
+
+                        // Validate VAT Amount
+                        $vatAmountValidation = false;
+                        if (isset($request['vat_amount'])) {
+                            if (gettype($request['vat_amount']) != 'string') {
+                                if ($request['vat_amount'] >= 0) {
+                                    $vatAmountValidation = true;
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "vat_amount",
+                                        'message' => ["vat_amount must be at least 0"]
+                                    ];
+                                }
+                            }
+                            else {
+                                $errorData[] = [
+                                    'field' => "vat_amount",
+                                    'message' => ["vat_amount must be a numeric"]
+                                ];
+                            }
+                        }
+
+                        if ($amountValidation && ($vatPercentageValidation && $vatAmountValidation)) {
+                            $vatAmount = ($request['amount'] * $request['vat_percentage']) / 100;
+                            if ($vatAmount != $request['vat_amount']) {
+                                $errorData[] = [
+                                    'field' => "vat_amount",
+                                    'message' => ["VAT% and VAT Amount is not matching"]
+                                ];
+                            }
+                        }
+
+                        if ($amountValidation && (!$vatPercentageValidation && $vatAmountValidation)) {
+                            $request['vat_percentage'] = ($request['vat_amount'] / ($request['amount'] - $request['vat_amount'])) * 100;
+                        }
+
+                        if ($amountValidation && ($vatPercentageValidation && !$vatAmountValidation)) {
+                            $request['vat_amount'] = ($request['amount'] / (100 + $request['vat_percentage'])) * $request['vat_percentage'];
+                        }
+
+                        $netAmount = $request['amount'] - $request['vat_amount'];
                     }
                 }
-                else {
-                    $errorData[] = [
-                        'field' => "vat_percentage",
-                        'message' => ["vat_percentage must be a numeric"]
-                    ];
-                }
             }
-
-            // Validate VAT Amount
-            $vatAmountValidation = false;
-            if (isset($request['vat_amount'])) {
-                if (gettype($request['vat_amount']) != 'string') {
-                    if ($request['vat_amount'] >= 0) {
-                        $vatAmountValidation = true;
-                    }
-                    else {
-                        $errorData[] = [
-                            'field' => "vat_amount",
-                            'message' => ["vat_amount must be at least 0"]
-                        ];
-                    }
-                }
-                else {
-                    $errorData[] = [
-                        'field' => "vat_amount",
-                        'message' => ["vat_amount must be a numeric"]
-                    ];
-                }
-            }
-
-            if ($amountValidation && ($vatPercentageValidation && $vatAmountValidation)) {
-                $vatAmount = ($request['amount'] * $request['vat_percentage']) / 100;
-                if ($vatAmount != $request['vat_amount']) {
-                    $errorData[] = [
-                        'field' => "vat_amount",
-                        'message' => ["VAT% and VAT Amount is not matching"]
-                    ];
-                }
-            }
-
-            if ($amountValidation && (!$vatPercentageValidation && $vatAmountValidation)) {
-                $request['vat_percentage'] = ($request['vat_amount'] / $request['amount']) * 100;
-            }
-
-            if ($amountValidation && ($vatPercentageValidation && !$vatAmountValidation)) {
-                $request['vat_amount'] = ($request['amount'] * $request['vat_percentage']) / 100;
-            }
-
-            $netAmount = $request['amount'] - $request['vat_amount'];
         } else {
             $request['vat_percentage'] = 0;
             $request['vat_amount'] = 0;
