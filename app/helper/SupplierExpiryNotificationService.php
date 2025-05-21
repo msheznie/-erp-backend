@@ -156,7 +156,7 @@ class SupplierExpiryNotificationService
         $empEmail = $mailTo->empEmail ?? null;
         if (!empty($empEmail)) {
             $mailBody = "Hi {$mailTo->empName},<br/>";
-            $mailBody .= $this->emailBody( );
+            $mailBody .= $this->emailBody(1);
             $mailBody .= "<br/>";
             $mailBody .= $this->expiryTable($this->expiredSuppliers);
             $mailBody .= "<br/>";
@@ -185,7 +185,7 @@ class SupplierExpiryNotificationService
                 $supplierName = $row['supplierName'];
                 $mailBody = "Hi {$supplierName},<br/>";
 
-                $mailBody .= $this->emailBody( );
+                $mailBody .= $this->emailBody(2);
                 $mailBody .= "<br/>";
                 $mailBody .= $this->expiryTableSuppliers($row);
                 $mailBody .= "<br/>";
@@ -209,23 +209,38 @@ class SupplierExpiryNotificationService
         return true;
     }
 
-    public function emailBody( ){
+    public function emailBody($val){
 
         $str = "<br/>";
 
-        switch ($this->type){
-            case 0: 
-                $str .= "The Commercial Registration (CR) number has reached its expiration today. Please renew the CR immediately to avoid any disruption.";
-                break;
-            case 1: 
-                $str .= "The Commercial Registration (CR) number is nearing its expiration. Please renew the CR before the expiration date to avoid any disruption.";
-                break;
-            case 2: 
-                $str .= "The Commercial Registration (CR) number has expired. Please renew the CR as soon as possible to avoid any disruption.";
-                break;
+        if($val == 2)
+        {
+            switch ($this->type){
+                case 0: 
+                    $str .= "The Commercial Registration (CR) number has reached its expiration today. Please renew the CR immediately to avoid any disruption.";
+                    break;
+                case 1: 
+                    $str .= "The Commercial Registration (CR) number is nearing its expiration. Please renew the CR before the expiration date to avoid any disruption.";
+                    break;
+                case 2: 
+                    $str .= "The Commercial Registration (CR) number has expired. Please renew the CR as soon as possible to avoid any disruption.";
+                    break;
+            }
+        }
+        else{
+            switch ($this->type){
+                case 0: 
+                    $str .= "The Commercial Registration (CR) number has reached its expiration today for the below listed supplier.";
+                    break;
+                case 1: 
+                    $str .= "The Commercial Registration (CR) number is nearing its expiration for the below listed supplier.";
+                    break;
+                case 2: 
+                    $str .= "The Commercial Registration (CR) number has expired for the below listed supplier.";
+                    break;
+            }
         }
          $str .= "<br/>";
-
         return $str;
     }
 
