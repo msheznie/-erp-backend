@@ -859,7 +859,7 @@ class CreateCreditNote implements ShouldQueue
                     $isvatCategories = TaxVatCategories::where('taxMasterAutoID', $isCompanyVatSetup->taxMasterAutoID)
                     ->where('isActive', 1)
                     ->where('subCatgeoryType',1)
-                    ->exists();
+                    ->first();
 
                     if(!$isvatCategories){
                         $errorData[] = [
@@ -929,7 +929,26 @@ class CreateCreditNote implements ShouldQueue
                             $request['vat_amount'] = ($request['amount'] / (100 + $request['vat_percentage'])) * $request['vat_percentage'];
                         }
 
-                        $netAmount = $request['amount'] - $request['vat_amount'];
+                        if($amountValidation && (!$vatPercentageValidation && !$vatAmountValidation)){
+
+                            $isDefaultVatCategories = TaxVatCategories::where('taxMasterAutoID', $isCompanyVatSetup->taxMasterAutoID)
+                                ->where('isActive', 1)
+                                ->where('isDefault',1)
+                                ->first();
+                            if($isDefaultVatCategories){
+                                $request['vat_percentage'] = $isDefaultVatCategories->percentage;
+                                $request['vat_amount'] = ($request['amount'] / (100 + $request['vat_percentage'])) * $request['vat_percentage'];
+                            } else {
+                                $request['vat_percentage'] = $isvatCategories->percentage;
+                                $request['vat_amount'] = ($request['amount'] / (100 + $request['vat_percentage'])) * $request['vat_percentage'];
+                            }
+
+                            $netAmount = $request['amount'] - $request['vat_amount'];
+                            
+                        } else {
+                            $netAmount = $request['amount'] - $request['vat_amount'];
+                        }
+                        
                     }
                 }
             }
