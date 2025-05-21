@@ -46,6 +46,7 @@ class CreditNoteAPIService extends AppBaseController
         }
 
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+        $input['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
         if ($input['creditNoteDate'] > $curentDate) {
             return [
                 'status' => false,
