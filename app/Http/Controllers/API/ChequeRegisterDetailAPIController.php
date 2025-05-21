@@ -488,7 +488,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
                         'details' => [
                             [
                                 'amendBy' =>  Helper::getEmployeeName(),
-                                'amenDate' => $input['updated_at'],
+                                'amenDate' => $createCurrentUpdateReason->updated_at,
                                 'document' => $bpvCode,
                                 'current' => $unUsedChequeRegisterDetails->cheque_no, 
                                 'previous' => $input['cheque_no'],

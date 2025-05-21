@@ -21,7 +21,7 @@ class CheckRegisterNotificationService
     private $type;
     private $days;
     private $currentDate;
-    private $mailSubject = "Cheque Register Switch Notification";
+    private $mailSubject = "Cheque Register Replaced Notification";
     private $companyId = null;
     private $details;
     private $sentMailCount = 0;
@@ -87,11 +87,11 @@ class CheckRegisterNotificationService
             $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
                     <thead>
                         <tr>
-                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Previous Val</th>
-                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Current Val</th>
-                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Amended By</th>
-                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Amended Date </th> 
-                            <th style="text-align: center;font-weight:100;border: 1px solid black;">Reason for Replacement</th>                                            
+                            <th style="text-align: center;font-weight:bold;border: 1px solid black;">Previous Val</th>
+                            <th style="text-align: center;font-weight:bold;border: 1px solid black;">Current Val</th>
+                            <th style="text-align: center;font-weight:bold;border: 1px solid black;">Amended By</th>
+                            <th style="text-align: center;font-weight:bold;border: 1px solid black;">Amended Date </th> 
+                            <th style="text-align: center;font-weight:bold;border: 1px solid black;">Reason for Replacement</th>                                            
                                     
                         </tr>
                     </thead>';
@@ -114,8 +114,6 @@ class CheckRegisterNotificationService
              $body .= "<br/>";
              $body .= "<br/>";
           }
-        $body .= "<br/>";
-        $body .= "<br/>";
         return $body;
     }
 
@@ -135,7 +133,7 @@ class CheckRegisterNotificationService
             $mailBody .= "<br/>";
             $mailBody .= $this->expiryTable();
             $mailBody .= "<br/>";
-            $mailBody .= "Best Regards,<br/> System Administrator,<br/> {$this->companyName}.";
+            $mailBody .= "<span style='text-align:center;font-weight:100'> Best Regards,<br/> System Administrator,<br/> {$this->companyName}. </span>";
             $empEmail = $mailTo->empEmail;
             $subject = $this->mailSubject;
             NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mailBody);
