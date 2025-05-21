@@ -160,4 +160,18 @@ class BidSubmissionDetail extends Model
                 $q->where('critera_type_id', 2);
             })->exists();
     }
+
+    public static function BidSubmissionEmpty($tenderId)
+    {
+        return self::where('tender_id',$tenderId)
+            ->whereHas('srm_bid_submission_master', function ($query) {
+                $query->where('doc_verifiy_status', '!=', 2)
+                    ->where('commercial_verify_status', 1)
+                    ->where('technical_verify_status', 1);
+            })
+            ->where('result',0)
+            ->whereNull('technical_ranking')
+            ->whereNull('eval_score')
+            ->exists();
+    }
 }
