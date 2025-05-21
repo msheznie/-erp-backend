@@ -1368,10 +1368,16 @@ ORDER BY
             $input['bank_account_id'] = null;
         }
         // Check Total Technical weightage
+<<<<<<< HEAD
         $response = $this->tenderMasterRepository->validateTechnicalEvaluationCriteria($input['id'], 1, 2);
 
         if (!$response['success']) {
             return $response;
+=======
+        $result = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('level',1)->sum('weightage');
+        if($result != 100){
+            return ['success' => false, 'message' => 'Total of the Technical Evaluation Criteria percentage should be equal to 100'];
+>>>>>>> 3724824c1 (feat(srm): Validation for the Technical Evaluation Criteria Total [GSUP-2870] (#8054))
         }
 
         if($input['estimated_value'] > $input['allocated_budget'] ){
