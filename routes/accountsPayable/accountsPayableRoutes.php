@@ -35,7 +35,9 @@ Route::group([], function() {
     Route::post('getSIMasterAmendHistory', 'BookInvSuppMasterRefferedBackAPIController@getSIMasterAmendHistory')->name("Get si master amend history");
     Route::post('saveSupplierInvoiceTaxDetails', 'BookInvSuppMasterAPIController@saveSupplierInvoiceTaxDetails')->name("Save si tax details");
     Route::get('supplierInvoiceTaxTotal', 'BookInvSuppMasterAPIController@supplierInvoiceTaxTotal')->name("Get si tax total");
-    
+    Route::post('supplierInvoiceValidateItem', 'SupplierInvoiceDirectItemAPIController@supplierInvoiceValidateItem')->name('Supplier invoice validate item');
+    Route::post('supplierInvoiceDetailsAddAllItems', 'SupplierInvoiceDirectItemAPIController@supplierInvoiceDetailsAddAllItems')->name('Supplier invoice add all item');
+
 });
 
 //approval

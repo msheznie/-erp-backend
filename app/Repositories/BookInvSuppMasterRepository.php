@@ -180,7 +180,8 @@ class BookInvSuppMasterRepository extends BaseRepository
                 'erp_bookinvsuppmaster.approved',
                 'erp_bookinvsuppmaster.supplierInvoiceNo',
                 'erp_bookinvsuppmaster.postedDate',
-                'erp_bookinvsuppmaster.supplierInvoiceDate'
+                'erp_bookinvsuppmaster.supplierInvoiceDate',
+                'erp_bookinvsuppmaster.isBulkItemJobRun'
             ]);
 
 

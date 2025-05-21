@@ -291,4 +291,8 @@ class ItemMaster extends Model
     public function item_category_type() {
         return $this->hasMany('App\Models\ItemMasterCategoryType','itemCodeSystem','itemCodeSystem');
     }
+
+    public function supplier_invoice_details() {
+        return $this->belongsTo('App\Models\SupplierInvoiceDirectItem', 'itemCodeSystem', 'itemCode');
+    }
 }
