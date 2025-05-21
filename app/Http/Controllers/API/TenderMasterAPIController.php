@@ -3666,12 +3666,12 @@ ORDER BY
             ->filter(function ($query) {
                 $query->where(function ($q) {
                     $q->where('stage', '<>', 2)
-                    ->orWhere(function ($subQuery) {
-                        $subQuery->where('stage', '=', 2)
-                            ->where('technical_eval_status', 1)
-                            ->where('doc_verifiy_status', 1)
-                            ->where('go_no_go_status', 1);
-                    });
+                        ->orWhere(function ($subQuery) {
+                            $subQuery->where('stage', '=', 2)
+                                ->where('technical_eval_status', 1)
+                                ->where('doc_verifiy_status', 1)
+                                ->where('go_no_go_status', 1);
+                        });
                 });
             })
             ->order(function ($query) use ($input) {
