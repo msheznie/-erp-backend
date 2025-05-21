@@ -358,7 +358,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if($bookInvMaster && $bookInvMaster->retentionAmount != 0){
                 if($bookInvMaster->documentType == 1) {
 
-                        $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / ($bookInvMaster->retentionAmount - $bookInvMaster->retentionVatAmount)) * $bookInvMaster->retentionVatAmount;
+                        if ($bookInvMaster->rcmActivated) {
+                            $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / $bookInvMaster->retentionAmount) * $bookInvMaster->retentionVatAmount;
+                        } else {
+                            $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / ($bookInvMaster->retentionAmount - $bookInvMaster->retentionVatAmount)) * $bookInvMaster->retentionVatAmount;
+                        }
 
                 }
                 else if($bookInvMaster->documentType == 0) {

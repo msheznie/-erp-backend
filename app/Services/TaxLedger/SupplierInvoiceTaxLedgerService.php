@@ -134,7 +134,7 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount =   ($vatPortion/100) * $value->transVATAmount ;
                     $standardAmount = $value->transVATAmount - $exemptAmount;
 
-                    if (($masterData->documentType == 1) && ($masterData['retentionPercentage'] > 0)) {
+                    if (($masterData->documentType == 1) && ($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
                         $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
                     }
 
@@ -258,7 +258,7 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount =   ($vatPortion/100) * $value->VATAmount ;
                     $standardAmount = $value->VATAmount - $exemptAmount;
 
-                    if (($masterData->documentType == 1) && ($masterData['retentionPercentage'] > 0)) {
+                    if (($masterData->documentType == 1) && ($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
                         $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
                     }
 
@@ -341,7 +341,7 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount =   ($vatPortion/100) * $value->transVATAmount ;
                     $standardAmount = $value->transVATAmount - $exemptAmount;
 
-                    if (($masterData['retentionPercentage'] > 0)) {
+                    if (($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
                         $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
                     }
 
@@ -459,7 +459,7 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount =   ($vatPortion/100) * $value->VATAmount * $value->noQty;
                     $standardAmount = ($value->VATAmount* $value->noQty) - $exemptAmount;
 
-                    if (($masterData['retentionPercentage'] > 0)) {
+                    if (($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
                         $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
                     }
 
