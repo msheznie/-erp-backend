@@ -595,6 +595,26 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than bid submission to date and time'];
         }
 
+        if ((!is_null($preBidClarificationStartDate) && !is_null($preBidClarificationEndDate)) && (($preBidClarificationStartDate > $preBidClarificationEndDate))) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
+        }
+
+        if ((!is_null($siteVisitStartDate) && !is_null($siteVisitEndDate)) && (($siteVisitStartDate > $siteVisitEndDate))) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+        }
+
+        if ($isTender == 1 &&! is_null($preBidClarificationStartDate) && !is_null($documentSalesStartDate) && ($documentSalesStartDate > $preBidClarificationStartDate)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
+        }
+
+        if ($isTender == 1 && !is_null($preBidClarificationStartDate) && ($preBidClarificationStartDate > $submissionClosingDate)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
+        }
+
+        if ($isTender == 1 && !is_null($preBidClarificationEndDate) && ($preBidClarificationEndDate >= $submissionClosingDate)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than bid submission to date and time'];
+        }
+
         return ['success' => true];
     }
     private function getFormattedDatesAndTime($input, $tenderData)
