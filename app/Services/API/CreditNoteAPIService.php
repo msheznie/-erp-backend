@@ -157,6 +157,9 @@ class CreditNoteAPIService extends AppBaseController
 
         $inputData['VATAmount'] = $request['vatAmount'];
         $inputData['netAmount'] = $request['netAmount'];
+        $inputData['vatSubCategoryID'] = $request['vatSubCategoryID'];
+        $inputData['VATPercentage'] =  $request['VATPercentage'];
+        $inputData['vatMasterCategoryID'] = $request['vatMasterCategoryID'];
         $inputData['serviceLineSystemID'] = $request['serviceLineSystemID'];
         $inputData['creditNoteAutoID'] = $creditNoteAutoID;
         $inputData['companyID'] = $master->companyID;
@@ -183,14 +186,6 @@ class CreditNoteAPIService extends AppBaseController
         }
         $inputData['comRptAmount'] = 0;
 
-        $isVATEligible = TaxService::checkCompanyVATEligible($master->companySystemID);
-
-        if ($isVATEligible) {
-            $defaultVAT = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
-            $inputData['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
-            $inputData['VATPercentage'] =  $request['VATPercentage'];
-            $inputData['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
-        }
 
 
         DB::beginTransaction();

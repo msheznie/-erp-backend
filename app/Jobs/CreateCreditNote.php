@@ -940,9 +940,14 @@ class CreateCreditNote implements ShouldQueue
                             if($isDefaultVatCategories){
                                 $request['vat_percentage'] = $isDefaultVatCategories->percentage;
                                 $request['vat_amount'] = ($request['amount'] / (100 + $request['vat_percentage'])) * $request['vat_percentage'];
+                                $request['vatSubCategoryID'] = $isDefaultVatCategories->taxVatSubCategoriesAutoID;
+                                $request['vatMasterCategoryID'] = $isDefaultVatCategories->mainCategory;
+                                
                             } else {
                                 $request['vat_percentage'] = $isvatCategories->percentage;
                                 $request['vat_amount'] = ($request['amount'] / (100 + $request['vat_percentage'])) * $request['vat_percentage'];
+                                $request['vatSubCategoryID'] = $isvatCategories->taxVatSubCategoriesAutoID;
+                                $request['vatMasterCategoryID'] = $isvatCategories->mainCategory;
                             }
 
                             $netAmount = $request['amount'] - $request['vat_amount'];
@@ -958,6 +963,8 @@ class CreateCreditNote implements ShouldQueue
             $request['vat_percentage'] = 0;
             $request['vat_amount'] = 0;
             $netAmount = $request['amount'];
+            $request['vatMasterCategoryID'] = null;
+            $request['vatSubCategoryID'] = null;
         }
 
         // Validate Comment
@@ -979,6 +986,8 @@ class CreateCreditNote implements ShouldQueue
                     'VATPercentage' => $request['vat_percentage'],
                     'vatAmount' => $request['vat_amount'],
                     'netAmount' => $netAmount,
+                    'vatMasterCategoryID' => $request['vatMasterCategoryID'],
+                    'vatSubCategoryID' => $request['vatSubCategoryID'],
                     'detail_project_id' => $projectID,
                     'companySystemID' => $companyId,
                     'isAutoCreateDocument' => true
