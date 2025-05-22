@@ -767,7 +767,7 @@ class CreateCreditNote implements ShouldQueue
                 }
             }
             else {
-                $projectID = $datasetMaster['projectID'] ?? null;
+                $projectID = $datasetMaster['data']['projectID'] ?? null;
             }
         } else {
             $projectID = null;
@@ -914,8 +914,8 @@ class CreateCreditNote implements ShouldQueue
                         }
 
                         if ($amountValidation && ($vatPercentageValidation && $vatAmountValidation)) {
-                            $vatAmount = ($request['amount'] * $request['vat_percentage']) / 100;
-                            if ($vatAmount != $request['vat_amount']) {
+                            $vatAmount = ($request['amount'] / (100 + $request['vat_percentage'])) * $request['vat_percentage'];
+                            if (round($vatAmount, 7) != round($request['vat_amount'], 7)) {
                                 $errorData[] = [
                                     'field' => "vat_amount",
                                     'message' => ["VAT% and VAT Amount is not matching"]
@@ -940,14 +940,10 @@ class CreateCreditNote implements ShouldQueue
                             if($isDefaultVatCategories){
                                 $request['vat_percentage'] = $isDefaultVatCategories->percentage;
                                 $request['vat_amount'] = ($request['amount'] / (100 + $request['vat_percentage'])) * $request['vat_percentage'];
-                                $request['vatSubCategoryID'] = $isDefaultVatCategories->taxVatSubCategoriesAutoID;
-                                $request['vatMasterCategoryID'] = $isDefaultVatCategories->mainCategory;
                                 
                             } else {
                                 $request['vat_percentage'] = $isvatCategories->percentage;
                                 $request['vat_amount'] = ($request['amount'] / (100 + $request['vat_percentage'])) * $request['vat_percentage'];
-                                $request['vatSubCategoryID'] = $isvatCategories->taxVatSubCategoriesAutoID;
-                                $request['vatMasterCategoryID'] = $isvatCategories->mainCategory;
                             }
 
                             $netAmount = $request['amount'] - $request['vat_amount'];
@@ -956,6 +952,18 @@ class CreateCreditNote implements ShouldQueue
                             $netAmount = $request['amount'] - $request['vat_amount'];
                         }
                         
+                        $isDefaultVatCategories = TaxVatCategories::where('taxMasterAutoID', $isCompanyVatSetup->taxMasterAutoID)
+                                ->where('isActive', 1)
+                                ->where('isDefault',1)
+                                ->first();
+                            if($isDefaultVatCategories){
+                                $request['vatSubCategoryID'] = $isDefaultVatCategories->taxVatSubCategoriesAutoID;
+                                $request['vatMasterCategoryID'] = $isDefaultVatCategories->mainCategory;
+                                
+                            } else {
+                                $request['vatSubCategoryID'] = $isvatCategories->taxVatSubCategoriesAutoID;
+                                $request['vatMasterCategoryID'] = $isvatCategories->mainCategory;
+                            }
                     }
                 }
             }
@@ -971,7 +979,7 @@ class CreateCreditNote implements ShouldQueue
         if (isset($request['comments'])) {
             $comments = $request['comments'] ?? null;
         }  else {
-            $comments = $datasetMaster['comments'] ?? null;
+            $comments = $datasetMaster['data']['comments'] ?? null;
         }
 
         if (empty($errorData)) {
