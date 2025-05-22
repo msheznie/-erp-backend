@@ -229,7 +229,7 @@ class CreateCreditNote implements ShouldQueue
 
                                 if ($approveDocument["success"]) {
                                     DB::commit();
-                                    $cnID[] = $confirmDataSet['creditNoteAutoID'];
+                                    $cnID = $confirmDataSet['creditNoteAutoID'];
                                     $this->storeToDocumentSystemMapping(19,$cnID,$this->authorization);
                                     $success = self::createSuccessResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], $confirmDataSet['creditNoteCode']);
                                     $successDocuments[] = $success;
