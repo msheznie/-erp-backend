@@ -91,13 +91,25 @@ class CreateCreditNote implements ShouldQueue
 
         $fieldErrors = $masterDatasets = $detailsDataSets = $errorDocuments = $successDocuments = [];
         $headerData = $detailData = ['status' => false , 'errors' => []];
-
+        $commentTracker = [];
         $masterIndex = 0;
         $creditNotes = $this->input['credit_notes'];
 
         foreach ($creditNotes as $creditNote) {
             
             $creditNote['company_id'] = $this->input['company_id'];
+
+                // Validate comment uniqueness in the input array
+                if (!empty($creditNote['comments'])) {
+                    if (in_array($creditNote['comments'], $commentTracker)) {
+                        $headerData['errors'][] = [
+                            'field' => "comments",
+                            'message' => ["The Comments should be unique."]
+                        ];
+                    } else {
+                        $commentTracker[] = $creditNote['comments'];
+                    }
+                }
 
             $datasetMaster = self::validateCNMasterData($creditNote, $masterIndex);
 
