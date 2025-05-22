@@ -165,7 +165,8 @@ class CreditNoteAPIService extends AppBaseController
         $inputData['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
         $inputData['glCode'] = $chartOfAccount->AccountCode;
         $inputData['glCodeDes'] = $chartOfAccount->AccountDescription;
-        $inputData['comments'] = $master->comments;
+        $inputData['comments'] = $request['comments'];
+        $inputData['detail_project_id'] = $request['detail_project_id'];
         $inputData['creditAmountCurrency'] = $myCurr;
         $inputData['creditAmountCurrencyER'] = 1;
         $inputData['creditAmount'] = $request['amount'];

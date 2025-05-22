@@ -584,7 +584,7 @@ class CreateCreditNote implements ShouldQueue
             if(!$secondaryLogoCompany){
                 $errorData[] = [
                     'field' => "secondaryLogoCompanySystemID",
-                    'message' => ["The selected Secondary Logo Company is not available in the system"]
+                    'message' => ["The selected company is not available in the system"]
                 ];
             }
         }
@@ -762,13 +762,15 @@ class CreateCreditNote implements ShouldQueue
                         'field' => "project",
                         'message' => ["The selected project code does not match with the system."]
                     ];
+                } else {
+                    $projectID = $project->id;
                 }
             }
             else {
-                $project = null;
+                $projectID = $datasetMaster['projectID'] ?? null;
             }
         } else {
-            $project = null;
+            $projectID = null;
         }
 
         // Validate Segment
@@ -958,6 +960,13 @@ class CreateCreditNote implements ShouldQueue
             $netAmount = $request['amount'];
         }
 
+        // Validate Comment
+        if (isset($request['comments'])) {
+            $comments = $request['comments'] ?? null;
+        }  else {
+            $comments = $datasetMaster['comments'] ?? null;
+        }
+
         if (empty($errorData)) {
             $returnData = [
                 "status" => true,
@@ -965,12 +974,12 @@ class CreateCreditNote implements ShouldQueue
                     'glCode' => $chartOfAccount->chartOfAccountSystemID,
                     'serviceLineSystemID' => $segment->serviceLineSystemID,
                     'ServiceLineCode' => $request['segment'],
-                    'comments' => $request['comments'] ?? null,
+                    'comments' => $comments,
                     'amount' => $request['amount'],
                     'VATPercentage' => $request['vat_percentage'],
                     'vatAmount' => $request['vat_amount'],
                     'netAmount' => $netAmount,
-                    'detail_project_id' => $project != null ? $project->id : null,
+                    'detail_project_id' => $projectID,
                     'companySystemID' => $companyId,
                     'isAutoCreateDocument' => true
                 ]
