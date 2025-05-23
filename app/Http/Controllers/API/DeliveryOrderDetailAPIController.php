@@ -2078,7 +2078,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $itemCurrentCostAndQty  = inventory::itemCurrentCostAndQty($data);
 
-        if(isset($itemCurrentCostAndQty['currentStockQty']) && ($itemCurrentCostAndQty['currentStockQty'] <= 0))
+        if(isset($itemCurrentCostAndQty['currentWareHouseStockQty']) && ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0))
         {
             return $this->sendError('Stock Qty is 0. You cannot issue.',500);
         }

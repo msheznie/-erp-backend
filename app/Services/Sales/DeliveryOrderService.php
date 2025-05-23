@@ -48,7 +48,7 @@ class DeliveryOrderService
 
         $itemCurrentCostAndQty  = inventory::itemCurrentCostAndQty($data);
 
-        if(isset($itemCurrentCostAndQty['currentStockQty']) && ($itemCurrentCostAndQty['currentStockQty'] <= 0))
+        if(isset($itemCurrentCostAndQty['currentWareHouseStockQty']) && ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0))
         {
             return ['status' => false , 'message' => 'Stock Qty is 0. You cannot issue.'];
         }
