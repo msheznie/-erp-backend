@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\helper\CommonJobService;
 use App\Models\BookInvSuppMaster;
+use App\Models\ItemCategoryTypeMaster;
 use App\Models\ItemMaster;
 use App\Services\SupplierInvoiceService;
 use Illuminate\Bus\Queueable;
@@ -71,6 +72,8 @@ class SupplierInvoiceAddBulkItemJob implements ShouldQueue
                 })
                 ->when((isset($input['financeCategorySub']) && $input['financeCategorySub']), function($query) use ($input){
                     $query->where('financeCategorySub', $input['financeCategorySub']);
+                })->whereHas('item_category_type', function ($query) {
+                    $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
                 })
                 ->whereDoesntHave('supplier_invoice_details', function($query) use ($input) {
                     $query->where('bookingSuppMasInvAutoID', $input['supplierInvoiceId']);

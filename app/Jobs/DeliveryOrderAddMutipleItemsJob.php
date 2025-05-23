@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\DeliveryOrder;
+use App\Models\ItemCategoryTypeMaster;
 use App\Services\Sales\DeliveryOrderService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -72,6 +73,8 @@ class DeliveryOrderAddMutipleItemsJob implements ShouldQueue
                 })
                 ->when((isset($input['financeCategorySub']) && $input['financeCategorySub']), function($query) use ($input){
                     $query->where('financeCategorySub', $input['financeCategorySub']);
+                })->whereHas('item_category_type', function ($query) {
+                    $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems());
                 })
                 ->whereDoesntHave('deliveryOrderDetails', function($query) use ($input) {
                     $query->where('deliveryOrderID', $input['deliveryOrderID']);

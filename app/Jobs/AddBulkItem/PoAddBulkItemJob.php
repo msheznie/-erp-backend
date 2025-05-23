@@ -2,6 +2,7 @@
 
 namespace App\Jobs\AddBulkItem;
 
+use App\Models\ItemCategoryTypeMaster;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -69,8 +70,9 @@ class PoAddBulkItemJob implements ShouldQueue
                                      })
                                      ->when((isset($input['financeCategorySub']) && $input['financeCategorySub']), function($query) use ($input){
                                         $query->where('financeCategorySub', $input['financeCategorySub']);
-                                     })
-                                     ->whereDoesntHave('purchase_order_details', function($query) use ($input) {
+                                     })->whereHas('item_category_type', function ($query) {
+                                        $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                                     })->whereDoesntHave('purchase_order_details', function($query) use ($input) {
                                         $query->where('purchaseOrderMasterID', $input['purchaseOrderID']);
                                      })
                                      ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
