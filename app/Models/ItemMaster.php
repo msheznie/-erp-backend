@@ -295,4 +295,8 @@ class ItemMaster extends Model
     public function supplier_invoice_details() {
         return $this->belongsTo('App\Models\SupplierInvoiceDirectItem', 'itemCodeSystem', 'itemCode');
     }
+
+    public function usedFinanceSubCategory() {
+        return self::pluck('financeCategorySub')->unique()->filter()->values()->all();
+    }
 }

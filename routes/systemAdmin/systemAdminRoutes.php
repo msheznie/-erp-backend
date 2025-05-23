@@ -155,6 +155,7 @@ Route::group([], function() {
     Route::post('getFinanceItemCategoryMasterExpiryStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterExpiryStatus')->name('Get finance item category master expiry status');
     Route::post('getFinanceItemCategoryMasterAttributesStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterAttributesStatus')->name('Get finance item category master attributes status');
     Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory')->name('All item finance sub categories by main category');
+    Route::post('usedFinanceSubCatByMainCat', 'FinanceItemCategoryMasterAPIController@usedFinanceSubCatByMainCat')->name('All used item finance sub categories by main category');
     Route::get('getSubCategoryFormData', 'FinanceItemCategoryMasterAPIController@getSubCategoryFormData')->name('Get sub category form data');
     Route::post('getAttributesData', 'FinanceItemCategoryMasterAPIController@getAttributesData')->name('Get attributes data');
     Route::post('finance_item_category_subs_update', 'FinanceItemCategorySubAPIController@finance_item_category_subs_update')->name('Finance item category subs update');
