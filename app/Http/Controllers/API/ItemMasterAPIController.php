@@ -1846,6 +1846,7 @@ class ItemMasterAPIController extends AppBaseController
                 $query->whereDoesntHave('supplier_invoice_details', function($query) use ($input) {
                     $query->where('bookingSuppMasInvAutoID', $input['supplierInvoiceId']);
                 });
+                $query->where('financeCategoryMaster', '!=' ,3);
         });
 
         if (array_key_exists('financeCategoryMaster', $input)) {
