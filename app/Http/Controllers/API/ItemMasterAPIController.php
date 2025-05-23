@@ -1883,7 +1883,10 @@ class ItemMasterAPIController extends AppBaseController
                 $query->where('primaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
                     ->orWhere('barcode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhereHas('unit', function ($q) use ($search) {
+                        $q->where('UnitShortCode', 'LIKE', "%{$search}%");
+                    });
             });
         }
 
