@@ -74,9 +74,9 @@ class DeliveryOrderService
 
 
 
-//        if(DeliveryOrderDetail::where('deliveryOrderID',$deliveryOrderID)->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
-//            return ['status' =>  false, 'message' => 'Different finance category found. You can not add different finance category items for same order',500];
-//        }
+        if(DeliveryOrderDetail::where('deliveryOrderID',$deliveryOrderID)->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
+            return ['status' =>  false, 'message' => 'Different finance category found. You can not add different finance category items for same order',500];
+        }
 
         if($item->financeCategoryMaster==1){
             // check the item pending pending for approval in other delivery orders
