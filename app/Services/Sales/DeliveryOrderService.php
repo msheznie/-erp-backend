@@ -63,7 +63,7 @@ class DeliveryOrderService
                 return ['status'=> false ,  'message' => "Warehouse stock Qty is 0. You cannot issue."];
             }
 
-            if ($itemCurrentCostAndQty['wacValueLocal'] == 0 || $itemCurrentCostAndQty['wacValueReporting'] == 0) {
+            if ((float)$itemCurrentCostAndQty['wacValueLocal'] == 0 || (float)$itemCurrentCostAndQty['wacValueReporting'] == 0) {
                 return ['status'=> false ,  'message' => "Cost is 0. You cannot issue."];
             }
 

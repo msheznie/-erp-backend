@@ -2083,6 +2083,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError('Stock Qty is 0. You cannot issue.',500);
         }
 
+        if ((float)$itemCurrentCostAndQty['wacValueLocal'] == 0 || (float)$itemCurrentCostAndQty['wacValueReporting'] == 0) {
+            return $this->sendError('Cost is 0. You cannot issue.',500);
+        }
+
 
         if(DeliveryOrderDetail::where('deliveryOrderID',$input['deliveryOrderID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same order',500);
