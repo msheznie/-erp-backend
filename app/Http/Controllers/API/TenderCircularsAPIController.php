@@ -336,6 +336,7 @@ class TenderCircularsAPIController extends AppBaseController
     public function getAttachmentDropCircular(Request $request)
     {
         $input = $request->all();
+        $documentSystemID = $input['documentSystemID'] ?? 0;
         $attachment = CircularAmendments::where('tender_id',$input['tenderMasterId'])->get();
         $attchArray = array();
         if(count($attachment) > 0){
@@ -344,7 +345,7 @@ class TenderCircularsAPIController extends AppBaseController
         }
 
         $attachmentDrop = DocumentAttachments::whereNotIn('attachmentID',$attchArray)
-            ->where('documentSystemID',108)
+            ->where('documentSystemID', $documentSystemID)
             ->where('attachmentType',3)
             ->where('parent_id', null)
             ->where('documentSystemCode',$input['tenderMasterId'])->orderBy('attachmentID', 'asc')->get()->toArray();
