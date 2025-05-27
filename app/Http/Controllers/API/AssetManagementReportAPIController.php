@@ -126,6 +126,11 @@ class AssetManagementReportAPIController extends AppBaseController
                     ->orWhereIn('faSubCatID2', $subCategory)
                     ->orWhereIn('faSubCatID3', $subCategory);
             })
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('erp_fa_fa_asset_transfer_details')
+                    ->whereColumn('erp_fa_fa_asset_transfer_details.fa_master_id', 'erp_fa_asset_master.faID');
+            })
             ->get();
 
         return $this->sendResponse($assets, "Asset retrieved successfully");
