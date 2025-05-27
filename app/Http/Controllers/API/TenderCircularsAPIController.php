@@ -15,6 +15,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderCirculars;
 use App\Models\TenderMaster;
+use App\Models\TenderSupplierAssignee;
 use App\Repositories\TenderCircularsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -619,7 +620,22 @@ class TenderCircularsAPIController extends AppBaseController
             ->where('srm_tender_master_supplier.tender_master_id', $input['tenderMasterId'])
             ->get();
 
-        $data['purchased'] = $purchased;
+        if ($purchased->isEmpty()) {
+            $assignSupplier = TenderSupplierAssignee::getAssignSupplier($input['companySystemID'],$input['tenderMasterId']);
+
+            $purchased = $assignSupplier->map(function ($assignee) {
+                $link = $assignee->supplierAssigned->supplierRegistrationLink ?? null;
+
+                return $link ? [
+                    'purchased_by' => $link->purchased_by,
+                    'name' => $link->name,
+                ] : null;
+            })->filter()->values();
+        }
+
+        return response()->json([
+            'purchased' => $purchased,
+        ]);
 
         if(isset($input['circularId']) && $input['circularId'] > 0){
             $dataAssigned = SupplierRegistrationLink::selectRaw('*')

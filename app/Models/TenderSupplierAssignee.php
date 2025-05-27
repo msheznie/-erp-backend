@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @SWG\Definition(
@@ -133,5 +134,24 @@ class TenderSupplierAssignee extends Model
     {
         return TenderSupplierAssignee::where('company_id', $companyId)
             ->where('tender_master_id', $id)->count();
+    }
+
+    public static function getAssignSupplier($companySystemID, $tenderMasterId)
+    {
+        return TenderSupplierAssignee::select('id', 'tender_master_id', 'company_id', 'supplier_assigned_id')
+            ->with(['supplierAssigned' => function ($q) {
+                $q->select('supplierAssignedID', 'supplierCodeSytem');
+                $q->with([
+                    'supplierRegistrationLink' => function ($q) {
+                        $q->select(
+                            DB::raw('id as purchased_by'),
+                            'name', 'supplier_master_id');
+                    },
+                ]);
+            },
+            ])
+            ->where('company_id', $companySystemID)
+            ->where('tender_master_id', $tenderMasterId)
+            ->get();
     }
 }
