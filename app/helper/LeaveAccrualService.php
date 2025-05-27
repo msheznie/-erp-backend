@@ -8,6 +8,7 @@ use App\Models\LeaveAccrualDetail;
 use App\Models\LeaveAccrualMaster;
 use App\Models\LeaveGroup;
 use Carbon\Carbon;
+use DateTime;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\LeaveBalanceValidationHelper;
@@ -104,7 +105,7 @@ class LeaveAccrualService
 
     function get_employee_list($leaveGroupID, $leave_group, $getCount): bool
     {
-        $str = "EIdNo, ECode, Ename2, emp.leaveGroupID, gd.leaveTypeID, noOfDays";
+        $str = "EIdNo, ECode, Ename2, emp.leaveGroupID, gd.leaveTypeID, noOfDays, EDOJ";
         if($getCount){
             $str = "COUNT(EIdNo) AS emp_count";
         }
@@ -326,10 +327,10 @@ class LeaveAccrualService
 
         foreach ($this->emp_arr as $val) {
             $hoursEntitled = 0;
-            $daysEntitled = $val->noOfDays;
+            $daysEntitled = $this->getDaysEntitledForLeaveAccrual($val);
 
             if($this->dailyBasis){
-                $daysEntitled = ($daysEntitled / 365);
+                $daysEntitled = ($val->noOfDays / 365);
             }
 
             $detail[] = array(
@@ -351,6 +352,8 @@ class LeaveAccrualService
         $chunkSize = 500;
 
         if (empty($detail) || !is_array($detail)) {
+            DB::rollBack();
+
             Log::info('No accrual details found');
             return;
         }
@@ -402,4 +405,38 @@ class LeaveAccrualService
         DB::table('job_logs')->insert($data);
     }
 
+    function getDaysEntitledForLeaveAccrual($data) {
+        $policy = SME::policy($this->company_id, 'PLC', 'All');
+        $proratedPolicy = (isset($policy)) ? $policy : 0;
+        $noOfDays = $data->noOfDays;
+        $empDoj = $data->EDOJ;
+
+        if(!$proratedPolicy){
+            return $noOfDays;
+        }
+
+        $startDate = $this->month_det['dateFrom'];
+        $endDate = $this->month_det['dateTo'];
+        if($this->policy == 1) {
+            $startDate = $this->year_det['startDate'];
+            $endDate = $this->year_det['endDate'];
+        }
+
+        if($startDate < $empDoj && $empDoj < $endDate){
+            return $this->empProratedBalanceCalculation($empDoj, $noOfDays, $startDate, $endDate);
+        }
+
+        return $noOfDays;
+    }
+
+    function empProratedBalanceCalculation($empDoj, $noOfDays, $startDate, $endDate) {
+        $empDoj = new DateTime($empDoj);
+        $fromDate = new DateTime($startDate);
+        $toDate = new DateTime($endDate);
+
+        $daysWorked = $empDoj->diff($toDate)->days + 1;
+        $totalPeriodDays = $fromDate->diff($toDate)->days + 1;
+
+        return ($daysWorked / $totalPeriodDays) * $noOfDays;
+    }
 }
