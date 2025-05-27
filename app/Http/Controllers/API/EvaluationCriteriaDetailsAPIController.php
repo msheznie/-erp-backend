@@ -319,7 +319,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             ]);
 
             if ($validator->fails()) {
-                return ['success' => false, 'message' =>  $validator->errors()];
+                $message = $validator->errors()->first('selectedData');
+
+                return [
+                    'success' => false,
+                    'message' => $message,
+                ];
             }
 
             $idArray = array_map(function ($item) {
