@@ -9816,22 +9816,39 @@ class Helper
         return $attachments;
     }
 
-    public static function sendCircularEmailToSuppliers($supplierList, $circular, $companySystemID, $attachments, $companyName,$tenderObj)
-    {
-        foreach ($supplierList as $supplier) {
-            $email = ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id == 2) ?
-                $supplier->supplierAssigned->supEmail :
-                $supplier->supplier_registration_link->email;
+    public static function sendCircularEmailToSuppliers(
+        $supplierList, $circular, $companySystemID,
+        $attachments, $companyName, $tenderObj
+    ) {
+        $documentSystemIds = [108, 113];
+        $documentSystemId = $tenderObj->document_system_id;
+        $documentName = $documentSystemId === 108 ? 'Tender' : 'RFX';
 
-            $description = isset($circular['description']) ? "<b>Circular Description : </b>" . $circular['description'] . "<br /><br />" : "";
-            $emailMessage = "Dear Supplier,<br /><br />Please find published tender circular details below.<br /><br /><b>Circular Name : </b>{$circular['circular_name']}<br /><br />{$description}{$companyName}<br /><br />Thank You<br /><br /><b>";
+        foreach ($supplierList as $supplier) {
+            $useAssignedEmail = in_array($documentSystemId, $documentSystemIds, true)
+                && $tenderObj->tender_type_id == 2;
+
+            $email = $useAssignedEmail
+                ? $supplier->supplierAssigned->supEmail
+                : $supplier->supplier_registration_link->email;
+
+            $description = $circular['description'] ?? '';
+            $descriptionHtml = $description
+                ? "<b>Circular Description : </b>{$description}<br /><br />"
+                : '';
+
+            $emailMessage = "Dear Supplier,<br /><br />
+            Please find published <span style='text-transform: lowercase;'>{$documentName}</span> circular details below.<br /><br />
+            <b>Circular Name : </b>{$circular['circular_name']}<br /><br />
+            {$descriptionHtml}{$companyName}<br /><br />
+            Thank You<br /><br /><b>";
 
             $dataEmail = [
                 'empEmail' => $email,
                 'companySystemID' => $companySystemID,
                 'attachmentList' => $attachments,
                 'emailAlertMessage' => $emailMessage,
-                'alertMessage' => 'Tender Circular'
+                'alertMessage' => $documentName . ' Circular',
             ];
 
             \Email::sendEmailErp($dataEmail);
