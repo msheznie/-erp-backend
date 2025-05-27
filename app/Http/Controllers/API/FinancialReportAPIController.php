@@ -12202,5 +12202,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
             ->with('orderCondition', $sort)
             ->with('total', $output['total'])
             ->make(true);
-    }   
+    }
+
+   
 }
