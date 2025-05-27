@@ -579,22 +579,23 @@ class TenderCircularsAPIController extends AppBaseController
 
             if ($result && $supplierList) {
                 DB::commit();
+                $documentName = $tenderObj->document_system_id == 108 ? 'Tender' : 'RFX';
                 foreach ($supplierList as $supplier){
                     $description = "";
                     if(isset($circular[0]['description'])){
                         $description = "<b>Circular Description : </b>" . $circular[0]['description']. "<br /><br />";
                     }
 
-                    $email = ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id == 2) ?
+                    $email = ($tenderObj->tender_type_id ?? null) == 2 ?
                         $supplier->supplierAssigned->supEmail :
                         $supplier->supplier_registration_link->email;
 
                     $emailFormatted = email::emailAddressFormat($email);
                     
                     $dataEmail['companySystemID'] = $request->input('company_id');
-                    $dataEmail['alertMessage'] = "Tender Circular";
+                    $dataEmail['alertMessage'] = $documentName . " Circular";
                     $dataEmail['empEmail'] = $emailFormatted;
-                    $body = "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
+                    $body = "Dear Supplier,"."<br /><br />"." Please find published <span style='text-transform: lowercase;'>". $documentName ."</span> circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
                     $dataEmail['emailAlertMessage'] = $body;
                     $dataEmail['attachmentList'] = $file;
                     $sendEmail = \Email::sendEmailErp($dataEmail);

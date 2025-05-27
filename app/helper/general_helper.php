@@ -9783,7 +9783,7 @@ class Helper
     }
 
     public static function getTenderCircularSupplierList($tenderObj, $circularId, $id, $companySystemID){
-        if ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id == 2) {
+        if (($tenderObj->tender_type_id ?? null) == 2) {
             return self::tenderSupplierAssignedList($id, $companySystemID);
         } else {
             return CircularSuppliers::select('id','supplier_id','circular_id','status')
