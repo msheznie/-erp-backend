@@ -37,6 +37,7 @@ use App\Models\GRVMaster;
 use App\Models\Months;
 use App\Models\Year;
 use App\Models\AssetType;
+use App\Scopes\ActiveScope;
 use App\Services\AssetManagementService;
 use App\Services\Currency\CurrencyService;
 use App\Services\Excel\ExportVatDetailReportService;
@@ -88,7 +89,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 ->get();
 
             if (isset($request['reportID']) && $request['reportID'] == "ATR") {
-                $mainCategory = FixedAssetCategory::where('companySystemID', $selectedCompanyId)->get();
+                $mainCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->where('companySystemID', $selectedCompanyId)->get();
             }
             else {
                 $assets = FixedAssetMaster::where('confirmedYN',1)->where('approved',-1)->where('companySystemID',$selectedCompanyId)->get();
