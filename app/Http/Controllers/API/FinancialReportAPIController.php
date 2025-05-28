@@ -7207,7 +7207,7 @@ INNER JOIN
     erp_debitnotedetails ed ON ed.debitNoteAutoID  = edn.debitNoteAutoID 
 LEFT JOIN
     countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
-LEFT JOIN erp_tax_vat_sub_categories vatsub ON  vatsub.taxVatSubCategoriesAutoID = ed.vatSubCategoryID AND vatsub.subCatgeoryType != 2 
+LEFT JOIN erp_tax_vat_sub_categories vatsub ON  vatsub.taxVatSubCategoriesAutoID = ed.vatSubCategoryID 
 LEFT JOIN
     (SELECT
         td.documentSystemID,
@@ -7300,7 +7300,7 @@ INNER JOIN
 LEFT JOIN
     countrymaster country ON country.countryID = cust.customerCountry
 INNER JOIN erp_creditnotedetails ecnd ON ecnd.creditNoteAutoID = ecn.creditNoteAutoID        
-LEFT JOIN erp_tax_vat_sub_categories vatsub ON  vatsub.taxVatSubCategoriesAutoID = ecnd.vatSubCategoryID AND vatsub.subCatgeoryType != 2         
+LEFT JOIN erp_tax_vat_sub_categories vatsub ON  vatsub.taxVatSubCategoriesAutoID = ecnd.vatSubCategoryID         
 LEFT JOIN (
     SELECT
         td.documentSystemID,
@@ -7409,7 +7409,7 @@ LEFT JOIN
 LEFT JOIN
     erp_directpaymentdetails AS edpd ON edpd.directPaymentAutoID = epsim.PayMasterAutoId
 LEFT JOIN
-    erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = edpd.vatSubCategoryID AND etvsc1.subCatgeoryType != 2
+    erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = edpd.vatSubCategoryID
 LEFT JOIN
     (SELECT
         td.documentSystemID,
@@ -7538,7 +7538,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             LEFT JOIN
                 countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
             LEFT JOIN
-                erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID AND etvsc1.subCatgeoryType != 2
+                erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
             LEFT JOIN
             (
                 SELECT
@@ -7634,7 +7634,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             LEFT JOIN
                 countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
             LEFT JOIN
-                erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID AND etvsc1.subCatgeoryType != 2
+                erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
             LEFT JOIN
             (
                 SELECT
@@ -7737,7 +7737,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             LEFT JOIN
                 countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
             LEFT JOIN
-                erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID AND etvsc1.subCatgeoryType != 2
+                erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
             LEFT JOIN
             (
                 SELECT
@@ -7834,7 +7834,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             LEFT JOIN
                 countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
             LEFT JOIN
-                erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID AND etvsc1.subCatgeoryType != 2
+                erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
             LEFT JOIN
             (
                 SELECT
@@ -7952,7 +7952,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
         LEFT JOIN
             countrymaster AS ctm ON ctm.countryID = custm.customerCountry
         LEFT JOIN erp_custinvoicedirectdet details ON details.custInvoiceDirectID = ecid.custInvoiceDirectAutoID
-        LEFT JOIN erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID AND etvsc1.subCatgeoryType != 2
+        LEFT JOIN erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
         WHERE  DATE(ecid.postedDate) BETWEEN :fromDate1 AND :toDate1
         AND ecid.companySystemID IN (' . implode(',', $companyID) . ')
         AND ecid.approved = - 1
@@ -8024,7 +8024,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
         LEFT JOIN
             countrymaster AS ctm ON ctm.countryID = custm.customerCountry
         LEFT JOIN erp_customerinvoiceitemdetails details ON details.custInvoiceDirectAutoID = ecid.custInvoiceDirectAutoID
-        LEFT JOIN erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID AND etvsc1.subCatgeoryType != 2
+        LEFT JOIN erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
         WHERE  DATE(ecid.postedDate) BETWEEN :fromDate2 AND :toDate2
         AND ecid.companySystemID IN (' . implode(',', $companyID) . ')
         AND ecid.approved = - 1
