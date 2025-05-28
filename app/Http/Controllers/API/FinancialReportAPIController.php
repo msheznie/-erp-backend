@@ -7715,7 +7715,10 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 (SELECT DecimalPlaces FROM currencymaster WHERE currencymaster.currencyID = invoiceMaster.companyReportingCurrencyID) AS rptDecimalPlaces,
                 (SELECT CurrencyCode FROM currencymaster WHERE currencymaster.currencyID = invoiceMaster.companyReportingCurrencyID) AS rptCurrencyCode,
                 curm.DecimalPlaces,
-                ep.companyReportingER,
+               CASE
+                    WHEN ep.companyReportingER IS NULL OR ep.companyReportingER = 0 THEN pom.companyReportingER
+                    ELSE ep.companyReportingER
+                END AS companyReportingER,
                 "Input VAT" AS vatCategory,
                 ep.VATPercentage,
                 IFNULL(etvsc1.subCategoryDescription,"-") AS subCategoryDescription,
@@ -7729,6 +7732,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             LEFT JOIN erp_grvdetails eg ON eg.grvDetailsID = details.grvDetailsID
             LEFT JOIN erp_purchaseorderdetails ep ON ep.purchaseOrderDetailsID = eg.purchaseOrderDetailsID
             LEFT JOIN erp_purchaseorderadvpayment adv ON adv.poAdvPaymentID = details.logisticID and adv.currencyID = invoiceMaster.supplierTransactionCurrencyID
+            LEFT JOIN erp_purchaseordermaster pom ON pom.purchaseOrderID = adv.poID
             INNER JOIN
                 companymaster AS cm ON cm.companySystemID = invoiceMaster.companySystemID
             INNER JOIN
