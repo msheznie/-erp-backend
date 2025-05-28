@@ -7692,9 +7692,9 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
     IFNULL((ep.VATAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))), 0) AS VATAmount,
     (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discount,
     SUM(ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discountAmount,
-    IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost), 0) AS bookingAmountTrans,
+    IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost) + IFNULL(SUM(adv.reqAmountInPOTransCur),0), 0) AS bookingAmountTrans,
     IFNULL((invoiceMaster.bookingAmountRpt), 0) AS bookingAmountRpt,
-    SUM(details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) AS taxTotalAmount,        
+    (SUM(details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) + IFNULL(SUM(adv.VATAmount),0)) AS taxTotalAmount,        
                 ep.vatSubCategoryID,
                 (IF(ep.exempt_vat_portion IS NULL, NULL,ep.exempt_vat_portion) * (ep.VATAmount / 100) * ep.noQty) AS exempt_vat_portion,
                 (
@@ -7728,6 +7728,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             LEFT JOIN erp_bookinvsupp_item_det details ON invoiceMaster.bookingSuppMasInvAutoID = details.bookingSuppMasInvAutoID
             LEFT JOIN erp_grvdetails eg ON eg.grvDetailsID = details.grvDetailsID
             LEFT JOIN erp_purchaseorderdetails ep ON ep.purchaseOrderDetailsID = eg.purchaseOrderDetailsID
+            LEFT JOIN erp_purchaseorderadvpayment adv ON adv.poAdvPaymentID = details.logisticID and adv.currencyID = invoiceMaster.supplierTransactionCurrencyID
             INNER JOIN
                 companymaster AS cm ON cm.companySystemID = invoiceMaster.companySystemID
             INNER JOIN
