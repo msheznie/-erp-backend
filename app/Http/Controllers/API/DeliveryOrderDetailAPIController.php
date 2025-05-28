@@ -2078,13 +2078,14 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $itemCurrentCostAndQty  = inventory::itemCurrentCostAndQty($data);
 
-        if(isset($itemCurrentCostAndQty['currentWareHouseStockQty']) && ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0))
-        {
-            return $this->sendError('Stock Qty is 0. You cannot issue.',500);
-        }
+        if ($item->financeCategoryMaster == 1) {
+            if (isset($itemCurrentCostAndQty['currentWareHouseStockQty']) && ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0)) {
+                return $this->sendError('Stock Qty is 0. You cannot issue.', 500);
+            }
 
-        if ((float)$itemCurrentCostAndQty['wacValueLocal'] == 0 || (float)$itemCurrentCostAndQty['wacValueReporting'] == 0) {
-            return $this->sendError('Cost is 0. You cannot issue.',500);
+            if ((float)$itemCurrentCostAndQty['wacValueLocal'] == 0 || (float)$itemCurrentCostAndQty['wacValueReporting'] == 0) {
+                return $this->sendError('Cost is 0. You cannot issue.', 500);
+            }
         }
 
 
