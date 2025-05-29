@@ -69,6 +69,7 @@ use App\Models\ReportTemplateDetails;
 use App\Models\SalesReturnDetail;
 use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
+use App\Models\SupplierInvoiceItemDetail;
 use App\Models\SupplierMaster;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TaxVatCategories;
@@ -9651,6 +9652,21 @@ class Helper
 
         $retentionAmountToFixed = round($retentionAmount,$decimalPlaces);
         $bookInvSuppMaster->retentionAmount = $retentionAmountToFixed;
+
+        if($bookInvSuppMaster->retentionAmount != 0){
+            $details = SupplierInvoiceItemDetail::with(['vat_sub_category'])->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->get();
+
+            $totalStdVat = 0;
+            foreach ($details as $detail) {
+                if ($detail->vat_sub_category && $detail->vat_sub_category->subCatgeoryType == 1) {
+                    $totalStdVat += $detail->VATAmount;
+                }
+            }
+
+            $retentionVatAmount = ($totalStdVat * $bookInvSuppMaster->retentionPercentage) / 100;
+            $bookInvSuppMaster->retentionVatAmount = round($retentionVatAmount,$decimalPlaces);
+        }
+
         $bookInvSuppMaster->save();
     }
 

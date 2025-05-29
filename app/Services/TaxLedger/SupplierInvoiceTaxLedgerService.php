@@ -544,7 +544,10 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount = (($value->grvVATAmount - $normalVAT) * $value->noQty);
                     
                     $standardAmount =  ($normalVAT * $value->noQty);
-    
+
+                    if (($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
+                        $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
+                    }
     
                     $info = [
                         ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
@@ -695,6 +698,11 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount = (($value->grv_detail->VATAmount - $normalVAT) * $value->grv_detail->noQty);
                     
                     $standardAmount =  ($normalVAT * $value->grv_detail->noQty);
+
+                    if (($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
+                        $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
+                    }
+
                     $totalAmount = $standardAmount + $exemptAmount;
                     
                     $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {

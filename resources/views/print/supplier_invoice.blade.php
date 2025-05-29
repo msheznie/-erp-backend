@@ -696,7 +696,7 @@
                             </span></td>
                         <td class="text-right"
                             style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
-                                    class="font-weight-bold">{{number_format($VATTotal, $transDecimal)}}</span>
+                                    class="font-weight-bold">{{number_format(($VATTotal - $retentionVatPortion), $transDecimal)}}</span>
                         </td>
                     </tr>
                 @endif
@@ -727,7 +727,7 @@
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                     <span class="font-weight-bold">
                     @if ($masterdata->detail)
-                            {{number_format(($subTotal + $VATTotal) * ($masterdata->retentionPercentage/100), $transDecimal)}}
+                            {{number_format((($subTotal + $VATTotal) * ($masterdata->retentionPercentage/100) - $retentionVatPortion), $transDecimal)}}
                         @endif
                     </span>
                     </td>
@@ -827,7 +827,7 @@
                         @endif
                         <td class="text-right" style="background-color: rgb(215,215,215)">VAT</td>
                         <td class="text-right"
-                            style="background-color: rgb(215,215,215)">{{number_format($directTotVAT, $transDecimal)}}</td>
+                            style="background-color: rgb(215,215,215)">{{number_format(($directTotVAT - $retentionVatPortion), $transDecimal)}}</td>
                             
                     </tr>
                     <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
@@ -856,7 +856,7 @@
                                     style="background-color: rgb(215,215,215)">{{number_format($directTotNet * ($masterdata->retentionPercentage/100), $transDecimal)}}</td>
                             @else
                                 <td class="text-right"
-                                    style="background-color: rgb(215,215,215)">{{number_format(($directTotNet + $directTotVAT) * ($masterdata->retentionPercentage/100), $transDecimal)}}</td>
+                                    style="background-color: rgb(215,215,215)">{{number_format((($directTotNet + $directTotVAT) * ($masterdata->retentionPercentage/100) - $retentionVatPortion), $transDecimal)}}</td>
                             @endif
                         </tr>
                         <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
