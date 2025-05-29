@@ -7866,7 +7866,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             
             
             select
-	            invoiceMaster.bookingSuppMasInvAutoID,
+	            adv.poAdvPaymentID AS bookingSuppMasInvAutoID,
                 invoiceMaster.createdDateAndTime,
                 invoiceMaster.companyID AS companyID,
                 invoiceMaster.bookingInvCode AS DocumentCode,
