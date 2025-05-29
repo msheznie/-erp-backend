@@ -4132,8 +4132,8 @@ class FinancialReportAPIController extends AppBaseController
                                 if (in_array(24, $selectedColumns)) $data[$x]['Exempt VAT'] = $val->exemptVATPortionALL ?? 0;
                                 if($request->tempType == 2 || $request->tempType == 1)
                                 {
-                                    $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans - $val->discountAmount + $val->taxTotalAmount, $val->DecimalPlaces);
-                                    $dueAmount = $val->bookingAmountTrans - $val->discountAmount + $val->taxTotalAmount;
+                                    $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans - $val->discountAmount + $val->taxTotalAmount - ($val->retentionAmount ?? 0), $val->DecimalPlaces);
+                                    $dueAmount = $val->bookingAmountTrans - $val->discountAmount + $val->taxTotalAmount - ($val->retentionAmount ?? 0);
                                 }else {
                                     $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount, $val->DecimalPlaces);
                                     $dueAmount = $val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount;
