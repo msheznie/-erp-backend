@@ -7692,29 +7692,9 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
     IFNULL((ep.VATAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))), 0) AS VATAmount,
     (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discount,
     SUM(ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discountAmount,
+    IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost) + IFNULL(SUM(adv.reqAmountInPOTransCur),0), 0) AS bookingAmountTrans,
     IFNULL((invoiceMaster.bookingAmountRpt), 0) AS bookingAmountRpt,
-    IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost) + SUM(
-							CASE 
-									WHEN details.logisticID > 0 THEN
-											(
-													SELECT SUM(erp_bookinvsupp_item_det.supplierInvoAmount - (erp_bookinvsupp_item_det.supplierInvoAmount / (erp_purchaseorderadvpayment.VATPercentage  + 100) * erp_purchaseorderadvpayment.VATPercentage))
-													FROM erp_bookinvsupp_item_det
-													LEFT JOIN erp_purchaseorderadvpayment ON erp_purchaseorderadvpayment.poAdvPaymentID = erp_bookinvsupp_item_det.logisticID WHERE erp_bookinvsupp_item_det.bookingSuppMasInvAutoID = invoiceMaster.bookingSuppMasInvAutoID
-											)
-								ELSE 0							
-							END
-						), 0) AS bookingAmountTrans,
-            (SUM(details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) + 	SUM(
-							CASE 
-									WHEN details.logisticID > 0 THEN
-											(
-													SELECT SUM((erp_bookinvsupp_item_det.supplierInvoAmount / (erp_purchaseorderadvpayment.VATPercentage  + 100) * erp_purchaseorderadvpayment.VATPercentage))
-													FROM erp_bookinvsupp_item_det
-													LEFT JOIN erp_purchaseorderadvpayment ON erp_purchaseorderadvpayment.poAdvPaymentID = erp_bookinvsupp_item_det.logisticID WHERE erp_bookinvsupp_item_det.bookingSuppMasInvAutoID = invoiceMaster.bookingSuppMasInvAutoID
-											)
-								ELSE 0							
-							END
-						) ) AS taxTotalAmount,
+    (SUM(details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) + IFNULL(SUM(adv.VATAmount),0)) AS taxTotalAmount,        
                 ep.vatSubCategoryID,
                 (IF(ep.exempt_vat_portion IS NULL, NULL,ep.exempt_vat_portion) * (ep.VATAmount / 100) * ep.noQty) AS exempt_vat_portion,
                 (
