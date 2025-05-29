@@ -4132,8 +4132,9 @@ class FinancialReportAPIController extends AppBaseController
                                 if (in_array(24, $selectedColumns)) $data[$x]['Exempt VAT'] = $val->exemptVATPortionALL ?? 0;
                                 if($request->tempType == 2 || $request->tempType == 1)
                                 {
-                                    $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans - $val->discountAmount + $val->taxTotalAmount - ($val->retentionAmount ?? 0), $val->DecimalPlaces);
-                                    $dueAmount = $val->bookingAmountTrans - $val->discountAmount + $val->taxTotalAmount - ($val->retentionAmount ?? 0);
+                                    $taxAmount = $val->rcmActivated ? 0 : $val->taxTotalAmount;
+                                    $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans - $val->discountAmount + $taxAmount - ($val->retentionAmount ?? 0), $val->DecimalPlaces);
+                                    $dueAmount = $val->bookingAmountTrans - $val->discountAmount + $taxAmount - ($val->retentionAmount ?? 0);
                                 }else {
                                     $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount, $val->DecimalPlaces);
                                     $dueAmount = $val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount;
@@ -7395,7 +7396,7 @@ WHERE sbca.supplierID = sm.supplierCodeSystem
     (SELECT DecimalPlaces FROM currencymaster WHERE currencymaster.currencyID = epsim.companyRptCurrencyID) AS rptDecimalPlaces,
     (SELECT CurrencyCode FROM currencymaster WHERE currencymaster.currencyID = epsim.companyRptCurrencyID) AS rptCurrencyCode,
     GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
-    GROUP_CONCAT(DISTINCT CASE WHEN edpd.VATPercentage != 0 THEN edpd.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
+    GROUP_CONCAT(DISTINCT CASE WHEN edpd.VATPercentage != 0 THEN edpd.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL
         FROM
     erp_paysupplierinvoicemaster AS epsim
 LEFT JOIN
