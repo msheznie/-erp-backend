@@ -7692,21 +7692,9 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
     IFNULL((ep.VATAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))), 0) AS VATAmount,
     (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discount,
     SUM(ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discountAmount,
+    IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost) + IFNULL(SUM(adv.reqAmountInPOTransCur),0), 0) AS bookingAmountTrans,
     IFNULL((invoiceMaster.bookingAmountRpt), 0) AS bookingAmountRpt,
-        IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost) + SUM(
-							CASE 
-									WHEN details.logisticID > 0 THEN
-											(details.supplierInvoAmount - (details.supplierInvoAmount / (adv.VATPercentage  + 100) * adv.VATPercentage))
-								ELSE 0							
-							END
-						), 0) AS bookingAmountTrans,
-        (SUM(details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) + 	SUM(
-							CASE 
-									WHEN details.logisticID > 0 THEN
-																						((details.supplierInvoAmount / (adv.VATPercentage  + 100) * adv.VATPercentage))
-								ELSE 0							
-							END
-						) ) AS taxTotalAmount,
+    (SUM(details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) + IFNULL(SUM(adv.VATAmount),0)) AS taxTotalAmount,        
                 ep.vatSubCategoryID,
                 (IF(ep.exempt_vat_portion IS NULL, NULL,ep.exempt_vat_portion) * (ep.VATAmount / 100) * ep.noQty) AS exempt_vat_portion,
                 (
