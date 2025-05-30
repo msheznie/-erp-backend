@@ -1,5 +1,14 @@
 # Changelog
 
+## [10.70.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.69.0...v10.70.0) (2025-05-30)
+
+
+### Features
+
+* **attendance:** Date picker at the time of editing Clock in and clock out [GHR-3675] ([#8012](https://github.com/pbsgears/Gears_BackEnd/issues/8012)) ([d01bcbe](https://github.com/pbsgears/Gears_BackEnd/commit/d01bcbed6c5bf1c7b4b64218a311ea9b1c92e70a))
+* **Attendance:** HRMS | TKT8155 | TKT8205 | Attendance| New shift module | Mobile API is not Up to date ([#8015](https://github.com/pbsgears/Gears_BackEnd/issues/8015)) ([06dddb2](https://github.com/pbsgears/Gears_BackEnd/commit/06dddb2460611fe2718b7c5c695a5f8bb6523554))
+* **leave:** Leave Accruals consider from date of join [GHR-2780] ([#8088](https://github.com/pbsgears/Gears_BackEnd/issues/8088)) ([efb6ac3](https://github.com/pbsgears/Gears_BackEnd/commit/efb6ac363433e51dd70f0b0835632540643e14aa))
+
 ## [10.69.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.68.0...v10.69.0) (2025-05-14)
 
 
