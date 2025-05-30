@@ -18,6 +18,7 @@ use App\Models\CustomerMaster;
 use App\Models\ModuleAssigned;
 use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
+use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -118,12 +119,19 @@ class CreditNoteAPIService extends AppBaseController
         $input['creditNoteCode'] = $creditNoteCode;
 
         $input['customerCurrencyER'] = 1;
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['createdUserID'] = \Helper::getEmployeeID();
-        $input['createdPcID'] = getenv('COMPUTERNAME');
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
-        $input['modifiedPc'] = getenv('COMPUTERNAME');
+        $input['createdPcID'] = gethostname();
+
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            $employee = UserTypeService::getSystemEmployee();
+            $input['createdUserID'] = $employee->empID;
+            $input['createdUserSystemID'] = $employee->employeeSystemID;
+        }
+        else{
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+        }
+
+
 
         $creditNotes = CreditNote::create($input);
 
@@ -640,9 +648,17 @@ class CreditNoteAPIService extends AppBaseController
 
         }
 
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
-        $input['modifiedPc'] = getenv('COMPUTERNAME');
+        $input['modifiedPc'] = gethostname();
+
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            $employee = UserTypeService::getSystemEmployee();
+            $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+            $input['modifiedUser'] = $employee->empID;
+        }
+        else{
+            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['modifiedUser'] = \Helper::getEmployeeID();
+        }
 
         DB::beginTransaction();
 
