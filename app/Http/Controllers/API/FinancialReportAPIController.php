@@ -7112,7 +7112,7 @@ class FinancialReportAPIController extends AppBaseController
                 $conditionalQuery = 'GROUP_CONCAT(ed.glCode SEPARATOR ",") AS lineItemNumberALL,
                                     GROUP_CONCAT(0 SEPARATOR ",") AS exemptVATPortionALL,
                                     GROUP_CONCAT(DISTINCT  vatsub.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
-                                    GROUP_CONCAT(DISTINCT CASE WHEN ed.VATPercentage != 0 THEN ed.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL,';
+                                    GROUP_CONCAT(DISTINCT CASE WHEN ed.VATPercentage != 0 THEN ROUND(ed.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,';
 
                 $groupby = " GROUP BY  edn.debitNoteAutoID";
             }else {
@@ -7192,7 +7192,7 @@ WHERE sbca.supplierID = sm.supplierCodeSystem
     END AS documentType,
     SUM(ed.VATAmount) AS taxTotalAmount,
     ed.VATAmount AS VATAmount,
-    ed.VATPercentage AS VATPercentage,
+    ROUND(ed.VATPercentage,4) AS VATPercentage,
     0 AS discount,
     0 AS discountAmount,
     (SELECT DecimalPlaces FROM currencymaster WHERE currencymaster.currencyID = edn.companyReportingCurrencyID) AS rptDecimalPlaces,
@@ -7248,7 +7248,7 @@ AND edn.approved = - 1  AND edn.type = 1 AND taxTotalAmount > 0 '      ;
                 $conditionalQuery = 'GROUP_CONCAT(ecnd.glCode SEPARATOR ",") AS lineItemNumberALL,
     GROUP_CONCAT(0 SEPARATOR ",") AS exemptVATPortionALL,
     GROUP_CONCAT(DISTINCT vatsub.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
-    GROUP_CONCAT(DISTINCT CASE WHEN ecnd.VATPercentage != 0 THEN ecnd.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL,';
+    GROUP_CONCAT(DISTINCT CASE WHEN ecnd.VATPercentage != 0 THEN ROUND(ecnd.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,';
 
                 $groupby = " GROUP BY  ecnd.creditNoteAutoID";
 
@@ -7283,7 +7283,7 @@ AND edn.approved = - 1  AND edn.type = 1 AND taxTotalAmount > 0 '      ;
     ecnd.VATAmount,
     ecnd.comRptAmount AS bookingAmountRpt,
     ecnd.comRptCurrencyER AS companyReportingER,
-    ecnd.VATPercentage,
+    ROUND(ecnd.VATPercentage,4) AS VATPercentage,
     ecnd.glCode AS lineItemNumber,
     cust.vatNumber,
     curr.CurrencyCode,
@@ -7387,7 +7387,7 @@ WHERE sbca.supplierID = sm.supplierCodeSystem
     SUM(edpd.netAmount) AS bookingAmountTrans,
     (epsim.netAmountRpt + epsim.VATAmountRpt) AS bookingAmountRpt,
     IFNULL(SUM(edpd.vatAmount), 0) AS taxTotalAmount,
-    edpd.VATPercentage,
+    ROUND(edpd.VATPercentage,4) AS VATPercentage,
     edpd.vatAmount AS VATAmount,
     sm.vatNumber,    
     0 AS discount,
@@ -7397,7 +7397,7 @@ WHERE sbca.supplierID = sm.supplierCodeSystem
     (SELECT DecimalPlaces FROM currencymaster WHERE currencymaster.currencyID = epsim.companyRptCurrencyID) AS rptDecimalPlaces,
     (SELECT CurrencyCode FROM currencymaster WHERE currencymaster.currencyID = epsim.companyRptCurrencyID) AS rptCurrencyCode,
     GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
-    GROUP_CONCAT(DISTINCT CASE WHEN edpd.VATPercentage != 0 THEN edpd.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL
+    GROUP_CONCAT(DISTINCT CASE WHEN edpd.VATPercentage != 0 THEN ROUND(edpd.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL
         FROM
     erp_paysupplierinvoicemaster AS epsim
 LEFT JOIN
@@ -7525,7 +7525,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 details.VATPercentage,
                 IFNULL(etvsc1.subCategoryDescription,"-") AS subCategoryDescription,
                 GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
-                GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN details.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
+                GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN ROUND(details.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
                 GROUP_CONCAT(details.glCode SEPARATOR ",") AS lineItemNumberALL,
                 GROUP_CONCAT(ROUND(IFNULL(details.exempt_vat_portion,0) * (details.VATAmount / 100),curm.DecimalPlaces) SEPARATOR ",") AS exemptVATPortionALL
             FROM
@@ -7621,7 +7621,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 details.VATPercentage,
                 IFNULL(etvsc1.subCategoryDescription,"-") AS subCategoryDescription,
                 GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
-                GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN details.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
+                GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN ROUND(details.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
                 GROUP_CONCAT(details.itemPrimaryCode SEPARATOR ",") AS lineItemNumberALL,
                 GROUP_CONCAT(ROUND(IFNULL(details.exempt_vat_portion,0) * (details.VATAmount / 100),curm.DecimalPlaces) * details.noQty SEPARATOR ",") AS exemptVATPortionALL
             FROM
@@ -7725,7 +7725,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 ep.VATPercentage,
                 IFNULL(etvsc1.subCategoryDescription,"-") AS subCategoryDescription,
                 GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
-                GROUP_CONCAT(DISTINCT CASE WHEN ep.VATPercentage != 0 THEN ep.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
+                GROUP_CONCAT(DISTINCT CASE WHEN ep.VATPercentage != 0 THEN ROUND(ep.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
                 GROUP_CONCAT(ep.itemPrimaryCode SEPARATOR ",") AS lineItemNumberALL,
                 GROUP_CONCAT(ROUND(IFNULL(ep.exempt_vat_portion,0) * (ep.VATAmount / 100) * ep.noQty,curm.DecimalPlaces) SEPARATOR ",") AS exemptVATPortionALL
             FROM
@@ -7944,7 +7944,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             "Direct Customer Invoice" AS documentType,
             etvsc1.subCategoryDescription AS subCategoryDescription,
             GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
-            GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN details.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
+            GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN ROUND(details.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
             GROUP_CONCAT(details.glCode SEPARATOR ",") AS lineItemNumberALL,
             GROUP_CONCAT(0 SEPARATOR ",") AS exemptVATPortionALL
         FROM
@@ -8016,7 +8016,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             END AS documentType,
             etvsc1.subCategoryDescription AS subCategoryDescription,
             GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
-            GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN details.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
+            GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN ROUND(details.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
             GROUP_CONCAT(details.itemPrimaryCode SEPARATOR ",") AS lineItemNumberALL,
             GROUP_CONCAT(0 SEPARATOR ",") AS exemptVATPortionALL
         FROM
