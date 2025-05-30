@@ -157,6 +157,7 @@ class SMAttendanceCrossDayPullingService{
         $this->updateData[] = [
             'gracePeriod'=> $curRow->gracePeriod,
             'checkOut'=> $obj->clockOut,
+            'check_out_date'=> $obj->clockOutDate,
             'presentTypeID' => $obj->presentAbsentType,
             'clockoutFloorID' => $curRow->clockOutFloorId,
 

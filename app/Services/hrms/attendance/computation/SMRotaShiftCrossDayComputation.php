@@ -172,12 +172,12 @@ class SMRotaShiftCrossDayComputation{
             return false;
         }
 
-        $t1 = $this->clockOutDtObj;
-        $t2 = ($this->isShiftHoursSet && $this->onDutyDtObj >= $this->clockInDtObj)
-            ? $this->onDutyDtObj
+        $out = $this->clockOutDtObj;
+        $in = ($this->isShiftHoursSet && $this->onDutyDateTime >= $this->clockInDtObj)
+            ? $this->onDutyDateTime
             : $this->clockInDtObj;
 
-        $totWorkingHoursObj = $t1->diff($t2);
+        $totWorkingHoursObj = $out->diff($in);
         $hours = $totWorkingHoursObj->format('%h');
         $minutes = $totWorkingHoursObj->format('%i');
         $this->actualWorkingHours = ($hours * 60) + $minutes;
@@ -206,8 +206,7 @@ class SMRotaShiftCrossDayComputation{
 
     public function rotaGeneralComputation(){
 
-        $this->lateHoursComputation();
-
+        $this->rotaLateHoursComputation();
 
         $clockInDt = new DateTime($this->clockInDateTime);
 
@@ -250,5 +249,24 @@ class SMRotaShiftCrossDayComputation{
 
         $this->earlyHourComputation($clockInDt, $this->clockOutDtObj);
         $this->overTimeComputation($clockInDt, $this->clockOutDtObj);
+    }
+
+    function rotaLateHoursComputation(){
+        if (!$this->clockInDateTime) {
+            return false;
+        }
+
+        $clockInDtObj = $this->clockInDtObj;
+        $tempOnDutyDt = $this->onDutyDateTime;
+        $tempOnDutyDtObj = $tempOnDutyDt->modify("+{$this->gracePeriod} minutes");
+
+        if ($clockInDtObj > $tempOnDutyDtObj) {
+            $this->presentAbsentType = AbsentType::LATE;
+
+            $interval = $clockInDtObj->diff($this->onDutyDateTime);
+            $hours = ($interval->format('%h') != 0) ? $interval->format('%h') : 0;
+            $minutes = ($interval->format('%i') != 0) ? $interval->format('%i') : 0;
+            $this->lateHours = $hours * 60 + $minutes;
+        }
     }
 }
