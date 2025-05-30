@@ -7351,7 +7351,7 @@ AND ecn.approved = - 1 AND taxTotalAmount > 0' ;
     edpd.vatSubCategoryID AS vatSubCategoryID,
     etvsc1.subCategoryDescription,
     epsim.companySystemID AS companySystemID,
-    cm.DecimalPlaces,
+    IFNULL(cm.DecimalPlaces,3) AS DecimalPlaces,
     NULL AS exempt_vat_portion,
     GROUP_CONCAT(edpd.glCode SEPARATOR ",") AS lineItemNumberALL,
     GROUP_CONCAT(0 SEPARATOR ",") AS exemptVATPortionALL,
@@ -7392,7 +7392,7 @@ WHERE sbca.supplierID = sm.supplierCodeSystem
     sm.vatNumber,    
     0 AS discount,
     0 AS discountAmount,
-    epsim.companyRptCurrencyER AS companyReportingER,    
+    IFNULL(epsim.companyRptCurrencyER,3) AS companyReportingER,    
     epsim.rcmActivated,
     (SELECT DecimalPlaces FROM currencymaster WHERE currencymaster.currencyID = epsim.companyRptCurrencyID) AS rptDecimalPlaces,
     (SELECT CurrencyCode FROM currencymaster WHERE currencymaster.currencyID = epsim.companyRptCurrencyID) AS rptCurrencyCode,
@@ -7734,7 +7734,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             LEFT JOIN erp_grvdetails eg ON eg.grvDetailsID = details.grvDetailsID
             LEFT JOIN erp_purchaseorderdetails ep ON ep.purchaseOrderDetailsID = eg.purchaseOrderDetailsID
             LEFT JOIN erp_purchaseorderadvpayment adv ON adv.poAdvPaymentID = details.logisticID and adv.currencyID = invoiceMaster.supplierTransactionCurrencyID
-            LEFT JOIN erp_purchaseordermaster pom ON pom.purchaseOrderID = adv.poID
+            LEFT JOIN erp_purchaseordermaster pom ON pom.purchaseOrderID = ep.purchaseOrderMasterID
             INNER JOIN
                 companymaster AS cm ON cm.companySystemID = invoiceMaster.companySystemID
             INNER JOIN
