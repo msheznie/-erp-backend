@@ -4130,6 +4130,7 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Net Amount'] = number_format($val->bookingAmountTrans - $val->discountAmount, $val->DecimalPlaces);
                                 $data[$x]['VAT'] = number_format($val->taxTotalAmount, $val->DecimalPlaces);
                                 if (in_array(24, $selectedColumns)) $data[$x]['Exempt VAT'] = $val->exemptVATPortionALL ?? 0;
+                                if (in_array(31, $selectedColumns)) $data[$x]['Retention Amount'] = number_format($val->retentionAmount, $val->DecimalPlaces);
                                 if($request->tempType == 2 || $request->tempType == 1)
                                 {
                                     $taxAmount = $val->rcmActivated ? 0 : $val->taxTotalAmount;
@@ -4146,6 +4147,7 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Net Amount'] = number_format($val->value - $val->discount, $val->DecimalPlaces);
                                 $data[$x]['VAT'] = number_format($val->VATAmount, $val->DecimalPlaces);
                                 if (in_array(24, $selectedColumns)) $data[$x]['Exempt VAT'] = $val->exempt_vat_portion ?? 0;
+                                if (in_array(31, $selectedColumns)) $data[$x]['Retention Amount'] = $val->retentionAmount;
                                 if($request->tempType == 2 || $request->tempType == 1)
                                 {
                                     $data[$x]['Due Amount'] = number_format($val->value - $val->discount + $val->VATAmount, $val->DecimalPlaces);
@@ -4157,7 +4159,6 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
 
-                            if (in_array(31, $selectedColumns)) $data[$x]['Retention Amount'] = $val->retentionAmount;
                             if (in_array(20, $selectedColumns)) $data[$x]['Amount in reporting currency '.'('.$reporingCurrencyCode.')'] = number_format($dueAmount / $val->companyReportingER, $val->rptDecimalPlaces);
                             if (in_array(19, $selectedColumns)) $data[$x]['Exchange Rate'] = $val->companyReportingER;
                             $x++;
