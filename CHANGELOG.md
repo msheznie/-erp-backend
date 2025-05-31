@@ -1,5 +1,39 @@
 # Changelog
 
+## [10.71.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.70.0...v10.71.0) (2025-05-31)
+
+
+### Features
+
+* **accounts payable:** More than [GCP-7712] ([#8049](https://github.com/pbsgears/Gears_BackEnd/issues/8049)) ([99342f2](https://github.com/pbsgears/Gears_BackEnd/commit/99342f2071cf6a418db3bc0fa3ab2a0c45c7ff52))
+* **accounts payable:** retention calculaion changes in supplier invoice [GCP-7217] ([#8011](https://github.com/pbsgears/Gears_BackEnd/issues/8011)) ([1d0af0f](https://github.com/pbsgears/Gears_BackEnd/commit/1d0af0f13a98f4a4393df08428cbb9493a3438fc))
+* **accounts payable:** supplier invoice multiple item selection option [GCP-5743] ([#8047](https://github.com/pbsgears/Gears_BackEnd/issues/8047)) ([19b571b](https://github.com/pbsgears/Gears_BackEnd/commit/19b571be52b3585da66845edefe474cf6140bde3))
+* **accounts receivable:** Create credit note from API [GCP-7022] ([#8007](https://github.com/pbsgears/Gears_BackEnd/issues/8007)) ([8cfdb65](https://github.com/pbsgears/Gears_BackEnd/commit/8cfdb65b62e6dc52882fb86e217e4f52ec5654a6))
+* **asset management:** asset tracking report optimization [GCP-7874] ([#8065](https://github.com/pbsgears/Gears_BackEnd/issues/8065)) ([2cb0b24](https://github.com/pbsgears/Gears_BackEnd/commit/2cb0b24d638a6e342d91cc5cf9a1a4b1440e7f08))
+* **configuration:** Add supplier expiry notification email logic [GCP-5842] ([#8002](https://github.com/pbsgears/Gears_BackEnd/issues/8002)) ([d51183a](https://github.com/pbsgears/Gears_BackEnd/commit/d51183a8f322e7beec1bb7ce1ddf6f72bcd56513))
+* **configuration:** Expired suppliers email content changed [GCP-7857] ([#8045](https://github.com/pbsgears/Gears_BackEnd/issues/8045)) ([3628929](https://github.com/pbsgears/Gears_BackEnd/commit/362892941791cc17ec1b45694bbb2fc1e6417cc5))
+* **general ledger:** Added currency option in Salary JV [GCP-7026] ([#7993](https://github.com/pbsgears/Gears_BackEnd/issues/7993)) ([4096850](https://github.com/pbsgears/Gears_BackEnd/commit/4096850ce58bb1e59079605f6a452e46c2e6c85e))
+* **general ledger:** Recurring Voucher Setup [GCP-5846] ([#8022](https://github.com/pbsgears/Gears_BackEnd/issues/8022)) ([2cbc645](https://github.com/pbsgears/Gears_BackEnd/commit/2cbc645422a7362ad595f596d7ebd88a0ec26fcb))
+* **general ledger:** Tax detail report interduce new columns and reports [GCP-7063] ([#8023](https://github.com/pbsgears/Gears_BackEnd/issues/8023)) ([8637aa6](https://github.com/pbsgears/Gears_BackEnd/commit/8637aa6526e0fc876a9598614a7229eb20b61031))
+* **inventory:** Removed policy related to GRV partial qty update [GCP-7034] ([#8009](https://github.com/pbsgears/Gears_BackEnd/issues/8009)) ([4fa330b](https://github.com/pbsgears/Gears_BackEnd/commit/4fa330bd0cc52e64941e34d23a9c534d74220dc2))
+* **procurement:** Added internal note field in purchase request [GCP-5838] ([#7997](https://github.com/pbsgears/Gears_BackEnd/issues/7997)) ([a418533](https://github.com/pbsgears/Gears_BackEnd/commit/a4185331adea39a681189aa291caddb054499c75))
+* **procurement:** PO print number not showing [GCP-5733] ([#7995](https://github.com/pbsgears/Gears_BackEnd/issues/7995)) ([247f39f](https://github.com/pbsgears/Gears_BackEnd/commit/247f39f60494bb92ed9a585fdec64fa501623c28))
+* **sales & marketing:** Multiple item selection in DO [GCP-6373] ([#8041](https://github.com/pbsgears/Gears_BackEnd/issues/8041)) ([2bdc6e5](https://github.com/pbsgears/Gears_BackEnd/commit/2bdc6e5f5d176f0a02cdf37c8ecc1980bab3aa46))
+* **treasury management:** Added bank reconciliation workbook view [GCP-6589] ([#8003](https://github.com/pbsgears/Gears_BackEnd/issues/8003)) ([a65ab9f](https://github.com/pbsgears/Gears_BackEnd/commit/a65ab9fc1a0a63732fb1cd11c305f851939678ab))
+* **treasury management:** Added Rules configuration for bank statement matching [GCP-6588] ([#8000](https://github.com/pbsgears/Gears_BackEnd/issues/8000)) ([3d16e68](https://github.com/pbsgears/Gears_BackEnd/commit/3d16e68215f4825026f8ac4f6a7be6915376cdcc))
+* **treasury management:** Checkqe register notification [GCP-5746] ([#8008](https://github.com/pbsgears/Gears_BackEnd/issues/8008)) ([57ad9c4](https://github.com/pbsgears/Gears_BackEnd/commit/57ad9c418680b396537c33e6aef89b5968af8b1f))
+* **treasury management:** Cheque register Email format changed [GCP-7825] ([#8039](https://github.com/pbsgears/Gears_BackEnd/issues/8039)) ([4395880](https://github.com/pbsgears/Gears_BackEnd/commit/4395880a4e025b8341134d7ee36334b308bc97e2))
+
+
+### Bug Fixes
+
+* **accounts payable:** BSI confirmation error Currency Issue [GCP-7056] ([#7996](https://github.com/pbsgears/Gears_BackEnd/issues/7996)) ([226a83f](https://github.com/pbsgears/Gears_BackEnd/commit/226a83f5c29524ca0d9cbd0a6544f6f73aed15c4))
+* **accounts payable:** retention VAT entry posting issue [GCP-7975] ([#8129](https://github.com/pbsgears/Gears_BackEnd/issues/8129)) ([7ec3502](https://github.com/pbsgears/Gears_BackEnd/commit/7ec35020125ec2dde6e8bd10ad3c73c618dfb845))
+* **accounts payable:** Unbilled GRV Detail Report issue [GCP-7205] ([#8001](https://github.com/pbsgears/Gears_BackEnd/issues/8001)) ([69f414d](https://github.com/pbsgears/Gears_BackEnd/commit/69f414dc29b3018d095819ffe4dee7e52b750dc4))
+* **general ledger:** jV currency conversion not updating issue fixed [GCP-7027] ([#8027](https://github.com/pbsgears/Gears_BackEnd/issues/8027)) ([4d1c4e3](https://github.com/pbsgears/Gears_BackEnd/commit/4d1c4e3fc8e37d447e314bc6aaeda0cf429c773d))
+* **general ledger:** Unable to export excel in VAT Report [GCP-6840] ([#7990](https://github.com/pbsgears/Gears_BackEnd/issues/7990)) ([46d9b69](https://github.com/pbsgears/Gears_BackEnd/commit/46d9b69825fc6d0f6e5e20857536e27ffdd185ea))
+* **procurement:** purchase order print pdf changes [GCP-7684] ([#8029](https://github.com/pbsgears/Gears_BackEnd/issues/8029)) ([0e10e5d](https://github.com/pbsgears/Gears_BackEnd/commit/0e10e5da68d322394e6125ae31b4f42f94f9c03c))
+
 ## [10.70.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.69.0...v10.70.0) (2025-05-30)
 
 
