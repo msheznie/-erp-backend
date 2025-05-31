@@ -273,7 +273,7 @@ class GRVDetailsAPIController extends AppBaseController
 
                 if (!empty($input['purchaseOrderDetailsID']) && !empty($input['purchaseOrderMastertID'])) {
                     $detailExistPODetail = PurchaseOrderDetails::find($input['purchaseOrderDetailsID']);
-                    if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
+                    if ($POMaster->partiallyGRVAllowed == 0) {
                         if (($input['poQty'] - $input['prvRecievedQty']) != $input['noQty']) {
                             return $this->sendError('GRV qty should be equal to PO qty', 422);
                         }
@@ -482,7 +482,7 @@ class GRVDetailsAPIController extends AppBaseController
                 ->first();
             $POMaster = ProcumentOrder::find($purchaseOrderMastertID);
 
-            if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
+            if ($POMaster->partiallyGRVAllowed == 0) {
                 return $this->sendError('You cannot delete one line item as partial GRV is disabled.', 422);
             }
         }
@@ -947,7 +947,7 @@ class GRVDetailsAPIController extends AppBaseController
         $size = array_column($input['detailTable'], 'isChecked');
         $frontDetailcount = count(array_filter($size));
 
-        if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
+        if ($POMaster->partiallyGRVAllowed == 0) {
             $poDetailTotal = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderMastertID'])
                                                     ->where('goodsRecievedYN', '<>', 2)
                                                     ->count();
@@ -989,7 +989,7 @@ class GRVDetailsAPIController extends AppBaseController
                     if (($new['noQty'] == '' || $new['noQty'] == 0)) {
                         return $this->sendError('Qty cannot be zero', 422);
                     } else {
-                        if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
+                        if ($POMaster->partiallyGRVAllowed == 0) {
                             // pre check for all items qty pulled
                             if ($new['isChecked'] && ((float)$new['noQty'] != ($new['poQty'] - (float)$new['receivedQty']))) {
                                 return $this->sendError('Full order quantity should be received', 422);

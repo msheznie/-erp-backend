@@ -1794,7 +1794,11 @@ class ItemMasterAPIController extends AppBaseController
 
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
             return $query->where('companySystemID', '=', $companyId)->where('isAssigned', '=', -1);
-        })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
+        })->with(['unit', 'unit_by', 'financeMainCategory' => function($query) use ($input) {
+            $query->when((isset($input['supplierInvoiceId']) && $input['supplierInvoiceId'] > 0), function ($query) {
+                $query->where('itemCategoryID', '!=', 3);
+            });
+        }, 'financeSubCategory'])
         ->when((isset($input['PurchaseRequestID']) && $input['PurchaseRequestID'] > 0), function($query) use ($input) {
             $query->whereHas('item_category_type', function ($query) {
                         $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
@@ -1827,6 +1831,22 @@ class ItemMasterAPIController extends AppBaseController
             $query->whereDoesntHave('material_issue_details', function($query) use ($input) {
                 $query->where('itemIssueAutoID', $input['itemIssueAutoID']);
             });
+        })->when((isset($input['deliveryOrderId']) && $input['deliveryOrderId'] > 0), function($query) use ($input) {
+                $query->whereHas('item_category_type', function ($query) {
+                    $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems());
+                });
+                $query->whereDoesntHave('deliveryOrderDetails', function($query) use ($input) {
+                    $query->where('deliveryOrderID', $input['deliveryOrderId']);
+                });
+                $query->where('financeCategoryMaster', '!=' ,3);
+        })->when((isset($input['supplierInvoiceId']) && $input['supplierInvoiceId'] > 0), function($query) use ($input) {
+                $query->whereHas('item_category_type', function ($query) {
+                    $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems());
+                });
+                $query->whereDoesntHave('supplier_invoice_details', function($query) use ($input) {
+                    $query->where('bookingSuppMasInvAutoID', $input['supplierInvoiceId']);
+                });
+                $query->where('financeCategoryMaster', '!=' ,3);
         });
 
         if (array_key_exists('financeCategoryMaster', $input)) {
@@ -1863,7 +1883,10 @@ class ItemMasterAPIController extends AppBaseController
                 $query->where('primaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
                     ->orWhere('barcode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhereHas('unit', function ($q) use ($search) {
+                        $q->where('UnitShortCode', 'LIKE', "%{$search}%");
+                    });
             });
         }
 

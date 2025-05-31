@@ -87,10 +87,11 @@ Route::group([], function () {
     Route::resource('do_refferedbacks', 'DeliveryOrderRefferedbackAPIController');
     Route::get('downloadDeliveryOrderUploadTemplate', 'DeliveryOrderAPIController@downloadQuotationItemUploadTemplate')->name("Download quotation item upload template");
     Route::post('uploadItemsDeliveryOrder','DeliveryOrderDetailAPIController@uploadItemsDeliveryOrder')->name("Upload items delivery order");
+    Route::post('deleteAllItemsFromDeliveryOrder','DeliveryOrderDetailAPIController@deleteAllItemsFromDeliveryOrder')->name("Delete items delivery order");
     Route::get('salesQuotationForDO', 'DeliveryOrderAPIController@salesQuotationForDO')->name("Sales Quotation for delivery order");
     Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation')->name("Store delivery detail from sales quotation");
     Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO')->name("Get sales quotation detail for delivery order");
-
+    Route::post('deliveryOrderValidateItem', 'DeliveryOrderDetailAPIController@validateDeliveryOrderItem')->name("Validate Delivery Order Item");
 });
 
 //Sales Return

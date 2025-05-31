@@ -279,11 +279,12 @@ Route::group([], function(){
     Route::resource('recurring_voucher_setups', 'RecurringVoucherSetupAPIController');
     Route::resource('recurring_voucher_setup_details', 'RecurringVoucherSetupDetailAPIController');
     Route::resource('recurring_voucher_setup_schedules', 'RecurringVoucherSetupScheduleAPIController');
-
+    Route::resource('recurring_voucher_setup_sche_dets', 'RecurringVoucherSetupScheDetAPIController');
 
     Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData')->name('Get allocation configuration assign form data');
     Route::resource('coa_allocation_details', 'ChartOfAccountAllocationDetailAPIController');
     Route::resource('coa_allocation_masters', 'ChartOfAccountAllocationMasterAPIController');
+    Route::post('getSheduleDetails', 'RecurringVoucherSetupScheDetAPIController@getSheduleDetails')->name('Get shedule details');
 
 
     Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData')->name('Get Finance Year Form data');

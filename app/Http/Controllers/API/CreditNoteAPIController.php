@@ -57,6 +57,9 @@ use App\Models\CustomerCurrency;
 use App\Repositories\CreditNoteRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Jobs\CreateCreditNote;
+use App\Models\DocumentSystemMapping;
+use App\Services\API\CreditNoteAPIService;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -1769,6 +1772,13 @@ WHERE
             return $this->sendError('Cannot return back to amend. credit note is added to matching');
         }
 
+        if($masterData->approved == -1) {
+            $isAPIDocument = DocumentSystemMapping::where('documentId',$id)->where('documentSystemID',$masterData->documentSystemiD)->exists();
+            if ($isAPIDocument){
+                return $this->sendError('The auto-generated documents cannot be amended.');
+            }
+        }
+
         $documentAutoId = $id;
         $documentSystemID = $masterData->documentSystemiD;
 
@@ -1921,4 +1931,30 @@ WHERE
             ->get()->toArray();
         return $this->sendResponse($debitNote, 'Data retrieved successfully');
     }
+
+    public function createCreditNoteAPI(Request $request){
+
+        $input = $request->all();
+        $db = isset($request->db) ? $request->db : "";
+        $authorization = $request->header('Authorization');
+
+        $creditNotes = $input['credit_notes'] ?? null;
+
+        if(is_array($creditNotes)) {
+            $compId = $input['company_id'];
+            $company = Company::where('companySystemID', $compId)->first();
+            if (!$company) {
+                return $this->sendError("Company details not found");
+            }
+
+            CreateCreditNote::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
+
+            return $this->sendResponse([],"Credit note request has been successfully queued for processing!");
+        }
+        else {
+            return $this->sendError("Invalid Data Format");
+        }
+
+    }
+
 }

@@ -134,6 +134,9 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount =   ($vatPortion/100) * $value->transVATAmount ;
                     $standardAmount = $value->transVATAmount - $exemptAmount;
 
+                    if (($masterData->documentType == 1) && ($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
+                        $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
+                    }
 
                     $info = [
                         ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
@@ -255,6 +258,10 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount =   ($vatPortion/100) * $value->VATAmount ;
                     $standardAmount = $value->VATAmount - $exemptAmount;
 
+                    if (($masterData->documentType == 1) && ($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
+                        $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
+                    }
+
                     $info = [
                         ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
                         ["amount" => $standardAmount,"subcat" => $value->vatSubCategoryID,"mastercat" => $value->vatMasterCategoryID,"inVat" => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,
@@ -304,7 +311,8 @@ class SupplierInvoiceTaxLedgerService
 
              
             }
-        } else if($masterData->documentType == 3) {
+        }
+        else if($masterData->documentType == 3) {
             $details = SupplierInvoiceDirectItem::selectRaw('exempt_vat_portion,erp_tax_vat_sub_categories.subCatgeoryType,noQty, (VATAmount * noQty) as transVATAmount, (VATAmountLocal * noQty) as localVATAmount ,(VATAmountRpt * noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID, companyReportingCurrencyID as reportingCurrencyID, supplierDefaultCurrencyID as transCurrencyID, companyReportingER as reportingCurrencyER, localCurrencyER as localCurrencyER, supplierDefaultER as transCurrencyER')
                 ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
                 ->whereNotNull('vatSubCategoryID')
@@ -312,7 +320,7 @@ class SupplierInvoiceTaxLedgerService
                 ->get();
 
 
-                foreach ($details as $key => $value) {
+            foreach ($details as $key => $value) {
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
 
                 if ($subCategoryData) {
@@ -332,6 +340,11 @@ class SupplierInvoiceTaxLedgerService
                     $vatPortion = $value->exempt_vat_portion;
                     $exemptAmount =   ($vatPortion/100) * $value->transVATAmount ;
                     $standardAmount = $value->transVATAmount - $exemptAmount;
+
+                    if (($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
+                        $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
+                    }
+
                     $info = [
                         ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
                         ["amount" => $standardAmount,"subcat" => $value->vatSubCategoryID,"mastercat" => $value->vatMasterCategoryID,"inVat" => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,
@@ -446,6 +459,10 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount =   ($vatPortion/100) * $value->VATAmount * $value->noQty;
                     $standardAmount = ($value->VATAmount* $value->noQty) - $exemptAmount;
 
+                    if (($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
+                        $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
+                    }
+
                     $info = [
                         ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
                         ["amount" => $standardAmount,"subcat" => $value->vatSubCategoryID,"mastercat" => $value->vatMasterCategoryID,"inVat" => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,
@@ -527,7 +544,10 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount = (($value->grvVATAmount - $normalVAT) * $value->noQty);
                     
                     $standardAmount =  ($normalVAT * $value->noQty);
-    
+
+                    if (($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
+                        $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
+                    }
     
                     $info = [
                         ["amount" => $exemptAmount,"subcat" => $exemptVatSub,"mastercat" => $exemptVatMain,"inVat" => null,"inTra" => null,"outVat" => null,"outTra" => null],
@@ -678,6 +698,11 @@ class SupplierInvoiceTaxLedgerService
                     $exemptAmount = (($value->grv_detail->VATAmount - $normalVAT) * $value->grv_detail->noQty);
                     
                     $standardAmount =  ($normalVAT * $value->grv_detail->noQty);
+
+                    if (($masterData['retentionPercentage'] > 0) && ($masterData['rcmActivated'] == 0)) {
+                        $standardAmount = $standardAmount - $masterData['retentionVatAmount'];
+                    }
+
                     $totalAmount = $standardAmount + $exemptAmount;
                     
                     $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($masterData) {

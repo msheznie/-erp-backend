@@ -69,6 +69,7 @@ use App\Models\ReportTemplateDetails;
 use App\Models\SalesReturnDetail;
 use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
+use App\Models\SupplierInvoiceItemDetail;
 use App\Models\SupplierMaster;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TaxVatCategories;
@@ -3696,7 +3697,7 @@ class Helper
      * @param null $bankAccountAutoID - bank account ID
      * @return trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount
      */
-    public static function currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $transactionAmount, $bankAccountAutoID = null)
+    public static function currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $transactionAmount, $bankAccountAutoID = null,$roundOff = false)
     {
         $locaCurrencyID = null;
         $reportingCurrencyID = null;
@@ -3722,9 +3723,9 @@ class Helper
                 $reportingCurrencyID = $companyCurrency->reportingCurrency;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $locaCurrencyID)->first();
 
-                $trasToLocER = $conversion->conversion;
+                $trasToLocER = $roundOff ? self::roundValue($conversion->conversion) : $conversion->conversion;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $reportingCurrencyID)->first();
-                $trasToRptER = $conversion->conversion;
+                $trasToRptER = $roundOff ? self::roundValue($conversion->conversion) : $conversion->conversion;
 
                 if ($transactionCurrencyID == $reportingCurrencyID) {
                     $reportingAmount = $transactionAmount;
@@ -9651,6 +9652,21 @@ class Helper
 
         $retentionAmountToFixed = round($retentionAmount,$decimalPlaces);
         $bookInvSuppMaster->retentionAmount = $retentionAmountToFixed;
+
+        if($bookInvSuppMaster->retentionAmount != 0){
+            $details = SupplierInvoiceItemDetail::with(['vat_sub_category'])->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->get();
+
+            $totalStdVat = 0;
+            foreach ($details as $detail) {
+                if ($detail->vat_sub_category && $detail->vat_sub_category->subCatgeoryType == 1) {
+                    $totalStdVat += $detail->VATAmount;
+                }
+            }
+
+            $retentionVatAmount = ($totalStdVat * $bookInvSuppMaster->retentionPercentage) / 100;
+            $bookInvSuppMaster->retentionVatAmount = round($retentionVatAmount,$decimalPlaces);
+        }
+
         $bookInvSuppMaster->save();
     }
 
@@ -10122,4 +10138,6 @@ class Helper
     {
         return collect($data_array)->pluck('id')->filter()->values()->all();
     }
+
+
 }

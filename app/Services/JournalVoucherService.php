@@ -164,7 +164,7 @@ class JournalVoucherService
         }
 
         $input['serialNo'] = $lastSerialNumber;
-        $input['currencyER'] = 1;
+        $input['currencyER'] = $companyCurrencyConversion['trasToLocER'];
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
@@ -214,6 +214,12 @@ class JournalVoucherService
         $jvConfirmedYN = $input['confirmedYN'];
         $prevJvConfirmedYN = $jvMaster->confirmedYN;
         $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
+
+        // set currency exchange rate
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
+        $input['currencyER'] = $companyCurrencyConversion['trasToLocER'];
+        $input['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
 
         if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
         }

@@ -336,7 +336,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
     public function update($id, UpdateDirectInvoiceDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'purchase_order','chartofaccount']);
+        $input = array_except($input, ['segment', 'purchase_order','chartofaccount','vat_sub_category']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -531,7 +531,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $invoiceID = $input['invoiceID'];
 
         $items = DirectInvoiceDetails::where('directInvoiceAutoID', $invoiceID)
-            ->with(['segment', 'purchase_order','chartofaccount'])
+            ->with(['segment', 'purchase_order','chartofaccount','vat_sub_category'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Direct Invoice Details retrieved successfully');

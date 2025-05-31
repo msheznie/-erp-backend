@@ -2042,6 +2042,17 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }
     }
 
+    public function validateDeliveryOrderItem(Request $request) {
+        $input = $request->all();
+
+        $input['deliveryOrderID'] = $input['deliveryOrderId'];
+        $input['itemCodeSystem'] = $input['itemCodeSystem'];
+        $item = ItemMaster::find($input['itemCodeSystem']);
+        $companySystemId = $input['companySystemID'];
+
+       return $this->validateItemBeforeUpload($input, $item, $companySystemId);
+    }
+
     private function validateItemBeforeUpload($input,$item,$companySystemID) {
 
         $deliveryOrderMaster = DeliveryOrder::find($input['deliveryOrderID']);
@@ -2058,6 +2069,25 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         if ($alreadyAdded) {
             return $this->sendError("Selected item is already added. Please check again", 500);
         }
+
+        $data = array(
+            'companySystemID' => $companySystemID,
+            'itemCodeSystem' => $item['itemCodeSystem'],
+            'wareHouseId' => $deliveryOrderMaster->wareHouseSystemCode
+        );
+
+        $itemCurrentCostAndQty  = inventory::itemCurrentCostAndQty($data);
+
+        if ($item->financeCategoryMaster == 1) {
+            if (isset($itemCurrentCostAndQty['currentWareHouseStockQty']) && ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0)) {
+                return $this->sendError('Stock Qty is 0. You cannot issue.', 500);
+            }
+
+            if ((float)$itemCurrentCostAndQty['wacValueLocal'] == 0 || (float)$itemCurrentCostAndQty['wacValueReporting'] == 0) {
+                return $this->sendError('Cost is 0. You cannot issue.', 500);
+            }
+        }
+
 
         if(DeliveryOrderDetail::where('deliveryOrderID',$input['deliveryOrderID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same order',500);
@@ -2191,8 +2221,23 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
         }
 
-        
+        return response()->json(['status' => true, 'message' => ''], 200);
+    }
 
-        return true;
+    public function deleteAllItemsFromDeliveryOrder(Request $request)
+    {
+        if(!isset($request->deliveryOrderID))
+            return $this->sendError("Delivery Order Not Found!");
+
+        $deliveryOrder = DeliveryOrder::where('deliveryOrderID',$request->deliveryOrderID)->first();
+
+        if(!$deliveryOrder)
+            return $this->sendError("Delivery Order Not Found!");
+
+
+        DeliveryOrderDetail::where('deliveryOrderID',$request->deliveryOrderID)->delete();
+
+        return $this->sendResponse([],"Item deleted Successfully");
+
     }
 }

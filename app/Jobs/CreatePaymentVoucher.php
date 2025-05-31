@@ -196,7 +196,7 @@ class CreatePaymentVoucher implements ShouldQueue
 
                                 if ($approveDocument["success"]) {
                                     DB::commit();
-                                    $pvID[] = $confirmDataSet['PayMasterAutoId'];
+                                    $pvID = $confirmDataSet['PayMasterAutoId'];
                                     $this->storeToDocumentSystemMapping(4,$pvID,$this->authorization);
                                     $success = self::createSuccessResponseDataArray($masterDataset['BPVNarration'], $masterDataset['initialIndex'], $confirmDataSet['BPVcode']);
                                     $successDocuments[] = $success;

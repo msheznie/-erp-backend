@@ -419,6 +419,11 @@ class SupplierMaster extends Model
         return $query->whereNotIn('supplierCountryID', MemberStateOfTheGCC::getMemberStateOfTheGCCCountries());
     }
 
+    public function assigned(){
+        return $this->hasMany('App\Models\SupplierAssigned','supplierCodeSytem','supplierCodeSystem');
+    }
+
+
     public function scopeIsActive()
     {
         return $this->isActive;

@@ -5201,7 +5201,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
                     WHERE
                         erp_bookinvsuppmaster.approved = -1
-                        AND STR_TO_DATE( DATE_FORMAT( erp_bookinvsuppmaster.bookingDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+                        AND STR_TO_DATE( DATE_FORMAT( erp_bookinvsuppmaster.postedDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
                     GROUP BY
                         erp_bookinvsuppdet.companySystemID,
                         erp_bookinvsuppdet.grvAutoID 
@@ -5302,36 +5302,38 @@ class AccountsPayableReportAPIController extends AppBaseController
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup;
 
         $results = \DB::select($qry);
+        if ($reportTypeID == 'UGRVD')
+        {
+            foreach ($results as $index => $result) {
+                $result->matchedLocalAmount = BookInvSuppDet::with(['suppinvmaster' => function($query) use($asOfDate){
+                                                                    $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
+                                                                }])->where('grvAutoID', $result->documentSystemCode)
+                                                                ->where('companySystemID', $result->companySystemID)
+                                                                ->where('supplierID', $result->supplierID)
+                                                                ->whereHas('suppinvmaster', function($query) use($asOfDate){
+                                                                    $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
+                                                                })
+                                                                ->sum('totLocalAmount');
 
-        foreach ($results as $index => $result) {
-            $result->matchedLocalAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
-                                                                $query->where('approved', -1);
-                                                            }])->where('grvAutoID', $result->documentSystemCode)
-                                                            ->where('companySystemID', $result->companySystemID)
-                                                            ->where('supplierID', $result->supplierID)
-                                                            ->whereHas('suppinvmaster', function($query){
-                                                                $query->where('approved', -1);
-                                                            })
-                                                            ->sum('totLocalAmount');
-
-            $result->matchedRptAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
-                                            $query->where('approved', -1);
-                                        }])->where('grvAutoID', $result->documentSystemCode)
-                                        ->where('companySystemID', $result->companySystemID)
-                                        ->where('supplierID', $result->supplierID)
-                                        ->whereHas('suppinvmaster', function($query){
-                                            $query->where('approved', -1);
-                                        })
-                                        ->sum('totRptAmount');
+                $result->matchedRptAmount = BookInvSuppDet::with(['suppinvmaster' => function($query) use($asOfDate){
+                                                $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
+                                            }])->where('grvAutoID', $result->documentSystemCode)
+                                            ->where('companySystemID', $result->companySystemID)
+                                            ->where('supplierID', $result->supplierID)
+                                            ->whereHas('suppinvmaster', function($query) use($asOfDate){
+                                                $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
+                                            })
+                                            ->sum('totRptAmount');
 
 
-            $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;
-            $result->balanceRptAmount = $result->documentRptAmount - $result->matchedRptAmount;
+                $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;
+                $result->balanceRptAmount = $result->documentRptAmount - $result->matchedRptAmount;
 
-            if (abs($result->balanceLocalAmount) < 0.00001 || abs($result->balanceRptAmount) < 0.00001) {
-                if(!is_null($result->supplierInvoiceDate) && $result->supplierInvoiceDate < $asOfDate) {
-                    unset($results[$index]);
-                }
+                // if (abs($result->balanceLocalAmount) < 0.00001 || abs($result->balanceRptAmount) < 0.00001) {
+                //     if(!is_null($result->supplierInvoiceDate) && $result->supplierInvoiceDate < $asOfDate) {
+                //         unset($results[$index]);
+                //     }
+                // }
             }
         }
 
@@ -5625,23 +5627,23 @@ class AccountsPayableReportAPIController extends AppBaseController
         $results = \DB::select($qry);
 
         foreach ($results as $index => $result) {
-            $result->matchedLocalAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
-                        $query->where('approved', -1);
+            $result->matchedLocalAmount = BookInvSuppDet::with(['suppinvmaster' => function($query) use($asOfDate){
+                        $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
                     }])->where('grvAutoID', $result->documentSystemCode)
                     ->where('companySystemID', $result->companySystemID)
                     ->where('supplierID', $result->supplierID)
-                    ->whereHas('suppinvmaster', function($query){
-                        $query->where('approved', -1);
+                    ->whereHas('suppinvmaster', function($query)  use($asOfDate){
+                        $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
                     })
                     ->sum('totLocalAmount');
 
-            $result->matchedRptAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
-                        $query->where('approved', -1);
+            $result->matchedRptAmount = BookInvSuppDet::with(['suppinvmaster' => function($query) use($asOfDate){
+                        $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
                     }])->where('grvAutoID', $result->documentSystemCode)
                     ->where('companySystemID', $result->companySystemID)
                     ->where('supplierID', $result->supplierID)
-                    ->whereHas('suppinvmaster', function($query){
-                        $query->where('approved', -1);
+                    ->whereHas('suppinvmaster', function($query)  use($asOfDate){
+                        $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
                     })
                     ->sum('totRptAmount');
 
@@ -5649,9 +5651,9 @@ class AccountsPayableReportAPIController extends AppBaseController
             $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;
             $result->balanceRptAmount = $result->documentRptAmount - $result->matchedRptAmount;
 
-            if (abs($result->balanceLocalAmount) < 0.00001 || abs($result->balanceRptAmount) < 0.00001) {
-                unset($results[$index]);
-            }
+            // if (abs($result->balanceLocalAmount) < 0.00001 || abs($result->balanceRptAmount) < 0.00001) {
+            //     unset($results[$index]);
+            // }
         }
 
         return array_values($results);
@@ -5892,25 +5894,26 @@ class AccountsPayableReportAPIController extends AppBaseController
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ') as agingFinal ' . $supplierGroup;
 
         $results = \DB::select($qry);
-
+        if ($reportTypeID == 'UGRVAD')
+        {
         foreach ($results as $index => $result) {
-            $result->matchedLocalAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
-                        $query->where('approved', -1);
+            $result->matchedLocalAmount = BookInvSuppDet::with(['suppinvmaster' => function($query)use($asOfDate){
+                        $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
                     }])->where('grvAutoID', $result->documentSystemCode)
                     ->where('companySystemID', $result->companySystemID)
                     ->where('supplierID', $result->supplierID)
-                    ->whereHas('suppinvmaster', function($query){
-                        $query->where('approved', -1);
+                    ->whereHas('suppinvmaster', function($query)use($asOfDate){
+                        $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
                     })
                     ->sum('totLocalAmount');
 
-            $result->matchedRptAmount = BookInvSuppDet::with(['suppinvmaster' => function($query){
-                        $query->where('approved', -1);
+            $result->matchedRptAmount = BookInvSuppDet::with(['suppinvmaster' => function($query)use($asOfDate){
+                        $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
                     }])->where('grvAutoID', $result->documentSystemCode)
                     ->where('companySystemID', $result->companySystemID)
                     ->where('supplierID', $result->supplierID)
-                    ->whereHas('suppinvmaster', function($query){
-                        $query->where('approved', -1);
+                    ->whereHas('suppinvmaster', function($query)use($asOfDate){
+                        $query->where('approved', -1)->whereDate('postedDate', '<=', $asOfDate);
                     })
                     ->sum('totRptAmount');
 
@@ -5922,7 +5925,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 unset($results[$index]);
             }
         }
-
+        }
         return array_values($results);
     }
 

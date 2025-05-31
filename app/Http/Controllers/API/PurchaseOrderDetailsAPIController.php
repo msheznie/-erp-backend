@@ -22,7 +22,11 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Jobs\AddBulkItem\PoAddBulkItemJob;
+use App\Jobs\DeliveryOrderAddMutipleItemsJob;
 use App\Models\CurrencyMaster;
+use App\Models\DeliveryOrder;
+use App\Models\DeliveryOrderDetail;
+use App\Models\ItemMaster;
 use App\Services\ProcurementOrder\ProcurementOrderService;
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
@@ -41,6 +45,7 @@ use App\Models\SegmentAllocatedItem;
 use App\Models\SupplierMaster;
 use App\Repositories\UserRepository;
 use App\Repositories\PurchaseOrderDetailsRepository;
+use App\Services\Sales\DeliveryOrderService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\PoDetailExpectedDeliveryDate;
@@ -453,7 +458,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $grvCost = $input['unitCost'];
 
         if ($grvCost > 0) {
-            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $grvCost);
+            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $grvCost,null,true);
 
             $input['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
             $input['GRVcostPerUnitSupTransCur'] = $grvCost;
@@ -466,7 +471,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         // adding supplier Default CurrencyID base currency conversion
         if ($grvCost > 0) {
-            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $grvCost);
+            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $grvCost,null,true);
 
             $input['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
             $input['purchaseRetcostPerUniSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
@@ -748,7 +753,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['supplierCatalogMasterID'] = isset($new['supplierCatalogMasterID']) ? $new['supplierCatalogMasterID'] : 0;
 
                             if ($new['poUnitAmount'] > 0) {
-                                $currencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $new['poUnitAmount']);
+                                $currencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $new['poUnitAmount'],null,true);
 
                                 $prDetail_arr['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                                 $prDetail_arr['GRVcostPerUnitSupTransCur'] = $new['poUnitAmount'];
@@ -1012,7 +1017,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
 
             if ($discountedUnitPrice > 0) {
-                $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
+                $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice,null,true);
 
                 $input['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                 $input['GRVcostPerUnitSupTransCur'] = $discountedUnitPrice;
@@ -1725,64 +1730,110 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['employeeSystemID'] = $user ? $user->employee['employeeSystemID'] : null;
         $input['empID'] = $user ? $user->employee['empID'] : null;
 
-        if (isset($input['addAllItems']) && $input['addAllItems']) {
-            $db = isset($input['db']) ? $input['db'] : "";    
+        if(isset($input['purchaseOrderID']))
+        {
+            if (isset($input['addAllItems']) && $input['addAllItems']) {
+                $db = isset($input['db']) ? $input['db'] : "";
 
-            $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])
-                                            ->first();
+                $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])
+                    ->first();
 
-            if (empty($purchaseOrder)) {
-                return $this->sendError('Purchase Order not found', 500);
-            }
-            $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                ->where('companySystemID', $purchaseOrder->companySystemID)
-                ->first();
-            if ($allowFinanceCategory) {
-                $policy = $allowFinanceCategory->isYesNO;
-                if ($policy == 0) {
-                    if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                        return $this->sendError('Category is not found', 500);
-                    }
+                if (empty($purchaseOrder)) {
+                    return $this->sendError('Purchase Order not found', 500);
+                }
+                $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                    ->where('companySystemID', $purchaseOrder->companySystemID)
+                    ->first();
+                if ($allowFinanceCategory) {
+                    $policy = $allowFinanceCategory->isYesNO;
+                    if ($policy == 0) {
+                        if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
+                            return $this->sendError('Category is not found', 500);
+                        }
 
-                    //checking if item category is same or not
-                    $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                        ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-                        ->first();
+                        //checking if item category is same or not
+                        $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                            ->first();
 
-                    if ($pRDetailExistSameItem) {
-                        if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return $this->sendError('You cannot add different category item', 500);
+                        if ($pRDetailExistSameItem) {
+                            if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
+                                return $this->sendError('You cannot add different category item', 500);
+                            }
                         }
                     }
                 }
-            }
 
 
-            $data['isBulkItemJobRun'] = 1;
+                $data['isBulkItemJobRun'] = 1;
 
-            $purchaseRequest = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->update($data);
-            PoAddBulkItemJob::dispatch($db, $input);
+                $purchaseRequest = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->update($data);
+                PoAddBulkItemJob::dispatch($db, $input);
 
-            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
-        } else {
-            DB::beginTransaction();
-            try {
-                $invalidItems = [];
-                foreach ($input['itemArray'] as $key => $value) {
-                    $res = ProcurementOrderService::validatePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['purchaseOrderID']);
-                    
-                    if ($res['status']) {
-                        ProcurementOrderService::savePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['purchaseOrderID'], $input['empID'], $input['employeeSystemID']);
-                    } else {
-                        $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $res['message']];
+                return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+            } else {
+                DB::beginTransaction();
+                try {
+                    $invalidItems = [];
+                    foreach ($input['itemArray'] as $key => $value) {
+                        $res = ProcurementOrderService::validatePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['purchaseOrderID']);
+
+                        if ($res['status']) {
+                            ProcurementOrderService::savePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['purchaseOrderID'], $input['empID'], $input['employeeSystemID']);
+                        } else {
+                            $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $res['message']];
+                        }
                     }
+                    DB::commit();
+                    return $this->sendResponse('', 'Purchase Order Items saved successfully');
+                } catch (\Exception $exception) {
+                    DB::rollBack();
+                    return $this->sendError($exception->getMessage(), 500);
                 }
-                DB::commit();
-                return $this->sendResponse('', 'Purchase Order Items saved successfully');
-            } catch (\Exception $exception) {
-                DB::rollBack();
-                return $this->sendError($exception->getMessage(), 500);
             }
         }
+
+
+        if(isset($input['deliveryOrderID']))
+        {
+            if (isset($input['addAllItems']) && $input['addAllItems']) {
+                $db = isset($input['db']) ? $input['db'] : "";
+
+
+                $deliveryOrder = DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])
+                    ->first();
+
+                if (empty($deliveryOrder)) {
+                    return $this->sendError('Delivery Order not found', 500);
+                }
+
+                $data['isBulkItemJobRun'] = 1;
+
+                DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])->update($data);
+                DeliveryOrderAddMutipleItemsJob::dispatch($db, $input);
+
+                return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+            }else {
+                DB::beginTransaction();
+                try {
+                    $invalidItems = [];
+                    foreach ($input['itemArray'] as $key => $value) {
+                        $res = DeliveryOrderService::validatePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['deliveryOrderID']);
+
+                        if ($res['status']) {
+                            DeliveryOrderService::savePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['deliveryOrderID'], $input['empID'], $input['employeeSystemID']);
+                        } else {
+                            $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $res['message']];
+                        }
+                    }
+                    DB::commit();
+                    return $this->sendResponse('', 'Delivery Order Items saved successfully');
+                } catch (\Exception $exception) {
+                    DB::rollBack();
+                    return $this->sendError($exception->getMessage(), 500);
+                }
+            }
+        }
+
     }
 }

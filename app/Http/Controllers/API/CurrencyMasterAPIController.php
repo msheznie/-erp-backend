@@ -487,4 +487,22 @@ class CurrencyMasterAPIController extends AppBaseController
         return $this->sendResponse($localCurrencyCode, 'Data retrieved successfully');
 
     }
+
+    public function getCompanyCurrency(Request $request)
+    {
+        $input = $request->all();
+
+        $currencyIds = Company::where('companySystemID', $input['companyId'])
+            ->get(['reportingCurrency', 'localCurrencyID'])
+            ->pluck('reportingCurrency')
+            ->merge(Company::where('companySystemID', $input['companyId'])->pluck('localCurrencyID'))
+            ->unique();
+
+        $companyCurrencies = CurrencyMaster::select('currencyID',
+            DB::raw("CONCAT(CurrencyCode, ' | ', CurrencyName) as CurrencyName"))
+            ->whereIn('currencyID', $currencyIds)
+            ->get();
+
+        return $this->sendResponse($companyCurrencies, 'Data retrieved successfully');
+    }
 }

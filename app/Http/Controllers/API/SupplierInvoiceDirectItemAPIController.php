@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSupplierInvoiceDirectItemAPIRequest;
 use App\Http\Requests\API\UpdateSupplierInvoiceDirectItemAPIRequest;
+use App\Jobs\SupplierInvoiceAddBulkItemJob;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\ItemAssigned;
 use App\Models\FinanceItemCategorySub;
@@ -13,6 +14,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Repositories\SupplierInvoiceDirectItemRepository;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\UserRepository;
+use App\Services\SupplierInvoiceService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -536,5 +538,55 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$supInvoice);
         \Helper::updateSupplierItemWhtAmount($bookingSuppMasInvAutoID,$supInvoice);
         return $this->sendResponse($bookingSuppMasInvAutoID, 'Details deleted successfully');
+    }
+
+    public function supplierInvoiceValidateItem(Request $request) {
+        $input = $request->all();
+
+        return SupplierInvoiceService::validateSupplierInvoiceItem($input['itemCodeSystem'], $input['companySystemID'], $input['supplierInvoiceId']);
+    }
+
+    public function supplierInvoiceDetailsAddAllItems(Request $request) {
+        $input = $request->all();
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $input['employeeSystemID'] = $user ? $user->employee['employeeSystemID'] : null;
+
+        if (isset($input['addAllItems']) && $input['addAllItems']) {
+            $db = $input['db'] ?? "";
+
+            $supplierInvoice = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['supplierInvoiceId'])->first();
+            if (empty($supplierInvoice)) {
+                return $this->sendError('Supplier Invoice not found', 500);
+            }
+
+            $data['isBulkItemJobRun'] = 1;
+            BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['supplierInvoiceId'])->update($data);
+
+            SupplierInvoiceAddBulkItemJob::dispatch($db, $input);
+
+            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+        }
+        else {
+            DB::beginTransaction();
+            try {
+                $invalidItems = [];
+                foreach ($input['itemArray'] as $key => $value) {
+                    $response = SupplierInvoiceService::validateSupplierInvoiceItem($value['itemCodeSystem'], $input['companySystemID'], $input['supplierInvoiceId']);
+
+                    if ($response['status']) {
+                        SupplierInvoiceService::saveSupplierInvoiceItem($value['itemCodeSystem'], $input['supplierInvoiceId'], $input['employeeSystemID']);
+                    } else {
+                        $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $response['message']];
+                    }
+                }
+                DB::commit();
+                return $this->sendResponse('', 'Supplier Invoice Items saved successfully');
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return $this->sendError($exception->getMessage(), 500);
+            }
+        }
     }
 }

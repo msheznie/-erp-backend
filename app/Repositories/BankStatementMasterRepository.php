@@ -67,4 +67,25 @@ class BankStatementMasterRepository extends BaseRepository
 
         return $bankstatementMaster;
     }
+
+    public function bankStatementWorkBook($searchValue, $companyId)
+    {
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+
+        $bankstatementMaster = BankStatementMaster::with('bankAccount.currency')->whereIn('companySystemID', $subCompanies)->where('importStatus', 1);
+        if ($searchValue) {
+            $searchValue = str_replace("\\", "\\\\", $searchValue);
+            $bankstatementMaster = $bankstatementMaster->whereHas('bankAccount', function ($query) use ($searchValue) {
+                $query->where('bankName', 'LIKE', "%{$searchValue}%");
+                $query->orWhere('AccountNo', 'LIKE', "%{$searchValue}%");
+            });
+        }
+
+        return $bankstatementMaster;
+    }
 }

@@ -53,6 +53,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('create_receipts_voucher','ReceiptAPIController@store');
             Route::post('push_budget_items', 'SRM\ThirdPartySystemsController@pushBudgetItems');
             Route::post('create_customer_invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
+            Route::post('credit-note','CreditNoteAPIController@createCreditNoteAPI');
             Route::post('cancel_customer_invoice', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
             Route::post('supplier_invoice_create','BookInvSuppMasterAPIController@createSupplierInvoices');
             Route::post('journal-voucher','JvMasterAPIController@createJournalVoucher');
@@ -125,6 +126,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 });
 
                 Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode');
+                Route::get('getCompanyCurrency', 'CurrencyMasterAPIController@getCompanyCurrency');
                 Route::resource('users', 'UserAPIController');
                 Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
 
@@ -1042,5 +1044,3 @@ Route::group(['middleware' => ['mobileServer']], function () {
 /*
  * End external related routes
  */
-
-

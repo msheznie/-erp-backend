@@ -179,7 +179,7 @@ class CreateJournalVoucher implements ShouldQueue
 
                                 if ($approveDocument["success"]) {
                                     DB::commit();
-                                    $jvID[] = $confirmDataSet['jvMasterAutoId'];
+                                    $jvID = $confirmDataSet['jvMasterAutoId'];
                                     $this->storeToDocumentSystemMapping(11,$jvID,$this->authorization);
                                     $success = self::createSuccessResponseDataArray($masterDataset['JVNarration'], $masterDataset['initialIndex'], $confirmDataSet['JVcode']);
                                     $successDocuments[] = $success;

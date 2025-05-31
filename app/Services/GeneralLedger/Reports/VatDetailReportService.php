@@ -145,19 +145,22 @@ class VatDetailReportService
                 } else {
                     isset($val->company->country->countryName) ? $objVatDetailReport->setPlaceOfSupply("Outside ".$val->company->country->countryName) : "";
                 }
+
+                $decimalPlaces = $val->transcurrency->DecimalPlaces ?? ($val->transcurrency['DecimalPlaces'] ?? null);
+
                 $objVatDetailReport->setTaxCodeType('');
                 isset($val->sub_category->subCategoryDescription) ? $objVatDetailReport->setTaxCodeDescription($val->sub_category->subCategoryDescription) : "";
                 $objVatDetailReport->setVatRate($val->VATPercentage);
-                $objVatDetailReport->setValueExculdingInDocumentCurency( CurrencyService::convertNumberFormatToNumber(number_format($val->taxableAmount, $val->transcurrency->DecimalPlaces)));
-                $objVatDetailReport->setVatInDocumentCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->VATAmount, $val->transcurrency->DecimalPlaces)));
+                $objVatDetailReport->setValueExculdingInDocumentCurency( CurrencyService::convertNumberFormatToNumber(number_format($val->taxableAmount, $decimalPlaces)));
+                $objVatDetailReport->setVatInDocumentCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->VATAmount, $decimalPlaces)));
                 $objVatDetailReport->setDocumentCurrencyToLocalCurrencyRate($val->localER);
-                $objVatDetailReport->setValueExculdingInLocalCurency( CurrencyService::convertNumberFormatToNumber(number_format($val->taxableAmountLocal, $val->transcurrency->DecimalPlaces)));
-                $objVatDetailReport->setVatInLocalCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->VATAmountLocal, $val->transcurrency->DecimalPlaces)));
+                $objVatDetailReport->setValueExculdingInLocalCurency( CurrencyService::convertNumberFormatToNumber(number_format($val->taxableAmountLocal, $decimalPlaces)));
+                $objVatDetailReport->setVatInLocalCurrency(CurrencyService::convertNumberFormatToNumber(number_format($val->VATAmountLocal, $decimalPlaces)));
                 isset($val->output_vat->AccountCode) ? $objVatDetailReport->setVatGlCode($val->output_vat->AccountCode) : "";
                 isset($val->output_vat->AccountDescription) ? $objVatDetailReport->setVatGlDescription($val->output_vat->AccountDescription) : "";
                 (isset($val->company->vatRegisteredYN) && $val->company->vatRegisteredYN) ? $objVatDetailReport->setInputTaxRecoverability("Yes") : $objVatDetailReport->setInputTaxRecoverability("No");
                 $objVatDetailReport->setInputTaxRecoverabilityPercentage($val->recovertabilityPercentage);
-                $objVatDetailReport->setInputTaxRecoverabilityAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->recoverabilityAmount, $val->transcurrency->DecimalPlaces)));
+                $objVatDetailReport->setInputTaxRecoverabilityAmount(CurrencyService::convertNumberFormatToNumber(number_format($val->recoverabilityAmount, $decimalPlaces)));
             }
 
             array_push($dataArray,collect($objVatDetailReport)->toArray());

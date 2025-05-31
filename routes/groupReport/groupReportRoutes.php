@@ -75,6 +75,7 @@ Route::group([],function (){
         });
     });
     Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Generate general ledger report pdf");
+    Route::post('getCustomReportColumnList', 'FinancialReportAPIController@getCustomReportColumnList')->name("Get Custom report columns");
 });
 
 //Trial Balance

@@ -62,7 +62,9 @@ class VatReportService
 
             $inputOutputVatReport->setDocumentDate($val->documentDate,true);
             if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
-                $inputOutputVatReport->setPartyName($val->supplier->supplierName);
+                $inputOutputVatReport->setPartyName(
+                    $val->supplier->supplierName ?? ($val->supplier['supplierName'] ?? null)
+                );
             }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
                 if(isset($val->bank_receipt['payeeTypeID']) && $val->bank_receipt['payeeTypeID'] == 2){
                     if(isset($val->employee['empFullName'])) {
@@ -76,7 +78,9 @@ class VatReportService
             }
 
             if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
-                $inputOutputVatReport->setCountry($val->supplier->country->countryName);
+                $inputOutputVatReport->setCountry(
+                    $val->supplier->country->countryName ?? ($val->supplier['country']['countryName'] ?? null)
+                );
             }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
                 if(isset($val->bank_receipt['payeeTypeID']) && $val->bank_receipt['payeeTypeID'] == 2) {
                 }

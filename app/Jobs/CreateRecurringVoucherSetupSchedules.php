@@ -18,6 +18,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\RecurringVoucherSetupScheDet;
+
 
 class CreateRecurringVoucherSetupSchedules implements ShouldQueue
 {
@@ -69,7 +71,8 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
                 $processDate = Carbon::parse($recurringVoucher->startDate);
                 $noOfDayMonthYear = $recurringVoucher->noOfDayMonthYear;
 
-                $rrvDebitSum = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $recurringVoucher->recurringVoucherAutoId)->sum('debitAmount');
+                $details = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $recurringVoucher->recurringVoucherAutoId)->get();
+                $rrvDebitSum = $details->sum('debitAmount');
 
                 for($i = 0; $i < $noOfDayMonthYear; $i++){
                     $processDate = $i == 0 ? $processDate : $processDate->addMonth();
@@ -83,7 +86,7 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
                         ->first();
 
 
-                    RecurringVoucherSetupSchedule::create([
+                    $sheduleId = RecurringVoucherSetupSchedule::create([
                         'recurringVoucherAutoId' => $recurringVoucher->recurringVoucherAutoId,
                         'processDate' => $processDate,
                         'amount' => $rrvDebitSum,
@@ -93,6 +96,13 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
                         'createdUserID' => $recurringVoucher->createdUserID,
                         'createdPcID' => $recurringVoucher->createdPcID
                     ]);
+
+                        foreach($details as $detail)
+                    {
+                            $data = $detail->toArray(); 
+                            $data['recurringVoucherSheduleAutoId'] = $sheduleId->rrvSetupScheduleAutoID;
+                            RecurringVoucherSetupScheDet::create($data);
+                    }
                 }
             } else {
                 Log::error("Recurring Voucher Setup not found");

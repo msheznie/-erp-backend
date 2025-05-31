@@ -2169,11 +2169,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $output = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])->with(['grvdetail' => function ($query) {
             $query->with('grvmaster');
         }, 'directdetail' => function ($query) {
-            $query->with('project','segment');
+            $query->with('project','segment','vat_sub_category');
         }, 'detail' => function ($query) {
             $query->with('grvmaster');
         }, 'item_details' => function ($query) {
-            $query->with('unit');
+            $query->with('unit','vat_sub_category');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
@@ -2851,11 +2851,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMasterRecord = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)->with(['grvdetail' => function ($query) {
             $query->with('grvmaster');
         }, 'directdetail' => function ($query) {
-            $query->with('project','segment');
+            $query->with('project','segment','vat_sub_category');
         }, 'detail' => function ($query) {
             $query->with('grvmaster');
         }, 'item_details' => function ($query) {
-            $query->with('unit');
+            $query->with('unit','vat_sub_category');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
@@ -2919,6 +2919,31 @@ class BookInvSuppMasterAPIController extends AppBaseController
         ->where('isYesNO', 1)
         ->exists();
 
+        $stdVatTot = 0;
+        $retentionVatPortion = 0;
+        if ($bookInvSuppMasterRecord->documentType != 4) {
+            if (
+                ($bookInvSuppMasterRecord->retentionPercentage > 0) &&
+                ($bookInvSuppMasterRecord->vatRegisteredYN == 1) &&
+                ($bookInvSuppMasterRecord->rcmActivated == 0) &&
+                ($bookInvSuppMasterRecord->whtApplicable == 0)
+            ) {
+                foreach ($bookInvSuppMasterRecord->directdetail as $data) {
+                    if ($data->vat_sub_category && $data->vat_sub_category->subCatgeoryType == 1) {
+                        $stdVatTot += $data->VATAmount;
+                    }
+                }
+
+                foreach ($bookInvSuppMasterRecord->item_details as $data) {
+                    if ($data->vat_sub_category && $data->vat_sub_category->subCatgeoryType == 1) {
+                        $stdVatTot += $data->VATAmount;
+                    }
+                }
+
+                $retentionVatPortion = ($stdVatTot * $bookInvSuppMasterRecord->retentionPercentage) / 100;
+            }
+        }
+
         $order = array(
             'masterdata' => $bookInvSuppMasterRecord,
             'docRef' => $refernaceDoc,
@@ -2933,7 +2958,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'grvTotLoc' => $grvTotLoc,
             'isVATEligible' => $isVATEligible,
             'isProjectBase' => $isProjectBase,
-            'grvTotRpt' => $grvTotRpt
+            'grvTotRpt' => $grvTotRpt,
+            'retentionVatPortion' => $retentionVatPortion
         );
 
         $time = strtotime("now");

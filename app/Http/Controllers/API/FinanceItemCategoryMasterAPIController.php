@@ -17,10 +17,12 @@ use App\Http\Requests\API\CreateFinanceItemCategoryMasterAPIRequest;
 use App\Http\Requests\API\UpdateFinanceItemCategoryMasterAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\ItemCategoryTypeMaster;
+use App\Models\ItemMaster;
 use App\Models\YesNoSelection;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\FinanceItemCategorySub;
 use App\Repositories\FinanceItemCategoryMasterRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ErpAttributes;
@@ -400,5 +402,22 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         return$expiryStatus = FinanceItemCategoryMaster::select('attributesYN')->where('itemCategoryID',$itemCategoryID)->first();
 
         return $this->sendResponse($expiryStatus, 'Record retrieved successfully');
+    }
+
+    public function usedFinanceSubCatByMainCat(Request $request): JsonResponse {
+        $ids = (new ItemMaster)->usedFinanceSubCategory();
+
+        $results = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
+            ->whereIn('itemCategorySubID',$ids)
+            ->with([
+                'finance_item_category_master',
+                'finance_gl_code_bs',
+                'finance_gl_code_pl',
+                'finance_gl_code_revenue',
+                'cogs_gl_code_pl',
+                'finance_item_category_type'])
+            ->select('financeitemcategorysub.*')->get();
+
+        return response()->json($results);
     }
 }

@@ -376,44 +376,52 @@ class FixedAssetCategorySubAPIController extends AppBaseController
 
     public function getAllAssetSubCategoryByMain(Request $request)
     {
-
-
         $input = $request->all();
         $selectedCompanyId = isset($input['companyId']) ? $input['companyId'] : 0;
         $id = isset($input['id']) ? $input['id'] : 0;
-        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
-        if ($isGroup) {
-            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
+
+        $isDropdown = isset($input['isDropdown']) && $input['isDropdown'];
+
+        if (!$isDropdown) {
+            $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
+            if ($isGroup) {
+                $subCompanies = Helper::getGroupCompany($selectedCompanyId);
+            } else {
+                $subCompanies = [$selectedCompanyId];
+            }
+
+            if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+                $sort = 'asc';
+            } else {
+                $sort = 'desc';
+            }
+
+            $assetCategories = FixedAssetCategorySub::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)
+                ->with(['company'])
+                ->orderBy('faCatSubID', $sort);
+
+            if (isset($input['isAll']) && !$input['isAll']) {
+                $assetCategories = $assetCategories->ofCompany($subCompanies);
+            }
+
+            $search = $request->input('search.value');
+
+            if ($search) {
+                $search = str_replace("\\", "\\\\", $search);
+                $assetCategories = $assetCategories->where(function ($query) use ($search) {
+                    $query->where('catDescription', 'LIKE', "%{$search}%");
+                });
+            }
+
+            return \DataTables::of($assetCategories)
+                ->addColumn('Actions', 'Actions', "Actions")
+                ->addIndexColumn()
+                ->make(true);
         }
+        else {
+            $assetCategories = FixedAssetCategorySub::withoutGlobalScope(ActiveScope::class)->where('companySystemID', $selectedCompanyId)->where('faCatID', $id)->get();
 
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
+            return $this->sendResponse($assetCategories, 'Asset Sub Category fetched successfully');
         }
-
-        $assetCategories = FixedAssetCategorySub::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)
-            ->with(['company'])
-            ->orderBy('faCatSubID', $sort);
-
-        if (isset($input['isAll']) && !$input['isAll']) {
-            $assetCategories = $assetCategories->ofCompany($subCompanies);
-        }
-
-        $search = $request->input('search.value');
-
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $assetCategories = $assetCategories->where(function ($query) use ($search) {
-                $query->where('catDescription', 'LIKE', "%{$search}%");
-            });
-        }
-
-        return \DataTables::of($assetCategories)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->addIndexColumn()
-            ->make(true);
     }
 }

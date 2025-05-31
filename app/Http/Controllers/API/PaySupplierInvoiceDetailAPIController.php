@@ -14,6 +14,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreatePaySupplierInvoiceDetailAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceDetailAPIRequest;
@@ -357,7 +358,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if($bookInvMaster && $bookInvMaster->retentionAmount != 0){
                 if($bookInvMaster->documentType == 1) {
 
-                        $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / ($bookInvMaster->retentionAmount - $bookInvMaster->retentionVatAmount)) * $bookInvMaster->retentionVatAmount;
+                        if ($bookInvMaster->rcmActivated) {
+                            $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / $bookInvMaster->retentionAmount) * $bookInvMaster->retentionVatAmount;
+                        } else {
+                            $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / ($bookInvMaster->retentionAmount - $bookInvMaster->retentionVatAmount)) * $bookInvMaster->retentionVatAmount;
+                        }
 
                 }
                 else if($bookInvMaster->documentType == 0) {
@@ -371,6 +376,20 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 else{
                     $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / ($bookInvMaster->retentionAmount - $bookInvMaster->retentionVatAmount)) * $bookInvMaster->retentionVatAmount;
                 }
+
+                $input['vatMasterCategoryID'] = null;
+                $input['vatSubCategoryID'] = null;
+
+                $taxVatCategories = TaxVatCategories::where('subCatgeoryType', 1)->where('mainCategory', 2)->where('isActive', 1)->first();
+                if ($taxVatCategories) {
+                    $input['vatMasterCategoryID'] = $taxVatCategories->mainCategory;
+                    $input['vatSubCategoryID'] = $taxVatCategories->taxVatSubCategoriesAutoID;
+                }
+
+                $input['VATAmount'] = $input['retentionVatAmount'];
+                $input['VATAmountLocal'] = Helper::conversionCurrencyByER($input['supplierTransCurrencyID'],$input['localCurrencyID'],$input['retentionVatAmount'],$input['localER']);
+                $input['VATAmountRpt'] = Helper::conversionCurrencyByER($input['supplierTransCurrencyID'],$input['comRptCurrencyID'],$input['retentionVatAmount'],$input['comRptER']);
+                $input['VATPercentage'] = Helper::roundValue(($input['retentionVatAmount'] / $input['supplierPaymentAmount']) * 100);
             }
         }
 

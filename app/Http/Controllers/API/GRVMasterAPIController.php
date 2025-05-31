@@ -231,7 +231,7 @@ class GRVMasterAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0,null,true);
 
         //var_dump($companyCurrencyConversion);
         $company = Company::where('companySystemID', $input['companySystemID'])->first();

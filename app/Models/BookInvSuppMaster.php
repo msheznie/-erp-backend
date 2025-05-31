@@ -376,8 +376,8 @@ class BookInvSuppMaster extends Model
         'whtPercentage',
         'whtEdited',
         'isWHTApplicableVat',
-        'isDelegation'
-
+        'isDelegation',
+        'isBulkItemJobRun'
     ];
 
     /**
@@ -444,6 +444,7 @@ class BookInvSuppMaster extends Model
         'UnbilledGRVAccountSystemID' => 'integer',
         'custInvoiceDirectAutoID' => 'integer',
         'rcmActivated' => 'integer',
+        'isBulkItemJobRun' => 'integer',
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',

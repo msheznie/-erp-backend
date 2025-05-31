@@ -190,6 +190,7 @@ class PurchaseRequestRepository extends BaseRepository
                 'erp_purchaserequest.createdDateTime',
                 'erp_purchaserequest.createdUserSystemID',
                 'erp_purchaserequest.comments',
+                'erp_purchaserequest.internalNotes',
                 'erp_purchaserequest.location',
                 'erp_purchaserequest.priority',
                 'erp_purchaserequest.cancelledYN',
@@ -235,6 +236,7 @@ class PurchaseRequestRepository extends BaseRepository
                 $data[$x]['Buyer'] = $val->buyerEmpName;
                 $data[$x]['Budget Year'] = $val->budgetYear;
                 $data[$x]['Comments'] = $val->comments;
+                $data[$x]['Internal Note'] = $val->internalNotes;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
                 $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
                 $data[$x]['Status'] = StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN);

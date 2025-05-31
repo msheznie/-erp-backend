@@ -458,10 +458,12 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
                 ->where('companySystemID', $input['companySystemID'])
+                ->where('isAssigned', -1)
+                ->where('isActive', 1)
                 ->first();
 
-            if ($supplierAssignedDetai) {
-                $input['supplierVATEligible'] = $supplierAssignedDetai->vatEligible;
+            if ($supplierAssignedDetai && $supplier) {
+                $input['supplierVATEligible'] = $supplier->vatEligible;
                 $input['VATPercentage'] = 0; // $supplierAssignedDetai->vatPercentage;
             }
 
@@ -873,7 +875,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     // $calculateItemTax = (($itemDiscont['VATPercentage'] / 100) * $calculateItemDiscount) + $calculateItemDiscount;
                     $vatLineAmount = $itemDiscont['VATAmount']; //($calculateItemTax - $calculateItemDiscount);
 
-                    $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
+                    $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount,null,true);
 
                     $currencyConversionForLineAmount = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatLineAmount);
 
@@ -912,7 +914,9 @@ class ProcumentOrderAPIController extends AppBaseController
                         $itemDiscont['companySystemID'],
                         $input['supplierTransactionCurrencyID'],
                         $input['supplierTransactionCurrencyID'],
-                        $calculateItemDiscount
+                        $calculateItemDiscount,
+                        null,
+                        true
                     );
 
                     $currencyConversionLineDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateItemDiscount);

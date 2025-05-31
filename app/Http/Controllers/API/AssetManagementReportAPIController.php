@@ -24,6 +24,7 @@ use App\helper\Helper;
 use App\Models\AssetFinanceCategory;
 use App\Models\Company;
 use App\Models\AssetDisposalMaster;
+use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCost;
 use App\Models\ItemAssigned;
 use App\Models\CompanyFinancePeriod;
@@ -36,6 +37,7 @@ use App\Models\GRVMaster;
 use App\Models\Months;
 use App\Models\Year;
 use App\Models\AssetType;
+use App\Scopes\ActiveScope;
 use App\Services\AssetManagementService;
 use App\Services\Currency\CurrencyService;
 use App\Services\Excel\ExportVatDetailReportService;
@@ -78,15 +80,20 @@ class AssetManagementReportAPIController extends AppBaseController
 
         $assets = [];
         $expenseGL = [];
-        if (isset($request['reportID']) && $request['reportID'] == "AEA" || isset($request['reportID']) && $request['reportID'] == "ATR") {
+        $mainCategory = [];
 
-            $assets = FixedAssetMaster::where('confirmedYN',1)->where('approved',-1)->where('companySystemID',$selectedCompanyId)->get();
-
-
+        if ((isset($request['reportID']) && $request['reportID'] == "AEA") || (isset($request['reportID']) && $request['reportID'] == "ATR")) {
             $expenseGL = ChartOfAccountsAssigned::where('companySystemID', $selectedCompanyId)
-                                                ->where('isAssigned', -1)
-                                                ->where('isActive', 1)
-                                                ->get();
+                ->where('isAssigned', -1)
+                ->where('isActive', 1)
+                ->get();
+
+            if (isset($request['reportID']) && $request['reportID'] == "ATR") {
+                $mainCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->where('companySystemID', $selectedCompanyId)->get();
+            }
+            else {
+                $assets = FixedAssetMaster::where('confirmedYN',1)->where('approved',-1)->where('companySystemID',$selectedCompanyId)->get();
+            }
         }
 
         $output = array(
@@ -97,10 +104,37 @@ class AssetManagementReportAPIController extends AppBaseController
             'months' => $months,
             'assets' => $assets,
             'expenseGL' => $expenseGL,
-            'assetType' => $aasetType
+            'assetType' => $aasetType,
+            'mainCategory' => $mainCategory
         );
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
+    }
+
+    public function filterAssetByCategory(Request $request) {
+        $input = $request->all();
+
+        $companyID = $input['companyId'] ?? 0;
+        $mainCategory = $input['mainCategory'] ?? 0;
+        $subCategory = $input['subCategory'] ?? [];
+
+        $assets = FixedAssetMaster::where('confirmedYN',1)
+            ->where('approved',-1)
+            ->where('companySystemID',$companyID)
+            ->where('faCatID', $mainCategory)
+            ->where(function ($query) use ($subCategory) {
+                $query->whereIn('faSubCatID', $subCategory)
+                    ->orWhereIn('faSubCatID2', $subCategory)
+                    ->orWhereIn('faSubCatID3', $subCategory);
+            })
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('erp_fa_fa_asset_transfer_details')
+                    ->whereColumn('erp_fa_fa_asset_transfer_details.fa_master_id', 'erp_fa_asset_master.faID');
+            })
+            ->get();
+
+        return $this->sendResponse($assets, "Asset retrieved successfully");
     }
 
     public function validateReport(Request $request)
@@ -2197,15 +2231,31 @@ FROM
 
         $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('faID')->toArray() : [];
 
-         $assetTransfer = FixedAssetCost::selectRaw('erp_fa_assetcost.assetID as assetCode, erp_fa_assettype.typeDes as assetType,erp_fa_asset_master.assetDescription as assetDescription, erp_fa_category.catDescription as category,erp_fa_fa_asset_transfer.document_code as documentCode, erp_fa_fa_asset_transfer.document_date as documentDate,IFNULL(fromLocation.locationName, "-") as fromName, IFNULL(toLocation.locationName, "-") as toName, IFNULL(location.locationName, "-") as locationName, IFNULL(empRequest.empName, "-") as reqName, IFNULL(depMaster.DepartmentDescription, "-") as depName, IFNULL(transferDepMaster.DepartmentDescription, "-") as transferDepName, IFNULL(fromEmployee.empName, "-") as fromEmpName, IFNULL(toEmployee.empName, "-") as toEmpName, erp_fa_asset_master.faID')->addSelect([
-                 'erp_fa_fa_asset_transfer.type',
-                 DB::raw('(CASE 
-            WHEN erp_fa_fa_asset_transfer.type = 1 THEN "Request Based - Employee"
-            WHEN erp_fa_fa_asset_transfer.type = 2 THEN "Direct to Location"
-            WHEN erp_fa_fa_asset_transfer.type = 3 THEN "Direct to Employee"
-            WHEN erp_fa_fa_asset_transfer.type = 4 THEN "Request Based - Department"
-            ELSE ""
-        END) as transferType')
+         $assetTransfer = FixedAssetCost::selectRaw(
+             'erp_fa_assetcost.assetID as assetCode, 
+             erp_fa_assettype.typeDes as assetType,
+             erp_fa_asset_master.assetDescription as assetDescription, 
+             erp_fa_category.catDescription as category,
+             erp_fa_fa_asset_transfer.document_code as documentCode, 
+             erp_fa_fa_asset_transfer.document_date as documentDate,
+             IFNULL(fromLocation.locationName, "-") as fromName, 
+             IFNULL(toLocation.locationName, "-") as toName, 
+             IFNULL(location.locationName, "-") as locationName, 
+             IFNULL(empRequest.empName, "-") as reqName, 
+             IFNULL(depMaster.DepartmentDescription, "-") as depName, 
+             IFNULL(transferDepMaster.DepartmentDescription, "-") as transferDepName, 
+             IFNULL(fromEmployee.empName, "-") as fromEmpName, 
+             IFNULL(toEmployee.empName, "-") as toEmpName, 
+             erp_fa_asset_master.faID'
+            )->addSelect([
+             'erp_fa_fa_asset_transfer.type',
+             DB::raw('(CASE 
+                WHEN erp_fa_fa_asset_transfer.type = 1 THEN "Request Based - Employee"
+                WHEN erp_fa_fa_asset_transfer.type = 2 THEN "Direct to Location"
+                WHEN erp_fa_fa_asset_transfer.type = 3 THEN "Direct to Employee"
+                WHEN erp_fa_fa_asset_transfer.type = 4 THEN "Request Based - Department"
+                ELSE ""
+             END) as transferType')
              ])
             ->leftjoin('erp_fa_asset_master', 'erp_fa_asset_master.faID', '=', 'erp_fa_assetcost.faID')
             ->leftjoin('erp_fa_fa_asset_transfer_details', 'erp_fa_fa_asset_transfer_details.fa_master_id', '=', 'erp_fa_assetcost.faID')
@@ -2226,7 +2276,7 @@ FROM
             ->whereDate('erp_fa_fa_asset_transfer.document_date', '>=', $fromDate)
             ->whereDate('erp_fa_fa_asset_transfer.document_date', '<=', $toDate)
             ->whereIn('erp_fa_asset_master.faID', $assetIds)
-            ->where('erp_fa_fa_asset_transfer.company_id', $companyID)
+            ->whereIn('erp_fa_fa_asset_transfer.company_id', $companyID)
             ->orderBy('documentDate', 'asc')
             ->get();
 

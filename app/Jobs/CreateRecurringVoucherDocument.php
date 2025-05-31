@@ -18,6 +18,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\RecurringVoucherSetupScheDet;
 
 class CreateRecurringVoucherDocument implements ShouldQueue
 {
@@ -101,8 +102,12 @@ class CreateRecurringVoucherDocument implements ShouldQueue
 
                                 // Convert RRV details to JV details
                                 $jvDetailsCreateState = false;
+                                $rrvDetails = RecurringVoucherSetupScheDet::where('recurringVoucherSheduleAutoId',$rrvSchedule->rrvSetupScheduleAutoID)
+                                                                            ->where('recurringVoucherAutoId',$rrvSchedule->master->recurringVoucherAutoId)
+                                                                            ->where('companySystemID',$rrvSchedule->master->companySystemID)
+                                                                            ->get();
 
-                                foreach ($rrvSchedule->master->detail as $rrvDetail){
+                                foreach ($rrvDetails as $rrvDetail){
                                     $dataset = [
                                         'jvMasterAutoId' => $jvMasterReturnData['data']['jvMasterAutoId'],
                                         'chartOfAccountSystemID' => $rrvDetail->chartOfAccountSystemID,
@@ -121,7 +126,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                             'creditAmount' => $rrvDetail->creditAmount,
                                             'serviceLineSystemID' => $rrvDetail->serviceLineSystemID,
                                             'contractUID' => $rrvDetail->contractUID,
-                                            'detail_project_id' => $rrvDetail->detail_project_id,
+                                            'detail_project_id' => $rrvDetail->detailProjectID,
                                             'isAutoCreateDocument' => true
                                         ];
 

@@ -283,7 +283,20 @@ class ItemMaster extends Model
         return $this->belongsTo('App\Models\ItemIssueDetails', 'itemCodeSystem', 'itemCodeSystem');
     }
 
+    public function deliveryOrderDetails()
+    {
+        return $this->belongsTo('App\Models\DeliveryOrderDetail', 'itemCodeSystem', 'itemCodeSystem');
+    }
+
     public function item_category_type() {
         return $this->hasMany('App\Models\ItemMasterCategoryType','itemCodeSystem','itemCodeSystem');
+    }
+
+    public function supplier_invoice_details() {
+        return $this->belongsTo('App\Models\SupplierInvoiceDirectItem', 'itemCodeSystem', 'itemCode');
+    }
+
+    public function usedFinanceSubCategory() {
+        return self::pluck('financeCategorySub')->unique()->filter()->values()->all();
     }
 }

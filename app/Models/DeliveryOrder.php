@@ -434,7 +434,8 @@ class DeliveryOrder extends Model
         'vatRegisteredYN',
         'customerVATEligible',
         'timestamp',
-        'isDelegation'
+        'isDelegation',
+        'isBulkItemJobRun'
     ];
 
     /**
@@ -521,7 +522,8 @@ class DeliveryOrder extends Model
         'modifiedUserName' => 'string',
         'selectedForCustomerInvoice' => 'integer',
         'selectedForSalesReturn' => 'integer',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'isBulkItemJobRun' => 'boolean'
     ];
 
     /**
