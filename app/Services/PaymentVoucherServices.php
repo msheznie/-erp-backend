@@ -2162,13 +2162,16 @@ class PaymentVoucherServices
             ];
         }
 
-        $bankAccountLink = BankAccount::isActive()->IsApprove()->where('companySystemID',$payMaster->companySystemID)->where('chartOfAccountSystemID',$input['chartOfAccountSystemID'])->first();
+        if(!(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) && $payMaster->expenseClaimOrPettyCash == 15 && $payMaster->invoiceType == 3)
+        {
+            $bankAccountLink = BankAccount::isActive()->IsApprove()->where('companySystemID',$payMaster->companySystemID)->where('chartOfAccountSystemID',$input['chartOfAccountSystemID'])->first();
 
-        if (empty($bankAccountLink)) {
-            return [
-                'status' => false,
-                'message' => 'The selected GL is not linked to a bank account.'
-            ];
+            if (empty($bankAccountLink)) {
+                return [
+                    'status' => false,
+                    'message' => 'The selected GL is not linked to a bank account.'
+                ];
+            }
         }
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
