@@ -202,6 +202,9 @@ class SupplierMasterAuditService
                 $previousCriticalYN = SupplierCritical::where('suppliercriticalID',$auditData['previosValue']['isCriticalYN'])->first();
                 $modifiedData[] = ['amended_field' => "is_critical", 'previous_value' => ($previousCriticalYN) ? $previousCriticalYN->description: '', 'new_value' => ($newCriticalYN) ? $newCriticalYN->description : ''];
             }
+            if($auditData['previosValue']['omanization'] != $auditData['newValue']['omanization']) {
+                $modifiedData[] = ['amended_field' => "omanization", 'previous_value' => ($auditData['previosValue']['omanization']) ? $auditData['previosValue']['omanization'] : '', 'new_value' => ($auditData['newValue']['omanization']) ? $auditData['newValue']['omanization'] : ''];
+            }
 
         }
 
