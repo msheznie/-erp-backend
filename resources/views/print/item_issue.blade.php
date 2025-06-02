@@ -228,6 +228,19 @@
                             <span>{{$entity->comment}}</span>
                         </td>
                     </tr>
+                    <tr>
+                        <td width="50px">
+                            <span style="font-weight: bold;">{{ __('custom.segment') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight: bold">:</span>
+                        </td>
+                        <td>
+                            @if($entity->segment_by)
+                                {{$entity->segment_by->ServiceLineDes}}
+                            @endif
+                        </td>
+                    </tr>
                 </table>
             </td>
             {{-- <td style="width: 40%;text-align: center">
@@ -394,7 +407,7 @@
                     <table>
                         <tr>
                             <td width="90px">
-                                <span style="font-weight: bold">{{ __('custom.reviewed_by') }} :</span>
+                                <span style="font-weight: bold">{{ __('custom.recieved_by') }} :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
