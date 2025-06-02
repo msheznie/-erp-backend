@@ -2162,6 +2162,15 @@ class PaymentVoucherServices
             ];
         }
 
+        $bankAccountLink = BankAccount::isActive()->IsApprove()->where('companySystemID',$payMaster->companySystemID)->where('chartOfAccountSystemID',$input['chartOfAccountSystemID'])->first();
+
+        if (empty($bankAccountLink)) {
+            return [
+                'status' => false,
+                'message' => 'The selected GL is not linked to a bank account.'
+            ];
+        }
+
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if (empty($chartOfAccount)) {
             return [

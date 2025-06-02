@@ -190,6 +190,11 @@ class BankAccount extends Model
         return $query->where('isAccountActive',  1);
     }
 
+    public function scopeIsApprove($query)
+    {
+        return $query->where('approvedYN',  1);
+    }
+
     /**
      * Validation rules
      *
