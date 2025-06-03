@@ -914,7 +914,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $technicalCount = $this->getTechnicalCount($tenderId);      
         $bidSubmissionMasterIds = SRMService::getNegotiationBids($tenderId);
 
-
         if($technicalCount->technical_count == 0)
         {
             $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
@@ -933,13 +932,16 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
             ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
             ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
-            ->havingRaw('weightage >= passing_weightage')
-            ->groupBy('srm_bid_submission_master.id')
+            ->groupBy('srm_bid_submission_master.id','srm_tender_master.stage')
             ->where('srm_evaluation_criteria_details.critera_type_id', 2)
             ->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
-            ->where('srm_bid_submission_master.doc_verifiy_status','!=', 2)
-            ->where('srm_bid_submission_master.tender_id', $tenderId); 
+                ->where(function ($query) {
+                    $query->where('srm_tender_master.stage', 1)
+                        ->orWhere('srm_bid_submission_master.doc_verifiy_status', '!=', 2);
+                })
+            ->where('srm_bid_submission_master.tender_id', $tenderId)
+            ->havingRaw("(srm_tender_master.stage != 2 OR weightage >= passing_weightage)");
         }
         
         $isNegotiation == 1 ? $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds)

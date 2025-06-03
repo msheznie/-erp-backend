@@ -79,6 +79,8 @@ return [
             'region' => env('AWS_DEFAULT_REGION_SRM'),
             'bucket' => env('AWS_BUCKET_SRM'),
             'url' => env('AWS_URL_SRM'),
+            'endpoint' => env('AWS_ENDPOINT_SRM'),
+            'use_path_style_endpoint' => true,
         ],
 
         

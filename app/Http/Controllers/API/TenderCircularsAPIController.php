@@ -15,6 +15,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderCirculars;
 use App\Models\TenderMaster;
+use App\Models\TenderSupplierAssignee;
 use App\Repositories\TenderCircularsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -336,6 +337,7 @@ class TenderCircularsAPIController extends AppBaseController
     public function getAttachmentDropCircular(Request $request)
     {
         $input = $request->all();
+        $documentSystemID = $input['documentSystemID'] ?? 0;
         $attachment = CircularAmendments::where('tender_id',$input['tenderMasterId'])->get();
         $attchArray = array();
         if(count($attachment) > 0){
@@ -344,7 +346,7 @@ class TenderCircularsAPIController extends AppBaseController
         }
 
         $attachmentDrop = DocumentAttachments::whereNotIn('attachmentID',$attchArray)
-            ->where('documentSystemID',108)
+            ->where('documentSystemID', $documentSystemID)
             ->where('attachmentType',3)
             ->where('parent_id', null)
             ->where('documentSystemCode',$input['tenderMasterId'])->orderBy('attachmentID', 'asc')->get()->toArray();
@@ -393,8 +395,7 @@ class TenderCircularsAPIController extends AppBaseController
             $attachmentList = $input['attachment_id'];
         }
 
-        if ($tenderMaster['document_system_id'] == 113 ||
-            ($tenderMaster['document_system_id'] == 108 && $input['tenderTypeId'] == 3)) {
+        if (($input['tenderTypeId'] ?? null) === 3) {
             if(isset($input['supplier_id'])){
                 if(sizeof($input['supplier_id' ]) == 0){
                     return ['success' => false, 'message' => 'Supplier is required'];
@@ -578,22 +579,23 @@ class TenderCircularsAPIController extends AppBaseController
 
             if ($result && $supplierList) {
                 DB::commit();
+                $documentName = $tenderObj->document_system_id == 108 ? 'Tender' : 'RFX';
                 foreach ($supplierList as $supplier){
                     $description = "";
                     if(isset($circular[0]['description'])){
                         $description = "<b>Circular Description : </b>" . $circular[0]['description']. "<br /><br />";
                     }
 
-                    $email = ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id == 2) ?
+                    $email = ($tenderObj->tender_type_id ?? null) == 2 ?
                         $supplier->supplierAssigned->supEmail :
                         $supplier->supplier_registration_link->email;
 
                     $emailFormatted = email::emailAddressFormat($email);
                     
                     $dataEmail['companySystemID'] = $request->input('company_id');
-                    $dataEmail['alertMessage'] = "Tender Circular";
+                    $dataEmail['alertMessage'] = $documentName . " Circular";
                     $dataEmail['empEmail'] = $emailFormatted;
-                    $body = "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
+                    $body = "Dear Supplier,"."<br /><br />"." Please find published <span style='text-transform: lowercase;'>". $documentName ."</span> circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
                     $dataEmail['emailAlertMessage'] = $body;
                     $dataEmail['attachmentList'] = $file;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -618,7 +620,22 @@ class TenderCircularsAPIController extends AppBaseController
             ->where('srm_tender_master_supplier.tender_master_id', $input['tenderMasterId'])
             ->get();
 
-        $data['purchased'] = $purchased;
+        if ($purchased->isEmpty()) {
+            $assignSupplier = TenderSupplierAssignee::getAssignSupplier($input['companySystemID'],$input['tenderMasterId']);
+
+            $purchased = $assignSupplier->map(function ($assignee) {
+                $link = $assignee->supplierAssigned->supplierRegistrationLink ?? null;
+
+                return $link ? [
+                    'purchased_by' => $link->purchased_by,
+                    'name' => $link->name,
+                ] : null;
+            })->filter()->values();
+        }
+
+        return response()->json([
+            'purchased' => $purchased,
+        ]);
 
         if(isset($input['circularId']) && $input['circularId'] > 0){
             $dataAssigned = SupplierRegistrationLink::selectRaw('*')

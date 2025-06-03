@@ -58,6 +58,24 @@ class TenderCustomEmail extends Model
             ];
         }
 
+        $supplierList = collect(SupplierTenderNegotiation::getSupplierList($negotiationId, $tenderId))
+            ->filter(function ($record) {
+                return isset($record['id']);
+            })
+            ->values();
+
+        $existingSupplierIds = collect($responseData)->pluck('supplier_uuid')->all();
+
+        foreach ($supplierList as $record) {
+            if (!in_array($record['id'], $existingSupplierIds, true)) {
+                $responseData[] = [
+                    'id' => null,
+                    'supplier_uuid' => $record['id'],
+                    'supplier_name' => $record['name'] ?? null,
+                ];
+            }
+        }
+
         return $responseData;
     }
 

@@ -244,4 +244,9 @@ class SupplierAssigned extends Model
     public function businessCategoryAssigned(){
         return $this->hasOne('App\Models\SupplierBusinessCategoryAssign', 'supplierID','supplierCodeSytem');
     }
+
+    public function supplierRegistrationLink()
+    {
+        return $this->belongsTo('App\Models\SupplierRegistrationLink', 'supplierCodeSytem','supplier_master_id');
+    }
 }

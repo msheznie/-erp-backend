@@ -311,6 +311,22 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         } else if(isset($input['level']) && $input['level'] === 0) {
             return $this->addMasterEvaluationCriteria($request);
         } else if(isset($input['pullFromMaster']) && $input['pullFromMaster'] == true){
+
+            $validator = \Validator::make($input, [
+                'selectedData' => 'required',
+            ], [
+                'selectedData.required' => 'Technical evaluation criteria is required.',
+            ]);
+
+            if ($validator->fails()) {
+                $message = $validator->errors()->first('selectedData');
+
+                return [
+                    'success' => false,
+                    'message' => $message,
+                ];
+            }
+
             $idArray = array_map(function ($item) {
                 return $item['id'];
             }, $input['selectedData']);

@@ -343,6 +343,12 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["companySystemID"], 'document' => $input["document_master_id"],'reference_document_id' => $input["requested_document_master_id"],'document_type' => $tenderMaster->document_type,'amount' => $tenderMaster->estimated_value,'tenderTypeId' => $tenderMaster->tender_type_id);
                 $confirm = \Helper::confirmDocument($params);
 
+                $titles = [
+                    108 => 'Tender',
+                    113 => 'RFX',
+                ];
+                $title = $titles[$tenderMaster['document_system_id']] ?? null;
+
 
                 if (!$confirm["success"]) {
                     DB::rollBack();
@@ -351,7 +357,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
 
                 DB::commit();
 
-                return ['success' => true, 'message' => 'Tender modify request sent successfully'];
+                return ['success' => true, 'message' => $title. ' modify request sent successfully'];
 
             } catch (\Exception $e) {
                 DB::rollback();

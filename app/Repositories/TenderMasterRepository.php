@@ -4,6 +4,9 @@ namespace App\Repositories;
 
 use App\helper\Helper;
 use App\Helpers\General;
+use App\Models\BidSubmissionDetail;
+use App\Models\CalendarDates;
+use App\Models\CalendarDatesDetail;
 use App\Models\CodeConfigurations;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -21,6 +24,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\EnvelopType;
+use App\Models\EvaluationCriteriaDetails;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
@@ -465,16 +469,18 @@ class TenderMasterRepository extends BaseRepository
             }
 
             $formattedDatesAndTime = $this->getFormattedDatesAndTime($input,$tenderData);
-            $validationResult = $this->validateTenderDates($formattedDatesAndTime,$tenderData,$isTender);
+            $validationResult = $this->validateTenderDates($formattedDatesAndTime,$tenderData,$isTender, $input);
             if (!$validationResult['success']) {
                 return $validationResult;
             }
 
             $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
 
+            $title = ($isTender == 1) ? "Tender" : "RFX";
+
             return [
                 'success' => true,
-                'message' => 'Tender calendar days updated successfully.',
+                'message' => $title . ' calendar days updated successfully.',
                 'data' => $updatedData
             ];
 
@@ -485,7 +491,7 @@ class TenderMasterRepository extends BaseRepository
         }
     }
 
-    private function validateTenderDates($data,$tenderData,$isTender)
+    private function validateTenderDates($data,$tenderData,$isTender,$input)
     {
         $documentSalesStartDate = $data['documentSalesStartDate'];
         $documentSalesEndDate = $data['documentSalesEndDate'];
@@ -498,11 +504,29 @@ class TenderMasterRepository extends BaseRepository
         $technicalEndDate = $data['technicalEndDate'];
         $commercialStartDate = $data['commercialStartDate'];
         $commercialEndDate = $data['commercialEndDate'];
-        $employee = \Helper::getEmployeeInfo();
 
+        $preBidClarificationStartDate = $data['preBidClarificationStartDate'];
+        $preBidClarificationEndDate = $data['preBidClarificationEndDate'];
+        $siteVisitStartDate = $data['siteVisitStartDate'];
+        $siteVisitEndDate = $data['siteVisitEndDate'];
 
-        $bidClosingDate = $tenderData['bid_submission_closing_date'];
-        $currentDate = (Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()));
+        if (!empty($input['calendarDates'])) {
+            foreach ($input['calendarDates'] as $calDate) {
+                $isDefault = $calDate['is_default'] ?? 0;
+                if ($isDefault == 0) {
+                    $keyBase = $calDate['calendar_date'];
+                    $startDate = $this->parseDateTime($calDate, 'from_date', 'from_time');
+                    $endDate = $this->parseDateTime($calDate, 'to_date', 'to_time');
+
+                    $calendarDateTimes[$keyBase . 'StartDate'] = $startDate;
+                    $calendarDateTimes[$keyBase . 'EndDate'] = $endDate;
+
+                    if (!empty($startDate) && !empty($endDate) && $startDate > $endDate) {
+                        return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time'];
+                    }
+                }
+            }
+        }
 
         if ($submissionOpeningDate > $submissionClosingDate) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
@@ -538,17 +562,57 @@ class TenderMasterRepository extends BaseRepository
                 return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
             }
 
-                if (!is_null($commercialEndDate) && !is_null($commercialStartDate) && $commercialStartDate > $commercialEndDate) {
-                    return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
-                }
+            if (!is_null($commercialEndDate) && !is_null($commercialStartDate) && $commercialStartDate > $commercialEndDate) {
+                return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
+            }
 
-                if (!is_null($technicalEndDate) && !is_null($commercialStartDate) && ($technicalEndDate >= $commercialStartDate)) {
-                    return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
-                }
+            if (!is_null($technicalEndDate) && !is_null($commercialStartDate) && ($technicalEndDate >= $commercialStartDate)) {
+                return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
+            }
 
-                if (!empty($technicalStartDate) && !empty($technicalEndDate && $technicalStartDate > $technicalEndDate)) {
-                    return ['success' => false, 'message' => 'Technical Bid Opening to date and time should greater than Technical Bid Opening from date and time'];
-                }
+            if (!empty($technicalStartDate) && !empty($technicalEndDate && $technicalStartDate > $technicalEndDate)) {
+                return ['success' => false, 'message' => 'Technical Bid Opening to date and time should greater than Technical Bid Opening from date and time'];
+            }
+        }
+
+        if ((!is_null($preBidClarificationStartDate) && !is_null($preBidClarificationEndDate)) && (($preBidClarificationStartDate > $preBidClarificationEndDate))) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
+        }
+
+        if ((!is_null($siteVisitStartDate) && !is_null($siteVisitEndDate)) && (($siteVisitStartDate > $siteVisitEndDate))) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+        }
+
+        if (!is_null($preBidClarificationStartDate) && !is_null($documentSalesStartDate) && ($documentSalesStartDate > $preBidClarificationStartDate)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
+        }
+
+        if (!is_null($preBidClarificationStartDate) && ($preBidClarificationStartDate > $submissionClosingDate)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
+        }
+
+        if (!is_null($preBidClarificationEndDate) && ($preBidClarificationEndDate >= $submissionClosingDate)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than bid submission to date and time'];
+        }
+
+        if ((!is_null($preBidClarificationStartDate) && !is_null($preBidClarificationEndDate)) && (($preBidClarificationStartDate > $preBidClarificationEndDate))) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
+        }
+
+        if ((!is_null($siteVisitStartDate) && !is_null($siteVisitEndDate)) && (($siteVisitStartDate > $siteVisitEndDate))) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+        }
+
+        if (!is_null($preBidClarificationStartDate) && !is_null($documentSalesStartDate) && ($documentSalesStartDate > $preBidClarificationStartDate)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
+        }
+
+        if (!is_null($preBidClarificationStartDate) && ($preBidClarificationStartDate > $submissionClosingDate)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
+        }
+
+        if (!is_null($preBidClarificationEndDate) && ($preBidClarificationEndDate >= $submissionClosingDate)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than bid submission to date and time'];
         }
 
         return ['success' => true];
@@ -565,7 +629,11 @@ class TenderMasterRepository extends BaseRepository
             'technicalStartDate' => $this->parseDateTime($input, 'technicalBidOpeningStartDate', 'technicalBidOpeningStarDateTime'),
             'technicalEndDate' => $this->parseDateTime($input, 'technicalBidOpeningEndDate', 'technicalBidOpeningEndDateTime'),
             'commercialStartDate' => $this->parseDateTime($input, 'commercialBidOpeningStartDate', 'commercialBidOpeningStarDateTime'),
-            'commercialEndDate' => $this->parseDateTime($input, 'commercialBidOpeningEndDate', 'commercialBidOpeningEndDateTime')
+            'commercialEndDate' => $this->parseDateTime($input, 'commercialBidOpeningEndDate', 'commercialBidOpeningEndDateTime'),
+            'preBidClarificationStartDate' => $this->parseDateTime($input, 'preBidClarificationStartDate', 'preBidClarificationStartTime'),
+            'preBidClarificationEndDate' => $this->parseDateTime($input, 'preBidClarificationEndDate', 'preBidClarificationEndTime'),
+            'siteVisitStartDate' => $this->parseDateTime($input, 'siteVisitStartDate', 'siteVisitStartTime'),
+            'siteVisitEndDate' => $this->parseDateTime($input, 'siteVisitEndDate', 'siteVisitEndTime')
         ];
     }
     private function parseDateTime($input, $dateKey, $timeKey)
@@ -596,9 +664,48 @@ class TenderMasterRepository extends BaseRepository
                     'technical_bid_closing_date' => $formattedDatesAndTime['technicalEndDate'] ?? null,
                     'commerical_bid_opening_date' => $formattedDatesAndTime['commercialStartDate'] ?? null,
                     'commerical_bid_closing_date' => $formattedDatesAndTime['commercialEndDate'] ?? null,
+                    'pre_bid_clarification_start_date' => $formattedDatesAndTime['preBidClarificationStartDate'] ?? null,
+                    'pre_bid_clarification_end_date' => $formattedDatesAndTime['preBidClarificationEndDate'] ?? null,
+                    'site_visit_date' => $formattedDatesAndTime['siteVisitStartDate'] ?? null,
+                    'site_visit_end_date' => $formattedDatesAndTime['siteVisitEndDate'] ?? null,
                 ];
 
                 $tenderMaster->update($data);
+
+                $calendarDateMap = CalendarDates::calendarDateMap($input['calendarDates']);
+
+                $defaultDateMappings = [
+                    1 => ['start' => 'preBidClarificationStartDate', 'end' => 'preBidClarificationEndDate'],
+                    2 => ['start' => 'siteVisitStartDate', 'end' => 'siteVisitEndDate'],
+                ];
+
+                foreach ($input['calendarDates'] as $calDate) {
+
+                    $calenderDateDetails = $calendarDateMap[$calDate['id']] ?? null;
+                    if (!$calenderDateDetails) {
+                        continue;
+                    }
+
+                    $dates = [
+                        'from_date' => $this->parseDateTime($calDate, 'from_date', 'from_time'),
+                        'to_date' => $this->parseDateTime($calDate, 'to_date', 'to_time'),
+                    ];
+
+                    CalendarDatesDetail::updateCalendarDates($tenderData['id'],$tenderData['company_id'],
+                        $calDate['id'], $dates);
+
+                    if (isset($defaultDateMappings[$calenderDateDetails->is_default])) {
+                        $map = $defaultDateMappings[$calenderDateDetails->is_default];
+
+                        $dates = [
+                            'from_date' => $formattedDatesAndTime[$map['start']] ?? null,
+                            'to_date'   => $formattedDatesAndTime[$map['end']] ?? null,
+                        ];
+
+                        CalendarDatesDetail::updateCalendarDates($tenderData['id'],$tenderData['company_id'],
+                            $calenderDateDetails['id'], $dates);
+                    }
+                }
             });
 
             return [
@@ -689,32 +796,9 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => 'Tender not found'];
         }
         $calendarDataAuditLog = SRMTenderCalendarLog::getCalenderDatesEditLogs($tenderData['id'],
-            $tenderData['company_id'],null,true);
+            $tenderData['company_id'],$input['sort'],$input['isGrouped']);
 
         return \DataTables::of($calendarDataAuditLog)
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->make(true);
-    }
-
-    public function getCalendarDateAuditLogDetail($request)
-    {
-        $input = $request->all();
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
-
-        $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
-        if (empty($tenderData)) {
-            return ['success' => false, 'message' => 'Tender not found'];
-        }
-        $calendarDataAuditLogDetails = SRMTenderCalendarLog::getCalenderDatesEditLogs(
-            $tenderData['id'], $input['companyId'], $input['sort']);
-
-        return \DataTables::of($calendarDataAuditLogDetails)
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -747,29 +831,28 @@ class TenderMasterRepository extends BaseRepository
                 $oldValue = isset($tenderData[$info['oldField']]) ? $tenderData[$info['oldField']] : null;
                 $newValue = isset($formattedDatesAndTime[$newField]) ? $formattedDatesAndTime[$newField] : null;
 
-                $oldDateTime = $oldValue ? Carbon::parse($oldValue) : null;
-                $newDateTime = $newValue ? Carbon::parse($newValue) : null;
+                $this->compareAndLogChange($logData, $baseData, $info['descriptionDate'], $oldValue, $newValue, 'date');
+                $this->compareAndLogChange($logData, $baseData, $info['descriptionTime'], $oldValue, $newValue, 'time');
+            }
 
-                $oldDate = $oldDateTime ? $oldDateTime->format('Y-m-d') : null;
-                $newDate = $newDateTime ? $newDateTime->format('Y-m-d') : null;
+            if (!empty($input['calendarDates'])) {
+                foreach ($input['calendarDates'] as $calDate) {
+                    if (($calDate['is_default'] ?? 1) == 0) {
+                        $keyBase = $calDate['calendar_date'];
 
-                if ($oldDate !== $newDate) {
-                    $logData[] = array_merge($baseData, [
-                        'filed_description' => $info['descriptionDate'],
-                        'old_value' => $oldDate,
-                        'new_value' => $newDate,
-                    ]);
-                }
+                        $startDateTime = $this->parseDateTime($calDate, 'from_date', 'from_time');
+                        $endDateTime   = $this->parseDateTime($calDate, 'to_date', 'to_time');
 
-                $oldTime = $oldDateTime ? $oldDateTime->format('H:i:s') : null;
-                $newTime = $newDateTime ? $newDateTime->format('H:i:s') : null;
+                        $calendarDate = CalendarDatesDetail::getCalendarDateDetail($tenderData['id'],
+                            $tenderData['company_id'], $calDate['id']);
 
-                if ($oldTime !== $newTime) {
-                    $logData[] = array_merge($baseData, [
-                        'filed_description' => $info['descriptionTime'],
-                        'old_value' => $oldTime,
-                        'new_value' => $newTime,
-                    ]);
+                        if ($calendarDate) {
+                            $this->compareAndLogChange($logData, $baseData, "{$keyBase} from date", $calendarDate->from_date, $startDateTime, 'date');
+                            $this->compareAndLogChange($logData, $baseData, "{$keyBase} from time", $calendarDate->from_date, $startDateTime, 'time');
+                            $this->compareAndLogChange($logData, $baseData, "{$keyBase} to date", $calendarDate->to_date, $endDateTime, 'date');
+                            $this->compareAndLogChange($logData, $baseData, "{$keyBase} to time", $calendarDate->to_date, $endDateTime, 'time');
+                        }
+                    }
                 }
             }
 
@@ -778,6 +861,25 @@ class TenderMasterRepository extends BaseRepository
             }
         });
     }
+
+
+    private function compareAndLogChange(array &$logData, array $baseData, string $fieldDesc, $oldValue, $newValue, string $type)
+    {
+        $old = $oldValue ? Carbon::parse($oldValue) : null;
+        $new = $newValue ? Carbon::parse($newValue) : null;
+
+        $oldFormatted = $old ? $old->format($type === 'date' ? 'Y-m-d' : 'H:i:s') : null;
+        $newFormatted = $new ? $new->format($type === 'date' ? 'Y-m-d' : 'H:i:s') : null;
+
+        if ($oldFormatted !== $newFormatted) {
+            $logData[] = array_merge($baseData, [
+                'filed_description' => $fieldDesc,
+                'old_value' => $oldFormatted,
+                'new_value' => $newFormatted,
+            ]);
+        }
+    }
+
 
     private function getFieldMappings(): array
     {
@@ -836,6 +938,30 @@ class TenderMasterRepository extends BaseRepository
                 'oldField' => 'commerical_bid_closing_date',
                 'descriptionDate' => 'Commercial bid opening to date',
                 'descriptionTime' => 'Commercial bid opening to time',
+            ],
+
+            'preBidClarificationStartDate' => [
+                'oldField' => 'pre_bid_clarification_start_date',
+                'descriptionDate' => 'Pre Bid Clarification from date',
+                'descriptionTime' => 'Pre Bid Clarification from time',
+            ],
+
+            'preBidClarificationEndDate' => [
+                'oldField' => 'pre_bid_clarification_end_date',
+                'descriptionDate' => 'Pre Bid Clarification to date',
+                'descriptionTime' => 'Pre Bid Clarification to time',
+            ],
+
+            'siteVisitStartDate' => [
+                'oldField' => 'site_visit_date',
+                'descriptionDate' => 'Site Visit from date',
+                'descriptionTime' => 'Site Visit from time',
+            ],
+
+            'siteVisitEndDate' => [
+                'oldField' => 'site_visit_end_date',
+                'descriptionDate' => 'Site Visit to date',
+                'descriptionTime' => 'Site Visit to time',
             ],
         ];
     }
@@ -1264,6 +1390,38 @@ class TenderMasterRepository extends BaseRepository
                 'success' => false,
                 'message' => 'Single Sourcing ' .$type. ' allows only one supplier. Please remove
                                      additional suppliers before confirming'];
+        }
+
+        return ['success' => true];
+    }
+
+    public function checkRankingEmptyRecords($request)
+    {
+        $input = $request->all();
+        $tenderId = $input['tenderId'];
+        $isEmptyRecordsExists = BidSubmissionDetail::BidSubmissionEmpty($tenderId);
+        if($isEmptyRecordsExists )
+        {
+            DB::transaction(function () use ($tenderId) {
+                BidSubmissionDetail::where('tender_id', $tenderId)
+                    ->update(['technical_ranking' => null]);
+            });
+        }
+
+    }
+
+    public function validateTechnicalEvaluationCriteria($tenderId, $level, $criteriaType)
+    {
+        $criteriaDetails = EvaluationCriteriaDetails::getEvaluationCriteriaDetails($tenderId, $level, $criteriaType);
+
+        if ($criteriaDetails->exists()) {
+            $totalWeightage = $criteriaDetails->sum('weightage');
+            if ($totalWeightage != 100) {
+                return [
+                    'success' => false,
+                    'message' => 'Total of the Technical Evaluation Criteria percentage should be equal to 100'
+                ];
+            }
         }
 
         return ['success' => true];
