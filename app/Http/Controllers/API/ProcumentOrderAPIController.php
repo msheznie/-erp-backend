@@ -59,6 +59,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Jobs\CreateSupplierTransactions;
+use App\Jobs\exportDetailedPoList;
 use App\Models\AddonCostCategories;
 use App\Models\AdvancePaymentDetails;
 use App\Models\AdvanceReceiptDetails;
@@ -146,6 +147,7 @@ use App\Repositories\SrmTenderPoRepository;
 use App\Services\Currency\CurrencyService;
 use App\Services\Excel\ExportReportToExcelService;
 use App\Services\PrintTemplateService;
+use App\Services\ProcurementOrder\ExportPODetailExcel;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Exception;
@@ -5427,6 +5429,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable'));
 
+        if(isset($input['stat']) && $input['stat']) {
+            $db = $input['db'] ?? "";
+            exportDetailedPoList::dispatch($db, $request->all());
+
+            return $this->sendResponse('', 'PO Detailed report Export in progress, you will be notified once ready !!');
+        }
+
         $supplierID = $request['supplierID'];
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
@@ -5441,6 +5450,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $output = ProcumentOrder::where('companySystemID', $input['companyId']);
         $output->where('documentSystemID', $input['documentId']);
 
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $procumentOrders = $output->where(function ($query) use ($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $output->whereIn('serviceLineSystemID', $serviceLineSystemID);
@@ -5450,6 +5471,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         if (array_key_exists('poType_N', $input)) {
             if (($input['poType_N'] == 5 || $input['poType_N'] == 6) && !is_null($input['poType_N'])) {
                 $output->where('poType_N', $input['poType_N']);
+            }
+        }
+
+        if (array_key_exists('financeCategory', $input)) {
+            if ($input['financeCategory'] && !is_null($input['financeCategory'])) {
+                $output->where('financeCategory', $input['financeCategory']);
+            }
+        }
+
+        if (array_key_exists('poTypeID', $input)) {
+            if ($input['poTypeID'] && !is_null($input['poTypeID'])) {
+                $output->where('poTypeID', $input['poTypeID']);
             }
         }
 

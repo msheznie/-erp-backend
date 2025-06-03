@@ -92,7 +92,8 @@ class TenantEnforce
             'api/v1/credit-note',
             'api/v1/chequeRegisterDetailSwitch',
             'api/v1/chequeRegisterDetailCancellation',
-            'api/v1/supplierInvoiceDetailsAddAllItems'
+            'api/v1/supplierInvoiceDetailsAddAllItems',
+            'api/v1/exportProcumentOrderMaster'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {

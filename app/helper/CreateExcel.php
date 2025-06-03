@@ -301,6 +301,115 @@ class CreateExcel
         return $basePath;
     }
 
+    public static function processDetailExport($data, $companyCode) {
+        $excel_content = \Excel::create('po_details_export', function($excel) use ($data) {
+            $excel->sheet('Sheet1', function($sheet) use ($data) {
+                $sheet->setStyle([
+                    'font' => [
+                        'name' => 'Calibri',
+                        'size' => 11,
+                    ]
+                ]);
+
+                $rowNum = 1;
+                $knownHeaders = [
+                    'company id',
+                    'order details',
+                    'item code',
+                    'pr number',
+                    'logistics details',
+                    'category',
+                    'addon details',
+                ];
+
+                $columnWidths = [
+                    'A' => 20, // Company ID
+                    'B' => 13, // Company Name
+                    'C' => 13, // Order Code
+                    'D' => 15, // Segment
+                    'E' => 13, // Created at
+                    'F' => 13, // Created By
+                    'G' => 13, // Category
+                    'H' => 13, // Narration
+                    'I' => 13, // Supplier Code
+                    'J' => 13, // Supplier Name
+                    'K' => 13, // Credit Period
+                    'L' => 13, // Supplier Country
+                    'M' => 13, // Expected Delivery Date
+                    'N' => 13, // Delivery Terms
+                    'O' => 13, // Penalty Terms
+                    'P' => 13, // Confirmed Status
+                    'Q' => 13, // Confirmed Date
+                    'R' => 13, // Confirmed By
+                    'S' => 13, // Approved Status
+                    'T' => 13, // Approved Date
+                    'U' => 13, // Transaction Currency
+                    'V' => 13, // Transaction Amount
+                    'W' => 13, // Local Amount
+                    'X' => 13, // Reporting Amount
+                    'Y' => 13, // Advance Payment Available
+                    'Z' => 13, // Total Advance Payment Amount
+                ];
+
+                foreach ($columnWidths as $col => $width) {
+                    $sheet->setWidth($col, $width);
+                }
+
+                $maxColumns = 0;
+                foreach ($data as $row) {
+                    $maxColumns = max($maxColumns, count($row));
+                }
+
+                foreach ($data as $row) {
+                    $paddedRow = array_pad($row, $maxColumns, '');
+                    $sheet->appendRow($paddedRow);
+
+                    $isHeader = false;
+                    foreach ($paddedRow as $cell) {
+                        $clean = strtolower(trim($cell));
+                        foreach ($knownHeaders as $keyword) {
+                            if ($clean === $keyword || strpos($clean, $keyword) !== false) {
+                                $isHeader = true;
+                                break 2;
+                            }
+                        }
+                    }
+
+                    if ($isHeader) {
+                        $highestColumn = \PHPExcel_Cell::stringFromColumnIndex($maxColumns - 1);
+                        $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) {
+                            $cells->setFont([
+                                'bold' => true,
+                                'size' => 12,
+                                'name' => 'Calibri'
+                            ]);
+                        });
+                    }
+
+                    $rowNum++;
+                }
+            });
+        })->string('xlsx');
+
+        $disk = 's3';
+        $fileName = 'po_detail_export';
+        $path_dir='procurement/purchase_order/excel/';
+        $type='xlsx';
+
+        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
+        $path = $companyCode.'/'.$path_dir.$full_name;
+        $result = Storage::disk($disk)->put($path, $excel_content);
+        $basePath = '';
+        if($result)
+        {
+            if (Storage::disk($disk)->exists($path))
+            {
+                $basePath = \Helper::getFileUrlFromS3($path);
+            }
+        }
+        return $basePath;
+    }
+
     public static function fromDate($array,$sheet,$type)
     {
         if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
