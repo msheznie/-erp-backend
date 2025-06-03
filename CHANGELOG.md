@@ -1,6 +1,25 @@
 # Changelog
 
 
+## [10.72.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.71.0...v10.72.0) (2025-06-03)
+
+
+### Features
+
+* **RFX:** RFX- BidOpening [GSUP-2421] ([#7999](https://github.com/pbsgears/Gears_BackEnd/issues/7999)) ([171a6b2](https://github.com/pbsgears/Gears_BackEnd/commit/171a6b259cda65ff57ee49b443d701e75d341929))
+* **srm:** Display tender negotiation emails that are sent as default [GSUP-2415] ([#8046](https://github.com/pbsgears/Gears_BackEnd/issues/8046)) ([18abced](https://github.com/pbsgears/Gears_BackEnd/commit/18abced4e723dfeb064b7143e1b1d63394a30faa))
+* **srm:** Tender & RFX | Calendar Date Change Enhancement [GSUP-2700] ([#8005](https://github.com/pbsgears/Gears_BackEnd/issues/8005)) ([2c0beb0](https://github.com/pbsgears/Gears_BackEnd/commit/2c0beb08b54c1a9293fb491c0c1ee8b516ab4b0b))
+* **srm:** Validation for the Technical Evaluation Criteria Total [GSUP-2870] ([#8054](https://github.com/pbsgears/Gears_BackEnd/issues/8054)) ([b51f78a](https://github.com/pbsgears/Gears_BackEnd/commit/b51f78a7d3d93f099edf8f4006e61b7610d615e0))
+
+
+### Bug Fixes
+
+* **srm:** Calendar Date Section Shows All Dates on Edit Icon Click tender/RFX [GSUP-2821] ([#8035](https://github.com/pbsgears/Gears_BackEnd/issues/8035)) ([cccb661](https://github.com/pbsgears/Gears_BackEnd/commit/cccb6613444dac2e5120d871d26652aa4d95a5ab))
+* **srm:** Display RFX 100% validation message when RFX include a Go/No Go criteria even there isn't technical evaluation [GSUP-3006] ([#8102](https://github.com/pbsgears/Gears_BackEnd/issues/8102)) ([e57b21f](https://github.com/pbsgears/Gears_BackEnd/commit/e57b21fde6b29d2a780dfa63b85127f2d8840df0))
+* **srm:** Issues in Supplier Assignment and Circular Functionality for Single-Sourcing Tenders/RFX [GSUP-3001] ([#8098](https://github.com/pbsgears/Gears_BackEnd/issues/8098)) ([370fd27](https://github.com/pbsgears/Gears_BackEnd/commit/370fd27e15c6450d4603529149b7f0144debd9b2))
+* **srm:** RFX Edit/Amend redirects to Tender page after approval [GSUP-2886] ([#8067](https://github.com/pbsgears/Gears_BackEnd/issues/8067)) ([6d044bc](https://github.com/pbsgears/Gears_BackEnd/commit/6d044bc35de3739663ca370ade85dfc218f1dd4a))
+* **srm:** Suppliers Dropdown Not Loading in Single-Sourcing Tender and RFX [GSUP-2994] ([#8090](https://github.com/pbsgears/Gears_BackEnd/issues/8090)) ([32230ea](https://github.com/pbsgears/Gears_BackEnd/commit/32230ea9c4bb9a73ec054e2139b63dd9ed9242f8))
+
 ## [10.71.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.70.0...v10.71.0) (2025-05-31)
 
 
