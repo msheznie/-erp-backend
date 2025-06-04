@@ -113,4 +113,9 @@ class CompanyDocumentAttachment extends Model
                         ->where('documentSystemID', $documentSystemID)
                         ->first();
     }
+
+       public function access()
+    {
+        return $this->hasOne('App\Models\CompanyDocumentAttachmentAccess','documentSystemID','documentSystemID');
+    }
 }
