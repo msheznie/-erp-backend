@@ -4141,20 +4141,22 @@ class FinancialReportAPIController extends AppBaseController
                                 $dueAmount = $val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount;
                             }
 
-                        } elseif ($request->reportViewID == 2) {
-                            $data[$x]['Value'] = number_format($val->value, $val->DecimalPlaces);
-                            $data[$x]['Discount'] = number_format($val->discount, $val->DecimalPlaces);
-                            $data[$x]['Net Amount'] = number_format($val->value - $val->discount, $val->DecimalPlaces);
-                            $data[$x]['VAT'] = number_format($val->VATAmount, $val->DecimalPlaces);
-                            if (in_array(24, $selectedColumns)) $data[$x]['Exempt VAT'] = $val->exempt_vat_portion ?? 0;
-                            if (in_array(31, $selectedColumns)) $data[$x]['Retention Amount'] = $val->retentionAmount;
-                            if($request->tempType == 2 || $request->tempType == 1)
-                            {
-                                $data[$x]['Due Amount'] = number_format($val->value - $val->discount + $val->VATAmount, $val->DecimalPlaces);
-                                $dueAmount = $val->value - $val->discount + $val->VATAmount;
-                            }else {
-                                $data[$x]['Due Amount'] = number_format($val->value + $val->discount + $val->VATAmount, $val->DecimalPlaces);
-                                $dueAmount = $val->value + $val->discount + $val->VATAmount;
+                            } elseif ($request->reportViewID == 2) {
+                                $data[$x]['Value'] = number_format($val->value, $val->DecimalPlaces);
+                                $data[$x]['Discount'] = number_format($val->discount, $val->DecimalPlaces);
+                                $data[$x]['Net Amount'] = number_format($val->value - $val->discount, $val->DecimalPlaces);
+                                $data[$x]['VAT'] = number_format($val->VATAmount, $val->DecimalPlaces);
+                                if (in_array(24, $selectedColumns)) $data[$x]['Exempt VAT'] = $val->exempt_vat_portion ?? 0;
+                                if (in_array(31, $selectedColumns)) $data[$x]['Retention Amount'] = $val->retentionAmount;
+                                if($request->tempType == 2 || $request->tempType == 1)
+                                {
+                                    $taxAmountLine = $val->rcmActivated ? 0 : $val->taxTotalAmount;
+                                    $data[$x]['Due Amount'] = number_format($val->value - $val->discount + $taxAmountLine, $val->DecimalPlaces);
+                                    $dueAmount = $val->value - $val->discount + $val->VATAmount;
+                                }else {
+                                    $data[$x]['Due Amount'] = number_format($val->value + $val->discount + $val->VATAmount, $val->DecimalPlaces);
+                                    $dueAmount = $val->value + $val->discount + $val->VATAmount;
+                                }
                             }
                         }
 
