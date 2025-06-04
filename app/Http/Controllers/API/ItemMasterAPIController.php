@@ -617,6 +617,10 @@ class ItemMasterAPIController extends AppBaseController
             $companyList = $warehouse->pluck('companySystemID')->unique()->toArray();
         }
 
+        if (empty($companyList)) {
+            $companyList = [$selectedCompanyId];
+        }
+
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
         foreach ($companyList as $companyId) {
@@ -627,7 +631,7 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
-        $subCompanies = !empty($companyList) ? array_unique($companyList) : [$selectedCompanyId];
+        $subCompanies = array_unique($subCompanies);
 
         /**  Fixed Assets  Drop Down */
         $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
