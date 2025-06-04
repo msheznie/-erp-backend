@@ -7141,7 +7141,7 @@ class FinancialReportAPIController extends AppBaseController
     edn.supplierID AS supplierID,
     ctm.countryName,
     cm.DecimalPlaces,
-    ed.glCode AS lineItemNumber,
+    CONCAT(ed.glCode," | ",ed.glCodeDes) AS lineItemNumber,
     SUM(ed.netAmount) AS bookingAmountTrans,
     vatsub.subCategoryDescription,
      0 AS discount,
@@ -7284,7 +7284,7 @@ AND edn.approved = - 1  AND edn.type = 1 AND taxTotalAmount > 0 '      ;
     ecnd.comRptAmount AS bookingAmountRpt,
     ecnd.comRptCurrencyER AS companyReportingER,
     ROUND(ecnd.VATPercentage,4) AS VATPercentage,
-    ecnd.glCode AS lineItemNumber,
+    CONCAT(ecnd.glCode," | ",ecnd.glCodeDes) AS lineItemNumber,
     cust.vatNumber,
     curr.CurrencyCode,
     vatsub.subCategoryDescription,
@@ -7344,7 +7344,7 @@ AND ecn.approved = - 1 AND taxTotalAmount > 0' ;
     DATE_FORMAT(epsim.postedDate, "%d/%m/%Y") AS postedDate,
     epsim.BPVsupplierID AS BPVsupplierID,
     ctm.countryName,
-    edpd.glCode AS lineItemNumber,
+    CONCAT(edpd.glCode," | ",edpd.glCodeDes) AS lineItemNumber,
     edpd.glCode,
     edpd.netAmount AS value,
     (edpd.netAmountRpt + edpd.VATAmountRpt) AS valueRpt,
@@ -7404,6 +7404,8 @@ LEFT JOIN
     suppliermaster AS sm ON sm.supplierCodeSystem = epsim.BPVsupplierID
 LEFT JOIN
     employees AS emp ON emp.employeeSystemID = epsim.directPaymentPayeeEmpID
+LEFT JOIN 
+    hrms_employeedetails AS empDetails ON empDetails.employeeSystemID = emp.employeeSystemID
 LEFT JOIN
     currencymaster AS cm ON cm.currencyID = epsim.supplierTransCurrencyID
 LEFT JOIN
@@ -7490,7 +7492,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 DATE_FORMAT(invoiceMaster.postedDate, "%d/%m/%Y") AS postedDate,
                 invoiceMaster.rcmActivated AS rcmActivated,
                 ctm.countryName,
-                details.glCode AS lineItemNumber,
+                CONCAT(details.glCode," | ",details.glCodeDes) AS lineItemNumber,
                 (details.DIAmount) AS value,
                 (details.comRptAmount + details.VATAmountRpt) AS valueRpt,
                 (details.VATAmount) AS VATAmount,
@@ -7498,8 +7500,20 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 0 AS discountAmount,
                 (SUM(details.DIAmount)) AS bookingAmountTrans,
                 (SUM(details.comRptAmount + details.VATAmountRpt)) AS bookingAmountRpt,
-                (SUM(details.VATAmount) - (IFNULL(SUM(details.exempt_vat_portion),0)/100 * SUM(details.VATAmount)) - IFNULL(invoiceMaster.retentionVatAmount,0)) AS taxTotalAmount,
-                IFNULL((invoiceMaster.retentionAmount - invoiceMaster.retentionVatAmount),0) AS retentionAmount,
+                CASE 
+                    WHEN invoiceMaster.rcmActivated = 1 AND invoiceMaster.retentionPercentage > 0 THEN
+                        SUM(details.VATAmount)
+                    ELSE
+                        (SUM(details.VATAmount) 
+                         - (IFNULL(SUM(details.exempt_vat_portion), 0) / 100 * SUM(details.VATAmount))
+                         - IFNULL(invoiceMaster.retentionVatAmount, 0))
+                END AS taxTotalAmount,
+                CASE 
+                    WHEN invoiceMaster.rcmActivated = 1 AND invoiceMaster.retentionPercentage > 0 THEN
+                        IFNULL(invoiceMaster.retentionAmount, 0)
+                    ELSE
+                        IFNULL((invoiceMaster.retentionAmount - invoiceMaster.retentionVatAmount), 0)
+                END AS retentionAmount,
                 details.vatSubCategoryID,
                 (IF(details.exempt_vat_portion IS NULL, NULL,details.exempt_vat_portion) * (details.VATAmount / 100)) AS exempt_vat_portion,
                 (
@@ -7541,22 +7555,6 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
             LEFT JOIN
                 erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
-            LEFT JOIN
-            (
-                SELECT
-                    td.documentSystemID,
-                    td.companySystemID,
-                    td.documentSystemCode,
-                    IFNULL(Sum(td.amount), 0) AS taxTotalAmount
-                FROM
-                    erp_taxdetail AS td
-                GROUP BY
-                    td.documentSystemID,
-                    td.companySystemID,
-                    td.documentSystemCode
-            ) AS tax ON tax.documentSystemID = invoiceMaster.documentSystemID
-                        AND tax.companySystemID = invoiceMaster.companySystemID
-                        AND tax.documentSystemCode = invoiceMaster.bookingSuppMasInvAutoID
             WHERE DATE(invoiceMaster.postedDate) BETWEEN ? AND ?
             AND invoiceMaster.companySystemID IN (' . implode(',', $companyID) . ')
             AND invoiceMaster.approved = -1
@@ -7565,8 +7563,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             AND invoiceMaster.approved  = -1
             GROUP BY
                 CASE WHEN ? = 1 THEN primaryKey ELSE details.directInvoiceDetailsID END
-            HAVING
-                taxTotalAmount > 0
+            HAVING (? != 1 OR taxTotalAmount > 0)
             UNION ALL
 
             SELECT
@@ -7586,7 +7583,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 DATE_FORMAT(invoiceMaster.postedDate, "%d/%m/%Y") AS postedDate,
                 invoiceMaster.rcmActivated AS rcmActivated,
                 ctm.countryName,
-                details.itemPrimaryCode AS lineItemNumber,
+                CONCAT(details.itemPrimaryCode," | ",details.itemDescription) AS lineItemNumber,
                 IFNULL((details.noQty * details.unitCost),0) AS value,
                 IFNULL(((details.costPerUnitComRptCur * details.noQty) + (details.VATAmountRpt * details.noQty )),0) AS valueRpt,
                 IFNULL((details.VATAmount * details.noQty ),0) AS VATAmount,
@@ -7637,22 +7634,6 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
             LEFT JOIN
                 erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
-            LEFT JOIN
-            (
-                SELECT
-                    td.documentSystemID,
-                    td.companySystemID,
-                    td.documentSystemCode,
-                    IFNULL(Sum(td.amount), 0) AS taxTotalAmount
-                FROM
-                    erp_taxdetail AS td
-                GROUP BY
-                    td.documentSystemID,
-                    td.companySystemID,
-                    td.documentSystemCode
-            ) AS tax ON tax.documentSystemID = invoiceMaster.documentSystemID
-                        AND tax.companySystemID = invoiceMaster.companySystemID
-                        AND tax.documentSystemCode = invoiceMaster.bookingSuppMasInvAutoID
             WHERE DATE(invoiceMaster.postedDate) BETWEEN ? AND ?
             AND invoiceMaster.companySystemID IN (' . implode(',', $companyID) . ')
             AND invoiceMaster.approved = -1
@@ -7661,8 +7642,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             AND invoiceMaster.approved  = -1
             GROUP BY
                 CASE WHEN ? = 1 THEN primaryKey ELSE details.id END
-            HAVING
-                taxTotalAmount > 0
+            HAVING (? != 1 OR taxTotalAmount > 0)
             UNION ALL
 
             SELECT
@@ -7682,19 +7662,19 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 DATE_FORMAT(invoiceMaster.postedDate, "%d/%m/%Y") AS postedDate,
                 pom.rcmActivated AS rcmActivated,
                 ctm.countryName,
-                ep.itemPrimaryCode AS lineItemNumber,
+                CONCAT(ep.itemPrimaryCode," | ",ep.itemDescription) AS lineItemNumber,
 
-    IFNULL((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost, 0) AS value,
+                IFNULL((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost, 0) AS value,
 
-    CASE
-        WHEN details.balanceAmount = 0 THEN IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0)
-        ELSE IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0)
-    END AS valueRpt,
-    IFNULL((ep.VATAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))), 0) AS VATAmount,
-    (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discount,
-    SUM(ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discountAmount,
-    IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost), 0) AS bookingAmountTrans,
-    IFNULL((invoiceMaster.bookingAmountRpt), 0) AS bookingAmountRpt,
+                CASE
+                    WHEN details.balanceAmount = 0 THEN IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0)
+                    ELSE IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0)
+                END AS valueRpt,
+                IFNULL((ep.VATAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))), 0) AS VATAmount,
+                (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discount,
+                SUM(ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discountAmount,
+                IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost), 0) AS bookingAmountTrans,
+                IFNULL((invoiceMaster.bookingAmountRpt), 0) AS bookingAmountRpt,
                 (SUM(details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) - (IFNULL(SUM(details.exempt_vat_portion)/100,0) * SUM(details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount)) - invoiceMaster.retentionVatAmount) AS taxTotalAmount,
                 IFNULL((invoiceMaster.retentionAmount - invoiceMaster.retentionVatAmount),0) AS retentionAmount,      
                 ep.vatSubCategoryID,
@@ -7745,32 +7725,16 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
             LEFT JOIN
                 erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
-            LEFT JOIN
-            (
-                SELECT
-                    td.documentSystemID,
-                    td.companySystemID,
-                    td.documentSystemCode,
-                    IFNULL(Sum(td.amount), 0) AS taxTotalAmount
-                FROM
-                    erp_taxdetail AS td
-                GROUP BY
-                    td.documentSystemID,
-                    td.companySystemID,
-                    td.documentSystemCode
-            ) AS tax ON tax.documentSystemID = invoiceMaster.documentSystemID
-                        AND tax.companySystemID = invoiceMaster.companySystemID
-                        AND tax.documentSystemCode = invoiceMaster.bookingSuppMasInvAutoID
             WHERE DATE(invoiceMaster.postedDate) BETWEEN ? AND ?
             AND invoiceMaster.companySystemID IN (' . implode(',', $companyID) . ')
             AND invoiceMaster.approved = -1
             AND invoiceMaster.cancelYN = 0
             AND invoiceMaster.documentType =  0
+            AND details.logisticID = 0
             AND invoiceMaster.approved  = -1
             GROUP BY
                 CASE WHEN ? = 1 THEN primaryKey ELSE ep.purchaseOrderDetailsID END
-            HAVING
-                taxTotalAmount > 0
+            HAVING (? != 1 OR taxTotalAmount > 0)
             UNION ALL
 
             SELECT
@@ -7790,7 +7754,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 DATE_FORMAT(invoiceMaster.postedDate, "%d/%m/%Y") AS postedDate,
                 invoiceMaster.rcmActivated AS rcmActivated,
                 ctm.countryName,
-                ep.itemPrimaryCode AS lineItemNumber,
+                CONCAT(ep.itemPrimaryCode," | ",ep.itemDescription) AS lineItemNumber,
                 IFNULL((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost, 0) AS value,
                 IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0) AS valueRpt,
                 IFNULL((ep.VATAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))), 0) AS VATAmount,
@@ -7842,22 +7806,6 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
             LEFT JOIN
                 erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = details.vatSubCategoryID
-            LEFT JOIN
-            (
-                SELECT
-                    td.documentSystemID,
-                    td.companySystemID,
-                    td.documentSystemCode,
-                    IFNULL(Sum(td.amount), 0) AS taxTotalAmount
-                FROM
-                    erp_taxdetail AS td
-                GROUP BY
-                    td.documentSystemID,
-                    td.companySystemID,
-                    td.documentSystemCode
-            ) AS tax ON tax.documentSystemID = invoiceMaster.documentSystemID
-                        AND tax.companySystemID = invoiceMaster.companySystemID
-                        AND tax.documentSystemCode = invoiceMaster.bookingSuppMasInvAutoID
             WHERE DATE(invoiceMaster.postedDate) BETWEEN ? AND ?
             AND invoiceMaster.companySystemID IN (' . implode(',', $companyID) . ')
             AND invoiceMaster.approved = -1
@@ -7866,8 +7814,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             AND invoiceMaster.approved  = -1
             GROUP BY
                 CASE WHEN ? = 1 THEN primaryKey ELSE details.id END
-            HAVING
-            taxTotalAmount > 0
+            HAVING (? != 1 OR taxTotalAmount > 0)
             ORDER BY primaryKey';
 
         $bindings = [];
@@ -7876,11 +7823,193 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             $bindings[] = $fromDate;
             $bindings[] = $toDate;
             $bindings[] = $request->reportViewID;
+            $bindings[] = $request->reportViewID;
         }
+
 
         $results = \DB::select($query, $bindings);
 
-        return $results;
+
+        if($request->reportViewID == 1)
+        {
+
+            $querry2 = '
+            
+SELECT 
+                eb.createdDateAndTime,
+                eb.companyID AS companyID,
+                eb.bookingInvCode AS DocumentCode,
+                DATE_FORMAT(eb.bookingDate, "%d/%m/%Y") AS DocumentDate,
+                eb.supplierInvoiceNo AS invoiceNo,
+                DATE_FORMAT(eb.supplierInvoiceDate, "%d/%m/%Y") AS invoiceDate,
+                eb.bookingInvCode,
+                eb.comments AS comments,
+                sm.primarySupplierCode,
+                sm.supplierName,
+                sm.vatNumber,
+                curm.DecimalPlaces,
+                curm.CurrencyCode,
+                DATE_FORMAT(eb.postedDate, "%d/%m/%Y") AS postedDate,
+                ctm.countryName,
+                eb.retentionAmount,
+                0 AS lineItemNumber,
+                   "Supplier PO Invoice - Logistics" AS documentType,
+                   0 AS discountAmount,
+    0 AS grvDetailsID,
+    0 AS exempt_vat_portion,
+	SUM(details.supplierInvoAmount - details.VATAmount)  as bookingAmountTrans,
+	SUM(details.VATAmount)  as taxTotalAmount,
+	0 AS discount,
+	(SELECT categoryDescription FROM suppliercategoryicvmaster WHERE supCategoryICVMasterID = sm.supCategoryICVMasterID) AS goodORService,
+    (SELECT DecimalPlaces FROM currencymaster WHERE currencymaster.currencyID = eb.companyReportingCurrencyID) AS rptDecimalPlaces,
+    (SELECT CurrencyCode FROM currencymaster WHERE currencymaster.currencyID = eb.companyReportingCurrencyID) AS rptCurrencyCode,
+    GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
+    GROUP_CONCAT(DISTINCT CASE WHEN  erp_purchaseorderadvpayment.VATPercentage != 0 THEN ROUND( erp_purchaseorderadvpayment.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
+    	details.companyReportingER,
+    		(SELECT categoryDescription FROM suppliercategoryicvmaster WHERE supCategoryICVMasterID = sm.supCategoryICVMasterID) AS goodORService,
+    (SELECT DecimalPlaces FROM currencymaster WHERE currencymaster.currencyID = eb.companyReportingCurrencyID) AS rptDecimalPlaces,
+    (SELECT CurrencyCode FROM currencymaster WHERE currencymaster.currencyID = eb.companyReportingCurrencyID) AS rptCurrencyCode,
+    (
+                    SELECT
+                        GROUP_CONCAT(DISTINCT scm.categoryName SEPARATOR ",") AS businessCategoryNames
+                    FROM supplierbusinesscategoryassign sbca
+                    LEFT JOIN suppliercategorymaster scm
+                        ON sbca.supCategoryMasterID = scm.supCategoryMasterID
+                    LEFT JOIN suppliersubcategoryassign ssa
+                        ON ssa.supplierID = sbca.supplierID
+                    LEFT JOIN suppliercategorysub scs
+                        ON ssa.supSubCategoryID = scs.supCategorySubID
+                        AND scs.supMasterCategoryID = sbca.supCategoryMasterID
+                    WHERE sbca.supplierID = sm.supplierCodeSystem
+     ) AS transcation
+FROM erp_purchaseorderadvpayment
+LEFT JOIN erp_bookinvsupp_item_det details ON details.logisticID = erp_purchaseorderadvpayment.poAdvPaymentID 
+LEFT JOIN erp_grvmaster 
+    ON erp_purchaseorderadvpayment.grvAutoID = erp_grvmaster.grvAutoID
+LEFT JOIN erp_tax_vat_sub_categories 
+    ON erp_purchaseorderadvpayment.vatSubCategoryID = erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID
+LEFT JOIN erp_purchaseordermaster 
+    ON erp_purchaseorderadvpayment.poID = erp_purchaseordermaster.purchaseOrderID
+JOIN erp_addoncostcategories 
+    ON erp_purchaseorderadvpayment.logisticCategoryID = erp_addoncostcategories.idaddOnCostCategories
+JOIN itemmaster 
+    ON itemmaster.itemCodeSystem = erp_addoncostcategories.itemSystemCode
+LEFT JOIN erp_bookinvsuppmaster eb ON eb.bookingSuppMasInvAutoID = details.bookingSuppMasInvAutoID
+INNER JOIN companymaster AS cm ON cm.companySystemID = eb.companySystemID
+INNER JOIN suppliermaster AS sm ON sm.supplierCodeSystem = eb.supplierID
+INNER JOIN currencymaster AS curm ON curm.currencyID = eb.supplierTransactionCurrencyID
+LEFT JOIN countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
+LEFT JOIN erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = erp_purchaseorderadvpayment.vatSubCategoryID
+LEFT JOIN erp_purchaseordermaster pom ON pom.purchaseOrderID  = details.purchaseOrderID 
+WHERE DATE(eb.postedDate) BETWEEN ? AND ? AND details.logisticID > 0
+AND eb.companySystemID IN (' . implode(',', $companyID) . ')
+AND eb.approved = -1
+AND eb.cancelYN = 0
+AND eb.documentType =  0
+GROUP BY details.bookingSuppMasInvAutoID 
+ ';
+        }else {
+            $querry2 = 'SELECT 
+  eb.createdDateAndTime,
+                eb.companyID AS companyID,
+                eb.bookingInvCode AS DocumentCode,
+                DATE_FORMAT(eb.bookingDate, "%d/%m/%Y") AS DocumentDate,
+                eb.supplierInvoiceNo AS invoiceNo,
+                DATE_FORMAT(eb.supplierInvoiceDate, "%d/%m/%Y") AS invoiceDate,
+                eb.bookingInvCode,
+                eb.comments AS comments,
+                sm.primarySupplierCode,
+                sm.supplierName,
+                sm.vatNumber,
+                curm.CurrencyCode,
+                curm.DecimalPlaces,
+                 "Input VAT" AS vatCategory,
+                "Supplier PO Invoice - Logistics" AS documentType,
+                DATE_FORMAT(eb.postedDate, "%d/%m/%Y") AS postedDate,
+                (eb.rcmActivated = 1 OR pom.rcmActivated = 1) AS rcmActivated,
+                CONCAT(itemmaster.primaryCode," | ",itemmaster.itemDescription) AS lineItemNumber,
+                ctm.countryName,
+                eb.retentionAmount,
+                erp_purchaseorderadvpayment.VATPercentage,
+                erp_purchaseorderadvpayment.currencyID,
+    erp_purchaseorderadvpayment.poAdvPaymentID AS logisticID,
+    itemmaster.primaryCode AS itemPrimaryCode,
+    itemmaster.itemDescription AS itemDescription,
+    erp_tax_vat_sub_categories.mainCategory AS vatMasterCategoryID,
+    erp_purchaseorderadvpayment.vatSubCategoryID,
+    0 AS exempt_vat_portion,
+	(details.supplierInvoAmount-details.VATAmount)  as value,
+	details.VATAmount  as VATAmount,
+	IFNULL(etvsc1.subCategoryDescription,"-") AS subCategoryDescription,
+	details.companyReportingER,
+	0 AS discount,
+	(SELECT categoryDescription FROM suppliercategoryicvmaster WHERE supCategoryICVMasterID = sm.supCategoryICVMasterID) AS goodORService,
+    (SELECT DecimalPlaces FROM currencymaster WHERE currencymaster.currencyID = eb.companyReportingCurrencyID) AS rptDecimalPlaces,
+    (SELECT CurrencyCode FROM currencymaster WHERE currencymaster.currencyID = eb.companyReportingCurrencyID) AS rptCurrencyCode,
+    (
+                    SELECT
+                        GROUP_CONCAT(DISTINCT scm.categoryName SEPARATOR ",") AS businessCategoryNames
+                    FROM supplierbusinesscategoryassign sbca
+                    LEFT JOIN suppliercategorymaster scm
+                        ON sbca.supCategoryMasterID = scm.supCategoryMasterID
+                    LEFT JOIN suppliersubcategoryassign ssa
+                        ON ssa.supplierID = sbca.supplierID
+                    LEFT JOIN suppliercategorysub scs
+                        ON ssa.supSubCategoryID = scs.supCategorySubID
+                        AND scs.supMasterCategoryID = sbca.supCategoryMasterID
+                    WHERE sbca.supplierID = sm.supplierCodeSystem
+     ) AS transcation
+FROM erp_purchaseorderadvpayment
+LEFT JOIN erp_bookinvsupp_item_det details ON details.logisticID = erp_purchaseorderadvpayment.poAdvPaymentID 
+LEFT JOIN erp_grvmaster 
+    ON erp_purchaseorderadvpayment.grvAutoID = erp_grvmaster.grvAutoID
+LEFT JOIN erp_tax_vat_sub_categories 
+    ON erp_purchaseorderadvpayment.vatSubCategoryID = erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID
+LEFT JOIN erp_purchaseordermaster 
+    ON erp_purchaseorderadvpayment.poID = erp_purchaseordermaster.purchaseOrderID
+JOIN erp_addoncostcategories 
+    ON erp_purchaseorderadvpayment.logisticCategoryID = erp_addoncostcategories.idaddOnCostCategories
+JOIN itemmaster 
+    ON itemmaster.itemCodeSystem = erp_addoncostcategories.itemSystemCode
+LEFT JOIN erp_bookinvsuppmaster eb ON eb.bookingSuppMasInvAutoID = details.bookingSuppMasInvAutoID
+INNER JOIN companymaster AS cm ON cm.companySystemID = eb.companySystemID
+INNER JOIN suppliermaster AS sm ON sm.supplierCodeSystem = eb.supplierID
+INNER JOIN currencymaster AS curm ON curm.currencyID = eb.supplierTransactionCurrencyID
+LEFT JOIN countrymaster AS ctm ON ctm.countryID = sm.supplierCountryID
+LEFT JOIN erp_tax_vat_sub_categories AS etvsc1 ON etvsc1.taxVatSubCategoriesAutoID = erp_purchaseorderadvpayment.vatSubCategoryID
+LEFT JOIN erp_purchaseordermaster pom ON pom.purchaseOrderID  = details.purchaseOrderID 
+WHERE DATE(eb.postedDate) BETWEEN ? AND ? AND details.logisticID > 0
+AND eb.companySystemID IN (' . implode(',', $companyID) . ')
+AND eb.approved = -1
+AND eb.cancelYN = 0
+AND eb.documentType =  0
+';
+        }
+
+
+
+
+        $bindings2 = [];
+
+        for ($i = 0; $i < 1; $i++) {
+            $bindings2[] = $fromDate;
+            $bindings2[] = $toDate;
+        }
+
+
+        $results2 = \DB::select($querry2,$bindings2);
+        $mergedData = array_merge($results,$results2);
+
+        if(!empty($mergedData))
+        {
+            usort($mergedData, function ($a, $b) {
+                return strcmp($a->DocumentCode, $b->DocumentCode);
+            });
+
+
+        }
+
+        return $mergedData;
     }
 
 
@@ -7938,7 +8067,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             NULL AS customerItemDetailID,
             details.salesPrice AS salesPrice,
             details.VATPercentage AS VATPercentage,
-            details.glCode AS lineItemNumber,
+            CONCAT(details.glCode," | ",details.glCodeDes) AS lineItemNumber,
             custm.CutomerCode AS CutomerCode,
             custm.vatNumber,
             "Direct Customer Invoice" AS documentType,
@@ -8005,7 +8134,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             details.customerItemDetailID,
             details.salesPrice,
             details.VATPercentage,
-            details.itemPrimaryCode AS lineItemNumber,
+            CONCAT(details.itemPrimaryCode," | ",details.itemDescription) AS lineItemNumber,
             custm.CutomerCode AS CutomerCode,
             custm.vatNumber,
             CASE
