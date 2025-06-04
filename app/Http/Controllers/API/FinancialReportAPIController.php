@@ -4150,7 +4150,7 @@ class FinancialReportAPIController extends AppBaseController
                                 if (in_array(31, $selectedColumns)) $data[$x]['Retention Amount'] = $val->retentionAmount;
                                 if($request->tempType == 2 || $request->tempType == 1)
                                 {
-                                    $taxAmountLine = $val->rcmActivated ? 0 : $val->taxTotalAmount;
+                                    $taxAmountLine = $val->rcmActivated ? 0 : $val->VATAmount;
                                     $data[$x]['Due Amount'] = number_format($val->value - $val->discount + $taxAmountLine, $val->DecimalPlaces);
                                     $dueAmount = $val->value - $val->discount + $val->VATAmount;
                                 }else {
@@ -7735,7 +7735,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
             AND details.logisticID = 0
             AND invoiceMaster.approved  = -1
             GROUP BY
-                CASE WHEN ? = 1 THEN primaryKey ELSE ep.purchaseOrderDetailsID END
+                CASE WHEN ? = 1 THEN primaryKey ELSE id END
             HAVING (? != 1 OR taxTotalAmount > 0)
             UNION ALL
 
