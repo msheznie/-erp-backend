@@ -17,6 +17,7 @@ use App\Models\ChequeRegisterDetail;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PdcLogRepository;
+use App\Services\PaymentVoucherServices;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -231,30 +232,16 @@ class PdcLogAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        /** @var PdcLog $pdcLog */
-        $pdcLog = $this->pdcLogRepository->findWithoutFail($id);
-
-        if (empty($pdcLog)) {
-            return $this->sendError('Pdc Log not found');
+        $data = PaymentVoucherServices::updatePDCCheque($id,$input);
+        if ($data['status']) {
+            return $this->sendResponse($data['data'], $data['message']);
         }
-
-        $checkPdcChequeDuplicate = PdcLog::where('documentmasterAutoID', $input['documentmasterAutoID'])
-                                         ->where('id','!=', $id)
-                                         ->where('chequeNo', $input['chequeNo'])
-                                         ->whereNotNull('chequeNo')
-                                         ->first();
-
-        if ($checkPdcChequeDuplicate) {
-            return $this->sendError('Cheque no cannot be duplicated', 500);
+        else {
+            return $this->sendError(
+                $data['message'],
+                $data['code'] ?? 404
+            );
         }
-
-        if (isset($input['chequeDate'])) {
-            $input['chequeDate'] = Carbon::parse($input['chequeDate']);
-        }
-
-        $pdcLog = $this->pdcLogRepository->update($input, $id);
-
-        return $this->sendResponse($pdcLog->toArray(), 'PdcLog updated successfully');
     }
 
     /**
