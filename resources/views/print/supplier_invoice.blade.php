@@ -670,87 +670,7 @@
                 </tbody>
             </table>
         </div>
-         <div class="row">
-            <table style="width:100%;" class="table table-bordered">
-                <tbody>
-                <tr>
-                    <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                    <td class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                                class="font-weight-bold" style="font-size: 11px">Total Order Amount</span></td>
-                    <td class="text-right"
-                        style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                    <span class="font-weight-bold">
-                    @if ($masterdata->item_details)
-                            {{number_format($subTotal, $transDecimal)}}
-                        @endif
-                    </span>
-                    </td>
-                </tr>
-                @if ($masterdata->isVatEligible || $masterdata->vatRegisteredYN)
-                    <tr>
-                        <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                            &nbsp;</td>
-                        <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                                    class="font-weight-bold"
-                                    style="font-size: 11px">VAT{{--({{$masterdata->VATPercentage .'%'}})--}}
-                            </span></td>
-                        <td class="text-right"
-                            style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
-                                    class="font-weight-bold">{{number_format(($VATTotal - $retentionVatPortion), $transDecimal)}}</span>
-                        </td>
-                    </tr>
-                @endif
-                <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                        &nbsp;</td>
-                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11px">Net Amount</span>
-                    </td>
-                    <td class="text-right"
-                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                    <span class="font-weight-bold">
-                    @if ($masterdata->detail)
-                            {{number_format(($subTotal + $VATTotal), $transDecimal)}}
-                        @endif
-                    </span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                        &nbsp;</td>
-                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11px">Retention Amount</span>
-                    </td>
-                    <td class="text-right"
-                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                    <span class="font-weight-bold">
-                    @if ($masterdata->detail)
-                            {{number_format((($subTotal + $VATTotal) * ($masterdata->retentionPercentage/100) - $retentionVatPortion), $transDecimal)}}
-                        @endif
-                    </span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                        &nbsp;</td>
-                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11px">Net of Retention Amount</span>
-                    </td>
-                    <td class="text-right"
-                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                    <span class="font-weight-bold">
-                    @if ($masterdata->detail)
-                            {{number_format(($subTotal + $VATTotal) - (($subTotal + $VATTotal)* ($masterdata->retentionPercentage/100)), $transDecimal)}}
-                        @endif
-                    </span>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+        
     @endif
     @if($masterdata->documentType == 1 || $masterdata->documentType == 4)
         <div style="margin-top: 30px">
@@ -879,4 +799,160 @@
             </table>
         </div>
     @endif
+
+
+    @if(($masterdata->documentType == 0 || $masterdata->documentType == 3) && count($masterdata->directdetail) > 0)
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+               <tr class="border-bottom-remov">
+                    <th colspan="1" style="background-color: rgb(215,215,215)">
+                        @if($masterdata->documentType == 0)
+                            Extra Charges
+                        @elseif($masterdata->documentType == 3)
+                            Other Charges
+                        @else
+                            Charges
+                        @endif
+                    </th>
+                </tr>
+                <tr class="theme-tr-head">
+                    @if($masterdata->documentType == 0)
+                         <th class="text-center">PO Code</th>
+                    @endif
+                    <th class="text-center">GL Code</th>
+                    <th class="text-center">Segment</th>
+                    @if($masterdata->documentType == 0)
+                        <th class="text-center">Local Currency</th>
+                        <th class="text-center">Rpt Currency</th>
+                    @endif
+                    @if($masterdata->documentType == 3)
+                        <th class="text-center">Comments</th>
+                        <th class="text-center">Amount</th>
+                    @endif
+                </tr>
+                </thead>
+                <tbody>
+                @foreach ($masterdata->directdetail as $item)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        @if($masterdata->documentType == 0)
+                            <td>{{$item->purchase_order->purchaseOrderCode}}</td>
+                        @endif
+                        <td>{{$item->glCode}} | {{$item->glCodeDes}}</td>
+                        <td>
+                            @if($item->segment)
+                                {{$item->segment->ServiceLineDes}}
+                            @endif
+                        </td>
+                        @if($masterdata->documentType == 0)
+                            <td>{{number_format($item->localAmount, $transDecimal)}}</td>
+                            <td>{{number_format($item->comRptAmount, $transDecimal)}}</td>
+                        @endif
+                        @if($masterdata->documentType == 3)
+                            <td>{{$item->comments}}</td>
+                            <td>{{number_format($item->DIAmount, $transDecimal)}}</td>
+                        @endif
+                    </tr>
+                @endforeach
+                </tbody>
+                <tfoot>
+                    @if($masterdata->documentType == 0)
+                        <tr>
+                            <td colspan="5" class="no-border spacer-row"></td>
+                        </tr>
+                        <tr class="no-border">
+                            <td colspan="3" class="text-right"><strong>Total</strong></td>
+                            <td class="text-right">{{number_format($grvTotLoc + $directTotLoc, $localDecimal )}}</td>
+                            <td class="text-right">{{number_format($grvTotRpt + $directAmountReport, $rptDecimal)}}</td>
+                        </tr>
+                    @endif
+                </tfoot>
+
+            </table>
+        </div>
+    @endif                    
+
+    @if($masterdata->documentType == 3)
+     <div class="row" style="margin-top: 30px">
+            <table style="width:100%;" class="table table-bordered">
+                <tbody>
+                <tr>
+                    <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                    <td class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                class="font-weight-bold" style="font-size: 11px">Total Order Amount</span></td>
+                    <td class="text-right"
+                        style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                    <span class="font-weight-bold">
+                        @if ($masterdata->item_details)
+                            {{number_format($subTotal + $directTotTra, $transDecimal)}}
+                        @endif
+                    </span>
+                    </td>
+                </tr>
+                @if ($masterdata->isVatEligible || $masterdata->vatRegisteredYN)
+                    <tr>
+                        <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                            &nbsp;</td>
+                        <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                    class="font-weight-bold"
+                                    style="font-size: 11px">VAT{{--({{$masterdata->VATPercentage .'%'}})--}}
+                            </span></td>
+                        <td class="text-right"
+                            style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
+                                    class="font-weight-bold">{{number_format(($VATTotal - $retentionVatPortion), $transDecimal)}}</span>
+                        </td>
+                    </tr>
+                @endif
+                <tr>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        &nbsp;</td>
+                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11px">Net Amount</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                    <span class="font-weight-bold">
+                        @if ($masterdata->detail)
+                            {{number_format(($subTotal + $VATTotal + $directTotTra), $transDecimal)}}
+                        @endif
+                    </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        &nbsp;</td>
+                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11px">Retention Amount</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                    <span class="font-weight-bold">
+                        @if ($masterdata->detail)
+                            {{number_format((($subTotal + $VATTotal + $directTotTra) * ($masterdata->retentionPercentage/100) - $retentionVatPortion), $transDecimal)}}
+                        @endif
+                    </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        &nbsp;</td>
+                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11px">Net of Retention Amount</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                    <span class="font-weight-bold">
+                        @if ($masterdata->detail)
+                            {{number_format(($subTotal + $VATTotal + $directTotTra) - (($subTotal + $VATTotal + $directTotTra)* ($masterdata->retentionPercentage/100)), $transDecimal)}}
+                        @endif
+                    </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    @endif 
 </div>
