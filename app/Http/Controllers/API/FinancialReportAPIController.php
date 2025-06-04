@@ -177,7 +177,7 @@ class FinancialReportAPIController extends AppBaseController
             $generalColumns = array_merge($generalColumns, [21, 23, 24,29,30]);
             $defaultSelectedColumns = array_merge($defaultSelectedColumns, [21, 24]);
             if ($request->selectionType == 1 || $request->selectionType == 3) {
-                $generalColumns = array_merge($generalColumns, [24]);
+                $generalColumns = array_merge($generalColumns, [24,31]);
             }
 
             $columnIds = ReportCustomColumn::where('isActive', 1)
@@ -7672,7 +7672,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                     WHEN details.balanceAmount = 0 THEN IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0)
                     ELSE IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0)
                 END AS valueRpt,
-                IFNULL((ep.VATAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))), 0) AS VATAmount,
+                ((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount)) - invoiceMaster.retentionVatAmount) AS VATAmount,
                 (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discount,
                 SUM(ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discountAmount,
                 IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost), 0) AS bookingAmountTrans,
@@ -7853,10 +7853,12 @@ SELECT
                 curm.CurrencyCode,
                 DATE_FORMAT(eb.postedDate, "%d/%m/%Y") AS postedDate,
                 ctm.countryName,
-                eb.retentionAmount,
+                 "Input VAT" AS vatCategory,
+                0 AS retentionAmount,      
                 0 AS lineItemNumber,
                    "Supplier PO Invoice - Logistics" AS documentType,
                    0 AS discountAmount,
+                        (eb.rcmActivated = 1 OR pom.rcmActivated = 1) AS rcmActivated,
     0 AS grvDetailsID,
     0 AS exempt_vat_portion,
 	SUM(details.supplierInvoAmount - details.VATAmount)  as bookingAmountTrans,
@@ -8009,10 +8011,31 @@ AND eb.documentType =  0
             });
 
 
+            $colorMap = [];
+            if($request->reportViewID == 2) {
+                $adddedDocCode = array();
+                foreach ($mergedData as $item) {
+                    $docCode = $item->DocumentCode;
+
+                    if(!in_array($docCode,$adddedDocCode))
+                    {
+                        $item->rowSpan = collect($mergedData)->where('DocumentCode',$docCode)->count();
+                        $item->retentionAmount = collect($mergedData)->where('DocumentCode',$docCode)->first()->retentionAmount;
+                        $item->borderTop = true;
+                        array_push($adddedDocCode,$docCode);
+                    }else {
+                        $item->rowSpan = -1;
+                        $item->retentionAmount= null;
+                        $item->borderTop = false;
+                    }
+                }
+            }
+
         }
 
         return $mergedData;
     }
+
 
 
     public function getCustomerInvoiceDetailsQuery($request) {
