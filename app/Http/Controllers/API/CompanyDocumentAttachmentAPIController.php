@@ -109,7 +109,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $input = array_except($input, ['companySystemID','companyID','documentSystemID','documentID','timeStamp','company','document']);
+        $input = array_except($input, ['companySystemID','companyID','documentSystemID','documentID','timeStamp','company','document','access']);
 
         $input = $this->convertArrayToValue($input);
 
@@ -184,7 +184,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $companyDocumentAttachment = CompanyDocumentAttachment::whereIn('companySystemID',$childCompanies)->with(['company','document']);
+        $companyDocumentAttachment = CompanyDocumentAttachment::whereIn('companySystemID',$childCompanies)->with(['company','document','access']);
 
         if (array_key_exists('documentSystemID', $input)) {
             $companyDocumentAttachment = $companyDocumentAttachment->where('documentSystemID', $input['documentSystemID']);
