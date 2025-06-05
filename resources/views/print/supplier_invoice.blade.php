@@ -15,7 +15,7 @@
         .footer {
             width: 100%;
             text-align: center;
-            position: relative;
+            position: fixed;
             font-size: 10px;
             padding-top: -20px;
         }
@@ -960,7 +960,7 @@
         </tr>
     </table>
 </div>
-<div class="footer">
+<div class="" style="margin-top: 30px;">
     <table style="width:100%;">
         <tr>
             <td width="40%"><span
@@ -998,6 +998,8 @@
             @endif
         </tr>
     </table>
+</div>
+<div class="footer">
     <table style="width:100%;">
         <tr>
             <td colspan="3" style="width:100%">
