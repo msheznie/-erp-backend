@@ -91,6 +91,23 @@ class ValidateAssetCreation
             }
         }
 
+        // Validate accumulated depreciation date is not later than asset end date
+        if(isset($input['accumulated_depreciation_date']) && isset($input['dateAQ']) && isset($input['depMonth'])) {
+            $acquiredDate = new DateTime($input['dateAQ']);
+            $firstDayOfAcquire = new DateTime($acquiredDate->format('Y-m-01'));
+            $lifeInMonths = $input['depMonth'] * 12;
+            
+            $endOfDepreciationDate = clone $firstDayOfAcquire;
+            $endOfDepreciationDate->modify("+{$lifeInMonths} months");
+            $endOfDepreciationDate->modify("-1 day");
+            
+            $accDepreciationDate = new DateTime($input['accumulated_depreciation_date']);
+            
+            if($accDepreciationDate > $endOfDepreciationDate) {
+                return self::sendJsonResponse(false, "Accumulated depreciation date cannot be later than the asset end date.", 500);
+            }
+        }
+
         return self::sendJsonResponse(true,'All validations are passed',200);
     }
 
