@@ -126,9 +126,10 @@ class CreatePaymentVoucher implements ShouldQueue
             $pdcChequeDetails = $paymentVoucher['pdc_cheque_details'] ?? null;
 
             if (!is_null($pdcChequeDetails)) {
+                $validationData = $datasetMaster['validationData'] ?? null;
                 foreach ($pdcChequeDetails as $pdcChequeDetail) {
 
-                    $datasetPDCChequeDetails = self::validatePDCChequeDetailsData($paymentVoucher,$pdcChequeDetail,$datasetMaster['validationData']);
+                    $datasetPDCChequeDetails = self::validatePDCChequeDetailsData($paymentVoucher,$pdcChequeDetail,$validationData);
 
                     if ($datasetPDCChequeDetails['status']) {
                         $pdcChequeDetailsDataSets[$masterIndex][] = $datasetPDCChequeDetails['data'];
@@ -1170,6 +1171,14 @@ class CreatePaymentVoucher implements ShouldQueue
                 'data' => $errorData,
                 'fieldErrors' => $fieldErrors
             ];
+
+            if (!is_null($paymentMode) && $paymentMode == 2 && $isPdcCheque) {
+                $returnDataset['validationData'] = [
+                    'currency' => $currency ?? null,
+                    'bank' => $bank ?? null,
+                    'account' => $bankAccount ?? null
+                ];
+            }
         }
 
         return $returnDataset;
@@ -1442,55 +1451,60 @@ class CreatePaymentVoucher implements ShouldQueue
 
                 $chequeNumber = null;
                 $chequeNumberID = null;
-                if (($validationData['currency']['currencyID'] == $localCurrency) && ($localCurrency == $validationData['account']['accountCurrencyID'])) {
-                    $isExistPolicyGCNFCR = CompanyPolicyMaster::where('companySystemID', $companyId)
-                        ->where('companyPolicyCategoryID', 35)
-                        ->where('isYesNO', 1)
-                        ->exists();
+                if (!is_null($validationData)) {
+                    if ((isset($validationData['currency']) && $validationData['currency']['currencyID'] == $localCurrency) && (isset($validationData['account']) && $validationData['account']['accountCurrencyID'] == $localCurrency)) {
+                        $isExistPolicyGCNFCR = CompanyPolicyMaster::where('companySystemID', $companyId)
+                            ->where('companyPolicyCategoryID', 35)
+                            ->where('isYesNO', 1)
+                            ->exists();
 
-                    if ($isExistPolicyGCNFCR) {
-                        $chequeRegister = ChequeRegister::where('company_id', $companyId)
-                            ->where('bank_id',$validationData['bank']['bankmasterAutoID'])
-                            ->where('bank_account_id',$validationData['account']['bankAccountAutoID'])
-                            ->get();
+                        if ($isExistPolicyGCNFCR && isset($validationData['bank'])) {
+                            $chequeRegister = ChequeRegister::where('company_id', $companyId)
+                                ->where('bank_id',$validationData['bank']['bankmasterAutoID'])
+                                ->where('bank_account_id',$validationData['account']['bankAccountAutoID'])
+                                ->get();
 
-                        if (count($chequeRegister) > 0) {
-                            $activeChequeRegister = $chequeRegister->where('isActive',1)->first();
-                            if (!is_null($activeChequeRegister)) {
-                                $chequeRegisterDetails = ChequeRegisterDetail::where('company_id',$companyId)->where('cheque_register_master_id', $activeChequeRegister->id)->where('status', 0)->get();
+                            if (count($chequeRegister) > 0) {
+                                $activeChequeRegister = $chequeRegister->where('isActive',1)->first();
+                                if (!is_null($activeChequeRegister)) {
+                                    $chequeRegisterDetails = ChequeRegisterDetail::where('company_id',$companyId)->where('cheque_register_master_id', $activeChequeRegister->id)->where('status', 0)->get();
 
-                                if (count($chequeRegisterDetails) > 0) {
-                                    $selectedChequeData = $chequeRegisterDetails->where('cheque_no', $pdcChequeDetails['cheque_number'])->first();
-                                    if (!is_null($selectedChequeData)) {
-                                        $chequeNumber = $pdcChequeDetails['cheque_number'];
-                                        $chequeNumberID = $selectedChequeData->id;
+                                    if (count($chequeRegisterDetails) > 0) {
+                                        $selectedChequeData = $chequeRegisterDetails->where('cheque_no', $pdcChequeDetails['cheque_number'])->first();
+                                        if (!is_null($selectedChequeData)) {
+                                            $chequeNumber = $pdcChequeDetails['cheque_number'];
+                                            $chequeNumberID = $selectedChequeData->id;
+                                        }
+                                        else {
+                                            $errorData[] = [
+                                                'field' => "cheque_number",
+                                                'message' => ["Entered cheque number does not match the available cheques in the register."]
+                                            ];
+                                        }
                                     }
                                     else {
                                         $errorData[] = [
                                             'field' => "cheque_number",
-                                            'message' => ["Entered cheque number does not match the available cheques in the register."]
+                                            'message' => ["No unused cheques available in the cheque register for the selected bank account."]
                                         ];
                                     }
                                 }
                                 else {
                                     $errorData[] = [
                                         'field' => "cheque_number",
-                                        'message' => ["No unused cheques available in the cheque register for the selected bank account."]
+                                        'message' => ["The cheque register for the selected bank account is inactive."]
                                     ];
                                 }
                             }
                             else {
                                 $errorData[] = [
                                     'field' => "cheque_number",
-                                    'message' => ["The cheque register for the selected bank account is inactive."]
+                                    'message' => ["Cheque register not found for the selected bank account."]
                                 ];
                             }
                         }
                         else {
-                            $errorData[] = [
-                                'field' => "cheque_number",
-                                'message' => ["Cheque register not found for the selected bank account."]
-                            ];
+                            $chequeNumber = $pdcChequeDetails['cheque_number'];
                         }
                     }
                     else {
