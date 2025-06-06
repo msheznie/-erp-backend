@@ -4161,9 +4161,18 @@ class FinancialReportAPIController extends AppBaseController
                         }
 
 
-                        if (in_array(20, $selectedColumns)) $data[$x]['Amount in reporting currency '.'('.$reporingCurrencyCode.')'] = number_format($dueAmount / $val->companyReportingER, $val->rptDecimalPlaces);
-                        if (in_array(19, $selectedColumns)) $data[$x]['Exchange Rate'] = $val->companyReportingER;
-                        $x++;
+                            if (in_array(20, $selectedColumns))
+                            {
+                                if (!empty($val->companyReportingER) && $val->companyReportingER != 0)
+                                {
+                                    $data[$x]['Amount in reporting currency '.'('.$reporingCurrencyCode.')'] = number_format($dueAmount / $val->companyReportingER, $val->rptDecimalPlaces);
+                                } else {
+                                    $data[$x]['Amount in reporting currency '.'('.$reporingCurrencyCode.')'] = number_format($dueAmount, $val->rptDecimalPlaces);
+                                }
+                            }
+                            if (in_array(19, $selectedColumns)) $data[$x]['Exchange Rate'] = $val->companyReportingER;
+                            $x++;
+                        }
                     }
                 }
 
