@@ -380,7 +380,7 @@
                     {{$taxPercent = ($request->tax) ? $request->tax->taxPercent : 0}}
                     <tr>
                         <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{round($taxPercent , $numberFormatting)}}% (ضريبة القيمة المضافة )</b></td>
                         <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">{{number_format($taxAmount, $numberFormatting)}}</td>
                     </tr>
@@ -463,7 +463,7 @@
                     {{$directTraSubTotal+=$request->tax->amount}}
                         <tr>
                             <td></td>
-                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{round($request->tax->taxPercent , $numberFormatting)}}% (ضريبة القيمة المضافة )</b></td>
                             <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                             <td colspan="2" class="text-right">{{number_format($request->tax->amount, $numberFormatting)}}</td>
                         </tr>
