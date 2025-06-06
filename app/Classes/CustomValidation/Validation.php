@@ -12,6 +12,8 @@ class Validation implements \JsonSerializable
 
     public $detailData = [];
 
+    public $pdcData = [];
+
     private $identifierKey;
     private $identifierValue;
 
@@ -83,13 +85,23 @@ class Validation implements \JsonSerializable
         ];
     }
 
+    public function setPDCData($detailData): void
+    {
+
+        $this->pdcData = [
+            'success' => collect($detailData)->pluck('error')->flatten()->isEmpty(),
+            'errors' => (collect($detailData)->pluck('error')->flatten()->isEmpty()) ? [] : $detailData
+        ];
+    }
+
     public function jsonSerialize()
     {
         return [
             'identifier' => $this->identifier,
             'fieldErrors' => $this->fieldErrors,
             'headerData' => $this->headerData,
-            'detailData' => $this->detailData
+            'detailData' => $this->detailData,
+            'pdcChequeData' => $this->pdcData
         ];
     }
 
