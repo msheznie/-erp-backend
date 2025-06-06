@@ -42,7 +42,8 @@ class SystemGlCodeScenario extends Model
         'documentSystemID',
         'isActive',
         'description',
-        'department_master_id'
+        'department_master_id',
+        'slug'
 
     ];
 
@@ -56,6 +57,7 @@ class SystemGlCodeScenario extends Model
         'isActive' => 'integer',
         'documentSystemID' => 'integer',
         'description' => 'string',
+        'slug' => 'string',
         'department_master_id' => 'integer'
 
     ];
