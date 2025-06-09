@@ -5552,8 +5552,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }, 'supplier' => function ($query) {
             $query->with('country');
         }, 'advance_detail' => function ($query) {
-            $query->selectRaw('COALESCE(SUM(reqAmount),0) as advanceSum,poID');
-            $query->groupBy('poID');
+            $query->where('isAdvancePaymentYN', 0)
+                ->selectRaw('COALESCE(SUM(reqAmount),0) as advanceSum, poID')
+                ->groupBy('poID');
         }]);
         $output->orderBy('purchaseOrderID', 'desc');
         $output = $output->get();
