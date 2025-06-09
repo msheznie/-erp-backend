@@ -7,6 +7,7 @@ use App\helper\Helper;
 use App\Models\Company;
 use App\Models\ProcumentOrder;
 use App\Services\WebPushNotificationService;
+use Illuminate\Support\Facades\Log;
 
 class ExportPODetailExcel {
     private $output;
@@ -28,14 +29,13 @@ class ExportPODetailExcel {
     private $poTypeId;
     private $financeCategory;
     private $search;
-    private $userId = [];
+    private $userId;
     private $companyCode;
     private $data = [];
 
     public function __construct($request) {
         $this->input = $request;
         $this->setData($this->input);
-        $this->export();
     }
 
     private function setData($request) {
@@ -56,26 +56,27 @@ class ExportPODetailExcel {
         $this->poTypeId = $request['poTypeID'] ?? null;
         $this->financeCategory= $request['financeCategory'] ?? null;
         $this->search = $request['search']['value'] ?? null;
-        $this->userId[] = Helper::getEmployeeSystemID();
+        $this->userId = Helper::getEmployeeSystemID();
 
         $this->supplierId = collect((array) $this->supplierId)->pluck('id');
         $this->serviceLineSystemId = collect((array) $this->serviceLineSystemId)->pluck('id');
 
         $companyMaster = Company::find($this->companyId);
-        $this->companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $this->companyCode = $companyMaster->CompanyID ?? 'common';
     }
 
     public function export() {
         $this->output = $this->getMasterData();
         $this->processExportData();
         $basePath = CreateExcel::processDetailExport($this->data, $this->companyCode);
+        Log::info('Export completed', ['result' => $basePath]);
+        $this->sendNotification($basePath);
 
         if($basePath == '') {
             return ['success' => false , 'message' => 'Unable to export excel'];
         }
 
-        $this->sendNotification($basePath);
-        return ['success' => true , 'message' =>  trans('custom.success_export') ,'data' => $basePath];
+        return ['success' => true , 'message' =>  trans('custom.success_export')];
     }
 
     private function getMasterData() {
@@ -204,12 +205,7 @@ class ExportPODetailExcel {
             'detail',
             'detail.unit',
             'detail.requestDetail.purchase_request',
-            'advance_detail',
-            'advance_detail.supplier_by',
-            'advance_detail.currency',
-            'advance_detail.grv_by',
-            'advance_detail.category_by',
-            'advance_detail.vat_sub_category',
+            'po_logistics_details',
             'addon_details',
             'addon_details.category',
             'advance_summary'
@@ -220,6 +216,7 @@ class ExportPODetailExcel {
 
     private function mainHeader($localCurrencyCode = '', $reportingCurrencyCode = '') {
         $this->data[] = [
+            '#' => '#',
             'Company ID' => 'Company ID',
             'Company Name' => 'Company Name',
             'Order Code' => 'Order Code',
@@ -249,8 +246,9 @@ class ExportPODetailExcel {
         ];
     }
 
-    private function headerDetails($val) {
+    private function headerDetails($val, $counter) {
         $this->data[] = [
+            '#' => $counter,
             'Company ID' => $val->companyID,
             'Company Name' => optional($val->company)->CompanyName,
             'Order Code' => $val->purchaseOrderCode,
@@ -284,15 +282,19 @@ class ExportPODetailExcel {
         if (!empty($val) && count($val) > 0) {
             $hasPR = $this->checkRequest($val);
 
-            $this->data[] = ['Order Details'];
+            $headerOne [''] = '';
+            $headerOne ['Order Details'] = 'Order Details';
+
+            $this->data[] = $headerOne;
             $header = [];
+            $header[''] = '';
             if ($hasPR) $header['PR Number'] = 'PR Number';
             $header['item Code'] = 'Item Code';
             $header['item Description'] = 'Item Description';
             $header['comments'] = 'Comments';
             if ($hasPR) $header['PR QTY'] = 'PR QTY';
             $header['UOM'] = 'UOM';
-            $header['No qty'] = 'Qty';
+            $header['No qty'] = 'No Qty';
             $header['Unit Cost'] = 'Unit Cost';
             $header['Dis %'] = 'Discount %';
             $header['Discount'] = 'Discount';
@@ -303,6 +305,7 @@ class ExportPODetailExcel {
 
             foreach ($val as $detail) {
                 $row = [];
+                $row [''] = '';
                 if ($hasPR) {
                     $row['PR Number'] = $detail->requestDetail->purchase_request->purchaseRequestCode ?? '';
                 }
@@ -328,8 +331,12 @@ class ExportPODetailExcel {
 
     private function logisticDetails($val) {
         if (!empty($val) && count($val) > 0) {
-            $this->data[] = ['Logistics Details'];
+            $headerOne [''] = '';
+            $headerOne ['Logistics Details'] = 'Logistics Details';
+
+            $this->data[] = $headerOne;
             $header = [];
+            $header[''] = '';
             $header['Category'] = 'Category';
             $header['Supplier Code'] = 'Supplier Code';
             $header['Supplier Name'] = 'Supplier Name';
@@ -346,12 +353,13 @@ class ExportPODetailExcel {
 
             foreach ($val as $detail) {
                 $row = [];
+                $row [''] = '';
                 $row['Category'] = $detail->category_by->costCatDes ?? '';
                 $row['Supplier Code'] = $detail->SupplierPrimaryCode ?? '';
                 $row['Supplier Name'] = $detail->supplier_by->supplierName ?? '';
                 $row['GRV Code'] = $detail->grv_by->grvPrimaryCode ?? '';
                 $row['Currency'] = $detail->currency->CurrencyCode ?? '';
-                $row['Amount'] = $detail->reqAmountInPOTransCur ?? '';
+                $row['Amount'] = $detail->reqAmount ?? '';
                 $row['Local Amount'] = $detail->reqAmountInPOLocalCur ?? '';
                 $row['Reporting Amount'] = $detail->reqAmountInPORptCur ?? '';
                 $row['Add VAT On PO'] = ($detail->addVatOnPO ?? false) ? 'Yes' : 'No';
@@ -366,14 +374,19 @@ class ExportPODetailExcel {
 
     private function addonDetails($val) {
         if (!empty($val) && count($val) > 0) {
-            $this->data[] = ['Addon Details'];
+            $headerOne [''] = '';
+            $headerOne ['Addon Details'] = 'Addon Details';
+
+            $this->data[] = $headerOne;
             $header = [];
+            $header[''] = '';
             $header['Category'] = 'Category';
             $header['Amount'] = 'Amount';
             $this->data[] = $header;
 
             foreach ($val as $detail) {
                 $row = [];
+                $row [''] = '';
                 $row['Category'] = $detail->category->costCatDes ?? '';
                 $row['Amount'] = $detail->amount ?? '';
                 $this->data[] = $row;
@@ -382,23 +395,26 @@ class ExportPODetailExcel {
         }
     }
 
-    private function processExportData()
-    {
+    private function processExportData() {
         $this->data = [];
+        $counter = 1;
         foreach ($this->output as $val) {
             $localCode = optional($val->localcurrency)->CurrencyCode;
             $reportingCode = optional($val->reportingcurrency)->CurrencyCode;
 
             $this->mainHeader($localCode, $reportingCode);
-            $this->headerDetails($val);
+            $this->headerDetails($val, $counter);
             $this->data[] = [];
             $this->detailDetails($val->detail);
-            $this->logisticDetails($val->advance_detail);
+            $this->logisticDetails($val->po_logistics_details);
             $this->addonDetails($val->addon_details);
             $this->data[] = [];
             $this->data[] = [];
+
+            $counter++;
         }
     }
+
 
     private function checkRequest($val) {
         $hasPR = false;
@@ -412,13 +428,16 @@ class ExportPODetailExcel {
     }
 
     private function sendNotification($basePath) {
-        $reportTitle = "Purchase Order Detailed Excel has been generated";
+        Log::info('Push notification triggered for PO Detail Excel Export', [
+            'userId' => [$this->userId],
+            'filePath' => $basePath
+        ]);
         $webPushData = [
-            'title' => $reportTitle,
+            'title' => "Purchase Order Detailed Excel has been generated",
             'body' => '',
             'url' => "",
             'path' => $basePath,
         ];
-       return WebPushNotificationService::sendNotification($webPushData, 3, $this->userId);
+       return WebPushNotificationService::sendNotification($webPushData, 3, [$this->userId]);
     }
 }
