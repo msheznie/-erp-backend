@@ -7516,7 +7516,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                         SUM(details.VATAmount)
                     ELSE
                         (SUM(details.VATAmount) 
-                         - (IFNULL(SUM(details.exempt_vat_portion), 0) / 100 * SUM(details.VATAmount))
+                         - SUM(IFNULL((details.exempt_vat_portion), 0) / 100 * (details.VATAmount))
                          - IFNULL(invoiceMaster.retentionVatAmount, 0))
                 END AS taxTotalAmount,
                 CASE 
@@ -7683,11 +7683,11 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 END AS valueRpt,
                 ((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount)) - invoiceMaster.retentionVatAmount) AS VATAmount,
                 (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discount,
-                SUM(ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discountAmount,
-                IFNULL(SUM((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost), 0) AS bookingAmountTrans,
+                SUM(((details.supplierInvoAmount - (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage))/(100-ep.discountPercentage))*ep.discountPercentage) AS discountAmount,
+                IFNULL(SUM(details.supplierInvoAmount - (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)), 0) AS bookingAmountTrans,
                 IFNULL((invoiceMaster.bookingAmountRpt), 0) AS bookingAmountRpt,
-                (SUM(details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) - (SUM(IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount)) - invoiceMaster.retentionVatAmount)) AS taxTotalAmount,
-                IFNULL((invoiceMaster.retentionAmount - invoiceMaster.retentionVatAmount),0) AS retentionAmount,      
+                (SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - SUM(IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) - ((SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage)) AS taxTotalAmount,
+                IFNULL((SUM(details.supplierInvoAmount)/100*invoiceMaster.retentionPercentage) - (SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage,0) AS retentionAmount,      
                 ep.vatSubCategoryID,
                 (IF(ep.exempt_vat_portion IS NULL, NULL,ep.exempt_vat_portion) * (ep.VATAmount / 100) * ep.noQty) AS exempt_vat_portion,
                 (
@@ -7863,15 +7863,15 @@ SELECT
                 DATE_FORMAT(eb.postedDate, "%d/%m/%Y") AS postedDate,
                 ctm.countryName,
                  "Input VAT" AS vatCategory,
-                0 AS retentionAmount,      
+                IFNULL((SUM(details.supplierInvoAmount)/100*eb.retentionPercentage) - (SUM(details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage)/100*eb.retentionPercentage) ,0) AS retentionAmount,      
                 0 AS lineItemNumber,
                    "Supplier PO Invoice - Logistics" AS documentType,
                    0 AS discountAmount,
                         (eb.rcmActivated = 1 OR pom.rcmActivated = 1) AS rcmActivated,
     0 AS grvDetailsID,
     0 AS exempt_vat_portion,
-	SUM(details.supplierInvoAmount - details.VATAmount)  as bookingAmountTrans,
-	SUM(details.VATAmount)  as taxTotalAmount,
+	SUM(details.supplierInvoAmount - (details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage))  as bookingAmountTrans,
+	(SUM(details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage) -  (SUM(details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage)/100*eb.retentionPercentage)) AS taxTotalAmount,
 	0 AS discount,
 	(SELECT categoryDescription FROM suppliercategoryicvmaster WHERE supCategoryICVMasterID = sm.supCategoryICVMasterID) AS goodORService,
     (SELECT DecimalPlaces FROM currencymaster WHERE currencymaster.currencyID = eb.companyReportingCurrencyID) AS rptDecimalPlaces,
