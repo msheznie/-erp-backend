@@ -756,7 +756,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
     {     
         $input = $request->all();
         $account = BankAccount::where('chartOfAccountSystemID', $input['bankGLId'])->where('companySystemID', $input['company_id'])->first();
-        return $this->sendResponse($account, 'Account details retrieved successfully');
+        if (empty($account)) {
+            return $this->sendError('The selected GL is not linked to a bank account.');
+        } else {
+            return $this->sendResponse($account, 'Account details retrieved successfully.');
+        }
 
     }
 }
