@@ -558,7 +558,7 @@ class ReceiptAPIService
                     }
                 }else {
                     $this->isError = true;
-                    $detailsError = new Error('invoiceCode','Account receivable ledger data not posted');
+                    $detailsError = new Error('invoiceCode','Receivable ledger posting is in progress. Please try again in a while');
                     array_push($this->detailsArrayObj,$detailsError);
                 }
             }
