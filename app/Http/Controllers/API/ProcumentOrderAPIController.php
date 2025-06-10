@@ -5428,6 +5428,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable'));
+        $request->merge(['userId' => Helper::getEmployeeSystemID()]);
 
         if(isset($input['stat']) && $input['stat']) {
             $db = $input['db'] ?? "";

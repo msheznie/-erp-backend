@@ -56,7 +56,7 @@ class ExportPODetailExcel {
         $this->poTypeId = $request['poTypeID'] ?? null;
         $this->financeCategory= $request['financeCategory'] ?? null;
         $this->search = $request['search']['value'] ?? null;
-        $this->userId = Helper::getEmployeeSystemID();
+        $this->userId = $request['userId'] ?? null;
 
         $this->supplierId = collect((array) $this->supplierId)->pluck('id');
         $this->serviceLineSystemId = collect((array) $this->serviceLineSystemId)->pluck('id');
