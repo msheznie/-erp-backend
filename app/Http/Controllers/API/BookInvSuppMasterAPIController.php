@@ -2936,7 +2936,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                 foreach ($bookInvSuppMasterRecord->item_details as $data) {
                     if ($data->vat_sub_category && $data->vat_sub_category->subCatgeoryType == 1) {
-                        $stdVatTot += $data->VATAmount;
+                        $stdVatTot += $data->VATAmount * $data->noQty;
                     }
                 }
 
