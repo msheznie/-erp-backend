@@ -2169,7 +2169,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $output = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])->with(['grvdetail' => function ($query) {
             $query->with('grvmaster');
         }, 'directdetail' => function ($query) {
-            $query->with('project','segment','vat_sub_category');
+            $query->with('project','segment','vat_sub_category','purchase_order');
         }, 'detail' => function ($query) {
             $query->with('grvmaster');
         }, 'item_details' => function ($query) {
@@ -2851,7 +2851,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMasterRecord = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)->with(['grvdetail' => function ($query) {
             $query->with('grvmaster');
         }, 'directdetail' => function ($query) {
-            $query->with('project','segment','vat_sub_category');
+            $query->with('project','segment','vat_sub_category','purchase_order');
         }, 'detail' => function ($query) {
             $query->with('grvmaster');
         }, 'item_details' => function ($query) {
@@ -2903,6 +2903,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $grvTotRpt = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
             ->sum('totRptAmount');
+
+        $directAmountReport = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('comRptAmount');
 
         $isVATEligible = TaxService::checkCompanyVATEligible($bookInvSuppMaster->companySystemID);
 
@@ -2959,7 +2962,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isVATEligible' => $isVATEligible,
             'isProjectBase' => $isProjectBase,
             'grvTotRpt' => $grvTotRpt,
-            'retentionVatPortion' => $retentionVatPortion
+            'retentionVatPortion' => $retentionVatPortion,
+            'directAmountReport' => $directAmountReport
         );
 
         $time = strtotime("now");
