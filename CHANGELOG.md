@@ -1,6 +1,20 @@
 # Changelog
 
 
+## [10.73.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.72.0...v10.73.0) (2025-06-10)
+
+
+### Features
+
+* **accounts payable:** Extra chargers in BSI is not available in print [GCP-4591] ([#8181](https://github.com/pbsgears/Gears_BackEnd/issues/8181)) ([cc9d2d5](https://github.com/pbsgears/Gears_BackEnd/commit/cc9d2d50a0c6433d9dffc38f13fa88da562e1b15))
+* **accounts payable:** Extra chargers in BSI is not available in print [GCP-4591Temp] ([#8157](https://github.com/pbsgears/Gears_BackEnd/issues/8157)) ([6f79222](https://github.com/pbsgears/Gears_BackEnd/commit/6f7922245c6b29d8a3fc1c186aa7713a4fa4e6d8))
+
+
+### Bug Fixes
+
+* **accounts payable:** supplier invoice print preview VAT calculation changes [GCP-8084] ([#8176](https://github.com/pbsgears/Gears_BackEnd/issues/8176)) ([35213c2](https://github.com/pbsgears/Gears_BackEnd/commit/35213c269d66218c454a8091cbcbad5dbd4a5650))
+* **general ledger:** Fixed salary JV entry issue [GCP-8111] ([#8196](https://github.com/pbsgears/Gears_BackEnd/issues/8196)) ([00b11c7](https://github.com/pbsgears/Gears_BackEnd/commit/00b11c71366b683ca480862c901abe0f096b5551))
+
 ## [10.72.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.71.0...v10.72.0) (2025-06-03)
 
 
