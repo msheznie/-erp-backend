@@ -435,8 +435,8 @@ class ExportPODetailExcel {
         $webPushData = [
             'title' => "Purchase Order Detailed Excel has been generated",
             'body' => '',
-            'url' => "",
-            'path' => $basePath,
+            'url' => $basePath,
+            'path' => "",
         ];
        return WebPushNotificationService::sendNotification($webPushData, 3, [$this->userId]);
     }
