@@ -19,21 +19,41 @@ class MaterialIssueRegister
     public $cost;
     public $amount;
 
-    public function getHeader() {
-        return [
-            'Issue Code',
-            'Issue Date',
-            'Request No',
-            'Item Code',
-            'Item Description',
-            'UOM',
-            'Issued Qty',
-            'Issued to - Emp ID',
-            'Issued to - Emp Name',
-            'Qty',
-            'Cost',
-            'Amount'
-        ];
+    public function getHeader($reportType) {
+
+        if($reportType == 1)
+        {
+            return [
+                'Issue Code',
+                'Issue Date',
+                'Request No',
+                'Item Code',
+                'Item Description',
+                'UOM',
+                'Issued Qty',
+                'Issued to - Emp ID',
+                'Issued to - Emp Name',
+                'Qty',
+                'Cost',
+                'Amount'
+            ];
+        }else {
+            return [
+                'Issue Code',
+                'Issue Date',
+                'Request No',
+                'Item Code',
+                'Item Description',
+                'UOM',
+                'Issued Qty',
+                'Issued to - Asset Code',
+                'Issued to - Asset Description',
+                'Qty',
+                'Cost',
+                'Amount'
+            ];
+        }
+
     }
     /**
      * @param mixed $issueCode

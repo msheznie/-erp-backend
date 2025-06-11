@@ -32,6 +32,7 @@ use App\Models\CurrencyMaster;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\DeliveryOrder;
 use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\FixedAssetMaster;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
 use App\Models\PurchaseReturn;
@@ -174,7 +175,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function store(CreateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
-        
+
 
         $input = $this->convertArrayToValue($input);
 
@@ -225,7 +226,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             ]);
         }
 
-       
+
 
 
         if ($validator->fails()) {
@@ -255,7 +256,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
-        if(isset($input['type']) && $input["type"] != "MRFROMMI") { 
+        if(isset($input['type']) && $input["type"] != "MRFROMMI") {
             $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['wareHouseFrom'])->first();
             if ($warehouse) {
                 $input['wareHouseFromCode'] = $warehouse->wareHouseCode;
@@ -428,15 +429,15 @@ class ItemIssueMasterAPIController extends AppBaseController
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');
 
-       
-        
+
+
         /** @var ItemIssueMaster $itemIssueMaster */
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
         }
-        
+
 
         if ($itemIssueMaster->confirmedYN == 0 && $input['confirmedYN'] == 0) {
 
@@ -448,8 +449,8 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $input['mfqJobID'] = NULL;
                 $input['mfqJobNo'] = NULL;
             }
-    
-        
+
+
         }
 
 
@@ -457,8 +458,8 @@ class ItemIssueMasterAPIController extends AppBaseController
         {
             $input['mfqJobID'] = null;
         }
-		
-      
+
+
 
         if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
@@ -583,7 +584,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $bytes = random_bytes(10);
                 $hashKey = bin2hex($bytes);
                 $empID = \Helper::getEmployeeSystemID();
-        
+
                 Carbon::now()->addDays(1);
                 $insertData = [
                 'employee_id' => $empID,
@@ -591,9 +592,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'expire_time' => Carbon::now()->addDays(1),
                 'module_id' => 1
                   ];
-        
+
                 $resData = UserToken::create($insertData);
-        
+
                 $client = new Client();
                 $res = $client->request('GET', env('MANUFACTURING_URL').'/getJobStatus?JobID='.$itemIssueMaster->mfqJobID, [
                     'headers' => [
@@ -602,10 +603,10 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'api_key' => $api_key
                     ]
                 ]);
-    
-                if ($res->getStatusCode() == 200) { 
+
+                if ($res->getStatusCode() == 200) {
                     $job = json_decode($res->getBody(), true);
-    
+
                     if($job['closedYN'] == 1)
                     {
                         return $this->sendError('The selected job is closed');
@@ -650,7 +651,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             $is_manu =  WarehouseMaster::checkManuefactoringWareHouse($input['wareHouseFrom']);
             if($is_manu)
-            {   
+            {
                 if($input['mfqJobID'] == null)
                 {
                     $err_msg['mfq_job'] = ['The Mfq Job field is required !'];
@@ -1173,7 +1174,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         if ($warehouseBinLocationPolicy) {
             $request['warehouseSystemCode'] = 0;
-           
+
             $wareHouseBinLocations = WarehouseBinLocation::where('companySystemID', $companyId)
                 ->where('isDeleted', 0)
                 ->where('isActive', -1)
@@ -1556,7 +1557,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $fetchDetails = ItemIssueMaster::where('issueRefNo', $id)->get();
 
-        
+
         if(count($fetchDetails) > 0) {
             $data = [
                 "status" => true,
@@ -1591,10 +1592,10 @@ class ItemIssueMasterAPIController extends AppBaseController
         $fetchDetails = ItemIssueDetails::whereHas('master', function($q)
         {
             $q->where('approved', 0);
-        
+
         })->where('itemCodeSystem', $id)->get();
 
-        
+
 
         if(count($fetchDetails) > 0) {
             $data = [
@@ -1634,7 +1635,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     $data = array('companySystemID' => $companySystemID,
                     'itemCodeSystem' => $issueDetail->itemCodeSystem,
                     'wareHouseId' => $location);
-        
+
                     $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
                     $issueDetail['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
@@ -1644,9 +1645,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                     $issueDetail['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
                     $issueDetail['issueCostLocalTotal'] = $issueDetail['issueCostLocal'] * $issueDetail['qtyIssuedDefaultMeasure'];
                     $issueDetail['issueCostRptTotal'] = $issueDetail['issueCostRpt'] * $issueDetail['qtyIssuedDefaultMeasure'];
-                           
+
                     $issueDetail->save();
-                    
+
                 }
             }
         }else {
@@ -1670,8 +1671,8 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $is_manu =  WarehouseMaster::checkManuefactoringWareHouse($wareHouseId);
 
-        
-        
+
+
         $job = [];
         if($is_manu)
         {
@@ -1682,9 +1683,9 @@ class ItemIssueMasterAPIController extends AppBaseController
             'expire_time' => Carbon::now()->addDays(1),
             'module_id' => 1
               ];
-    
+
             $resData = UserToken::create($insertData);
-    
+
             $client = new Client();
             $res = $client->request('GET', env('MANUFACTURING_URL').'/getOpenJobs?company_id='.$companyId.'&warehouse='.$wareHouseId.'&segment='.$segmentId, [
                 'headers' => [
@@ -1693,17 +1694,17 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'api_key' => $api_key
                 ]
             ]);
-    
-           
-    
-            if ($res->getStatusCode() == 200) { 
+
+
+
+            if ($res->getStatusCode() == 200) {
                 $job = json_decode($res->getBody(), true);
             }
             else
             {
                 $job = [];
             }
-    
+
             foreach($job as $key=>$val)
             {
                 $job[$key]['jobID'] = intval($val['jobID']);
@@ -1715,7 +1716,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $details['jobs'] = $job;
         $details['is_manu'] = $is_manu;
 
-      
+
        return $this->sendResponse($details, 'Data retrived!');
 
     }
@@ -2098,7 +2099,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     }
 
 
-    
+
     public function getMIReportData(Request $request)
     {
 
@@ -2119,13 +2120,14 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->where('itemmaster.financeCategoryMaster', 1)
             ->groupBy('erp_itemledger.itemSystemCode')
             ->get();
-    
+
 
       $employess = Employee::where('empCompanySystemID', $selectedCompanyId)->get();
 
         $output = array(
             'item' => $item,
-            'employess' => $employess
+            'employess' => $employess,
+            'assets' => FixedAssetMaster::whereHas('allocatToExpense')->select(['faCode','faID','assetDescription'])->get()
         );
         return $this->sendResponse($output, 'Supplier Master retrieved successfully');
     }
@@ -2139,7 +2141,10 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'fromDate' => 'required',
                     'toDate' => 'required|date|after_or_equal:fromDate',
                     'Items' => 'required',
-                    'reportType' => 'required',
+                    'reportType' => 'required|not_in:0',
+                ], [
+                    'reportType.required' => 'The report type field is required.',
+                    'reportType.not_in' => 'The report type field is required.',
                 ]);
 
                 if ($validator->fails()) {
@@ -2156,6 +2161,12 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->input();
 
+
+        if(isset($input['reportType']) && is_array($input['reportType']))
+        {
+            $input['reportType'] = $input['reportType'][0];
+        }
+
         $details = $this->getMIRReportData($input);
         $companyName = $details['companyName'];
         $startDate = $details['startDate'];
@@ -2164,15 +2175,21 @@ class ItemIssueMasterAPIController extends AppBaseController
         $employee = $details['employee'];
         $employeeCondition = $details['employeeCondition'];
         $employeeSubQuery = $details['employeeSubQuery'];
+        $assetsConditon = $details['assetsConditon'];
+        $assetsSubQuery = $details['assetsSubQuery'];
+
 
         if (empty($items))
         {
             return $this->sendError('The items field is required.', 500);
 
         }
-       
+
         \DB::select("SET SESSION group_concat_max_len = 1000000");
-        $query = "SELECT 
+
+        if($input['reportType'] == 1)
+        {
+            $query = "SELECT 
                         erp_itemissuedetails.itemPrimaryCode,
                         CONCAT(
                             '[', 
@@ -2241,6 +2258,155 @@ class ItemIssueMasterAPIController extends AppBaseController
                       GROUP BY 
                 erp_itemissuedetails.itemPrimaryCode
                 ";
+        }else {
+
+            if(empty($input['groupByAsset']))
+            {
+                $query = "SELECT 
+                        erp_itemissuedetails.itemPrimaryCode,
+                        CONCAT(
+                            '[', 
+                            GROUP_CONCAT(
+                                JSON_OBJECT(
+                                    'itemIssueDetailID', erp_itemissuedetails.itemIssueDetailID,
+                                    'itemIssueCode', erp_itemissuemaster.itemIssueCode,
+                                    'issueDate', DATE(erp_itemissuemaster.issueDate),
+                                    'itemPrimaryCode', erp_itemissuedetails.itemPrimaryCode,
+                                    'itemDescription', erp_itemissuedetails.itemDescription,
+                                    'unit', units.UnitShortCode,
+                                    'qtyIssued', erp_itemissuedetails.qtyIssued,
+                                    'issueCostLocal', erp_itemissuedetails.issueCostLocal,
+                                    'issueCostLocalTotal', erp_itemissuedetails.issueCostLocalTotal,
+                                    'RequestCode' , erp_request.RequestCode,
+                                    'expenseAllocations', (
+                                            SELECT 
+                                                CONCAT(
+                                                    '[', 
+                                                    GROUP_CONCAT(
+                                                        JSON_OBJECT(
+                                                        'employeeSystemID', erp_fa_asset_master.faID,
+                                                        'empID', erp_fa_asset_master.faCode,
+                                                        'empName', erp_fa_asset_master.assetDescription,
+                                                        'assignedQty', expense_asset_allocation.allocation_qty,
+                                                        'amount', expense_asset_allocation.amount
+                                                        )
+                                                    ),
+                                                    ']'
+                                                )
+                                            FROM 
+                                                expense_asset_allocation 
+                                            JOIN 
+                                                erp_fa_asset_master 
+                                            ON 
+                                                expense_asset_allocation.assetID = erp_fa_asset_master.faID     
+                                            WHERE 
+                                                expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                                                $assetsConditon
+                                        )
+                                )
+                            ),
+                            ']'
+                        ) AS items
+                    FROM 
+                        erp_itemissuemaster 
+                    JOIN 
+                        erp_itemissuedetails 
+                    ON 
+                        erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID 
+                    LEFT JOIN 
+                        erp_request 
+                    ON 
+                        erp_itemissuedetails.reqDocID = erp_request.RequestID 
+                    JOIN 
+                        units 
+                    ON 
+                        erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
+                    WHERE 
+                        erp_itemissuedetails.itemCodeSystem IN ($items)
+                    AND 
+                        erp_itemissuemaster.approved = -1
+                    AND  
+                        DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
+                      $assetsSubQuery
+                      GROUP BY 
+                erp_itemissuedetails.itemPrimaryCode
+                ";
+
+            }else {
+                $query = "SELECT 
+                        expense_asset_allocation.assetID,
+                        CONCAT(
+                            '[', 
+                            GROUP_CONCAT(
+                                JSON_OBJECT(
+                                    'itemIssueDetailID', erp_itemissuedetails.itemIssueDetailID,
+                                    'itemIssueCode', erp_itemissuemaster.itemIssueCode,
+                                    'issueDate', DATE(erp_itemissuemaster.issueDate),
+                                    'itemPrimaryCode', erp_itemissuedetails.itemPrimaryCode,
+                                    'itemDescription', erp_itemissuedetails.itemDescription,
+                                    'unit', units.UnitShortCode,
+                                    'qtyIssued', erp_itemissuedetails.qtyIssued,
+                                    'issueCostLocal', erp_itemissuedetails.issueCostLocal,
+                                    'issueCostLocalTotal', erp_itemissuedetails.issueCostLocalTotal,
+                                    'RequestCode' , erp_request.RequestCode,
+                                    'expenseAllocations', (
+                                            SELECT 
+                                                CONCAT(
+                                                    '[', 
+                                                    GROUP_CONCAT(
+                                                        JSON_OBJECT(
+                                                        'employeeSystemID', erp_fa_asset_master.faID,
+                                                        'empID', erp_fa_asset_master.faCode,
+                                                        'empName', erp_fa_asset_master.assetDescription,
+                                                        'assignedQty', expense_asset_allocation.allocation_qty,
+                                                        'amount', expense_asset_allocation.amount
+                                                        )
+                                                    ),
+                                                    ']'
+                                                )
+                                            FROM 
+                                                expense_asset_allocation 
+                                            JOIN 
+                                                erp_fa_asset_master 
+                                            ON 
+                                                expense_asset_allocation.assetID = erp_fa_asset_master.faID     
+                                            WHERE 
+                                                expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                                                $assetsConditon
+                                        )
+                                )
+                            ),
+                            ']'
+                        ) AS items
+                    FROM 
+                        erp_itemissuemaster 
+                    JOIN 
+                        erp_itemissuedetails 
+                    ON 
+                        erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID 
+                    LEFT JOIN 
+                        erp_request 
+                    ON 
+                        erp_itemissuedetails.reqDocID = erp_request.RequestID 
+                    JOIN 
+                        units 
+                    ON 
+                        erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
+                    LEFT JOIN 
+                            expense_asset_allocation
+                    ON expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                    WHERE 
+                        erp_itemissuedetails.itemCodeSystem IN ($items)
+                    AND 
+                        erp_itemissuemaster.approved = -1
+                    AND  
+                        DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
+                      $assetsSubQuery
+                      GROUP BY 
+                expense_asset_allocation.assetID";
+            }
+        }
+
         
         $output = \DB::select($query);
 
@@ -2250,19 +2416,39 @@ class ItemIssueMasterAPIController extends AppBaseController
             foreach ($output as $row) {
                 
                 $details = json_decode($row->items,true);
-                $groupedResults[$row->itemPrimaryCode] = $details;
 
 
-                foreach($details as $key => $value)
+                if($input['reportType'] == 2 && (isset($input['groupByAsset']) && $input['groupByAsset'] === true))
                 {
+                    $groupedResults[$row->assetID] = $details;
 
-                    if($value['expenseAllocations'] != null)
+
+                    foreach($details as $key => $value)
                     {
 
-                        $groupedResults[$row->itemPrimaryCode][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
+                        if($value['expenseAllocations'] != null)
+                        {
+
+                            $groupedResults[$row->assetID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
+                        }
+                    }
+
+                }else {
+                    $groupedResults[$row->itemPrimaryCode] = $details;
+
+
+                    foreach($details as $key => $value)
+                    {
+
+                        if($value['expenseAllocations'] != null)
+                        {
+
+                            $groupedResults[$row->itemPrimaryCode][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
+                        }
                     }
                 }
-                
+
+
             }
 
 
@@ -2287,10 +2473,15 @@ class ItemIssueMasterAPIController extends AppBaseController
         $employee = $details['employee'];
         $employeeCondition = $details['employeeCondition'];
         $employeeSubQuery = $details['employeeSubQuery'];
+        $assetsConditon = $details['assetsConditon'];
+        $assetsSubQuery = $details['assetsSubQuery'];
         $company = Company::find($input['companySystemID']);
-
         $data = array();
-        $query = "SELECT 
+
+        if($input['reportType'] == 1){
+            $title = 'Employee expense register';
+
+            $query = "SELECT 
                     erp_itemissuedetails.itemPrimaryCode,
                     erp_itemissuedetails.itemIssueDetailID,
                     erp_itemissuemaster.itemIssueCode,
@@ -2333,19 +2524,69 @@ class ItemIssueMasterAPIController extends AppBaseController
                     erp_itemissuedetails.itemPrimaryCode, erp_itemissuedetails.itemIssueDetailID
 
                 ";
+            $output = \DB::select($query);
 
-        $output = \DB::select($query);
+        }
+        else {
+            $title = 'Asset expense register';
+
+            $query = "SELECT 
+                    erp_itemissuedetails.itemPrimaryCode,
+                    erp_itemissuedetails.itemIssueDetailID,
+                    erp_itemissuemaster.itemIssueCode,
+                    DATE(erp_itemissuemaster.issueDate) AS issueDate,
+                    erp_itemissuedetails.itemDescription,
+                    units.UnitShortCode AS unit,
+                    erp_itemissuedetails.qtyIssued,
+                    erp_itemissuedetails.issueCostLocal,
+                    erp_itemissuedetails.issueCostLocalTotal,
+                    erp_fa_asset_master.faID,
+                    erp_fa_asset_master.faCode,
+                    erp_fa_asset_master.assetDescription,
+                    expense_asset_allocation.allocation_qty,
+                    expense_asset_allocation.amount,
+                    (expense_asset_allocation.allocation_qty * expense_asset_allocation.amount) AS calculatedAmount,
+                    erp_request.RequestCode
+                FROM 
+                    erp_itemissuemaster
+                JOIN 
+                    erp_itemissuedetails 
+                    ON erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID
+                LEFT JOIN 
+                    erp_request 
+                    ON erp_itemissuemaster.reqDocID = erp_request.RequestID
+                JOIN 
+                    units 
+                    ON erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
+                LEFT JOIN 
+                    expense_asset_allocation 
+                    ON expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                LEFT JOIN 
+                    erp_fa_asset_master 
+                    ON expense_asset_allocation.assetID = erp_fa_asset_master.faID
+                WHERE 
+                    erp_itemissuedetails.itemCodeSystem IN ($items)
+                    AND erp_itemissuemaster.approved = -1
+                    AND DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
+                    $assetsConditon
+                ORDER BY 
+                    erp_itemissuedetails.itemPrimaryCode, erp_itemissuedetails.itemIssueDetailID
+
+                ";
+            $output = \DB::select($query);
+        }
+
 
 
         if(empty($data)) {
             $mirReportHeaderObj = new MaterialIssueRegister();
-            array_push($data,collect($mirReportHeaderObj->getHeader())->toArray());
+            array_push($data,collect($mirReportHeaderObj->getHeader($input['reportType'] ?? 1))->toArray());
         }        
 
 
          foreach ($output as $val) {
              $mirReportObj = new MaterialIssueRegister();
- 
+
              $mirReportObj->setIssueCode($val->itemIssueCode);
              $mirReportObj->setIssueDate($val->issueDate);
              $mirReportObj->setRequestNo($val->RequestCode);
@@ -2353,9 +2594,17 @@ class ItemIssueMasterAPIController extends AppBaseController
              $mirReportObj->setItemDescription($val->itemDescription);
              $mirReportObj->setUom($val->unit);
              $mirReportObj->setIssuedQty($val->qtyIssued);
-             $mirReportObj->setEmpID($val->empID);
-             $mirReportObj->setEmpName($val->empName);
-             $mirReportObj->setQty($val->assignedQty);
+             if($input['reportType'] == 1)
+             {
+                 $mirReportObj->setEmpID($val->empID);
+                 $mirReportObj->setEmpName($val->empName);
+                 $mirReportObj->setQty($val->assignedQty);
+             }else {
+                 $mirReportObj->setEmpID($val->faCode);
+                 $mirReportObj->setEmpName($val->assetDescription);
+                 $mirReportObj->setQty($val->allocation_qty);
+             }
+
              $mirReportObj->setCost($val->amount);
              $mirReportObj->setAmount($val->calculatedAmount);
              array_push($data,collect($mirReportObj)->toArray());
@@ -2374,7 +2623,6 @@ class ItemIssueMasterAPIController extends AppBaseController
         ];
 
        
-        $title = 'Material Issue Register';
         $path = 'inventory/report/material_issue_register/excel/';
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
         $fileName = 'material_issue_register';
@@ -2450,13 +2698,21 @@ class ItemIssueMasterAPIController extends AppBaseController
             $employee = collect($input['employee'])->pluck('id')->toArray(); 
         }
 
+        $assets = [];
+        if (array_key_exists('assets', $input)) {
+            $assets = collect($input['assets'])->pluck('id')->toArray();
+        }
+
 
 
         $items = implode(',', $items);
         $employee = implode(',', $employee);
+        $assets = implode(',', $assets);
 
         $employeeCondition = '';
         $employeeSubQuery = '';
+        $assetsConditon = '';
+        $assetsSubQuery = '';
 
             if (!empty($employee)) {
                 $employeeCondition = "AND expense_employee_allocation.employeeSystemID IN ($employee)";
@@ -2472,15 +2728,30 @@ class ItemIssueMasterAPIController extends AppBaseController
                                     ) > 0";
             }
 
+            if (!empty($assets)) {
+                $assetsConditon = "AND expense_asset_allocation.assetID IN ($assets)";
+
+                $assetsSubQuery = "AND (
+                                            SELECT 
+                                                COUNT(*) 
+                                            FROM 
+                                                expense_asset_allocation 
+                                            WHERE 
+                                                expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                                                $assetsConditon
+                                        ) > 0";
+            }
+
             return [
                 'companyName' => $companyName,
                 'startDate' => $startDate,
                 'endDate' => $endDate,
-                'startDate' => $startDate,
                 'items' => $items,
                 'employee' => $employee,
                 'employeeCondition' => $employeeCondition,
                 'employeeSubQuery' => $employeeSubQuery,
+                'assetsConditon' => $assetsConditon,
+                'assetsSubQuery' => $assetsSubQuery
             ];
 
     }
