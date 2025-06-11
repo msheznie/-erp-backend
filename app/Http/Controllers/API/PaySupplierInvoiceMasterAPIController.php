@@ -330,10 +330,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             return $this->sendError('Pay Supplier Invoice Master not found');
         }
 
-        $paySupplierInvoiceMaster['supplierTransCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['supplierTransCurrencyID'])->first()->CurrencyCode;
-        $paySupplierInvoiceMaster['BPVbankCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['BPVbankCurrency'])->first()->CurrencyCode;
-        $paySupplierInvoiceMaster['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['companyRptCurrencyID'])->first()->CurrencyCode;
-        $paySupplierInvoiceMaster['localCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['localCurrencyID'])->first()->CurrencyCode;
+        $paySupplierInvoiceMaster['supplierTransCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['supplierTransCurrencyID'])->first()->CurrencyCode ?? null;
+        $paySupplierInvoiceMaster['BPVbankCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['BPVbankCurrency'])->first()->CurrencyCode ?? null;
+        $paySupplierInvoiceMaster['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['companyRptCurrencyID'])->first()->CurrencyCode ?? null;
+        $paySupplierInvoiceMaster['localCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['localCurrencyID'])->first()->CurrencyCode ?? null;
         $paySupplierInvoiceMaster['BPVchequeNoID'] = null;
 
         if($paySupplierInvoiceMaster['payment_mode'] == 2 && $paySupplierInvoiceMaster['pdcChequeYN'] == 0 && !empty($paySupplierInvoiceMaster['BPVchequeNo'])) {
