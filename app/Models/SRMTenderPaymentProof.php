@@ -340,6 +340,13 @@ class SRMTenderPaymentProof extends Model
                 'tt.name as selection',
                 'et.name as envelope',
                 'cm.CurrencyCode as currencyCode',
+                DB::raw("
+                CASE
+                    WHEN SUM(CASE WHEN pf.approved_yn = 0 AND pf.refferedBackYN = 0 THEN 1 ELSE 0 END) > 0
+                        THEN 0
+                    ELSE 1
+                END as approval_status
+                "),
             ]);
     }
 
