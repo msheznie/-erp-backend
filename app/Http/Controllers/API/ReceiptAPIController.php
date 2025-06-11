@@ -51,12 +51,10 @@ class ReceiptAPIController extends AppBaseController
             '*.paymentMode.required' => 'The payment mode is required.',
             '*.payeeType.required' => 'The payee type is required.',
             '*.isPDCCheque.required_if' => 'Cheque Payment method is mandatory',
-            '*.chequeNo.required_if' => 'chequeNo is required when isPDCCheque is 2',
-            '*.chequeDate.required_if' => 'chequeDate is required when isPDCCheque is 2',
             '*.chequeDate.date_format' => 'The cheque date must follow the format dd-MM-yyyy.',
             '*.isPDCCheque.in' => 'The isPDCCheque field must be either 1 or 2.',
             '*.isPDCCheque.integer' => 'The isPDCCheque field must be integer',
-            '*.pdcChequeData.required_if' => 'pdcChequeData is mandatory when isPDCCheque is 1',
+            '*.pdcChequeData.required_if' => 'PDC Cheques Details missing',
             '*.pdcChequeData.array' => 'The isPDCCheque field must be array',
             '*.customer.required' => 'The customer field is required.',
             '*.customer.string' => 'The customer field must be a valid string.',
@@ -88,6 +86,8 @@ class ReceiptAPIController extends AppBaseController
             '*.pdcChequeData.*.chequeNo.numeric' => 'The cheque number must be a numeric value',
             '*.pdcChequeData.*.amount.numeric' => 'The cheque amount must be a numeric value',
             '*.pdcChequeData.*.amount.min' => 'The cheque amount cannot be less than or equal to zero',
+            '*.chequeNo.required_if' => 'Cheque no is required',
+            '*.chequeDate.required_if' => 'Cheque date is required'
         ];
 
         $validator = \Validator::make($input['data'], $rules,$messages);
