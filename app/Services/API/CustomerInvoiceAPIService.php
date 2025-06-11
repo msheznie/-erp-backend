@@ -3499,7 +3499,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 $invoice['company_id'] = $data['company_id'];
 
                 //Get Invoice Details to new variable and remove it from Master Data
-                $invoiceDetails = $invoice['details'] ?? "";
+                $invoiceDetails = $invoice['details'] ?? null;
                 unset($invoice['details']);
 
                 //Validate Master Data
