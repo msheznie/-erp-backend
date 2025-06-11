@@ -19,6 +19,7 @@ use App\Models\ContractTypeSections;
 use App\Models\ContractUserAssign;
 use App\Models\ContractUserGroup;
 use App\Models\ContractUserGroupAssignedUser;
+use App\Models\ContractUsers;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
@@ -33,6 +34,7 @@ use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SRMTenderCalendarLog;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\SRMTenderTechnicalEvaluationAttachment;
+use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBoqItems;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
@@ -977,18 +979,27 @@ class TenderMasterRepository extends BaseRepository
         $input = $request->all();
         $companySystemId = $input['companySystemID'];
 
+        $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
+        if (empty($tenderData)) {
+            return ['success' => false, 'message' => 'Tender not found'];
+        }
+
+        $contractType = ContractTypes::getContractTypeId($input['contractType']);
+        if (empty($contractType)) {
+            return ['success' => false, 'message' => 'Contract Type not found'];
+        }
+
+        $supplierId = SupplierRegistrationLink::getSupplierMasterId($input['supplierId'], $companySystemId);
+        $checkSupplierExists = ContractUsers::checkSupplierExists(
+            $supplierId['supplier_master_id'], 1, $companySystemId, 1);
+
+        if (empty($checkSupplierExists)) {
+            return ['success' => false, 'message' => 'The supplier does not exist in the contract management masters.
+             Please add the supplier to the contract management master'];
+        }
+
         try {
-            DB::transaction(function () use ($input, $companySystemId, $request) {
-
-                $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
-                if (empty($tenderData)) {
-                    return ['success' => false, 'message' => 'Tender not found'];
-                }
-
-                $contractType = ContractTypes::getContractTypeId($input['contractType']);
-                if (empty($contractType)) {
-                    return ['success' => false, 'message' => 'Contract Type not found'];
-                }
+            DB::transaction(function () use ($input, $companySystemId, $tenderData, $contractType) {
 
                 $contractCodeData = $this->generateContractCode($companySystemId);
                 $insertArray = [];
