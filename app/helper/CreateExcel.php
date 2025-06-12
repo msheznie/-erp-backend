@@ -408,7 +408,7 @@ class CreateExcel
                 $basePath = \Helper::getFileUrlFromS3($path);
             }
         }
-        return $basePath;
+        return $path;
     }
 
     public static function fromDate($array,$sheet,$type)
