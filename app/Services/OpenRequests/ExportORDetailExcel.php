@@ -13,14 +13,10 @@ class ExportORDetailExcel {
     private $userId;
     private $data;
     private $code;
-    public function __construct($request,$code) {
+    public function __construct($request,$code, $userId) {
         $this->data = $request;
         $this->code = $code;
-        $this->setData();
-    }
-
-    private function setData() {
-        $this->userId = Helper::getEmployeeSystemID();;
+        $this->userId = $userId;
     }
 
     public function export() {
