@@ -16,6 +16,7 @@ use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\RecurringVoucherSetup;
+use App\Models\SegmentMaster;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SystemConfigurationAttributes;
@@ -530,6 +531,13 @@ class email
                         if (!empty($srmTenderPaymentProof)) {
                             $data['docApprovedYN'] = $srmTenderPaymentProof->approved_yn;
                             $data['docCode'] = $srmTenderPaymentProof->document_code;
+                        }
+
+                    case 132:
+                        $segment = SegmentMaster::where('serviceLineSystemID', $data['docSystemCode'])->first();
+                        if (!empty($segment)) {
+                            $data['docApprovedYN'] = $segment->approved_yn;
+                            $data['docCode'] = $segment->serviceLineCode;
                         }
                         break;
                     default:

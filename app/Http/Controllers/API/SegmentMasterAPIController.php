@@ -145,6 +145,14 @@ class SegmentMasterAPIController extends AppBaseController
 
         $segmentMasters = $this->segmentMasterRepository->create($input);
 
+        if(isset($input['confirmed_yn'])) {
+            $params = array('autoID' => $segmentMasters->serviceLineSystemID, 'company' => $input["companySystemID"], 'document' => 132);
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
         return $this->sendResponse($segmentMasters->toArray(), 'Segment Master saved successfully');
     }
 
@@ -652,7 +660,8 @@ class SegmentMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $segmentMasters = SegmentMaster::whereIn('companySystemID',$childCompanies)
+        $segmentMasters = SegmentMaster::withoutGlobalScope('final_level')
+                                ->whereIn('companySystemID',$childCompanies)
                                 ->with(['company']);
 
         $search = $request->input('search.value');
@@ -728,8 +737,9 @@ class SegmentMasterAPIController extends AppBaseController
     public function updateSegmentMaster(Request $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
         $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->find($input['serviceLineSystemID']);
+        $companySystemId = $input['companySystemID'];
 
         if (!$segmentMaster) {
             return $this->sendError("Segment not found", 500);
@@ -834,6 +844,19 @@ class SegmentMasterAPIController extends AppBaseController
         $empId = $user->employee['empID'];
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $empId;
+
+        if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1) {
+            $params = array('autoID' => $input['serviceLineSystemID'], 'company' => $companySystemId, 'document' => 132);
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+
+            $input['confirmed_by_emp_system_id'] = $user->employee['employeeSystemID'];
+            $input['confirmed_by_emp_id'] = $empId;
+            $input['confirmed_by_name'] = $user->employee['empName'];
+            $input['confirmed_date'] = $input['timeStamp'];
+        }
 
         $data = array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count']);
 
