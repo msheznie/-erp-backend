@@ -59,7 +59,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Jobs\CreateSupplierTransactions;
-use App\Jobs\exportDetailedPoList;
+use App\Jobs\ExportDetailedPoList;
 use App\Models\AddonCostCategories;
 use App\Models\AdvancePaymentDetails;
 use App\Models\AdvanceReceiptDetails;
@@ -5432,7 +5432,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if(isset($input['stat']) && $input['stat']) {
             $db = $input['db'] ?? "";
-            exportDetailedPoList::dispatch($db, $request->all());
+            ExportDetailedPoList::dispatch($db, $request->all());
 
             return $this->sendResponse('', 'PO Detailed report Export in progress, you will be notified once ready !!');
         }

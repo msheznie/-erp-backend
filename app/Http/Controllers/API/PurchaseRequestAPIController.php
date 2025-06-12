@@ -98,7 +98,7 @@ use App\Models\DocumentModifyRequest;
 use App\Repositories\DocumentApprovedRepository;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\Services\DocumentCodeConfigurationService;
-use App\Jobs\exportDetailedORList;
+use App\Jobs\ExportDetailedORList;
 
 /**
  * Class PurchaseRequestController
@@ -2882,7 +2882,8 @@ class PurchaseRequestAPIController extends AppBaseController
         if(isset($input['reportType']) && $input['reportType'] == 2) {
 
                $db = $input['db'] ?? "";
-               exportDetailedORList::dispatch($db, $data,$companyCode);
+               $userId = Helper::getEmployeeSystemID();
+               ExportDetailedORList::dispatch($db, $data,$companyCode, $userId);
                return $this->sendResponse('', 'Open Request Detailed report Export in progress, you will be notified once ready !!');
         }
 
