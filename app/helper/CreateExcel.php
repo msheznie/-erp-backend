@@ -566,4 +566,99 @@ class CreateExcel
 
        return $basePath;
     }
+
+
+     public static function processOpenRequestReport($data,$companyCode) {
+
+        $excel_content =  \Excel::create('open_request_detail_report', function ($excel) use ($data) {
+       
+                $excel->sheet('open_requests', function ($sheet) use ($data) {
+
+                    $i = 1;
+                  
+                    $sheet->setAutoSize(true);
+
+                    if (!empty($data)) {
+                        $headerRow = array_keys($data[0]);
+                        if (($key = array_search('details', $headerRow)) !== false) {
+                            unset($headerRow[$key]);
+                        }
+                        $sheet->appendRow($headerRow);
+
+                        $sheet->row(1, function($row) {
+                            $row->setAlignment('left');
+                            $row->setFontColor('#000000');
+                            $row->setFont([
+                                'family' => 'Calibri',
+                                'size'   => '12',
+                                'bold'   => true,
+                            ]);
+                        });
+                    }
+
+                    foreach ($data as $row) {
+                        $first = true; 
+                        if (!empty($row['details'])) {
+                            foreach ($row['details'] as $detail) {
+                                $sheet->appendRow([
+                                    $first ? $row['PR Number'] : '',
+                                    $first ? $row['PR Requested Date'] : '',
+                                    $first ? $row['Department'] : '',
+                                    $detail['Item Code'],
+                                    $detail['Part No / Ref.Number'],
+                                    $detail['Item Description'],
+                                    $detail['Req Qty'],
+                                    $first ? $row['Narration'] : '',
+                                    $first ? $row['Location'] : '',
+                                    $first ? $row['Priority'] : '',         
+                                    $first ? $row['Created By'] : '',
+                                    $first ? $row['Confirmed Date'] : '',
+                                    $first ? $row['Approved Date'] : '',
+                                    
+                                ]);
+                                $first = false; 
+                            }
+                        } else {
+                            $sheet->appendRow([
+                                $row['PR Number'],
+                                $row['PR Requested Date'],
+                                $row['Department'],
+                                '', '', '', '',
+                                $row['Narration'],
+                                $row['Location'],
+                                $row['Priority'],
+                                $row['Created By'],
+                                $row['Confirmed Date'],
+                                $row['Approved Date'],
+                            ]);
+                        }
+
+                        $sheet->appendRow([]);
+                    }
+
+
+                });
+            
+
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+        })->string('xlsx');
+
+        $disk = 's3';
+        $fileName = 'or_detail_export';
+        $path_dir='procurement/open_request/excel/';
+        $type='xlsx';
+
+        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
+        $path = $companyCode.'/'.$path_dir.$full_name;
+        $result = Storage::disk($disk)->put($path, $excel_content);
+        $basePath = '';
+        if($result)
+        {
+            if (Storage::disk($disk)->exists($path))
+            {
+                $basePath = \Helper::getFileUrlFromS3($path);
+            }
+        }
+        return $basePath;
+    }
 }
