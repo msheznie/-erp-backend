@@ -3181,6 +3181,17 @@ class Helper
                     $docInforArr["modelName"] = 'SRMTenderPaymentProof';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 132:
+                    $docInforArr["documentCodeColumnName"] = 'ServiceLineCode';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmedBy"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'serviceline';
+                    $docInforArr["modelName"] = 'SegmentMaster';
+                    $docInforArr["primarykey"] = 'serviceLineSystemID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
