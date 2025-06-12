@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.73.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.73.0...v10.73.1) (2025-06-12)
+
+
+### Bug Fixes
+
+* **general ledger:** Salary jv amount duplication issue fixed [GCP-8278] ([#8209](https://github.com/pbsgears/Gears_BackEnd/issues/8209)) ([927ce8b](https://github.com/pbsgears/Gears_BackEnd/commit/927ce8b872baae1a26065cfe9f4dc10bc21fd1a9))
+
 ## [10.73.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.72.0...v10.73.0) (2025-06-10)
 
 
