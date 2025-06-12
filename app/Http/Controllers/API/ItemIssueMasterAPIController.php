@@ -2122,11 +2122,13 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->get();
 
 
+        $segments = SegmentMaster::where('companySystemID',$selectedCompanyId)->where('isActive',true)->where('isFinalLevel',true)->select(['serviceLineSystemID','ServiceLineCode','ServiceLineDes'])->get();
       $employess = Employee::where('empCompanySystemID', $selectedCompanyId)->get();
 
         $output = array(
             'item' => $item,
             'employess' => $employess,
+            'segments' => $segments,
             'assets' => FixedAssetMaster::whereHas('allocatToExpense')->select(['faCode','faID','assetDescription'])->get()
         );
         return $this->sendResponse($output, 'Supplier Master retrieved successfully');
@@ -2177,8 +2179,10 @@ class ItemIssueMasterAPIController extends AppBaseController
         $employeeSubQuery = $details['employeeSubQuery'];
         $assetsConditon = $details['assetsConditon'];
         $assetsSubQuery = $details['assetsSubQuery'];
-
-
+        $segments = $details['segments'];
+        $segmentConditon = $details['segmentConditon'];
+        $segmentSubQuery = $details['segmentSubQuery'];
+        $employeeSubQuery = $details['employeeSubQuery'];
         if (empty($items))
         {
             return $this->sendError('The items field is required.', 500);
@@ -2256,159 +2260,172 @@ class ItemIssueMasterAPIController extends AppBaseController
                         DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
                        $employeeSubQuery
                       GROUP BY 
-                erp_itemissuedetails.itemPrimaryCode
-                ";
-        }else {
-
-            if(empty($input['groupByAsset']))
-            {
-                $query = "SELECT 
-                        erp_itemissuedetails.itemPrimaryCode,
-                        CONCAT(
-                            '[', 
-                            GROUP_CONCAT(
-                                JSON_OBJECT(
-                                    'itemIssueDetailID', erp_itemissuedetails.itemIssueDetailID,
-                                    'itemIssueCode', erp_itemissuemaster.itemIssueCode,
-                                    'issueDate', DATE(erp_itemissuemaster.issueDate),
-                                    'itemPrimaryCode', erp_itemissuedetails.itemPrimaryCode,
-                                    'itemDescription', erp_itemissuedetails.itemDescription,
-                                    'unit', units.UnitShortCode,
-                                    'qtyIssued', erp_itemissuedetails.qtyIssued,
-                                    'issueCostLocal', erp_itemissuedetails.issueCostLocal,
-                                    'issueCostLocalTotal', erp_itemissuedetails.issueCostLocalTotal,
-                                    'RequestCode' , erp_request.RequestCode,
-                                    'expenseAllocations', (
-                                            SELECT 
-                                                CONCAT(
-                                                    '[', 
-                                                    GROUP_CONCAT(
-                                                        JSON_OBJECT(
-                                                        'employeeSystemID', erp_fa_asset_master.faID,
-                                                        'empID', erp_fa_asset_master.faCode,
-                                                        'empName', erp_fa_asset_master.assetDescription,
-                                                        'assignedQty', expense_asset_allocation.allocation_qty,
-                                                        'amount', expense_asset_allocation.amount
-                                                        )
-                                                    ),
-                                                    ']'
-                                                )
-                                            FROM 
-                                                expense_asset_allocation 
-                                            JOIN 
-                                                erp_fa_asset_master 
-                                            ON 
-                                                expense_asset_allocation.assetID = erp_fa_asset_master.faID     
-                                            WHERE 
-                                                expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
-                                                $assetsConditon
-                                        )
-                                )
-                            ),
-                            ']'
-                        ) AS items
-                    FROM 
-                        erp_itemissuemaster 
-                    JOIN 
-                        erp_itemissuedetails 
-                    ON 
-                        erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID 
-                    LEFT JOIN 
-                        erp_request 
-                    ON 
-                        erp_itemissuedetails.reqDocID = erp_request.RequestID 
-                    JOIN 
-                        units 
-                    ON 
-                        erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
-                    WHERE 
-                        erp_itemissuedetails.itemCodeSystem IN ($items)
-                    AND 
-                        erp_itemissuemaster.approved = -1
-                    AND  
-                        DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
-                      $assetsSubQuery
-                      GROUP BY 
-                erp_itemissuedetails.itemPrimaryCode
+                    erp_itemissuedetails.itemPrimaryCode
                 ";
 
-            }else {
-                $query = "SELECT 
-                        expense_asset_allocation.assetID,
-                        CONCAT(
-                            '[', 
-                            GROUP_CONCAT(
-                                JSON_OBJECT(
-                                    'itemIssueDetailID', erp_itemissuedetails.itemIssueDetailID,
-                                    'itemIssueCode', erp_itemissuemaster.itemIssueCode,
-                                    'issueDate', DATE(erp_itemissuemaster.issueDate),
-                                    'itemPrimaryCode', erp_itemissuedetails.itemPrimaryCode,
-                                    'itemDescription', erp_itemissuedetails.itemDescription,
-                                    'unit', units.UnitShortCode,
-                                    'qtyIssued', erp_itemissuedetails.qtyIssued,
-                                    'issueCostLocal', erp_itemissuedetails.issueCostLocal,
-                                    'issueCostLocalTotal', erp_itemissuedetails.issueCostLocalTotal,
-                                    'RequestCode' , erp_request.RequestCode,
-                                    'expenseAllocations', (
-                                            SELECT 
-                                                CONCAT(
-                                                    '[', 
-                                                    GROUP_CONCAT(
-                                                        JSON_OBJECT(
-                                                        'employeeSystemID', erp_fa_asset_master.faID,
-                                                        'empID', erp_fa_asset_master.faCode,
-                                                        'empName', erp_fa_asset_master.assetDescription,
-                                                        'assignedQty', expense_asset_allocation.allocation_qty,
-                                                        'amount', expense_asset_allocation.amount
-                                                        )
-                                                    ),
-                                                    ']'
-                                                )
-                                            FROM 
-                                                expense_asset_allocation 
-                                            JOIN 
-                                                erp_fa_asset_master 
-                                            ON 
-                                                expense_asset_allocation.assetID = erp_fa_asset_master.faID     
-                                            WHERE 
-                                                expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
-                                                $assetsConditon
-                                        )
-                                )
-                            ),
-                            ']'
-                        ) AS items
-                    FROM 
-                        erp_itemissuemaster 
-                    JOIN 
-                        erp_itemissuedetails 
-                    ON 
-                        erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID 
-                    LEFT JOIN 
-                        erp_request 
-                    ON 
-                        erp_itemissuedetails.reqDocID = erp_request.RequestID 
-                    JOIN 
-                        units 
-                    ON 
-                        erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
-                    LEFT JOIN 
-                            expense_asset_allocation
+
+            $output = \DB::select($query);
+        }
+        elseif($input['reportType'] == 2) {
+
+            $groupByField = empty($input['groupByAsset'])
+                ? 'erp_itemissuedetails.itemPrimaryCode'
+                : 'expense_asset_allocation.assetID';
+
+            $selectField = $groupByField;
+
+            $expenseAllocationsSubquery = "
+                SELECT CONCAT(
+                    '[', 
+                    GROUP_CONCAT(
+                        JSON_OBJECT(
+                            'employeeSystemID', erp_fa_asset_master.faID,
+                            'empID', erp_fa_asset_master.faCode,
+                            'empName', erp_fa_asset_master.assetDescription,
+                            'assignedQty', expense_asset_allocation.allocation_qty,
+                            'amount', expense_asset_allocation.amount
+                        )
+                    ),
+                    ']'
+                )
+                FROM expense_asset_allocation 
+                JOIN erp_fa_asset_master 
+                    ON expense_asset_allocation.assetID = erp_fa_asset_master.faID     
+                WHERE expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                $assetsConditon
+            ";
+
+            $jsonItems = "
+                CONCAT(
+                    '[', 
+                    GROUP_CONCAT(
+                        JSON_OBJECT(
+                            'itemIssueDetailID', erp_itemissuedetails.itemIssueDetailID,
+                            'itemIssueCode', erp_itemissuemaster.itemIssueCode,
+                            'issueDate', DATE(erp_itemissuemaster.issueDate),
+                            'itemPrimaryCode', erp_itemissuedetails.itemPrimaryCode,
+                            'itemDescription', erp_itemissuedetails.itemDescription,
+                            'unit', units.UnitShortCode,
+                            'qtyIssued', erp_itemissuedetails.qtyIssued,
+                            'issueCostLocal', erp_itemissuedetails.issueCostLocal,
+                            'issueCostLocalTotal', erp_itemissuedetails.issueCostLocalTotal,
+                            'RequestCode', erp_request.RequestCode,
+                            'expenseAllocations', ($expenseAllocationsSubquery)
+                        )
+                    ),
+                    ']'
+                ) AS items
+            ";
+
+            $leftJoinAssetAllocation = empty($input['groupByAsset']) ? "" : "
+                LEFT JOIN expense_asset_allocation
                     ON expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
-                    WHERE 
-                        erp_itemissuedetails.itemCodeSystem IN ($items)
-                    AND 
-                        erp_itemissuemaster.approved = -1
-                    AND  
-                        DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
-                      $assetsSubQuery
-                      GROUP BY 
-                expense_asset_allocation.assetID";
-            }
+            ";
+
+            $query = "
+                SELECT 
+                    $selectField,
+                    $jsonItems
+                FROM 
+                    erp_itemissuemaster 
+                JOIN 
+                    erp_itemissuedetails 
+                    ON erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID 
+                LEFT JOIN 
+                    erp_request 
+                    ON erp_itemissuedetails.reqDocID = erp_request.RequestID 
+                JOIN 
+                    units 
+                    ON erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
+                $leftJoinAssetAllocation
+                WHERE 
+                    erp_itemissuedetails.itemCodeSystem IN ($items)
+                    AND erp_itemissuemaster.approved = -1
+                    AND DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
+                    $assetsSubQuery
+                GROUP BY 
+                    $groupByField
+            ";
+
+            $output = \DB::select($query);
+
+
+        }
+        else {
+            $groupByField = empty($input['groupByAsset']) ? 'erp_itemissuedetails.itemPrimaryCode' : 'erp_itemissuemaster.serviceLineSystemID';
+            $selectField = $groupByField;
+
+            $expenseAllocationsSubquery = "
+                SELECT CONCAT(
+                    '[', 
+                    GROUP_CONCAT(
+                        JSON_OBJECT(
+                            'employeeSystemID', master.serviceLineSystemID,
+                            'empID', master.serviceLineCode,
+                            'empName', master.serviceLineCode,
+                            'assignedQty', details.qtyIssued,
+                            'amount', details.issueCostLocal
+                        )
+                    ), 
+                    ']'
+                )
+                FROM erp_itemissuemaster AS master
+                JOIN erp_itemissuedetails AS details 
+                    ON master.itemIssueAutoID = details.itemIssueAutoID
+                WHERE details.itemIssueDetailID = erp_itemissuedetails.itemIssueDetailID
+            ";
+
+            $jsonItems = "
+                CONCAT(
+                    '[', 
+                    GROUP_CONCAT(
+                        JSON_OBJECT(
+                            'itemIssueDetailID', erp_itemissuedetails.itemIssueDetailID,
+                            'itemIssueCode', erp_itemissuemaster.itemIssueCode,
+                            'issueDate', DATE(erp_itemissuemaster.issueDate),
+                            'itemPrimaryCode', erp_itemissuedetails.itemPrimaryCode,
+                            'itemDescription', erp_itemissuedetails.itemDescription,
+                            'unit', units.UnitShortCode,
+                            'qtyIssued', erp_itemissuedetails.qtyIssued,
+                            'issueCostLocal', erp_itemissuedetails.issueCostLocal,
+                            'issueCostLocalTotal', erp_itemissuedetails.issueCostLocalTotal,
+                            'RequestCode', erp_request.RequestCode,
+                            'expenseAllocations', ($expenseAllocationsSubquery)
+                        )
+                    ), 
+                    ']'
+                ) AS items
+            ";
+
+            $query = "
+                SELECT 
+                    $selectField,
+                    $jsonItems
+                FROM 
+                    erp_itemissuemaster 
+                JOIN 
+                    erp_itemissuedetails 
+                    ON erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID 
+                LEFT JOIN 
+                    erp_request 
+                    ON erp_itemissuedetails.reqDocID = erp_request.RequestID 
+                JOIN 
+                    units 
+                    ON erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
+                WHERE 
+                    erp_itemissuedetails.itemCodeSystem IN ($items)
+                    AND erp_itemissuemaster.approved = -1
+                    AND DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
+                    $segmentSubQuery
+                GROUP BY 
+                    $groupByField
+            ";
+
+
+
+            $output = \DB::select($query);
         }
 
-        
-        $output = \DB::select($query);
 
 
         $groupedResults = [];
@@ -2430,6 +2447,19 @@ class ItemIssueMasterAPIController extends AppBaseController
                         {
 
                             $groupedResults[$row->assetID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
+                        }
+                    }
+
+                }else if($input['reportType'] == 3 &&  (isset($input['groupByAsset']) && $input['groupByAsset'] === true)) {
+                    $details = json_decode($row->items,true);
+                    $groupedResults[$row->serviceLineSystemID] = $details;
+                    foreach($details as $key => $value)
+                    {
+
+                        if($value['expenseAllocations'] != null)
+                        {
+
+                            $groupedResults[$row->serviceLineSystemID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
                         }
                     }
 
@@ -2476,6 +2506,9 @@ class ItemIssueMasterAPIController extends AppBaseController
         $assetsConditon = $details['assetsConditon'];
         $assetsSubQuery = $details['assetsSubQuery'];
         $company = Company::find($input['companySystemID']);
+        $segments = $details['segments'];
+        $segmentConditon = $details['segmentConditon'];
+        $segmentSubQuery = $details['segmentSubQuery'];
         $data = array();
 
         if($input['reportType'] == 1){
@@ -2527,7 +2560,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $output = \DB::select($query);
 
         }
-        else {
+        else if($input['reportType'] == 2) {
             $title = 'Asset expense register';
 
             $query = "SELECT 
@@ -2574,6 +2607,50 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                 ";
             $output = \DB::select($query);
+        }else {
+            $title = 'Segment expense register';
+
+            $query = "SELECT 
+                    erp_itemissuedetails.itemPrimaryCode,
+                    erp_itemissuedetails.itemIssueDetailID,
+                    erp_itemissuemaster.itemIssueCode,
+                    DATE(erp_itemissuemaster.issueDate) AS issueDate,
+                    erp_itemissuedetails.itemDescription,
+                    units.UnitShortCode AS unit,
+                    erp_itemissuedetails.qtyIssued,
+                    erp_itemissuedetails.issueCostLocal,
+                    erp_itemissuedetails.issueCostLocalTotal,
+                    serviceline.serviceLineSystemID,
+                    serviceline.ServiceLineCode,
+                    serviceline.ServiceLineDes,
+                    erp_itemissuedetails.qtyIssued,
+                    erp_itemissuedetails.issueCostLocal AS amount,
+                    (erp_itemissuedetails.qtyIssued * erp_itemissuedetails.issueCostLocal) AS calculatedAmount,
+                    erp_request.RequestCode
+                FROM 
+                    erp_itemissuemaster
+                JOIN 
+                    erp_itemissuedetails 
+                    ON erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID
+                LEFT JOIN 
+                    erp_request 
+                    ON erp_itemissuemaster.reqDocID = erp_request.RequestID
+                JOIN 
+                    units 
+                    ON erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
+                LEFT JOIN 
+                    serviceline 
+                    ON serviceline.serviceLineSystemID = erp_itemissuemaster.serviceLineSystemID
+                WHERE 
+                    erp_itemissuedetails.itemCodeSystem IN ($items)
+                    AND erp_itemissuemaster.approved = -1
+                    AND DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
+                    $segmentConditon
+                ORDER BY 
+                    erp_itemissuedetails.itemPrimaryCode, erp_itemissuedetails.itemIssueDetailID
+
+                ";
+            $output = \DB::select($query);
         }
 
 
@@ -2599,10 +2676,14 @@ class ItemIssueMasterAPIController extends AppBaseController
                  $mirReportObj->setEmpID($val->empID);
                  $mirReportObj->setEmpName($val->empName);
                  $mirReportObj->setQty($val->assignedQty);
-             }else {
+             }else if($input['reportType'] == 2) {
                  $mirReportObj->setEmpID($val->faCode);
                  $mirReportObj->setEmpName($val->assetDescription);
                  $mirReportObj->setQty($val->allocation_qty);
+             }else {
+                 $mirReportObj->setEmpID($val->ServiceLineCode);
+                 $mirReportObj->setEmpName($val->ServiceLineDes);
+                 $mirReportObj->setQty($val->qtyIssued);
              }
 
              $mirReportObj->setCost($val->amount);
@@ -2703,16 +2784,23 @@ class ItemIssueMasterAPIController extends AppBaseController
             $assets = collect($input['assets'])->pluck('id')->toArray();
         }
 
+        $segments = [];
+        if (array_key_exists('segments', $input)) {
+            $segments = collect($input['segments'])->pluck('id')->toArray();
+        }
 
 
         $items = implode(',', $items);
         $employee = implode(',', $employee);
         $assets = implode(',', $assets);
+        $segments = implode(',', $segments);
 
         $employeeCondition = '';
         $employeeSubQuery = '';
         $assetsConditon = '';
         $assetsSubQuery = '';
+        $segmentConditon = '';
+        $segmentSubQuery = '';
 
             if (!empty($employee)) {
                 $employeeCondition = "AND expense_employee_allocation.employeeSystemID IN ($employee)";
@@ -2742,6 +2830,20 @@ class ItemIssueMasterAPIController extends AppBaseController
                                         ) > 0";
             }
 
+        if (!empty($segments)) {
+            $segmentConditon = "AND erp_itemissuemaster.serviceLineSystemID IN ($segments)";
+
+            $segmentSubQuery = "AND (
+                                            SELECT 
+                                                COUNT(*) 
+                                            FROM 
+                                                expense_asset_allocation 
+                                            WHERE 
+                                                expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
+                                                $segmentConditon
+                                        ) > 0";
+        }
+
             return [
                 'companyName' => $companyName,
                 'startDate' => $startDate,
@@ -2751,7 +2853,10 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'employeeCondition' => $employeeCondition,
                 'employeeSubQuery' => $employeeSubQuery,
                 'assetsConditon' => $assetsConditon,
-                'assetsSubQuery' => $assetsSubQuery
+                'assetsSubQuery' => $assetsSubQuery,
+                'segments' => $segments,
+                'segmentConditon' => $segmentConditon,
+                'segmentSubQuery' => $segmentSubQuery
             ];
 
     }
