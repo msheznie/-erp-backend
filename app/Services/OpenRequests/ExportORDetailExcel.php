@@ -39,12 +39,8 @@ class ExportORDetailExcel {
 
 
     private function sendNotification($basePath) {
-        Log::info('Push notification triggered for PO Detail Excel Export', [
-            'userId' => [$this->userId],
-            'filePath' => $basePath
-        ]);
         $webPushData = [
-            'title' => "Purchase Order Detailed Excel has been generated",
+            'title' => "Open Request Detailed Excel has been generated",
             'body' => '',
             'url' => "",
             'path' => $basePath,
