@@ -2516,7 +2516,6 @@ class ItemIssueMasterAPIController extends AppBaseController
        
         $path = 'inventory/report/material_issue_register/excel/';
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
-        $fileName = 'material_issue_register';
 
 
         $selectedAssets  = $request->assets;
@@ -2558,7 +2557,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2
         ];
 
-        $fileName = 'Supplier Ledger';
+        $fileName = 'material_issue_register';
         $path = 'accounts-payable/report/supplier_ledger/excel/';
         $type = "xls";
         $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName, $excelColumnFormat);
